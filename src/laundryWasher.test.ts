@@ -45,6 +45,7 @@ if (!debug) {
 
 const MATTER_PORT = 6001;
 const NAME = 'LaundryWasher';
+const HOMEDIR = path.join('jest', NAME);
 
 /**
  * Waits for the `isOnline` property to become `true`.
@@ -83,11 +84,11 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync(path.join('test', NAME), { recursive: true, force: true });
+    rmSync(HOMEDIR, { recursive: true, force: true });
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', path.join('test', NAME));
+    environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);

@@ -1,6 +1,9 @@
 // src\matterbridge.test.ts
 
-process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
+const NAME = 'MatterbridgeGlobal';
+const HOMEDIR = path.join('jest', NAME);
+
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
 import os from 'node:os';
@@ -48,7 +51,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'MatterbridgeGlobal'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge', () => {
   beforeEach(async () => {
@@ -166,20 +169,20 @@ describe('Matterbridge', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Matterbridge profile: Jest'));
 
       /*
-      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal'), 'Matterbridge Home Directory', expect.anything());
-      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal', '.matterbridge'), 'Matterbridge Directory', expect.anything());
-      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'certs'), 'Matterbridge Frontend Certificate Directory', expect.anything());
-      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'uploads'), 'Matterbridge Frontend Uploads Directory', expect.anything());
-      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal', 'Matterbridge'), 'Matterbridge Plugin Directory', expect.anything());
-      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal', '.mattercert'), 'Matterbridge Matter Certificate Directory', expect.anything());
+      expect(createDirectorySpy).toHaveBeenCalledWith(HOMEDIR, 'Matterbridge Home Directory', expect.anything());
+      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('jest', 'MatterbridgeGlobal', '.matterbridge'), 'Matterbridge Directory', expect.anything());
+      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'certs'), 'Matterbridge Frontend Certificate Directory', expect.anything());
+      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'uploads'), 'Matterbridge Frontend Uploads Directory', expect.anything());
+      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('jest', 'MatterbridgeGlobal', 'Matterbridge'), 'Matterbridge Plugin Directory', expect.anything());
+      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('jest', 'MatterbridgeGlobal', '.mattercert'), 'Matterbridge Matter Certificate Directory', expect.anything());
       */
 
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Home Directory: ${path.join('test', 'MatterbridgeGlobal')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Directory: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'certs')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'uploads')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join('test', 'MatterbridgeGlobal', 'Matterbridge')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join('test', 'MatterbridgeGlobal', '.mattercert')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Home Directory: ${HOMEDIR}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'certs')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'uploads')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join('jest', 'MatterbridgeGlobal', 'Matterbridge')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join('jest', 'MatterbridgeGlobal', '.mattercert')}`));
 
       // -frontend 0
       expect((matterbridge as any).frontend.httpServer).toBeUndefined();
@@ -197,7 +200,7 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('Matterbridge.loadInstance(true) with frontend', async () => {
-      process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '8081', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest'];
+      process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '8081', '-homedir', HOMEDIR, '-profile', 'Jest'];
 
       expect((Matterbridge as any).instance).toBeUndefined();
       matterbridge = await Matterbridge.loadInstance(true);
@@ -220,12 +223,12 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).plugins).toBeDefined();
       expect((matterbridge as any).devices.size).toBe(0);
 
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Home Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'certs')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'uploads')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal', 'Matterbridge')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal', '.mattercert')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Home Directory already exists at path: ${HOMEDIR}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'certs')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'uploads')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', 'Matterbridge')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.mattercert')}`));
 
       // -frontend 8081
       expect((matterbridge as any).frontend.port).toBe(8081);
@@ -251,7 +254,7 @@ describe('Matterbridge', () => {
     });
 
     test('Matterbridge profile', async () => {
-      process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
+      process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
       matterbridge = await Matterbridge.loadInstance(true);
       if (!(matterbridge as any).initialized) await matterbridge.initialize();
       expect(matterbridge).toBeDefined();
@@ -368,7 +371,7 @@ describe('Matterbridge', () => {
       let plugins = (await (matterbridge as any).plugins) as RegisteredPlugin[];
       expect(plugins).toHaveLength(0);
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-add', './src/mock/plugin1'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-add', './src/mock/plugin1'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
       await (matterbridge as any).parseCommandLine();
       const log = (matterbridge as any).plugins.log;
@@ -403,7 +406,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-disable', './src/mock/plugin1'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-disable', './src/mock/plugin1'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
       await (matterbridge as any).parseCommandLine();
       expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Disabled plugin ${plg}matterbridge-mock1${nf}`);
@@ -435,7 +438,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-enable', './src/mock/plugin1'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-enable', './src/mock/plugin1'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
       await (matterbridge as any).parseCommandLine();
       expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Enabled plugin ${plg}matterbridge-mock1${nf}`);
@@ -467,7 +470,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-remove', './src/mock/plugin1'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-remove', './src/mock/plugin1'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
       await (matterbridge as any).parseCommandLine();
       expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock1${nf}`);
@@ -494,7 +497,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-add', './src/mock/plugin1'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-add', './src/mock/plugin1'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
       await (matterbridge as any).parseCommandLine();
       expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-mock1${nf}`);
@@ -527,7 +530,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-add', './src/mock/plugin2'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-add', './src/mock/plugin2'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
       await (matterbridge as any).parseCommandLine();
       expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-mock2${nf}`);
@@ -560,7 +563,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-add', './src/mock/plugin3'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-add', './src/mock/plugin3'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
       await (matterbridge as any).parseCommandLine();
       expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-mock3${nf}`);
@@ -583,7 +586,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
       expect((matterbridge as any).shutdown).toBe(false);
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
       const plugins = (await (matterbridge as any).plugins.array()) as RegisteredPlugin[];
       expect(plugins).toHaveLength(3);
 
@@ -621,7 +624,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-help'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-help'];
       await (matterbridge as any).parseCommandLine();
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Usage: matterbridge [options]'));
       await shutdownPromise;
@@ -644,7 +647,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-list'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-list'];
       await (matterbridge as any).parseCommandLine();
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered plugins (3)`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered devices (0)`);
@@ -668,7 +671,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-logstorage'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-logstorage'];
       await (matterbridge as any).parseCommandLine();
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} storage log`);
       await shutdownPromise;
@@ -691,7 +694,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-loginterfaces'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-loginterfaces'];
       await (matterbridge as any).parseCommandLine();
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} network interfaces log`);
       await shutdownPromise;
@@ -720,7 +723,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-reset'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-reset'];
       (matterbridge as any).initialized = true;
       await (matterbridge as any).parseCommandLine();
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Matter storage reset done! Remove the bridge from the controller.');
@@ -744,7 +747,7 @@ describe('Matterbridge', () => {
         }, 100);
       });
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-reset', 'xxx'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-reset', 'xxx'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
       await (matterbridge as any).parseCommandLine();
       expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, 'Reset plugin xxx');
@@ -759,7 +762,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
       expect((matterbridge as any).shutdown).toBe(false);
 
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-factoryreset'];
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-factoryreset'];
       (matterbridge as any).initialized = true;
       await (matterbridge as any).parseCommandLine();
 

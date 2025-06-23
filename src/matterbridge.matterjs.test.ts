@@ -3,9 +3,10 @@
 /* eslint-disable no-console */
 
 const MATTER_PORT = 6010;
-const HOMEDIR = 'MatterbridgeMatterjs';
+const NAME = 'MatterbridgeMatterjs';
+const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.matterjs.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '0', '-homedir', path.join('test', HOMEDIR), '-port', MATTER_PORT.toString()];
+process.argv = ['node', 'matterbridge.matterjs.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
 import { jest } from '@jest/globals';
 import path from 'node:path';
@@ -47,7 +48,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge matterjs', () => {
   let matterbridge: Matterbridge;

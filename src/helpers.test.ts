@@ -29,7 +29,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { Matterbridge } from './matterbridge.ts';
 
 const MATTER_PORT = 6004;
-const HOMEDIR = 'Helpers';
+const HOMEDIR = path.join('jest', 'Helpers');
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -83,12 +83,12 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
+    rmSync(HOMEDIR, { recursive: true, force: true });
 
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', path.join('test', HOMEDIR));
+    environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);

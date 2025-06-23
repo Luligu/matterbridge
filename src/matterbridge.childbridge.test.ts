@@ -3,6 +3,9 @@
 /* eslint-disable no-console */
 /* eslint-disable jest/no-conditional-expect */
 
+const NAME = 'MatterbridgeChildBridge';
+const HOMEDIR = path.join('jest', NAME);
+
 process.argv = [
   'node',
   'matterbridge.test.js',
@@ -15,7 +18,7 @@ process.argv = [
   '-frontend',
   '8802',
   '-homedir',
-  path.join('test', 'MatterbridgeChildBridge'),
+  HOMEDIR,
   '-profile',
   'JestChildbridge',
   '-port',
@@ -71,7 +74,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'MatterbridgeChildBridge'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
