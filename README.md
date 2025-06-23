@@ -15,25 +15,25 @@
 
 Matterbridge is a Matter plugin manager.
 
-It allows you to have all your Matter devices up and running in a couple of minutes without
-having to deal with the pairing process of each single device.
+It allows you to have all your Matter devices up and running in a couple of minutes without having to deal with the pairing process for each individual device.
 
-The developer just focuses on the device development extending the provided classes.
+Developers can focus solely on device development by extending the provided classes.
 
-Just pair Matterbridge once, and it will load all your registered plugins.
+Simply pair Matterbridge once, and it will load all your registered plugins.
 
-This project aims to allow the porting of homebridge plugins to matterbridge plugins without recoding everything ([Development](README-DEV.md)).
+This project aims to enable porting Homebridge plugins to Matterbridge plugins without having to recode everything ([Development](README-DEV.md)).
 
-It creates a device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, Home Assistant or
-any other ecosystem supporting Matter.
+The easiest way to start create a new plugin is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) which has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.
+
+Matterbridge creates a device that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, Home Assistant, or any other platform supporting Matter.
 
 You don't need a hub or a dedicated new machine.
 
-No complex setup just copy paste the installation scripts.
+No complex setup: just copy paste the installation scripts.
 
-Matterbridge is light weight and run also on slow Linux machine with 512MB of memory.
+Matterbridge is lightweight and also runs on slow Linux machines with as little as 512MB of memory.
 
-It runs perfectly on macOS and Windows too.
+It also runs perfectly on macOS and Windows.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
@@ -45,7 +45,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 The project is build on top of https://github.com/project-chip/matter.js.
 
-A special thank to Apollon77 for his incredible work.
+A special thanks to Apollon77 for his incredible work.
 
 ## Discord
 
