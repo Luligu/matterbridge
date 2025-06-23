@@ -80,13 +80,13 @@ Matterbridge exports from:
 
 - All matter.js types.
 
-### WARNING \***\*\*\*\*\***
+### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
 A plugin must never install or import from `@matter` or `@project-chip` directly (neither as a dependency, devDependency, nor peerDependency), as this leads to a second instance of `matter.js`, causing instability and unpredictable errors such as "The only instance is Endpoint".
 
 Additionally, when Matterbridge updates the `matter.js` version, it should be consistent across all plugins.
 
-### WARNING \***\*\*\*\*\***
+### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
 A plugin must never install Matterbridge (neither as a dependency, devDependency, nor peerDependency).
 
@@ -102,7 +102,23 @@ Matterbridge must be linked to the plugin in development only. At runtime the pl
 
 If you don't use Dev Container from the Matterbridge Plugin Template, on the host you use for the development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).
 
-If you want to develop a plugin using the dev branch of matterbridge (I suggest you do it), you have to clone the dev branch of matterbridge, build it locally and link it (npm run deepCleanBuild does all necessary steps).
+```bash
+git clone https://github.com/Luligu/matterbridge.git
+cd matterbridge
+npm install
+npm run build
+npm link
+```
+
+If you want to develop a plugin using the dev branch of matterbridge (I suggest you do it).
+
+```bash
+git clone -b dev https://github.com/Luligu/matterbridge.git
+cd matterbridge
+npm install
+npm run build
+npm link
+```
 
 Always keep your local instance of matterbridge up to date.
 
@@ -116,19 +132,19 @@ To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platfor
 
 On windows:
 
-```
+```powershell
 cd $HOME\Matterbridge
 ```
 
 On linux or macOS:
 
-```
+```bash
 cd ~/Matterbridge
 ```
 
 then clone the plugin
 
-```
+```bash
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 npm install
@@ -138,7 +154,7 @@ npm run build
 
 then add the plugin to Matterbridge
 
-```
+```bash
 matterbridge -add .
 ```
 
