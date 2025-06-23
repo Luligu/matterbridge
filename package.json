@@ -141,7 +141,7 @@
     "updateMatter:dev": "npm install @matter/main@dev && npm install && npm run reset",
     "updateMatter:loc": "npm install ../matter.js/packages/matter.js && npm install && npm run reset",
     "install:dependencies": "npm install --save-exact @matter/main archiver express glob multer node-ansi-logger node-persist-manager ws",
-    "install:scripts": "npm install --save-dev --save-exact npm-check-updates rimraf shx",
+    "install:scripts": "npm install --save-dev --save-exact npm-check-updates shx",
     "install:typescript": "npm install --save-dev --save-exact typescript @types/node @types/express @types/ws",
     "install:eslint": "npm install --save-dev --save-exact @eslint/js typescript-eslint eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-jsdoc",
     "install:jest": "npm install --save-dev --save-exact jest@29.7.0 ts-jest @types/jest @jest/globals eslint-plugin-jest",
