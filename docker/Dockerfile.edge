@@ -6,22 +6,23 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install node from NodeSource
 RUN apt update && \
-    apt install -y --no-install-recommends ca-certificates curl && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt install -y --no-install-recommends nodejs
+  apt install -y --no-install-recommends ca-certificates curl && \
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+  apt install -y --no-install-recommends nodejs
 
 # Build Matterbridge for production
 WORKDIR /matterbridge
 COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
+COPY ./bin ./bin
 RUN npm ci && \
-    npm run cleanBuildProduction && \
-    npm pkg delete devDependencies scripts types && \
-    npx rimraf ./node_modules && \
-    npm install --omit=dev && \
-    npm shrinkwrap && \
-    npm pack
+  npm run cleanBuildProduction && \
+  npm pkg delete devDependencies scripts types && \
+  npx rimraf ./node_modules && \
+  npm install --omit=dev && \
+  npm shrinkwrap && \
+  npm pack
 
 # ─────────────── RUNTIME STAGE ───────────────
 FROM ubuntu:latest AS release
@@ -31,14 +32,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install node from NodeSource
 RUN apt update && \
-    apt install -y --no-install-recommends ca-certificates curl && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt install -y --no-install-recommends nodejs && \
-    apt update && apt upgrade -y && \
-    apt purge -y apt-transport-https gnupg && \
-    apt autoremove -y && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
+  apt install -y --no-install-recommends ca-certificates curl && \
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+  apt install -y --no-install-recommends nodejs && \
+  apt update && apt upgrade -y && \
+  apt purge -y apt-transport-https gnupg && \
+  apt autoremove -y && \
+  apt clean && \
+  rm -rf /var/lib/apt/lists/*
 
 # Install matterbridge and npm@latest
 WORKDIR /matterbridge    
