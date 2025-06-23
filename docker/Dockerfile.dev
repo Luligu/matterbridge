@@ -13,6 +13,7 @@ WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
+COPY ./bin ./bin
 RUN npm ci && npm run build && npm link 
 
 # WORKDIR /matterbridge-zigbee2mqtt
