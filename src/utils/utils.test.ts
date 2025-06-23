@@ -227,6 +227,10 @@ describe('Utils test', () => {
   });
 
   test('Address ipv6', () => {
+    // Skip this test in remote containers, as it may not have a valid IPv6 address
+    if (process.env.REMOTE_CONTAINERS === 'true') {
+      return;
+    }
     expect(getIpv6InterfaceAddress()).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
     expect(getIpv6InterfaceAddress()).toBeDefined();
   });
