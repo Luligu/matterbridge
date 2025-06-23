@@ -15,7 +15,7 @@
   ],
   */
   // On startup, update npm, pnpm, install the dev of matterbridge and install the dependencies from package.json
-  "postCreateCommand": "sudo npm install -g npm@latest pnpm@latest npm-check-updates rimraf shx && sudo chown -R node:node node_modules && sudo chmod g+s node_modules && npm install && npm run build && npm outdated || true",
+  "postCreateCommand": "sudo npm install -g npm@latest pnpm@latest npm-check-updates shx && sudo chown -R node:node . && sudo chmod g+s . && npm install && npm run build && npm outdated || true",
   "customizations": {
     "vscode": {
       // Extensions to install in the dev container
