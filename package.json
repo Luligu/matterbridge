@@ -101,7 +101,7 @@
   "scripts": {
     "build": "tsc",
     "buildProduction": "tsc --project tsconfig.production.json",
-    "cleanBuild": "npm shx rm -rf tsconfig.tsbuildinfo dist && npm run build",
+    "cleanBuild": "npx shx rm -rf tsconfig.tsbuildinfo dist && npm run build",
     "cleanBuildProduction": "npx shx rm -rf tsconfig.tsbuildinfo dist && npm run buildProduction",
     "watch": "tsc --watch",
     "start": "node ./dist/cli.js",
