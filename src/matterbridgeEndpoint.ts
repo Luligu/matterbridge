@@ -264,8 +264,16 @@ export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
 
-  /** The server mode of the endpoint, if it is a device with its server node or a device added directly to the bridge server node as Matter device */
-  serverMode: 'server' | 'composed' | undefined = undefined;
+  /**
+   * Activates a special mode for this endpoint.
+   * - 'server': it creates the device server node and add the device as Matter device
+   * - 'matter': it adds the device directly to the bridge server node as Matter device. In this case the implementation must respect
+   * the desambiguation rule (i.e. use taglist if needed cause the device doesn't have nodeLabel). See 9.12.2.2. Native Matter functionality in Bridge.
+   *
+   * @remarks
+   * Always use createDefaultBasicInformationClusterServer() to create the BasicInformation cluster server.
+   */
+  serverMode: 'server' | 'matter' | undefined = undefined;
   /** The server node of the endpoint, if it is a single not bridged endpoint */
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
 

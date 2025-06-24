@@ -2529,19 +2529,36 @@ const commissioningController = new CommissioningController({
         return;
       }
     } else if (this.bridgeMode === 'bridge') {
-      // Register and add the device to the matterbridge aggregator node
-      this.log.debug(`Adding bridged endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to Matterbridge aggregator node`);
-      if (!this.aggregatorNode) {
-        this.log.error('Aggregator node not found for Matterbridge');
-        return;
-      }
-      try {
-        await this.aggregatorNode.add(device);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : error;
-        const errorInspect = inspect(error, { depth: 10 });
-        this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for plugin ${plg}${pluginName}${er}: ${errorMessage}\nstack: ${errorInspect}`);
-        return;
+      if (device.serverMode === 'matter') {
+        // Register and add the device to the matterbridge server node
+        this.log.debug(`Adding matter endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to Matterbridge server node...`);
+        if (!this.serverNode) {
+          this.log.error('Server node not found for Matterbridge');
+          return;
+        }
+        try {
+          await this.serverNode.add(device);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : error;
+          const errorInspect = inspect(error, { depth: 10 });
+          this.log.error(`Error adding matter endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for plugin ${plg}${pluginName}${er}: ${errorMessage}\nstack: ${errorInspect}`);
+          return;
+        }
+      } else {
+        // Register and add the device to the matterbridge aggregator node
+        this.log.debug(`Adding bridged endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to Matterbridge aggregator node`);
+        if (!this.aggregatorNode) {
+          this.log.error('Aggregator node not found for Matterbridge');
+          return;
+        }
+        try {
+          await this.aggregatorNode.add(device);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : error;
+          const errorInspect = inspect(error, { depth: 10 });
+          this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for plugin ${plg}${pluginName}${er}: ${errorMessage}\nstack: ${errorInspect}`);
+          return;
+        }
       }
     } else if (this.bridgeMode === 'childbridge') {
       // Register and add the device to the plugin server node
@@ -2567,11 +2584,16 @@ const commissioningController = new CommissioningController({
           await this.createDynamicPlugin(plugin);
           // Fast plugins can add another device before the server node is created
           await waiter(`createDynamicPlugin(${plugin.name})`, () => plugin.serverNode?.hasParts === true);
+          if (!plugin.serverNode) {
+            this.log.error(`Server node not found for plugin ${plg}${plugin.name}${er}`);
+            return;
+          }
           if (!plugin.aggregatorNode) {
             this.log.error(`Aggregator node not found for plugin ${plg}${plugin.name}${er}`);
             return;
           }
-          await plugin.aggregatorNode.add(device);
+          if (device.serverMode === 'matter') await plugin.serverNode.add(device);
+          else await plugin.aggregatorNode.add(device);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : error;
           const errorInspect = inspect(error, { depth: 10 });

@@ -1,6 +1,6 @@
 // src\matterbridgeEndpoint-default.test.ts
 
-const MATTER_PORT = 6010;
+const MATTER_PORT = 6016;
 const NAME = 'EndpointDefault';
 const HOMEDIR = path.join('jest', NAME);
 

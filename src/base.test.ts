@@ -2,7 +2,7 @@
 
 /* eslint-disable jest/no-commented-out-tests */
 
-const MATTER_PORT = 6001;
+const MATTER_PORT = 6000;
 const NAME = 'BaseTest';
 const HOMEDIR = path.join('jest', NAME);
 
