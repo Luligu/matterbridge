@@ -37,14 +37,14 @@ import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbr
 import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
 
 interface PluginManagerEvents {
-  added: [plugin: string];
-  removed: [plugin: string];
-  loaded: [plugin: string];
-  enabled: [plugin: string];
-  disabled: [plugin: string];
-  started: [plugin: string];
-  configured: [plugin: string];
-  shutdown: [plugin: string];
+  added: [name: string];
+  removed: [name: string];
+  loaded: [name: string];
+  enabled: [name: string];
+  disabled: [name: string];
+  started: [name: string];
+  configured: [name: string];
+  shutdown: [name: string];
 }
 
 export class PluginManager extends EventEmitter<PluginManagerEvents> {

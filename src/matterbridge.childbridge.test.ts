@@ -3,6 +3,7 @@
 /* eslint-disable no-console */
 /* eslint-disable jest/no-conditional-expect */
 
+const MATTER_PORT = 6014;
 const NAME = 'MatterbridgeChildBridge';
 const HOMEDIR = path.join('jest', NAME);
 
@@ -22,7 +23,7 @@ process.argv = [
   '-profile',
   'JestChildbridge',
   '-port',
-  '5555',
+  MATTER_PORT.toString(),
   '-passcode',
   '123456',
   '-discriminator',
@@ -139,7 +140,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).aggregatorNode).toBeUndefined();
 
     expect((matterbridge as any).mdnsInterface).toBe(undefined);
-    expect((matterbridge as any).port).toBe(5555);
+    expect((matterbridge as any).port).toBe(MATTER_PORT);
     expect((matterbridge as any).passcode).toBe(123456);
     expect((matterbridge as any).discriminator).toBe(3860);
 

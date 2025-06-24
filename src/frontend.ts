@@ -1042,7 +1042,7 @@ export class Frontend {
       // Filter by pluginName if provided
       if (pluginName && pluginName !== device.plugin) return;
       // Check if the device has the required properties
-      if (!device.plugin || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return;
+      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return;
       const cluster = this.getClusterTextFromDevice(device);
       devices.push({
         pluginName: device.plugin,

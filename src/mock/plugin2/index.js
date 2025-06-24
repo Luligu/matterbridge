@@ -6,11 +6,7 @@ export default function initializePlugin(matterbridge, log, config) {
   return new MockPlatform(matterbridge, log, config);
 }
 
-export class MockPlatform extends MatterbridgeDynamicPlatform {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(matterbridge, log, config) {
-    super(matterbridge, log, config);
-  }
+class MockPlatform extends MatterbridgeDynamicPlatform {
   async onStart(reason) {
     await this.ready;
     this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);

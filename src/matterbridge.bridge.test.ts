@@ -2,6 +2,7 @@
 
 /* eslint-disable jest/no-conditional-expect */
 
+const MATTER_PORT = 6013;
 const NAME = 'MatterbridgeBridge';
 const HOMEDIR = path.join('jest', NAME);
 
@@ -21,7 +22,7 @@ process.argv = [
   '-profile',
   'JestBridge',
   '-port',
-  '5555',
+  MATTER_PORT.toString(),
   '-passcode',
   '123456',
   '-discriminator',
@@ -135,7 +136,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).aggregatorNode).toBeDefined();
 
     expect((matterbridge as any).mdnsInterface).toBe(undefined);
-    expect((matterbridge as any).port).toBe(5555 + 1);
+    expect((matterbridge as any).port).toBe(MATTER_PORT + 1);
     expect((matterbridge as any).passcode).toBe(123456 + 1);
     expect((matterbridge as any).discriminator).toBe(3860 + 1);
 

@@ -264,6 +264,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
 
+  /** The server mode of the endpoint, if it is a device with its server node or a device added directly to the bridge server node as Matter device */
+  serverMode: 'server' | 'composed' | undefined = undefined;
+  /** The server node of the endpoint, if it is a single not bridged endpoint */
+  serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+
   /** The logger instance for the MatterbridgeEndpoint */
   log: AnsiLogger;
   /** The plugin name this MatterbridgeEndpoint belongs to */
@@ -283,12 +288,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersionString: string | undefined = undefined;
   productUrl = 'https://www.npmjs.com/package/matterbridge';
 
-  /** The server node of the endpoint, if it is a single not bridged endpoint */
-  serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
   /** The name of the first device type of the endpoint (old api compatibility) */
   name: string | undefined = undefined;
   /** The code of the first device type of the endpoint (old api compatibility) */
-  deviceType: number;
+  deviceType: number | undefined = undefined;
   /** The id of the endpoint (old api compatibility) */
   uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;

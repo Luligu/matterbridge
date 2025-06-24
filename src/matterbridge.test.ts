@@ -17,6 +17,8 @@ import { AnsiLogger, Logger, LogLevel, nf, TimestampFormat } from 'node-ansi-log
 import { getParameter, hasParameter, waiter } from './utils/export.ts';
 import { Matterbridge } from './matterbridge.ts';
 import { plg, RegisteredPlugin, SessionInformation } from './matterbridgeTypes.ts';
+import { PluginManager } from './pluginManager.ts';
+import { DeviceManager } from './deviceManager.ts';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   // eslint-disable-next-line no-console
