@@ -23,6 +23,7 @@
  */
 
 // Node.js import
+import EventEmitter from 'node:events';
 import type { ExecException } from 'node:child_process';
 
 // AnsiLogger module
@@ -35,15 +36,25 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
 
-// Node.js import type
+interface PluginManagerEvents {
+  added: [plugin: string];
+  removed: [plugin: string];
+  loaded: [plugin: string];
+  enabled: [plugin: string];
+  disabled: [plugin: string];
+  started: [plugin: string];
+  configured: [plugin: string];
+  shutdown: [plugin: string];
+}
 
-export class PluginManager {
+export class PluginManager extends EventEmitter<PluginManagerEvents> {
   private _plugins = new Map<string, RegisteredPlugin>();
   private nodeContext: NodeStorage;
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
 
   constructor(matterbridge: Matterbridge) {
+    super();
     this.matterbridge = matterbridge;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.nodeContext = (matterbridge as any).nodeContext;
@@ -446,6 +457,7 @@ export class PluginManager {
       plugin.enabled = true;
       this.log.info(`Enabled plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('enabled', plugin.name);
       return plugin;
     } catch (err) {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
@@ -488,6 +500,7 @@ export class PluginManager {
       plugin.enabled = false;
       this.log.info(`Disabled plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('disabled', plugin.name);
       return plugin;
     } catch (err) {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
@@ -530,6 +543,7 @@ export class PluginManager {
       this._plugins.delete(packageJson.name);
       this.log.info(`Removed plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('removed', plugin.name);
       return plugin;
     } catch (err) {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
@@ -574,6 +588,7 @@ export class PluginManager {
       this.log.info(`Added plugin ${plg}${packageJson.name}${nf}`);
       await this.saveToStorage();
       const plugin = this._plugins.get(packageJson.name);
+      this.emit('added', packageJson.name);
       return plugin || null;
     } catch (err) {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
@@ -725,6 +740,8 @@ export class PluginManager {
 
         this.log.notice(`Loaded plugin ${plg}${plugin.name}${nt} type ${typ}${platform.type}${nt} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
 
+        this.emit('loaded', plugin.name);
+
         if (start) await this.start(plugin, message, false);
 
         if (configure) await this.configure(plugin);
@@ -768,6 +785,7 @@ export class PluginManager {
       this.log.notice(`Started plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.started = true;
       await this.saveConfigFromPlugin(plugin);
+      this.emit('started', plugin.name);
       if (configure) await this.configure(plugin);
       return plugin;
     } catch (err) {
@@ -805,6 +823,7 @@ export class PluginManager {
       await plugin.platform.onConfigure();
       this.log.notice(`Configured plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.configured = true;
+      this.emit('configured', plugin.name);
       return plugin;
     } catch (err) {
       plugin.error = true;
@@ -858,6 +877,7 @@ export class PluginManager {
       plugin.registeredDevices = undefined;
       plugin.addedDevices = undefined;
       this.log.notice(`Shutdown of plugin ${plg}${plugin.name}${nt} completed`);
+      this.emit('shutdown', plugin.name);
       return plugin;
     } catch (err) {
       this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
