@@ -21,6 +21,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [ESLint]: Added the plugins `eslint-plugin-promise`, `eslint-plugin-jsdoc`, and `@vitest/eslint-plugin`.
 - [Vitest]: Added Vitest for TypeScript project testing. It will replace Jest, which does not work correctly with ESM module mocks.
 - [JSDoc]: Added missing JSDoc comments, including `@param` and `@returns` tags.
+- [MatterbridgeEndpoint]: Add MatterbridgeEndpoint serverMode='server'
+- [MatterbridgeEndpoint]: Add MatterbridgeEndpoint serverMode='matter'
 
 ### Changed
 
@@ -28,6 +30,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [package]: Updated dependencies.
 - [storage]: Bumped `node-storage-manager` to 2.0.0.
 - [logger]: Bumped `node-ansi-logger` to 3.1.1.
+- [matter.js]: Updated to 0.15.0-alpha.0-20250625-c7634df96.
 
 ### Fixed
 

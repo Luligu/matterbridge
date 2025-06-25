@@ -179,14 +179,17 @@ export function xyColorToRgbColor(x: number, y: number, brightness = 254): RGB {
   green = Math.round(green * 255);
   blue = Math.round(blue * 255);
 
-  // Normalize
+  // Normalize even if this code should never be reached...
   if (isNaN(red) || red < 0) {
+    /* istanbul ignore next */
     red = 0;
   }
   if (isNaN(green) || green < 0) {
+    /* istanbul ignore next */
     green = 0;
   }
   if (isNaN(blue) || blue < 0) {
+    /* istanbul ignore next */
     blue = 0;
   }
 

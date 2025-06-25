@@ -50,6 +50,7 @@ import {
   SessionsBehavior,
   UINT32_MAX,
   UINT16_MAX,
+  Crypto,
 } from '@matter/main';
 import { DeviceCertification, DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
@@ -473,10 +474,10 @@ export class Matterbridge extends EventEmitter {
     this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
 
     // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
-    this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode')) ?? PaseClient.generateRandomPasscode();
+    this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode')) ?? PaseClient.generateRandomPasscode(this.environment.get(Crypto));
 
     // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
-    this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator();
+    this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
 
     // Certificate management
     const pairingFilePath = path.join(this.matterbridgeCertDirectory, 'pairing.json');

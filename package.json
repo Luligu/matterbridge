@@ -138,8 +138,8 @@
     "npmPublishTagLatest": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag latest && npx shx cp package.json.backup package.json && npx shx rm -rf package.json.backup && npm run reset",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm run reset",
-    "updateMatter:latest": "npm install @matter/main@latest && npm install && npm run reset",
-    "updateMatter:dev": "npm install @matter/main@dev && npm install && npm run reset",
+    "updateMatter:latest": "npm install --save-exact @matter/main@latest && npm install && npm run reset",
+    "updateMatter:dev": "npm install --save-exact @matter/main@dev && npm install && npm run reset",
     "updateMatter:loc": "npm install ../matter.js/packages/matter.js && npm install && npm run reset",
     "install:dependencies": "npm install --save-exact @matter/main archiver express glob multer node-ansi-logger node-persist-manager ws",
     "install:scripts": "npm install --save-dev --save-exact npm-check-updates shx",
@@ -150,7 +150,7 @@
     "install:prettier": "npm install --save-dev --save-exact prettier eslint-config-prettier eslint-plugin-prettier"
   },
   "dependencies": {
-    "@matter/main": "0.14.0",
+    "@matter/main": "0.15.0-alpha.0-20250625-c7634df96",
     "archiver": "7.0.1",
     "express": "5.1.0",
     "glob": "11.0.3",
