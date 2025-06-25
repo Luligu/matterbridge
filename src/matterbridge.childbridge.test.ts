@@ -263,6 +263,20 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugins.get('matterbridge-mock4')?.type).toBe('AccessoryPlatform');
   }, 60000);
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
+  test('addBridgedEndpoint fails adding for DynamicPlatform cause serverNode', async () => {
+    const plugin = plugins.get('matterbridge-mock1');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    const serverNode = plugin.serverNode;
+    plugin.serverNode = { hasParts: true } as any; // Mock serverNode to simulate failure
+    await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);
+    plugin.serverNode = serverNode;
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Server node not found for plugin`));
+  });
+  */
+
   test('addBridgedEndpoint fails adding for DynamicPlatform cause aggregatorNode', async () => {
     const plugin = plugins.get('matterbridge-mock1');
     expect(plugin).toBeDefined();

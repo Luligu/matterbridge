@@ -165,12 +165,12 @@ describe('Matterbridge matterjs', () => {
   });
 
   test('startServerNode undefined', async () => {
-    (matterbridge as any).startServerNode();
+    await (matterbridge as any).startServerNode();
     expect(loggerLogSpy).toHaveBeenCalledTimes(0);
   });
 
   test('stopServerNode undefined', async () => {
-    (matterbridge as any).stopServerNode();
+    await (matterbridge as any).stopServerNode();
     expect(loggerLogSpy).toHaveBeenCalledTimes(0);
   });
 
@@ -201,6 +201,18 @@ describe('Matterbridge matterjs', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
+
+    jest.spyOn(matterbridge.serverNode as any, 'close').mockImplementationOnce(() => {
+      throw new Error('Test error creating server node');
+    });
+    await (matterbridge as any).stopServerNode(matterbridge.serverNode, 100);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Closing Matterbridge server node`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to close Matterbridge server node`));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    });
+    await Promise.resolve();
+
     // Close the Matterbridge instance
     await matterbridge.destroyInstance();
 

@@ -2585,15 +2585,11 @@ const commissioningController = new CommissioningController({
           await this.createDynamicPlugin(plugin);
           // Fast plugins can add another device before the server node is created
           await waiter(`createDynamicPlugin(${plugin.name})`, () => plugin.serverNode?.hasParts === true);
-          if (!plugin.serverNode) {
-            this.log.error(`Server node not found for plugin ${plg}${plugin.name}${er}`);
-            return;
-          }
           if (!plugin.aggregatorNode) {
             this.log.error(`Aggregator node not found for plugin ${plg}${plugin.name}${er}`);
             return;
           }
-          if (device.serverMode === 'matter') await plugin.serverNode.add(device);
+          if (device.serverMode === 'matter') await plugin.serverNode?.add(device);
           else await plugin.aggregatorNode.add(device);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : error;
