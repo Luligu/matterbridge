@@ -1,4 +1,4 @@
-name: Install, Lint, Test and Build
+name: Node.js CI
 
 on:
   push:
