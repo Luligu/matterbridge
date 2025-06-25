@@ -70,12 +70,15 @@
         "--no-warnings",
         "--experimental-vm-modules",
         "node_modules/jest/bin/jest.js",
+        "--verbose",
         "--coverage",
         "--maxWorkers=100%",
         "matterbridge.test.ts",
         "matterbridge.matterjs.test.ts",
         "matterbridge.bridge.test.ts",
-        "matterbridge.childbridge.test.ts"
+        "matterbridge.childbridge.test.ts",
+        "matterbridge.device.matter.test.ts",
+        "matterbridge.device.server.test.ts"
       ],
       "group": {
         "kind": "test",
