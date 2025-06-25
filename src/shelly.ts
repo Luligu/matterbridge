@@ -296,9 +296,9 @@ export async function triggerShellyHardReset(matterbridge: Matterbridge): Promis
  * Fetches Shelly system log and write it to shelly.log.
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
- * @returns {Promise<void>} A promise that resolves when the operation is complete.
+ * @returns {Promise<boolean>}  A promise that resolves to true if the log was successfully downloaded, false otherwise.
  */
-export async function createShellySystemLog(matterbridge: Matterbridge): Promise<void> {
+export async function createShellySystemLog(matterbridge: Matterbridge): Promise<boolean> {
   const { promises: fs } = await import('node:fs');
   const path = await import('node:path');
 
@@ -308,8 +308,10 @@ export async function createShellySystemLog(matterbridge: Matterbridge): Promise
     await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, 'shelly.log'), data);
     matterbridge.log.notice(`Shelly system log ready for download`);
     matterbridge.frontend.wssSendSnackbarMessage('Shelly system log ready for download');
+    return true;
   } catch (error) {
     matterbridge.log.error(`Error getting Shelly system log: ${error instanceof Error ? error.message : error}`);
+    return false;
   }
 }
 

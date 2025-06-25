@@ -8,6 +8,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.ts';
 import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.ts';
 import path from 'node:path';
+import { mkdir, mkdirSync } from 'node:fs';
 
 const log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -35,7 +36,9 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-describe('getMatterbridgeLatestVersion', () => {
+mkdirSync(path.join('jest', 'Shelly'), { recursive: true });
+
+describe('Shelly API', () => {
   let server: http.Server;
   let serverFail = false;
   let updatingInProgress = false;
@@ -47,6 +50,7 @@ describe('getMatterbridgeLatestVersion', () => {
         res.writeHead(400);
         return res.end();
       }
+      console.log(`Received request for ${req.url} fail=${serverFail}`);
 
       switch (req.url) {
         case '/api/updates/sys/check':
@@ -269,11 +273,10 @@ describe('getMatterbridgeLatestVersion', () => {
 
   it('should createShellySystemLog', async () => {
     const { createShellySystemLog } = await import('./shelly.js');
-    const result = await createShellySystemLog(matterbridgeMock);
-    expect(result).toBeUndefined();
+    expect(await createShellySystemLog(matterbridgeMock)).toBe(true);
 
     serverFail = true;
-    await createShellySystemLog(matterbridgeMock);
+    expect(await createShellySystemLog(matterbridgeMock)).toBe(false);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error'));
   }, 30000);
 
