@@ -2,13 +2,16 @@
 
 /* eslint-disable no-console */
 
+const TEST_DIR = path.join('jest', 'Shelly');
+mkdirSync(TEST_DIR, { recursive: true });
+
 import { jest } from '@jest/globals';
 import http, { IncomingMessage, ServerResponse } from 'node:http';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.ts';
 import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.ts';
 import path from 'node:path';
-import { mkdir, mkdirSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 
 const log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -35,8 +38,6 @@ if (!debug) {
   consoleWarnSpy = jest.spyOn(console, 'warn');
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
-
-mkdirSync(path.join('jest', 'Shelly'), { recursive: true });
 
 describe('Shelly API', () => {
   let server: http.Server;
