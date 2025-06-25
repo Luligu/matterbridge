@@ -80,6 +80,8 @@ interface MatterbridgeEvent {
   initialize_completed: [];
   online: [nodeid: string];
   offline: [nodeid: string];
+  bridge_started: [];
+  childbridge_started: [];
   cleanup_started: [];
   cleanup_completed: [];
   startmemorycheck: [];
@@ -1709,14 +1711,17 @@ export class Matterbridge extends EventEmitter {
           }
         }
         this.frontend.wssSendRefreshRequired('plugins');
-      }, 30 * 1000);
+      }, 30 * 1000).unref();
 
       // Setting reachability to true
       this.reachabilityTimeout = setTimeout(() => {
         this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
         if (this.aggregatorNode) this.setAggregatorReachability(this.aggregatorNode, true);
         this.frontend.wssSendRefreshRequired('reachability');
-      }, 60 * 1000);
+      }, 60 * 1000).unref();
+
+      this.emit('bridge_started');
+      this.log.notice('Matterbridge bridge started successfully');
     }, 1000);
   }
 
@@ -1778,7 +1783,7 @@ export class Matterbridge extends EventEmitter {
           }
         }
         this.frontend.wssSendRefreshRequired('plugins');
-      }, 30 * 1000);
+      }, 30 * 1000).unref();
 
       for (const plugin of this.plugins.array()) {
         if (!plugin.enabled || plugin.error) continue;
@@ -1806,7 +1811,7 @@ export class Matterbridge extends EventEmitter {
           this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf} type ${plugin.type} server node ${plugin.serverNode !== undefined} aggregator node ${plugin.aggregatorNode !== undefined} device ${plugin.device !== undefined}`);
           if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
           this.frontend.wssSendRefreshRequired('reachability');
-        }, 60 * 1000);
+        }, 60 * 1000).unref();
       }
 
       // Start the Matter server node of single devices in mode 'server'
@@ -1816,6 +1821,8 @@ export class Matterbridge extends EventEmitter {
           await this.startServerNode(device.serverNode);
         }
       }
+      this.emit('childbridge_started');
+      this.log.notice('Matterbridge childbridge started successfully');
     }, 1000);
   }
 

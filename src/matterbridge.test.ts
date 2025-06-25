@@ -790,5 +790,67 @@ describe('Matterbridge', () => {
       matterbridge.shutdown = false;
       matterbridge.removeAllListeners('shutdown');
     }, 10000);
+
+    // eslint-disable-next-line jest/no-commented-out-tests
+    /*
+    test('matterbridge -factoryreset should fail', async () => {
+      const spyPath = jest.spyOn(path, 'join').mockImplementation((...args: string[]) => {
+        if (path2.includes('.backup')) throw new Error('Mocked error');
+        return
+      });
+
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+      expect((matterbridge as any).shutdown).toBe(false);
+      (matterbridge as any).initialized = true;
+
+      const cleanup = new Promise<void>((resolve) => {
+        matterbridge.on('cleanup_completed', resolve);
+      });
+      await (matterbridge as any).cleanup('shutting down with factory reset...', false);
+      await cleanup;
+
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error removing matter storage directory'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error removing matterbridge storage directory'));
+
+      matterbridge.shutdown = false;
+      matterbridge.removeAllListeners('cleanup_completed');
+      spyPath.mockRestore();
+    }, 60000);
+    */
+
+    test('matterbridge cleanup("updating...", true)', async () => {
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+      expect((matterbridge as any).shutdown).toBe(false);
+      (matterbridge as any).initialized = true;
+
+      await new Promise<void>((resolve) => {
+        matterbridge.on('update', resolve);
+        (matterbridge as any).cleanup('updating...', true);
+      });
+
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Cleanup completed. Updating...'));
+
+      matterbridge.shutdown = false;
+      matterbridge.removeAllListeners('update');
+    }, 10000);
+
+    test('matterbridge cleanup("restarting...", true)', async () => {
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+      expect((matterbridge as any).shutdown).toBe(false);
+      (matterbridge as any).initialized = true;
+
+      await new Promise<void>((resolve) => {
+        matterbridge.on('restart', resolve);
+        (matterbridge as any).cleanup('restarting...', true);
+      });
+
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Cleanup completed. Restarting...'));
+
+      matterbridge.shutdown = false;
+      matterbridge.removeAllListeners('update');
+    }, 10000);
   });
 });

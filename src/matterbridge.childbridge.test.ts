@@ -144,16 +144,11 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).passcode).toBe(123456);
     expect((matterbridge as any).discriminator).toBe(3860);
 
-    await waiter(
-      'Matterbridge started',
-      () => {
-        return (matterbridge as any).configureTimeout !== undefined;
-      },
-      false,
-      60000,
-      100,
-      true,
-    );
+    await new Promise<void>((resolve) => {
+      matterbridge.once('childbridge_started', () => {
+        resolve();
+      });
+    });
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8802${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in childbridge mode...`);
@@ -262,20 +257,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugins.get('matterbridge-mock3')?.type).toBe('DynamicPlatform');
     expect(plugins.get('matterbridge-mock4')?.type).toBe('AccessoryPlatform');
   }, 60000);
-
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-  test('addBridgedEndpoint fails adding for DynamicPlatform cause serverNode', async () => {
-    const plugin = plugins.get('matterbridge-mock1');
-    expect(plugin).toBeDefined();
-    if (!plugin) return;
-    const serverNode = plugin.serverNode;
-    plugin.serverNode = { hasParts: true } as any; // Mock serverNode to simulate failure
-    await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);
-    plugin.serverNode = serverNode;
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Server node not found for plugin`));
-  });
-  */
 
   test('addBridgedEndpoint fails adding for DynamicPlatform cause aggregatorNode', async () => {
     const plugin = plugins.get('matterbridge-mock1');
