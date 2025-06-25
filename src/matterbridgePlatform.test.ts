@@ -1,12 +1,17 @@
+// src\matterbridgePlatform.test.ts
+
 /* eslint-disable jest/no-conditional-expect */
 
 const NAME = 'MatterbridgePlatform';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'JestPlatform'];
+process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR];
 
 import { jest } from '@jest/globals';
+
 import path from 'node:path';
+import { rmSync } from 'node:fs';
+
 import { AnsiLogger, CYAN, db, er, LogLevel, pl, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
@@ -14,8 +19,30 @@ import { Matterbridge } from './matterbridge.ts';
 import { MatterbridgePlatform } from './matterbridgePlatform.ts';
 import { contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.ts';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { waiter } from './utils/export.ts';
-import { rmSync } from 'node:fs';
+
+let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+const debug = false; // Set to true to enable debug logging
+
+if (!debug) {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
+} else {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+  consoleLogSpy = jest.spyOn(console, 'log');
+  consoleDebugSpy = jest.spyOn(console, 'debug');
+  consoleInfoSpy = jest.spyOn(console, 'info');
+  consoleWarnSpy = jest.spyOn(console, 'warn');
+  consoleErrorSpy = jest.spyOn(console, 'error');
+}
 
 // Cleanup the matter environment
 rmSync(HOMEDIR, { recursive: true, force: true });
@@ -23,54 +50,6 @@ rmSync(HOMEDIR, { recursive: true, force: true });
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;
   let platform: MatterbridgePlatform;
-
-  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-  const debug = false;
-
-  if (!debug) {
-    // Spy on and mock AnsiLogger.log
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      //
-    });
-    // Spy on and mock console.log
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.debug
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.info
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.warn
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.error
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
-      //
-    });
-  } else {
-    // Spy on AnsiLogger.log
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    // Spy on console.log
-    consoleLogSpy = jest.spyOn(console, 'log');
-    // Spy on console.debug
-    consoleDebugSpy = jest.spyOn(console, 'debug');
-    // Spy on console.info
-    consoleInfoSpy = jest.spyOn(console, 'info');
-    // Spy on console.warn
-    consoleWarnSpy = jest.spyOn(console, 'warn');
-    // Spy on console.error
-    consoleErrorSpy = jest.spyOn(console, 'error');
-  }
 
   beforeAll(async () => {
     jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
@@ -112,10 +91,11 @@ describe('Matterbridge platform', () => {
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeInstanceOf(Matterbridge);
 
-    const checkOnline = () => {
-      return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
-    };
-    await waiter('Matter server node started and online', checkOnline, true, 60000, 1000, true);
+    await new Promise<void>((resolve) => {
+      matterbridge.once('online', (name) => {
+        if (name === 'Matterbridge') resolve();
+      });
+    });
   }, 60000);
 
   test('should have created an instance of NodeStorageManager', async () => {
@@ -385,7 +365,7 @@ describe('Matterbridge platform', () => {
     platform.setSelectEntity('name1', 'description1', 'hub');
     platform.getSelectDevices();
     platform.getSelectEntities();
-    platform.clearSelect();
+    await platform.clearSelect();
     expect(platform.selectDevice.size).toBe(0);
     expect(platform.selectEntity.size).toBe(0);
   });
@@ -402,6 +382,47 @@ describe('Matterbridge platform', () => {
     expect(platform.selectEntity.size).toBe(0);
   });
 
+  it('should update a not existing entity selects', async () => {
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    await platform.ready;
+    expect(platform.storage).toBeDefined();
+    expect(platform.context).toBeDefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
+    await platform.clearSelect();
+    expect(platform.selectDevice.size).toBe(0);
+    expect(platform.selectEntity.size).toBe(0);
+
+    platform.setSelectDevice('serial1', 'name1', 'url1', 'hub');
+    expect(platform.selectDevice.size).toBe(1);
+    expect(platform.selectEntity.size).toBe(0);
+    expect(platform.selectDevice.get('serial1')?.entities).toEqual(undefined);
+
+    platform.setSelectDeviceEntity('serial1', 'name2', 'description2', 'hub2');
+    expect(platform.selectDevice.get('serial1')?.entities).toEqual([{ description: 'description2', icon: 'hub2', name: 'name2' }]);
+  });
+
+  it('should update an existing entity selects', async () => {
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    await platform.ready;
+    expect(platform.storage).toBeDefined();
+    expect(platform.context).toBeDefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
+    await platform.clearSelect();
+    expect(platform.selectDevice.size).toBe(0);
+    expect(platform.selectEntity.size).toBe(0);
+
+    platform.setSelectDevice('serial1', 'name1', 'url1', 'hub', [{ name: 'name1', description: 'description1', icon: 'hub1' }]);
+    expect(platform.selectDevice.size).toBe(1);
+    expect(platform.selectEntity.size).toBe(0);
+    expect(platform.selectDevice.get('serial1')?.entities).toEqual([{ description: 'description1', icon: 'hub1', name: 'name1' }]);
+
+    platform.setSelectDeviceEntity('serial1', 'name2', 'description2', 'hub2');
+    expect(platform.selectDevice.get('serial1')?.entities).toEqual([
+      { description: 'description1', icon: 'hub1', name: 'name1' },
+      { description: 'description2', icon: 'hub2', name: 'name2' },
+    ]);
+  });
+
   test('should check checkNotLatinCharacters', async () => {
     const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'nonLatin' }, true);
     testDevice.createDefaultBasicInformationClusterServer('nonLatin조명', 'serial012345', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
@@ -411,6 +432,13 @@ describe('Matterbridge platform', () => {
     expect(platform.hasDeviceName('none')).toBeFalsy();
     expect((platform as any)._registeredEndpoints.has(testDevice.uniqueId ?? 'none')).toBeTruthy();
     expect((platform as any)._registeredEndpointsByName.has('nonLatin조명')).toBeTruthy();
+  });
+
+  test('checkEndpointNumbers should return -1', async () => {
+    const storage = platform.storage;
+    (platform.storage as any) = undefined; // Simulate no storage available
+    expect(await platform.checkEndpointNumbers()).toBe(-1);
+    platform.storage = storage; // Restore storage
   });
 
   test('checkEndpointNumbers should be empty', async () => {
@@ -560,7 +588,8 @@ describe('Matterbridge platform', () => {
   });
 
   test('onAction should log a message', async () => {
-    await platform.onAction('Test', 'value', 'id');
+    await platform.onAction('Test');
+    await platform.onAction('Test', 'value', 'id', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onAction.`), undefined);
   });
 
@@ -577,6 +606,10 @@ describe('Matterbridge platform', () => {
   test('onShutdown should log a message', async () => {
     await platform.onShutdown('test reason');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Shutting down platform ', 'test reason');
+  });
+
+  test('getDevice should return []', async () => {
+    expect(platform.getDevices()).toEqual([]);
   });
 
   test('registerDevice calls matterbridge.addBridgedEndpoint with correct parameters', async () => {
