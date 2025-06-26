@@ -7,7 +7,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['vitest/**/*.test.ts', 'vitest/**/*.spec.ts'],
-    exclude: ['dist', 'node_modules'],
+    exclude: ['dist', 'node_modules', 'frontend', 'frontend/**'],
     globals: true,
     clearMocks: true,
     restoreMocks: true,
@@ -16,6 +16,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8', // default, but explicit
       reporter: ['text', 'lcov'],
+      include: ['src/matterbridge.ts'],
+      exclude: ['dist', 'node_modules', 'frontend', 'frontend/**'],
       thresholds: {
         statements: 100,
         branches: 100,
