@@ -226,7 +226,7 @@ describe('Matterbridge Device serverMode=server', () => {
 
     for (const device of matterbridge.devices) {
       expect(device.uniqueId).toBeDefined();
-      expect(device.serverMode).toBe('server');
+      expect(device.mode).toBe('server');
       expect(device.serverNode).toBeDefined();
       serverDevice = device;
     }
@@ -243,7 +243,7 @@ describe('Matterbridge Device serverMode=server', () => {
     jest.spyOn(Matterbridge.prototype as any, 'createDeviceServerNode').mockImplementationOnce(() => {
       throw new Error('Test error creating server node');
     });
-    await matterbridge.addBridgedEndpoint('serverdevicetest', { serverMode: 'server' } as any);
+    await matterbridge.addBridgedEndpoint('serverdevicetest', { mode: 'server' } as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating server node for device`));
   });
 

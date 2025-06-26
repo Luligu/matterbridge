@@ -215,7 +215,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
 
     for (const device of matterbridge.devices) {
       expect(device.uniqueId).toBeDefined();
-      expect(device.serverMode).toBe('matter');
+      expect(device.mode).toBe('matter');
       expect(device.serverNode).toBeUndefined();
       matterDevice = device;
     }
@@ -224,7 +224,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
   test('Should log error if addBridgedEndpoint fails', async () => {
     const server = matterbridge.serverNode;
     matterbridge.serverNode = undefined as any; // Simulate no server node
-    await matterbridge.addBridgedEndpoint('matterdevicetest', { serverMode: 'matter' } as any);
+    await matterbridge.addBridgedEndpoint('matterdevicetest', { mode: 'matter' } as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Server node not found for Matterbridge`);
     matterbridge.serverNode = server; // Restore server node
 
@@ -232,7 +232,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
     jest.spyOn(matterbridge.serverNode as any, 'add').mockImplementationOnce(() => {
       throw new Error('Test error creating server node');
     });
-    await matterbridge.addBridgedEndpoint('matterdevicetest', { serverMode: 'matter', deviceName: 'Matter node device' } as any);
+    await matterbridge.addBridgedEndpoint('matterdevicetest', { mode: 'matter', deviceName: 'Matter node device' } as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error adding matter endpoint ${dev}Matter node device${er}`));
   });
 
