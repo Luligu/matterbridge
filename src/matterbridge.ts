@@ -60,7 +60,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/brid
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
 import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
-import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation, typ } from './matterbridgeTypes.js';
+import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint, SerializedMatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -169,7 +169,7 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeQrPairingCode: string | undefined = undefined;
   public matterbridgeManualPairingCode: string | undefined = undefined;
   public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined = undefined;
-  public matterbridgeSessionInformations: SanitizedSessionInformation[] | undefined = undefined;
+  public matterbridgeSessionInformations: SanitizedSession[] | undefined = undefined;
   public matterbridgePaired: boolean | undefined = undefined;
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
@@ -2356,12 +2356,7 @@ const commissioningController = new CommissioningController({
     });
 
     const sanitizeSessions = (sessions: SessionsBehavior.Session[]) => {
-      const sanitizedSessions = this.sanitizeSessionInformation(
-        sessions.map((session) => ({
-          ...session,
-          secure: session.name.startsWith('secure'),
-        })),
-      );
+      const sanitizedSessions = this.sanitizeSessionInformation(sessions);
       this.log.debug(`Sessions: ${debugStringify(sanitizedSessions)}`);
       if (this.bridgeMode === 'bridge') {
         this.matterbridgeSessionInformations = sanitizedSessions;
@@ -2728,11 +2723,11 @@ const commissioningController = new CommissioningController({
   /**
    * Sanitizes the session information by converting bigint properties to strings because `res.json` doesn't support bigint.
    *
-   * @param {SessionInformation[]} sessionInfo - The array of session information objects.
-   * @returns {SanitizedSessionInformation[]} An array of sanitized session information objects.
+   * @param {SessionsBehavior.Session[]} session - The array of session information objects.
+   * @returns {SanitizedSession[]} An array of sanitized session information objects.
    */
-  private sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
-    return sessionInfo
+  private sanitizeSessionInformation(session: SessionsBehavior.Session[]): SanitizedSession[] {
+    return session
       .filter((session) => session.isPeerActive)
       .map((session) => {
         return {
@@ -2751,11 +2746,10 @@ const commissioningController = new CommissioningController({
               }
             : undefined,
           isPeerActive: session.isPeerActive,
-          secure: session.secure,
           lastInteractionTimestamp: session.lastInteractionTimestamp?.toString(),
           lastActiveTimestamp: session.lastActiveTimestamp?.toString(),
           numberOfActiveSubscriptions: session.numberOfActiveSubscriptions,
-        } as SanitizedSessionInformation;
+        } as SanitizedSession;
       });
   }
 

@@ -10,15 +10,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
-import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/main';
+import { FabricId, FabricIndex, NodeId, SessionsBehavior, VendorId } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
-import { AnsiLogger, Logger, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
-import { getParameter, hasParameter, waiter } from './utils/export.ts';
+import { getParameter, hasParameter } from './utils/export.ts';
 import { Matterbridge } from './matterbridge.ts';
-import { plg, RegisteredPlugin, SessionInformation } from './matterbridgeTypes.ts';
-import { PluginManager } from './pluginManager.ts';
-import { DeviceManager } from './deviceManager.ts';
+import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   // eslint-disable-next-line no-console
@@ -306,14 +304,13 @@ describe('Matterbridge', () => {
     });
 
     test('Sanitize sessions', () => {
-      let sessionInfos: SessionInformation[] = [
+      let sessionInfos: SessionsBehavior.Session[] = [
         {
           name: 'secure/64351',
           nodeId: NodeId(16784206195868397986n),
           peerNodeId: NodeId(1604858123872676291n),
           fabric: { fabricIndex: FabricIndex(2), fabricId: FabricId(456546212146567986n), nodeId: NodeId(1678420619586823323397986n), rootNodeId: NodeId(18446744060824623349729n), rootVendorId: VendorId(4362), label: 'SmartThings Hub 0503' },
           isPeerActive: true,
-          secure: true,
           lastInteractionTimestamp: 1720035723121269,
           lastActiveTimestamp: 1720035761223121,
           numberOfActiveSubscriptions: 0,
@@ -323,7 +320,7 @@ describe('Matterbridge', () => {
         JSON.stringify(sessionInfos);
       }).toThrow();
       expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
-      expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(464);
+      expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(450);
       sessionInfos = [
         {
           name: 'secure/64351',
@@ -331,7 +328,6 @@ describe('Matterbridge', () => {
           peerNodeId: NodeId(1604858123872676291n),
           fabric: { fabricIndex: FabricIndex(2), fabricId: FabricId(456546212146567986n), nodeId: NodeId(1678420619586823323397986n), rootNodeId: NodeId(18446744060824623349729n), rootVendorId: VendorId(4362), label: 'SmartThings Hub 0503' },
           isPeerActive: false,
-          secure: true,
           lastInteractionTimestamp: 1720035723121269,
           lastActiveTimestamp: 1720035761223121,
           numberOfActiveSubscriptions: 0,

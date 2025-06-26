@@ -26,8 +26,7 @@
 import { NodeStorage } from 'node-persist-manager';
 import { LogLevel } from 'node-ansi-logger';
 // @matter
-import { FabricIndex, NodeId, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
-import { ExposedFabricInformation } from '@matter/main/protocol';
+import { FabricIndex, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 
 // Matterbridge
@@ -73,7 +72,7 @@ export interface BaseRegisteredPlugin {
   paired?: boolean;
   restartRequired?: boolean;
   fabricInformations?: SanitizedExposedFabricInformation[];
-  sessionInformations?: SanitizedSessionInformation[];
+  sessionInformations?: SanitizedSession[];
   registeredDevices?: number;
   addedDevices?: number;
   qrPairingCode?: string;
@@ -122,7 +121,7 @@ export interface MatterbridgeInformation {
   matterbridgeQrPairingCode: string | undefined;
   matterbridgeManualPairingCode: string | undefined;
   matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
-  matterbridgeSessionInformations: SanitizedSessionInformation[] | undefined;
+  matterbridgeSessionInformations: SanitizedSession[] | undefined;
   matterbridgePaired: boolean | undefined;
   matterbridgeAdvertise: boolean | undefined;
   bridgeMode: string;
@@ -157,27 +156,14 @@ export interface SanitizedExposedFabricInformation {
   label: string;
 }
 
-export interface SessionInformation {
-  name: string;
-  nodeId: NodeId;
-  peerNodeId: NodeId;
-  fabric?: ExposedFabricInformation;
-  isPeerActive: boolean;
-  secure: boolean;
-  lastInteractionTimestamp?: number;
-  lastActiveTimestamp?: number;
-  numberOfActiveSubscriptions: number;
-}
-
-export interface SanitizedSessionInformation {
+export interface SanitizedSession {
   name: string;
   nodeId: string;
   peerNodeId: string;
   fabric?: SanitizedExposedFabricInformation;
   isPeerActive: boolean;
-  secure: boolean;
-  lastInteractionTimestamp?: string;
-  lastActiveTimestamp?: string;
+  lastInteractionTimestamp: string;
+  lastActiveTimestamp: string;
   numberOfActiveSubscriptions: number;
 }
 
