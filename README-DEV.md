@@ -28,6 +28,14 @@ The Matterbridge Plugin Template has an already configured Jest / Vitest test un
 
 It also has a workflow configured to run on push and pull request that build, lint and test the plugin on node 20, 22 and 24 with ubuntu, macOS and windows.
 
+## Dev Container
+
+Using a Dev Container provides a fully isolated, reproducible, and pre-configured development environment. This ensures that all contributors have the same tools, extensions, and dependencies, eliminating "works on my machine" issues. It also makes onboarding new developers fast and hassle-free, as everything needed is set up automatically.
+
+For improved efficiency, the setup uses named Docker volumes for `node_modules`. This means dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes.
+
+Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
+
 ## Guidelines on imports/exports
 
 Matterbridge exports from:
