@@ -239,7 +239,26 @@ It can be useful to call this method from onShutdown() if you don't want to keep
 
 ## MatterbridgeEndpoint api
 
-Work in progress...
+You create a device with a new instance of MatterbridgeEndpoint(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false).
+
+- @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
+- @param {MatterbridgeEndpointOptions} [options] - The options for the device.
+- @param {boolean} [debug] - Debug flag.
+
+```typescript
+    const device = new MatterbridgeEndpoint([contactSensor, powerSource], { uniqueStorageKey: 'Eve door', mode: 'matter' }, this.config.debug as boolean)
+      .createDefaultIdentifyClusterServer()
+      .createDefaultBasicInformationClusterServer('My contact sensor', '0123456789')
+      .createDefaultBooleanStateClusterServer(true)
+      .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
+      .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
+```
+
+In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.
+
+All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the 'Matter-1.4-Device-Library-Specification.pdf'.
+
+All default cluster helpers are available as methods of MatterbridgeEndpoint.
 
 # Contribution Guidelines
 
