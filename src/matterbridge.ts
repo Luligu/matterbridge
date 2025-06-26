@@ -1458,6 +1458,7 @@ export class Matterbridge extends EventEmitter {
         if (device.serverMode === 'server' && device.serverNode) {
           await this.stopServerNode(device.serverNode);
           device.serverNode = undefined;
+          device.serverContext = undefined;
         }
       }
       this.log.notice('Stopped matter server nodes');
@@ -1589,8 +1590,8 @@ export class Matterbridge extends EventEmitter {
   private async createDeviceServerNode(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
     if (device.serverMode === 'server' && !device.serverNode && device.deviceType && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
       this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);
-      const storageContext = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
-      device.serverNode = await this.createServerNode(storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      device.serverContext = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
+      device.serverNode = await this.createServerNode(device.serverContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node...`);
       await device.serverNode.add(device);
       this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node`);
