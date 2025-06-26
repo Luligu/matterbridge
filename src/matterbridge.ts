@@ -345,7 +345,7 @@ export class Matterbridge extends EventEmitter {
     }
     if (this.devices !== undefined) {
       for (const device of this.devices.array()) {
-        if (device.serverMode === 'server' && device.serverNode) servers.push(device.serverNode);
+        if (device.mode === 'server' && device.serverNode) servers.push(device.serverNode);
       }
     }
     // Let any already‐queued microtasks run first
@@ -1455,7 +1455,7 @@ export class Matterbridge extends EventEmitter {
         }
       }
       for (const device of this.devices.array()) {
-        if (device.serverMode === 'server' && device.serverNode) {
+        if (device.mode === 'server' && device.serverNode) {
           await this.stopServerNode(device.serverNode);
           device.serverNode = undefined;
           device.serverContext = undefined;
@@ -1588,7 +1588,7 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
    */
   private async createDeviceServerNode(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
-    if (device.serverMode === 'server' && !device.serverNode && device.deviceType && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
+    if (device.mode === 'server' && !device.serverNode && device.deviceType && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
       this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);
       device.serverContext = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
       device.serverNode = await this.createServerNode(device.serverContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
@@ -1692,7 +1692,7 @@ export class Matterbridge extends EventEmitter {
 
       // Start the Matter server node of single devices in mode 'server'
       for (const device of this.devices.array()) {
-        if (device.serverMode === 'server' && device.serverNode) {
+        if (device.mode === 'server' && device.serverNode) {
           this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
           await this.startServerNode(device.serverNode);
         }
@@ -1721,6 +1721,7 @@ export class Matterbridge extends EventEmitter {
         this.frontend.wssSendRefreshRequired('reachability');
       }, 60 * 1000).unref();
 
+      // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('bridge_started');
       this.log.notice('Matterbridge bridge started successfully');
     }, 1000);
@@ -1817,11 +1818,13 @@ export class Matterbridge extends EventEmitter {
 
       // Start the Matter server node of single devices in mode 'server'
       for (const device of this.devices.array()) {
-        if (device.serverMode === 'server' && device.serverNode) {
+        if (device.mode === 'server' && device.serverNode) {
           this.log.debug(`***Starting server node for device ${plg}${device.deviceName}${db} in server mode...`);
           await this.startServerNode(device.serverNode);
         }
       }
+
+      // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('childbridge_started');
       this.log.notice('Matterbridge childbridge started successfully');
     }, 1000);
@@ -2522,7 +2525,7 @@ const commissioningController = new CommissioningController({
       this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) plugin ${plg}${pluginName}${er} not found`);
       return;
     }
-    if (device.serverMode === 'server') {
+    if (device.mode === 'server') {
       try {
         this.log.debug(`Creating server node for device ${dev}${device.deviceName}${db} of plugin ${plg}${plugin.name}${db}...`);
         await this.createDeviceServerNode(plugin, device);
@@ -2533,7 +2536,7 @@ const commissioningController = new CommissioningController({
         return;
       }
     } else if (this.bridgeMode === 'bridge') {
-      if (device.serverMode === 'matter') {
+      if (device.mode === 'matter') {
         // Register and add the device to the matterbridge server node
         this.log.debug(`Adding matter endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to Matterbridge server node...`);
         if (!this.serverNode) {
@@ -2592,7 +2595,7 @@ const commissioningController = new CommissioningController({
             this.log.error(`Aggregator node not found for plugin ${plg}${plugin.name}${er}`);
             return;
           }
-          if (device.serverMode === 'matter') await plugin.serverNode?.add(device);
+          if (device.mode === 'matter') await plugin.serverNode?.add(device);
           else await plugin.aggregatorNode.add(device);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : error;

@@ -284,14 +284,18 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Activates a special mode for this endpoint.
-   * - 'server': it creates the device server node and add the device as Matter device
+   * - 'server': it creates the device server node and add the device as Matter device that needs to be paired individually.
+   *   In this case the bridge mode is not relevant. The device is autonomous.
+   *
    * - 'matter': it adds the device directly to the bridge server node as Matter device. In this case the implementation must respect
-   * the desambiguation rule (i.e. use taglist if needed cause the device doesn't have nodeLabel). See 9.12.2.2. Native Matter functionality in Bridge.
+   *   the 9.2.3. Disambiguation rule (i.e. use taglist if needed cause the device doesn't have nodeLabel).
+   *   Furthermore the device will be a part of the bridge (i.e. will have the same name and will be in the same room).
+   *   See 9.12.2.2. Native Matter functionality in Bridge.
    *
    * @remarks
    * Always use createDefaultBasicInformationClusterServer() to create the BasicInformation cluster server.
    */
-  serverMode: 'server' | 'matter' | undefined = undefined;
+  mode: 'server' | 'matter' | undefined = undefined;
   /** The server context of the endpoint, if it is a single not bridged endpoint */
   serverContext: StorageContext | undefined;
   /** The server node of the endpoint, if it is a single not bridged endpoint */
@@ -338,7 +342,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {MatterbridgeEndpointOptions} [options] - The options for the device.
    * @param {boolean} [debug] - Debug flag.
    */
-  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
+  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false) {
     let deviceTypeList: { deviceType: number; revision: number }[] = [];
 
     // Get the first DeviceTypeDefinition
@@ -378,6 +382,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (options.uniqueStorageKey && checkNotLatinCharacters(options.uniqueStorageKey)) {
       options.uniqueStorageKey = generateUniqueId(options.uniqueStorageKey);
     }
+    if (options.id && checkNotLatinCharacters(options.id)) {
+      options.id = generateUniqueId(options.id);
+    }
 
     // Convert the options to an Endpoint.Options
     const optionsV8 = {
@@ -385,9 +392,17 @@ export class MatterbridgeEndpoint extends Endpoint {
       number: options.endpointId,
       descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
+    // Override the deprecated uniqueStorageKey && endpointId with id and number if provided
+    if (options.id !== undefined) {
+      optionsV8.id = options.id.replace(/[ .]/g, '');
+    }
+    if (options.number !== undefined) {
+      optionsV8.number = options.number;
+    }
     super(endpointV8, optionsV8);
 
-    this.uniqueStorageKey = options.uniqueStorageKey;
+    this.mode = options.mode;
+    this.uniqueStorageKey = options.id ? options.id : options.uniqueStorageKey;
     this.name = firstDefinition.name;
     this.deviceType = firstDefinition.code;
     this.tagList = options.tagList;
@@ -419,7 +434,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [debug] - Debug flag.
    * @returns {Promise<MatterbridgeEndpoint>} MatterbridgeEndpoint instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
+  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false): Promise<MatterbridgeEndpoint> {
     return new MatterbridgeEndpoint(definition, options, debug);
   }
 
@@ -979,10 +994,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {string} deviceName - The name of the device.
    * @param {string} serialNumber - The serial number of the device.
-   * @param {number} vendorId - The vendor ID of the device.
-   * @param {string} vendorName - The name of the vendor.
-   * @param {number} productId - The product ID of the device.
-   * @param {string} productName - The name of the product.
+   * @param {number} [vendorId] - The vendor ID of the device.  Default is 0xfff1 (Matter Test VendorId).
+   * @param {string} [vendorName] - The name of the vendor. Default is 'Matterbridge'.
+   * @param {number} [productId] - The product ID of the device.  Default is 0x8000 (Matter Test ProductId).
+   * @param {string} [productName] - The name of the product. Default is 'Matterbridge device'.
    * @param {number} [softwareVersion] - The software version of the device. Default is 1.
    * @param {string} [softwareVersionString] - The software version string of the device. Default is '1.0.0'.
    * @param {number} [hardwareVersion] - The hardware version of the device. Default is 1.
@@ -992,10 +1007,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   createDefaultBasicInformationClusterServer(
     deviceName: string,
     serialNumber: string,
-    vendorId: number,
-    vendorName: string,
-    productId: number,
-    productName: string,
+    vendorId: number = 0xfff1,
+    vendorName: string = 'Matterbridge',
+    productId: number = 0x8000,
+    productName: string = 'Matterbridge device',
     softwareVersion = 1,
     softwareVersionString = '1.0.0',
     hardwareVersion = 1,
@@ -1013,7 +1028,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.softwareVersionString = softwareVersionString;
     this.hardwareVersion = hardwareVersion;
     this.hardwareVersionString = hardwareVersionString;
-    if (MatterbridgeEndpoint.bridgeMode === 'bridge') {
+    if (MatterbridgeEndpoint.bridgeMode === 'bridge' && this.mode === undefined) {
       const options = this.getClusterServerOptions(Descriptor.Cluster.id);
       if (options) {
         const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
@@ -1029,9 +1044,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {string} deviceName - The name of the device.
    * @param {string} serialNumber - The serial number of the device.
-   * @param {number} vendorId - The vendor ID of the device.
-   * @param {string} vendorName - The name of the vendor.
-   * @param {string} productName - The name of the product.
+   * @param {number} [vendorId] - The vendor ID of the device. Default is 0xfff1 (Matter Test VendorId).
+   * @param {string} [vendorName] - The name of the vendor. Default is 'Matterbridge'.
+   * @param {string} [productName] - The name of the product. Default is 'Matterbridge device'.
    * @param {number} [softwareVersion] - The software version of the device. Default is 1.
    * @param {string} [softwareVersionString] - The software version string of the device. Default is '1.0.0'.
    * @param {number} [hardwareVersion] - The hardware version of the device. Default is 1.
@@ -1043,9 +1058,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   createDefaultBridgedDeviceBasicInformationClusterServer(
     deviceName: string,
     serialNumber: string,
-    vendorId: number,
-    vendorName: string,
-    productName: string,
+    vendorId: number = 0xfff1,
+    vendorName: string = 'Matterbridge',
+    productName: string = 'Matterbridge device',
     softwareVersion = 1,
     softwareVersionString = '1.0.0',
     hardwareVersion = 1,

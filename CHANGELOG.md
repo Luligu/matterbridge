@@ -21,8 +21,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [ESLint]: Added the plugins `eslint-plugin-promise`, `eslint-plugin-jsdoc`, and `@vitest/eslint-plugin`.
 - [Vitest]: Added Vitest for TypeScript project testing. It will replace Jest, which does not work correctly with ESM module mocks.
 - [JSDoc]: Added missing JSDoc comments, including `@param` and `@returns` tags.
-- [MatterbridgeEndpoint]: Add MatterbridgeEndpoint serverMode='server'
-- [MatterbridgeEndpoint]: Add MatterbridgeEndpoint serverMode='matter'
+- [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='server'. It allows to advertise a single device like an autonomous device with its server node to be paired.
+- [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='matter'. It allows to add a single device to the Matterbridge server node next to the aggregator. The device is not bridged.
 
 ### Changed
 
