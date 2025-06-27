@@ -220,7 +220,7 @@ describe('DeviceManager with mocked devices', () => {
   });
 
   test('Destroy matterbridge', async () => {
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);
 });
@@ -293,7 +293,7 @@ describe('DeviceManager with real devices', () => {
   });
 
   test('Matterbridge.destroyInstance()', async () => {
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
 
     // Wait for the promises to settle

@@ -297,7 +297,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
       i++;
     }
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock1 MdnsService`);
@@ -425,7 +425,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     for (const plugin of plugins) {
       expect(plugin.serverNode).toBeDefined();
     }
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock1 MdnsService`);

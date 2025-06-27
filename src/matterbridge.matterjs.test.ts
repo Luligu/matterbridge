@@ -214,7 +214,7 @@ describe('Matterbridge matterjs', () => {
     await Promise.resolve();
 
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing matter node storage...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Matter node storage closed`);

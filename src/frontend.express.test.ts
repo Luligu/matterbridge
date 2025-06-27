@@ -333,7 +333,7 @@ describe('Matterbridge frontend express with http', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Stopping the frontend...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Frontend app closed successfully`);

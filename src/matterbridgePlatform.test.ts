@@ -654,7 +654,7 @@ describe('Matterbridge platform', () => {
 
   test('destroyInstance()', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);

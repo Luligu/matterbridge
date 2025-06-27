@@ -1284,18 +1284,7 @@ describe('PluginManager', () => {
 
   test('Matterbridge.destroyInstance()', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);
-
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-  test('Cleanup storage', async () => {
-    process.argv.push('-factoryreset');
-    (matterbridge as any).initialized = true;
-    await (matterbridge as any).parseCommandLine();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }, 60000);
-  */
 });
