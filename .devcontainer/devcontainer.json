@@ -15,7 +15,7 @@
   ],
   */
   // On startup, update npm, pnpm, install the dev of matterbridge and install the dependencies from package.json
-  "postCreateCommand": "echo '1 - Installing updates ...' sudo npm install -g npm@latest pnpm@latest npm-check-updates shx && echo '2 - Setting permissions ...' && sudo chown -R node:node . && echo '3 - Building the package ...' && npm install && npm run build && npm outdated || true",
+  "postCreateCommand": "echo '1 - Installing updates ...' && sudo npm install -g npm@latest pnpm@latest npm-check-updates shx && echo '2 - Setting permissions ...' && sudo chown -R node:node . && echo '3 - Building the package ...' && npm install && npm run build && npm outdated || true",
   "customizations": {
     "vscode": {
       // Extensions to install in the dev container
