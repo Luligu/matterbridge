@@ -72,7 +72,7 @@ import spawn from './utils/spawn.js';
 /**
  * Represents the Matterbridge events.
  */
-interface MatterbridgeEvent {
+interface MatterbridgeEvents {
   shutdown: [];
   restart: [];
   update: [];
@@ -95,7 +95,7 @@ interface MatterbridgeEvent {
 /**
  * Represents the Matterbridge application.
  */
-export class Matterbridge extends EventEmitter {
+export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public systemInformation: SystemInformation = {
     interfaceName: '',
     macAddress: '',
@@ -186,9 +186,9 @@ export class Matterbridge extends EventEmitter {
   public frontend = new Frontend(this);
 
   // Matterbridge storage
+  public nodeStorageName = 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
   public nodeStorage: NodeStorageManager | undefined;
   public nodeContext: NodeStorage | undefined;
-  public nodeStorageName = 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
 
   // Cleanup
   private hasCleanupStarted = false;
@@ -224,6 +224,7 @@ export class Matterbridge extends EventEmitter {
   discriminator: number | undefined; // first server node discriminator
   certification: DeviceCertification.Definition | undefined; // device certification
 
+  // Matter nodes
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
   aggregatorNode: Endpoint<AggregatorEndpoint> | undefined;
   aggregatorVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
@@ -236,30 +237,6 @@ export class Matterbridge extends EventEmitter {
   // We load asyncronously so is private
   protected constructor() {
     super();
-  }
-
-  /**
-   * Emits an event of the specified type with the provided arguments.
-   *
-   * @template K - The type of the event.
-   * @param {K} eventName - The name of the event to emit.
-   * @param {...MatterbridgeEvent[K]} args - The arguments to pass to the event listeners.
-   * @returns {boolean} - Returns true if the event had listeners, false otherwise.
-   */
-  override emit<K extends keyof MatterbridgeEvent>(eventName: K, ...args: MatterbridgeEvent[K]): boolean {
-    return super.emit(eventName, ...args);
-  }
-
-  /**
-   * Registers an event listener for the specified event type.
-   *
-   * @template K - The type of the event.
-   * @param {K} eventName - The name of the event to listen for.
-   * @param {(...args: MatterbridgeEvent[K]) => void} listener - The callback function to invoke when the event is emitted.
-   * @returns {this} - Returns the instance of the Matterbridge class.
-   */
-  override on<K extends keyof MatterbridgeEvent>(eventName: K, listener: (...args: MatterbridgeEvent[K]) => void): this {
-    return super.on(eventName, listener);
   }
 
   /**
