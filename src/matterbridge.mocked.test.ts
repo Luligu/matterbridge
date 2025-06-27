@@ -326,6 +326,7 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).nodeContext.set('matteripv4address', '');
     await (matterbridge as any).nodeContext.set('matteripv6address', '');
     expect(matterbridge.matterbridgeInformation.virtualMode).toBe('disabled');
+    await matterbridge.destroyInstance(10, 10);
 
     process.argv = [
       'node',
@@ -352,9 +353,10 @@ describe('Matterbridge mocked', () => {
     ];
     await matterbridge.initialize();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Invalid mdnsInterface`));
-
     await (matterbridge as any).nodeContext.set('mattermdnsinterface', '');
     await (matterbridge as any).nodeContext.remove('virtualmode');
+    await matterbridge.destroyInstance(10, 10);
+
     process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'null', '-matterlogger', 'null', '-debug'];
     await matterbridge.initialize();
     expect(matterbridge.mdnsInterface).toBeUndefined();
