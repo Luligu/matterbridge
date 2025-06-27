@@ -94,11 +94,6 @@ describe('DeviceManager with mocked devices', () => {
     expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
   }, 60000);
 
-  test('constructor initializes correctly', () => {
-    devices = new DeviceManager(matterbridge, (matterbridge as any).nodeContext);
-    expect(devices).toBeInstanceOf(DeviceManager);
-  });
-
   test('logLevel changes correctly', () => {
     devices.logLevel = LogLevel.DEBUG;
     expect((devices as any).log.logLevel).toBe(LogLevel.DEBUG);

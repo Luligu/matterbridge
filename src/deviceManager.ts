@@ -24,8 +24,6 @@
 
 // AnsiLogger module
 import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
-// NodeStorage module
-import { NodeStorage } from 'node-persist-manager';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
@@ -38,18 +36,15 @@ import { dev } from './matterbridgeTypes.js';
 export class DeviceManager {
   private readonly _devices = new Map<string, MatterbridgeEndpoint>();
   private readonly matterbridge: Matterbridge;
-  private readonly nodeContext: NodeStorage;
   private readonly log: AnsiLogger;
 
   /**
    * Creates an instance of DeviceManager.
    *
    * @param {Matterbridge} matterbridge - The Matterbridge instance.
-   * @param {NodeStorage} nodeContext - The node storage context.
    */
-  constructor(matterbridge: Matterbridge, nodeContext: NodeStorage) {
+  constructor(matterbridge: Matterbridge) {
     this.matterbridge = matterbridge;
-    this.nodeContext = nodeContext;
     this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.log.logLevel });
     this.log.debug('Matterbridge device manager starting...');
   }

@@ -698,7 +698,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.plugins.logLevel = this.log.logLevel;
 
     // Initialize DeviceManager
-    this.devices = new DeviceManager(this, this.nodeContext);
+    this.devices = new DeviceManager(this);
     this.devices.logLevel = this.log.logLevel;
 
     // Get the plugins from node storage and create the plugins node storage contexts
