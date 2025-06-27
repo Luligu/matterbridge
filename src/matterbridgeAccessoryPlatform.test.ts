@@ -13,7 +13,6 @@ import { AnsiLogger } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.ts';
-import { MatterbridgePlatform } from './matterbridgePlatform.ts';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;

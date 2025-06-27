@@ -71,6 +71,8 @@ describe('Matterbridge  Device serverMode=matter', () => {
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.profile).toBeUndefined();
     expect(matterbridge.bridgeMode).toBe('bridge');
     expect(Environment.default.vars.get('path.root')).toBe(path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
@@ -165,7 +167,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
 
   test('Matterbridge.destroyInstance()', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
 
     // Let any already‐queued microtasks run first
     await Promise.resolve();
@@ -238,7 +240,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
 
   test('Finally Matterbridge.destroyInstance()', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
 
     // Let any already‐queued microtasks run first
     await Promise.resolve();

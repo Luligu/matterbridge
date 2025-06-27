@@ -24,7 +24,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='server'. It allows to advertise a single device like an autonomous device with its server node to be paired.
 - [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='matter'. It allows to add a single device to the Matterbridge server node next to the aggregator. The device is not bridged.
 - [storage]: Improved error handling of corrupted storage.
-- [test]: Improved test units on Matterbridge class.
+- [test]: Improved test units on Matterbridge classes.
 
 ### Changed
 
