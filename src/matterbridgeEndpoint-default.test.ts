@@ -41,6 +41,10 @@ import {
   ActivatedCarbonFilterMonitoring,
   ResourceMonitoring,
   ScenesManagement,
+  UserLabel,
+  FixedLabel,
+  DeviceEnergyManagement,
+  DeviceEnergyManagementMode,
 } from '@matter/main/clusters';
 import {
   AirQualityServer,
@@ -92,7 +96,7 @@ import {
   waterLeakDetector,
   waterValve,
 } from './matterbridgeDeviceTypes.ts';
-import { updateAttribute } from './matterbridgeEndpointHelpers.ts';
+import { capitalizeFirstLetter, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -185,6 +189,35 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`\x1B[39mMatterbridge.Matterbridge.${device.uniqueStorageKey.replaceAll(' ', '')} \x1B[0mready`));
   }
 
+  test('capitalizeFirstLetter', async () => {
+    const result = capitalizeFirstLetter('hello');
+    expect(result).toBe('Hello');
+    expect(capitalizeFirstLetter(null as any)).toBe(null);
+  });
+
+  test('lowercaseFirstLetter', async () => {
+    const result = lowercaseFirstLetter('Hello');
+    expect(result).toBe('hello');
+    expect(lowercaseFirstLetter(null as any)).toBe(null);
+  });
+
+  test('getBehaviourTypeFromClusterServerId', async () => {
+    expect(getBehaviourTypeFromClusterServerId(PowerSource.Cluster.id)?.id).toBe('powerSource');
+    expect(getBehaviourTypeFromClusterServerId(UserLabel.Cluster.id)?.id).toBe('userLabel');
+    expect(getBehaviourTypeFromClusterServerId(FixedLabel.Cluster.id)?.id).toBe('fixedLabel');
+    expect(getBehaviourTypeFromClusterServerId(BasicInformation.Cluster.id)?.id).toBe('basicInformation');
+    expect(getBehaviourTypeFromClusterServerId(BridgedDeviceBasicInformation.Cluster.id)?.id).toBe('bridgedDeviceBasicInformation');
+    expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagement.Cluster.id)?.id).toBe('deviceEnergyManagement');
+    expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagementMode.Cluster.id)?.id).toBe('deviceEnergyManagementMode');
+  });
+
+  test('getBehaviourTypesFromClusterClientIds', async () => {
+    expect(getBehaviourTypesFromClusterClientIds([Identify.Cluster.id])).toEqual([]);
+  });
+  test('getBehaviourTypeFromClusterClientId', async () => {
+    expect(getBehaviourTypeFromClusterClientId(Identify.Cluster.id)).toBeUndefined();
+  });
+
   test('createDefaultIdentifyClusterServer', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight8', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
@@ -245,10 +278,14 @@ describe('Matterbridge ' + HOMEDIR, () => {
     device.createDefaultScenesClusterServer();
     expect(device.hasClusterServer(ScenesManagement.Cluster)).toBe(true);
 
+    await add(device);
+
+    /*
     device.addRequiredClusterServers();
     expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
     expect(device.lifecycle.isReady).toBeTruthy();
     expect(device.construction.status).toBe(Lifecycle.Status.Active);
+    */
   });
 
   test('createDefaultOnOffClusterServer', async () => {

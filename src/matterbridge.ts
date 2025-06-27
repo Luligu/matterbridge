@@ -313,7 +313,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    *
    * @deprecated This method is deprecated and is ONLY used for jest tests.
    */
-  async destroyInstance(timeout: number = 1000, pause: number = 500) {
+  async destroyInstance(timeout: number = 1000, pause: number = 250) {
     this.log.info(`Destroy instance...`);
     // Save server nodes to close
     const servers: ServerNode<ServerNode.RootEndpoint>[] = [];
