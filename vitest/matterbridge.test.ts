@@ -1,6 +1,13 @@
 import { vi, describe, it, expect, beforeEach, afterEach, MockInstance } from 'vitest';
 import { Matterbridge } from '../src/matterbridge.ts';
-import { AnsiLogger } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import path from 'node:path';
+import spawn from '../src/utils/spawn.ts';
+
+const NAME = 'ViMatterbridgeGlobal';
+const HOMEDIR = path.join('jest', NAME);
+
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-logger', 'debug', '-matterlogger', 'debug'];
 
 // Partial mock for @matter/main, preserving all actual exports except Logger
 vi.mock('@matter/main', async (importOriginal) => {
@@ -28,7 +35,7 @@ let consoleDebugSpy: MockInstance<typeof console.debug>;
 let consoleInfoSpy: MockInstance<typeof console.info>;
 let consoleWarnSpy: MockInstance<typeof console.warn>;
 let consoleErrorSpy: MockInstance<typeof console.error>;
-const debug = true; // Set to true to enable debug logging
+const debug = false; // Set to true to enable debug logging
 
 if (!debug) {
   loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
@@ -52,7 +59,8 @@ describe('Matterbridge', () => {
   beforeEach(async () => {
     matterbridge = await Matterbridge.loadInstance(false);
     // Set up required properties/mocks
-    matterbridge.log = { debug: vi.fn(), info: vi.fn(), notice: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn() } as any;
+    matterbridge.log = { debug: vi.fn(), info: vi.fn(), notice: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), now: vi.fn() } as any;
+    // matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
     matterbridge.plugins = { array: () => [], clear: vi.fn(), [Symbol.iterator]: function* () {} } as any;
     matterbridge.devices = { array: () => [], clear: vi.fn(), [Symbol.iterator]: function* () {} } as any;
     matterbridge.frontend = {
@@ -61,6 +69,7 @@ describe('Matterbridge', () => {
       wssSendRefreshRequired: vi.fn(),
       wssSendRestartRequired: vi.fn(),
       wssSendSnackbarMessage: vi.fn(),
+      wssSendMessage: vi.fn(),
     } as any;
   });
 
@@ -120,27 +129,27 @@ describe('Matterbridge', () => {
 
   it('should get devices using getDevices()', () => {
     const fakeDevices = [{ id: 1 }, { id: 2 }];
-    matterbridge.devices.array = vi.fn(() => fakeDevices);
+    matterbridge.devices.array = vi.fn(() => fakeDevices) as any;
     expect(matterbridge.getDevices()).toBe(fakeDevices);
   });
 
   it('should get plugins using getPlugins()', () => {
     const fakePlugins = [{ name: 'p1' }, { name: 'p2' }];
-    matterbridge.plugins.array = vi.fn(() => fakePlugins);
+    matterbridge.plugins.array = vi.fn(() => fakePlugins) as any;
     expect(matterbridge.getPlugins()).toBe(fakePlugins);
   });
 
   it('should set log level and propagate to dependencies', async () => {
     const setLevel = vi.fn();
-    matterbridge.frontend.logLevel = undefined;
-    matterbridge.devices.logLevel = undefined;
-    matterbridge.plugins.logLevel = undefined;
-    (global as any).MatterbridgeEndpoint = { logLevel: undefined };
+    matterbridge.frontend.logLevel = LogLevel.NONE; // Set to NONE initially
+    matterbridge.devices.logLevel = LogLevel.NONE;
+    matterbridge.plugins.logLevel = LogLevel.NONE;
+    (global as any).MatterbridgeEndpoint = { logLevel: LogLevel.NONE };
     matterbridge.log = { debug: vi.fn() } as any;
-    await matterbridge.setLogLevel(1); // 1 = INFO
-    expect(matterbridge.frontend.logLevel).toBe(1);
-    expect(matterbridge.devices.logLevel).toBe(1);
-    expect(matterbridge.plugins.logLevel).toBe(1);
+    await matterbridge.setLogLevel(LogLevel.INFO);
+    expect(matterbridge.frontend.logLevel).toBe(LogLevel.INFO);
+    expect(matterbridge.devices.logLevel).toBe(LogLevel.INFO);
+    expect(matterbridge.plugins.logLevel).toBe(LogLevel.INFO);
     expect(matterbridge.log.debug).toHaveBeenCalled();
   });
 
@@ -172,10 +181,11 @@ describe('Matterbridge', () => {
   });
 
   it('should call updateProcess and cleanup', async () => {
+    const spawnSpy = vi.spyOn(spawn, 'spawnCommand').mockResolvedValueOnce(true);
     const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockResolvedValue(undefined);
     matterbridge.log.info = vi.fn();
-    (matterbridge.frontend as any).wssSendRestartRequired = vi.fn();
     await matterbridge.updateProcess();
+    expect(spawnSpy).toHaveBeenCalledWith(matterbridge, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
     expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
     expect(matterbridge.log.info).toHaveBeenCalledWith(expect.stringContaining('Updating matterbridge...'));
     expect((matterbridge.frontend as any).wssSendRestartRequired).toHaveBeenCalled();
@@ -184,7 +194,7 @@ describe('Matterbridge', () => {
   it('should call unregisterAndShutdownProcess and cleanup', async () => {
     const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockResolvedValue(undefined);
     matterbridge.log.info = vi.fn();
-    matterbridge.plugins = [{ name: 'p1' }];
+    matterbridge.plugins = [{ name: 'p1' }] as any;
     matterbridge.removeAllBridgedEndpoints = vi.fn().mockResolvedValue(undefined);
     matterbridge.devices.clear = vi.fn();
     await matterbridge.unregisterAndShutdownProcess();
@@ -203,6 +213,4 @@ describe('Matterbridge', () => {
     await matterbridge.shutdownProcessAndFactoryReset();
     expect(cleanupSpy).toHaveBeenCalledWith('shutting down with factory reset...', false);
   });
-
-  // Add more tests for all public/protected methods to reach 100% coverage
 });
