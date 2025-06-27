@@ -42,6 +42,8 @@ interface PluginManagerEvents {
   loaded: [name: string];
   enabled: [name: string];
   disabled: [name: string];
+  installed: [name: string, version: string | undefined];
+  uninstalled: [name: string];
   started: [name: string];
   configured: [name: string];
   shutdown: [name: string];
@@ -434,12 +436,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   async enable(nameOrPath: string): Promise<RegisteredPlugin | null> {
     const { promises } = await import('node:fs');
-    if (!nameOrPath || nameOrPath === '') return null;
+    if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
       plugin.enabled = true;
       this.log.info(`Enabled plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('enabled', plugin.name);
       return plugin;
     }
     const packageJsonPath = await this.resolve(nameOrPath);
@@ -477,12 +480,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   async disable(nameOrPath: string): Promise<RegisteredPlugin | null> {
     const { promises } = await import('node:fs');
-    if (!nameOrPath || nameOrPath === '') return null;
+    if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
       plugin.enabled = false;
       this.log.info(`Disabled plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('disabled', plugin.name);
       return plugin;
     }
     const packageJsonPath = await this.resolve(nameOrPath);
@@ -520,12 +524,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   async remove(nameOrPath: string): Promise<RegisteredPlugin | null> {
     const { promises } = await import('node:fs');
-    if (!nameOrPath || nameOrPath === '') return null;
+    if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
       this._plugins.delete(nameOrPath);
       this.log.info(`Removed plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('removed', plugin.name);
       return plugin;
     }
     const packageJsonPath = await this.resolve(nameOrPath);
@@ -564,7 +569,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   async add(nameOrPath: string): Promise<RegisteredPlugin | null> {
     const { promises } = await import('node:fs');
-    if (!nameOrPath || nameOrPath === '') return null;
+    if (!nameOrPath) return null;
     const packageJsonPath = await this.resolve(nameOrPath);
     if (!packageJsonPath) {
       this.log.error(`Failed to add plugin ${plg}${nameOrPath}${er}: package.json not found`);
@@ -632,6 +637,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             if (versionLine) {
               const version = versionLine.split('@')[1].trim();
               this.log.info(`Installed plugin ${plg}${name}@${version}${nf}`);
+              this.emit('installed', name, version);
               resolve(version);
             } else {
               resolve(undefined);
@@ -663,6 +669,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         } else {
           this.log.info(`Uninstalled plugin ${plg}${name}${nf}`);
           this.log.debug(`Uninstalled plugin ${plg}${name}${db}: ${stdout}`);
+          this.emit('uninstalled', name);
           resolve(name);
         }
       });
@@ -1030,12 +1037,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       // this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
       return schema;
     } catch (_err) {
-      // const nodeErr = err as NodeJS.ErrnoException;
-      // if (nodeErr.code === 'ENOENT') {
       this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
-      // } else {
-      // this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema. Error: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
-      // }
       return this.getDefaultSchema(plugin);
     }
   }

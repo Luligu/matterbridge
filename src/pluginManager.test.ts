@@ -40,7 +40,7 @@ let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
+const debug = true; // Set to true to enable debug logging
 
 if (!debug) {
   loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
@@ -97,11 +97,6 @@ describe('PluginManager', () => {
     devices = (matterbridge as any).devices;
     expect(devices).toBeInstanceOf(DeviceManager);
   }, 60000);
-
-  test('constructor initializes correctly', () => {
-    plugins = new PluginManager(matterbridge);
-    expect(plugins).toBeInstanceOf(PluginManager);
-  });
 
   test('logLevel changes correctly', () => {
     plugins.logLevel = LogLevel.DEBUG;
