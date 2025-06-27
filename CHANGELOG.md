@@ -32,9 +32,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [package]: Updated dependencies.
 - [storage]: Bumped `node-storage-manager` to 2.0.0.
 - [logger]: Bumped `node-ansi-logger` to 3.1.1.
-- [matter.js]: Updated to 0.15.0-alpha.0-20250625-c7634df96.
-- [matter.js]: Updated to 0.15.0-alpha.0-20250626-fc3a84ce9.
-- [matter.js]: Updated to 0.15.0.
+- [matter.js]: Updated to 0.15.0-alpha.0-20250625-c7634df96, 0.15.0-alpha.0-20250626-fc3a84ce9, and bumped to 0.15.0.
 
 ### Fixed
 
