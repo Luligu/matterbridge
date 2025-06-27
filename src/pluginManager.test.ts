@@ -771,7 +771,6 @@ describe('PluginManager', () => {
     jest.spyOn(fs, 'writeFile').mockImplementationOnce(async () => {
       throw new Error('Test error');
     });
-    // await plugins.saveConfigFromPlugin(plugin);
     await expect(plugins.saveConfigFromPlugin(plugin)).rejects.toThrow();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error saving config file`));
 

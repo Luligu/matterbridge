@@ -179,7 +179,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
 
   // Matterbridge log files
-  public log!: AnsiLogger;
+  public log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
   public matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   public matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
 
@@ -361,9 +361,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public async initialize(): Promise<void> {
     // Emit the initialize_started event
     this.emit('initialize_started');
-
-    // Create the matterbridge logger
-    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
     // Set the restart mode
     if (hasParameter('service')) this.restartMode = 'service';

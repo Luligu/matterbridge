@@ -163,7 +163,7 @@ describe('Matterbridge', () => {
   it('should call destroyInstance and cleanup', async () => {
     const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockResolvedValue(undefined);
     matterbridge.log.info = vi.fn();
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect(cleanupSpy).toHaveBeenCalled();
     expect(matterbridge.log.info).toHaveBeenCalledWith(expect.stringContaining('Destroy instance...'));
   });

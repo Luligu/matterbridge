@@ -110,7 +110,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
       // Destroy the Matterbridge instance
-      await matterbridge.destroyInstance();
+      await matterbridge.destroyInstance(10);
 
       expect((matterbridge as any).initialized).toBeFalsy();
       expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
@@ -194,7 +194,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
       // Destroy the Matterbridge instance
-      await matterbridge.destroyInstance();
+      await matterbridge.destroyInstance(10);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
 
       expect((matterbridge as any).initialized).toBeFalsy();
@@ -243,7 +243,7 @@ describe('Matterbridge', () => {
 
     test('destroy instance', async () => {
       // Destroy the Matterbridge instance
-      await matterbridge.destroyInstance();
+      await matterbridge.destroyInstance(10);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
     }, 60000);
   });
@@ -653,7 +653,7 @@ describe('Matterbridge', () => {
 
     test('destroy instance', async () => {
       // Destroy the Matterbridge instance
-      await matterbridge.destroyInstance();
+      await matterbridge.destroyInstance(10);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
     }, 60000);
 

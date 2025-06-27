@@ -22,7 +22,7 @@ let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = true; // Set to true to enable debug logs
+const debug = false; // Set to true to enable debug logs
 
 if (!debug) {
   loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
@@ -53,7 +53,6 @@ describe('Matterbridge mocked', () => {
     // Reset the Matterbridge instance
     (Matterbridge as any).instance = undefined;
     matterbridge = await Matterbridge.loadInstance(); // Default to false if no parameter is provided
-    matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   });
 
   afterEach(async () => {
@@ -232,6 +231,13 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.matterbridgeInformation.fileLogger).toBe(true);
     expect(matterbridge.matterbridgeInformation.matterLoggerLevel).toBe(MatterLogLevel.DEBUG);
     expect(matterbridge.matterbridgeInformation.matterFileLogger).toBe(true);
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Home Directory already exists at path: ${HOMEDIR}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge')}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'certs')}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'uploads')}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', 'Matterbridge')}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.mattercert')}`));
 
     unlinkSync(path.join(matterbridge.matterbridgeCertDirectory, 'pairing.json'));
     await (matterbridge as any).nodeContext.set('mattermdnsinterface', '');
