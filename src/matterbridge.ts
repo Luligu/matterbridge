@@ -30,7 +30,7 @@ import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN } from 'node-ansi-logger';
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
@@ -63,7 +63,7 @@ import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
 import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
-import { MatterbridgeEndpoint, SerializedMatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevices } from './helpers.js';
@@ -620,11 +620,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Validate mdnsInterface
     if (this.mdnsInterface) {
       if (!availableInterfaces.includes(this.mdnsInterface)) {
-        this.log.error(`Invalid mdnsInterface: ${this.mdnsInterface}. Available interfaces are: ${availableInterfaces.join(', ')}. Using all available interfaces.`);
+        this.log.error(`Invalid mdnsinterface: ${this.mdnsInterface}. Available interfaces are: ${availableInterfaces.join(', ')}. Using all available interfaces.`);
         this.mdnsInterface = undefined;
         await this.nodeContext.remove('mattermdnsinterface');
       } else {
-        this.log.info(`Using mdnsInterface ${CYAN}${this.mdnsInterface}${nf} for the Matter MdnsBroadcaster.`);
+        this.log.info(`Using mdnsinterface ${CYAN}${this.mdnsInterface}${nf} for the Matter MdnsBroadcaster.`);
       }
     }
     if (this.mdnsInterface) this.environment.vars.set('mdns.networkInterface', this.mdnsInterface);
@@ -822,6 +822,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         }
         index++;
       }
+      /*
       const serializedRegisteredDevices = await this.nodeContext?.get<SerializedMatterbridgeEndpoint[]>('devices', []);
       this.log.info(`│ Registered devices (${serializedRegisteredDevices?.length})`);
       serializedRegisteredDevices?.forEach((device, index) => {
@@ -833,6 +834,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.info(`  └─ endpoint ${RED}${device.endpoint}${nf} ${typ}${device.endpointName}${nf} ${debugStringify(device.clusterServersId)}`);
         }
       });
+      */
       this.shutdown = true;
       return;
     }

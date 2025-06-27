@@ -321,10 +321,10 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.log.logLevel).toBe(LogLevel.INFO);
     expect(matterbridge.matterbridgeInformation.loggerLevel).toBe(LogLevel.INFO);
     expect(matterbridge.matterbridgeInformation.matterLoggerLevel).toBe(MatterLogLevel.INFO);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Using mdnsInterface ${CYAN}${availableInterfaces[0]}${nf} for the Matter MdnsBroadcaster.`);
-    await (matterbridge as any).nodeContext.set('mattermdnsinterface', '');
-    await (matterbridge as any).nodeContext.set('matteripv4address', '');
-    await (matterbridge as any).nodeContext.set('matteripv6address', '');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Using mdnsinterface ${CYAN}${availableInterfaces[0]}${nf} for the Matter MdnsBroadcaster.`);
+    await (matterbridge as any).nodeContext.set('mattermdnsinterface', ''); // Prepare for next test
+    await (matterbridge as any).nodeContext.set('matteripv4address', ''); // Prepare for next test
+    await (matterbridge as any).nodeContext.set('matteripv6address', ''); // Prepare for next test
     expect(matterbridge.matterbridgeInformation.virtualMode).toBe('disabled');
     await matterbridge.destroyInstance(10, 10);
 
@@ -352,7 +352,9 @@ describe('Matterbridge mocked', () => {
       'invalid',
     ];
     await matterbridge.initialize();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Invalid mdnsInterface`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Invalid mdnsinterface`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Invalid ipv4address`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Invalid ipv6address`));
     await (matterbridge as any).nodeContext.set('mattermdnsinterface', '');
     await (matterbridge as any).nodeContext.remove('virtualmode');
     await matterbridge.destroyInstance(10, 10);
@@ -368,6 +370,36 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.frontend.logLevel).toBe(undefined);
     expect((matterbridge.devices as any).log.logLevel).toBe(LogLevel.DEBUG);
     expect((matterbridge.plugins as any).log.logLevel).toBe(LogLevel.DEBUG);
+  });
+
+  test('Matterbridge.initialize() plugins', async () => {
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+    expect(matterbridge.getPlugins()).toEqual([]);
+    expect(await (matterbridge.plugins as any).add('./src/mock/plugin1')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./src/mock/plugin2')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./src/mock/plugin3')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./src/mock/plugin4')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./src/mock/plugin5')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./src/mock/plugin6')).not.toBeNull();
+    expect((matterbridge.plugins as any).length).toBe(6);
+    await matterbridge.destroyInstance(10, 10);
+
+    const originalNodeVersion = process.versions.node;
+    Object.defineProperty(process.versions, 'node', {
+      get: () => '16.0.0',
+    });
+    await expect(matterbridge.initialize()).rejects.toThrow(`Node version 16 is not supported. Please upgrade to 18 or above.`);
+    Object.defineProperty(process.versions, 'node', {
+      get: () => originalNodeVersion,
+    });
+    expect((matterbridge.plugins as any).length).toBe(6);
+  });
+
+  test('Matterbridge.initialize() devices', async () => {
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+    expect(matterbridge.getDevices()).toEqual([]);
   });
 
   test('Matterbridge.initialize() -service should fails for createStorage', async () => {
