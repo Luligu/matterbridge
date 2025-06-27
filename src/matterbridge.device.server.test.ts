@@ -71,6 +71,8 @@ describe('Matterbridge Device serverMode=server', () => {
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.profile).toBeUndefined();
@@ -183,6 +185,10 @@ describe('Matterbridge Device serverMode=server', () => {
   test('Restart initialize()', async () => {
     expect((matterbridge as any).initialized).toBeFalsy();
     await matterbridge.initialize();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect((matterbridge as any).initialized).toBeTruthy();
     plugins = matterbridge.plugins;
     expect(plugins.length).toBe(1);
