@@ -3,17 +3,18 @@
 const NAME = 'MatterbridgeDynamicPlatform';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR];
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR];
 
 import { jest } from '@jest/globals';
 
 import path from 'node:path';
 import { rmSync } from 'node:fs';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.ts';
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.ts';
 import { MatterbridgePlatform } from './matterbridgePlatform.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -43,8 +44,26 @@ if (!debug) {
 rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge dynamic platform', () => {
-  let matterbridge: Matterbridge;
-  let platform: MatterbridgePlatform;
+  const matterbridge = {
+    homeDirectory: HOMEDIR,
+    matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge'),
+    matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
+    systemInformation: { ipv4Address: undefined, ipv6Address: undefined, osRelease: 'xx.xx.xx.xx.xx.xx', nodeVersion: '22.1.10' },
+    matterbridgeVersion: '3.0.0',
+    log: {
+      fatal: jest.fn((message: string, ...parameters: any[]) => {}),
+      error: jest.fn((message: string, ...parameters: any[]) => {}),
+      warn: jest.fn((message: string, ...parameters: any[]) => {}),
+      notice: jest.fn((message: string, ...parameters: any[]) => {}),
+      info: jest.fn((message: string, ...parameters: any[]) => {}),
+      debug: jest.fn((message: string, ...parameters: any[]) => {}),
+    } as unknown as AnsiLogger,
+    getDevices: jest.fn(() => []),
+    getPlugins: jest.fn(() => []),
+    addBridgedEndpoint: jest.fn(async (pluginName: string, device: MatterbridgeEndpoint) => {}),
+    removeBridgedEndpoint: jest.fn(async (pluginName: string, device: MatterbridgeEndpoint) => {}),
+    removeAllBridgedEndpoints: jest.fn(async (pluginName: string) => {}),
+  } as unknown as Matterbridge;
 
   beforeEach(() => {
     // Clear all mocks
@@ -54,30 +73,10 @@ describe('Matterbridge dynamic platform', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
-  }, 60000);
+  });
 
   test('create a MatterbridgeDynamicPlatform', async () => {
-    matterbridge = await Matterbridge.loadInstance(true);
-    expect((Matterbridge as any).instance).toBeDefined();
-
-    await new Promise<void>((resolve) => {
-      matterbridge.once('online', (name) => {
-        if (name === 'Matterbridge') resolve();
-      });
-    });
-
-    platform = new MatterbridgeDynamicPlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgeDynamicPlatform(matterbridge, matterbridge.log, { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
     expect(platform.type).toBe('DynamicPlatform');
-
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
-    expect((Matterbridge as any).instance).toBeUndefined();
-  }, 60000);
-
-  test('Cleanup storage', async () => {
-    process.argv.push('-factoryreset');
-    (matterbridge as any).initialized = true;
-    await (matterbridge as any).parseCommandLine();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
-  }, 60000);
+  });
 });
