@@ -4,7 +4,7 @@
  * @file devices.ts
  * @author Luca Liguori
  * @created 2024-07-26
- * @version 1.0.10
+ * @version 1.0.11
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
