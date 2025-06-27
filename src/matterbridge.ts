@@ -1380,7 +1380,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Clear the check update timeout
       if (this.checkUpdateTimeout) {
-        clearInterval(this.checkUpdateTimeout);
+        clearTimeout(this.checkUpdateTimeout);
         this.checkUpdateTimeout = undefined;
         this.log.debug('Check update timeout cleared');
       }
