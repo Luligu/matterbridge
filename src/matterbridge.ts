@@ -166,11 +166,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
   public matterbridgeDevVersion = '';
-  public matterbridgeQrPairingCode: string | undefined = undefined;
-  public matterbridgeManualPairingCode: string | undefined = undefined;
-  public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined = undefined;
-  public matterbridgeSessionInformations: SanitizedSession[] | undefined = undefined;
-  public matterbridgePaired: boolean | undefined = undefined;
+  public matterbridgeQrPairingCode: string | undefined;
+  public matterbridgeManualPairingCode: string | undefined;
+  public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
+  public matterbridgeSessionInformations: SanitizedSession[] | undefined;
+  public matterbridgePaired: boolean | undefined;
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
   public profile = getParameter('profile');
@@ -178,9 +178,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public edge = true;
   private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
 
+  // Matterbridge log files
   public log!: AnsiLogger;
   public matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   public matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+
   public plugins!: PluginManager;
   public devices!: DeviceManager;
   public frontend = new Frontend(this);
@@ -282,9 +284,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
   }
 
-  /** */
-  /**                                              loadInstance() and cleanup() methods                                                 */
-  /** */
+  //* ************************************************************************************************************************************ */
+  //                                              loadInstance() and cleanup() methods                                                     */
+  //* ************************************************************************************************************************************ */
 
   /**
    * Loads an instance of the Matterbridge class.
@@ -293,7 +295,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {boolean} initialize - Whether to initialize the Matterbridge instance after loading. Defaults to false.
    * @returns {Matterbridge} A promise that resolves to the Matterbridge instance.
    */
-  static async loadInstance(initialize = false) {
+  static async loadInstance(initialize: boolean = false): Promise<Matterbridge> {
     if (!Matterbridge.instance) {
       // eslint-disable-next-line no-console
       if (hasParameter('debug')) console.log(GREEN + 'Creating a new instance of Matterbridge.', initialize ? 'Initializing...' : 'Not initializing...', rs);
@@ -306,9 +308,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /**
    * Call cleanup() and dispose MdnsService.
    *
+   * @param {number} [timeout] - The timeout duration to wait for the cleanup to complete in milliseconds. Default is 1000.
+   * @param {number} [pause] - The pause duration after the cleanup in milliseconds. Default is 500.
+   *
    * @deprecated This method is deprecated and is ONLY used for jest tests.
    */
-  async destroyInstance() {
+  async destroyInstance(timeout: number = 1000, pause: number = 500) {
     this.log.info(`Destroy instance...`);
     // Save server nodes to close
     const servers: ServerNode<ServerNode.RootEndpoint>[] = [];
@@ -328,7 +333,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Let any already‐queued microtasks run first
     await Promise.resolve();
     // Cleanup
-    await this.cleanup('destroying instance...', false);
+    await this.cleanup('destroying instance...', false, timeout);
     // Close servers mdns service
     this.log.info(`Dispose ${servers.length} MdnsService...`);
     for (const server of servers) {
@@ -339,7 +344,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await Promise.resolve();
     // Wait for the cleanup to finish
     await new Promise((resolve) => {
-      setTimeout(resolve, 500);
+      setTimeout(resolve, pause);
     });
   }
 
@@ -436,16 +441,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Restoring the backup of the node storage since it is corrupted
       this.log.error(`Error creating node storage manager and context: ${error instanceof Error ? error.message : error}`);
       if (hasParameter('norestore')) {
-        this.log.fatal(`The matterbridge node storage is corrupted. Parameter -norestore found: exiting...`);
-        await this.cleanup('Fatal error creating node storage manager and context for matterbridge');
-        return;
+        this.log.fatal(`The matterbridge storage is corrupted. Found -norestore parameter: exiting...`);
+      } else {
+        this.log.notice(`The matterbridge storage is corrupted. Restoring it with backup...`);
+        await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'), path.join(this.matterbridgeDirectory, this.nodeStorageName));
+        this.log.notice(`The matterbridge storage has been restored with backup`);
       }
-      this.log.notice(`The matterbridge storage is corrupted. Restoring it with backup...`);
-      await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'), path.join(this.matterbridgeDirectory, this.nodeStorageName));
-      this.log.notice(`The matterbridge storage has been restored with backup`);
     }
     if (!this.nodeStorage || !this.nodeContext) {
-      this.log.fatal('Fatal error creating node storage manager and context for matterbridge');
       throw new Error('Fatal error creating node storage manager and context for matterbridge');
     }
 
@@ -481,7 +484,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Set the vendorId, vendorName, productId and productName if they are present in the pairing file
       if (isValidNumber(pairingFileJson.vendorId)) this.aggregatorVendorId = VendorId(pairingFileJson.vendorId);
       if (isValidString(pairingFileJson.vendorName, 3)) this.aggregatorVendorName = pairingFileJson.vendorName;
-      if (isValidNumber(pairingFileJson.productId)) this.aggregatorProductId = VendorId(pairingFileJson.productId);
+      if (isValidNumber(pairingFileJson.productId)) this.aggregatorProductId = pairingFileJson.productId;
       if (isValidString(pairingFileJson.productName, 3)) this.aggregatorProductName = pairingFileJson.productName;
 
       // Override the passcode and discriminator if they are present in the pairing file
@@ -491,6 +494,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using passcode ${CYAN}${this.passcode}${nf} and discriminator ${CYAN}${this.discriminator}${nf} from pairing file.`);
       }
       // Set the certification if it is present in the pairing file
+      /*
       if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
         const hexStringToUint8Array = (hexString: string) => {
           const matches = hexString.match(/.{1,2}/g);
@@ -507,6 +511,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         };
         this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using privateKey, certificate, intermediateCertificate and declaration from pairing file.`);
       }
+      */
     } catch (error) {
       this.log.debug(`Pairing file ${CYAN}${pairingFilePath}${db} not found: ${error instanceof Error ? error.message : error}`);
     }
@@ -663,6 +668,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           isValid = true;
           break;
         }
+        /* istanbul ignore next */
         if (ifaces && ifaces.find((iface) => iface.scopeid && iface.scopeid > 0 && iface.address + '%' + (process.platform === 'win32' ? iface.scopeid : ifaceName) === this.ipv6address)) {
           this.log.info(`Using ipv6address ${CYAN}${this.ipv6address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
           isValid = true;
@@ -1359,9 +1365,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    *
    * @param {string} message - The cleanup message.
    * @param {boolean} [restart] - Indicates whether to restart the instance after cleanup. Default is `false`.
+   * @param {number} [timeout] - The timeout duration to wait for the message exchange to complete in milliseconds. Default is 1000.
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
-  protected async cleanup(message: string, restart = false): Promise<void> {
+  protected async cleanup(message: string, restart = false, timeout: number = 1000): Promise<void> {
     if (this.initialized && !this.hasCleanupStarted) {
       this.emit('cleanup_started');
       this.hasCleanupStarted = true;
@@ -1416,7 +1423,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Stop matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
       this.log.debug('Waiting for the MessageExchange to finish...');
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second for MessageExchange to finish
+      await new Promise((resolve) => setTimeout(resolve, timeout)); // Wait for MessageExchange to finish
       if (this.bridgeMode === 'bridge') {
         if (this.serverNode) {
           await this.stopServerNode(this.serverNode);

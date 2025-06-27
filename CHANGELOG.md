@@ -23,6 +23,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [JSDoc]: Added missing JSDoc comments, including `@param` and `@returns` tags.
 - [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='server'. It allows to advertise a single device like an autonomous device with its server node to be paired.
 - [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='matter'. It allows to add a single device to the Matterbridge server node next to the aggregator. The device is not bridged.
+- [storage]: Improved error handling of corrupted storage.
+- [test]: Improved test units on Matterbridge class.
 
 ### Changed
 
