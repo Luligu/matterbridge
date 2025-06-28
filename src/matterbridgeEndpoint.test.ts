@@ -1153,8 +1153,6 @@ describe('Matterbridge ' + NAME, () => {
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
-    // await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
-    await matterbridge.destroyInstance(10);
-    // await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
+    await matterbridge.destroyInstance(10, 1000);
   });
 });
