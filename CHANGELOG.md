@@ -8,9 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.1.0] - 2025-06-27
-
-### Breaking Changes
+## [3.1.0] - 2025-06-28
 
 ### Added
 
@@ -21,8 +19,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [ESLint]: Added the plugins `eslint-plugin-promise`, `eslint-plugin-jsdoc`, and `@vitest/eslint-plugin`.
 - [Vitest]: Added Vitest for TypeScript project testing. It will replace Jest, which does not work correctly with ESM module mocks.
 - [JSDoc]: Added missing JSDoc comments, including `@param` and `@returns` tags.
-- [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='server'. It allows to advertise a single device like an autonomous device with its server node to be paired.
-- [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='matter'. It allows to add a single device to the Matterbridge server node next to the aggregator. The device is not bridged.
+- [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='server'. It allows to advertise a single device like an autonomous device with its server node to be paired. The device is not bridged (alpha stage).
+- [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='matter'. It allows to add a single device to the Matterbridge server node next to the aggregator. The device is not bridged (alpha stage).
 - [storage]: Improved error handling of corrupted storage.
 - [test]: Improved test units on Matterbridge classes.
 
@@ -32,9 +30,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [package]: Updated dependencies.
 - [storage]: Bumped `node-storage-manager` to 2.0.0.
 - [logger]: Bumped `node-ansi-logger` to 3.1.1.
-- [matter.js]: Updated to 0.15.0-alpha.0-20250625-c7634df96, 0.15.0-alpha.0-20250626-fc3a84ce9, and bumped to 0.15.0.
-
-### Fixed
+- [matter.js]: Bumped `matter.js` to 0.15.0 (https://github.com/project-chip/matter.js/discussions/2203). Great job matter.js!
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

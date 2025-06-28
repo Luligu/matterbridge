@@ -1575,7 +1575,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
    */
   private async createDeviceServerNode(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
-    if (device.mode === 'server' && !device.serverNode && device.deviceType && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
+    if (device.mode === 'server' && !device.serverNode && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
       this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);
       device.serverContext = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
       device.serverNode = await this.createServerNode(device.serverContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
@@ -1675,13 +1675,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.debug('Cleared startMatterInterval interval for Matterbridge');
 
       // Start the Matter server node
-      this.startServerNode(this.serverNode);
+      this.startServerNode(this.serverNode); // We don't await this, because the server node is started in the background
 
       // Start the Matter server node of single devices in mode 'server'
       for (const device of this.devices.array()) {
         if (device.mode === 'server' && device.serverNode) {
           this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
-          await this.startServerNode(device.serverNode);
+          this.startServerNode(device.serverNode); // We don't await this, because the server node is started in the background
         }
       }
 
@@ -1793,7 +1793,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           continue;
         }
         // Start the Matter server node
-        this.startServerNode(plugin.serverNode);
+        this.startServerNode(plugin.serverNode); // We don't await this, because the server node is started in the background
 
         // Setting reachability to true
         plugin.reachabilityTimeout = setTimeout(() => {
@@ -1806,8 +1806,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Start the Matter server node of single devices in mode 'server'
       for (const device of this.devices.array()) {
         if (device.mode === 'server' && device.serverNode) {
-          this.log.debug(`***Starting server node for device ${plg}${device.deviceName}${db} in server mode...`);
-          await this.startServerNode(device.serverNode);
+          this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
+          this.startServerNode(device.serverNode); // We don't await this, because the server node is started in the background
         }
       }
 
@@ -2560,10 +2560,15 @@ const commissioningController = new CommissioningController({
         try {
           this.log.debug(`Creating endpoint ${dev}${device.deviceName}${db} for AccessoryPlatform plugin ${plg}${plugin.name}${db} server node`);
           if (plugin.serverNode) {
-            this.log.error(`The plugin ${plg}${plugin.name}${er} has already added a device. Only one device is allowed per AccessoryPlatform plugin.`);
-            return;
+            if (device.mode === 'matter') {
+              await plugin.serverNode.add(device);
+            } else {
+              this.log.error(`The plugin ${plg}${plugin.name}${er} has already added a device. Only one device is allowed per AccessoryPlatform plugin.`);
+              return;
+            }
+          } else {
+            await this.createAccessoryPlugin(plugin, device);
           }
-          await this.createAccessoryPlugin(plugin, device);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : error;
           const errorInspect = inspect(error, { depth: 10 });
@@ -2576,7 +2581,7 @@ const commissioningController = new CommissioningController({
         try {
           this.log.debug(`Adding bridged endpoint ${dev}${device.deviceName}${db} for DynamicPlatform plugin ${plg}${plugin.name}${db} aggregator node`);
           await this.createDynamicPlugin(plugin);
-          // Fast plugins can add another device before the server node is created
+          // Fast plugins can add another device before the server node is ready, so we wait for the server node to be ready
           await waiter(`createDynamicPlugin(${plugin.name})`, () => plugin.serverNode?.hasParts === true);
           if (!plugin.aggregatorNode) {
             this.log.error(`Aggregator node not found for plugin ${plg}${plugin.name}${er}`);

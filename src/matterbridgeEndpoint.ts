@@ -285,7 +285,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Activates a special mode for this endpoint.
    * - 'server': it creates the device server node and add the device as Matter device that needs to be paired individually.
-   *   In this case the bridge mode is not relevant. The device is autonomous.
+   *   In this case the bridge mode is not relevant. The device is autonomous. The main use case is a workaround for the Apple Home rvc issue.
    *
    * - 'matter': it adds the device directly to the bridge server node as Matter device. In this case the implementation must respect
    *   the 9.2.3. Disambiguation rule (i.e. use taglist if needed cause the device doesn't have nodeLabel).
@@ -419,7 +419,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Create the logger
     this.log = new AnsiLogger({ logName: options.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
-      `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
+      `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} mode: ${CYAN}${this.mode}${db} id: ${CYAN}${optionsV8.id}${db} number: ${CYAN}${optionsV8.number}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
 
     // Add MatterbridgeServer
