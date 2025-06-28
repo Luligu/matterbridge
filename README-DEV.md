@@ -36,7 +36,7 @@ For improved efficiency, the setup uses named Docker volumes for `node_modules`.
 
 To start the Dev Container, simply open the project folder in [Visual Studio Code](https://code.visualstudio.com/) and, if prompted, click "Reopen in Container". Alternatively, use the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`), search for "Dev Containers: Reopen in Container", and select it. VS Code will automatically build and start the containerized environment for you.
 
-> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be much faster.
+> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as as fast as from the local folder.
 
 Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
 
@@ -48,7 +48,7 @@ For improved efficiency, the setup uses named Docker volumes for `matterbridge` 
 
 To start the Dev Container, simply open the project folder in [Visual Studio Code](https://code.visualstudio.com/) and, if prompted, click "Reopen in Container". Alternatively, use the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`), search for "Dev Containers: Reopen in Container", and select it. VS Code will automatically build and start the containerized environment for you.
 
-> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be much faster.
+> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as fast as from the local folder.
 
 Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
 
