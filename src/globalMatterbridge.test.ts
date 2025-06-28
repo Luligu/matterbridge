@@ -1,7 +1,8 @@
 // src\globalMatterbridge.test.ts
-import { setGlobalMatterbridge, getGlobalMatterbridge, getGlobalFrontend, getGlobalLog } from './globalMatterbridge';
-import type { Matterbridge } from './matterbridge';
-import type { Frontend } from './frontend';
+
+import { setGlobalMatterbridge, getGlobalMatterbridge, getGlobalFrontend, getGlobalLog } from './globalMatterbridge.ts';
+import type { Matterbridge } from './matterbridge.ts';
+import type { Frontend } from './frontend.ts';
 import type { AnsiLogger } from 'node-ansi-logger';
 
 describe('globalMatterbridge', () => {

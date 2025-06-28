@@ -3,8 +3,9 @@
  *
  * @file matterbridgePlatform.ts
  * @author Luca Liguori
- * @date 2024-03-21
+ * @created 2024-03-21
  * @version 1.2.1
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,26 +19,25 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
+
+// Node.js module
+import path from 'node:path';
+
+// AnsiLogger module
+import { EndpointNumber } from '@matter/main';
+// AnsiLogger module
+import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
+// Storage module
+import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
+// Matter
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { isValidArray, isValidObject, isValidString } from './utils/export.js';
-
-// AnsiLogger module
-import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from './logger/export.js';
-
-// Storage module
-import { NodeStorage, NodeStorageManager } from './storage/export.js';
-
-// Matter
-import { EndpointNumber } from '@matter/main';
-
-// Node.js module
-import path from 'node:path';
 
 // Platform types
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
@@ -63,15 +63,22 @@ export type PlatformSchema = Record<string, PlatformSchemaValue>;
  *
  */
 export class MatterbridgePlatform {
+  /** The Matterbridge instance of this Platform. */
   matterbridge: Matterbridge;
+  /** The logger instance for this platform. */
   log: AnsiLogger;
+  /** The configuration for this platform. */
   config: PlatformConfig = {};
-  name = ''; // Will be set by the loadPlugin() method using the package.json value.
-  type = ''; // Will be set by the extending classes.
-  version = '1.0.0'; // Will be set by the loadPlugin() method using the package.json value.
+  /** The name of the platform. Will be set by the loadPlugin() method using the package.json value. */
+  name = '';
+  /** The type of the platform. Will be set by the extending classes. */
+  type = '';
+  /** The version of the platform. Will be set by the loadPlugin() method using the package.json value */
+  version = '1.0.0';
 
-  // Platform storage
+  /** Platform node storage manager. */
   storage: NodeStorageManager;
+  /** Platform context storage. */
   context?: NodeStorage;
 
   // Device and entity select in the plugin config UI
@@ -82,11 +89,13 @@ export class MatterbridgePlatform {
   private _contextReady: Promise<void>;
   private _selectDeviceContextReady: Promise<void>;
   private _selectEntityContextReady: Promise<void>;
+  /** The ready promise for the platform, which resolves when the platform is fully initialized. */
   ready: Promise<void>;
 
-  // Registered devices
-  private readonly _registeredEndpoints = new Map<string, MatterbridgeEndpoint>(); // uniqueId, MatterbridgeEndpoint
-  private readonly _registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>(); // deviceName, MatterbridgeEndpoint
+  /** Registered MatterbridgeEndpoint Map by uniqueId */
+  private readonly _registeredEndpoints = new Map<string, MatterbridgeEndpoint>();
+  /** Registered MatterbridgeEndpoint Map by deviceName */
+  private readonly _registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>();
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
@@ -103,7 +112,7 @@ export class MatterbridgePlatform {
     this.config = config;
 
     // create the NodeStorageManager for the plugin platform
-    if (!isValidString(this.config.name) || this.config.name === '') throw new Error('Platform: the plugin name is missing or invalid.');
+    if (!isValidString(this.config.name, 1)) throw new Error('Platform: the plugin name is missing or invalid.');
     this.log.debug(`Creating storage for plugin ${this.config.name} in ${path.join(this.matterbridge.matterbridgeDirectory, this.config.name)}`);
     this.storage = new NodeStorageManager({
       dir: path.join(this.matterbridge.matterbridgeDirectory, this.config.name),
@@ -117,8 +126,8 @@ export class MatterbridgePlatform {
     this.log.debug(`Creating context for plugin ${this.config.name}`);
     this._contextReady = this.storage.createStorage('context').then((context) => {
       this.context = context;
-      this.context.remove('endpointMap'); // Remove the old endpointMap TODO: remove in future versions
       this.log.debug(`Created context for plugin ${this.config.name}`);
+      return;
     });
 
     // create the selectDevice storage for the plugin platform
@@ -127,6 +136,7 @@ export class MatterbridgePlatform {
       const selectDevice = await context.get<{ serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]>('selectDevice', []);
       for (const device of selectDevice) this.selectDevice.set(device.serial, device);
       this.log.debug(`Loaded ${this.selectDevice.size} selectDevice for plugin ${this.config.name}`);
+      return;
     });
 
     // create the selectEntity storage for the plugin platform
@@ -135,11 +145,13 @@ export class MatterbridgePlatform {
       const selectEntity = await context.get<{ name: string; description: string; icon?: string }[]>('selectEntity', []);
       for (const entity of selectEntity) this.selectEntity.set(entity.name, entity);
       this.log.debug(`Loaded ${this.selectEntity.size} selectEntity for plugin ${this.config.name}`);
+      return;
     });
 
     // Create the `ready` promise for the platform
     this.ready = Promise.all([this._contextReady, this._selectDeviceContextReady, this._selectEntityContextReady]).then(() => {
       this.log.debug(`MatterbridgePlatform for plugin ${this.config.name} is fully initialized`);
+      return;
     });
   }
 
@@ -147,6 +159,7 @@ export class MatterbridgePlatform {
    * This method must be overridden in the extended class.
    * It is called when the platform is started.
    * Use this method to create the MatterbridgeEndpoints and call this.registerDevice().
+   *
    * @param {string} [reason] - The reason for starting.
    * @throws {Error} - Throws an error if the method is not overridden.
    */
@@ -175,6 +188,7 @@ export class MatterbridgePlatform {
    * This method can be overridden in the extended class. In this case always call super.onShutdown() to save the selects, run checkEndpointNumbers() and cleanup memory.
    * It is called when the platform is shutting down.
    * Use this method to clean up any resources you used in the constructor or onStart.
+   *
    * @param {string} [reason] - The reason for shutting down.
    */
   async onShutdown(reason?: string) {
@@ -200,6 +214,7 @@ export class MatterbridgePlatform {
 
   /**
    * Called when the logger level is changed.
+   *
    * @param {LogLevel} logLevel The new logger level.
    */
   async onChangeLoggerLevel(logLevel: LogLevel) {
@@ -208,6 +223,7 @@ export class MatterbridgePlatform {
 
   /**
    * Called when a plugin config includes an action button or an action button with text field.
+   *
    * @param {string} action The action triggered by the button in plugin config.
    * @param {string} value The value of the field of the action button.
    * @param {string} id The id of the schema associated with the action.
@@ -236,6 +252,7 @@ export class MatterbridgePlatform {
 
   /**
    * Called when the plugin config has been updated.
+   *
    * @param {PlatformConfig} config The new plugin config.
    */
   async onConfigChanged(config: PlatformConfig) {
@@ -244,6 +261,7 @@ export class MatterbridgePlatform {
 
   /**
    * Retrieves the devices registered with the platform.
+   *
    * @returns {MatterbridgeEndpoint[]} The registered devices.
    */
   getDevices(): MatterbridgeEndpoint[] {
@@ -252,6 +270,7 @@ export class MatterbridgePlatform {
 
   /**
    * Checks if a device with this name is already registered in the platform.
+   *
    * @param {string} deviceName - The device name to check.
    * @returns {boolean} True if the device is already registered, false otherwise.
    */
@@ -261,6 +280,7 @@ export class MatterbridgePlatform {
 
   /**
    * Registers a device with the Matterbridge platform.
+   *
    * @param {MatterbridgeEndpoint} device - The device to register.
    */
   async registerDevice(device: MatterbridgeEndpoint) {
@@ -279,6 +299,7 @@ export class MatterbridgePlatform {
 
   /**
    * Unregisters a device registered with the Matterbridge platform.
+   *
    * @param {MatterbridgeEndpoint} device - The device to unregister.
    */
   async unregisterDevice(device: MatterbridgeEndpoint) {
@@ -290,7 +311,7 @@ export class MatterbridgePlatform {
   /**
    * Unregisters all devices registered with the Matterbridge platform.
    *
-   * @param {number} [delay=0] - The delay in milliseconds between removing each bridged endpoint (default: 0).
+   * @param {number} [delay] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    */
   async unregisterAllDevices(delay = 0) {
     await this.matterbridge.removeAllBridgedEndpoints(this.name, delay);
@@ -422,6 +443,7 @@ export class MatterbridgePlatform {
 
   /**
    * Verifies if the Matterbridge version meets the required version.
+   *
    * @param {string} requiredVersion - The required version to compare against.
    * @returns {boolean} True if the Matterbridge version meets or exceeds the required version, false otherwise.
    */
@@ -454,9 +476,8 @@ export class MatterbridgePlatform {
    * The blacklist has priority over the whitelist.
    *
    * @param {string | string[]} device - The device name(s) to validate.
-   * @param {boolean} [log=true] - Whether to log the validation result.
+   * @param {boolean} [log] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the device is allowed, false otherwise.
-   *
    */
   validateDevice(device: string | string[], log = true): boolean {
     if (!Array.isArray(device)) device = [device];
@@ -486,9 +507,8 @@ export class MatterbridgePlatform {
    *
    * @param {string} device - The device to which the entity belongs.
    * @param {string} entity - The entity to validate.
-   * @param {boolean} [log=true] - Whether to log the validation result.
+   * @param {boolean} [log] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the entity is allowed, false otherwise.
-   *
    */
   validateEntity(device: string, entity: string, log = true): boolean {
     if (isValidArray(this.config.entityBlackList, 1) && this.config.entityBlackList.find((e) => e === entity)) {

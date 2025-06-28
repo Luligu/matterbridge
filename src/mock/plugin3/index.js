@@ -1,15 +1,12 @@
-import { MatterbridgeDynamicPlatform, MatterbridgeEndpoint, onOffSwitch } from 'matterbridge';
-import { onOffLight } from '../../matterbridgeDeviceTypes';
+// eslint-disable-next-line n/no-missing-import
+import { MatterbridgeDynamicPlatform, MatterbridgeEndpoint, onOffLight } from 'matterbridge';
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 export default function initializePlugin(matterbridge, log, config) {
   return new MockPlatform(matterbridge, log, config);
 }
 
-export class MockPlatform extends MatterbridgeDynamicPlatform {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(matterbridge, log, config) {
-    super(matterbridge, log, config);
-  }
+class MockPlatform extends MatterbridgeDynamicPlatform {
   async onStart(reason) {
     await this.ready;
     this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);

@@ -1,0 +1,16 @@
+[Unit]
+Description=matterbridge
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=matterbridge -service
+WorkingDirectory=/home/<USER>/Matterbridge
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=<USER>
+Group=<USER>
+
+[Install]
+WantedBy=multi-user.target

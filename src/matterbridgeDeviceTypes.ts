@@ -3,8 +3,9 @@
  *
  * @file matterbridgeDeviceTypes.ts
  * @author Luca Liguori
- * @date 2024-11-08
+ * @created 2024-11-08
  * @version 1.0.0
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,13 +19,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // @matter
 import { ClusterId, DeviceTypeId, EndpointNumber } from '@matter/main';
 import { Semtag } from '@matter/main/types';
-
 // @matter clusters
 import { BooleanState } from '@matter/main/clusters/boolean-state';
 import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
@@ -183,12 +183,76 @@ export const DeviceTypeDefinition = ({
   optionalClientClusters,
 });
 
+/**
+ *  MatterbridgeEndpointOptions interface is used to define the options for a Matterbridge endpoint.
+ *
+ *  @remarks
+ *  - tagList?: Semtag[]. It is used to disambiguate the sibling child endpoints (9.2.3. Disambiguation rule).
+ *    - mfgCode: VendorId | null,
+ *    - namespaceId: number,
+ *    - tag: number,
+ *    - label: string | undefined | null
+ *  - mode?: 'server' | 'matter'. It is used to activate a special mode for the endpoint.
+ *  - id?: string. It is the unique storage key for the endpoint.
+ *  - number?: EndpointNumber. It is the endpoint number for the endpoint.
+ */
 export interface MatterbridgeEndpointOptions extends EndpointOptions {
+  /**
+   *  The semantic tags array for the endpoint.
+   *  The tagList is used to disambiguate the sibling child endpoints (9.2.3. Disambiguation rule).
+   *  The tagList is used to identify the endpoint and to provide additional information about the endpoint.
+   *
+   *  @remarks
+   *    - mfgCode: VendorId | null,
+   *    - namespaceId: number,
+   *    - tag: number,
+   *    - label: string | undefined | null
+   */
   tagList?: Semtag[];
+  /**
+   * Activates a special mode for this endpoint.
+   * - 'server': it creates the device server node and add the device as Matter device that needs to be paired individually.
+   *   In this case the bridge mode is not relevant. The device is autonomous.
+   *
+   * - 'matter': it adds the device directly to the bridge server node as Matter device. In this case the implementation must respect
+   *   the 9.2.3. Disambiguation rule (i.e. use taglist if needed cause the device doesn't have nodeLabel).
+   *   Furthermore the device will be a part of the bridge (i.e. will have the same name and will be in the same room).
+   *   See 9.12.2.2. Native Matter functionality in Bridge.
+   *
+   * @remarks
+   * Always use createDefaultBasicInformationClusterServer() to create the BasicInformation cluster server.
+   */
+  mode?: 'server' | 'matter';
+  /**
+   * The unique storage key for the endpoint.
+   * If not provided, a default key will be used.
+   */
+  id?: string;
+  /**
+   * The endpoint number for the endpoint.
+   * If not provided, the endpoint will be created with the next available endpoint number.
+   * If provided, the endpoint will be created with the specified endpoint number.
+   */
+  number?: EndpointNumber;
 }
 
+/**
+ *  EndpointOptions interface is used to define the options for an endpoint.
+ *
+ * @deprecated Use `MatterbridgeEndpointOptions` instead.
+ */
 export interface EndpointOptions {
+  /**
+   * Old API compatibility replaced by number
+   *
+   * @deprecated Use `number` instead.
+   */
   endpointId?: EndpointNumber;
+  /**
+   * Old API compatibility replaced by id
+   *
+   * @deprecated Use `id` instead.
+   */
   uniqueStorageKey?: string;
 }
 
@@ -226,25 +290,25 @@ export const OTAProvider = DeviceTypeDefinition({
 });
 
 /**
-    2.5.3. Conditions
-    Please see the Base Device Type definition for conformance tags.
-    This device type SHALL only be used for Nodes which have a device type of Bridge.
-  
-    2.5.5. Cluster Requirements
-    Each endpoint supporting this device type SHALL include these clusters based on the conformance
-    defined below.
-    -  0x0039 Bridged Device Basic Information Server
-
-    2.5.6. Endpoint Composition
-    • A Bridged Node endpoint SHALL support one of the following composition patterns:
-      ◦ Separate Endpoints: All application device types are supported on separate endpoints, and
-        not on the Bridged Node endpoint. The Bridged Node endpoint’s Descriptor cluster PartsList
-        attribute SHALL indicate a list of all endpoints representing the functionality of the bridged
-        device, including the endpoints supporting the application device types, i.e. the full-family
-        pattern defined in the System Model specification.
-      ◦ One Endpoint: Both the Bridged Node and one or more application device types are sup
-        ported on the same endpoint (following application device type rules). Endpoint composi
-        tion SHALL conform to the application device type(s) definition
+  2.5.3. Conditions
+  Please see the Base Device Type definition for conformance tags.
+  This device type SHALL only be used for Nodes which have a device type of Bridge.
+ 
+  2.5.5. Cluster Requirements
+  Each endpoint supporting this device type SHALL include these clusters based on the conformance
+  defined below.
+  -  0x0039 Bridged Device Basic Information Server
+ 
+  2.5.6. Endpoint Composition
+  • A Bridged Node endpoint SHALL support one of the following composition patterns:
+  ◦ Separate Endpoints: All application device types are supported on separate endpoints, and
+    not on the Bridged Node endpoint. The Bridged Node endpoint’s Descriptor cluster PartsList
+    attribute SHALL indicate a list of all endpoints representing the functionality of the bridged
+    device, including the endpoints supporting the application device types, i.e. the full-family
+    pattern defined in the System Model specification.
+  ◦ One Endpoint: Both the Bridged Node and one or more application device types are sup
+    ported on the same endpoint (following application device type rules). Endpoint composi
+    tion SHALL conform to the application device type(s) definition
  */
 export const bridgedNode = DeviceTypeDefinition({
   name: 'MA-bridgedNode',

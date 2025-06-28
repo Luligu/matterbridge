@@ -1,9 +1,10 @@
 // src\pluginManager.test.ts
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', path.join('test', 'PluginManager')];
+const MATTER_PORT = 6006;
+const NAME = 'PluginManager';
+const HOMEDIR = path.join('jest', NAME);
+
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
 import { jest } from '@jest/globals';
 
@@ -26,12 +27,12 @@ import { promises as fs, rmSync } from 'node:fs';
 import path from 'node:path';
 import { AnsiLogger, db, er, LogLevel, nf, nt } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
-import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
-import { PluginManager } from './pluginManager.js';
-import { waiter } from './utils/export.js';
-import { DeviceManager } from './deviceManager.js';
-import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
+import { Matterbridge } from './matterbridge.ts';
+import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.ts';
+import { PluginManager } from './pluginManager.ts';
+import { waiter } from './utils/export.ts';
+import { DeviceManager } from './deviceManager.ts';
+import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -39,7 +40,7 @@ let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
+const debug = false; // Set to true to enable debug logging
 
 if (!debug) {
   loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
@@ -58,7 +59,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'PluginManager'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('PluginManager', () => {
   let matterbridge: Matterbridge;
@@ -96,11 +97,6 @@ describe('PluginManager', () => {
     devices = (matterbridge as any).devices;
     expect(devices).toBeInstanceOf(DeviceManager);
   }, 60000);
-
-  test('constructor initializes correctly', () => {
-    plugins = new PluginManager(matterbridge);
-    expect(plugins).toBeInstanceOf(PluginManager);
-  });
 
   test('logLevel changes correctly', () => {
     plugins.logLevel = LogLevel.DEBUG;
@@ -775,7 +771,6 @@ describe('PluginManager', () => {
     jest.spyOn(fs, 'writeFile').mockImplementationOnce(async () => {
       throw new Error('Test error');
     });
-    // await plugins.saveConfigFromPlugin(plugin);
     await expect(plugins.saveConfigFromPlugin(plugin)).rejects.toThrow();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error saving config file`));
 
@@ -1289,18 +1284,7 @@ describe('PluginManager', () => {
 
   test('Matterbridge.destroyInstance()', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);
-
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-  test('Cleanup storage', async () => {
-    process.argv.push('-factoryreset');
-    (matterbridge as any).initialized = true;
-    await (matterbridge as any).parseCommandLine();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }, 60000);
-  */
 });

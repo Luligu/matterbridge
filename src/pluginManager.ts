@@ -3,8 +3,9 @@
  *
  * @file plugins.ts
  * @author Luca Liguori
- * @date 2024-07-14
+ * @created 2024-07-14
  * @version 1.1.2
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,30 +19,44 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
-// AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr } from './logger/export.js';
+// Node.js import
+import EventEmitter from 'node:events';
+import type { ExecException } from 'node:child_process';
 
+// AnsiLogger module
+import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr } from 'node-ansi-logger';
 // NodeStorage module
-import { NodeStorage } from './storage/export.js';
+import { NodeStorage } from 'node-persist-manager';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
 
-// Node.js import type
-import type { ExecException } from 'node:child_process';
+interface PluginManagerEvents {
+  added: [name: string];
+  removed: [name: string];
+  loaded: [name: string];
+  enabled: [name: string];
+  disabled: [name: string];
+  installed: [name: string, version: string | undefined];
+  uninstalled: [name: string];
+  started: [name: string];
+  configured: [name: string];
+  shutdown: [name: string];
+}
 
-export class PluginManager {
+export class PluginManager extends EventEmitter<PluginManagerEvents> {
   private _plugins = new Map<string, RegisteredPlugin>();
   private nodeContext: NodeStorage;
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
 
   constructor(matterbridge: Matterbridge) {
+    super();
     this.matterbridge = matterbridge;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.nodeContext = (matterbridge as any).nodeContext;
@@ -147,8 +162,9 @@ export class PluginManager {
 
   /**
    * Resolves the name of a plugin by loading and parsing its package.json file.
+   *
    * @param {string} pluginPath - The path to the plugin or the path to the plugin's package.json file.
-   * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
+   * @returns {Promise<string | null>} A promise that resolves to the path of the plugin's package.json file or null if it could not be resolved.
    */
   async resolve(pluginPath: string): Promise<string | null> {
     const { default: path } = await import('node:path');
@@ -327,8 +343,9 @@ export class PluginManager {
 
   /**
    * Loads and parse the plugin package.json and returns it.
+   *
    * @param {RegisteredPlugin} plugin - The plugin to load the package from.
-   * @returns A Promise that resolves to the package.json object or null if the package.json could not be loaded.
+   * @returns {Promise<Record<string, string | number | object> | null>} A promise that resolves to the parsed package.json object or null if it could not be parsed.
    */
   async parse(plugin: RegisteredPlugin): Promise<Record<string, string | number | object> | null> {
     const { promises } = await import('node:fs');
@@ -419,12 +436,13 @@ export class PluginManager {
    */
   async enable(nameOrPath: string): Promise<RegisteredPlugin | null> {
     const { promises } = await import('node:fs');
-    if (!nameOrPath || nameOrPath === '') return null;
+    if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
       plugin.enabled = true;
       this.log.info(`Enabled plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('enabled', plugin.name);
       return plugin;
     }
     const packageJsonPath = await this.resolve(nameOrPath);
@@ -442,6 +460,7 @@ export class PluginManager {
       plugin.enabled = true;
       this.log.info(`Enabled plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('enabled', plugin.name);
       return plugin;
     } catch (err) {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
@@ -461,12 +480,13 @@ export class PluginManager {
    */
   async disable(nameOrPath: string): Promise<RegisteredPlugin | null> {
     const { promises } = await import('node:fs');
-    if (!nameOrPath || nameOrPath === '') return null;
+    if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
       plugin.enabled = false;
       this.log.info(`Disabled plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('disabled', plugin.name);
       return plugin;
     }
     const packageJsonPath = await this.resolve(nameOrPath);
@@ -484,6 +504,7 @@ export class PluginManager {
       plugin.enabled = false;
       this.log.info(`Disabled plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('disabled', plugin.name);
       return plugin;
     } catch (err) {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
@@ -503,12 +524,13 @@ export class PluginManager {
    */
   async remove(nameOrPath: string): Promise<RegisteredPlugin | null> {
     const { promises } = await import('node:fs');
-    if (!nameOrPath || nameOrPath === '') return null;
+    if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
       this._plugins.delete(nameOrPath);
       this.log.info(`Removed plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('removed', plugin.name);
       return plugin;
     }
     const packageJsonPath = await this.resolve(nameOrPath);
@@ -526,6 +548,7 @@ export class PluginManager {
       this._plugins.delete(packageJson.name);
       this.log.info(`Removed plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
+      this.emit('removed', plugin.name);
       return plugin;
     } catch (err) {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
@@ -546,7 +569,7 @@ export class PluginManager {
    */
   async add(nameOrPath: string): Promise<RegisteredPlugin | null> {
     const { promises } = await import('node:fs');
-    if (!nameOrPath || nameOrPath === '') return null;
+    if (!nameOrPath) return null;
     const packageJsonPath = await this.resolve(nameOrPath);
     if (!packageJsonPath) {
       this.log.error(`Failed to add plugin ${plg}${nameOrPath}${er}: package.json not found`);
@@ -570,6 +593,7 @@ export class PluginManager {
       this.log.info(`Added plugin ${plg}${packageJson.name}${nf}`);
       await this.saveToStorage();
       const plugin = this._plugins.get(packageJson.name);
+      this.emit('added', packageJson.name);
       return plugin || null;
     } catch (err) {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
@@ -613,6 +637,7 @@ export class PluginManager {
             if (versionLine) {
               const version = versionLine.split('@')[1].trim();
               this.log.info(`Installed plugin ${plg}${name}@${version}${nf}`);
+              this.emit('installed', name, version);
               resolve(version);
             } else {
               resolve(undefined);
@@ -644,6 +669,7 @@ export class PluginManager {
         } else {
           this.log.info(`Uninstalled plugin ${plg}${name}${nf}`);
           this.log.debug(`Uninstalled plugin ${plg}${name}${db}: ${stdout}`);
+          this.emit('uninstalled', name);
           resolve(name);
         }
       });
@@ -652,6 +678,7 @@ export class PluginManager {
 
   /**
    * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
+   *
    * @param {RegisteredPlugin} plugin - The plugin to load.
    * @param {boolean} start - Optional flag indicating whether to start the plugin after loading. Default is false.
    * @param {string} message - Optional message to pass to the plugin when starting.
@@ -720,6 +747,8 @@ export class PluginManager {
 
         this.log.notice(`Loaded plugin ${plg}${plugin.name}${nt} type ${typ}${platform.type}${nt} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
 
+        this.emit('loaded', plugin.name);
+
         if (start) await this.start(plugin, message, false);
 
         if (configure) await this.configure(plugin);
@@ -763,6 +792,7 @@ export class PluginManager {
       this.log.notice(`Started plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.started = true;
       await this.saveConfigFromPlugin(plugin);
+      this.emit('started', plugin.name);
       if (configure) await this.configure(plugin);
       return plugin;
     } catch (err) {
@@ -800,6 +830,7 @@ export class PluginManager {
       await plugin.platform.onConfigure();
       this.log.notice(`Configured plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.configured = true;
+      this.emit('configured', plugin.name);
       return plugin;
     } catch (err) {
       plugin.error = true;
@@ -816,8 +847,8 @@ export class PluginManager {
    *
    * @param {RegisteredPlugin} plugin - The plugin to shut down.
    * @param {string} [reason] - The reason for shutting down the plugin.
-   * @param {boolean} [removeAllDevices=false] - Whether to remove all devices associated with the plugin.
-   * @param {boolean} [force=false] - Whether to force the shutdown even if the plugin is not loaded or started.
+   * @param {boolean} [removeAllDevices] - Whether to remove all devices associated with the plugin.
+   * @param {boolean} [force] - Whether to force the shutdown even if the plugin is not loaded or started.
    * @returns {Promise<RegisteredPlugin | undefined>} A promise that resolves to the shut down plugin object, or undefined if the shutdown failed.
    */
   async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices = false, force = false): Promise<RegisteredPlugin | undefined> {
@@ -853,6 +884,7 @@ export class PluginManager {
       plugin.registeredDevices = undefined;
       plugin.addedDevices = undefined;
       this.log.notice(`Shutdown of plugin ${plg}${plugin.name}${nt} completed`);
+      this.emit('shutdown', plugin.name);
       return plugin;
     } catch (err) {
       this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
@@ -919,7 +951,7 @@ export class PluginManager {
    * the error and rejects the promise.
    *
    * @param {RegisteredPlugin} plugin - The plugin whose configuration is to be saved.
-   * @param {boolean} [restartRequired=false] - Indicates whether a restart is required after saving the configuration.
+   * @param {boolean} [restartRequired] - Indicates whether a restart is required after saving the configuration.
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or rejects if an error occurs.
    * @throws {Error} If the plugin's configuration is not found.
    */
@@ -955,7 +987,7 @@ export class PluginManager {
    *
    * @param {RegisteredPlugin} plugin - The plugin whose configuration is to be saved.
    * @param {PlatformConfig} config - The configuration data to be saved.
-   * @param {boolean} [restartRequired=false] - Indicates whether a restart is required after saving the configuration.
+   * @param {boolean} [restartRequired] - Indicates whether a restart is required after saving the configuration.
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or returns if an error occurs.
    */
   async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig, restartRequired = false): Promise<void> {
@@ -1005,12 +1037,7 @@ export class PluginManager {
       // this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
       return schema;
     } catch (_err) {
-      // const nodeErr = err as NodeJS.ErrnoException;
-      // if (nodeErr.code === 'ENOENT') {
       this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
-      // } else {
-      // this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema. Error: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
-      // }
       return this.getDefaultSchema(plugin);
     }
   }

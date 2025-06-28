@@ -1,9 +1,5 @@
 // src\singledevice.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 // Import necessary modules and types
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
@@ -11,7 +7,7 @@ import { rmSync } from 'node:fs';
 import path from 'node:path';
 
 // matter.js
-import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main/';
+import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
 import { MdnsService } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { RootEndpoint } from '@matter/main/endpoints/root';
@@ -20,7 +16,7 @@ import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/main/
 
 // Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { LaundryWasher, MatterbridgeLaundryWasherModeServer, MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './laundryWasher.js';
+import { LaundryWasher, MatterbridgeLaundryWasherModeServer, MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './laundryWasher.ts';
 import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
@@ -49,6 +45,7 @@ if (!debug) {
 
 const MATTER_PORT = 6001;
 const NAME = 'LaundryWasher';
+const HOMEDIR = path.join('jest', NAME);
 
 /**
  * Waits for the `isOnline` property to become `true`.
@@ -87,11 +84,11 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync(path.join('test', NAME), { recursive: true, force: true });
+    rmSync(HOMEDIR, { recursive: true, force: true });
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', path.join('test', NAME));
+    environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);

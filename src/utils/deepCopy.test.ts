@@ -1,6 +1,6 @@
 // src\utils\deepCopy.test.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { deepCopy } from './deepCopy.js';
+
+import { deepCopy } from './deepCopy.ts';
 
 describe('deepCopy', () => {
   // Primitives

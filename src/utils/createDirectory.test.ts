@@ -1,13 +1,11 @@
 // src\utils\createDirectory.test.ts
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { jest } from '@jest/globals';
 import path from 'node:path';
 import fs from 'node:fs';
-import { AnsiLogger, LogLevel, TimestampFormat } from '../logger/export.js';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { createDirectory } from './createDirectory.js';
+import { createDirectory } from './createDirectory.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

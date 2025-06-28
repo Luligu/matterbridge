@@ -1,6 +1,6 @@
 // src\utils\isvalid.test.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { isValidIpv4Address, isValidNumber, isValidBoolean, isValidString, isValidObject, isValidArray, isValidNull, isValidUndefined, parseVersionString, isValidRegExp } from './isvalid.js';
+
+import { isValidIpv4Address, isValidNumber, isValidBoolean, isValidString, isValidObject, isValidArray, isValidNull, isValidUndefined, parseVersionString, isValidRegExp } from './isvalid.ts';
 
 describe('Validation Functions', () => {
   describe('isValidIpv4Address', () => {

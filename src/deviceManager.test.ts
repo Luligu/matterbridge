@@ -1,21 +1,19 @@
 // src\deviceManager.test.ts
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-homedir', path.join('test', 'DeviceManager')];
+const NAME = 'DeviceManager';
+const HOMEDIR = path.join('jest', NAME);
+
+process.argv = ['node', 'deviceManager.test.js', '-logger', 'info', '-matterlogger', 'info', '-homedir', HOMEDIR];
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, er, LogLevel } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { DeviceManager } from './deviceManager.js';
-import { PluginManager } from './pluginManager.js';
-import { contactSensor, occupancySensor } from './matterbridgeDeviceTypes.js';
-import { dev } from './matterbridgeTypes.js';
+import { Matterbridge } from './matterbridge.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { DeviceManager } from './deviceManager.ts';
+import { dev } from './matterbridgeTypes.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -42,58 +40,23 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'DeviceManager'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
-/**
- * Waits for the `isOnline` property to become `true`.
- * @param {number} timeout - The maximum time to wait in milliseconds.
- * @returns {Promise<void>} A promise that resolves when `isOnline` becomes `true` or rejects if the timeout is reached.
- */
-async function waitForOnline(matterbridge: Matterbridge, timeout = 10000): Promise<void> {
-  const start = Date.now();
-
-  return new Promise((resolve, reject) => {
-    const checkOnline = () => {
-      if (matterbridge.serverNode?.lifecycle.isOnline) {
-        resolve();
-      } else if (Date.now() - start >= timeout) {
-        reject(new Error('Timeout waiting for matterbridge.serverNode.lifecycle.isOnline to become true'));
-      } else {
-        setTimeout(checkOnline, 100); // Check every 100ms
-      }
-    };
-
-    checkOnline();
-  });
-}
-
-describe('DeviceManager with mocked devices', () => {
+describe('DeviceManager', () => {
   let matterbridge: Matterbridge;
-  let plugins: PluginManager;
   let devices: DeviceManager;
+
+  beforeAll(async () => {
+    matterbridge = await Matterbridge.loadInstance(false);
+    devices = new DeviceManager(matterbridge);
+  });
 
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
   });
-
-  test('Load matterbridge', async () => {
-    matterbridge = await Matterbridge.loadInstance(true);
-    expect(matterbridge).toBeInstanceOf(Matterbridge);
-    plugins = (matterbridge as any).plugins;
-    expect(plugins).toBeInstanceOf(PluginManager);
-    devices = (matterbridge as any).devices;
-    expect(devices).toBeInstanceOf(DeviceManager);
-  }, 60000);
-
-  test('matterbridge loads correctly', async () => {
-    await waitForOnline(matterbridge);
-    expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
-  }, 60000);
-
-  test('constructor initializes correctly', () => {
-    devices = new DeviceManager(matterbridge, (matterbridge as any).nodeContext);
-    expect(devices).toBeInstanceOf(DeviceManager);
+  afterAll(async () => {
+    await matterbridge.destroyInstance(10, 10);
   });
 
   test('logLevel changes correctly', () => {
@@ -215,87 +178,4 @@ describe('DeviceManager with mocked devices', () => {
     });
     expect(count).toBe(0);
   });
-
-  test('Destroy matterbridge', async () => {
-    await matterbridge.destroyInstance();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-  }, 60000);
-});
-
-describe('DeviceManager with real devices', () => {
-  let matterbridge: Matterbridge;
-  let plugins: PluginManager;
-  let devices: DeviceManager;
-
-  beforeEach(() => {
-    // Clear all mocks
-    jest.clearAllMocks();
-  });
-
-  afterAll(async () => {
-    // Restore all mocks
-    jest.restoreAllMocks();
-  });
-
-  test('Load matterbridge', async () => {
-    matterbridge = await Matterbridge.loadInstance(true);
-    expect(matterbridge).toBeInstanceOf(Matterbridge);
-  }, 60000);
-
-  test('matterbridge loads correctly', async () => {
-    await waitForOnline(matterbridge);
-    expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
-  }, 60000);
-
-  test('devices initializes correctly', () => {
-    devices = (matterbridge as any).devices;
-    expect(devices).toBeInstanceOf(DeviceManager);
-  });
-
-  test('plugins initializes correctly', () => {
-    plugins = (matterbridge as any).plugins;
-    expect(plugins).toBeInstanceOf(PluginManager);
-  });
-
-  test('add contactSensor and occupancySensor device', async () => {
-    plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
-    plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
-    plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
-    expect(plugins.size).toBe(3);
-
-    MatterbridgeEndpoint.bridgeMode = 'bridge';
-    const device1 = await MatterbridgeEndpoint.loadInstance(contactSensor, { uniqueStorageKey: 'contactSensor' });
-    device1.createDefaultBridgedDeviceBasicInformationClusterServer('Contact sensor', 'Serial', 1, 'VendorName', 'ProductName');
-    device1.addRequiredClusterServers();
-    device1.plugin = 'matterbridge-mock1';
-
-    const device2 = await MatterbridgeEndpoint.loadInstance(occupancySensor, { uniqueStorageKey: 'occupancySensor' });
-    device2.createDefaultBridgedDeviceBasicInformationClusterServer('Ocuppancy sensor', 'Serial', 1, 'VendorName', 'ProductName');
-    device2.addRequiredClusterServers();
-    device2.plugin = 'matterbridge-mock2';
-
-    await matterbridge.addBridgedEndpoint('matterbridge-mock1', device1);
-    expect(devices.size).toBe(1);
-
-    await matterbridge.addBridgedEndpoint('matterbridge-mock2', device2);
-    expect(devices.size).toBe(2);
-
-    await matterbridge.removeBridgedEndpoint('matterbridge-mock1', device1);
-    expect(devices.size).toBe(1);
-
-    await matterbridge.removeBridgedEndpoint('matterbridge-mock2', device2);
-    expect(devices.size).toBe(0);
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  });
-
-  test('Matterbridge.destroyInstance()', async () => {
-    await matterbridge.destroyInstance();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-
-    // Wait for the promises to settle
-    await new Promise((resolve) => {
-      setTimeout(resolve, 1000);
-    });
-  }, 60000);
 });

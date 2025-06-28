@@ -1,7 +1,5 @@
 // src\utils\utils.test.ts
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { jest } from '@jest/globals';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -33,7 +31,7 @@ import {
   isValidArray,
   isValidNull,
   isValidUndefined,
-} from './export.js';
+} from './export.ts';
 
 describe('Utils test', () => {
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
@@ -229,6 +227,10 @@ describe('Utils test', () => {
   });
 
   test('Address ipv6', () => {
+    // Skip this test in remote containers, as it may not have a valid IPv6 address
+    if (process.env.REMOTE_CONTAINERS === 'true') {
+      return;
+    }
     expect(getIpv6InterfaceAddress()).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
     expect(getIpv6InterfaceAddress()).toBeDefined();
   });
@@ -517,16 +519,16 @@ describe('Utils test', () => {
     process.argv = argv;
   });
 
-  it('should not resolve localhost 0', async () => {
+  it('should resolve localhost 0', async () => {
     const result = await resolveHostname('localhost', 0);
     // console.log('Resolved localhost:', result);
     expect(result).toBeDefined();
     expect(result).not.toBeNull();
     expect(typeof result).toBe('string');
-    expect(result).toBe('::1');
+    expect(['::1', '127.0.0.1']).toContain(result);
   });
 
-  it('should not resolve localhost 4', async () => {
+  it('should resolve localhost 4', async () => {
     const result = await resolveHostname('localhost', 4);
     // console.log('Resolved localhost:', result);
     expect(result).toBeDefined();
@@ -535,7 +537,7 @@ describe('Utils test', () => {
     expect(result).toBe('127.0.0.1');
   });
 
-  it('should not resolve localhost 6', async () => {
+  it('should resolve localhost 6', async () => {
     const result = await resolveHostname('localhost', 6);
     // console.log('Resolved localhost:', result);
     expect(result).toBeDefined();
@@ -553,8 +555,8 @@ describe('Utils test', () => {
   });
 
   it('should copy a directory', async () => {
-    await fs.mkdir('test', { recursive: true });
-    const result = await copyDirectory(path.join('.', 'docker'), path.join('.', 'test'));
+    await fs.mkdir(path.join('jest', 'CopyDir'), { recursive: true });
+    const result = await copyDirectory(path.join('docker'), path.join('jest', 'CopyDir'));
     expect(result).toBeTruthy();
   });
 

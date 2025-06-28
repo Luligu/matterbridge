@@ -1,10 +1,11 @@
 // src\matterbridge.childbridge.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable no-console */
 /* eslint-disable jest/no-conditional-expect */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
+const MATTER_PORT = 6014;
+const NAME = 'MatterbridgeChildBridge';
+const HOMEDIR = path.join('jest', NAME);
 
 process.argv = [
   'node',
@@ -18,11 +19,11 @@ process.argv = [
   '-frontend',
   '8802',
   '-homedir',
-  path.join('test', 'MatterbridgeChildBridge'),
+  HOMEDIR,
   '-profile',
   'JestChildbridge',
   '-port',
-  '5555',
+  MATTER_PORT.toString(),
   '-passcode',
   '123456',
   '-discriminator',
@@ -31,17 +32,18 @@ process.argv = [
 
 import { jest } from '@jest/globals';
 import path from 'node:path';
-import { Environment } from '@matter/main';
-import { BasicInformationServer } from '@matter/main/behaviors';
+import { rmSync } from 'node:fs';
 import { AnsiLogger, db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/export.js';
-import { PluginManager } from './pluginManager.js';
-import { rmSync } from 'node:fs';
-import { dev, plg } from './matterbridgeTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { pressureSensor } from './matterbridgeDeviceTypes.js';
+import { Environment } from '@matter/main';
+import { BasicInformationServer } from '@matter/main/behaviors';
+
+import { Matterbridge } from './matterbridge.ts';
+import { waiter } from './utils/export.ts';
+import { PluginManager } from './pluginManager.ts';
+import { dev, plg } from './matterbridgeTypes.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { pressureSensor } from './matterbridgeDeviceTypes.ts';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   console.log('mockImplementation of process.exit() called');
@@ -73,7 +75,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'MatterbridgeChildBridge'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
@@ -138,20 +140,15 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).aggregatorNode).toBeUndefined();
 
     expect((matterbridge as any).mdnsInterface).toBe(undefined);
-    expect((matterbridge as any).port).toBe(5555);
+    expect((matterbridge as any).port).toBe(MATTER_PORT);
     expect((matterbridge as any).passcode).toBe(123456);
     expect((matterbridge as any).discriminator).toBe(3860);
 
-    await waiter(
-      'Matterbridge started',
-      () => {
-        return (matterbridge as any).configureTimeout !== undefined;
-      },
-      false,
-      60000,
-      100,
-      true,
-    );
+    await new Promise<void>((resolve) => {
+      matterbridge.once('childbridge_started', () => {
+        resolve();
+      });
+    });
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8802${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in childbridge mode...`);
@@ -300,7 +297,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
       i++;
     }
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock1 MdnsService`);
@@ -428,7 +425,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     for (const plugin of plugins) {
       expect(plugin.serverNode).toBeDefined();
     }
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock1 MdnsService`);

@@ -1,3 +1,4 @@
+/* eslint-disable import/export */
 // @matter
 export * from '@matter/main';
 export {

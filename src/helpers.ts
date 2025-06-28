@@ -3,8 +3,9 @@
  *
  * @file helpers.ts
  * @author Luca Liguori
- * @date 2025-05-12
+ * @created 2025-05-12
  * @version 1.0.0
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // @matter module
@@ -28,12 +29,13 @@ import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/brid
 import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-
-import { hasParameter } from './utils/commandLine.js';
-import { Matterbridge } from './matterbridge.js';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
+
+// Matterbridge
+import { hasParameter } from './utils/commandLine.js';
+import { Matterbridge } from './matterbridge.js';
 
 /**
  * Adds a virtual device to the provided endpoint, sets up an event listener for device state changes,
@@ -44,7 +46,7 @@ import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch
  * @param {'light' | 'outlet' | 'switch' | 'mounted_switch'} type - The type of the virtual device. Can be 'light', 'outlet', 'switch', or 'mounted_switch'.
  * @param {() => Promise<void>} callback - A callback function that gets executed when the device's on/off state changes to true.
  * @returns {Promise<Endpoint>} A promise that resolves with the created virtual device.
- * @remark The virtual device is created as an instance of `Endpoint` with the `OnOffPlugInUnitDevice` device type.
+ * @remarks The virtual device is created as an instance of `Endpoint` with the `OnOffPlugInUnitDevice` device type.
  * The onOff state always reverts to false when the device is turned on.
  */
 export async function addVirtualDevice(aggregatorEndpoint: Endpoint<AggregatorEndpoint>, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<Endpoint> {
@@ -116,6 +118,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
         getShelly('/api/updates/sys/perform', 10 * 1000)
           .then(() => {
             matterbridge.log.notice('Shelly system updated successfully');
+            return;
           })
           .catch((error) => {
             matterbridge.log.error(`Error updating shelly system: ${error}`);
@@ -123,6 +126,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
         getShelly('/api/updates/main/perform', 10 * 1000)
           .then(() => {
             matterbridge.log.notice('Shelly software updated successfully');
+            return;
           })
           .catch((error) => {
             matterbridge.log.error(`Error updating shelly software: ${error}`);
@@ -137,6 +141,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
         postShelly('/api/system/reboot', {}, 60 * 1000)
           .then(() => {
             matterbridge.log.notice('Rebooting shelly board...');
+            return;
           })
           .catch((error) => {
             matterbridge.log.error(`Error rebooting shelly board: ${error}`);

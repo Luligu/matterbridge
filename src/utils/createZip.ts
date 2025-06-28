@@ -3,8 +3,9 @@
  *
  * @file createZip.ts
  * @author Luca Liguori
- * @date 2025-02-16
+ * @created 2025-02-16
  * @version 1.0.0
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -62,15 +63,18 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
       resolve(archive.pointer());
     });
 
+    /* istanbul ignore next */
     output.on('end', () => {
       log.debug(`archive ${outputPath} data has been drained ${archive.pointer()} total bytes`);
     });
 
+    /* istanbul ignore next */
     archive.on('error', (error: ArchiverError) => {
       log.error(`archive error: ${error.message}`);
       reject(error);
     });
 
+    /* istanbul ignore next */
     archive.on('warning', (error: ArchiverError) => {
       if (error.code === 'ENOENT') {
         log.warn(`archive warning: ${error.message}`);
@@ -100,6 +104,7 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
             archive.file(file, { name: file });
           }
         } else {
+          /* istanbul ignore next */
           log.error(`no files or directory found for pattern ${sourcePath}: ${error}`);
         }
         continue;

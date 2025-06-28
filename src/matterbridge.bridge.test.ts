@@ -1,9 +1,10 @@
 // src\matterbridge.bridge.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable jest/no-conditional-expect */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
+const MATTER_PORT = 6013;
+const NAME = 'MatterbridgeBridge';
+const HOMEDIR = path.join('jest', NAME);
 
 process.argv = [
   'node',
@@ -17,11 +18,11 @@ process.argv = [
   '-frontend',
   '8801',
   '-homedir',
-  path.join('test', 'MatterbridgeBridge'),
+  HOMEDIR,
   '-profile',
   'JestBridge',
   '-port',
-  '5555',
+  MATTER_PORT.toString(),
   '-passcode',
   '123456',
   '-discriminator',
@@ -30,17 +31,18 @@ process.argv = [
 
 import { jest } from '@jest/globals';
 import path from 'node:path';
+import { rmSync } from 'node:fs';
 import { Environment } from '@matter/main';
-import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors';
 import { AnsiLogger, db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/export.js';
-import { PluginManager } from './pluginManager.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { pressureSensor } from './matterbridgeDeviceTypes.js';
-import { rmSync } from 'node:fs';
-import { plg } from './matterbridgeTypes.js';
+import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors';
+
+import { Matterbridge } from './matterbridge.ts';
+import { waiter } from './utils/export.ts';
+import { PluginManager } from './pluginManager.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { pressureSensor } from './matterbridgeDeviceTypes.ts';
+import { plg } from './matterbridgeTypes.ts';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   // eslint-disable-next-line no-console
@@ -73,7 +75,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'MatterbridgeBridge'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   let matterbridge: Matterbridge;
@@ -134,7 +136,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).aggregatorNode).toBeDefined();
 
     expect((matterbridge as any).mdnsInterface).toBe(undefined);
-    expect((matterbridge as any).port).toBe(5555 + 1);
+    expect((matterbridge as any).port).toBe(MATTER_PORT + 1);
     expect((matterbridge as any).passcode).toBe(123456 + 1);
     expect((matterbridge as any).discriminator).toBe(3860 + 1);
 
@@ -240,7 +242,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
@@ -341,7 +343,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
   test('Finally Matterbridge.destroyInstance() -bridge mode', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);

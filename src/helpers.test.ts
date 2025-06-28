@@ -1,9 +1,6 @@
 // src\helpers.test.ts
 
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { jest } from '@jest/globals';
 
@@ -26,13 +23,13 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
-import { addVirtualDevice, addVirtualDevices } from './helpers.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { Matterbridge } from './matterbridge.js';
+import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
+import { addVirtualDevice, addVirtualDevices } from './helpers.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { Matterbridge } from './matterbridge.ts';
 
 const MATTER_PORT = 6004;
-const HOMEDIR = 'Helpers';
+const HOMEDIR = path.join('jest', 'Helpers');
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -86,12 +83,12 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
+    rmSync(HOMEDIR, { recursive: true, force: true });
 
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', path.join('test', HOMEDIR));
+    environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);

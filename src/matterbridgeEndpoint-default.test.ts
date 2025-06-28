@@ -1,8 +1,9 @@
 // src\matterbridgeEndpoint-default.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+const MATTER_PORT = 6016;
+const NAME = 'EndpointDefault';
+const HOMEDIR = path.join('jest', NAME);
+
 import { jest } from '@jest/globals';
 import { Lifecycle } from '@matter/main';
 import {
@@ -40,6 +41,10 @@ import {
   ActivatedCarbonFilterMonitoring,
   ResourceMonitoring,
   ScenesManagement,
+  UserLabel,
+  FixedLabel,
+  DeviceEnergyManagement,
+  DeviceEnergyManagementMode,
 } from '@matter/main/clusters';
 import {
   AirQualityServer,
@@ -63,8 +68,8 @@ import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { Matterbridge } from './matterbridge.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import {
   airPurifier,
   airQualitySensor,
@@ -90,11 +95,8 @@ import {
   waterFreezeDetector,
   waterLeakDetector,
   waterValve,
-} from './matterbridgeDeviceTypes.js';
-import { updateAttribute } from './matterbridgeEndpointHelpers.js';
-
-const MATTER_PORT = 6002;
-const HOMEDIR = 'EndpointDefault';
+} from './matterbridgeDeviceTypes.ts';
+import { capitalizeFirstLetter, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -121,7 +123,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge ' + HOMEDIR, () => {
   let matterbridge: Matterbridge;
@@ -129,6 +131,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   /**
    * Waits for the `isOnline` property to become `true`.
+   *
    * @param {number} timeout - The maximum time to wait in milliseconds.
    * @returns {Promise<void>} A promise that resolves when `isOnline` becomes `true` or rejects if the timeout is reached.
    */
@@ -151,7 +154,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', path.join('test', HOMEDIR), '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
     matterbridge = await Matterbridge.loadInstance(true);
     await waitForOnline();
   }, 30000);
@@ -185,6 +188,35 @@ describe('Matterbridge ' + HOMEDIR, () => {
     if (device.uniqueStorageKey === undefined) return;
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`\x1B[39mMatterbridge.Matterbridge.${device.uniqueStorageKey.replaceAll(' ', '')} \x1B[0mready`));
   }
+
+  test('capitalizeFirstLetter', async () => {
+    const result = capitalizeFirstLetter('hello');
+    expect(result).toBe('Hello');
+    expect(capitalizeFirstLetter(null as any)).toBe(null);
+  });
+
+  test('lowercaseFirstLetter', async () => {
+    const result = lowercaseFirstLetter('Hello');
+    expect(result).toBe('hello');
+    expect(lowercaseFirstLetter(null as any)).toBe(null);
+  });
+
+  test('getBehaviourTypeFromClusterServerId', async () => {
+    expect(getBehaviourTypeFromClusterServerId(PowerSource.Cluster.id)?.id).toBe('powerSource');
+    expect(getBehaviourTypeFromClusterServerId(UserLabel.Cluster.id)?.id).toBe('userLabel');
+    expect(getBehaviourTypeFromClusterServerId(FixedLabel.Cluster.id)?.id).toBe('fixedLabel');
+    expect(getBehaviourTypeFromClusterServerId(BasicInformation.Cluster.id)?.id).toBe('basicInformation');
+    expect(getBehaviourTypeFromClusterServerId(BridgedDeviceBasicInformation.Cluster.id)?.id).toBe('bridgedDeviceBasicInformation');
+    expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagement.Cluster.id)?.id).toBe('deviceEnergyManagement');
+    expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagementMode.Cluster.id)?.id).toBe('deviceEnergyManagementMode');
+  });
+
+  test('getBehaviourTypesFromClusterClientIds', async () => {
+    expect(getBehaviourTypesFromClusterClientIds([Identify.Cluster.id])).toEqual([]);
+  });
+  test('getBehaviourTypeFromClusterClientId', async () => {
+    expect(getBehaviourTypeFromClusterClientId(Identify.Cluster.id)).toBeUndefined();
+  });
 
   test('createDefaultIdentifyClusterServer', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight8', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
@@ -246,10 +278,14 @@ describe('Matterbridge ' + HOMEDIR, () => {
     device.createDefaultScenesClusterServer();
     expect(device.hasClusterServer(ScenesManagement.Cluster)).toBe(true);
 
+    await add(device);
+
+    /*
     device.addRequiredClusterServers();
     expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
     expect(device.lifecycle.isReady).toBeTruthy();
     expect(device.construction.status).toBe(Lifecycle.Status.Active);
+    */
   });
 
   test('createDefaultOnOffClusterServer', async () => {
@@ -1051,7 +1087,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
     await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
   }, 60000);
 });

@@ -1,14 +1,17 @@
 // src\shelly.test.ts
+
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
+const TEST_DIR = path.join('jest', 'Shelly');
+mkdirSync(TEST_DIR, { recursive: true });
 
 import { jest } from '@jest/globals';
 import http, { IncomingMessage, ServerResponse } from 'node:http';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-import { Matterbridge } from './matterbridge.js';
-import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.js';
+import { Matterbridge } from './matterbridge.ts';
+import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.ts';
+import path from 'node:path';
+import { mkdirSync } from 'node:fs';
 
 const log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -36,7 +39,7 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-describe('getMatterbridgeLatestVersion', () => {
+describe('Shelly API', () => {
   let server: http.Server;
   let serverFail = false;
   let updatingInProgress = false;
@@ -48,6 +51,7 @@ describe('getMatterbridgeLatestVersion', () => {
         res.writeHead(400);
         return res.end();
       }
+      console.log(`Received request for ${req.url} fail=${serverFail}`);
 
       switch (req.url) {
         case '/api/updates/sys/check':
@@ -106,7 +110,7 @@ describe('getMatterbridgeLatestVersion', () => {
     matterbridgeMock = {
       matterbridgeVersion: '1.0.0',
       matterbridgeInformation: {},
-      matterbridgeDirectory: 'test',
+      matterbridgeDirectory: path.join('jest', 'Shelly'),
       log,
       frontend: {
         wssSendRefreshRequired: jest.fn(),
@@ -270,11 +274,10 @@ describe('getMatterbridgeLatestVersion', () => {
 
   it('should createShellySystemLog', async () => {
     const { createShellySystemLog } = await import('./shelly.js');
-    const result = await createShellySystemLog(matterbridgeMock);
-    expect(result).toBeUndefined();
+    expect(await createShellySystemLog(matterbridgeMock)).toBe(true);
 
     serverFail = true;
-    await createShellySystemLog(matterbridgeMock);
+    expect(await createShellySystemLog(matterbridgeMock)).toBe(false);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error'));
   }, 30000);
 

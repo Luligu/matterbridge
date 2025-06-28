@@ -1,9 +1,11 @@
 // src\matterbridgeEndpoint.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
+const MATTER_PORT = 6009;
+const NAME = 'Endpoint';
+const HOMEDIR = path.join('jest', NAME);
+
 import { jest } from '@jest/globals';
 import { Lifecycle, EndpointNumber, ActionContext } from '@matter/main';
 import {
@@ -48,8 +50,8 @@ import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { Matterbridge } from './matterbridge.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import {
   airQualitySensor,
   bridgedNode,
@@ -71,9 +73,6 @@ import {
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
-
-const MATTER_PORT = 6003;
-const HOMEDIR = 'Endpoint';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -100,14 +99,15 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
-describe('Matterbridge ' + HOMEDIR, () => {
+describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
   let device: MatterbridgeEndpoint;
 
   /**
    * Waits for the `isOnline` property to become `true`.
+   *
    * @param {number} timeout - The maximum time to wait in milliseconds.
    * @returns {Promise<void>} A promise that resolves when `isOnline` becomes `true` or rejects if the timeout is reached.
    */
@@ -131,7 +131,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', path.join('test', HOMEDIR), '-bridge', '-logger', 'info', '-matterlogger', 'info'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
     await waitForOnline();
   }, 30000);
@@ -278,11 +278,72 @@ describe('Matterbridge ' + HOMEDIR, () => {
       }
     });
 
+    test('constructor id with non latin', async () => {
+      const nonLatinNames = [
+        '버튼 - 작은방 (버튼-작은방)',
+        '거실 공기 관리 - 샤오미 공기 청정기 속도 조절 (거실공기관리-샤오미공기청정기속도조절)',
+        '난방 - 온도관리 방법 설정 (난방-온도관리방법설정)',
+        '단후이 로봇청소기 예약/일정 (단후이로봇청소기예약/일정)',
+        '단후이 로봇청소기 시계/지역시간 설정(mqtt) (단후이로봇청소기시계/지역시간설정(mqtt))',
+        '애드온을 다시 시작(DuckDNS) (애드온을다시시작(DuckDNS))',
+        '외출 중 기기 제어 - 외출 3시간 이상시 끄기 (외출중기기제어-외출3시간이상시끄기)',
+        '메인 등(L1) 조명 자동 컨트롤 (메인등(L1)조명자동컨트롤)',
+        '작은방 공기 관리 - 샤오미 공기 청정기 속도 조절 (작은방공기관리-샤오미공기청정기속도조절)',
+        '알림 - haos 메모이 시용이 90% 이상으로 시스템을 재시작합니다 (알림-haos메모이시용이90%이상으로시스템을재시작합니다)',
+        '알림 - 가스 검침기의 카운트를 다시 설정해 주세요 (알림-가스검침기의카운트를다시설정해주세요)',
+        '알림 - 배달원이 고객님의 음식을 픽업했습니다 (알림-배달원이고객님의음식을픽업했습니다)',
+        '알림 - 조리기기 관리가 수동으로 변경되었습니다 (알림-조리기기관리가수동으로변경되었습니다)',
+        '알림 - 주문이 거의 도착했습니다 (알림-주문이거의도착했습니다)',
+        '알림 - 현재 외부에는 비가 오고 있습니다 (알림-현재외부에는비가오고있습니다)',
+        '알림 - NAS의 보안 위험이 감지 되었습니디.  보안 어드바이저를 확인해 주세요 (알림-NAS의보안위험이감지되었습니디보안어드바이저를확인해주세요)',
+      ];
+      let n = 2000;
+      for (const name of nonLatinNames) {
+        const device = new MatterbridgeEndpoint(onOffOutlet, { id: name + 'bis', number: EndpointNumber(n++) });
+        expect(device).toBeDefined();
+        expect(device.id).toBe(generateUniqueId(name + 'bis'));
+        await add(device);
+      }
+    });
+
     test('constructor', async () => {
       const deviceType = onOffLight;
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight1' });
       expect(device).toBeDefined();
       expect(device.id).toBe('OnOffLight1');
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
+      expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
+      expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
+
+      await add(device);
+    });
+
+    test('constructor with id', async () => {
+      const deviceType = onOffLight;
+      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight1', id: 'OnOffLight1bis' });
+      expect(device).toBeDefined();
+      expect(device.id).toBe('OnOffLight1bis');
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
+      expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
+      expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
+
+      await add(device);
+    });
+
+    test('constructor with number', async () => {
+      const deviceType = onOffLight;
+      const device = new MatterbridgeEndpoint(deviceType, { id: 'OnOffLight1ter', endpointId: EndpointNumber(5000), number: EndpointNumber(6000) });
+      expect(device).toBeDefined();
+      expect(device.id).toBe('OnOffLight1ter');
+      expect(device.number).toBe(6000);
       expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
       expect(device.type.deviceType).toBe(deviceType.code);
       expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
@@ -1111,8 +1172,9 @@ describe('Matterbridge ' + HOMEDIR, () => {
     test('destroy instance', async () => {
       expect(matterbridge).toBeDefined();
       // Close the Matterbridge instance
-      await matterbridge.destroyInstance();
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
+      // await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
+      await matterbridge.destroyInstance(10);
+      // await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
     }, 60000);
   });
 });

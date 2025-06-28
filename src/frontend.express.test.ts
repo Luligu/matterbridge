@@ -1,28 +1,10 @@
 // src\frontend.express.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+const MATTER_PORT = 6007;
+const NAME = 'FrontendExpress';
+const HOMEDIR = path.join('jest', NAME);
 
-process.argv = [
-  'node',
-  'frontend.test.js',
-  '-logger',
-  'debug',
-  '-matterlogger',
-  'debug',
-  '-bridge',
-  '-homedir',
-  path.join('test', 'FrontendExpress'),
-  '-profile',
-  'JestFrontendExpress',
-  '-port',
-  '5555',
-  '-passcode',
-  '123456',
-  '-discriminator',
-  '3860',
-];
+process.argv = ['node', 'frontend.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-homedir', HOMEDIR, '-profile', 'JestFrontendExpress', '-port', MATTER_PORT.toString(), '-passcode', '123456', '-discriminator', '3860'];
 
 import { expect, jest } from '@jest/globals';
 import http from 'node:http';
@@ -32,8 +14,8 @@ import { rmSync } from 'node:fs';
 import os from 'node:os';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/export.js';
+import { Matterbridge } from './matterbridge.ts';
+import { waiter } from './utils/export.ts';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   return undefined as never;
@@ -64,7 +46,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'FrontendExpress'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge frontend express with http', () => {
   let matterbridge: Matterbridge;
@@ -327,6 +309,7 @@ describe('Matterbridge frontend express with http', () => {
 
   test('GET /api/download-backup', async () => {
     try {
+      // eslint-disable-next-line n/no-unsupported-features/node-builtins
       await fs.access(path.join(os.tmpdir(), `matterbridge.backup.zip`), fs.constants.F_OK);
     } catch (error) {
       await fs.copyFile('./src/mock/test.zip.txt', path.join(os.tmpdir(), `matterbridge.backup.zip`));
@@ -350,7 +333,7 @@ describe('Matterbridge frontend express with http', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Stopping the frontend...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Frontend app closed successfully`);

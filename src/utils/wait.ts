@@ -3,8 +3,9 @@
  *
  * @file wait.ts
  * @author Luca Liguori
- * @date 2025-02-16
+ * @created 2025-02-16
  * @version 1.0.1
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // AnsiLogger module
@@ -28,12 +29,13 @@ export const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFo
 
 /**
  * Asynchronous waiter function that resolves when the provided condition is met or rejects on timeout.
+ *
  * @param {string} name - The name of the waiter.
  * @param {() => boolean} check - A function that checks the condition. Should return a boolean.
- * @param {boolean} [exitWithReject=false] - Optional. If true, the promise will be rejected on timeout. Default is false.
- * @param {number} [resolveTimeout=5000] - Optional. The timeout duration in milliseconds. Default is 5000ms.
- * @param {number} [resolveInterval=500] - Optional. The interval duration in milliseconds between condition checks. Default is 500ms.
- * @param {boolean} [debug=false] - Optional. If true, debug messages will be logged to the console. Default is false.
+ * @param {boolean} [exitWithReject] - Optional. If true, the promise will be rejected on timeout. Default is false.
+ * @param {number} [resolveTimeout] - Optional. The timeout duration in milliseconds. Default is 5000ms.
+ * @param {number} [resolveInterval] - Optional. The interval duration in milliseconds between condition checks. Default is 500ms.
+ * @param {boolean} [debug] - Optional. If true, debug messages will be logged to the console. Default is false.
  * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
  */
 export async function waiter(name: string, check: () => boolean, exitWithReject = false, resolveTimeout = 5000, resolveInterval = 500, debug = false): Promise<boolean> {
@@ -64,6 +66,7 @@ export async function waiter(name: string, check: () => boolean, exitWithReject 
 
 /**
  * Asynchronously waits for a specified amount of time.
+ *
  * @param {number} timeout - The duration to wait in milliseconds. Default is 1000ms.
  * @param {string} name - The name of the wait operation. Default is undefined.
  * @param {boolean} debug - Whether to enable debug logging. Default is false.
@@ -85,9 +88,10 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
 
 /**
  * Wraps a promise with a timeout. If the promise does not resolve or reject within the specified time, it will be rejected.
+ *
  * @param {Promise<T>} promise - The promise to wrap.
- * @param {number} [timeoutMillisecs=10000] - The timeout duration in milliseconds. Default is 10000ms.
- * @param {boolean} [reThrow=true] - Optional. If true, the promise will rethrow the original promise and will reject on timeout. Default is true.
+ * @param {number} [timeoutMillisecs] - The timeout duration in milliseconds. Default is 10000ms.
+ * @param {boolean} [reThrow] - Optional. If true, the promise will rethrow the original promise and will reject on timeout. Default is true.
  * @returns {Promise<T>} A new promise that resolves or rejects based on the original promise and the timeout.
  */
 export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs = 10000, reThrow = true): Promise<T> {
@@ -103,6 +107,7 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs = 10000, re
       .then((result) => {
         clearTimeout(timer); // Prevent memory leak
         resolve(result);
+        return result;
       })
       .catch((error) => {
         clearTimeout(timer); // Ensure timeout does not fire if promise rejects first

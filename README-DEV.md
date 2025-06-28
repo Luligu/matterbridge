@@ -18,15 +18,27 @@
 
 The easiest way is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) that has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.
 
-Then change the name (keep matterbridge- at the beginning of the name), version, description, author, homepage, repository, bugs and funding in the package.json.
+After you clone it locally, change the name (keep always matterbridge- at the beginning of the name), version, description, author, homepage, repository, bugs and funding in the package.json.
 
-It is possible to add two custom properties to the package.json: **help** and **changelog** with a url that will be used in the frontend instead of the default (/blob/main/README.md and /blob/main/CHANGELOG.md).
+It is also possible to add two custom properties to the package.json: **help** and **changelog** with a url that will be used in the frontend instead of the default (/blob/main/README.md and /blob/main/CHANGELOG.md).
 
 Add your plugin logic in module.ts.
 
-The Matterbridge Plugin Template has an already configured Jest / Vitest test unit (coverage 100%) that you can expand while you add your own plugin logic.
+The Matterbridge Plugin Template has an already configured Jest / Vitest test unit (with 100% coverage) that you can expand while you add your own plugin logic.
 
 It also has a workflow configured to run on push and pull request that build, lint and test the plugin on node 20, 22 and 24 with ubuntu, macOS and windows.
+
+## Dev Container
+
+Using a Dev Container provides a fully isolated, reproducible, and pre-configured development environment. This ensures that all contributors have the same tools, extensions, and dependencies, eliminating "works on my machine" issues. It also makes onboarding new developers fast and hassle-free, as everything needed is set up automatically.
+
+For improved efficiency, the setup uses named Docker volumes for `node_modules`. This means dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes.
+
+To start the Dev Container, simply open the project folder in [Visual Studio Code](https://code.visualstudio.com/) and, if prompted, click "Reopen in Container". Alternatively, use the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`), search for "Dev Containers: Reopen in Container", and select it. VS Code will automatically build and start the containerized environment for you.
+
+> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be much faster.
+
+Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
 
 ## Guidelines on imports/exports
 
@@ -80,13 +92,13 @@ Matterbridge exports from:
 
 - All matter.js types.
 
-### WARNING \***\*\*\*\*\***
+### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
 A plugin must never install or import from `@matter` or `@project-chip` directly (neither as a dependency, devDependency, nor peerDependency), as this leads to a second instance of `matter.js`, causing instability and unpredictable errors such as "The only instance is Endpoint".
 
 Additionally, when Matterbridge updates the `matter.js` version, it should be consistent across all plugins.
 
-### WARNING \***\*\*\*\*\***
+### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
 A plugin must never install Matterbridge (neither as a dependency, devDependency, nor peerDependency).
 
@@ -100,9 +112,25 @@ Matterbridge must be linked to the plugin in development only. At runtime the pl
 }
 ```
 
-If you don't use Dev Container from the Matterbridge Plugin Template, on the machine you use for development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).
+If you don't use Dev Container from the Matterbridge Plugin Template, on the host you use for the development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).
 
-If you want to develop a plugin using the dev branch of matterbridge (I suggest you do it), you have to clone the dev branch of matterbridge, build it locally and link it (npm run deepCleanBuild does all necessary steps).
+```bash
+git clone https://github.com/Luligu/matterbridge.git
+cd matterbridge
+npm install
+npm run build
+npm link
+```
+
+If you want to develop a plugin using the dev branch of matterbridge (I suggest you do it).
+
+```bash
+git clone -b dev https://github.com/Luligu/matterbridge.git
+cd matterbridge
+npm install
+npm run build
+npm link
+```
 
 Always keep your local instance of matterbridge up to date.
 
@@ -116,19 +144,19 @@ To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platfor
 
 On windows:
 
-```
+```powershell
 cd $HOME\Matterbridge
 ```
 
 On linux or macOS:
 
-```
+```bash
 cd ~/Matterbridge
 ```
 
 then clone the plugin
 
-```
+```bash
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 npm install
@@ -138,7 +166,7 @@ npm run build
 
 then add the plugin to Matterbridge
 
-```
+```bash
 matterbridge -add .
 ```
 
@@ -223,7 +251,26 @@ It can be useful to call this method from onShutdown() if you don't want to keep
 
 ## MatterbridgeEndpoint api
 
-Work in progress...
+You create a Matter device with a new instance of MatterbridgeEndpoint(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false).
+
+- @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
+- @param {MatterbridgeEndpointOptions} [options] - The options for the device.
+- @param {boolean} [debug] - Debug flag.
+
+```typescript
+    const device = new MatterbridgeEndpoint([contactSensor, powerSource], { uniqueStorageKey: 'Eve door', mode: 'matter' }, this.config.debug as boolean)
+      .createDefaultIdentifyClusterServer()
+      .createDefaultBasicInformationClusterServer('My contact sensor', '0123456789')
+      .createDefaultBooleanStateClusterServer(true)
+      .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
+      .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
+```
+
+In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.
+
+All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the 'Matter-1.4-Device-Library-Specification.pdf'.
+
+All default cluster helpers are available as methods of MatterbridgeEndpoint.
 
 # Contribution Guidelines
 

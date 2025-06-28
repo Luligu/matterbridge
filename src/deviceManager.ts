@@ -3,8 +3,9 @@
  *
  * @file devices.ts
  * @author Luca Liguori
- * @date 2024-07-26
- * @version 1.0.10
+ * @created 2024-07-26
+ * @version 1.0.11
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,14 +19,11 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // AnsiLogger module
-import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from './logger/export.js';
-
-// NodeStorage module
-import { NodeStorage } from './storage/export.js';
+import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
@@ -38,18 +36,15 @@ import { dev } from './matterbridgeTypes.js';
 export class DeviceManager {
   private readonly _devices = new Map<string, MatterbridgeEndpoint>();
   private readonly matterbridge: Matterbridge;
-  private readonly nodeContext: NodeStorage;
   private readonly log: AnsiLogger;
 
   /**
    * Creates an instance of DeviceManager.
    *
    * @param {Matterbridge} matterbridge - The Matterbridge instance.
-   * @param {NodeStorage} nodeContext - The node storage context.
    */
-  constructor(matterbridge: Matterbridge, nodeContext: NodeStorage) {
+  constructor(matterbridge: Matterbridge) {
     this.matterbridge = matterbridge;
-    this.nodeContext = nodeContext;
     this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.log.logLevel });
     this.log.debug('Matterbridge device manager starting...');
   }

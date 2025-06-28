@@ -1,32 +1,6 @@
-// @ts-check
-/*
+// prettier.config.js
 
-prettier.config.js
-
-Prettier:
-
-How to install:
-  npm install --save-dev prettier eslint-config-prettier eslint-plugin-prettier
-
-  
-Add package.json scripts:  
-*/
-// "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
-// "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
-
-/* 
-
-Add .prettierignore  
-
-# Ignore artifacts:
-dist
-node_modules
-build
-coverage
-
-# Ignore all HTML files:
-*/
-// **/*.html
+// Config for Prettier
 
 export default {
   printWidth: 250, // default 80
@@ -34,7 +8,7 @@ export default {
   useTabs: false,
   semi: true,
   singleQuote: true, // default false
-  quoteProps: 'preserve', // default 'as-needed'
+  quoteProps: 'preserve', // default 'as-needed'. Other 'consistent'
   jsxSingleQuote: false,
   trailingComma: 'all',
   bracketSpacing: true,

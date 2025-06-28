@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import EventEmitter from 'node:events';
 
 // Creates a mocks of Matterbridge
 export class MockMatterbridge extends EventEmitter {
@@ -9,6 +9,7 @@ export class MockMatterbridge extends EventEmitter {
     super();
   }
 
+  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   static async loadInstance(initialize) {
     return new MockMatterbridge();
   }

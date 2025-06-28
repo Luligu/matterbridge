@@ -3,8 +3,9 @@
  *
  * @file matterbridgeEndpointHelpers.ts
  * @author Luca Liguori
- * @date 2024-10-01
+ * @created 2024-10-01
  * @version 2.1.0
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,13 +19,17 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
+// Other modules
+import { createHash } from 'node:crypto';
+
+// AnsiLogger module
+import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
 // @matter
 import { ActionContext, Behavior, ClusterBehavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
 import { ClusterType, getClusterNameById } from '@matter/main/types';
-
 // @matter clusters
 import { PowerSource } from '@matter/main/clusters/power-source';
 import { UserLabel } from '@matter/main/clusters/user-label';
@@ -70,7 +75,6 @@ import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/m
 import { OperationalState } from '@matter/main/clusters/operational-state';
 import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
-
 // @matter behaviors
 import { PowerSourceServer } from '@matter/main/behaviors/power-source';
 import { UserLabelServer } from '@matter/main/behaviors/user-label';
@@ -103,10 +107,6 @@ import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/rado
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 
-// Other modules
-import { createHash } from 'node:crypto';
-import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
-
 // Matterbridge
 import { deepCopy, deepEqual, isValidArray } from './utils/export.js';
 import { MatterbridgeEndpoint, MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
@@ -127,16 +127,34 @@ import {
   MatterbridgeDeviceEnergyManagementModeServer,
 } from './matterbridgeBehaviors.js';
 
+/**
+ *  Capitalizes the first letter of a string.
+ *
+ * @param {string} name - The string to capitalize.
+ * @returns {string} The string with the first letter capitalized.
+ */
 export function capitalizeFirstLetter(name: string): string {
   if (!name) return name;
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+/**
+ * Lowercases the first letter of a string.
+ *
+ * @param {string} name - The string to lowercase the first letter of.
+ * @returns {string} The string with the first letter lowercased.
+ */
 export function lowercaseFirstLetter(name: string): string {
   if (!name) return name;
   return name.charAt(0).toLowerCase() + name.slice(1);
 }
 
+/**
+ * Checks if the device name contains non-Latin characters.
+ *
+ * @param {string} deviceName - The name of the device to check.
+ * @returns {boolean} Returns true if the device name contains non-Latin characters, false otherwise.
+ */
 export function checkNotLatinCharacters(deviceName: string): boolean {
   const nonLatinRegexList = [
     /[\u0400-\u04FF\u0500-\u052F]/, // Cyrillic
@@ -151,16 +169,37 @@ export function checkNotLatinCharacters(deviceName: string): boolean {
   return nonLatinRegexList.some((regex) => regex.test(deviceName));
 }
 
+/**
+ * Generates a unique ID based on the device name.
+ *
+ * @param {string} deviceName - The name of the device to generate a unique ID for.
+ * @returns {string} A unique ID generated from the device name using MD5 hashing.
+ */
 export function generateUniqueId(deviceName: string): string {
   return createHash('md5').update(deviceName).digest('hex'); // MD5 hash of the device name
 }
 
+/**
+ * Generates a unique ID based on four parameters.
+ *
+ * @param {string} param1 - The first parameter.
+ * @param {string} param2 - The second parameter.
+ * @param {string} param3 - The third parameter.
+ * @param {string} param4 - The fourth parameter.
+ * @returns {string} A unique ID generated from the concatenation of the parameters using MD5 hashing.
+ */
 export function createUniqueId(param1: string, param2: string, param3: string, param4: string) {
   const hash = createHash('md5');
   hash.update(param1 + param2 + param3 + param4);
   return hash.digest('hex');
 }
 
+/**
+ * Maps a list of ClusterId to Behavior.Type for server clusters.
+ *
+ * @param {ClusterId[]} clusterServerList - The list of ClusterId to map.
+ * @returns {Behavior.Type[]} An array of Behavior.Type corresponding to the ClusterId in the server list.
+ */
 export function getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]) {
   // Map Server ClusterId to Behavior.Type
   const behaviorTypes: Behavior.Type[] = [];
@@ -170,6 +209,12 @@ export function getBehaviourTypesFromClusterServerIds(clusterServerList: Cluster
   return behaviorTypes;
 }
 
+/**
+ * Maps a list of ClusterId to Behavior.Type for client clusters.
+ *
+ * @param {ClusterId[]} clusterClientList - The list of ClusterId to map.
+ * @returns {Behavior.Type[]} An array of Behavior.Type corresponding to the ClusterId in the client list.
+ */
 export function getBehaviourTypesFromClusterClientIds(clusterClientList: ClusterId[]) {
   // Map Client ClusterId to Behavior.Type
   const behaviorTypes: Behavior.Type[] = [];
@@ -179,6 +224,12 @@ export function getBehaviourTypesFromClusterClientIds(clusterClientList: Cluster
   return behaviorTypes;
 }
 
+/**
+ * Maps a ClusterId to a Behavior.Type for server clusters.
+ *
+ * @param {ClusterId} clusterId - The ClusterId to map.
+ * @returns {Behavior.Type} The corresponding Behavior.Type for the given ClusterId.
+ */
 export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
   // Map ClusterId to Server Behavior.Type
   if (clusterId === PowerSource.Cluster.id) return PowerSourceServer.with(PowerSource.Feature.Wired);
@@ -229,11 +280,23 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
   return MatterbridgeIdentifyServer;
 }
 
+/**
+ *  Maps a ClusterId to a Behavior.Type for client clusters.
+ *
+ * @param {ClusterId} _clusterId - The ClusterId to map.
+ */
 export function getBehaviourTypeFromClusterClientId(_clusterId: ClusterId) {
   // Map ClusterId to Client Behavior.Type
   // return IdentifyClient;
 }
 
+/**
+ *  Retrieves the Behavior.Type for a given cluster from the endpoint's supported behaviors.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to retrieve the behavior from.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the behavior for.
+ * @returns {Behavior.Type | undefined} The Behavior.Type for the given cluster, or undefined if not found.
+ */
 export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Behavior.Type | undefined {
   let behavior: Behavior.Type | undefined;
   if (typeof cluster === 'string') {
@@ -250,6 +313,13 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
 
 /**
  * Invokes a command on the specified behavior of the endpoint. Used ONLY in Jest tests.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to invoke the command on.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+ * @param {keyof MatterbridgeEndpointCommands} command - The command to invoke.
+ * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The parameters to pass to the command.
+ *
+ * @returns {Promise<boolean>} A promise that resolves to true if the command was invoked successfully, false otherwise.
  *
  * @deprecated Used ONLY in Jest tests.
  */
@@ -286,6 +356,7 @@ export async function invokeBehaviorCommand(
  * @param {unknown} newValue - The new value of the attribute.
  * @param {unknown} oldValue - The old value of the attribute.
  *
+ * @returns {Promise<boolean>} A promise that resolves to true if the subscription handler was invoked successfully, false otherwise.
  * @deprecated Used ONLY in Jest tests.
  */
 export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, newValue: unknown, oldValue: unknown): Promise<boolean> {
@@ -313,6 +384,12 @@ export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, clu
   return true;
 }
 
+/**
+ * Adds required cluster servers to the specified endpoint based on the device types.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the required cluster servers to.
+ * @returns {void}
+ */
 export function addRequiredClusterServers(endpoint: MatterbridgeEndpoint) {
   const requiredServerList: ClusterId[] = [];
   endpoint.log.debug(`addRequiredClusterServers for ${CYAN}${endpoint.maybeId}${db}`);
@@ -328,6 +405,12 @@ export function addRequiredClusterServers(endpoint: MatterbridgeEndpoint) {
   addClusterServers(endpoint, requiredServerList);
 }
 
+/**
+ * Adds optional cluster servers to the specified endpoint based on the device types.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the optional cluster servers to.
+ * @returns {void}
+ */
 export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint) {
   const optionalServerList: ClusterId[] = [];
   endpoint.log.debug(`addOptionalClusterServers for ${CYAN}${endpoint.maybeId}${db}`);
@@ -348,9 +431,8 @@ export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint) {
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
  * @param {ClusterId[]} serverList - The list of cluster IDs to add.
- * @returns void
  */
-export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: ClusterId[]): void {
+export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: ClusterId[]) {
   if (serverList.includes(PowerSource.Cluster.id)) endpoint.createDefaultPowerSourceWiredClusterServer();
   if (serverList.includes(Identify.Cluster.id)) endpoint.createDefaultIdentifyClusterServer();
   if (serverList.includes(Groups.Cluster.id)) endpoint.createDefaultGroupsClusterServer();
@@ -440,14 +522,36 @@ export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string
   }
 }
 
+/**
+ * Returns the options for a given behavior type.
+ *
+ * @param {T} type - The behavior type.
+ * @param {Behavior.Options<T>} options - The options for the behavior type.
+ * @returns {Behavior.Options<T>} The options for the behavior type.
+ */
 export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.Options<T>) {
   return options;
 }
 
+/**
+ * Retrieves the cluster name by its ID.
+ *
+ * @param {Endpoint} endpoint - The endpoint to retrieve the cluster name from.
+ * @param {ClusterId} cluster - The ID of the cluster.
+ * @returns {string} The name of the cluster.
+ */
 export function getClusterId(endpoint: Endpoint, cluster: string) {
   return endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.id;
 }
 
+/**
+ * Retrieves the ID of an attribute from a cluster behavior.
+ *
+ * @param {Endpoint} endpoint - The endpoint to retrieve the attribute ID from.
+ * @param {string} cluster - The name of the cluster.
+ * @param {string} attribute - The name of the attribute.
+ * @returns {number | undefined} The ID of the attribute, or undefined if not found.
+ */
 export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: string) {
   const clusterBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)] as ClusterBehavior.Type | undefined;
   return clusterBehavior?.cluster?.attributes[lowercaseFirstLetter(attribute)]?.id;
@@ -629,10 +733,11 @@ export async function subscribeAttribute(
  * Triggers an event on the specified cluster.
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to trigger the event on.
- * @param {ClusterId} clusterId - The ID of the cluster.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The ID of the cluster.
  * @param {string} event - The name of the event to trigger.
  * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
  * @param {AnsiLogger} [log] - Optional logger for logging information.
+ *
  * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
  */
 export async function triggerEvent(
@@ -671,6 +776,7 @@ export async function triggerEvent(
  * Get the default OperationalState Cluster Server.
  *
  * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state.
+ * @returns {Behavior.Options<MatterbridgeOperationalStateServer>} - The default options for the OperationalState cluster server.
  */
 export function getDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped) {
   return optionsFor(MatterbridgeOperationalStateServer, {
@@ -693,6 +799,7 @@ export function getDefaultOperationalStateClusterServer(operationalState: Operat
  * @param {number | null} measuredValue - The measured value of the temperature x 100.
  * @param {number | null} minMeasuredValue - The minimum measured value of the temperature x 100.
  * @param {number | null} maxMeasuredValue - The maximum measured value of the temperature x 100.
+ * @returns {Behavior.Options<MatterbridgeTemperatureMeasurementServer>} - The default options for the TemperatureMeasurement cluster server.
  */
 export function getDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
   return optionsFor(TemperatureMeasurementServer, {
@@ -709,6 +816,7 @@ export function getDefaultTemperatureMeasurementClusterServer(measuredValue: num
  * @param {number | null} measuredValue - The measured value of the relative humidity x 100.
  * @param {number | null} minMeasuredValue - The minimum measured value of the relative humidity x 100.
  * @param {number | null} maxMeasuredValue - The maximum measured value of the relative humidity x 100.
+ * @returns {Behavior.Options<MatterbridgeRelativeHumidityMeasurementServer>} - The default options for the RelativeHumidityMeasurement cluster server.
  */
 export function getDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
   return optionsFor(RelativeHumidityMeasurementServer, {
@@ -725,6 +833,7 @@ export function getDefaultRelativeHumidityMeasurementClusterServer(measuredValue
  * @param {number | null} measuredValue - The measured value for the pressure.
  * @param {number | null} minMeasuredValue - The minimum measured value for the pressure.
  * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure.
+ * @returns {Behavior.Options<MatterbridgePressureMeasurementServer>} - The default options for the PressureMeasurement cluster server.
  */
 export function getDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
   return optionsFor(PressureMeasurementServer, {
@@ -741,7 +850,10 @@ export function getDefaultPressureMeasurementClusterServer(measuredValue: number
  * @param {number | null} measuredValue - The measured value of illuminance.
  * @param {number | null} minMeasuredValue - The minimum measured value of illuminance.
  * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
- * @remark The default value for the illuminance measurement is null.
+ *
+ * @returns {Behavior.Options<MatterbridgeIlluminanceMeasurementServer>} - The default options for the IlluminanceMeasurement cluster server.
+ *
+ * @remarks The default value for the illuminance measurement is null.
  * This attribute SHALL indicate the illuminance in Lux (symbol lx) as follows:
  * •  MeasuredValue = 10,000 x log10(illuminance) + 1,
  *    where 1 lx <= illuminance <= 3.576 Mlx, corresponding to a MeasuredValue in the range 1 to 0xFFFE.
@@ -763,6 +875,7 @@ export function getDefaultIlluminanceMeasurementClusterServer(measuredValue: num
  * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h.
  * @param {number | null} minMeasuredValue - The minimum measured value of the flow in 10 x m3/h.
  * @param {number | null} maxMeasuredValue - The maximum measured value of the flow in 10 x m3/h.
+ * @returns {Behavior.Options<MatterbridgeFlowMeasurementServer>} - The default options for the FlowMeasurement cluster server.
  */
 export function getDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
   return optionsFor(FlowMeasurementServer, {
@@ -780,8 +893,9 @@ export function getDefaultFlowMeasurementClusterServer(measuredValue: number | n
  * @param {number} holdTime - The hold time in seconds. Default is 30.
  * @param {number} holdTimeMin - The minimum hold time in seconds. Default is 1.
  * @param {number} holdTimeMax - The maximum hold time in seconds. Default is 300.
+ * @returns {Behavior.Options<MatterbridgeOccupancySensingServer>} - The default options for the OccupancySensing cluster server.
  *
- * @remark The default value for the occupancy sensor type is PIR.
+ * @remarks The default value for the occupancy sensor type is PIR.
  * Servers SHALL set these attributes for backward compatibility with clients implementing a cluster revision <= 4 as
  * described in OccupancySensorType and OccupancySensorTypeBitmap Attributes.
  * This replaces the 9 legacy attributes PIROccupiedToUnoccupiedDelay through PhysicalContactUnoccupiedToOccupiedThreshold.

@@ -3,8 +3,9 @@
  *
  * @file matterbridgeTypes.ts
  * @author Luca Liguori
- * @date 2024-07-12
+ * @created 2024-07-12
  * @version 1.0.2
+ * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -18,21 +19,19 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // NodeStorage and AnsiLogger modules
-import { NodeStorage } from './storage/export.js';
-import { LogLevel } from './logger/export.js';
+import { NodeStorage } from 'node-persist-manager';
+import { LogLevel } from 'node-ansi-logger';
+// @matter
+import { FabricIndex, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
+import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 
 // Matterbridge
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-
-// @matter
-import { FabricIndex, NodeId, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
-import { ExposedFabricInformation } from '@matter/main/protocol';
-import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 
 // Default colors
 export const plg = '\u001B[38;5;33m';
@@ -73,7 +72,7 @@ export interface BaseRegisteredPlugin {
   paired?: boolean;
   restartRequired?: boolean;
   fabricInformations?: SanitizedExposedFabricInformation[];
-  sessionInformations?: SanitizedSessionInformation[];
+  sessionInformations?: SanitizedSession[];
   registeredDevices?: number;
   addedDevices?: number;
   qrPairingCode?: string;
@@ -122,7 +121,7 @@ export interface MatterbridgeInformation {
   matterbridgeQrPairingCode: string | undefined;
   matterbridgeManualPairingCode: string | undefined;
   matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
-  matterbridgeSessionInformations: SanitizedSessionInformation[] | undefined;
+  matterbridgeSessionInformations: SanitizedSession[] | undefined;
   matterbridgePaired: boolean | undefined;
   matterbridgeAdvertise: boolean | undefined;
   bridgeMode: string;
@@ -157,27 +156,14 @@ export interface SanitizedExposedFabricInformation {
   label: string;
 }
 
-export interface SessionInformation {
-  name: string;
-  nodeId: NodeId;
-  peerNodeId: NodeId;
-  fabric?: ExposedFabricInformation;
-  isPeerActive: boolean;
-  secure: boolean;
-  lastInteractionTimestamp?: number;
-  lastActiveTimestamp?: number;
-  numberOfActiveSubscriptions: number;
-}
-
-export interface SanitizedSessionInformation {
+export interface SanitizedSession {
   name: string;
   nodeId: string;
   peerNodeId: string;
   fabric?: SanitizedExposedFabricInformation;
   isPeerActive: boolean;
-  secure: boolean;
-  lastInteractionTimestamp?: string;
-  lastActiveTimestamp?: string;
+  lastInteractionTimestamp: string;
+  lastActiveTimestamp: string;
   numberOfActiveSubscriptions: number;
 }
 

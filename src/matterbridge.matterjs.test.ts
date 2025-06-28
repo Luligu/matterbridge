@@ -1,15 +1,12 @@
 // src\matterbridge.matterjs.test.ts
 
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-empty-function */
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const MATTER_PORT = 6010;
-const HOMEDIR = 'MatterbridgeMatterjs';
+const NAME = 'MatterbridgeMatterjs';
+const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.matterjs.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '0', '-homedir', path.join('test', HOMEDIR), '-port', MATTER_PORT.toString()];
+process.argv = ['node', 'matterbridge.matterjs.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
 import { jest } from '@jest/globals';
 import path from 'node:path';
@@ -18,8 +15,7 @@ import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 import { Environment, FabricIndex, NodeLifecycle } from '@matter/main';
 
-import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/export.js';
+import { Matterbridge } from './matterbridge.ts';
 import { FabricAction } from '@matter/main/protocol';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
@@ -52,7 +48,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge matterjs', () => {
   let matterbridge: Matterbridge;
@@ -169,12 +165,12 @@ describe('Matterbridge matterjs', () => {
   });
 
   test('startServerNode undefined', async () => {
-    (matterbridge as any).startServerNode();
+    await (matterbridge as any).startServerNode();
     expect(loggerLogSpy).toHaveBeenCalledTimes(0);
   });
 
   test('stopServerNode undefined', async () => {
-    (matterbridge as any).stopServerNode();
+    await (matterbridge as any).stopServerNode();
     expect(loggerLogSpy).toHaveBeenCalledTimes(0);
   });
 
@@ -205,8 +201,20 @@ describe('Matterbridge matterjs', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
+
+    jest.spyOn(matterbridge.serverNode as any, 'close').mockImplementationOnce(() => {
+      throw new Error('Test error creating server node');
+    });
+    await (matterbridge as any).stopServerNode(matterbridge.serverNode, 100);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Closing Matterbridge server node`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to close Matterbridge server node`));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    });
+    await Promise.resolve();
+
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(10);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing matter node storage...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Matter node storage closed`);

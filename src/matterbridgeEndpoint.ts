@@ -3,8 +3,9 @@
  *
  * @file matterbridgeEndpoint.ts
  * @author Luca Liguori
- * @date 2024-10-01
+ * @created 2024-10-01
  * @version 2.1.1
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,12 +19,97 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
+
+// @matter
+import {
+  ActionContext,
+  AtLeastOne,
+  Behavior,
+  ClusterId,
+  Endpoint,
+  EndpointNumber,
+  EndpointType,
+  HandlerFunction,
+  Lifecycle,
+  MutableEndpoint,
+  NamedHandler,
+  ServerNode,
+  StorageContext,
+  SupportedBehaviors,
+  UINT16_MAX,
+  UINT32_MAX,
+  VendorId,
+} from '@matter/main';
+import { DeviceClassification } from '@matter/main/model';
+import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
+// @matter clusters
+import { Descriptor } from '@matter/main/clusters/descriptor';
+import { PowerSource } from '@matter/main/clusters/power-source';
+import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
+import { Identify } from '@matter/main/clusters/identify';
+import { OnOff } from '@matter/main/clusters/on-off';
+import { LevelControl } from '@matter/main/clusters/level-control';
+import { ColorControl } from '@matter/main/clusters/color-control';
+import { WindowCovering } from '@matter/main/clusters/window-covering';
+import { Thermostat } from '@matter/main/clusters/thermostat';
+import { FanControl } from '@matter/main/clusters/fan-control';
+import { DoorLock } from '@matter/main/clusters/door-lock';
+import { ModeSelect } from '@matter/main/clusters/mode-select';
+import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
+import { PumpConfigurationAndControl } from '@matter/main/clusters/pump-configuration-and-control';
+import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
+import { Switch } from '@matter/main/clusters/switch';
+import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
+import { PowerTopology } from '@matter/main/clusters/power-topology';
+import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
+import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
+import { AirQuality } from '@matter/main/clusters/air-quality';
+import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
+import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
+import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
+import { OperationalState } from '@matter/main/clusters/operational-state';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
+// @matter behaviors
+import { DescriptorServer } from '@matter/main/behaviors/descriptor';
+import { PowerSourceServer } from '@matter/main/behaviors/power-source';
+import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
+import { GroupsServer } from '@matter/main/behaviors/groups';
+import { ScenesManagementServer } from '@matter/main/behaviors/scenes-management';
+import { PumpConfigurationAndControlServer } from '@matter/main/behaviors/pump-configuration-and-control';
+import { SwitchServer } from '@matter/main/behaviors/switch';
+import { BooleanStateServer } from '@matter/main/behaviors/boolean-state';
+import { PowerTopologyServer } from '@matter/main/behaviors/power-topology';
+import { ElectricalPowerMeasurementServer } from '@matter/main/behaviors/electrical-power-measurement';
+import { ElectricalEnergyMeasurementServer } from '@matter/main/behaviors/electrical-energy-measurement';
+import { TemperatureMeasurementServer } from '@matter/main/behaviors/temperature-measurement';
+import { RelativeHumidityMeasurementServer } from '@matter/main/behaviors/relative-humidity-measurement';
+import { PressureMeasurementServer } from '@matter/main/behaviors/pressure-measurement';
+import { FlowMeasurementServer } from '@matter/main/behaviors/flow-measurement';
+import { IlluminanceMeasurementServer } from '@matter/main/behaviors/illuminance-measurement';
+import { OccupancySensingServer } from '@matter/main/behaviors/occupancy-sensing';
+import { AirQualityServer } from '@matter/main/behaviors/air-quality';
+import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-monoxide-concentration-measurement';
+import { CarbonDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-dioxide-concentration-measurement';
+import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/nitrogen-dioxide-concentration-measurement';
+import { OzoneConcentrationMeasurementServer } from '@matter/main/behaviors/ozone-concentration-measurement';
+import { FormaldehydeConcentrationMeasurementServer } from '@matter/main/behaviors/formaldehyde-concentration-measurement';
+import { Pm1ConcentrationMeasurementServer } from '@matter/main/behaviors/pm1-concentration-measurement';
+import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-concentration-measurement';
+import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
+import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { FanControlServer } from '@matter/main/behaviors/fan-control';
+import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
+import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
+import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
+import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
+import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
 
 // AnsiLogger module
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from './logger/export.js';
-
 // Matterbridge
 import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 import { isValidNumber, isValidObject, isValidString } from './utils/export.js';
@@ -75,76 +161,6 @@ import {
   invokeBehaviorCommand,
   triggerEvent,
 } from './matterbridgeEndpointHelpers.js';
-
-// @matter
-import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, ServerNode, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
-import { DeviceClassification } from '@matter/main/model';
-import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
-
-// @matter clusters
-import { Descriptor } from '@matter/main/clusters/descriptor';
-import { PowerSource } from '@matter/main/clusters/power-source';
-import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
-import { Identify } from '@matter/main/clusters/identify';
-import { OnOff } from '@matter/main/clusters/on-off';
-import { LevelControl } from '@matter/main/clusters/level-control';
-import { ColorControl } from '@matter/main/clusters/color-control';
-import { WindowCovering } from '@matter/main/clusters/window-covering';
-import { Thermostat } from '@matter/main/clusters/thermostat';
-import { FanControl } from '@matter/main/clusters/fan-control';
-import { DoorLock } from '@matter/main/clusters/door-lock';
-import { ModeSelect } from '@matter/main/clusters/mode-select';
-import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
-import { PumpConfigurationAndControl } from '@matter/main/clusters/pump-configuration-and-control';
-import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
-import { Switch } from '@matter/main/clusters/switch';
-import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
-import { PowerTopology } from '@matter/main/clusters/power-topology';
-import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
-import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
-import { AirQuality } from '@matter/main/clusters/air-quality';
-import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
-import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
-import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
-import { OperationalState } from '@matter/main/clusters/operational-state';
-import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
-import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
-
-// @matter behaviors
-import { DescriptorServer } from '@matter/main/behaviors/descriptor';
-import { PowerSourceServer } from '@matter/main/behaviors/power-source';
-import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
-import { GroupsServer } from '@matter/main/behaviors/groups';
-import { ScenesManagementServer } from '@matter/main/behaviors/scenes-management';
-import { PumpConfigurationAndControlServer } from '@matter/main/behaviors/pump-configuration-and-control';
-import { SwitchServer } from '@matter/main/behaviors/switch';
-import { BooleanStateServer } from '@matter/main/behaviors/boolean-state';
-import { PowerTopologyServer } from '@matter/main/behaviors/power-topology';
-import { ElectricalPowerMeasurementServer } from '@matter/main/behaviors/electrical-power-measurement';
-import { ElectricalEnergyMeasurementServer } from '@matter/main/behaviors/electrical-energy-measurement';
-import { TemperatureMeasurementServer } from '@matter/main/behaviors/temperature-measurement';
-import { RelativeHumidityMeasurementServer } from '@matter/main/behaviors/relative-humidity-measurement';
-import { PressureMeasurementServer } from '@matter/main/behaviors/pressure-measurement';
-import { FlowMeasurementServer } from '@matter/main/behaviors/flow-measurement';
-import { IlluminanceMeasurementServer } from '@matter/main/behaviors/illuminance-measurement';
-import { OccupancySensingServer } from '@matter/main/behaviors/occupancy-sensing';
-import { AirQualityServer } from '@matter/main/behaviors/air-quality';
-import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-monoxide-concentration-measurement';
-import { CarbonDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-dioxide-concentration-measurement';
-import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/nitrogen-dioxide-concentration-measurement';
-import { OzoneConcentrationMeasurementServer } from '@matter/main/behaviors/ozone-concentration-measurement';
-import { FormaldehydeConcentrationMeasurementServer } from '@matter/main/behaviors/formaldehyde-concentration-measurement';
-import { Pm1ConcentrationMeasurementServer } from '@matter/main/behaviors/pm1-concentration-measurement';
-import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-concentration-measurement';
-import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
-import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
-import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
-import { FanControlServer } from '@matter/main/behaviors/fan-control';
-import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
-import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
-import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
-import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
-import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -266,6 +282,25 @@ export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
 
+  /**
+   * Activates a special mode for this endpoint.
+   * - 'server': it creates the device server node and add the device as Matter device that needs to be paired individually.
+   *   In this case the bridge mode is not relevant. The device is autonomous. The main use case is a workaround for the Apple Home rvc issue.
+   *
+   * - 'matter': it adds the device directly to the bridge server node as Matter device. In this case the implementation must respect
+   *   the 9.2.3. Disambiguation rule (i.e. use taglist if needed cause the device doesn't have nodeLabel).
+   *   Furthermore the device will be a part of the bridge (i.e. will have the same name and will be in the same room).
+   *   See 9.12.2.2. Native Matter functionality in Bridge.
+   *
+   * @remarks
+   * Always use createDefaultBasicInformationClusterServer() to create the BasicInformation cluster server.
+   */
+  mode: 'server' | 'matter' | undefined = undefined;
+  /** The server context of the endpoint, if it is a single not bridged endpoint */
+  serverContext: StorageContext | undefined;
+  /** The server node of the endpoint, if it is a single not bridged endpoint */
+  serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+
   /** The logger instance for the MatterbridgeEndpoint */
   log: AnsiLogger;
   /** The plugin name this MatterbridgeEndpoint belongs to */
@@ -285,12 +320,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersionString: string | undefined = undefined;
   productUrl = 'https://www.npmjs.com/package/matterbridge';
 
-  /** The server node of the endpoint, if it is a single not bridged endpoint */
-  serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
   /** The name of the first device type of the endpoint (old api compatibility) */
   name: string | undefined = undefined;
   /** The code of the first device type of the endpoint (old api compatibility) */
-  deviceType: number;
+  deviceType: number | undefined = undefined;
   /** The id of the endpoint (old api compatibility) */
   uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;
@@ -303,12 +336,13 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Represents a MatterbridgeEndpoint.
-   * @constructor
+   *
+   * @class MatterbridgeEndpoint
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
-   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
-   * @param {boolean} [debug=false] - Debug flag.
+   * @param {MatterbridgeEndpointOptions} [options] - The options for the device.
+   * @param {boolean} [debug] - Debug flag.
    */
-  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
+  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false) {
     let deviceTypeList: { deviceType: number; revision: number }[] = [];
 
     // Get the first DeviceTypeDefinition
@@ -348,6 +382,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (options.uniqueStorageKey && checkNotLatinCharacters(options.uniqueStorageKey)) {
       options.uniqueStorageKey = generateUniqueId(options.uniqueStorageKey);
     }
+    if (options.id && checkNotLatinCharacters(options.id)) {
+      options.id = generateUniqueId(options.id);
+    }
 
     // Convert the options to an Endpoint.Options
     const optionsV8 = {
@@ -355,9 +392,17 @@ export class MatterbridgeEndpoint extends Endpoint {
       number: options.endpointId,
       descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
+    // Override the deprecated uniqueStorageKey && endpointId with id and number if provided
+    if (options.id !== undefined) {
+      optionsV8.id = options.id.replace(/[ .]/g, '');
+    }
+    if (options.number !== undefined) {
+      optionsV8.number = options.number;
+    }
     super(endpointV8, optionsV8);
 
-    this.uniqueStorageKey = options.uniqueStorageKey;
+    this.mode = options.mode;
+    this.uniqueStorageKey = options.id ? options.id : options.uniqueStorageKey;
     this.name = firstDefinition.name;
     this.deviceType = firstDefinition.code;
     this.tagList = options.tagList;
@@ -374,7 +419,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Create the logger
     this.log = new AnsiLogger({ logName: options.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
-      `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
+      `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} mode: ${CYAN}${this.mode}${db} id: ${CYAN}${optionsV8.id}${db} number: ${CYAN}${optionsV8.number}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
 
     // Add MatterbridgeServer
@@ -385,11 +430,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Loads an instance of the MatterbridgeEndpoint class.
    *
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the device.
-   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
-   * @param {boolean} [debug=false] - Debug flag.
+   * @param {MatterbridgeEndpointOptions} [options] - The options for the device.
+   * @param {boolean} [debug] - Debug flag.
    * @returns {Promise<MatterbridgeEndpoint>} MatterbridgeEndpoint instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
+  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false): Promise<MatterbridgeEndpoint> {
     return new MatterbridgeEndpoint(definition, options, debug);
   }
 
@@ -501,6 +546,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Triggers an event on the specified cluster.
+   *
    * @param {ClusterId} cluster - The ID of the cluster.
    * @param {string} event - The name of the event to trigger.
    * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
@@ -664,8 +710,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {string} endpointName - The name of the new endpoint to add.
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
-   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the endpoint.
-   * @param {boolean} [debug=false] - Whether to enable debug logging.
+   * @param {MatterbridgeEndpointOptions} [options] - The options for the endpoint.
+   * @param {boolean} [debug] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    *
    * @example
@@ -716,9 +762,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {string} endpointName - The name of the new enpoint to add.
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
-   * @param {ClusterId[]} [serverList=[]] - The list of cluster IDs to include.
-   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
-   * @param {boolean} [debug=false] - Whether to enable debug logging.
+   * @param {ClusterId[]} [serverList] - The list of cluster IDs to include.
+   * @param {MatterbridgeEndpointOptions} [options] - The options for the device.
+   * @param {boolean} [debug] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    *
    * @example
@@ -812,8 +858,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Serializes the Matterbridge device into a serialized object.
    *
-   * @param pluginName - The name of the plugin.
-   * @returns The serialized Matterbridge device object.
+   * @param {MatterbridgeEndpoint} device - The Matterbridge device to serialize.
+   *
+   * @returns {SerializedMatterbridgeEndpoint | undefined} The serialized Matterbridge device object.
    */
   static serialize(device: MatterbridgeEndpoint): SerializedMatterbridgeEndpoint | undefined {
     if (!device.serialNumber || !device.deviceName || !device.uniqueId) return;
@@ -842,7 +889,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Deserializes the device into a serialized object.
    *
-   * @returns The deserialized MatterbridgeDevice.
+   * @param {SerializedMatterbridgeEndpoint} serializedDevice - The serialized Matterbridge device object.
+   * @returns {MatterbridgeEndpoint | undefined} The deserialized Matterbridge device.
    */
   static deserialize(serializedDevice: SerializedMatterbridgeEndpoint): MatterbridgeEndpoint | undefined {
     const device = new MatterbridgeEndpoint(serializedDevice.deviceTypes as AtLeastOne<DeviceTypeDefinition>, { uniqueStorageKey: serializedDevice.endpointName, endpointId: serializedDevice.endpoint }, false);
@@ -872,7 +920,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source wired cluster server.
    *
-   * @param wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
+   * @param {PowerSource.WiredCurrentType} wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
@@ -889,11 +937,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source replaceable battery cluster server.
    *
-   * @param batPercentRemaining - The remaining battery percentage (default: 100).
-   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param batVoltage - The battery voltage (default: 1500).
-   * @param batReplacementDescription - The battery replacement description (default: 'Battery type').
-   * @param batQuantity - The battery quantity (default: 1).
+   * @param {number} batPercentRemaining - The remaining battery percentage (default: 100).
+   * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param {number} batVoltage - The battery voltage (default: 1500).
+   * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
+   * @param {number} batQuantity - The quantity of the battery (default: 1).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500, batReplacementDescription = 'Battery type', batQuantity = 1) {
@@ -917,9 +965,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source rechargeable battery cluster server.
    *
-   * @param batPercentRemaining - The remaining battery percentage (default: 100).
-   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param batVoltage - The battery voltage (default: 1500).
+   * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100).
+   * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param {number} [batVoltage] - The battery voltage (default: 1500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500) {
@@ -944,25 +992,25 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Setup the default Basic Information Cluster Server attributes for the server node.
    *
-   * @param deviceName - The name of the device.
-   * @param serialNumber - The serial number of the device.
-   * @param vendorId - The vendor ID of the device.
-   * @param vendorName - The vendor name of the device.
-   * @param productId - The product ID of the device.
-   * @param productName - The product name of the device.
-   * @param softwareVersion - The software version of the device. Default is 1.
-   * @param softwareVersionString - The software version string of the device. Default is 'v.1.0.0'.
-   * @param hardwareVersion - The hardware version of the device. Default is 1.
-   * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
+   * @param {string} deviceName - The name of the device.
+   * @param {string} serialNumber - The serial number of the device.
+   * @param {number} [vendorId] - The vendor ID of the device.  Default is 0xfff1 (Matter Test VendorId).
+   * @param {string} [vendorName] - The name of the vendor. Default is 'Matterbridge'.
+   * @param {number} [productId] - The product ID of the device.  Default is 0x8000 (Matter Test ProductId).
+   * @param {string} [productName] - The name of the product. Default is 'Matterbridge device'.
+   * @param {number} [softwareVersion] - The software version of the device. Default is 1.
+   * @param {string} [softwareVersionString] - The software version string of the device. Default is '1.0.0'.
+   * @param {number} [hardwareVersion] - The hardware version of the device. Default is 1.
+   * @param {string} [hardwareVersionString] - The hardware version string of the device. Default is '1.0.0'.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultBasicInformationClusterServer(
     deviceName: string,
     serialNumber: string,
-    vendorId: number,
-    vendorName: string,
-    productId: number,
-    productName: string,
+    vendorId: number = 0xfff1,
+    vendorName: string = 'Matterbridge',
+    productId: number = 0x8000,
+    productName: string = 'Matterbridge device',
     softwareVersion = 1,
     softwareVersionString = '1.0.0',
     hardwareVersion = 1,
@@ -980,7 +1028,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.softwareVersionString = softwareVersionString;
     this.hardwareVersion = hardwareVersion;
     this.hardwareVersionString = hardwareVersionString;
-    if (MatterbridgeEndpoint.bridgeMode === 'bridge') {
+    if (MatterbridgeEndpoint.bridgeMode === 'bridge' && this.mode === undefined) {
       const options = this.getClusterServerOptions(Descriptor.Cluster.id);
       if (options) {
         const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
@@ -994,15 +1042,15 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default BridgedDeviceBasicInformationClusterServer for the aggregator endpoints.
    *
-   * @param deviceName - The name of the device.
-   * @param serialNumber - The serial number of the device.
-   * @param vendorId - The vendor ID of the device.
-   * @param vendorName - The name of the vendor.
-   * @param productName - The name of the product.
-   * @param softwareVersion - The software version of the device. Default is 1.
-   * @param softwareVersionString - The software version string of the device. Default is 'v.1.0.0'.
-   * @param hardwareVersion - The hardware version of the device. Default is 1.
-   * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
+   * @param {string} deviceName - The name of the device.
+   * @param {string} serialNumber - The serial number of the device.
+   * @param {number} [vendorId] - The vendor ID of the device. Default is 0xfff1 (Matter Test VendorId).
+   * @param {string} [vendorName] - The name of the vendor. Default is 'Matterbridge'.
+   * @param {string} [productName] - The name of the product. Default is 'Matterbridge device'.
+   * @param {number} [softwareVersion] - The software version of the device. Default is 1.
+   * @param {string} [softwareVersionString] - The software version string of the device. Default is '1.0.0'.
+   * @param {number} [hardwareVersion] - The hardware version of the device. Default is 1.
+   * @param {string} [hardwareVersionString] - The hardware version string of the device. Default is '1.0.0'.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks The bridgedNode device type must be added to the deviceTypeList of the Descriptor cluster.
@@ -1010,9 +1058,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   createDefaultBridgedDeviceBasicInformationClusterServer(
     deviceName: string,
     serialNumber: string,
-    vendorId: number,
-    vendorName: string,
-    productName: string,
+    vendorId: number = 0xfff1,
+    vendorName: string = 'Matterbridge',
+    productName: string = 'Matterbridge device',
     softwareVersion = 1,
     softwareVersionString = '1.0.0',
     hardwareVersion = 1,
@@ -1056,8 +1104,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default identify cluster server with the specified identify time and type.
    *
-   * @param {number} [identifyTime=0] - The time to identify the server. Defaults to 0.
-   * @param {Identify.IdentifyType} [identifyType=Identify.IdentifyType.None] - The type of identification. Defaults to Identify.IdentifyType.None.
+   * @param {number} [identifyTime] - The time to identify the server. Defaults to 0.
+   * @param {Identify.IdentifyType} [identifyType] - The type of identification. Defaults to Identify.IdentifyType.None.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultIdentifyClusterServer(identifyTime = 0, identifyType = Identify.IdentifyType.None) {
@@ -1070,6 +1118,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default groups cluster server.
+   *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultGroupsClusterServer() {
@@ -1079,6 +1128,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default scenes management cluster server.
+   *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks The scenes management cluster server is still provisional and so not yet implemented.
@@ -1091,11 +1141,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default OnOff cluster server for light devices with feature Lighting.
    *
-   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
-   * @param {boolean} [globalSceneControl=false] - The global scene control state.
-   * @param {number} [onTime=0] - The on time value.
-   * @param {number} [offWaitTime=0] - The off wait time value.
-   * @param {OnOff.StartUpOnOff | null} [startUpOnOff=null] - The start-up OnOff state. Null means previous state.
+   * @param {boolean} [onOff] - The initial state of the OnOff cluster.
+   * @param {boolean} [globalSceneControl] - The global scene control state.
+   * @param {number} [onTime] - The on time value.
+   * @param {number} [offWaitTime] - The off wait time value.
+   * @param {OnOff.StartUpOnOff | null} [startUpOnOff] - The start-up OnOff state. Null means previous state.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
@@ -1112,7 +1162,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates an OnOff cluster server without features.
    *
-   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createOnOffClusterServer(onOff = false) {
@@ -1125,7 +1175,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a DeadFront OnOff cluster server with feature DeadFrontBehavior.
    *
-   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDeadFrontOnOffClusterServer(onOff = false) {
@@ -1138,7 +1188,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates an OffOnly OnOff cluster server with feature OffOnly.
    *
-   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createOffOnlyOnOffClusterServer(onOff = false) {
@@ -1151,11 +1201,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default level control cluster server for light devices with feature OnOff and Lighting.
    *
-   * @param {number} [currentLevel=254] - The current level (default: 254).
-   * @param {number} [minLevel=1] - The minimum level (default: 1).
-   * @param {number} [maxLevel=254] - The maximum level (default: 254).
-   * @param {number | null} [onLevel=null] - The on level (default: null).
-   * @param {number | null} [startUpCurrentLevel=null] - The startUp on level (default: null).
+   * @param {number} [currentLevel] - The current level (default: 254).
+   * @param {number} [minLevel] - The minimum level (default: 1).
+   * @param {number} [maxLevel] - The maximum level (default: 254).
+   * @param {number | null} [onLevel] - The on level (default: null).
+   * @param {number | null} [startUpCurrentLevel] - The startUp on level (default: null).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null, startUpCurrentLevel: number | null = null) {
@@ -1177,8 +1227,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a level control cluster server without features.
    *
-   * @param {number} [currentLevel=254] - The current level (default: 254).
-   * @param {number | null} [onLevel=null] - The on level (default: null).
+   * @param {number} [currentLevel] - The current level (default: 254).
+   * @param {number | null} [onLevel] - The on level (default: null).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createLevelControlClusterServer(currentLevel = 254, onLevel: number | null = null) {
@@ -1196,13 +1246,13 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default color control cluster server with features Xy, HueSaturation and ColorTemperature.
    *
-   * @param currentX - The current X value (range 0-65279).
-   * @param currentY - The current Y value (range 0-65279).
-   * @param currentHue - The current hue value (range: 0-254).
-   * @param currentSaturation - The current saturation value (range: 0-254).
-   * @param colorTemperatureMireds - The color temperature in mireds (default range 147-500).
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
+   * @param {number} currentX - The current X value (range 0-65279).
+   * @param {number} currentY - The current Y value (range 0-65279).
+   * @param {number} currentHue - The current hue value (range: 0-254).
+   * @param {number} currentSaturation - The current saturation value (range: 0-254).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -1238,11 +1288,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a Xy color control cluster server with feature Xy and ColorTemperature.
    *
-   * @param currentX - The current X value.
-   * @param currentY - The current Y value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @param {number} currentX - The current X value (range 0-65279).
+   * @param {number} currentY - The current Y value (range 0-65279).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1278,11 +1328,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default hue and saturation control cluster server with feature HueSaturation and ColorTemperature.
    *
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @param {number} currentHue - The current hue value (range: 0-254).
+   * @param {number} currentSaturation - The current saturation value (range: 0-254).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -1316,9 +1366,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a color temperature color control cluster server with feature ColorTemperature.
    * This cluster server is used for devices that only support color temperature control.
    *
-   * @param colorTemperatureMireds - The color temperature in mireds. Defaults to 250.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds. Defaults to 147.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds. Defaults to 500.
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -1471,6 +1521,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Sets the lift current and target position and the status of a window covering.
+   *
    * @param {number} current - The current position of the window covering.
    * @param {number} target - The target position of the window covering.
    * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
@@ -1493,6 +1544,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Sets the status of the window covering.
+   *
    * @param {WindowCovering.MovementStatus} status - The movement status to set.
    */
   async setWindowCoveringStatus(status: WindowCovering.MovementStatus) {
@@ -1512,7 +1564,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Retrieves the status of the window covering.
    *
-   * @returns The global operational status of the window covering or undefined.
+   * @returns {WindowCovering.MovementStatus | undefined} The movement status of the window covering, or undefined if not available.
    */
   getWindowCoveringStatus(): WindowCovering.MovementStatus | undefined {
     const status = this.getAttribute(WindowCovering.Cluster.id, 'operationalStatus', this.log);
@@ -1542,14 +1594,14 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default thermostat cluster server with features Heating, Cooling and AutoMode.
    *
-   * @param {number} [localTemperature=23] - The local temperature value in degrees Celsius. Defaults to 23°.
-   * @param {number} [occupiedHeatingSetpoint=21] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
-   * @param {number} [occupiedCoolingSetpoint=25] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
-   * @param {number} [minSetpointDeadBand=1] - The minimum setpoint dead band value. Defaults to 1°.
-   * @param {number} [minHeatSetpointLimit=0] - The minimum heat setpoint limit value. Defaults to 0°.
-   * @param {number} [maxHeatSetpointLimit=50] - The maximum heat setpoint limit value. Defaults to 50°.
-   * @param {number} [minCoolSetpointLimit=0] - The minimum cool setpoint limit value. Defaults to 0°.
-   * @param {number} [maxCoolSetpointLimit=50] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 1°.
+   * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultThermostatClusterServer(
@@ -1587,6 +1639,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default heating thermostat cluster server with feature Heating.
+   *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
@@ -1610,6 +1663,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default cooling thermostat cluster server with feature Cooling.
+   *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
    * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
@@ -1634,6 +1688,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default thermostat user interface configuration cluster server.
    *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    * @remarks
    * The default values are:
    * - temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius (writeble).
@@ -1652,10 +1707,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default fan control cluster server with features Auto, and Step.
    *
-   * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
-   * @param {FanControl.FanModeSequence} [fanModeSequence=FanControl.FanModeSequence.OffLowMedHighAuto] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
-   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
-   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
+   * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
+   * @param {number} [percentSetting] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent] - The initial percent current. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1676,12 +1731,13 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a fan control cluster server with features MultiSpeed, Auto, and Step.
    *
-   * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
-   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
-   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
-   * @param {number} [speedMax=10] - The maximum speed setting. Defaults to 10.
-   * @param {number} [speedSetting=0] - The initial speed setting. Defaults to 0.
-   * @param {number} [speedCurrent=0] - The initial speed current. Defaults to 0.
+   * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
+   * @param {number} [percentSetting] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent] - The initial percent current. Defaults to 0.
+   * @param {number} [speedMax] - The maximum speed setting. Defaults to 10.
+   * @param {number} [speedSetting] - The initial speed setting. Defaults to 0.
+   * @param {number} [speedCurrent] - The initial speed current. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1716,10 +1772,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a base fan control cluster server without features.
    *
-   * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
-   * @param {FanControl.FanModeSequence} [fanModeSequence=FanControl.FanModeSequence.OffLowMedHigh] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHigh`.
-   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
-   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
+   * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHigh`.
+   * @param {number} [percentSetting] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent] - The initial percent current. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1791,8 +1847,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default door lock cluster server.
    *
-   * @param {DoorLock.LockState} [lockState=DoorLock.LockState.Locked] - The initial state of the lock (default: Locked).
-   * @param {DoorLock.LockType} [lockType=DoorLock.LockType.DeadBolt] - The type of the lock (default: DeadBolt).
+   * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
+   * @param {DoorLock.LockType} [lockType] - The type of the lock (default: DeadBolt).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1816,8 +1872,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {string} description - The description of the mode select cluster.
    * @param {ModeSelect.ModeOption[]} supportedModes - The list of supported modes.
-   * @param {number} [currentMode=0] - The current mode (default: 0).
-   * @param {number} [startUpMode=0] - The startup mode (default: 0).
+   * @param {number} [currentMode] - The current mode (default: 0).
+   * @param {number} [startUpMode] - The startup mode (default: 0).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1837,8 +1893,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates the default Valve Configuration And Control cluster server with features Level.
    *
-   * @param {ValveConfigurationAndControl.ValveState} [valveState=ValveConfigurationAndControl.ValveState.Closed] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
-   * @param {number} [valveLevel=0] - The valve level to set. Defaults to 0.
+   * @param {ValveConfigurationAndControl.ValveState} [valveState] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
+   * @param {number} [valveLevel] - The valve level to set. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
@@ -1861,7 +1917,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates the default PumpConfigurationAndControl cluster server with features ConstantSpeed.
    *
-   * @param {PumpConfigurationAndControl.OperationMode} [pumpMode=PumpConfigurationAndControl.OperationMode.Normal] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
+   * @param {PumpConfigurationAndControl.OperationMode} [pumpMode] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPumpConfigurationAndControlClusterServer(pumpMode = PumpConfigurationAndControl.OperationMode.Normal) {
@@ -1998,7 +2054,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Triggers a switch event on the specified endpoint.
    *
    * @param {string} event - The type of event to trigger. Possible values are 'Single', 'Double', 'Long' for momentarySwitch and 'Press', 'Release' for latchingSwitch.
-   * @param {Endpoint} endpoint - The endpoint on which to trigger the event (default the device endpoint).
+   * @param {AnsiLogger} log - Optional logger to log the event.
    * @returns {boolean} - A boolean indicating whether the event was successfully triggered.
    */
   async triggerSwitchEvent(event: 'Single' | 'Double' | 'Long' | 'Press' | 'Release', log?: AnsiLogger): Promise<boolean> {
@@ -2108,12 +2164,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks Supports the enableDisableAlarm command.
    *
-   * @param {boolean} [sensorFault=false] - Optional boolean value indicating the sensor fault state. Defaults to `false` if not provided.
-   * @param {number} [currentSensitivityLevel=0] - The current sensitivity level. Defaults to `0` if not provided.
-   * @param {number} [supportedSensitivityLevels=2] - The number of supported sensitivity levels. Defaults to `2` if not provided (min 2, max 10).
-   * @param {number} [defaultSensitivityLevel=0] - The default sensitivity level. Defaults to `0` if not provided.
+   * @param {boolean} [sensorFault] - Optional boolean value indicating the sensor fault state. Defaults to `false` if not provided.
+   * @param {number} [currentSensitivityLevel] - The current sensitivity level. Defaults to `0` if not provided.
+   * @param {number} [supportedSensitivityLevels] - The number of supported sensitivity levels. Defaults to `2` if not provided (min 2, max 10).
+   * @param {number} [defaultSensitivityLevel] - The default sensitivity level. Defaults to `0` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   *
    */
   createDefaultBooleanStateConfigurationClusterServer(sensorFault = false, currentSensitivityLevel = 0, supportedSensitivityLevels = 2, defaultSensitivityLevel = 0) {
     this.behaviors.require(
@@ -2136,11 +2191,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting and with the specified ESA type, ESA canGenerate, ESA state, and power limits.
    *
-   * @param {DeviceEnergyManagement.EsaType} [esaType=DeviceEnergyManagement.EsaType.Other] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
-   * @param {boolean} [esaCanGenerate=false] - Indicates if the ESA can generate energy. Defaults to `false`.
-   * @param {DeviceEnergyManagement.EsaState} [esaState=DeviceEnergyManagement.EsaState.Online] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
-   * @param {number} [absMinPower=0] - The absolute minimum power in mW. Defaults to `0`.
-   * @param {number} [absMaxPower=0] - The absolute maximum power in mW. Defaults to `0`.
+   * @param {DeviceEnergyManagement.EsaType} [esaType] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
+   * @param {boolean} [esaCanGenerate] - Indicates if the ESA can generate energy. Defaults to `false`.
+   * @param {DeviceEnergyManagement.EsaState} [esaState] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
+   * @param {number} [absMinPower] - The absolute minimum power in mW. Defaults to `0`.
+   * @param {number} [absMaxPower] - The absolute maximum power in mW. Defaults to `0`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -2335,7 +2390,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
-   * @remark The default value for the illuminance measurement is null.
+   * @remarks The default value for the illuminance measurement is null.
    * This attribute SHALL indicate the illuminance in Lux (symbol lx) as follows:
    * •  MeasuredValue = 10,000 x log10(illuminance) + 1,
    *    where 1 lx <= illuminance <= 3.576 Mlx, corresponding to a MeasuredValue in the range 1 to 0xFFFE.
@@ -2372,7 +2427,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} holdTimeMax - The maximum hold time in seconds. Default is 300.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
-   * @remark The default value for the occupancy sensor type is PIR.
+   * @remarks The default value for the occupancy sensor type is PIR.
    */
   createDefaultOccupancySensingClusterServer(occupied = false, holdTime = 30, holdTimeMin = 1, holdTimeMax = 300) {
     this.behaviors.require(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), getDefaultOccupancySensingClusterServer(occupied, holdTime, holdTimeMin, holdTimeMax));
@@ -2415,8 +2470,8 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server with feature LevelIndication.
-
-  * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
+   
+   * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The measurement medium (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
