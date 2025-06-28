@@ -28,11 +28,23 @@ The Matterbridge Plugin Template has an already configured Jest / Vitest test un
 
 It also has a workflow configured to run on push and pull request that build, lint and test the plugin on node 20, 22 and 24 with ubuntu, macOS and windows.
 
-## Dev Container
+## Matterbridge Dev Container
 
 Using a Dev Container provides a fully isolated, reproducible, and pre-configured development environment. This ensures that all contributors have the same tools, extensions, and dependencies, eliminating "works on my machine" issues. It also makes onboarding new developers fast and hassle-free, as everything needed is set up automatically.
 
 For improved efficiency, the setup uses named Docker volumes for `node_modules`. This means dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes.
+
+To start the Dev Container, simply open the project folder in [Visual Studio Code](https://code.visualstudio.com/) and, if prompted, click "Reopen in Container". Alternatively, use the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`), search for "Dev Containers: Reopen in Container", and select it. VS Code will automatically build and start the containerized environment for you.
+
+> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be much faster.
+
+Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
+
+## Matterbridge Plugin Dev Container
+
+Using a Dev Container provides a fully isolated, reproducible, and pre-configured development environment. This ensures that all contributors have the same tools, extensions, and dependencies, eliminating "works on my machine" issues. It also makes onboarding new developers fast and hassle-free, as everything needed is set up automatically.
+
+For improved efficiency, the setup uses named Docker volumes for `matterbridge` and `node_modules`. This means that the dev of matterbridge and the plugin dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes.
 
 To start the Dev Container, simply open the project folder in [Visual Studio Code](https://code.visualstudio.com/) and, if prompted, click "Reopen in Container". Alternatively, use the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`), search for "Dev Containers: Reopen in Container", and select it. VS Code will automatically build and start the containerized environment for you.
 

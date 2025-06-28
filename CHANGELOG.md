@@ -24,7 +24,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [DevContainer]: Added support for the **Matterbridge Dev Container** with an optimized named volume for `node_modules`.
+- [DevContainer]: Added support for the [**Matterbridge Dev Container**](https://github.com/Luligu/matterbridge/blob/dev/README-DEV.md#matterbridge-dev-container) with an optimized named volume for `node_modules`.
+- [DevContainer]: Added support for the [**Matterbridge Plugin Dev Container**](https://github.com/Luligu/matterbridge/blob/dev/README-DEV.md#matterbridge-plugin-dev-container) with an optimized named volume for `matterbridge` and `node_modules`.
 - [GitHub]: Added GitHub issue templates for bug reports and feature requests.
 - [Systemd]: Added a systemd service example file for Matterbridge in the systemd directory.
 - [ESLint]: Refactored ESLint configuration for TypeScript and improved plugin integration.
