@@ -8,21 +8,33 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.1.1] - 2025-07-??
+
+### Added
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.1.0] - 2025-06-28
 
 ### Added
 
 - [DevContainer]: Added support for the **Matterbridge Dev Container** with an optimized named volume for `node_modules`.
 - [GitHub]: Added GitHub issue templates for bug reports and feature requests.
-- [Systemd]: Added a systemd service file for Matterbridge in the systemd directory.
+- [Systemd]: Added a systemd service example file for Matterbridge in the systemd directory.
 - [ESLint]: Refactored ESLint configuration for TypeScript and improved plugin integration.
 - [ESLint]: Added the plugins `eslint-plugin-promise`, `eslint-plugin-jsdoc`, and `@vitest/eslint-plugin`.
-- [Vitest]: Added Vitest for TypeScript project testing. It will replace Jest, which does not work correctly with ESM module mocks.
+- [Vitest]: Added `Vitest` for TypeScript project testing. It will replace Jest, which does not work correctly with ESM module mocks.
 - [JSDoc]: Added missing JSDoc comments, including `@param` and `@returns` tags.
 - [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='server'. It allows to advertise a single device like an autonomous device with its server node to be paired. The device is not bridged (alpha stage).
 - [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='matter'. It allows to add a single device to the Matterbridge server node next to the aggregator. The device is not bridged (alpha stage).
 - [storage]: Improved error handling of corrupted storage.
-- [test]: Improved test units on Matterbridge classes.
+- [test]: Improved test units on Matterbridge classes (coverage 91%).
 
 ### Changed
 

@@ -53,6 +53,7 @@
         "--no-warnings",
         "--experimental-vm-modules",
         "node_modules/jest/bin/jest.js",
+        "--verbose",
         "--coverage",
         "--maxWorkers=100%"
       ],
@@ -112,11 +113,35 @@
         "--no-warnings",
         "--experimental-vm-modules",
         "node_modules/jest/bin/jest.js",
+        "--verbose",
         "--coverage",
         "--maxWorkers=100%",
         "matterbridgeEndpoint.test.ts",
         "matterbridgeEndpoint-default.test.ts",
         "matterbridgeEndpoint-matterjs.test.ts"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Endpoint Classes",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "src/base.test.ts",
+        "src/laundryWasher.test.ts",
+        "src/roboticVacuumCleaner.test.ts",
+        "src/evse.test.ts",
+        "src/waterHeater.test.ts",
       ],
       "group": {
         "kind": "test",
@@ -132,6 +157,7 @@
         "--no-warnings",
         "--experimental-vm-modules",
         "node_modules/jest/bin/jest.js",
+        "--verbose",
         "--coverage",
         "--maxWorkers=100%",
         "matterbridgePlatform.test.ts",
@@ -145,13 +171,14 @@
       "problemMatcher": []
     },
     {
-      "label": "Test: Plugins",
+      "label": "Test: PluginManager",
       "type": "shell",
       "command": "node",
       "args": [
         "--no-warnings",
         "--experimental-vm-modules",
         "node_modules/jest/bin/jest.js",
+        "--verbose",
         "--coverage",
         "--maxWorkers=100%",
         "pluginManager.test.ts"
@@ -163,13 +190,14 @@
       "problemMatcher": []
     },
     {
-      "label": "Test: Devices",
+      "label": "Test: DeviceManager",
       "type": "shell",
       "command": "node",
       "args": [
         "--no-warnings",
         "--experimental-vm-modules",
         "node_modules/jest/bin/jest.js",
+        "--verbose",
         "--coverage",
         "--maxWorkers=100%",
         "deviceManager.test.ts"
