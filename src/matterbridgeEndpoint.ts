@@ -942,45 +942,6 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default power source wired rechargeable battery cluster server.
-   *
-   * @param batPercentRemaining - The remaining battery percentage (default: 100).
-   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param batVoltage - The battery voltage (default: 48000).
-   * @param batTimeRemaining - Estimated time in seconds before the battery will no longer be able to provide power to the Node (default: null).
-   * @param batTimeToFullCharge - Estimated time in seconds before the battery source will be at full charge (default: null).
-   * @param activeBatChargeFaults - The set of charge faults currently detected by the Node on this power (default: null).
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultPowerSourceWiredRechargeableBatteryClusterServer(
-    batPercentRemaining = 100,
-    batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
-    batVoltage = 48000,
-    batTimeRemaining: number | null = null,
-    batTimeToFullCharge: number | null = null,
-    activeBatChargeFaults: PowerSource.BatChargeFault[] | undefined = undefined,
-  ): this {
-    // this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Wired, PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
-    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
-      status: PowerSource.PowerSourceStatus.Active,
-      order: 0,
-      description: 'Primary battery',
-      batVoltage,
-      batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
-      batTimeRemaining,
-      batChargeLevel,
-      batTimeToFullCharge,
-      batReplacementNeeded: false,
-      batReplaceability: PowerSource.BatReplaceability.Unspecified,
-      activeBatChargeFaults,
-      batChargeState: PowerSource.BatChargeState.IsNotCharging,
-      batFunctionalWhileCharging: true,
-      endpointList: [],
-    });
-    return this;
-  }
-
-  /**
    * Setup the default Basic Information Cluster Server attributes for the server node.
    *
    * @param deviceName - The name of the device.
