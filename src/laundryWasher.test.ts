@@ -1,8 +1,12 @@
 // src\singledevice.test.ts
 
+const MATTER_PORT = 6001;
+const NAME = 'LaundryWasher';
+const HOMEDIR = path.join('jest', NAME);
+
 // Import necessary modules and types
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
@@ -43,10 +47,6 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-const MATTER_PORT = 6001;
-const NAME = 'LaundryWasher';
-const HOMEDIR = path.join('jest', NAME);
-
 /**
  * Waits for the `isOnline` property to become `true`.
  * This function checks the `isOnline` property of the provided server node at regular intervals until it becomes `true` or the specified timeout is reached.
@@ -74,24 +74,22 @@ async function waitForOnline(server: ServerNode<ServerNode.RootEndpoint>, timeou
   });
 }
 
-describe('Matterbridge ' + NAME, () => {
-  const log = new AnsiLogger({ logName: NAME, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+// Cleanup the matter environment
+rmSync(HOMEDIR, { recursive: true, force: true });
 
+describe('Matterbridge ' + NAME, () => {
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
-  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
-    // Cleanup the matter environment
-    rmSync(HOMEDIR, { recursive: true, force: true });
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
     environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
-  }, 30000);
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -135,20 +133,6 @@ describe('Matterbridge ' + NAME, () => {
     });
     expect(server).toBeDefined();
     expect(server.lifecycle.isReady).toBeTruthy();
-  });
-
-  test('create the aggregator node', async () => {
-    aggregator = new Endpoint(AggregatorEndpoint, { id: NAME + 'AggregatorNode' });
-    expect(aggregator).toBeDefined();
-  });
-
-  test('add the aggregator node to the server', async () => {
-    expect(server).toBeDefined();
-    expect(aggregator).toBeDefined();
-    await server.add(aggregator);
-    expect(server.parts.has(aggregator.id)).toBeTruthy();
-    expect(server.parts.has(aggregator)).toBeTruthy();
-    expect(aggregator.lifecycle.isReady).toBeTruthy();
   });
 
   test('create a laundry washer device', async () => {
@@ -290,17 +274,20 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
   });
 
-  test('close the server node', async () => {
+  test('close server node', async () => {
+    // Close the server
     expect(server).toBeDefined();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
     await server.close();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 
   test('stop the mDNS service', async () => {
     expect(server).toBeDefined();
     await server.env.get(MdnsService)[Symbol.asyncDispose]();
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 });

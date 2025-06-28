@@ -52,8 +52,6 @@ if (!debug) {
 rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge EVSE', () => {
-  const log = new AnsiLogger({ logName: NAME, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let device: MatterbridgeEndpoint;
@@ -236,7 +234,12 @@ describe('Matterbridge EVSE', () => {
     await server.close();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
-    // Stop the mDNS service
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  });
+
+  test('stop the mDNS service', async () => {
+    expect(server).toBeDefined();
     await server.env.get(MdnsService)[Symbol.asyncDispose]();
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 });

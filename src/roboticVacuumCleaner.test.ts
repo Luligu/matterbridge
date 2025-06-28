@@ -5,7 +5,7 @@ const NAME = 'Rvc';
 const HOMEDIR = path.join('jest', NAME);
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, er, hk, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
@@ -15,7 +15,6 @@ import { MdnsService } from '@matter/main/protocol';
 import { Identify, PowerSource, RvcCleanMode, RvcOperationalState, RvcRunMode, ServiceArea } from '@matter/main/clusters';
 import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
 
-import { Matterbridge } from './matterbridge.ts';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.ts';
 import { MatterbridgeServiceAreaServer } from './matterbridgeBehaviors.ts';
@@ -49,29 +48,9 @@ if (!debug) {
 rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge Robotic Vacuum Cleaner', () => {
-  const log = new AnsiLogger({ logName: NAME, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let device: MatterbridgeEndpoint;
-
-  const mockMatterbridge = {
-    matterbridgeVersion: '1.0.0',
-    matterbridgeInformation: { virtualMode: 'disabled' },
-    bridgeMode: 'bridge',
-    restartMode: '',
-    restartProcess: jest.fn(),
-    shutdownProcess: jest.fn(),
-    updateProcess: jest.fn(),
-    log,
-    frontend: {
-      wssSendRefreshRequired: jest.fn(),
-      wssSendUpdateRequired: jest.fn(),
-    },
-    nodeContext: {
-      set: jest.fn(),
-    },
-  } as unknown as Matterbridge;
 
   beforeAll(async () => {
     // Setup the matter environment
@@ -80,7 +59,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
-  }, 30000);
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -273,7 +252,12 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     await server.close();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
-    // Stop the mDNS service
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  });
+
+  test('stop the mDNS service', async () => {
+    expect(server).toBeDefined();
     await server.env.get(MdnsService)[Symbol.asyncDispose]();
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 });

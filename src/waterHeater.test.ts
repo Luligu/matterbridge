@@ -8,7 +8,7 @@ import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { inspect } from 'node:util';
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
 import { RootEndpoint } from '@matter/main/endpoints';
@@ -16,7 +16,6 @@ import { MdnsService } from '@matter/main/protocol';
 import { Identify, PowerSource, Thermostat, WaterHeaterManagement } from '@matter/main/clusters';
 import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } from '@matter/node/behaviors';
 
-import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.ts';
 import { MatterbridgeThermostatServer } from './matterbridgeBehaviors.ts';
@@ -50,29 +49,9 @@ if (!debug) {
 rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge Water Heater', () => {
-  const log = new AnsiLogger({ logName: NAME, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let device: MatterbridgeEndpoint;
-
-  const mockMatterbridge = {
-    matterbridgeVersion: '1.0.0',
-    matterbridgeInformation: { virtualMode: 'disabled' },
-    bridgeMode: 'bridge',
-    restartMode: '',
-    restartProcess: jest.fn(),
-    shutdownProcess: jest.fn(),
-    updateProcess: jest.fn(),
-    log,
-    frontend: {
-      wssSendRefreshRequired: jest.fn(),
-      wssSendUpdateRequired: jest.fn(),
-    },
-    nodeContext: {
-      set: jest.fn(),
-    },
-  } as unknown as Matterbridge;
 
   beforeAll(async () => {
     // Setup the matter environment
@@ -256,7 +235,12 @@ describe('Matterbridge Water Heater', () => {
     await server.close();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
-    // Stop the mDNS service
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  });
+
+  test('stop the mDNS service', async () => {
+    expect(server).toBeDefined();
     await server.env.get(MdnsService)[Symbol.asyncDispose]();
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 });

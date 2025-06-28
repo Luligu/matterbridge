@@ -76,8 +76,6 @@ async function waitForOnline(server: ServerNode<ServerNode.RootEndpoint>, timeou
 rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge ' + NAME, () => {
-  const log = new AnsiLogger({ logName: NAME, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
@@ -90,7 +88,7 @@ describe('Matterbridge ' + NAME, () => {
     environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
-  }, 30000);
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -272,10 +270,12 @@ describe('Matterbridge ' + NAME, () => {
     await server.close();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 
   test('stop the mDNS service', async () => {
     expect(server).toBeDefined();
     await server.env.get(MdnsService)[Symbol.asyncDispose]();
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 });

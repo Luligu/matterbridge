@@ -4,6 +4,8 @@ const MATTER_PORT = 6016;
 const NAME = 'EndpointDefault';
 const HOMEDIR = path.join('jest', NAME);
 
+process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
+
 import { jest } from '@jest/globals';
 import { Lifecycle } from '@matter/main';
 import {
@@ -125,38 +127,19 @@ if (!debug) {
 // Cleanup the matter environment
 rmSync(HOMEDIR, { recursive: true, force: true });
 
-describe('Matterbridge ' + HOMEDIR, () => {
+describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
   let device: MatterbridgeEndpoint;
 
-  /**
-   * Waits for the `isOnline` property to become `true`.
-   *
-   * @param {number} timeout - The maximum time to wait in milliseconds.
-   * @returns {Promise<void>} A promise that resolves when `isOnline` becomes `true` or rejects if the timeout is reached.
-   */
-  async function waitForOnline(timeout = 10000): Promise<void> {
-    const start = Date.now();
-
-    return new Promise((resolve, reject) => {
-      const checkOnline = () => {
-        if (matterbridge.serverNode?.lifecycle.isOnline) {
-          resolve();
-        } else if (Date.now() - start >= timeout) {
-          reject(new Error('Timeout waiting for matterbridge.serverNode.lifecycle.isOnline to become true'));
-        } else {
-          setTimeout(checkOnline, 100).unref(); // Check every 100ms
-        }
-      };
-      checkOnline();
-    });
-  }
-
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
     matterbridge = await Matterbridge.loadInstance(true);
-    await waitForOnline();
+
+    await new Promise<void>((resolve) => {
+      matterbridge.once('online', (name) => {
+        if (name === 'Matterbridge') resolve();
+      });
+    });
   }, 30000);
 
   beforeEach(async () => {
@@ -1088,6 +1071,5 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
     await matterbridge.destroyInstance(10);
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
-  }, 60000);
+  });
 });
