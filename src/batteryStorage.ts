@@ -44,7 +44,9 @@ export class BatteryStorage extends MatterbridgeEndpoint {
    * @param {number} [absMinPower=0] - Indicate the minimum electrical power that the ESA can produce when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower=0] - Indicate the maximum electrical power that the ESA can produce when switched on. Defaults to `0` if not provided.
    * @param {number} [batPercentRemaining=100] - The percentage of battery remaining, defaults to `100` if not provided.
-   * @param {number} [batVoltage=48000] - The battery voltage in millivolts, defaults to `48000` (48V) if not provided.
+   * @param {number} [batPercentRemaining=100] - The percentage of battery remaining, defaults to `100` if not provided.
+   * @param {number} [batTimeRemaining=null] - Estimated time in seconds before the battery will no longer be able to provide power, defaults to `null` if not provided.
+   * @param {number} [batTimeToFullCharge=null] - Estimated time in seconds before the battery source will be at full charge, defaults to `null` if not provided.
    * @param {PowerSource.BatChargeLevel} [batChargeLevel=] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
    */
   constructor(
