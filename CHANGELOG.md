@@ -20,6 +20,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [DeviceEnergyManagement]: Added MatterbridgeDeviceEnergyManagementServer with power adjustment methods.
 - [SolarPower]: Added SolarPower class and Jest test (working on Home Assistant and SmartThings). Thanks Ludovic BOUÉ.
 - [BatteryStorage]: Added BatteryStorage class and Jest test (working on Home Assistant and SmartThings). Thanks Ludovic BOUÉ.
+- [HeatPump]: Added HeatPump class and Jest test (working on Home Assistant and SmartThings).
 
 ### Changed
 

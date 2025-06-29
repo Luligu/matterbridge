@@ -145,6 +145,7 @@
         "src/waterHeater.test.ts",
         "src/solarPower.test.ts",
         "src/batteryStorage.test.ts",
+        "src/heatPump.test.ts"
       ],
       "group": {
         "kind": "test",
