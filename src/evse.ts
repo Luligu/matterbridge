@@ -47,8 +47,8 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {EnergyEvse.State} [state] - The current state of the EVSE. Defaults to NotPluggedIn.
    * @param {EnergyEvse.SupplyState} [supplyState] - The supply state of the EVSE. Defaults to Disabled.
    * @param {EnergyEvse.FaultState} [faultState] - The fault state of the EVSE. Defaults to NoError.
-   * @param {number} [absMinPower] - Indicate the minimum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
-   * @param {number} [absMaxPower] - Indicate the maximum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    */
   constructor(
     name: string,

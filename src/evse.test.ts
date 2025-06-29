@@ -1,6 +1,6 @@
 // src\evse.test.ts
 
-const MATTER_PORT = 6004;
+const MATTER_PORT = 6019;
 const NAME = 'Evse';
 const HOMEDIR = path.join('jest', NAME);
 
@@ -8,7 +8,7 @@ import { jest } from '@jest/globals';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { inspect } from 'node:util';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 // matter.js
 import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
@@ -164,7 +164,7 @@ describe('Matterbridge EVSE', () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(110);
+    expect(attributes.length).toBe(112);
   });
 
   test('invoke MatterbridgeDeviceEnergyManagementModeServer commands', async () => {
