@@ -934,6 +934,54 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(BooleanStateConfiguration.Cluster.id, 'currentSensitivityLevel')).toBe(0);
   });
 
+  test('power source wired', async () => {
+    const device = new MatterbridgeEndpoint([powerSource], { id: 'PowerSourceWired' });
+    expect(device).toBeDefined();
+    device.createDefaultPowerSourceWiredClusterServer();
+    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(PowerSource.Cluster.id, 'description')).toBe('AC Power');
+    expect(device.getAttribute(PowerSource.Cluster.id, 'status')).toBe(PowerSource.PowerSourceStatus.Active);
+  });
+
+  test('power source wired battery', async () => {
+    const device = new MatterbridgeEndpoint([powerSource], { id: 'PowerSourceWiredBattery' });
+    expect(device).toBeDefined();
+    device.createDefaultPowerSourceWiredBatteryClusterServer();
+    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(PowerSource.Cluster.id, 'description')).toBe('Primary battery');
+    expect(device.getAttribute(PowerSource.Cluster.id, 'status')).toBe(PowerSource.PowerSourceStatus.Active);
+  });
+
+  test('power source replaceable', async () => {
+    const device = new MatterbridgeEndpoint([powerSource], { id: 'PowerSourceReplaceable' });
+    expect(device).toBeDefined();
+    device.createDefaultPowerSourceReplaceableBatteryClusterServer();
+    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(PowerSource.Cluster.id, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
+    expect(device.getAttribute(PowerSource.Cluster.id, 'batReplaceability')).toBe(PowerSource.BatReplaceability.UserReplaceable);
+  });
+
+  test('power source rechargeable', async () => {
+    const device = new MatterbridgeEndpoint([powerSource], { id: 'PowerSourceRechargeable' });
+    expect(device).toBeDefined();
+    device.createDefaultPowerSourceRechargeableBatteryClusterServer();
+    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(PowerSource.Cluster.id, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
+    expect(device.getAttribute(PowerSource.Cluster.id, 'batChargeState')).toBe(PowerSource.BatChargeState.IsNotCharging);
+  });
+
   test('energy measurements for electricalSensor', async () => {
     const device = new MatterbridgeEndpoint([electricalSensor], { uniqueStorageKey: 'ElectricalSensor' });
     expect(device).toBeDefined();

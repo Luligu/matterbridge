@@ -90,6 +90,7 @@ import {
   MatterbridgeLiftWindowCoveringServer,
   MatterbridgeLiftTiltWindowCoveringServer,
   MatterbridgeDeviceEnergyManagementModeServer,
+  MatterbridgeDeviceEnergyManagementServer,
 } from './matterbridgeBehaviors.ts';
 import { Matterbridge } from './matterbridge.ts';
 import {
@@ -1013,6 +1014,22 @@ describe('Matterbridge ' + NAME, () => {
     await invokeBehaviorCommand(heater, 'waterHeaterMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(heater.stateOf(WaterHeaterModeServer).currentMode).toBe(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: 0`);
+  });
+
+  test('invoke MatterbridgeDeviceEnergyManagementServer commands', async () => {
+    expect(evse.behaviors.has(MatterbridgeDeviceEnergyManagementServer)).toBeTruthy();
+    expect(evse.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementServer).commands.has('powerAdjustRequest')).toBeTruthy();
+    expect(evse.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementServer).commands.has('cancelPowerAdjustRequest')).toBeTruthy();
+    expect((evse.state['deviceEnergyManagement'] as any).acceptedCommandList).toEqual([0, 1]);
+    expect((evse.state['deviceEnergyManagement'] as any).generatedCommandList).toEqual([]);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(evse, 'deviceEnergyManagement', 'powerAdjustRequest', { power: 0, duration: 0, cause: 'Test' }); // 0 is not a valid mode
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Adjusting power to 0 duration 0 cause Test (endpoint ${evse.id}.${evse.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power 0 duration 0 cause Test`);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(evse, 'deviceEnergyManagement', 'cancelPowerAdjustRequest', {});
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancelling power adjustment (endpoint ${evse.id}.${evse.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called`);
   });
 
   test('invoke MatterbridgeDeviceEnergyManagementModeServer commands', async () => {
