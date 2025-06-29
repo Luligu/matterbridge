@@ -142,6 +142,8 @@
         "src/roboticVacuumCleaner.test.ts",
         "src/evse.test.ts",
         "src/waterHeater.test.ts",
+        "src/solarPower.test.ts",
+        "src/batteryStorage.test.ts",
       ],
       "group": {
         "kind": "test",
