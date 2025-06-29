@@ -42,6 +42,7 @@ import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-
 import { OperationalState } from '@matter/main/clusters/operational-state';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 import { ServiceArea } from '@matter/main/clusters/service-area';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
 import { OnOffServer } from '@matter/main/behaviors/on-off';
@@ -57,6 +58,7 @@ import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
 import { SwitchServer } from '@matter/main/behaviors/switch';
 import { OperationalStateServer } from '@matter/main/behaviors/operational-state';
 import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
+import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
 import { DeviceEnergyManagementModeServer } from '@matter/main/behaviors/device-energy-management-mode';
 
 // AnsiLogger module
@@ -499,6 +501,27 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
     device.commandHandler.executeHandler('changeToMode', { request, cluster: ModeSelectServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode: ${request.newMode}`);
     super.changeToMode(request);
+  }
+}
+
+export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManagementServer {
+  powerAdjustRequest(request: DeviceEnergyManagement.PowerAdjustRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Adjusting power to ${request.power} duration ${request.duration} cause ${request.cause} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('powerAdjustRequest', { request, cluster: DeviceEnergyManagementServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power ${request.power} duration ${request.duration} cause ${request.cause}`);
+    // The implementation is responsible for setting the device accordingly with the powerAdjustRequest command
+    // powerAdjustRequest is not implemented in matter.js
+    // return super.powerAdjustRequest();
+  }
+  cancelPowerAdjustRequest(): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Cancelling power adjustment (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('cancelPowerAdjustRequest', { cluster: DeviceEnergyManagementServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called`);
+    // The implementation is responsible for setting the device accordingly with the cancelPowerAdjustRequest command
+    // cancelPowerAdjustRequest is not implemented in matter.js
+    // return super.cancelPowerAdjustRequest();
   }
 }
 
