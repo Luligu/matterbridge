@@ -22,20 +22,16 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/main';
 import { OperationalState } from '@matter/main/clusters/operational-state';
 import { LaundryWasherMode } from '@matter/main/clusters/laundry-washer-mode';
 import { TemperatureControl } from '@matter/main/clusters/temperature-control';
 import { LaundryDryerControls } from '@matter/main/clusters/laundry-dryer-controls';
-import { ModeBase } from '@matter/main/clusters/mode-base';
-import { TemperatureControlServer } from '@matter/main/behaviors/temperature-control';
-import { LaundryWasherModeServer } from '@matter/main/behaviors/laundry-washer-mode';
 import { LaundryDryerControlsServer } from '@matter/main/behaviors/laundry-dryer-controls';
 
 // Matterbridge
 import { laundryDryer } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterbridgeOnOffServer, MatterbridgeServer } from './matterbridgeBehaviors.js';
+import { MatterbridgeLaundryWasherModeServer, MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './laundryWasher.js';
 
 export class LaundryDryer extends MatterbridgeEndpoint {
   /**
@@ -156,78 +152,5 @@ export class LaundryDryer extends MatterbridgeEndpoint {
       step, // Fixed attribute
     });
     return this;
-  }
-}
-
-export class MatterbridgeLevelTemperatureControlServer extends TemperatureControlServer.with(TemperatureControl.Feature.TemperatureLevel) {
-  override initialize() {
-    if (this.state.supportedTemperatureLevels.length >= 2) {
-      const device = this.endpoint.stateOf(MatterbridgeServer);
-      device.log.info(`MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel ${this.state.selectedTemperatureLevel} and supportedTemperatureLevels: ${this.state.supportedTemperatureLevels.join(', ')}`);
-    }
-  }
-
-  override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('setTemperature', { request, cluster: TemperatureControlServer.id, attributes: this.state, endpoint: this.endpoint });
-    if (request.targetTemperatureLevel !== undefined && request.targetTemperatureLevel >= 0 && request.targetTemperatureLevel < this.state.supportedTemperatureLevels.length) {
-      device.log.debug(`MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to ${request.targetTemperatureLevel}: ${this.state.supportedTemperatureLevels[request.targetTemperatureLevel]}`);
-      this.state.selectedTemperatureLevel = request.targetTemperatureLevel;
-    } else {
-      device.log.error(`MatterbridgeLevelTemperatureControlServer: setTemperature called with invalid targetTemperatureLevel ${request.targetTemperatureLevel}`);
-    }
-  }
-}
-
-export class MatterbridgeNumberTemperatureControlServer extends TemperatureControlServer.with(TemperatureControl.Feature.TemperatureNumber, TemperatureControl.Feature.TemperatureStep) {
-  override initialize() {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint ${this.state.temperatureSetpoint} minTemperature ${this.state.minTemperature} maxTemperature ${this.state.maxTemperature} step ${this.state.step}`);
-  }
-
-  override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('setTemperature', { request, cluster: TemperatureControlServer.id, attributes: this.state, endpoint: this.endpoint });
-    if (request.targetTemperature !== undefined && request.targetTemperature >= this.state.minTemperature && request.targetTemperature <= this.state.maxTemperature) {
-      device.log.debug(`MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to ${request.targetTemperature}`);
-      this.state.temperatureSetpoint = request.targetTemperature;
-    } else {
-      device.log.error(`MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature ${request.targetTemperature}`);
-    }
-  }
-}
-
-export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer {
-  override initialize() {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeLaundryWasherModeServer initialized: currentMode is ${this.state.currentMode}`);
-    this.reactTo(this.agent.get(MatterbridgeOnOffServer).events.onOff$Changed, this.handleOnOffChange);
-  }
-
-  // Dead Front OnOff Cluster
-  protected handleOnOffChange(onOff: boolean) {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`HandleOnOffChange (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    if (onOff === false) {
-      device.log.notice('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
-      this.state.currentMode = 2;
-    }
-  }
-
-  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, cluster: LaundryWasherModeServer.id, attributes: this.state, endpoint: this.endpoint });
-    const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
-    if (supportedMode) {
-      device.log.debug(`MatterbridgeLaundryWasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);
-      this.state.currentMode = request.newMode;
-      return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
-    } else {
-      device.log.error(`MatterbridgeLaundryWasherModeServer: changeToMode called with invalid mode ${request.newMode}`);
-      return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Invalid mode' };
-    }
   }
 }
