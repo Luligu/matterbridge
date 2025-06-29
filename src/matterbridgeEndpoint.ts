@@ -106,7 +106,6 @@ import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
 import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
-import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
 
 // AnsiLogger module
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from './logger/export.js';
@@ -131,6 +130,7 @@ import {
   MatterbridgeSwitchServer,
   MatterbridgeOperationalStateServer,
   MatterbridgeDeviceEnergyManagementModeServer,
+  MatterbridgeDeviceEnergyManagementServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -256,6 +256,10 @@ export interface MatterbridgeEndpointCommands {
   // Energy Evse
   enableCharging: HandlerFunction;
   disable: HandlerFunction;
+
+  // Device Energy Management
+  powerAdjustRequest: HandlerFunction;
+  cancelPowerAdjustRequest: HandlerFunction;
 
   // Temperature Control
   setTemperature: HandlerFunction;
@@ -923,13 +927,48 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {PowerSource.WiredCurrentType} wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
+  createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac): this {
     this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Wired), {
       wiredCurrentType,
       description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
       status: PowerSource.PowerSourceStatus.Active,
       order: 0,
       endpointList: [],
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default power source wired and battery cluster server.
+   *
+   * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100).
+   * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultPowerSourceWiredBatteryClusterServer(batPercentRemaining: number = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok): this {
+    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
+      status: PowerSource.PowerSourceStatus.Active,
+      order: 0,
+      description: 'Primary battery',
+      endpointList: [],
+      // Wired
+      // wiredCurrentType: PowerSource.WiredCurrentType.Ac,
+      // Battery
+      batVoltage: null,
+      batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
+      batTimeRemaining: null,
+      batChargeLevel,
+      batReplacementNeeded: false,
+      batReplaceability: PowerSource.BatReplaceability.Unspecified,
+      batPresent: true,
+      activeBatFaults: [],
+      // Rechargeable
+      batChargeState: PowerSource.BatChargeState.IsNotCharging,
+      batTimeToFullCharge: null,
+      batFunctionalWhileCharging: true,
+      batChargingCurrent: null,
+      batCapacity: 1,
+      activeBatChargeFaults: [],
     });
     return this;
   }
@@ -944,7 +983,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} batQuantity - The quantity of the battery (default: 1).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500, batReplacementDescription = 'Battery type', batQuantity = 1) {
+  createDefaultPowerSourceReplaceableBatteryClusterServer(
+    batPercentRemaining: number = 100,
+    batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
+    batVoltage: number = 1500,
+    batReplacementDescription: string = 'Battery type',
+    batQuantity: number = 1,
+  ): this {
     this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable), {
       status: PowerSource.PowerSourceStatus.Active,
       order: 0,
@@ -2207,8 +2252,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
    */
   createDefaultDeviceEnergyManagementClusterServer(esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other, esaCanGenerate = false, esaState = DeviceEnergyManagement.EsaState.Online, absMinPower = 0, absMaxPower = 0) {
-    this.behaviors.require(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting), {
+    this.behaviors.require(MatterbridgeDeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
       forecast: null, // A null value indicates that there is no forecast currently available
+      powerAdjustmentCapability: null, // A null value indicates that no power adjustment is currently possible, and nor is any adjustment currently active
       esaType, // Fixed attribute
       esaCanGenerate, // Fixed attribute
       esaState,
