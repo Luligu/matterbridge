@@ -1091,8 +1091,8 @@ export const cooktop = DeviceTypeDefinition({
  * Conditions:
  * An Oven SHALL have the Heater condition applied to at least one endpoint containing the Temperature Control Cluster.
  * Device Type Requirements:
- * 0x0071 Temperature Controlled Cabinet min 1
- * 0x0078 Cooktop
+ * - 0x0071 Temperature Controlled Cabinet min 1
+ * - 0x0078 Cooktop
  */
 export const oven = DeviceTypeDefinition({
   name: 'MA-oven',
@@ -1111,9 +1111,9 @@ export const oven = DeviceTypeDefinition({
  *
  *
  * Element Requirements:
- * 0x0202 Fan Control Feature Rocking X
- * 0x0202 Fan Control Feature Wind X
- * 0x0202 Fan Control Feature AirflowDirection X
+ * - 0x0202 Fan Control Feature Rocking X
+ * - 0x0202 Fan Control Feature Wind X
+ * - 0x0202 Fan Control Feature AirflowDirection X
  */
 export const extractorHood = DeviceTypeDefinition({
   name: 'MA-extractorhood',
@@ -1149,10 +1149,10 @@ export const microwaveOven = DeviceTypeDefinition({
  * 14.1.5. Device Type Requirements
  * An EVSE SHALL be composed of at least one endpoint with device types as defined by the conformance
  * below. There MAY be more endpoints with other device types existing in the EVSE.
- * ID     Name                        Constraint    Conformance
- * 0x0011 Power Source                min 1         M
- * 0x0510 Electrical Sensor           min 1         M
- * 0x050D Device Energy Management    min 1         M
+ * - ID     Name                        Constraint    Conformance
+ * - 0x0011 Power Source                min 1         M
+ * - 0x0510 Electrical Sensor           min 1         M
+ * - 0x050D Device Energy Management    min 1         M
  *
  * The Electrical Sensor device SHALL include both the Electrical Energy Measurement and Electrical
  * Power Measurement clusters, measuring the total energy and power of the EVSE.
@@ -1176,11 +1176,11 @@ export const evse = DeviceTypeDefinition({
  * 14.2.5. Device Type Requirements
  * A Water Heater SHALL be composed of at least one endpoint with device types as defined by the
  * conformance below. There MAY be more endpoints with other device types existing in the Water Heater.
- * ID     Name                        Constraint    Conformance
- * 0x0011 Power Source                              O
- * 0x0302 Temperature Sensor                        O
- * 0x0510 Electrical Sensor                         desc
- * 0x050D Device Energy Management                  O
+ * - ID     Name                        Constraint    Conformance
+ * - 0x0011 Power Source                              O
+ * - 0x0302 Temperature Sensor                        O
+ * - 0x0510 Electrical Sensor                         desc
+ * - 0x050D Device Energy Management                  O
  *
  * 14.2.7. Element Requirements
  * 0x0201 Thermostat Feature Heating M
@@ -1221,23 +1221,23 @@ export const waterHeater = DeviceTypeDefinition({
  * the conformance below. There MAY be more endpoints with additional instances of these device
  * types or additional device types existing in the Solar Power device.
  *
- * ID     Name                        Constraint    Conformance
- * 0x0011 Power Source                min 1         M
- * 0x0510 Electrical Sensor           min 1         M
- * 0x050D Device Energy Management                  O
- * 0x0302 Temperature Sensor                        O
+ * - ID     Name                        Constraint    Conformance
+ * - 0x0011 Power Source                min 1         M
+ * - 0x0510 Electrical Sensor           min 1         M
+ * - 0x050D Device Energy Management                  O
+ * - 0x0302 Temperature Sensor                        O
  *
  * 14.3.5.1. Cluster Requirements on Composing Device Types
  *
- * 0x0011 Power Source 0x002F Power Source Feature Wired M
- * 0x0011 Power Source 0x001D Descriptor Feature TagList M
- * 0x0510 Electrical Sensor 0x0090 Electrical Power Measurement M
- * 0x0510 Electrical Sensor 0x0090 Electrical Power Measurement Attribute Voltage M
- * 0x0510 Electrical Sensor 0x0090 Electrical Power Measurement Attribute ActiveCurrent M
- * 0x0510 Electrical Sensor 0x0091 Electrical Energy Measurement M
- * 0x0510 Electrical Sensor 0x0091 Electrical Energy Measurement Feature ExportedEnergy M
- * 0x050D Device Energy Management 0x0098 Device Energy Management Feature PowerAdjustment M
- * 0x0302 Temperature Sensor 0x001D Descriptor Feature TagList M
+ * - 0x0011 Power Source 0x002F Power Source Feature Wired M
+ * - 0x0011 Power Source 0x001D Descriptor Feature TagList M
+ * - 0x0510 Electrical Sensor 0x0090 Electrical Power Measurement M
+ * - 0x0510 Electrical Sensor 0x0090 Electrical Power Measurement Attribute Voltage M
+ * - 0x0510 Electrical Sensor 0x0090 Electrical Power Measurement Attribute ActiveCurrent M
+ * - 0x0510 Electrical Sensor 0x0091 Electrical Energy Measurement M
+ * - 0x0510 Electrical Sensor 0x0091 Electrical Energy Measurement Feature ExportedEnergy M
+ * - 0x050D Device Energy Management 0x0098 Device Energy Management Feature PowerAdjustment M
+ * - 0x0302 Temperature Sensor 0x001D Descriptor Feature TagList M
  */
 export const solarPower = DeviceTypeDefinition({
   name: 'MA-solarpower',
@@ -1259,12 +1259,12 @@ export const solarPower = DeviceTypeDefinition({
  * A Battery Storage device SHALL be composed of at least one endpoint with device types as defined by
  * the conformance below. There MAY be more endpoints with additional instances of these device
  * types or additional device types existing in the Battery Storage device.
- * ID     Name                        Constraint    Conformance
- * 0x0011 Power Source                min 1         M
- * 0x0510 Electrical Sensor           min 1         M
- * 0x050D Device Energy Management                  M
- * 0x0302 Temperature Sensor                        O
- * 0x0017 Solar Power                               O
+ * - ID     Name                        Constraint    Conformance
+ * - 0x0011 Power Source                min 1         M
+ * - 0x0510 Electrical Sensor           min 1         M
+ * - 0x050D Device Energy Management                  M
+ * - 0x0302 Temperature Sensor                        O
+ * - 0x0017 Solar Power                               O
  *
  * See 14.4.5.1. Cluster Requirements on Composing Device Types
  */
@@ -1290,13 +1290,13 @@ export const batteryStorage = DeviceTypeDefinition({
  * A Heat Pump device SHALL be composed of at least one endpoint with device types as defined by
  * the conformance below. There MAY be more endpoints with additional instances of these device
  * types or additional device types existing in the Heat Pump device.
- * ID     Name                        Constraint    Conformance
- * 0x0011 Power Source                              M
- * 0x0510 Electrical Sensor           min 1         M
- * 0x050D Device Energy Management                  M
- * 0x0301 Thermostat                                O
- * 0x050f Water Heater                              O
- * 0x0302 Temperature Sensor                        O
+ * - ID     Name                        Constraint    Conformance
+ * - 0x0011 Power Source                              M
+ * - 0x0510 Electrical Sensor           min 1         M
+ * - 0x050D Device Energy Management                  M
+ * - 0x0301 Thermostat                                O
+ * - 0x050f Water Heater                              O
+ * - 0x0302 Temperature Sensor                        O
  *
  * See 14.5.5.1. Cluster Requirements on Composing Device Types
  */
