@@ -67,7 +67,7 @@ export class HeatPump extends MatterbridgeEndpoint {
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(energyImported)
-      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.Other, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.SpaceHeating, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
   }
