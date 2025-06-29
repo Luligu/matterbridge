@@ -33,7 +33,7 @@ import { LaundryWasherModeServer } from '@matter/main/behaviors/laundry-washer-m
 import { LaundryWasherControlsServer } from '@matter/main/behaviors/laundry-washer-controls';
 
 // Matterbridge
-import { laundryWasher } from './matterbridgeDeviceTypes.js';
+import { laundryWasher, powerSource } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { MatterbridgeOnOffServer, MatterbridgeServer } from './matterbridgeBehaviors.js';
 
@@ -78,7 +78,7 @@ export class LaundryWasher extends MatterbridgeEndpoint {
     step?: number,
     operationalState?: OperationalState.OperationalStateEnum,
   ) {
-    super(laundryWasher, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([laundryWasher, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Laundry Washer');
     this.createDefaultPowerSourceWiredClusterServer();

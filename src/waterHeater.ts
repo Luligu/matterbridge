@@ -34,7 +34,7 @@ import { WaterHeaterManagementServer } from '@matter/main/behaviors/water-heater
 import { WaterHeaterModeServer } from '@matter/main/behaviors/water-heater-mode';
 
 import { MatterbridgeServer } from './matterbridgeBehaviors.js';
-import { waterHeater } from './matterbridgeDeviceTypes.js';
+import { electricalSensor, powerSource, waterHeater } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 export class WaterHeater extends MatterbridgeEndpoint {
@@ -65,7 +65,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
     heaterTypes: { immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean } = { immersionElement1: true },
     tankPercentage = 90,
   ) {
-    super(waterHeater, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([waterHeater, powerSource, electricalSensor], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Water Heater')
       .createDefaultPowerSourceWiredClusterServer()

@@ -37,7 +37,7 @@ import { OperationalState } from '@matter/main/clusters/operational-state';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { roboticVacuumCleaner } from './matterbridgeDeviceTypes.js';
+import { powerSource, roboticVacuumCleaner } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeServer, MatterbridgeServiceAreaServer } from './matterbridgeBehaviors.js';
 
 export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
@@ -73,7 +73,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
     selectedAreas?: number[],
     currentArea?: number,
   ) {
-    super(roboticVacuumCleaner, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([roboticVacuumCleaner, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Robot Vacuum Cleaner')
       .createDefaultPowerSourceRechargeableBatteryClusterServer(80, PowerSource.BatChargeLevel.Ok, 5900)

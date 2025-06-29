@@ -69,6 +69,7 @@ export class Evse extends MatterbridgeEndpoint {
       .createDefaultElectricalPowerMeasurementClusterServer()
       .createDefaultElectricalEnergyMeasurementClusterServer()
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.Evse, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultDeviceEnergyManagementModeClusterServer()
       .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
       .createDefaultEnergyEvseModeClusterServer(currentMode, supportedModes)
       .addRequiredClusterServers();

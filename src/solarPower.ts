@@ -68,6 +68,7 @@ export class SolarPower extends MatterbridgeEndpoint {
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(0, energyExported)
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.SolarPv, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
   }
 }
