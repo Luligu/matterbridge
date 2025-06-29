@@ -946,18 +946,6 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(PowerSource.Cluster.id, 'status')).toBe(PowerSource.PowerSourceStatus.Active);
   });
 
-  test('power source wired battery', async () => {
-    const device = new MatterbridgeEndpoint([powerSource], { id: 'PowerSourceWiredBattery' });
-    expect(device).toBeDefined();
-    device.createDefaultPowerSourceWiredBatteryClusterServer();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBe(true);
-
-    await add(device);
-
-    expect(device.getAttribute(PowerSource.Cluster.id, 'description')).toBe('Primary battery');
-    expect(device.getAttribute(PowerSource.Cluster.id, 'status')).toBe(PowerSource.PowerSourceStatus.Active);
-  });
-
   test('power source replaceable', async () => {
     const device = new MatterbridgeEndpoint([powerSource], { id: 'PowerSourceReplaceable' });
     expect(device).toBeDefined();

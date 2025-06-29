@@ -129,10 +129,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     expect(device.id).toBe('BatteryStorageTestDevice-BS123456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
+
+    expect(device.getChildEndpointByName('BatteryPowerSource')).toBeDefined();
+    expect(device.getChildEndpointByName('BatteryPowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+    expect(device.getChildEndpointByName('GridPowerSource')).toBeDefined();
+    expect(device.getChildEndpointByName('GridPowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
   });
 
   test('add a battery storage device', async () => {
@@ -187,7 +191,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(88);
+    expect(attributes.length).toBe(64);
   });
 
   test('close the server node', async () => {

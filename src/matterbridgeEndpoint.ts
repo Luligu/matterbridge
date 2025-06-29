@@ -939,41 +939,6 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default power source wired and battery cluster server.
-   *
-   * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100).
-   * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultPowerSourceWiredBatteryClusterServer(batPercentRemaining: number = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok): this {
-    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
-      status: PowerSource.PowerSourceStatus.Active,
-      order: 0,
-      description: 'Primary battery',
-      endpointList: [],
-      // Wired
-      // wiredCurrentType: PowerSource.WiredCurrentType.Ac,
-      // Battery
-      batVoltage: null,
-      batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
-      batTimeRemaining: null,
-      batChargeLevel,
-      batReplacementNeeded: false,
-      batReplaceability: PowerSource.BatReplaceability.Unspecified,
-      batPresent: true,
-      activeBatFaults: [],
-      // Rechargeable
-      batChargeState: PowerSource.BatChargeState.IsNotCharging,
-      batTimeToFullCharge: null,
-      batFunctionalWhileCharging: true,
-      batChargingCurrent: null,
-      batCapacity: 1,
-      activeBatChargeFaults: [],
-    });
-    return this;
-  }
-
-  /**
    * Creates a default power source replaceable battery cluster server.
    *
    * @param {number} batPercentRemaining - The remaining battery percentage (default: 100).

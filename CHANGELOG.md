@@ -10,7 +10,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.1.1] - 2025-07-??
 
-### Breaking Changes
+### Development Breaking Changes
 
 - [devices]: The single devices (i.e. Rvc, Evse etc...) are only exported from matterbridge/devices. Please update your imports to use the new export path. Refer to the [documentation](README-DEV.md) for details on imports.
 
