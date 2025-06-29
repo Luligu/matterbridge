@@ -1,10 +1,12 @@
-# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
+# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge NGINX configuration
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver)](https://hub.docker.com/r/luligu/matterbridge)
 [![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge.svg)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
+![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
+[![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
 
 [![power by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
 [![power by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
@@ -31,7 +33,7 @@ server {
     server_name _;
 
     location / {
-        # Redirect to Matterbridge frontend
+        # Redirect to Matterbridge frontend from http:/server_name:80
         proxy_pass http://localhost:8283/;
         proxy_set_header Host                 $host;
         proxy_set_header X-Real-IP            $remote_addr;
@@ -48,13 +50,13 @@ server {
 
 Add matterbridge to enabled sites
 
-```
+```bash
 sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
 ```
 
 ### Create a basic nginx configuration file that redirect to http://yourhost:8283/matterbridge
 
-```
+```bash
 sudo nano /etc/nginx/sites-available/matterbridge
 ```
 
@@ -67,7 +69,7 @@ server {
     server_name _;
 
     location /matterbridge/ {
-        # Redirect to Matterbridge frontend
+        # Redirect to Matterbridge frontend from http:/server_name/matterbridge:80
         proxy_pass http://localhost:8283/;
         proxy_set_header Host                     $host;
         proxy_set_header X-Real-IP                $remote_addr;
@@ -84,13 +86,20 @@ server {
 
 Add matterbridge to enabled sites
 
-```
+```bash
 sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
+```
+
+Restart nginx and test the configuration
+
+```bash
+sudo systemctl restart nginx
+sudo nginx -t
 ```
 
 ### Create an advanced nginx configuration file that redirect to http://yourhost:8283 with ssl
 
-```
+```bash
 sudo nano /etc/nginx/sites-available/matterbridge
 ```
 
@@ -125,7 +134,7 @@ server {
     ssl_prefer_server_ciphers on;
 
     location / {
-      # Redirect to Matterbridge frontend
+      # Redirect to Matterbridge frontend from https:/server_name:443
       proxy_pass http://localhost:8283/;
       proxy_set_header Host                 $host;
       proxy_set_header X-Real-IP            $remote_addr;
@@ -142,13 +151,20 @@ server {
 
 Add matterbridge to enabled sites
 
-```
+```bash
 sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
+```
+
+Restart nginx and test the configuration
+
+```bash
+sudo systemctl restart nginx
+sudo nginx -t
 ```
 
 ### Create an advanced nginx configuration file that redirect to http://yourhost/matterbridge with ssl
 
-```
+```bash
 sudo nano /etc/nginx/sites-available/matterbridge
 ```
 
@@ -190,7 +206,7 @@ server {
 	}
 
     location /matterbridge/ {
-	    # Redirect to Matterbridge frontend
+	    # Redirect to Matterbridge frontend from https:/server_name/matterbridge:443
         proxy_pass http://localhost:8283/;
         proxy_set_header Host                       $host;
         proxy_set_header X-Real-IP                  $remote_addr;
@@ -207,21 +223,13 @@ server {
 
 Add matterbridge to enabled sites
 
-```
+```bash
 sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
 ```
 
-### Restart nginx and test the configuration
+Restart nginx and test the configuration
 
-```
+```bash
 sudo systemctl restart nginx
 sudo nginx -t
 ```
-
-### Use matterbridge with nginx
-
-http://ubuntu/matterbridge/
-
-or
-
-https://ubuntu/matterbridge/
