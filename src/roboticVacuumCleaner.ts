@@ -1,6 +1,5 @@
 /**
- * This file contains the RoboticVacuumCleaner class.
- *
+ * @description This file contains the RoboticVacuumCleaner class.
  * @file roboticVacuumCleaner.ts
  * @author Luca Liguori
  * @created 2025-05-01

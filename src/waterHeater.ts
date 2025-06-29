@@ -1,6 +1,5 @@
 /**
- * This file contains the WaterHeater class.
- *
+ * @description This file contains the WaterHeater class.
  * @file waterHeater.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ

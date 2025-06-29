@@ -1,6 +1,5 @@
 /**
- * This file contains the Evse class.
- *
+ * @description This file contains the Evse class.
  * @file energy-evse.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
