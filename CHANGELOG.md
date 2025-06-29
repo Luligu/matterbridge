@@ -16,9 +16,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [LaundryDryer]: Added LaundryDryer class and Jest test.
+- [DeviceEnergyManagement]: Added MatterbridgeDeviceEnergyManagementServer with power adjustment methods.
 - [SolarPower]: Added SolarPower class and Jest test. Thanks Ludovic BOUÉ.
 - [BatteryStorage]: Added BatteryStorage class and Jest test. Thanks Ludovic BOUÉ.
-- [DeviceEnergyManagement]: Added MatterbridgeDeviceEnergyManagementServer with power adjustment methods.
 
 ### Changed
 

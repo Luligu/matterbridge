@@ -9,9 +9,10 @@ import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
-import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Endpoint } from '@matter/main';
 import { RootEndpoint } from '@matter/main/endpoints';
 import { MdnsService } from '@matter/main/protocol';
+import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { Identify, PowerSource, RvcCleanMode, RvcOperationalState, RvcRunMode, ServiceArea } from '@matter/main/clusters';
 import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
 
@@ -50,6 +51,7 @@ rmSync(HOMEDIR, { recursive: true, force: true });
 describe('Matterbridge Robotic Vacuum Cleaner', () => {
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
@@ -104,6 +106,20 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(server).toBeDefined();
   });
 
+  test('create the aggregator node', async () => {
+    aggregator = new Endpoint(AggregatorEndpoint, { id: NAME + 'AggregatorNode' });
+    expect(aggregator).toBeDefined();
+  });
+
+  test('add the aggregator node to the server', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    await server.add(aggregator);
+    expect(server.parts.has(aggregator.id)).toBeTruthy();
+    expect(server.parts.has(aggregator)).toBeTruthy();
+    expect(aggregator.lifecycle.isReady).toBeTruthy();
+  });
+
   test('create an RVC device', async () => {
     device = new RoboticVacuumCleaner('RVC Test Device', 'RVC123456');
     expect(device).toBeDefined();
@@ -127,7 +143,18 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
 
   test('start the server node', async () => {
     // Run the server
-    await server.start();
+    expect(server.lifecycle.isReady).toBeTruthy();
+    expect(server.lifecycle.isOnline).toBeFalsy();
+
+    // Wait for the server to be online
+    await new Promise<void>((resolve) => {
+      server.lifecycle.online.on(async () => {
+        resolve();
+      });
+      server.start();
+    });
+
+    // Check if the server is online
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
   });

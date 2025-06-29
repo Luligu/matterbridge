@@ -139,6 +139,7 @@
         "--maxWorkers=100%",
         "src/base.test.ts",
         "src/laundryWasher.test.ts",
+        "src/laundryDryer.test.ts",
         "src/roboticVacuumCleaner.test.ts",
         "src/evse.test.ts",
         "src/waterHeater.test.ts",

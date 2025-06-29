@@ -10,7 +10,7 @@ import { rmSync } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger } from 'node-ansi-logger';
 
 // matter.js
 import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
@@ -43,33 +43,6 @@ if (!debug) {
   consoleInfoSpy = jest.spyOn(console, 'info');
   consoleWarnSpy = jest.spyOn(console, 'warn');
   consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-/**
- * Waits for the `isOnline` property to become `true`.
- * This function checks the `isOnline` property of the provided server node at regular intervals until it becomes `true` or the specified timeout is reached.
- * If the timeout is reached before `isOnline` becomes `true`, the promise is rejected with an error.
- *
- * @param {ServerNode<ServerNode.RootEndpoint>} server - The server node to check for online status.
- * @param {number} timeout - The maximum time to wait in milliseconds.
- * @returns {Promise<void>} A promise that resolves when `isOnline` becomes `true` or rejects if the timeout is reached.
- */
-async function waitForOnline(server: ServerNode<ServerNode.RootEndpoint>, timeout = 10000): Promise<void> {
-  const start = Date.now();
-
-  return new Promise((resolve, reject) => {
-    const checkOnline = () => {
-      if (server.lifecycle.isOnline) {
-        resolve();
-      } else if (Date.now() - start >= timeout) {
-        reject(new Error('Timeout waiting for server.lifecycle.isOnline to become true'));
-      } else {
-        setTimeout(checkOnline, 100); // Check every 100ms
-      }
-    };
-    // Start checking immediately
-    checkOnline();
-  });
 }
 
 // Cleanup the matter environment
@@ -177,11 +150,20 @@ describe('Matterbridge ' + NAME, () => {
 
   test('start the server node', async () => {
     // Run the server
-    await server.start();
+    expect(server.lifecycle.isReady).toBeTruthy();
+    expect(server.lifecycle.isOnline).toBeFalsy();
+
+    // Wait for the server to be online
+    await new Promise<void>((resolve) => {
+      server.lifecycle.online.on(async () => {
+        resolve();
+      });
+      server.start();
+    });
+
+    // Check if the server is online
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
-    // Wait for the server to be online
-    await waitForOnline(server);
   });
 
   /*

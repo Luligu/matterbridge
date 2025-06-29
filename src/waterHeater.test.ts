@@ -10,9 +10,10 @@ import { inspect } from 'node:util';
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Endpoint } from '@matter/main';
 import { RootEndpoint } from '@matter/main/endpoints';
 import { MdnsService } from '@matter/main/protocol';
+import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { Identify, PowerSource, Thermostat, WaterHeaterManagement } from '@matter/main/clusters';
 import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } from '@matter/node/behaviors';
 
@@ -51,6 +52,7 @@ rmSync(HOMEDIR, { recursive: true, force: true });
 describe('Matterbridge Water Heater', () => {
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
@@ -105,6 +107,20 @@ describe('Matterbridge Water Heater', () => {
     expect(server).toBeDefined();
   });
 
+  test('create the aggregator node', async () => {
+    aggregator = new Endpoint(AggregatorEndpoint, { id: NAME + 'AggregatorNode' });
+    expect(aggregator).toBeDefined();
+  });
+
+  test('add the aggregator node to the server', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    await server.add(aggregator);
+    expect(server.parts.has(aggregator.id)).toBeTruthy();
+    expect(server.parts.has(aggregator)).toBeTruthy();
+    expect(aggregator.lifecycle.isReady).toBeTruthy();
+  });
+
   test('create a water heater device with all parameters', async () => {
     device = new WaterHeater('Water Heater Test Device', 'WH123456', 50, 55, 20, 80, { immersionElement1: true, immersionElement2: true, heatPump: true, boiler: true, other: true }, 90);
     expect(device).toBeDefined();
@@ -145,7 +161,18 @@ describe('Matterbridge Water Heater', () => {
 
   test('start the server node', async () => {
     // Run the server
-    await server.start();
+    expect(server.lifecycle.isReady).toBeTruthy();
+    expect(server.lifecycle.isOnline).toBeFalsy();
+
+    // Wait for the server to be online
+    await new Promise<void>((resolve) => {
+      server.lifecycle.online.on(async () => {
+        resolve();
+      });
+      server.start();
+    });
+
+    // Check if the server is online
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
   });

@@ -11,8 +11,9 @@ import { inspect } from 'node:util';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 // matter.js
-import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Endpoint } from '@matter/main';
 import { RootEndpoint } from '@matter/main/endpoints';
+import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { MdnsService } from '@matter/main/protocol';
 import { Identify, PowerSource, ElectricalEnergyMeasurement, ElectricalPowerMeasurement, DeviceEnergyManagement, DeviceEnergyManagementMode, EnergyEvse } from '@matter/main/clusters';
 import { EnergyEvseServer, EnergyEvseModeServer, DeviceEnergyManagementModeServer } from '@matter/node/behaviors';
@@ -51,9 +52,10 @@ if (!debug) {
 // Cleanup the matter environment
 rmSync(HOMEDIR, { recursive: true, force: true });
 
-describe('Matterbridge EVSE', () => {
+describe('Matterbridge ' + NAME, () => {
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
@@ -108,6 +110,20 @@ describe('Matterbridge EVSE', () => {
     expect(server).toBeDefined();
   });
 
+  test('create the aggregator node', async () => {
+    aggregator = new Endpoint(AggregatorEndpoint, { id: NAME + 'AggregatorNode' });
+    expect(aggregator).toBeDefined();
+  });
+
+  test('add the aggregator node to the server', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    await server.add(aggregator);
+    expect(server.parts.has(aggregator.id)).toBeTruthy();
+    expect(server.parts.has(aggregator)).toBeTruthy();
+    expect(aggregator.lifecycle.isReady).toBeTruthy();
+  });
+
   test('create a Evse device', async () => {
     device = new Evse('EVSE Test Device', 'EVSE12456');
     device.createDefaultDeviceEnergyManagementModeClusterServer();
@@ -141,7 +157,18 @@ describe('Matterbridge EVSE', () => {
 
   test('start the server node', async () => {
     // Run the server
-    await server.start();
+    expect(server.lifecycle.isReady).toBeTruthy();
+    expect(server.lifecycle.isOnline).toBeFalsy();
+
+    // Wait for the server to be online
+    await new Promise<void>((resolve) => {
+      server.lifecycle.online.on(async () => {
+        resolve();
+      });
+      server.start();
+    });
+
+    // Check if the server is online
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
   });

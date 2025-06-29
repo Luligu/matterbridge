@@ -1,8 +1,8 @@
 /**
- * @description This file contains the LaundryWasher class.
- * @file laundryWasher.ts
+ * @description This file contains the LaundryDryer class.
+ * @file laundryDryer.ts
  * @author Luca Liguori
- * @created 2025-05-25
+ * @created 2025-06-29
  * @version 1.1.0
  * @license Apache-2.0
  *
@@ -24,31 +24,27 @@
 // Imports from @matter
 import { MaybePromise } from '@matter/main';
 import { OperationalState } from '@matter/main/clusters/operational-state';
-import { LaundryWasherControls } from '@matter/main/clusters/laundry-washer-controls';
 import { LaundryWasherMode } from '@matter/main/clusters/laundry-washer-mode';
 import { TemperatureControl } from '@matter/main/clusters/temperature-control';
+import { LaundryDryerControls } from '@matter/main/clusters/laundry-dryer-controls';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 import { TemperatureControlServer } from '@matter/main/behaviors/temperature-control';
 import { LaundryWasherModeServer } from '@matter/main/behaviors/laundry-washer-mode';
-import { LaundryWasherControlsServer } from '@matter/main/behaviors/laundry-washer-controls';
+import { LaundryDryerControlsServer } from '@matter/main/behaviors/laundry-dryer-controls';
 
 // Matterbridge
-import { laundryWasher } from './matterbridgeDeviceTypes.js';
+import { laundryDryer } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { MatterbridgeOnOffServer, MatterbridgeServer } from './matterbridgeBehaviors.js';
 
-export class LaundryWasher extends MatterbridgeEndpoint {
+export class LaundryDryer extends MatterbridgeEndpoint {
   /**
-   * Creates an instance of the LaundryWasher class.
+   * Creates an instance of the LaundryDryer class.
    *
-   * @param {string} name - The name of the laundry washer.
-   * @param {string} serial - The serial number of the laundry washer.
-   * @param {number} [currentMode] - The current mode of the laundry washer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off. Persistent attribute.
-   * @param {LaundryWasherMode.ModeOption[]} [supportedModes] - The supported modes of the laundry washer. Defaults to a set of common modes (which include Delicate, Normal, Heavy, and Whites). Fixed attribute.
-   * @param {number} [spinSpeedCurrent] - The current spin speed as index of the spinSpeeds array. Defaults to 2 (which corresponds to '1200').
-   * @param {string[]} [spinSpeeds] - The supported spin speeds. Defaults to ['400', '800', '1200', '1600'].
-   * @param {LaundryWasherControls.NumberOfRinses} [numberOfRinses] - The number of rinses. Defaults to LaundryWasherControls.NumberOfRinses.Normal (which corresponds to 1 rinse).
-   * @param {LaundryWasherControls.NumberOfRinses[]} [supportedRinses] - The supported rinses. Defaults to [NumberOfRinses.None, NumberOfRinses.Normal, NumberOfRinses.Max, NumberOfRinses.Extra].
+   * @param {string} name - The name of the laundry dryer.
+   * @param {string} serial - The serial number of the laundry dryer.
+   * @param {number} [currentMode] - The current mode of the laundry dryer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off. Persistent attribute.
+   * @param {LaundryWasherMode.ModeOption[]} [supportedModes] - The supported modes of the laundry dryer. Defaults to a set of common modes (which include Delicate, Normal, Heavy, and Whites). Fixed attribute.
    * @param {number} [selectedTemperatureLevel] - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
    * @param {string[]} [supportedTemperatureLevels] - The supported temperature levels. Defaults to ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']. Fixed attribute.
    * @param {number} [temperatureSetpoint] - The temperature setpoint * 100. Defaults to 40 * 100 (which corresponds to 40°C).
@@ -66,10 +62,6 @@ export class LaundryWasher extends MatterbridgeEndpoint {
     serial: string,
     currentMode?: number,
     supportedModes?: LaundryWasherMode.ModeOption[],
-    spinSpeedCurrent?: number,
-    spinSpeeds?: string[],
-    numberOfRinses?: LaundryWasherControls.NumberOfRinses,
-    supportedRinses?: LaundryWasherControls.NumberOfRinses[],
     selectedTemperatureLevel?: number,
     supportedTemperatureLevels?: string[],
     temperatureSetpoint?: number,
@@ -78,13 +70,13 @@ export class LaundryWasher extends MatterbridgeEndpoint {
     step?: number,
     operationalState?: OperationalState.OperationalStateEnum,
   ) {
-    super(laundryWasher, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super(laundryDryer, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer();
-    this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Laundry Washer');
+    this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Laundry Dryer');
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDeadFrontOnOffClusterServer(true);
     this.createDefaultLaundryWasherModeClusterServer(currentMode, supportedModes);
-    this.createDefaultLaundryWasherControlsClusterServer(spinSpeedCurrent, spinSpeeds, numberOfRinses, supportedRinses);
+    this.createDefaultLaundryDryerControlsClusterServer(1);
     if (temperatureSetpoint) this.createNumberTemperatureControlClusterServer(temperatureSetpoint, minTemperature, maxTemperature, step);
     else this.createLevelTemperatureControlClusterServer(selectedTemperatureLevel, supportedTemperatureLevels);
     this.createDefaultOperationalStateClusterServer(operationalState);
@@ -115,26 +107,17 @@ export class LaundryWasher extends MatterbridgeEndpoint {
   }
 
   /**
-   * Creates a Laundry Washer Controls Cluster Server with feature Spin for selecting the spin speed and feature Rinse for selecting the number of rinses.
+   * Creates a default Laundry Dryer Controls Cluster Server.
    *
-   * @param {number} spinSpeedCurrent - The current spin speed as index of the spinSpeeds array. Default to 2 (which corresponds to '1200').
-   * @param {string[]} spinSpeeds - The supported spin speeds. Default to ['400', '800', '1200', '1600'].
-   * @param {LaundryWasherControls.NumberOfRinses} numberOfRinses - The number of rinses. Default to LaundryWasherControls.NumberOfRinses.Normal (which corresponds to 1 rinse).
-   * @param {LaundryWasherControls.NumberOfRinses[]} supportedRinses - The supported rinses. Default to [NumberOfRinses.None, NumberOfRinses.Normal, NumberOfRinses.Max, NumberOfRinses.Extra].
+   * @param {LaundryDryerControls.DrynessLevel} selectedDrynessLevel - The selected dryness level. Default is undefined.
+   * @param {LaundryDryerControls.DrynessLevel[]} supportedDrynessLevels - The supported dryness levels. Default is [Low, Normal, Extra, Max].
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultLaundryWasherControlsClusterServer(
-    spinSpeedCurrent = 2,
-    spinSpeeds: string[] = ['400', '800', '1200', '1600'],
-    numberOfRinses: LaundryWasherControls.NumberOfRinses = LaundryWasherControls.NumberOfRinses.Normal,
-    supportedRinses: LaundryWasherControls.NumberOfRinses[] = [LaundryWasherControls.NumberOfRinses.None, LaundryWasherControls.NumberOfRinses.Normal, LaundryWasherControls.NumberOfRinses.Max, LaundryWasherControls.NumberOfRinses.Extra],
-  ): this {
-    this.behaviors.require(LaundryWasherControlsServer.with(LaundryWasherControls.Feature.Spin, LaundryWasherControls.Feature.Rinse), {
-      spinSpeeds,
-      spinSpeedCurrent, // Writable and nullable
-      supportedRinses,
-      numberOfRinses, // Writable
+  createDefaultLaundryDryerControlsClusterServer(selectedDrynessLevel?: LaundryDryerControls.DrynessLevel, supportedDrynessLevels?: LaundryDryerControls.DrynessLevel[]): this {
+    this.behaviors.require(LaundryDryerControlsServer, {
+      supportedDrynessLevels: supportedDrynessLevels ?? [LaundryDryerControls.DrynessLevel.Low, LaundryDryerControls.DrynessLevel.Normal, LaundryDryerControls.DrynessLevel.Extra, LaundryDryerControls.DrynessLevel.Max],
+      selectedDrynessLevel, // Writable
     });
     return this;
   }
@@ -154,6 +137,7 @@ export class LaundryWasher extends MatterbridgeEndpoint {
     });
     return this;
   }
+
   /**
    * Creates a TemperatureControl Cluster Server with features TemperatureNumber and TemperatureStep.
    *
