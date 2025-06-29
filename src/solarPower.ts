@@ -23,8 +23,8 @@
  */
 
 // @matter
+import { PowerSourceTag } from '@matter/main';
 import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
-import { PowerSourceTag } from 'matterbridge/matter';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
