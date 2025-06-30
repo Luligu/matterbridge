@@ -1,13 +1,12 @@
-// src\base.test.ts
+// src/heatPump.test.ts
 
-/* eslint-disable jest/no-commented-out-tests */
-
-const MATTER_PORT = 6000;
-const NAME = 'BaseTest';
+const MATTER_PORT = 6021;
+const NAME = 'HeatPump';
 const HOMEDIR = path.join('jest', NAME);
 
 import { rmSync } from 'node:fs';
 import path from 'node:path';
+import { inspect } from 'node:util';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
@@ -17,9 +16,15 @@ import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFor
 import { MdnsService } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { RootEndpoint } from '@matter/main/endpoints/root';
+import { Identify } from '@matter/main/clusters/identify';
+import { PowerSource } from '@matter/main/clusters/power-source';
+import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { HeatPump } from './heatPump.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -119,19 +124,18 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator.lifecycle.isReady).toBeTruthy();
   });
 
-  /*
-  test('create a water heater device', async () => {
-    device = new WaterHeater('Water Heater Test Device', 'WH123456');
+  test('create a heat pump device', async () => {
+    device = new HeatPump('Heat Pump Test Device', 'HP123456');
     expect(device).toBeDefined();
-    expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
+    expect(device.id).toBe('HeatPumpTestDevice-HP123456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(WaterHeaterManagementServer)).toBeTruthy();
-    expect(device.hasClusterServer(WaterHeaterModeServer)).toBeTruthy();
-    expect(device.hasClusterServer(ThermostatServer)).toBeTruthy();
+    expect(device.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
   });
 
-  test('add a water heater device', async () => {
+  test('add a solar power device', async () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
     try {
@@ -142,11 +146,10 @@ describe('Matterbridge ' + NAME, () => {
       device.log.error(`Error adding device ${device.deviceName}: ${errorMessage}\nstack: ${errorInspect}`);
       return;
     }
-    expect(server.parts.has('WaterHeaterTestDevice-WH123456')).toBeTruthy();
+    expect(server.parts.has('HeatPumpTestDevice-HP123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
   });
-  */
 
   test('start the server node', async () => {
     // Run the server
@@ -166,7 +169,6 @@ describe('Matterbridge ' + NAME, () => {
     expect(server.lifecycle.isOnline).toBeTruthy();
   });
 
-  /*
   test('device forEachAttribute', async () => {
     const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
@@ -185,65 +187,8 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(84);
+    expect(attributes.length).toBe(89);
   });
-
-  test('invoke MatterbridgeThermostatServer commands', async () => {
-    expect(device.behaviors.has(ThermostatServer)).toBeTruthy();
-    expect(device.behaviors.has(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating))).toBeTruthy();
-    expect(device.behaviors.elementsOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)).commands.has('setpointRaiseLower')).toBeTruthy();
-    expect((device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)) as any).acceptedCommandList).toEqual([0]);
-    expect((device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)) as any).generatedCommandList).toEqual([]);
-
-    jest.clearAllMocks();
-    const occupiedHeatingSetpoint = device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)).occupiedHeatingSetpoint;
-    expect(occupiedHeatingSetpoint).toBeDefined();
-    if (!occupiedHeatingSetpoint) return;
-    await invokeBehaviorCommand(device, 'thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Heat, amount: 5 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Heat} (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Set occupiedHeatingSetpoint to ${(occupiedHeatingSetpoint + 50) / 100}`);
-    expect(device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)).occupiedHeatingSetpoint).toBe(occupiedHeatingSetpoint + 50);
-  });
-
-  test('invoke MatterbridgeWaterHeaterManagementServer commands', async () => {
-    expect(device.behaviors.has(WaterHeaterManagementServer)).toBeTruthy();
-    expect(device.behaviors.has(MatterbridgeWaterHeaterManagementServer)).toBeTruthy();
-    expect(device.behaviors.elementsOf(WaterHeaterManagementServer).commands.has('boost')).toBeTruthy();
-    expect(device.behaviors.elementsOf(MatterbridgeWaterHeaterManagementServer).commands.has('boost')).toBeTruthy();
-    expect(device.behaviors.elementsOf(WaterHeaterManagementServer).commands.has('cancelBoost')).toBeTruthy();
-    expect(device.behaviors.elementsOf(MatterbridgeWaterHeaterManagementServer).commands.has('cancelBoost')).toBeTruthy();
-    expect((device.state['waterHeaterManagement'] as any).acceptedCommandList).toEqual([0, 1]);
-    expect((device.state['waterHeaterManagement'] as any).generatedCommandList).toEqual([]);
-    expect((device.stateOf(MatterbridgeWaterHeaterManagementServer) as any).acceptedCommandList).toEqual([0, 1]);
-    expect((device.stateOf(MatterbridgeWaterHeaterManagementServer) as any).generatedCommandList).toEqual([]);
-
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'waterHeaterManagement', 'boost', { boostInfo: { duration: 60 } });
-    expect(device.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Active);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Boost (endpoint ${device.id}.${device.number})`);
-
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'waterHeaterManagement', 'cancelBoost', {});
-    expect(device.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Inactive);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancel boost (endpoint ${device.id}.${device.number})`);
-  });
-
-  test('invoke MatterbridgeWaterHeaterModeServer commands', async () => {
-    expect(device.behaviors.has(WaterHeaterModeServer)).toBeTruthy();
-    expect(device.behaviors.has(MatterbridgeWaterHeaterModeServer)).toBeTruthy();
-    expect(device.behaviors.elementsOf(WaterHeaterModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect(device.behaviors.elementsOf(MatterbridgeWaterHeaterModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((device.state['waterHeaterMode'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['waterHeaterMode'] as any).generatedCommandList).toEqual([1]);
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'waterHeaterMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: 0`);
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'waterHeaterMode', 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterModeServer changeToMode called with newMode 1 => Auto`);
-  });
-  */
 
   test('close the server node', async () => {
     expect(server).toBeDefined();

@@ -1,6 +1,6 @@
 /**
  * @description This file contains the BatteryStorage class.
- * @file batteryStorage.ts
+ * @file src/devices/batteryStorage.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-06-20
@@ -28,8 +28,8 @@ import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-mana
 import { PowerSource } from '@matter/main/clusters/power-source';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { deviceEnergyManagement, electricalSensor, batteryStorage, powerSource } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { deviceEnergyManagement, electricalSensor, batteryStorage, powerSource } from '../matterbridgeDeviceTypes.js';
 
 export class BatteryStorage extends MatterbridgeEndpoint {
   /**
@@ -44,8 +44,12 @@ export class BatteryStorage extends MatterbridgeEndpoint {
    * @param {number} power - The power value in milliwatts.
    * @param {number} energyImported - The total production value in mW/h.
    * @param {number} energyExported - The total production value in mW/h.
-   * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can produce when switched on. Defaults to `0` if not provided.
-   * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can produce when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   *
+   * @remarks
+   * - A battery storage inverter that can charge its battery at a maximum power of 2000W and can
+   * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
    */
   constructor(
     name: string,
@@ -75,7 +79,7 @@ export class BatteryStorage extends MatterbridgeEndpoint {
     this.addChildDeviceType('BatteryPowerSource', powerSource, {
       tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Battery.namespaceId, tag: PowerSourceTag.Battery.tag, label: null }],
     })
-      .createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining, batChargeLevel)
+      .createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining, batChargeLevel, 24_000) // Battery voltage in mV (24V).
       .addRequiredClusterServers();
 
     this.addChildDeviceType('GridPowerSource', powerSource, {

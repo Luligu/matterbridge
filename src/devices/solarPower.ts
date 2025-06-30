@@ -1,6 +1,6 @@
 /**
- * @description This file contains the HeatPump class.
- * @file heatPump.ts
+ * @description This file contains the SolarPower class.
+ * @file src/devices/solarPower.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-06-14
@@ -27,21 +27,21 @@ import { PowerSourceTag } from '@matter/main';
 import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { deviceEnergyManagement, electricalSensor, powerSource, heatPump } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { deviceEnergyManagement, electricalSensor, solarPower, powerSource } from '../matterbridgeDeviceTypes.js';
 
-export class HeatPump extends MatterbridgeEndpoint {
+export class SolarPower extends MatterbridgeEndpoint {
   /**
-   * Creates an instance of the HeatPump class.
+   * Creates an instance of the SolarPower class.
    *
-   * @param {string} name - The name of the HeatPump.
-   * @param {string} serial - The serial number of the HeatPump.
+   * @param {string} name - The name of the SolarPower.
+   * @param {string} serial - The serial number of the SolarPower.
    * @param {number} voltage - The voltage value in millivolts.
    * @param {number} current - The current value in milliamperes.
    * @param {number} power - The power value in milliwatts.
-   * @param {number} energyImported - The total production value in mW/h.
-   * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can produce when switched on. Defaults to `0` if not provided.
-   * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can produce when switched on. Defaults to `0` if not provided.
+   * @param {number} energyExported - The total production value in mW/h.
+   * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    */
   constructor(
     name: string,
@@ -49,25 +49,25 @@ export class HeatPump extends MatterbridgeEndpoint {
     voltage: number | bigint | null = null,
     current: number | bigint | null = null,
     power: number | bigint | null = null,
-    energyImported: number | bigint | null = null,
+    energyExported: number | bigint | null = null,
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
     super(
-      [heatPump, powerSource, electricalSensor, deviceEnergyManagement],
+      [solarPower, powerSource, electricalSensor, deviceEnergyManagement],
       {
-        tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Grid.namespaceId, tag: PowerSourceTag.Grid.tag, label: null }],
+        tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Solar.namespaceId, tag: PowerSourceTag.Solar.tag, label: null }],
         id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
       },
       true,
     );
     this.createDefaultIdentifyClusterServer()
-      .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Heat Pump')
+      .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Solar Power')
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
-      .createDefaultElectricalEnergyMeasurementClusterServer(energyImported)
-      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.Other, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultElectricalEnergyMeasurementClusterServer(0, energyExported)
+      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.SolarPv, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
   }

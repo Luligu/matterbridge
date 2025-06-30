@@ -1,6 +1,6 @@
 /**
  * @description This file contains the LaundryDryer class.
- * @file laundryDryer.ts
+ * @file src/devices/laundryDryer.ts
  * @author Luca Liguori
  * @created 2025-06-29
  * @version 1.1.0
@@ -29,8 +29,9 @@ import { LaundryDryerControls } from '@matter/main/clusters/laundry-dryer-contro
 import { LaundryDryerControlsServer } from '@matter/main/behaviors/laundry-dryer-controls';
 
 // Matterbridge
-import { laundryDryer, powerSource } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { laundryDryer, powerSource } from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+
 import { MatterbridgeLaundryWasherModeServer, MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './laundryWasher.js';
 
 export class LaundryDryer extends MatterbridgeEndpoint {

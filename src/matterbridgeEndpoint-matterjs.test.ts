@@ -111,9 +111,9 @@ import {
 } from './matterbridgeDeviceTypes.ts';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
-import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.ts';
-import { WaterHeater } from './waterHeater.ts';
-import { Evse, MatterbridgeEnergyEvseServer } from './evse.ts';
+import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.ts';
+import { WaterHeater } from './devices/waterHeater.ts';
+import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

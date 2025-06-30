@@ -1,6 +1,6 @@
 /**
  * @description This file contains the WaterHeater class.
- * @file waterHeater.ts
+ * @file src/devices/waterHeater.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-05-18
@@ -32,9 +32,9 @@ import { WaterHeaterMode } from '@matter/main/clusters/water-heater-mode';
 import { WaterHeaterManagementServer } from '@matter/main/behaviors/water-heater-management';
 import { WaterHeaterModeServer } from '@matter/main/behaviors/water-heater-mode';
 
-import { MatterbridgeServer } from './matterbridgeBehaviors.js';
-import { electricalSensor, powerSource, waterHeater } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
+import { electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 export class WaterHeater extends MatterbridgeEndpoint {
   /**

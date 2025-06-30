@@ -1,7 +1,7 @@
-// src/heatPump.test.ts
+// src/batteryStorage.test.ts
 
-const MATTER_PORT = 6021;
-const NAME = 'HeatPump';
+const MATTER_PORT = 6018;
+const NAME = 'BatteryStorage';
 const HOMEDIR = path.join('jest', NAME);
 
 import { rmSync } from 'node:fs';
@@ -23,8 +23,8 @@ import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-pow
 import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { HeatPump } from './heatPump.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { BatteryStorage } from './batteryStorage.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -124,18 +124,22 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator.lifecycle.isReady).toBeTruthy();
   });
 
-  test('create a heat pump device', async () => {
-    device = new HeatPump('Heat Pump Test Device', 'HP123456');
+  test('create a solar power device', async () => {
+    device = new BatteryStorage('Battery Storage Test Device', 'BS123456');
     expect(device).toBeDefined();
-    expect(device.id).toBe('HeatPumpTestDevice-HP123456');
+    expect(device.id).toBe('BatteryStorageTestDevice-BS123456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
+
+    expect(device.getChildEndpointByName('BatteryPowerSource')).toBeDefined();
+    expect(device.getChildEndpointByName('BatteryPowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+    expect(device.getChildEndpointByName('GridPowerSource')).toBeDefined();
+    expect(device.getChildEndpointByName('GridPowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
   });
 
-  test('add a solar power device', async () => {
+  test('add a battery storage device', async () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
     try {
@@ -146,7 +150,7 @@ describe('Matterbridge ' + NAME, () => {
       device.log.error(`Error adding device ${device.deviceName}: ${errorMessage}\nstack: ${errorInspect}`);
       return;
     }
-    expect(server.parts.has('HeatPumpTestDevice-HP123456')).toBeTruthy();
+    expect(server.parts.has('BatteryStorageTestDevice-BS123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
   });
@@ -187,7 +191,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(89);
+    expect(attributes.length).toBe(88);
   });
 
   test('close the server node', async () => {

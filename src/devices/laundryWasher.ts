@@ -1,6 +1,6 @@
 /**
  * @description This file contains the LaundryWasher class.
- * @file laundryWasher.ts
+ * @file src/devices/laundryWasher.ts
  * @author Luca Liguori
  * @created 2025-05-25
  * @version 1.1.0
@@ -33,9 +33,9 @@ import { LaundryWasherModeServer } from '@matter/main/behaviors/laundry-washer-m
 import { LaundryWasherControlsServer } from '@matter/main/behaviors/laundry-washer-controls';
 
 // Matterbridge
-import { laundryWasher, powerSource } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterbridgeOnOffServer, MatterbridgeServer } from './matterbridgeBehaviors.js';
+import { laundryWasher, powerSource } from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
 
 export class LaundryWasher extends MatterbridgeEndpoint {
   /**

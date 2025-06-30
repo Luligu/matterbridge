@@ -19,9 +19,9 @@ import { Identify, PowerSource, ElectricalEnergyMeasurement, ElectricalPowerMeas
 import { EnergyEvseServer, EnergyEvseModeServer, DeviceEnergyManagementModeServer } from '@matter/node/behaviors';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
-import { MatterbridgeDeviceEnergyManagementModeServer } from './matterbridgeBehaviors.ts';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.ts';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.ts';
+import { MatterbridgeDeviceEnergyManagementModeServer } from '../matterbridgeBehaviors.ts';
 
 import { Evse, MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './evse.ts';
 

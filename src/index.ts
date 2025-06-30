@@ -41,12 +41,14 @@ export * from './matterbridgeDynamicPlatform.js';
 export { addVirtualDevice } from './helpers.js';
 
 // Single class device types
-export * from './roboticVacuumCleaner.js';
-export * from './laundryWasher.js';
-export * from './waterHeater.js';
-export * from './evse.js';
-export * from './solarPower.js';
-export * from './batteryStorage.js';
+export * from './devices/roboticVacuumCleaner.js';
+export * from './devices/laundryWasher.js';
+export * from './devices/laundryDryer.js';
+export * from './devices/waterHeater.js';
+export * from './devices/evse.js';
+export * from './devices/solarPower.js';
+export * from './devices/batteryStorage.js';
+export * from './devices/heatPump.js';
 
 const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 

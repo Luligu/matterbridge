@@ -1,6 +1,6 @@
 /**
  * @description This file contains the Evse class.
- * @file energy-evse.ts
+ * @file src/devices/energy-evse.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-05-27
@@ -31,9 +31,9 @@ import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-mana
 import { ModeBase } from '@matter/main/clusters/mode-base';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterbridgeServer } from './matterbridgeBehaviors.js';
-import { deviceEnergyManagement, electricalSensor, evse, powerSource } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
+import { deviceEnergyManagement, electricalSensor, evse, powerSource } from '../matterbridgeDeviceTypes.js';
 
 export class Evse extends MatterbridgeEndpoint {
   /**

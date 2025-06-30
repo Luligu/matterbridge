@@ -1,6 +1,6 @@
 /**
  * @description This file contains the RoboticVacuumCleaner class.
- * @file roboticVacuumCleaner.ts
+ * @file src/devices/roboticVacuumCleaner.ts
  * @author Luca Liguori
  * @created 2025-05-01
  * @version 1.1.0
@@ -35,9 +35,9 @@ import { ModeBase } from '@matter/main/clusters/mode-base';
 import { OperationalState } from '@matter/main/clusters/operational-state';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { powerSource, roboticVacuumCleaner } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeServer, MatterbridgeServiceAreaServer } from './matterbridgeBehaviors.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { powerSource, roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeServer, MatterbridgeServiceAreaServer } from '../matterbridgeBehaviors.js';
 
 export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
   /**

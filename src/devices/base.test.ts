@@ -1,26 +1,25 @@
-// src\waterHeater.test.ts
+// src\base.test.ts
 
-const MATTER_PORT = 6003;
-const NAME = 'WaterHeater';
+/* eslint-disable jest/no-commented-out-tests */
+
+const MATTER_PORT = 6000;
+const NAME = 'BaseTest';
 const HOMEDIR = path.join('jest', NAME);
 
 import { rmSync } from 'node:fs';
 import path from 'node:path';
-import { inspect } from 'node:util';
-import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Endpoint } from '@matter/main';
-import { RootEndpoint } from '@matter/main/endpoints';
+import { jest } from '@jest/globals';
+import { AnsiLogger } from 'node-ansi-logger';
+
+// matter.js
+import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
 import { MdnsService } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { Identify, PowerSource, Thermostat, WaterHeaterManagement } from '@matter/main/clusters';
-import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } from '@matter/node/behaviors';
+import { RootEndpoint } from '@matter/main/endpoints/root';
 
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.ts';
-import { MatterbridgeThermostatServer } from './matterbridgeBehaviors.ts';
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
+// Matterbridge
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -49,7 +48,7 @@ if (!debug) {
 // Cleanup the matter environment
 rmSync(HOMEDIR, { recursive: true, force: true });
 
-describe('Matterbridge Water Heater', () => {
+describe('Matterbridge ' + NAME, () => {
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
@@ -62,14 +61,12 @@ describe('Matterbridge Water Heater', () => {
     environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
-  }, 30000);
+  });
 
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
   });
-
-  afterEach(async () => {});
 
   afterAll(async () => {
     // Restore all mocks
@@ -85,14 +82,14 @@ describe('Matterbridge Water Heater', () => {
         name: NAME + 'ServerNode',
         deviceType: DeviceTypeId(RootEndpoint.deviceType),
         vendorId: VendorId(0xfff1),
-        productId: 0x8001,
+        productId: 0x8000,
       },
 
       // Provide defaults for the BasicInformation cluster on the Root endpoint
       basicInformation: {
         vendorId: VendorId(0xfff1),
         vendorName: 'Matterbridge',
-        productId: 0x8001,
+        productId: 0x8000,
         productName: 'Matterbridge ' + NAME,
         nodeLabel: NAME + 'ServerNode',
         hardwareVersion: 1,
@@ -105,6 +102,7 @@ describe('Matterbridge Water Heater', () => {
       },
     });
     expect(server).toBeDefined();
+    expect(server.lifecycle.isReady).toBeTruthy();
   });
 
   test('create the aggregator node', async () => {
@@ -121,18 +119,8 @@ describe('Matterbridge Water Heater', () => {
     expect(aggregator.lifecycle.isReady).toBeTruthy();
   });
 
-  test('create a water heater device with all parameters', async () => {
-    device = new WaterHeater('Water Heater Test Device', 'WH123456', 50, 55, 20, 80, { immersionElement1: true, immersionElement2: true, heatPump: true, boiler: true, other: true }, 90);
-    expect(device).toBeDefined();
-    expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(WaterHeaterManagementServer)).toBeTruthy();
-    expect(device.hasClusterServer(WaterHeaterModeServer)).toBeTruthy();
-    expect(device.hasClusterServer(ThermostatServer)).toBeTruthy();
-  });
-
-  test('create a water heater device with no parameter', async () => {
+  /*
+  test('create a water heater device', async () => {
     device = new WaterHeater('Water Heater Test Device', 'WH123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
@@ -158,6 +146,7 @@ describe('Matterbridge Water Heater', () => {
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
   });
+  */
 
   test('start the server node', async () => {
     // Run the server
@@ -177,6 +166,7 @@ describe('Matterbridge Water Heater', () => {
     expect(server.lifecycle.isOnline).toBeTruthy();
   });
 
+  /*
   test('device forEachAttribute', async () => {
     const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
@@ -251,11 +241,11 @@ describe('Matterbridge Water Heater', () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'waterHeaterMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeWaterHeaterModeServer changeToMode called with newMode 1 => Auto`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterModeServer changeToMode called with newMode 1 => Auto`);
   });
+  */
 
-  test('close server node', async () => {
-    // Close the server
+  test('close the server node', async () => {
     expect(server).toBeDefined();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();

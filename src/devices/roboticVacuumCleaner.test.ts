@@ -16,10 +16,10 @@ import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { Identify, PowerSource, RvcCleanMode, RvcOperationalState, RvcRunMode, ServiceArea } from '@matter/main/clusters';
 import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
 
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.ts';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.ts';
-import { MatterbridgeServiceAreaServer } from './matterbridgeBehaviors.ts';
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
+import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviors.ts';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

@@ -1,7 +1,7 @@
-// src\laundryDryer.test.ts
+// src\laundryWasher.test.ts
 
-const MATTER_PORT = 6020;
-const NAME = 'LaundryDryer';
+const MATTER_PORT = 6001;
+const NAME = 'LaundryWasher';
 const HOMEDIR = path.join('jest', NAME);
 
 // Import necessary modules and types
@@ -15,14 +15,13 @@ import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFor
 import { MdnsService } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { RootEndpoint } from '@matter/main/endpoints/root';
-import { Identify, LaundryDryerControls, LaundryWasherControls, LaundryWasherMode, OnOff, OperationalState, PowerSource, TemperatureControl } from '@matter/main/clusters';
+import { Identify, LaundryWasherControls, LaundryWasherMode, OnOff, OperationalState, PowerSource, TemperatureControl } from '@matter/main/clusters';
 import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/main/behaviors';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { LaundryDryer } from './laundryDryer.ts';
-import { MatterbridgeLaundryWasherModeServer, MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './laundryWasher.ts';
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
+import { LaundryWasher, MatterbridgeLaundryWasherModeServer, MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './laundryWasher.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -124,24 +123,24 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator.lifecycle.isReady).toBeTruthy();
   });
 
-  test('create a laundry dryer device', async () => {
-    device = new LaundryDryer('Laundry Dryer Test Device', 'LD123456');
+  test('create a laundry washer device', async () => {
+    device = new LaundryWasher('Laundry Washer Test Device', 'LW123456');
     expect(device).toBeDefined();
-    expect(device.id).toBe('LaundryDryerTestDevice-LD123456');
+    expect(device.id).toBe('LaundryWasherTestDevice-LW123456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(LaundryWasherMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(LaundryDryerControls.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(LaundryWasherControls.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
   });
 
-  test('add a laundry dryer device', async () => {
+  test('add a laundry washer device', async () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
     await server.add(device);
-    expect(server.parts.has('LaundryDryerTestDevice-LD123456')).toBeTruthy();
+    expect(server.parts.has('LaundryWasherTestDevice-LW123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
 
@@ -186,7 +185,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(71);
+    expect(attributes.length).toBe(73);
   });
 
   test('invoke MatterbridgeLaundryWasherModeServer commands', async () => {
@@ -227,28 +226,28 @@ describe('Matterbridge ' + NAME, () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
     await device.delete();
-    expect(server.parts.has('LaundryDryerTestDevice-LD123456')).toBeFalsy();
+    expect(server.parts.has('LaundryWasherTestDevice-LW123456')).toBeFalsy();
     expect(server.parts.has(device)).toBeFalsy();
   });
 
-  test('create a laundry dryer device with number temperature control', async () => {
-    device = new LaundryDryer('Laundry Dryer Test Device', 'LD123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
+  test('create a laundry washer device with number temperature control', async () => {
+    device = new LaundryWasher('Laundry Washer Test Device', 'LW123456', undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
     expect(device).toBeDefined();
-    expect(device.id).toBe('LaundryDryerTestDevice-LD123456');
+    expect(device.id).toBe('LaundryWasherTestDevice-LW123456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(LaundryWasherMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(LaundryDryerControls.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(LaundryWasherControls.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
   });
 
-  test('add a laundry dryer device with number temperature control', async () => {
+  test('add a laundry washer device with number temperature control', async () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
     await server.add(device);
-    expect(server.parts.has('LaundryDryerTestDevice-LD123456')).toBeTruthy();
+    expect(server.parts.has('LaundryWasherTestDevice-LW123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
 

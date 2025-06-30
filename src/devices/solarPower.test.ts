@@ -1,7 +1,7 @@
-// src/batteryStorage.test.ts
+// src/solarPower.test.ts
 
-const MATTER_PORT = 6018;
-const NAME = 'BatteryStorage';
+const MATTER_PORT = 6017;
+const NAME = 'SolarPower';
 const HOMEDIR = path.join('jest', NAME);
 
 import { rmSync } from 'node:fs';
@@ -23,8 +23,8 @@ import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-pow
 import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { BatteryStorage } from './batteryStorage.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { SolarPower } from './solarPower.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -125,21 +125,17 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a solar power device', async () => {
-    device = new BatteryStorage('Battery Storage Test Device', 'BS123456');
+    device = new SolarPower('Solar Power Test Device', 'SP123456');
     expect(device).toBeDefined();
-    expect(device.id).toBe('BatteryStorageTestDevice-BS123456');
+    expect(device.id).toBe('SolarPowerTestDevice-SP123456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
-
-    expect(device.getChildEndpointByName('BatteryPowerSource')).toBeDefined();
-    expect(device.getChildEndpointByName('BatteryPowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointByName('GridPowerSource')).toBeDefined();
-    expect(device.getChildEndpointByName('GridPowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
   });
 
-  test('add a battery storage device', async () => {
+  test('add a solar power device', async () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
     try {
@@ -150,7 +146,7 @@ describe('Matterbridge ' + NAME, () => {
       device.log.error(`Error adding device ${device.deviceName}: ${errorMessage}\nstack: ${errorInspect}`);
       return;
     }
-    expect(server.parts.has('BatteryStorageTestDevice-BS123456')).toBeTruthy();
+    expect(server.parts.has('SolarPowerTestDevice-SP123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
   });
@@ -191,7 +187,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(88);
+    expect(attributes.length).toBe(89);
   });
 
   test('close the server node', async () => {

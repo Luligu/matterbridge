@@ -977,7 +977,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100).
    * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param {number} [batVoltage] - The battery voltage (default: 1500).
+   * @param {number} [batVoltage] - The battery voltage in mV (default: 1500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500) {
@@ -987,11 +987,12 @@ export class MatterbridgeEndpoint extends Endpoint {
       description: 'Primary battery',
       batVoltage,
       batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
-      batTimeRemaining: 1,
+      batTimeRemaining: null, // Indicates the estimated time in seconds before the battery will no longer be able to provide power to the Node
       batChargeLevel,
       batReplacementNeeded: false,
       batReplaceability: PowerSource.BatReplaceability.Unspecified,
-      activeBatFaults: undefined,
+      batPresent: true,
+      activeBatFaults: [],
       batChargeState: PowerSource.BatChargeState.IsNotCharging,
       batFunctionalWhileCharging: true,
       endpointList: [],
@@ -2204,8 +2205,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {DeviceEnergyManagement.EsaType} [esaType] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
    * @param {boolean} [esaCanGenerate] - Indicates if the ESA can generate energy. Defaults to `false`.
    * @param {DeviceEnergyManagement.EsaState} [esaState] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
-   * @param {number} [absMinPower] - The absolute minimum power in mW. Defaults to `0`.
-   * @param {number} [absMaxPower] - The absolute maximum power in mW. Defaults to `0`.
+   * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -2271,11 +2272,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Power Topology Cluster Server with feature TreeTopology. Only needed for an electricalSensor device type.
+   * Creates a default Power Topology Cluster Server with feature TreeTopology (the endpoint provides or consumes power to/from itself and its child endpoints). Only needed for an electricalSensor device type.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultPowerTopologyClusterServer() {
+  createDefaultPowerTopologyClusterServer(): this {
     this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.TreeTopology));
     return this;
   }
@@ -2287,7 +2288,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} energyExported - The total production value in mW/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null) {
+  createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
     this.behaviors.require(ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy), {
       accuracy: {
         measurementType: MeasurementType.ElectricalEnergy,
@@ -2312,7 +2313,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} frequency - The frequency value in millihertz.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null) {
+  createDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null): this {
     this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), {
       powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
       numberOfMeasurementTypes: 4,
