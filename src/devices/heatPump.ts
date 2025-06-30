@@ -47,7 +47,7 @@ export class HeatPump extends MatterbridgeEndpoint {
    * - It also includes child devices for flow temperature, return temperature, and a thermostat.
    * - The flow and return temperature sensors are set to default values of 45.00°C and 35.00°C respectively.
    * - The heating only thermostat is set up with a default temperature setpoint of 21.00°C.
-   * - The device energy management cluster is set to `esaType` as `Other`, `esaCanGenerate` as `false`, and `esaState` as `Online`.
+   * - The device energy management cluster is set to `esaType` as `SpaceHeating`, `esaCanGenerate` as `false`, and `esaState` as `Online`.
    * - The absolute minimum and maximum power values can be set to indicate the range of power consumption for the heat pump.
    */
   constructor(
@@ -74,7 +74,7 @@ export class HeatPump extends MatterbridgeEndpoint {
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(energyImported)
-      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.Other, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.SpaceHeating, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
 
