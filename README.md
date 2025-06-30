@@ -69,15 +69,18 @@ https://matter-smarthome.de/en/interview/an-alternative-to-the-official-matter-s
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
 
 If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions.
-The supported versions of node are 18, 20 and 22. Please install node 22 LTS.
-Node 23 is not supported.
+The supported versions of node are 18, 20 and 22. Please install Node.js 22 LTS.
+Node.js 23, like all odd-numbered versions, is not supported.
 Nvm is not a good choice and should not be used for production.
 
 If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/desktop/setup/install/linux/debian/.
+After follow the guidelines for the [Docker configurations](README-DOCKER.md).
+
+I suggest using Docker for its simplicity.
 
 Since as stated in the Matter specifications "Matter aims to build a universal IPv6-based communication protocol for smart home devices", ipv6 should be enabled in the network.
 
-Avoid using VLAN and firewall blocking the communications between the controller and Matterbridge.
+Avoid using VLAN and firewall blocking the communications between the controllers and Matterbridge.
 
 ## Installation
 

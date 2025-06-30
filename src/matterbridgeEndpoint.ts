@@ -621,11 +621,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {keyof MatterbridgeEndpointCommands} command - The command to execute.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [request] - The optional request to pass to the handler function.
+   * @param {string} [cluster] - The optional cluster to pass to the handler function.
+   * @param {Record<string, boolean | number | bigint | string | object | null>} [attributes] - The optional attributes to pass to the handler function.
+   * @param {MatterbridgeEndpoint} [endpoint] - The optional MatterbridgeEndpoint instance to pass to the handler function
    *
    * @deprecated Used ONLY in Jest tests.
    */
-  async executeCommandHandler(command: keyof MatterbridgeEndpointCommands, request?: Record<string, boolean | number | bigint | string | object | null>) {
-    await this.commandHandler.executeHandler(command, { request });
+  async executeCommandHandler(command: keyof MatterbridgeEndpointCommands, request?: Record<string, boolean | number | bigint | string | object | null>, cluster?: string, attributes?: Record<string, boolean | number | bigint | string | object | null>, endpoint?: MatterbridgeEndpoint): Promise<void> {
+    await this.commandHandler.executeHandler(command, { request, cluster, attributes, endpoint });
   }
 
   /**

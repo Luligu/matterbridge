@@ -120,11 +120,11 @@ docker compose down
 
 ### Update with docker compose
 
-This will pull the new matterbridge image and restart the matterbridge container.
+This will pull the new matterbridge image and restart only the matterbridge container.
 
 ```bash
 docker compose pull matterbridge
-docker compose up -d --no-deps matterbridge
+docker compose up -d --no-deps --force-recreate matterbridge
 ```
 
 ### Inspect the container
