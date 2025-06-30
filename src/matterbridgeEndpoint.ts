@@ -164,7 +164,8 @@ import {
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CommandHandlerFunction = (data: { request: Record<string, any>; cluster: string; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint }) => void | Promise<void>;
+export type CommandHandlerData = { request: Record<string, any>; cluster: string; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint };
+export type CommandHandlerFunction = (data: CommandHandlerData) => void | Promise<void>;
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -328,7 +329,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   name: string | undefined = undefined;
   /** The code of the first device type of the endpoint (old api compatibility) */
   deviceType: number | undefined = undefined;
-  /** The id of the endpoint (old api compatibility) */
+  /** The original id (with spaces and .) of the endpoint (old api compatibility) */
   uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;
 
