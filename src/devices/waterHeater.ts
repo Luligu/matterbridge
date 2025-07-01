@@ -29,6 +29,7 @@ import { MaybePromise } from '@matter/main';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/main/clusters/water-heater-mode';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
 import { WaterHeaterManagementServer } from '@matter/main/behaviors/water-heater-management';
 import { WaterHeaterModeServer } from '@matter/main/behaviors/water-heater-mode';
 
@@ -53,6 +54,12 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {boolean} heaterTypes.boiler - Indicates if the water heater has a boiler.
    * @param {boolean} heaterTypes.other - Indicates if the water heater has other types of heating sources.
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 90.
+   * @param {number} [voltage] - The voltage value in millivolts. Defaults to null if not provided.
+   * @param {number} [current] - The current value in milliamperes. Defaults to null if not provided.
+   * @param {number} [power] - The power value in milliwatts. Defaults to null if not provided.
+   * @param {number} [energy] - The total consumption value in mW/h. Defaults to null if not provided.
+   * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    */
   constructor(
     name: string,
@@ -63,6 +70,12 @@ export class WaterHeater extends MatterbridgeEndpoint {
     maxHeatSetpointLimit = 80,
     heaterTypes: { immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean } = { immersionElement1: true },
     tankPercentage = 90,
+    voltage: number | bigint | null = null,
+    current: number | bigint | null = null,
+    power: number | bigint | null = null,
+    energy: number | bigint | null = null,
+    absMinPower: number = 0,
+    absMaxPower: number = 0,
   ) {
     super([waterHeater, powerSource, electricalSensor], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
@@ -70,7 +83,12 @@ export class WaterHeater extends MatterbridgeEndpoint {
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultHeatingThermostatClusterServer(waterTemperature, targetWaterTemperature, minHeatSetpointLimit, maxHeatSetpointLimit)
       .createDefaultWaterHeaterManagementClusterServer(heaterTypes, {}, tankPercentage)
-      .createDefaultWaterHeaterModeClusterServer();
+      .createDefaultWaterHeaterModeClusterServer()
+      .createDefaultPowerTopologyClusterServer()
+      .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
+      .createDefaultElectricalEnergyMeasurementClusterServer(energy)
+      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.WaterHeating, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultDeviceEnergyManagementModeClusterServer();
   }
 
   /**
