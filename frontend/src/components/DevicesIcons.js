@@ -45,7 +45,7 @@ import KitchenIcon from '@mui/icons-material/Kitchen';
 
 // @mdi/js use: <Icon path={mdiSortDescending} size='15px'/>
 import Icon from '@mdi/react';
-import { mdiPowerSocketEu, mdiLightSwitch, mdiThermostat, mdiGestureTapButton, mdiWaterPercent, mdiSmokeDetectorVariant, mdiAirPurifier, mdiAirFilter, mdiWashingMachine, mdiTumbleDryer, mdiDishwasher, mdiStove, mdiThermostatBox, mdiRobotVacuum } from '@mdi/js';
+import { mdiPowerSocketEu, mdiTransmissionTower, mdiEvStation, mdiWaterBoiler, mdiHeatPump, mdiSolarPanel, mdiHomeBattery, mdiLightSwitch, mdiThermostat, mdiGestureTapButton, mdiWaterPercent, mdiSmokeDetectorVariant, mdiAirPurifier, mdiAirFilter, mdiWashingMachine, mdiTumbleDryer, mdiDishwasher, mdiStove, mdiThermostatBox, mdiRobotVacuum } from '@mdi/js';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -138,6 +138,11 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
         <Render icon={<ElectricalServicesIcon/>} cluster={cluster} value={cluster.attributeLocalValue===0 ? 'AC' : 'DC'} />
       ))}
 
+      {/* DeviceEnergyManagement */}
+      {deviceType===0x050d && clusters.filter(cluster => cluster.clusterName === 'DeviceEnergyManagement' && cluster.attributeName === 'esaState').map(cluster => (
+        <Render icon={<Icon path={mdiTransmissionTower} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===0 ? 'Offline' : 'Online'} />
+      ))}
+
       {lightDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
         <Render icon={<LightbulbIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
       ))}
@@ -225,6 +230,27 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
       {/* Rain sensor */}
       {deviceType===0x0044 && clusters.filter(cluster => cluster.clusterName === 'BooleanState' && cluster.attributeName === 'stateValue').map(cluster => (
         <Render icon={<ThunderstormIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'Rain':'No rain'}/>
+      ))}
+
+      {/* Evse */}
+      {deviceType===0x050c && clusters.filter(cluster => cluster.clusterName === 'EnergyEvse' && cluster.attributeName === 'state').map(cluster => (
+        <Render icon={<Icon path={mdiEvStation} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===0 ?'Free':'In use'}/>
+      ))}
+      {/* Water Heater */}
+      {deviceType===0x050f && clusters.filter(cluster => cluster.clusterName === 'WaterHeaterManagement' && cluster.attributeName === 'tankPercentage').map(cluster => (
+        <Render icon={<Icon path={mdiWaterBoiler} size='40px' color='var(--primary-color)' />} cluster={cluster} value={'Tank ' + (cluster.attributeLocalValue ?? 0) + '%'}/>
+      ))}
+      {/* Heat Pump */}
+      {deviceType===0x0309 && clusters.filter(cluster => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'featureMap').map(cluster => (
+        <Render icon={<Icon path={mdiHeatPump} size='40px' color='var(--primary-color)' />} cluster={cluster} value={'HeatPump'}/>
+      ))}
+      {/* Solar Power */}
+      {deviceType===0x0017 && clusters.filter(cluster => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'featureMap').map(cluster => (
+        <Render icon={<Icon path={mdiSolarPanel} size='40px' color='var(--primary-color)' />} cluster={cluster} value={'Solar'}/>
+      ))}
+      {/* Battery Storage */}
+      {deviceType===0x0018 && clusters.filter(cluster => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'featureMap').map(cluster => (
+        <Render icon={<Icon path={mdiHomeBattery} size='40px' color='var(--primary-color)' />} cluster={cluster} value={'Inverter'}/>
       ))}
 
       {/* SmokeCoAlarm */}
