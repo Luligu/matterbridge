@@ -299,7 +299,7 @@ function Devices() {
   const [filteredDevices, setFilteredDevices] = useState(devices);
 
   // View mode
-  const [viewMode, setViewMode] = useState('table');
+  const [viewMode, setViewMode] = useState('icon'); // Default to icon view
 
   // Refs
   const uniqueId = useRef(getUniqueId());

@@ -28,7 +28,7 @@ function Home() {
   const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [selectPlugin, setSelectPlugin] = useState(undefined);
   const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true); // default true
-  const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'logs'); // default logs
+  const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'devices'); // default devices
   const [browserRefresh, setBrowserRefresh] = useState(false);
   // Contexts
   const { addListener, removeListener, online, sendMessage, logFilterLevel, logFilterSearch, autoScroll, getUniqueId } = useContext(WebSocketContext);
