@@ -46,6 +46,10 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {EnergyEvse.State} [state] - The current state of the EVSE. Defaults to NotPluggedIn.
    * @param {EnergyEvse.SupplyState} [supplyState] - The supply state of the EVSE. Defaults to Disabled.
    * @param {EnergyEvse.FaultState} [faultState] - The fault state of the EVSE. Defaults to NoError.
+   * @param {number} [voltage] - The voltage value in millivolts. Defaults to null if not provided.
+   * @param {number} [current] - The current value in milliamperes. Defaults to null if not provided.
+   * @param {number} [power] - The power value in milliwatts. Defaults to null if not provided.
+   * @param {number} [energy] - The total consumption value in mW/h. Defaults to null if not provided.
    * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    */
@@ -57,16 +61,20 @@ export class Evse extends MatterbridgeEndpoint {
     state?: EnergyEvse.State,
     supplyState?: EnergyEvse.SupplyState,
     faultState?: EnergyEvse.FaultState,
+    voltage: number | bigint | null = null,
+    current: number | bigint | null = null,
+    power: number | bigint | null = null,
+    energy: number | bigint | null = null,
     absMinPower?: number,
     absMaxPower?: number,
   ) {
     super([evse, powerSource, electricalSensor, deviceEnergyManagement], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
-      .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge EVSE')
+      .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Evse')
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultPowerTopologyClusterServer()
-      .createDefaultElectricalPowerMeasurementClusterServer()
-      .createDefaultElectricalEnergyMeasurementClusterServer()
+      .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
+      .createDefaultElectricalEnergyMeasurementClusterServer(energy, 0)
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.Evse, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
@@ -84,16 +92,17 @@ export class Evse extends MatterbridgeEndpoint {
    */
   createDefaultEnergyEvseClusterServer(state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState): this {
     this.behaviors.require(MatterbridgeEnergyEvseServer, {
-      state: state ?? EnergyEvse.State.NotPluggedIn,
-      supplyState: supplyState ?? EnergyEvse.SupplyState.ChargingEnabled,
-      faultState: faultState ?? EnergyEvse.FaultState.NoError,
-      chargingEnabledUntil: 0, // Persistent attribute
-      circuitCapacity: 0, // Persistent attribute in mA
-      minimumChargeCurrent: 6000, // Persistent attribute in mA
-      maximumChargeCurrent: 0, // Persistent attribute in mA
+      state: state !== undefined ? state : EnergyEvse.State.NotPluggedIn,
+      supplyState: supplyState !== undefined ? supplyState : EnergyEvse.SupplyState.ChargingEnabled,
+      faultState: faultState !== undefined ? faultState : EnergyEvse.FaultState.NoError,
+      chargingEnabledUntil: null, // Persistent attribute. A null value indicates the EVSE is always enabled for charging.
+      circuitCapacity: 32_000, // Persistent attribute in mA. 32A in mA.
+      minimumChargeCurrent: 6_000, // Persistent attribute in mA. 6A in mA.
+      maximumChargeCurrent: 32_000, // Persistent attribute in mA. 32A in mA.
+      userMaximumChargeCurrent: 32_000, // Persistent attribute in mA. 32A in mA.
       sessionId: null, // Persistent attribute
-      sessionDuration: 0, // Persistent attribute
-      sessionEnergyCharged: 0, // Persistent attribute
+      sessionDuration: null, // Persistent attribute
+      sessionEnergyCharged: null, // Persistent attribute
     });
     return this;
   }
