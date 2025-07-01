@@ -8,7 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.1.1] - 2025-07-??
+## [3.1.1] - 2025-07-01
 
 ### Development Breaking Changes
 
@@ -25,6 +25,9 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Updated dependencies.
+- [frontend]: Added all esa devices.
+- [frontend]: New default values: select on the home page and icon view on devices page.
+- [matter.js]: Bumped `matter.js` to 0.15.1 (https://github.com/project-chip/matter.js/discussions/2220). Great job matter.js!
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

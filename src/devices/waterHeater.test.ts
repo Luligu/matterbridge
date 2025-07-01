@@ -195,7 +195,7 @@ describe('Matterbridge Water Heater', () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(134);
+    expect(attributes.length).toBe(139);
   });
 
   test('invoke MatterbridgeThermostatServer commands', async () => {

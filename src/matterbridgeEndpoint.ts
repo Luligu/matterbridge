@@ -2308,8 +2308,8 @@ export class MatterbridgeEndpoint extends Endpoint {
         accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
       },
       cumulativeEnergyReset: null,
-      cumulativeEnergyImported: energyImported ? { energy: energyImported } : null,
-      cumulativeEnergyExported: energyExported ? { energy: energyExported } : null,
+      cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
+      cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
     });
     return this;
   }
