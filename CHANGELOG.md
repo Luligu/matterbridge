@@ -12,7 +12,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development Breaking Changes
 
-- [devices]: The single devices (i.e. Rvc, Evse etc...) are only exported from matterbridge/devices. Please update your imports to use the new export path. Refer to the [documentation](README-DEV.md) for details on imports.
+- [devices]: The single devices (i.e. Rvc, Evse etc...) are only exported from `matterbridge/devices`. Please update your imports to use the new export path. Refer to the [documentation](README-DEV.md) for details on imports.
+- [MatterbridgeEndpoint]: Added the mode property: `server` will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This a workaround for the Rvc Apple issue. So the Rvc (like any other device) can be paired directly to the controller and is not in the bridge.
 
 ### Added
 
