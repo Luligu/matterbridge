@@ -41,7 +41,7 @@ import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/cluster
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter } from './utils/export.js';
-import { ApiClusters, ApiClustersResponse, ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
+import { ApiClusters, ApiClustersResponse, ApiDevices, ApiDevicesMatter, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
@@ -867,6 +867,22 @@ export class Frontend {
   }
 
   /**
+   * Retrieves the matter pairing code from a given device.
+   *
+   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint object to retrieve the QR pairing code from.
+   * @returns {Promise<ApiDevicesMatter[]>} A promise that resolves to an array of ApiDevicesMatter objects.
+   */
+  private async getMatterDataFromDevice(device: MatterbridgeEndpoint): Promise<ApiDevicesMatter | undefined> {
+    if (device.mode === 'server' && device.serverContext) {
+      const matter: ApiDevicesMatter = {};
+      matter.qrPairingCode = await device.serverContext.get('qrPairingCode', undefined);
+      matter.manualPairingCode = await device.serverContext.get('manualPairingCode', undefined);
+      // this.log.debug(`***MatterbridgeFrontend.getDevices: device ${device.deviceName} has serverContext with qrPairingCode ${matter.qrPairingCode} and manualPairingCode ${matter.manualPairingCode}`);
+      return matter;
+    }
+  }
+
+  /**
    * Retrieves the cluster text description from a given device.
    *
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
@@ -1034,16 +1050,15 @@ export class Frontend {
    * Retrieves the devices from Matterbridge.
    *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
-   * @returns {Promise<ApiDevices[]>} A promise that resolves to an array of ApiDevices.
+   * @returns {Promise<ApiDevices[]>} A promise that resolves to an array of ApiDevices for the frontend.
    */
   private async getDevices(pluginName?: string): Promise<ApiDevices[]> {
     const devices: ApiDevices[] = [];
-    this.matterbridge.devices.forEach(async (device) => {
+    for (const device of this.matterbridge.devices.array()) {
       // Filter by pluginName if provided
-      if (pluginName && pluginName !== device.plugin) return;
+      if (pluginName && pluginName !== device.plugin) continue;
       // Check if the device has the required properties
-      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return;
-      const cluster = this.getClusterTextFromDevice(device);
+      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
       devices.push({
         pluginName: device.plugin,
         type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
@@ -1055,9 +1070,10 @@ export class Frontend {
         uniqueId: device.uniqueId,
         reachable: this.getReachability(device),
         powerSource: this.getPowerSource(device),
-        cluster: cluster,
+        matter: await this.getMatterDataFromDevice(device),
+        cluster: this.getClusterTextFromDevice(device),
       });
-    });
+    }
     return devices;
   }
 

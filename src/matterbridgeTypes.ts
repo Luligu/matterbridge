@@ -179,6 +179,14 @@ export interface ApiDevices {
   reachable: boolean;
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
   cluster: string;
+  matter?: ApiDevicesMatter;
+}
+
+export interface ApiDevicesMatter {
+  fabricInformations?: SanitizedExposedFabricInformation[];
+  sessionInformations?: SanitizedSession[];
+  qrPairingCode?: string;
+  manualPairingCode?: string;
 }
 
 export interface ApiClustersResponse {

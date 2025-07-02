@@ -599,6 +599,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Log network interfaces
     const networkInterfaces = os.networkInterfaces();
+    // console.log(`Network interfaces:`, networkInterfaces);
     const availableAddresses = Object.entries(networkInterfaces);
     const availableInterfaces = Object.keys(networkInterfaces);
     for (const [ifaceName, ifaces] of availableAddresses) {
