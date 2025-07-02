@@ -225,7 +225,8 @@
         "--maxWorkers=100%",
         "dgram.test.ts",
         "unicast.test.ts",
-        "multicast.test.ts"
+        "multicast.test.ts",
+        "mdns.test.ts",
       ],
       "group": {
         "kind": "test",
