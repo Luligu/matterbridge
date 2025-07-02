@@ -19,6 +19,7 @@ import Tooltip from '@mui/material/Tooltip';
 import SettingsIcon from '@mui/icons-material/Settings';
 import Battery4BarIcon from '@mui/icons-material/Battery4Bar';
 import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
+import QrCode2 from '@mui/icons-material/QrCode2';
 
 // @mdi/js
 import Icon from '@mdi/react';
@@ -28,6 +29,7 @@ import { mdiSortAscending, mdiSortDescending } from '@mdi/js';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { debug } from '../App';
+import { QRDivDevice } from './QRDivDevice';
 // const debug = true;
 
 
@@ -127,6 +129,8 @@ export function HomeDevices() {
     configUrl: false,
     actions: true,
   });
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [qrDialogData, setQrDialogData] = useState(null);
   // Refs
   const uniqueId = useRef(getUniqueId());
 
@@ -180,6 +184,19 @@ export function HomeDevices() {
       noSort: true,
       Cell: ({ row }) => (
         <div style={{ display: 'flex', flexDirection: 'row' }}>
+          {row.original.matter!==undefined ?
+            <Tooltip title="Show the QRCode" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
+              <IconButton
+                onClick={() => handleOpenQrDialog(row.original.matter)}
+                aria-label="Show the QRCode"
+                sx={{ margin: 0, padding: 0 }}
+              >
+                <QrCode2 fontSize="small"/>
+              </IconButton>
+            </Tooltip> 
+          :
+            <div style={{ width: '20px', height: '20px' }}></div>
+          }
           {row.original.configUrl ?
             <Tooltip title="Open the configuration page" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <IconButton
@@ -371,6 +388,16 @@ export function HomeDevices() {
     });
   };
 
+  const handleOpenQrDialog = (data) => {
+    setQrDialogData(data);
+    setQrDialogOpen(true);
+  };
+
+  const handleCloseQrDialog = () => {
+    setQrDialogOpen(false);
+    setQrDialogData(null);
+  };
+
   const handleCheckboxChange = (event, device) => {
     if(debug) console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
     setMixedDevices((prevDevices) =>
@@ -402,6 +429,8 @@ export function HomeDevices() {
   return (
       <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
 
+        {/* QR Code Dialog */}
+        <QRDivDevice open={qrDialogOpen} data={qrDialogData} onClose={handleCloseQrDialog} />
         {/* HomeDevices Configure Columns Dialog */}
         <Dialog open={dialogDevicesOpen} onClose={handleDialogDevicesToggle}>
           <DialogTitle>Configure Devices Columns</DialogTitle>
