@@ -2703,7 +2703,7 @@ const commissioningController = new CommissioningController({
    * @param {ExposedFabricInformation[]} fabricInfo - The array of exposed fabric information objects.
    * @returns {SanitizedExposedFabricInformation[]} An array of sanitized exposed fabric information objects.
    */
-  private sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]): SanitizedExposedFabricInformation[] {
+  sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]): SanitizedExposedFabricInformation[] {
     return fabricInfo.map((info) => {
       return {
         fabricIndex: info.fabricIndex,
@@ -2720,11 +2720,11 @@ const commissioningController = new CommissioningController({
   /**
    * Sanitizes the session information by converting bigint properties to strings because `res.json` doesn't support bigint.
    *
-   * @param {SessionsBehavior.Session[]} session - The array of session information objects.
+   * @param {SessionsBehavior.Session[]} sessions - The array of session information objects.
    * @returns {SanitizedSession[]} An array of sanitized session information objects.
    */
-  private sanitizeSessionInformation(session: SessionsBehavior.Session[]): SanitizedSession[] {
-    return session
+  sanitizeSessionInformation(sessions: SessionsBehavior.Session[]): SanitizedSession[] {
+    return sessions
       .filter((session) => session.isPeerActive)
       .map((session) => {
         return {
@@ -2767,7 +2767,7 @@ const commissioningController = new CommissioningController({
     */
   }
 
-  private getVendorIdName = (vendorId: number | undefined) => {
+  getVendorIdName = (vendorId: number | undefined) => {
     if (!vendorId) return '';
     let vendorName = '(Unknown vendorId)';
     switch (vendorId) {

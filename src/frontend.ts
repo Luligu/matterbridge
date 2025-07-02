@@ -825,13 +825,13 @@ export class Frontend {
   /**
    * Retrieves the reachable attribute.
    *
-   * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
+   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint object.
    * @returns {boolean} The reachable attribute.
    */
   private getReachability(device: MatterbridgeEndpoint): boolean {
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return false;
-
     if (device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) return device.getAttribute(BridgedDeviceBasicInformation.Cluster.id, 'reachable') as boolean;
+    if (device.mode === 'server' && device.serverNode && device.serverNode.state.basicInformation.reachable !== undefined) return device.serverNode.state.basicInformation.reachable;
     if (this.matterbridge.bridgeMode === 'childbridge') return true;
     return false;
   }
@@ -870,15 +870,17 @@ export class Frontend {
    * Retrieves the matter pairing code from a given device.
    *
    * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint object to retrieve the QR pairing code from.
-   * @returns {Promise<ApiDevicesMatter[]>} A promise that resolves to an array of ApiDevicesMatter objects.
+   * @returns {ApiDevicesMatter | undefined} An ApiDevicesMatter object or undefined if not found.
    */
-  private async getMatterDataFromDevice(device: MatterbridgeEndpoint): Promise<ApiDevicesMatter | undefined> {
-    if (device.mode === 'server' && device.serverContext) {
-      const matter: ApiDevicesMatter = {};
-      matter.qrPairingCode = await device.serverContext.get('qrPairingCode', undefined);
-      matter.manualPairingCode = await device.serverContext.get('manualPairingCode', undefined);
-      // this.log.debug(`***MatterbridgeFrontend.getDevices: device ${device.deviceName} has serverContext with qrPairingCode ${matter.qrPairingCode} and manualPairingCode ${matter.manualPairingCode}`);
-      return matter;
+  private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiDevicesMatter | undefined {
+    if (device.mode === 'server' && device.serverNode && device.serverContext) {
+      return {
+        commissioned: device.serverNode.state.commissioning.commissioned,
+        qrPairingCode: device.serverNode.state.commissioning.pairingCodes.qrPairingCode,
+        manualPairingCode: device.serverNode.state.commissioning.pairingCodes.manualPairingCode,
+        fabricInformations: this.matterbridge.sanitizeFabricInformations(Object.values(device.serverNode.state.commissioning.fabrics)),
+        sessionInformations: this.matterbridge.sanitizeSessionInformation(Object.values(device.serverNode.state.sessions.sessions)),
+      } as ApiDevicesMatter;
     }
   }
 
@@ -1070,7 +1072,7 @@ export class Frontend {
         uniqueId: device.uniqueId,
         reachable: this.getReachability(device),
         powerSource: this.getPowerSource(device),
-        matter: await this.getMatterDataFromDevice(device),
+        matter: this.getMatterDataFromDevice(device),
         cluster: this.getClusterTextFromDevice(device),
       });
     }

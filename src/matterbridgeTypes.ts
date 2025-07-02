@@ -183,6 +183,7 @@ export interface ApiDevices {
 }
 
 export interface ApiDevicesMatter {
+  commissioned: boolean;
   fabricInformations?: SanitizedExposedFabricInformation[];
   sessionInformations?: SanitizedSession[];
   qrPairingCode?: string;
