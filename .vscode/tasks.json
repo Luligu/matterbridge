@@ -213,6 +213,27 @@
       "problemMatcher": []
     },
     {
+      "label": "Test: Dgram",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "dgram.test.ts",
+        "unicast.test.ts",
+        "multicast.test.ts"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
       "type": "npm",
       "script": "lint",
       "problemMatcher": ["$eslint-stylish"],
