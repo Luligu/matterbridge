@@ -185,7 +185,7 @@ export function HomeDevices() {
       Cell: ({ row }) => (
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           {row.original.matter!==undefined ?
-            <Tooltip title="Show the QRCode" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
+            <Tooltip title="Show the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <IconButton
                 onClick={() => handleOpenQrDialog(row.original.matter)}
                 aria-label="Show the QRCode"
