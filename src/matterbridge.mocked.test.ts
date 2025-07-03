@@ -541,4 +541,62 @@ describe('Matterbridge mocked', () => {
     Logger.get('Jest').error('Test log message');
     Logger.get('Jest').fatal('Test log message');
   });
+
+  test('Matterbridge.initialize() logNodeAndSystemInfo', async () => {
+    // Reset the process.argv to simulate command line arguments
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+    matterbridge.mdnsInterface = 'eth0'; // Set a valid interface for testing
+    const ifaces = {};
+    ifaces['empty'] = undefined; // Simulate an empty interface
+    ifaces['eth0'] = [
+      {
+        address: ' 192.168.1.100',
+        netmask: '255.255.255.0',
+        family: 'IPv4',
+        mac: '00:11:22:33:44:55',
+        internal: false,
+        cidr: 'eth0',
+      },
+      {
+        address: 'fe80::1234:5678:9abc:def0',
+        netmask: 'ffff:ffff:ffff:ffff::',
+        family: 'IPv6',
+        mac: '00:11:22:33:44:55',
+        internal: false,
+      },
+    ];
+    ifaces['lo'] = [
+      {
+        address: '127.0.0.1',
+        netmask: '255.0.0.0',
+        family: 'IPv4',
+        mac: '00:00:00:00:00:00',
+        internal: true,
+        cidr: 'lo',
+      },
+    ];
+    const networkInterfacesSpy = jest.spyOn(os, 'networkInterfaces').mockReturnValueOnce(ifaces);
+    await (matterbridge as any).logNodeAndSystemInfo();
+    matterbridge.mdnsInterface = undefined; // Reset the interface after testing
+    matterbridge.systemInformation.ipv4Address = ''; // Reset the ipv4Address after testing
+    matterbridge.systemInformation.ipv6Address = ''; // Reset the ipv6Address after testing
+    networkInterfacesSpy.mockReturnValueOnce({
+      empty: undefined,
+      eth0: [
+        {
+          address: 'fe80::1234:5678:9abc:def0',
+          netmask: 'ffff:ffff:ffff:ffff::',
+          family: 'IPv6',
+          mac: '00:11:22:33:44:55',
+          internal: false,
+          scopeid: 0,
+          cidr: 'eth0',
+        },
+      ],
+      lo: [],
+    }); // Reset the spy to return an empty interface
+    await (matterbridge as any).logNodeAndSystemInfo();
+    expect(networkInterfacesSpy).toHaveBeenCalled();
+  });
 });
