@@ -679,6 +679,8 @@ describe('Matterbridge', () => {
       await shutdownPromise;
       matterbridge.shutdown = false;
       matterbridge.removeAllListeners('shutdown');
+      // Destroy the Matterbridge instance
+      await matterbridge.destroyInstance(10);
     }, 60000);
 
     test('matterbridge -reset xxx', async () => {
@@ -704,6 +706,8 @@ describe('Matterbridge', () => {
       await shutdownPromise;
       matterbridge.shutdown = false;
       matterbridge.removeAllListeners('shutdown');
+      // Destroy the Matterbridge instance
+      await matterbridge.destroyInstance(10);
     }, 60000);
 
     test('matterbridge -factoryreset', async () => {
@@ -736,6 +740,8 @@ describe('Matterbridge', () => {
       await shutdownPromise;
       matterbridge.shutdown = false;
       matterbridge.removeAllListeners('shutdown');
+      // Destroy the Matterbridge instance
+      await matterbridge.destroyInstance(10);
     }, 10000);
 
     // eslint-disable-next-line jest/no-commented-out-tests
