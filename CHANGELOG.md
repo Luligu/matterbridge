@@ -8,12 +8,12 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.1.1] - 2025-07-01
+## [3.1.1] - 2025-07-08
 
 ### Development Breaking Changes
 
-- [devices]: The single devices (i.e. Rvc, Evse etc...) are only exported from `matterbridge/devices`. Please update your imports to use the new export path. Refer to the [documentation](README-DEV.md) for details on imports.
-- [MatterbridgeEndpoint]: Added the mode property: `server` will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This a workaround for the Rvc Apple issue. So the Rvc (like any other device) can be paired directly to the controller and is a native Matter device and is not bridged.
+- [exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from `matterbridge/devices`. Please update your imports to use the new export path. Refer to the [documentation](README-DEV.md) for details on imports.
+- [MatterbridgeEndpoint]: Added the mode property: `server` will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device.
 
 ### Added
 
@@ -27,8 +27,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [package]: Updated dependencies.
 - [frontend]: Added all esa devices.
-- [frontend]: New default values: select on the home page and icon view on devices page.
+- [frontend]: New default values: devices on the home page and icon view on the devices page.
 - [matter.js]: Bumped `matter.js` to 0.15.1 (https://github.com/project-chip/matter.js/discussions/2220). Great job matter.js!
+- [imports]: Added more dynamic imports to Matterbridge and Frontend classes.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
