@@ -41,7 +41,6 @@ import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matte
 import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.ts';
-import spawn from './utils/spawn.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
@@ -566,11 +565,18 @@ describe('Matterbridge frontend', () => {
 
   test('Websocket API /api/uninstall wrong package name with mock', async () => {
     // Mock `spawnCommand` to reject with an error
-    jest.spyOn(spawn, 'spawnCommand').mockRejectedValueOnce(new Error('Package not found'));
+    jest.unstable_mockModule('./utils/spawn.js', () => ({
+      spawnCommand: jest.fn((matterbridge: Matterbridge, command: string, args: string[]) => {
+        return Promise.reject(new Error(`Mocked spawnCommand error for command: ${command} with args: ${args.join(' ')}`));
+      }),
+    }));
+    const spawn = await import('./utils/spawn.js');
+    const spawnCommandMock = spawn.spawnCommand as jest.MockedFunction<typeof spawn.spawnCommand>;
 
     const msg = await waitMessageId(++WS_ID, '/api/uninstall', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
     expect(msg.response).toBeUndefined();
     expect(msg.error).toBeDefined();
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['uninstall', '-g', 'matterbridge-st', '--verbose']);
   }, 60000);
 
   test('Websocket API /api/addplugin', async () => {

@@ -46,7 +46,6 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
 import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
-import spawn from './utils/spawn.js';
 
 /**
  * Websocket message ID for logging.
@@ -649,7 +648,8 @@ export class Frontend {
 
         // Install the plugin package
         if (filename.endsWith('.tgz')) {
-          await spawn.spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
+          const { spawnCommand } = await import('./utils/spawn.js');
+          await spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
           this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
           this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
           this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
@@ -1206,8 +1206,8 @@ export class Frontend {
           return;
         }
         this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
-        spawn
-          .spawnCommand(this.matterbridge, 'npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
+        const { spawnCommand } = await import('./utils/spawn.js');
+        spawnCommand(this.matterbridge, 'npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
           .then((response) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
             this.wssSendCloseSnackbarMessage(`Installing package ${data.params.packageName}...`);
@@ -1279,8 +1279,8 @@ export class Frontend {
         }
         // Uninstall the package
         this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
-        spawn
-          .spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
+        const { spawnCommand } = await import('./utils/spawn.js');
+        spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
           .then((response) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
             this.wssSendCloseSnackbarMessage(`Uninstalling package ${data.params.packageName}...`);

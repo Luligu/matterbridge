@@ -30,7 +30,7 @@ import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt } from 'node-ansi-logger';
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
@@ -59,7 +59,6 @@ import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/brid
 
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
-import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
 import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -67,7 +66,6 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevices } from './helpers.js';
-import spawn from './utils/spawn.js';
 
 /**
  * Represents the Matterbridge events.
@@ -585,17 +583,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
     Logger.format = MatterLogFormat.ANSI;
     Logger.setLogger('default', this.createMatterLogger());
-    this.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
+    // Logger.destinations.default.write = this.createMatterLogger();
+    this.matterbridgeInformation.matterLoggerLevel = Logger.level;
 
     // Create the file logger for matter.js (context: matterFileLog)
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
       this.matterbridgeInformation.matterFileLogger = true;
       Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
-        defaultLogLevel: Logger.defaultLogLevel,
+        defaultLogLevel: Logger.level,
         logFormat: MatterLogFormat.PLAIN,
       });
     }
-    this.log.debug(`Matter logLevel: ${Logger.defaultLogLevel} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
+    this.log.debug(`Matter logLevel: ${Logger.level} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
 
     // Log network interfaces
     const networkInterfaces = os.networkInterfaces();
@@ -710,7 +709,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         // We don't do this when the add and other parameters are set because we shut down the process after adding the plugin
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
-          await spawn.spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose']);
+          const { spawnCommand } = await import('./utils/spawn.js');
+          await spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose']);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } catch (error) {
@@ -852,6 +852,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     if (hasParameter('loginterfaces')) {
+      const { logInterfaces } = await import('./utils/network.js');
       this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
       logInterfaces();
       this.shutdown = true;
@@ -913,6 +914,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (plugin) {
         const matterStorageManager = await this.matterStorageService?.open(plugin.name);
         if (!matterStorageManager) {
+          /* istanbul ignore next */
           this.log.error(`Plugin ${plg}${plugin.name}${er} storageManager not found`);
         } else {
           await matterStorageManager.createContext('events')?.clearAll();
@@ -920,7 +922,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await matterStorageManager.createContext('root')?.clearAll();
           await matterStorageManager.createContext('sessions')?.clearAll();
           await matterStorageManager.createContext('persist')?.clearAll();
-          this.log.info(`Reset commissionig for plugin ${plg}${plugin.name}${nf} done! Remove the device from the controller.`);
+          this.log.notice(`Reset commissioning for plugin ${plg}${plugin.name}${nt} done! Remove the device from the controller.`);
         }
       } else {
         this.log.warn(`Plugin ${plg}${getParameter('reset')}${wr} not registerd in matterbridge`);
@@ -1163,6 +1165,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (this.globalModulesDirectory === '') {
       // First run of Matterbridge so the node storage is empty
       try {
+        const { getGlobalNodeModules } = await import('./utils/network.js');
         this.execRunningCount++;
         this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
         this.execRunningCount--;
@@ -1240,9 +1243,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case MatterLogLevel.FATAL:
           matterLogger.log(LogLevel.FATAL, message);
           break;
-        default:
-          matterLogger.log(LogLevel.DEBUG, message);
-          break;
       }
     };
   }
@@ -1266,10 +1266,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     return async (level: MatterLogLevel, formattedLog: string) => {
-      if (fileSize > 100000000) return;
-      fileSize += formattedLog.length;
+      /* istanbul ignore if */
       if (fileSize > 100000000) {
-        await fs.appendFile(filePath, `Logging on file has been stoppped because the file size is greater then 100MB.` + os.EOL);
+        return; // Stop logging if the file size is greater than 100MB
+      }
+      fileSize += formattedLog.length;
+      /* istanbul ignore if */
+      if (fileSize > 100000000) {
+        await fs.appendFile(filePath, `Logging on file has been stopped because the file size is greater than 100MB.` + os.EOL);
         return;
       }
 
@@ -1300,9 +1304,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case MatterLogLevel.FATAL:
           await fs.appendFile(filePath, `[${timestamp}] [${logger}] [fatal] ${finalMessage}`);
           break;
-        default:
-          await fs.appendFile(filePath, `[${timestamp}] [${logger}] ${finalMessage}`);
-          break;
       }
     };
   }
@@ -1327,7 +1328,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   async updateProcess() {
     this.log.info('Updating matterbridge...');
     try {
-      await spawn.spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
+      const { spawnCommand } = await import('./utils/spawn.js');
+      await spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
       this.log.info('Matterbridge has been updated. Full restart required.');
     } catch (error) {
       this.log.error('Error updating matterbridge:', error instanceof Error ? error.message : error);

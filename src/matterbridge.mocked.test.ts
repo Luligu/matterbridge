@@ -3,18 +3,29 @@
 const NAME = 'MatterbridgeMocked';
 const HOMEDIR = path.join('jest', NAME);
 
+// Mock the spawnCommand from spawn module before importing it
+jest.unstable_mockModule('./utils/spawn.js', () => ({
+  spawnCommand: jest.fn((matterbridge: Matterbridge, command: string, args: string[]) => {
+    return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
+  }),
+}));
+const spawn = await import('./utils/spawn.js');
+const spawnCommandMock = spawn.spawnCommand as jest.MockedFunction<typeof spawn.spawnCommand>;
+
 import { jest } from '@jest/globals';
 import os from 'node:os';
 import path from 'node:path';
 import { rmSync, writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
 
-import { AnsiLogger, CYAN, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, LogLevel, nf, nt, TimestampFormat, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import { getParameter } from './utils/export.ts';
 import { Matterbridge } from './matterbridge.ts';
-import { VendorId, LogLevel as MatterLogLevel } from '@matter/main';
+import { VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
+import { PluginManager } from './pluginManager.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -295,7 +306,7 @@ describe('Matterbridge mocked', () => {
     const availableInterfaces = Object.keys(networkInterfaces);
     process.argv = [
       'node',
-      'matterbridge.test.js',
+      'matterbridge.mocked.test.js',
       '-novirtual',
       '-frontend',
       '0',
@@ -330,7 +341,7 @@ describe('Matterbridge mocked', () => {
 
     process.argv = [
       'node',
-      'matterbridge.test.js',
+      'matterbridge.mocked.test.js',
       '-novirtual',
       '-frontend',
       '0',
@@ -359,7 +370,7 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).nodeContext.remove('virtualmode');
     await matterbridge.destroyInstance(10, 10);
 
-    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'null', '-matterlogger', 'null', '-debug'];
+    process.argv = ['node', 'matterbridge.mocked.test.js', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'null', '-matterlogger', 'null', '-debug'];
     await matterbridge.initialize();
     expect(matterbridge.mdnsInterface).toBeUndefined();
     expect(matterbridge.matterbridgeInformation.virtualMode).toBe('outlet');
@@ -373,7 +384,7 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() plugins', async () => {
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await matterbridge.initialize();
     expect(matterbridge.getPlugins()).toEqual([]);
     expect(await (matterbridge.plugins as any).add('./src/mock/plugin1')).not.toBeNull();
@@ -383,8 +394,50 @@ describe('Matterbridge mocked', () => {
     expect(await (matterbridge.plugins as any).add('./src/mock/plugin5')).not.toBeNull();
     expect(await (matterbridge.plugins as any).add('./src/mock/plugin6')).not.toBeNull();
     expect((matterbridge.plugins as any).length).toBe(6);
-    await matterbridge.destroyInstance(10, 10);
 
+    // Test set log level for plugins
+    await (matterbridge.plugins as any).load(matterbridge.getPlugins()[0]);
+    matterbridge.setLogLevel(LogLevel.NOTICE);
+    expect((matterbridge.plugins as any).log.logLevel).toBe(LogLevel.NOTICE);
+    expect(matterbridge.getPlugins()[0].platform?.log.logLevel).toBe(LogLevel.NOTICE);
+
+    // Test reinstall of plugins
+    const parseSpy = jest.spyOn(PluginManager.prototype, 'parse').mockImplementation(async (plugin: RegisteredPlugin) => {
+      return null; // Simulate a plugin that does not return a valid instance
+    });
+    spawnCommandMock.mockImplementationOnce((matterbridge: Matterbridge, command: string, args: string[]) => {
+      return Promise.reject(new Error(`Mocked spawnCommand error for command: ${command} with args: ${args.join(' ')}`));
+    });
+    await matterbridge.initialize();
+    expect(parseSpy).toHaveBeenCalledTimes(6);
+    expect(spawnCommandMock).toHaveBeenCalledTimes(6);
+    await matterbridge.destroyInstance(10, 10);
+    parseSpy.mockRestore();
+
+    // Test startPlugins
+    const resolveSpy = jest.spyOn(PluginManager.prototype, 'resolve').mockImplementation(async (pluginPath: string) => {
+      return null; // Simulate a plugin that does not return a valid path
+    });
+    await matterbridge.initialize();
+    await (matterbridge as any).startPlugins();
+    expect(resolveSpy).toHaveBeenCalledTimes(6);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('not found or not validated. Disabling it.'));
+
+    for (const plugin of matterbridge.getPlugins()) {
+      expect(plugin.enabled).toBe(false);
+      if (plugin.name === 'matterbridge-mock1') plugin.enabled = true; // Enable the plugin for the next test
+      if (plugin.name === 'matterbridge-mock4') plugin.enabled = true; // Enable the plugin for the next test
+    }
+    resolveSpy.mockImplementation(async (pluginPath: string) => {
+      return pluginPath; // Simulate a plugin that returns a valid path
+    });
+    await (matterbridge as any).startPlugins();
+    expect(resolveSpy).toHaveBeenCalledTimes(12);
+
+    await matterbridge.destroyInstance(10, 10);
+    resolveSpy.mockRestore();
+
+    // Test throw error for unsupported Node version
     const originalNodeVersion = process.versions.node;
     Object.defineProperty(process.versions, 'node', {
       get: () => '16.0.0',
@@ -397,7 +450,7 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() devices', async () => {
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await matterbridge.initialize();
     expect(matterbridge.getDevices()).toEqual([]);
   });
@@ -423,5 +476,69 @@ describe('Matterbridge mocked', () => {
     await expect(matterbridge.initialize()).rejects.toThrow('Fatal error creating node storage manager and context for matterbridge');
     expect(matterbridge.restartMode).toBe('docker');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.FATAL, 'The matterbridge storage is corrupted. Found -norestore parameter: exiting...');
+  });
+
+  test('Matterbridge.initialize() Matter Storage', async () => {
+    jest.spyOn(Matterbridge.prototype as any, 'startMatterStorage').mockImplementationOnce(async () => {
+      throw new Error('Test error for startMatterStorage');
+    });
+    // Reset the process.argv to simulate command line arguments
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-debug'];
+    await expect(matterbridge.initialize()).rejects.toThrow('Fatal error creating matter storage: Test error for startMatterStorage');
+    await matterbridge.destroyInstance(10, 10);
+
+    // Reset the process.argv to simulate reset of a registered plugin
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-mock1'];
+    await matterbridge.initialize();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Reset commissioning for plugin ${plg}matterbridge-mock1${nt} done! Remove the device from the controller.`);
+
+    // Reset the process.argv to simulate reset of not registered plugin
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-noplugin'];
+    await matterbridge.initialize();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Plugin ${plg}matterbridge-noplugin${wr} not registerd in matterbridge`);
+  });
+
+  test('Matterbridge.initialize() update', async () => {
+    // Reset the process.argv to simulate command line arguments
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
+    // Mock the checkUpdates from update module before importing it
+    jest.unstable_mockModule('./update.js', () => ({
+      checkUpdates: jest.fn().mockImplementation(() => Promise.resolve()), // Mock the checkUpdates function to resolve immediately
+    }));
+    const update = await import('./update.js');
+    const checkUpdatesSpy = update.checkUpdates;
+    jest.useFakeTimers();
+    await matterbridge.initialize();
+    jest.advanceTimersByTime(12 * 60 * 60 * 1000); // Simulate 12 hours
+    jest.useRealTimers();
+    await new Promise((resolve) => setTimeout(resolve, 10)); // Wait for the next tick
+    expect(checkUpdatesSpy).toHaveBeenCalledTimes(2);
+  });
+
+  test('Matterbridge.initialize() registerProcessHandlers', async () => {
+    // Reset the process.argv to simulate command line arguments
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger'];
+    const createMatterFileLoggerSpy = jest.spyOn(Matterbridge.prototype, 'createMatterFileLogger');
+    await matterbridge.initialize();
+    if ((matterbridge as any).exceptionHandler) await (matterbridge as any).exceptionHandler(new Error('Test error for exceptionHandler'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Unhandled Exception detected:'));
+    if ((matterbridge as any).rejectionHandler) await (matterbridge as any).rejectionHandler(new Error('Test error for rejectionHandler'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Unhandled Rejection detected:'));
+    jest.spyOn(matterbridge as any, 'cleanup').mockImplementationOnce(async () => {
+      return Promise.resolve();
+    });
+    if ((matterbridge as any).sigintHandler) await (matterbridge as any).sigintHandler();
+    jest.spyOn(matterbridge as any, 'cleanup').mockImplementationOnce(async () => {
+      return Promise.resolve();
+    });
+    if ((matterbridge as any).sigtermHandler) await (matterbridge as any).sigtermHandler();
+
+    expect(createMatterFileLoggerSpy).toHaveBeenCalled();
+    Logger.get('Jest').debug('Test log message');
+    Logger.get('Jest').info('Test log message');
+    Logger.get('Jest').notice('Test log message');
+    Logger.get('Jest').warn('Test log message');
+    Logger.get('Jest').error('Test log message');
+    Logger.get('Jest').fatal('Test log message');
   });
 });
