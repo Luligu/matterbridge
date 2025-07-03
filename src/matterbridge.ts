@@ -1318,14 +1318,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Shut down the process by exiting the current process.
+   * Shut down the process.
    */
   async shutdownProcess() {
     await this.cleanup('shutting down...', false);
   }
 
   /**
-   * Update matterbridge and and shut down the process.
+   * Update matterbridge and shut down the process.
    */
   async updateProcess() {
     this.log.info('Updating matterbridge...');
@@ -1334,7 +1334,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
       this.log.info('Matterbridge has been updated. Full restart required.');
     } catch (error) {
-      this.log.error('Error updating matterbridge:', error instanceof Error ? error.message : error);
+      this.log.error(`Error updating matterbridge: ${error instanceof Error ? error.message : error}`);
     }
     this.frontend.wssSendRestartRequired();
     await this.cleanup('updating...', false);

@@ -26,6 +26,7 @@ import { VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
 import { PluginManager } from './pluginManager.ts';
+import { Frontend } from './frontend.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -599,5 +600,125 @@ describe('Matterbridge mocked', () => {
     }); // Reset the spy to return an empty interface
     await (matterbridge as any).logNodeAndSystemInfo();
     expect(networkInterfacesSpy).toHaveBeenCalled();
+  });
+
+  test('Matterbridge.initialize() parseCommandLine', async () => {
+    // Reset the process.argv to simulate command line arguments
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-help'];
+    matterbridge.shutdown = false;
+    await (matterbridge as any).parseCommandLine();
+    expect(matterbridge.shutdown).toBe(true);
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-list'];
+    matterbridge.shutdown = false;
+    await (matterbridge as any).parseCommandLine();
+    expect(matterbridge.shutdown).toBe(true);
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-logstorage'];
+    matterbridge.shutdown = false;
+    await (matterbridge as any).parseCommandLine();
+    expect(matterbridge.shutdown).toBe(true);
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-loginterfaces'];
+    matterbridge.shutdown = false;
+    await (matterbridge as any).parseCommandLine();
+    expect(matterbridge.shutdown).toBe(true);
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-disable', './src/mock/plugin1'];
+    matterbridge.shutdown = false;
+    await (matterbridge as any).parseCommandLine();
+    expect(matterbridge.shutdown).toBe(true);
+    expect(matterbridge.plugins.get('matterbridge-mock1')?.enabled).toBe(false);
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-enable', './src/mock/plugin1'];
+    matterbridge.shutdown = false;
+    await (matterbridge as any).parseCommandLine();
+    expect(matterbridge.shutdown).toBe(true);
+    expect(matterbridge.getPlugins().length).toBe(6);
+    expect(matterbridge.plugins.get('matterbridge-mock1')?.enabled).toBe(true);
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-remove', './src/mock/plugin1'];
+    matterbridge.shutdown = false;
+    await (matterbridge as any).parseCommandLine();
+    expect(matterbridge.shutdown).toBe(true);
+    expect(matterbridge.getPlugins().length).toBe(5);
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-add', './src/mock/plugin1'];
+    matterbridge.shutdown = false;
+    await (matterbridge as any).parseCommandLine();
+    expect(matterbridge.shutdown).toBe(true);
+    expect(matterbridge.getPlugins().length).toBe(6);
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-reset'];
+    matterbridge.shutdown = false;
+    await (matterbridge as any).parseCommandLine();
+    expect(matterbridge.shutdown).toBe(true);
+    expect(matterbridge.getPlugins().length).toBe(0);
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-factoryreset'];
+    matterbridge.shutdown = false;
+    await (matterbridge as any).parseCommandLine();
+    expect(matterbridge.shutdown).toBe(true);
+  });
+
+  test('Matterbridge.initialize() startBridge and startChildbridge', async () => {
+    await matterbridge.initialize();
+    const frontendStartSpy = jest.spyOn(matterbridge.frontend, 'start').mockImplementation(async () => Promise.resolve());
+    const startBridgeSpy = jest.spyOn(matterbridge as any, 'startBridge').mockImplementation(async () => Promise.resolve());
+    const startChildBridgeSpy = jest.spyOn(matterbridge as any, 'startChildbridge').mockImplementation(async () => Promise.resolve());
+    expect(matterbridge.nodeContext).toBeDefined();
+    await matterbridge.nodeContext?.remove('bridgeMode');
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR];
+    jest.clearAllMocks();
+    await (matterbridge as any).parseCommandLine();
+    expect(frontendStartSpy).toHaveBeenCalled();
+    expect(startBridgeSpy).toHaveBeenCalled();
+    expect(startChildBridgeSpy).not.toHaveBeenCalled();
+    expect(await matterbridge.nodeContext?.get<string>('bridgeMode', '')).toBe('bridge');
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR, '-bridge'];
+    jest.clearAllMocks();
+    await (matterbridge as any).parseCommandLine();
+    expect(frontendStartSpy).toHaveBeenCalled();
+    expect(startBridgeSpy).toHaveBeenCalled();
+    expect(startChildBridgeSpy).not.toHaveBeenCalled();
+
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR, '-childbridge'];
+    jest.clearAllMocks();
+    await (matterbridge as any).parseCommandLine();
+    expect(frontendStartSpy).toHaveBeenCalled();
+    expect(startBridgeSpy).not.toHaveBeenCalled();
+    expect(startChildBridgeSpy).toHaveBeenCalled();
+  });
+
+  test('Matterbridge.initialize() restartProcess', async () => {
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+    const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
+
+    await matterbridge.restartProcess();
+    expect(cleanupSpy).toHaveBeenCalledWith('restarting...', true);
+
+    await matterbridge.shutdownProcess();
+    expect(cleanupSpy).toHaveBeenCalledWith('shutting down...', false);
+
+    await matterbridge.updateProcess();
+    expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']));
+
+    spawnCommandMock.mockImplementationOnce(() => {
+      return Promise.reject(new Error('Mocked spawnCommand error for updateProcess'));
+    });
+    await matterbridge.updateProcess();
+    expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error updating matterbridge:'));
+
+    await matterbridge.unregisterAndShutdownProcess();
+    expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false);
   });
 });

@@ -28,6 +28,7 @@ import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
+import EventEmitter from 'node:events';
 
 // Third-party modules
 import express from 'express';
@@ -139,7 +140,16 @@ export const WS_ID_SHELLY_SYS_UPDATE = 100;
  */
 export const WS_ID_SHELLY_MAIN_UPDATE = 101;
 
-export class Frontend {
+/**
+ * Represents the Matterbridge events.
+ */
+interface FrontendEvents {
+  server_listening: [protocol: string, port: number, address?: string];
+  server_error: [error: Error];
+  websocket_server_listening: [host: string];
+}
+
+export class Frontend extends EventEmitter<FrontendEvents> {
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
   private port = 8283;
@@ -151,6 +161,7 @@ export class Frontend {
   private webSocketServer: WebSocketServer | undefined;
 
   constructor(matterbridge: Matterbridge) {
+    super();
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({ logName: 'Frontend', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
   }
@@ -209,18 +220,19 @@ export class Frontend {
       if (hasParameter('ingress')) {
         this.httpServer.listen(this.port, '0.0.0.0', () => {
           this.log.info(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${this.port}${UNDERLINEOFF}${rs}`);
+          this.emit('server_listening', 'http', this.port, '0.0.0.0');
         });
       } else {
         this.httpServer.listen(this.port, () => {
           if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
           if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+          this.emit('server_listening', 'http', this.port);
         });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.httpServer.on('error', (error: any) => {
+      this.httpServer.on('error', (error: Error) => {
         this.log.error(`Frontend http server error listening on ${this.port}`);
-        switch (error.code) {
+        switch ((error as NodeJS.ErrnoException).code) {
           case 'EACCES':
             this.log.error(`Port ${this.port} requires elevated privileges`);
             break;
@@ -229,6 +241,7 @@ export class Frontend {
             break;
         }
         this.initializeError = true;
+        this.emit('server_error', error);
         return;
       });
     } else {
@@ -265,18 +278,19 @@ export class Frontend {
       if (hasParameter('ingress')) {
         this.httpsServer.listen(this.port, '0.0.0.0', () => {
           this.log.info(`The frontend https server is listening on ${UNDERLINE}https://0.0.0.0:${this.port}${UNDERLINEOFF}${rs}`);
+          this.emit('server_listening', 'https', this.port, '0.0.0.0');
         });
       } else {
         this.httpsServer.listen(this.port, () => {
           if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
           if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+          this.emit('server_listening', 'https', this.port);
         });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.httpsServer.on('error', (error: any) => {
+      this.httpsServer.on('error', (error: Error) => {
         this.log.error(`Frontend https server error listening on ${this.port}`);
-        switch (error.code) {
+        switch ((error as NodeJS.ErrnoException).code) {
           case 'EACCES':
             this.log.error(`Port ${this.port} requires elevated privileges`);
             break;
@@ -285,6 +299,7 @@ export class Frontend {
             break;
         }
         this.initializeError = true;
+        this.emit('server_error', error);
         return;
       });
     }
@@ -339,6 +354,7 @@ export class Frontend {
 
     this.webSocketServer.on('listening', () => {
       this.log.info(`The WebSocketServer is listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
+      this.emit('websocket_server_listening', wssHost);
     });
 
     this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
