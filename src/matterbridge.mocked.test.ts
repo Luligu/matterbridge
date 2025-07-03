@@ -491,6 +491,7 @@ describe('Matterbridge mocked', () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-mock1'];
     await matterbridge.initialize();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Reset commissioning for plugin ${plg}matterbridge-mock1${nt} done! Remove the device from the controller.`);
+    await matterbridge.destroyInstance(10, 10);
 
     // Reset the process.argv to simulate reset of not registered plugin
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-noplugin'];
