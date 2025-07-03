@@ -507,13 +507,13 @@ describe('Matterbridge mocked', () => {
       checkUpdates: jest.fn().mockImplementation(() => Promise.resolve()), // Mock the checkUpdates function to resolve immediately
     }));
     const update = await import('./update.js');
-    const checkUpdatesSpy = update.checkUpdates;
+    const checkUpdatesMock = update.checkUpdates;
     jest.useFakeTimers();
     await matterbridge.initialize();
     jest.advanceTimersByTime(12 * 60 * 60 * 1000); // Simulate 12 hours
     jest.useRealTimers();
     await new Promise((resolve) => setTimeout(resolve, 10)); // Wait for the next tick
-    expect(checkUpdatesSpy).toHaveBeenCalledTimes(2);
+    expect(checkUpdatesMock).toHaveBeenCalledTimes(2);
   });
 
   test('Matterbridge.initialize() registerProcessHandlers', async () => {
