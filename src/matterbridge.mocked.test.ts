@@ -26,7 +26,6 @@ import { VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
 import { PluginManager } from './pluginManager.ts';
-import { Frontend } from './frontend.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -720,5 +719,7 @@ describe('Matterbridge mocked', () => {
 
     await matterbridge.unregisterAndShutdownProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false);
+
+    cleanupSpy.mockRestore();
   });
 });
