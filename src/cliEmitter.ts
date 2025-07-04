@@ -25,3 +25,15 @@
 import { EventEmitter } from 'node:events';
 
 export const cliEmitter = new EventEmitter();
+
+export let lastCpuUsage = 0;
+
+/**
+ * Sets the last CPU usage.
+ *
+ * @param {number} val - The CPU usage percentage to set.
+ * @returns {void}
+ */
+export function setLastCpuUsage(val: number): void {
+  lastCpuUsage = val;
+}
