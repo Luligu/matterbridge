@@ -45,6 +45,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the robotic vacuum cleaner.
    * @param {string} serial - The serial number of the robotic vacuum cleaner.
+   * @param {'server' | 'matter' | undefined} [mode] - The mode of the robotic vacuum cleaner. Defaults to undefined. Use 'server' or 'matter' if you want Apple Home compatibility.
    * @param {number} [currentRunMode] - The current run mode of the robotic vacuum cleaner. Defaults to 1 (Idle).
    * @param {RvcRunMode.ModeOption[]} [supportedRunModes] - The supported run modes for the robotic vacuum cleaner. Defaults to a predefined set of modes.
    * @param {number} [currentCleanMode] - The current clean mode of the robotic vacuum cleaner. Defaults to 1 (Vacuum).
@@ -60,6 +61,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
   constructor(
     name: string,
     serial: string,
+    mode: 'server' | 'matter' | undefined = undefined,
     currentRunMode?: number,
     supportedRunModes?: RvcRunMode.ModeOption[],
     currentCleanMode?: number,
@@ -72,7 +74,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
     selectedAreas?: number[],
     currentArea?: number,
   ) {
-    super([roboticVacuumCleaner, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([roboticVacuumCleaner, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, mode }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Robot Vacuum Cleaner')
       .createDefaultPowerSourceRechargeableBatteryClusterServer(80, PowerSource.BatChargeLevel.Ok, 5900)
