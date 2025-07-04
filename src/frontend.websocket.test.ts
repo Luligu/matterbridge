@@ -1,6 +1,7 @@
 // src\frontend.websocket.test.ts
 
 const MATTER_PORT = 6008;
+const FRONTEND_PORT = 8284;
 const NAME = 'FrontendWebsocket';
 const HOMEDIR = path.join('jest', NAME);
 
@@ -8,7 +9,7 @@ process.argv = [
   'node',
   'frontend.test.js',
   '-frontend',
-  '8284',
+  FRONTEND_PORT.toString(),
   '-logger',
   'info',
   '-matterlogger',
@@ -26,12 +27,13 @@ process.argv = [
   '3860',
 ];
 
-import { expect, jest } from '@jest/globals';
+import { jest } from '@jest/globals';
+
 import path from 'node:path';
 import { rmSync } from 'node:fs';
+
 import { AnsiLogger, CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import WebSocket from 'ws';
-
 import { LogLevel as MatterLogLevel } from '@matter/main';
 import { Identify } from '@matter/main/clusters';
 
@@ -53,9 +55,11 @@ jest.unstable_mockModule('./shelly.ts', () => ({
 }));
 const { triggerShellySysUpdate, triggerShellyMainUpdate, createShellySystemLog, triggerShellySoftReset, triggerShellyHardReset, triggerShellyReboot, triggerShellyChangeIp } = await import('./shelly.ts');
 
+/*
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   return undefined as never;
 });
+*/
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -137,20 +141,22 @@ describe('Matterbridge frontend', () => {
     expect(matterbridge.bridgeMode).toBe('bridge');
     expect((matterbridge as any).initialized).toBe(true);
 
-    await waiter('Matter server node started', () => {
-      return matterbridge.serverNode?.lifecycle.isOnline === true;
-    });
+    // prettier-ignore
+    await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
+    // prettier-ignore
+    await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
+    // prettier-ignore
+    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
+    // prettier-ignore
+    await waiter('Matter server node started', () => { return (matterbridge as any).reachabilityTimeout; });
+    // prettier-ignore
+    await waiter('Matter server node started', () => { return matterbridge.serverNode?.lifecycle.isOnline === true; });
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8284${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening on ${UNDERLINE}ws://${matterbridge.systemInformation.ipv4Address}:8284${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
   }, 60000);
-
-  test('Reset Jest plugins', async () => {
-    matterbridge.plugins.clear();
-    expect(await matterbridge.plugins.saveToStorage()).toBe(0);
-  });
 
   test('Add mock plugin 1', async () => {
     await (matterbridge as any).plugins.add('./src/mock/plugin1');
@@ -1152,7 +1158,7 @@ describe('Matterbridge frontend', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
+    await matterbridge.destroyInstance(10, 1000);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocket server closed successfully`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);

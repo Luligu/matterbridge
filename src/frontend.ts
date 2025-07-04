@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.0.2
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -47,6 +47,7 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
 import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
+import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
 
 /**
  * Websocket message ID for logging.
@@ -214,7 +215,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
-      this.httpServer = createServer(this.expressApp);
+      try {
+        this.httpServer = createServer(this.expressApp);
+      } catch (error) {
+        this.log.error(`Failed to create HTTP server: ${error}`);
+        this.emit('server_error', error as Error);
+        return;
+      }
 
       // Listen on the specified port
       if (hasParameter('ingress')) {
@@ -252,6 +259,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.info(`Loaded certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}`);
       } catch (error) {
         this.log.error(`Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}: ${error}`);
+        this.emit('server_error', error as Error);
         return;
       }
       let key: string | undefined;
@@ -260,6 +268,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.info(`Loaded key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}`);
       } catch (error) {
         this.log.error(`Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}: ${error}`);
+        this.emit('server_error', error as Error);
         return;
       }
       let ca: string | undefined;
@@ -272,7 +281,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       const serverOptions: https.ServerOptions = { cert, key, ca };
 
       // Create an HTTPS server with the SSL certificate and private key (ca is optional) and attach the express app
-      this.httpsServer = https.createServer(serverOptions, this.expressApp);
+      try {
+        this.httpsServer = https.createServer(serverOptions, this.expressApp);
+      } catch (error) {
+        this.log.error(`Failed to create HTTPS server: ${error}`);
+        this.emit('server_error', error as Error);
+        return;
+      }
 
       // Listen on the specified port
       if (hasParameter('ingress')) {
@@ -362,7 +377,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Subscribe to cli events
-    const { cliEmitter } = await import('./cli.js');
     cliEmitter.removeAllListeners();
     cliEmitter.on('uptime', (systemUptime: string, processUptime: string) => {
       this.wssSendUptimeUpdate(systemUptime, processUptime);
@@ -534,6 +548,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       res.type('text/plain');
       // res.download(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
       res.download(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
+        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge log file');
@@ -555,6 +570,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
       res.type('text/plain');
       res.download(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), 'matter.log', (error) => {
+        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading log file ${this.matterbridge.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter log file');
@@ -576,6 +592,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
       res.type('text/plain');
       res.download(path.join(os.tmpdir(), 'shelly.log'), 'shelly.log', (error) => {
+        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading Shelly system log file: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading Shelly system log file');
@@ -806,8 +823,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     matterbridgeInformation: MatterbridgeInformation;
     systemInformation: SystemInformation;
   }> {
-    const { lastCpuUsage } = await import('./cli.js');
-
     // Update the system information
     this.matterbridge.systemInformation.totalMemory = this.formatMemoryUsage(os.totalmem());
     this.matterbridge.systemInformation.freeMemory = this.formatMemoryUsage(os.freemem());

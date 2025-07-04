@@ -307,7 +307,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * Call cleanup() and dispose MdnsService.
    *
    * @param {number} [timeout] - The timeout duration to wait for the cleanup to complete in milliseconds. Default is 1000.
-   * @param {number} [pause] - The pause duration after the cleanup in milliseconds. Default is 500.
+   * @param {number} [pause] - The pause duration after the cleanup in milliseconds. Default is 250.
    *
    * @deprecated This method is deprecated and is ONLY used for jest tests.
    */

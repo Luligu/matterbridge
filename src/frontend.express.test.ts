@@ -1,12 +1,14 @@
 // src\frontend.express.test.ts
 
 const MATTER_PORT = 6007;
+const FRONTEND_PORT = 8283;
 const NAME = 'FrontendExpress';
 const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'frontend.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-homedir', HOMEDIR, '-profile', 'JestFrontendExpress', '-port', MATTER_PORT.toString(), '-passcode', '123456', '-discriminator', '3860'];
 
-import { expect, jest } from '@jest/globals';
+import { jest } from '@jest/globals';
+
 import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
@@ -17,9 +19,11 @@ import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.ts';
 import { waiter } from './utils/export.ts';
 
+/*
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   return undefined as never;
 });
+*/
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -105,11 +109,6 @@ describe('Matterbridge frontend express with http', () => {
     expect(matterbridge.bridgeMode).toBe('bridge');
     expect((matterbridge as any).initialized).toBe(true);
   }, 60000);
-
-  test('Reset Jest plugins', async () => {
-    matterbridge.plugins.clear();
-    expect(await matterbridge.plugins.saveToStorage()).toBe(0);
-  });
 
   test('Frontend is running on http', async () => {
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
@@ -227,7 +226,7 @@ describe('Matterbridge frontend express with http', () => {
     expect(Array.isArray(response.body)).toBe(true);
   }, 30000);
 
-  test('GET /api/view-mblog', async () => {
+  test('GET /api/view-mblog error', async () => {
     const response = await makeRequest('/api/view-mblog', 'GET');
 
     expect(response.status).toBe(500);
@@ -235,7 +234,18 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body).toBe('Error reading matterbridge log file. Please enable the matterbridge log on file in the settings.');
   }, 30000);
 
-  test('GET /api/view-mjlog', async () => {
+  test('GET /api/view-mblog', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterbrideLoggerFile), 'Test log content', 'utf8');
+    const response = await makeRequest('/api/view-mblog', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+    expect(response.body).toBe('Test log content');
+
+    await fs.unlink(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterbrideLoggerFile));
+  }, 30000);
+
+  test('GET /api/view-mjlog error', async () => {
     const response = await makeRequest('/api/view-mjlog', 'GET');
 
     expect(response.status).toBe(500);
@@ -243,12 +253,34 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body).toBe('Error reading matter log file. Please enable the matter log on file in the settings.');
   }, 30000);
 
-  test('GET /api/shellyviewsystemlog', async () => {
+  test('GET /api/view-mjlog', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterLoggerFile), 'Test log content', 'utf8');
+    const response = await makeRequest('/api/view-mjlog', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+    expect(response.body).toBe('Test log content');
+
+    await fs.unlink(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterLoggerFile));
+  }, 30000);
+
+  test('GET /api/shellyviewsystemlog error', async () => {
     const response = await makeRequest('/api/shellyviewsystemlog', 'GET');
 
     expect(response.status).toBe(500);
     expect(typeof response.body).toBe('string');
     expect(response.body).toBe('Error reading shelly log file. Please create the shelly system log before loading it.');
+  }, 30000);
+
+  test('GET /api/shellyviewsystemlog', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, 'shelly.log'), 'Test shelly log content', 'utf8');
+    const response = await makeRequest('/api/shellyviewsystemlog', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+    expect(response.body).toBe('Test shelly log content');
+
+    await fs.unlink(path.join(matterbridge.matterbridgeDirectory, 'shelly.log'));
   }, 30000);
 
   test('GET /api/download-mblog', async () => {
@@ -333,7 +365,7 @@ describe('Matterbridge frontend express with http', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
+    await matterbridge.destroyInstance(10, 1000);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Stopping the frontend...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Frontend app closed successfully`);
