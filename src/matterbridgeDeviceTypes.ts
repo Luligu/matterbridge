@@ -212,9 +212,9 @@ export interface MatterbridgeEndpointOptions extends EndpointOptions {
   /**
    * Activates a special mode for this endpoint.
    * - 'server': it creates the device server node and add the device as Matter device that needs to be paired individually.
-   *   In this case the bridge mode is not relevant. The device is independent.
+   *   In this case the Matterbridge bridge mode (bridge or childbridge) is not relevant. The device is independent.
    *
-   * - 'matter': it adds the device directly to the bridge server node as Matter device. In this case the implementation must respect
+   * - 'matter': it adds the device directly to the Matterbridge server node as Matter device alongside the aggregator. In this case the implementation must respect
    *   the 9.2.3. Disambiguation rule (i.e. use taglist if needed cause the device doesn't have nodeLabel).
    *   Furthermore the device will be a part of the bridge (i.e. will have the same name and will be in the same room).
    *   See 9.12.2.2. Native Matter functionality in Bridge.
