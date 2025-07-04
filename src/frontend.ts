@@ -718,6 +718,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Close the WebSocket server
     if (this.webSocketServer) {
+      this.log.debug('Closing WebSocket server...');
       // Close all active connections
       this.webSocketServer.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
@@ -744,6 +745,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Close the http server
     if (this.httpServer) {
+      this.log.debug('Closing http server...');
       await withTimeout(
         new Promise<void>((resolve) => {
           this.httpServer?.close((error) => {
@@ -765,6 +767,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Close the https server
     if (this.httpsServer) {
+      this.log.debug('Closing https server...');
       await withTimeout(
         new Promise<void>((resolve) => {
           this.httpsServer?.close((error) => {
