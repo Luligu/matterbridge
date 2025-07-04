@@ -25,7 +25,6 @@
 // Node modules
 import type { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
 import os from 'node:os';
-import { EventEmitter } from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
@@ -34,8 +33,7 @@ import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, TimestampFormat, YELLOW } from 
 // Matterbridge
 import { getIntParameter, hasParameter } from './utils/export.js';
 import { Matterbridge } from './matterbridge.js';
-
-export const cliEmitter = new EventEmitter();
+import { cliEmitter } from './cliEmitter.js';
 
 export let instance: Matterbridge | undefined;
 
