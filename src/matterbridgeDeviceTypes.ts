@@ -212,7 +212,7 @@ export interface MatterbridgeEndpointOptions extends EndpointOptions {
   /**
    * Activates a special mode for this endpoint.
    * - 'server': it creates the device server node and add the device as Matter device that needs to be paired individually.
-   *   In this case the bridge mode is not relevant. The device is autonomous.
+   *   In this case the bridge mode is not relevant. The device is independent.
    *
    * - 'matter': it adds the device directly to the bridge server node as Matter device. In this case the implementation must respect
    *   the 9.2.3. Disambiguation rule (i.e. use taglist if needed cause the device doesn't have nodeLabel).
@@ -220,7 +220,7 @@ export interface MatterbridgeEndpointOptions extends EndpointOptions {
    *   See 9.12.2.2. Native Matter functionality in Bridge.
    *
    * @remarks
-   * Always use createDefaultBasicInformationClusterServer() to create the BasicInformation cluster server.
+   * Always use createDefaultBasicInformationClusterServer() to create the BasicInformation cluster server when using mode 'server' or 'matter'.
    */
   mode?: 'server' | 'matter';
   /**
@@ -243,13 +243,13 @@ export interface MatterbridgeEndpointOptions extends EndpointOptions {
  */
 export interface EndpointOptions {
   /**
-   * Old API compatibility replaced by number
+   * Old API compatibility replaced by number.
    *
    * @deprecated Use `number` instead.
    */
   endpointId?: EndpointNumber;
   /**
-   * Old API compatibility replaced by id
+   * Old API compatibility replaced by id.
    *
    * @deprecated Use `id` instead.
    */
