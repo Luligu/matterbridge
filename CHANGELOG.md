@@ -8,7 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.1.1] - 2025-07-08
+## [3.1.1] - 2025-07-04
 
 ### Development Breaking Changes
 
@@ -22,14 +22,15 @@ If you like this project and find it useful, please consider giving it a star on
 - [SolarPower]: Added SolarPower class and Jest test (working on Home Assistant and SmartThings). Thanks Ludovic BOUÉ.
 - [BatteryStorage]: Added BatteryStorage class and Jest test (working on Home Assistant and SmartThings). Thanks Ludovic BOUÉ.
 - [HeatPump]: Added HeatPump class and Jest test (working on Home Assistant and SmartThings).
+- [test]: Improved test units on Frontend class and all Matterbridge classes (coverage 93%).
 
 ### Changed
 
 - [package]: Updated dependencies.
+- [matter.js]: Bumped `matter.js` to 0.15.1 (https://github.com/project-chip/matter.js/discussions/2220). Great job matter.js!
 - [frontend]: Added all esa devices.
 - [frontend]: New default values: devices on the home page and icon view on the devices page.
-- [matter.js]: Bumped `matter.js` to 0.15.1 (https://github.com/project-chip/matter.js/discussions/2220). Great job matter.js!
-- [imports]: Added more dynamic imports to Matterbridge and Frontend classes.
+- [imports]: Added dynamic imports to Matterbridge and Frontend classes.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

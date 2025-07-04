@@ -520,27 +520,13 @@ As of version 18.4.x, the Robot is supported by the Home app only as a single, n
 
 If a Robot is present alongside other devices in the bridge, the entire bridge becomes unstable in the Home app.
 
+A workaround has been released in Matterbridge 3.1.1. Ask the plugin authors to update the code.
+
 ## Home Assistant
 
-So far is the only controller supporting some Matter 1.2, 1.3 and 1.4 device type:
+So far is the only controller supporting all Matter 1.2, 1.3 and 1.4 device type.
 
-- airQualitySensor code 0x002c (Matter 1.2)
-- smokesmokeCoAlarm code 0x0076 (Matter 1.2)
-- waterFreezeDetector code 0x0041 (Matter 1.3 with only BooleanState cluster)
-- waterLeakDetector code 0x0043 (Matter 1.3 with only BooleanState cluster)
-- rainSensor code 0x0044 (Matter 1.3 with only BooleanState cluster)
-- deviceEnergyManagement code 0x050d (Matter 1.3 with only DeviceEnergyManagementMode cluster)
-
-Electrical measurements:
-
-- electrical measurements from EveHistoryCluster (used in old Matterbridge plugins)
-- electricalSensor code 0x0510 with clusters: ElectricalPowerMeasurement and ElectricalEnergyMeasurement
-
-Other supported cluster:
-
-- modeSelect code 0x27 with ModeSelect cluster
-
-## Home Assistant issues (Matter Server for HA is still in Beta)
+## Home Assistant issues
 
 - If HA doesn't show all devices, reload the Matter Server Integration or reboot HA
 - Home Assistant doesn't seem to always react when a device is removed from the bridge: they remain in HA unavailable forever...
@@ -565,8 +551,7 @@ There is no support for these Matter device types:
 - pressure sensor
 - flow sensor
 
-In the zigbee2mqtt and shelly plugins select the option to expose
-the switch devices like light or outlet cause they don't show up like switch
+In the zigbee2mqtt and shelly plugins select the option to expose the switch devices like light or outlet cause they don't show up like switch
 (Matterbridge uses a switch device type without client cluster).
 
 ## SmartThings
@@ -574,11 +559,6 @@ the switch devices like light or outlet cause they don't show up like switch
 Tested by Tamer Salah
 
 No issues reported so far.
-
-Supports also:
-
-- air Quality Sensor (Matter 1.2)
-- smoke Co Alarm
 
 ## eWeLink
 
