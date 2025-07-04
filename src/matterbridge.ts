@@ -30,7 +30,7 @@ import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt } from 'node-ansi-logger';
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
@@ -59,7 +59,6 @@ import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/brid
 
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
-import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
 import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -67,7 +66,6 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevices } from './helpers.js';
-import spawn from './utils/spawn.js';
 
 /**
  * Represents the Matterbridge events.
@@ -309,7 +307,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * Call cleanup() and dispose MdnsService.
    *
    * @param {number} [timeout] - The timeout duration to wait for the cleanup to complete in milliseconds. Default is 1000.
-   * @param {number} [pause] - The pause duration after the cleanup in milliseconds. Default is 500.
+   * @param {number} [pause] - The pause duration after the cleanup in milliseconds. Default is 250.
    *
    * @deprecated This method is deprecated and is ONLY used for jest tests.
    */
@@ -585,20 +583,22 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
     Logger.format = MatterLogFormat.ANSI;
     Logger.setLogger('default', this.createMatterLogger());
-    this.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
+    // Logger.destinations.default.write = this.createMatterLogger();
+    this.matterbridgeInformation.matterLoggerLevel = Logger.level;
 
     // Create the file logger for matter.js (context: matterFileLog)
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
       this.matterbridgeInformation.matterFileLogger = true;
       Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
-        defaultLogLevel: Logger.defaultLogLevel,
+        defaultLogLevel: Logger.level,
         logFormat: MatterLogFormat.PLAIN,
       });
     }
-    this.log.debug(`Matter logLevel: ${Logger.defaultLogLevel} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
+    this.log.debug(`Matter logLevel: ${Logger.level} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
 
     // Log network interfaces
     const networkInterfaces = os.networkInterfaces();
+    // console.log(`Network interfaces:`, networkInterfaces);
     const availableAddresses = Object.entries(networkInterfaces);
     const availableInterfaces = Object.keys(networkInterfaces);
     for (const [ifaceName, ifaces] of availableAddresses) {
@@ -709,7 +709,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         // We don't do this when the add and other parameters are set because we shut down the process after adding the plugin
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
-          await spawn.spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose']);
+          const { spawnCommand } = await import('./utils/spawn.js');
+          await spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose']);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } catch (error) {
@@ -851,6 +852,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     if (hasParameter('loginterfaces')) {
+      const { logInterfaces } = await import('./utils/network.js');
       this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
       logInterfaces();
       this.shutdown = true;
@@ -912,6 +914,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (plugin) {
         const matterStorageManager = await this.matterStorageService?.open(plugin.name);
         if (!matterStorageManager) {
+          /* istanbul ignore next */
           this.log.error(`Plugin ${plg}${plugin.name}${er} storageManager not found`);
         } else {
           await matterStorageManager.createContext('events')?.clearAll();
@@ -919,7 +922,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await matterStorageManager.createContext('root')?.clearAll();
           await matterStorageManager.createContext('sessions')?.clearAll();
           await matterStorageManager.createContext('persist')?.clearAll();
-          this.log.info(`Reset commissionig for plugin ${plg}${plugin.name}${nf} done! Remove the device from the controller.`);
+          this.log.notice(`Reset commissioning for plugin ${plg}${plugin.name}${nt} done! Remove the device from the controller.`);
         }
       } else {
         this.log.warn(`Plugin ${plg}${getParameter('reset')}${wr} not registerd in matterbridge`);
@@ -933,12 +936,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
 
     // Check in 30 seconds the latest and dev versions of matterbridge and the plugins
+    clearTimeout(this.checkUpdateTimeout);
     this.checkUpdateTimeout = setTimeout(async () => {
       const { checkUpdates } = await import('./update.js');
       checkUpdates(this);
     }, 30 * 1000).unref();
 
     // Check each 12 hours the latest and dev versions of matterbridge and the plugins
+    clearInterval(this.checkUpdateInterval);
     this.checkUpdateInterval = setInterval(
       async () => {
         const { checkUpdates } = await import('./update.js');
@@ -1162,6 +1167,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (this.globalModulesDirectory === '') {
       // First run of Matterbridge so the node storage is empty
       try {
+        const { getGlobalNodeModules } = await import('./utils/network.js');
         this.execRunningCount++;
         this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
         this.execRunningCount--;
@@ -1239,9 +1245,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case MatterLogLevel.FATAL:
           matterLogger.log(LogLevel.FATAL, message);
           break;
-        default:
-          matterLogger.log(LogLevel.DEBUG, message);
-          break;
       }
     };
   }
@@ -1265,10 +1268,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     return async (level: MatterLogLevel, formattedLog: string) => {
-      if (fileSize > 100000000) return;
-      fileSize += formattedLog.length;
+      /* istanbul ignore if */
       if (fileSize > 100000000) {
-        await fs.appendFile(filePath, `Logging on file has been stoppped because the file size is greater then 100MB.` + os.EOL);
+        return; // Stop logging if the file size is greater than 100MB
+      }
+      fileSize += formattedLog.length;
+      /* istanbul ignore if */
+      if (fileSize > 100000000) {
+        await fs.appendFile(filePath, `Logging on file has been stopped because the file size is greater than 100MB.` + os.EOL);
         return;
       }
 
@@ -1299,9 +1306,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case MatterLogLevel.FATAL:
           await fs.appendFile(filePath, `[${timestamp}] [${logger}] [fatal] ${finalMessage}`);
           break;
-        default:
-          await fs.appendFile(filePath, `[${timestamp}] [${logger}] ${finalMessage}`);
-          break;
       }
     };
   }
@@ -1314,22 +1318,23 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Shut down the process by exiting the current process.
+   * Shut down the process.
    */
   async shutdownProcess() {
     await this.cleanup('shutting down...', false);
   }
 
   /**
-   * Update matterbridge and and shut down the process.
+   * Update matterbridge and shut down the process.
    */
   async updateProcess() {
     this.log.info('Updating matterbridge...');
     try {
-      await spawn.spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
+      const { spawnCommand } = await import('./utils/spawn.js');
+      await spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
       this.log.info('Matterbridge has been updated. Full restart required.');
     } catch (error) {
-      this.log.error('Error updating matterbridge:', error instanceof Error ? error.message : error);
+      this.log.error(`Error updating matterbridge: ${error instanceof Error ? error.message : error}`);
     }
     this.frontend.wssSendRestartRequired();
     await this.cleanup('updating...', false);
@@ -2702,7 +2707,7 @@ const commissioningController = new CommissioningController({
    * @param {ExposedFabricInformation[]} fabricInfo - The array of exposed fabric information objects.
    * @returns {SanitizedExposedFabricInformation[]} An array of sanitized exposed fabric information objects.
    */
-  private sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]): SanitizedExposedFabricInformation[] {
+  sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]): SanitizedExposedFabricInformation[] {
     return fabricInfo.map((info) => {
       return {
         fabricIndex: info.fabricIndex,
@@ -2719,11 +2724,11 @@ const commissioningController = new CommissioningController({
   /**
    * Sanitizes the session information by converting bigint properties to strings because `res.json` doesn't support bigint.
    *
-   * @param {SessionsBehavior.Session[]} session - The array of session information objects.
+   * @param {SessionsBehavior.Session[]} sessions - The array of session information objects.
    * @returns {SanitizedSession[]} An array of sanitized session information objects.
    */
-  private sanitizeSessionInformation(session: SessionsBehavior.Session[]): SanitizedSession[] {
-    return session
+  sanitizeSessionInformation(sessions: SessionsBehavior.Session[]): SanitizedSession[] {
+    return sessions
       .filter((session) => session.isPeerActive)
       .map((session) => {
         return {
@@ -2766,7 +2771,7 @@ const commissioningController = new CommissioningController({
     */
   }
 
-  private getVendorIdName = (vendorId: number | undefined) => {
+  getVendorIdName = (vendorId: number | undefined) => {
     if (!vendorId) return '';
     let vendorName = '(Unknown vendorId)';
     switch (vendorId) {

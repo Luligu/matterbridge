@@ -6,12 +6,13 @@ process.argv = ['node', './cli.js', '-memorycheck', '-inspect', '-snapshotinterv
 
 import { jest } from '@jest/globals';
 import os from 'node:os';
+import { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, YELLOW } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 // eslint-disable-next-line n/no-missing-import
 import { MockMatterbridge } from './mock/mockMatterbridge.js';
-import { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
+import { cliEmitter } from './cliEmitter.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -56,7 +57,6 @@ const postSpy = jest.spyOn(Session.prototype, 'post').mockImplementation((method
 });
 
 describe('Matterbridge', () => {
-  let cliEmitter;
   let matterbridge: Matterbridge;
 
   beforeEach(async () => {
@@ -74,12 +74,11 @@ describe('Matterbridge', () => {
     // Dynamically import the cli module
     const cli = await import('./cli.js');
     await new Promise((resolve) => {
-      cli.cliEmitter.once('ready', resolve);
+      cliEmitter.once('ready', resolve);
     });
     expect(cli.instance).toBeDefined();
     expect(cli.instance).toBeInstanceOf(MockMatterbridge);
     matterbridge = cli.instance as unknown as Matterbridge;
-    cliEmitter = cli.cliEmitter;
 
     expect(loadInstance).toHaveBeenCalledTimes(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cli main() started');

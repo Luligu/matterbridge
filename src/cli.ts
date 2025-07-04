@@ -25,7 +25,6 @@
 // Node modules
 import type { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
 import os from 'node:os';
-import { EventEmitter } from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
@@ -34,8 +33,7 @@ import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, TimestampFormat, YELLOW } from 
 // Matterbridge
 import { getIntParameter, hasParameter } from './utils/export.js';
 import { Matterbridge } from './matterbridge.js';
-
-export const cliEmitter = new EventEmitter();
+import { cliEmitter, lastCpuUsage, setLastCpuUsage } from './cliEmitter.js';
 
 export let instance: Matterbridge | undefined;
 
@@ -46,7 +44,6 @@ let snapshotInterval: NodeJS.Timeout;
 // Cpu and memory check
 let memoryCheckInterval: NodeJS.Timeout;
 let prevCpus: os.CpuInfo[];
-export let lastCpuUsage = 0;
 let peakCpu = 0;
 let peakRss = 0;
 
@@ -131,7 +128,7 @@ async function startCpuMemoryCheck() {
       cpuUsageLog = lastCpuUsage.toFixed(2);
     } else {
       cpuUsageLog = cpuUsage.toFixed(2);
-      lastCpuUsage = cpuUsage;
+      setLastCpuUsage(cpuUsage);
       if (lastCpuUsage > peakCpu) peakCpu = lastCpuUsage;
       cliEmitter.emit('cpu', lastCpuUsage);
     }

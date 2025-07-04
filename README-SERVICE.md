@@ -1,10 +1,12 @@
-# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
+# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver)](https://hub.docker.com/r/luligu/matterbridge)
 [![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge.svg)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
+![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
+[![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
 
 [![power by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
 [![power by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
@@ -15,6 +17,10 @@
 # Advanced configuration
 
 ## Run matterbridge as a daemon with systemctl (Linux only)
+
+The easiest way to add systemctl is to use [Matterbridge service cli for linux](https://github.com/Luligu/mb-service-linux).
+
+If your setup is too complex or you prefer to do it manually follow this method. You can still use mb-service to manage systemd after.
 
 ### First create the Matterbridge directories
 
@@ -75,7 +81,7 @@ If you use the matterbridge-bthome plugin add this:
 AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 ```
 
-If you modify it after, then run:
+If you modify matterbridge.service after, then run:
 
 ```bash
 sudo systemctl daemon-reload

@@ -90,6 +90,7 @@ import {
   MatterbridgeLiftWindowCoveringServer,
   MatterbridgeLiftTiltWindowCoveringServer,
   MatterbridgeDeviceEnergyManagementModeServer,
+  MatterbridgeDeviceEnergyManagementServer,
 } from './matterbridgeBehaviors.ts';
 import { Matterbridge } from './matterbridge.ts';
 import {
@@ -110,9 +111,9 @@ import {
 } from './matterbridgeDeviceTypes.ts';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
-import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.ts';
-import { WaterHeater } from './waterHeater.ts';
-import { Evse, MatterbridgeEnergyEvseServer } from './evse.ts';
+import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.ts';
+import { WaterHeater } from './devices/waterHeater.ts';
+import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -161,14 +162,16 @@ describe('Matterbridge ' + NAME, () => {
   let evse: MatterbridgeEndpoint;
 
   beforeAll(async () => {
-    // Create a MatterbridgeEdge instance
+    // Create a MatterbridgeEdge instance not initialized
     matterbridge = await Matterbridge.loadInstance(false);
-    matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-    matterbridge.matterbridgeDirectory = HOMEDIR;
+    matterbridge.homeDirectory = HOMEDIR;
+    matterbridge.matterbridgeDirectory = path.join(HOMEDIR, '.matterbridge');
+    matterbridge.matterbridgePluginDirectory = path.join(HOMEDIR, 'Matterbridge');
+
     // Setup matter environment
     matterbridge.environment.vars.set('log.level', MatterLogLevel.INFO);
     matterbridge.environment.vars.set('log.format', MatterLogFormat.ANSI);
-    matterbridge.environment.vars.set('path.root', HOMEDIR);
+    matterbridge.environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
     matterbridge.environment.vars.set('runtime.signals', false);
     matterbridge.environment.vars.set('runtime.exitcode', false);
     await (matterbridge as any).startMatterStorage();
@@ -191,7 +194,7 @@ describe('Matterbridge ' + NAME, () => {
   const deviceType = extendedColorLight;
 
   test('create a context for server node', async () => {
-    expect(matterbridge.environment.vars.get('path.root')).toBe(HOMEDIR);
+    expect(matterbridge.environment.vars.get('path.root')).toBe(path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
     context = await (matterbridge as any).createServerNodeContext('Matterbridge', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
     expect(context).toBeDefined();
   });
@@ -1013,6 +1016,22 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: 0`);
   });
 
+  test('invoke MatterbridgeDeviceEnergyManagementServer commands', async () => {
+    expect(evse.behaviors.has(MatterbridgeDeviceEnergyManagementServer)).toBeTruthy();
+    expect(evse.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementServer).commands.has('powerAdjustRequest')).toBeTruthy();
+    expect(evse.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementServer).commands.has('cancelPowerAdjustRequest')).toBeTruthy();
+    expect((evse.state['deviceEnergyManagement'] as any).acceptedCommandList).toEqual([0, 1]);
+    expect((evse.state['deviceEnergyManagement'] as any).generatedCommandList).toEqual([]);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(evse, 'deviceEnergyManagement', 'powerAdjustRequest', { power: 0, duration: 0, cause: 'Test' }); // 0 is not a valid mode
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Adjusting power to 0 duration 0 cause Test (endpoint ${evse.id}.${evse.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power 0 duration 0 cause Test`);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(evse, 'deviceEnergyManagement', 'cancelPowerAdjustRequest', {});
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancelling power adjustment (endpoint ${evse.id}.${evse.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called`);
+  });
+
   test('invoke MatterbridgeDeviceEnergyManagementModeServer commands', async () => {
     expect(evse.behaviors.has(DeviceEnergyManagementModeServer)).toBeTruthy();
     expect(evse.behaviors.has(MatterbridgeDeviceEnergyManagementModeServer)).toBeTruthy();
@@ -1058,6 +1077,6 @@ describe('Matterbridge ' + NAME, () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
     await matterbridge.destroyInstance(10);
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
+    // await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
   });
 });

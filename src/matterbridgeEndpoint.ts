@@ -106,7 +106,6 @@ import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
 import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
-import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
 
 // AnsiLogger module
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from './logger/export.js';
@@ -131,6 +130,7 @@ import {
   MatterbridgeSwitchServer,
   MatterbridgeOperationalStateServer,
   MatterbridgeDeviceEnergyManagementModeServer,
+  MatterbridgeDeviceEnergyManagementServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -164,7 +164,8 @@ import {
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CommandHandlerFunction = (data: { request: Record<string, any>; cluster: string; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint }) => void | Promise<void>;
+export type CommandHandlerData = { request: Record<string, any>; cluster: string; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint };
+export type CommandHandlerFunction = (data: CommandHandlerData) => void | Promise<void>;
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -257,6 +258,10 @@ export interface MatterbridgeEndpointCommands {
   enableCharging: HandlerFunction;
   disable: HandlerFunction;
 
+  // Device Energy Management
+  powerAdjustRequest: HandlerFunction;
+  cancelPowerAdjustRequest: HandlerFunction;
+
   // Temperature Control
   setTemperature: HandlerFunction;
 }
@@ -324,7 +329,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   name: string | undefined = undefined;
   /** The code of the first device type of the endpoint (old api compatibility) */
   deviceType: number | undefined = undefined;
-  /** The id of the endpoint (old api compatibility) */
+  /** The original id (with spaces and .) of the endpoint (old api compatibility) */
   uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;
 
@@ -616,11 +621,20 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {keyof MatterbridgeEndpointCommands} command - The command to execute.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [request] - The optional request to pass to the handler function.
+   * @param {string} [cluster] - The optional cluster to pass to the handler function.
+   * @param {Record<string, boolean | number | bigint | string | object | null>} [attributes] - The optional attributes to pass to the handler function.
+   * @param {MatterbridgeEndpoint} [endpoint] - The optional MatterbridgeEndpoint instance to pass to the handler function
    *
    * @deprecated Used ONLY in Jest tests.
    */
-  async executeCommandHandler(command: keyof MatterbridgeEndpointCommands, request?: Record<string, boolean | number | bigint | string | object | null>) {
-    await this.commandHandler.executeHandler(command, { request });
+  async executeCommandHandler(
+    command: keyof MatterbridgeEndpointCommands,
+    request?: Record<string, boolean | number | bigint | string | object | null>,
+    cluster?: string,
+    attributes?: Record<string, boolean | number | bigint | string | object | null>,
+    endpoint?: MatterbridgeEndpoint,
+  ): Promise<void> {
+    await this.commandHandler.executeHandler(command, { request, cluster, attributes, endpoint });
   }
 
   /**
@@ -923,7 +937,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {PowerSource.WiredCurrentType} wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
+  createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac): this {
     this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Wired), {
       wiredCurrentType,
       description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
@@ -944,7 +958,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} batQuantity - The quantity of the battery (default: 1).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500, batReplacementDescription = 'Battery type', batQuantity = 1) {
+  createDefaultPowerSourceReplaceableBatteryClusterServer(
+    batPercentRemaining: number = 100,
+    batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
+    batVoltage: number = 1500,
+    batReplacementDescription: string = 'Battery type',
+    batQuantity: number = 1,
+  ): this {
     this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable), {
       status: PowerSource.PowerSourceStatus.Active,
       order: 0,
@@ -967,7 +987,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100).
    * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param {number} [batVoltage] - The battery voltage (default: 1500).
+   * @param {number} [batVoltage] - The battery voltage in mV (default: 1500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500) {
@@ -977,11 +997,12 @@ export class MatterbridgeEndpoint extends Endpoint {
       description: 'Primary battery',
       batVoltage,
       batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
-      batTimeRemaining: 1,
+      batTimeRemaining: null, // Indicates the estimated time in seconds before the battery will no longer be able to provide power to the Node
       batChargeLevel,
       batReplacementNeeded: false,
       batReplaceability: PowerSource.BatReplaceability.Unspecified,
-      activeBatFaults: undefined,
+      batPresent: true,
+      activeBatFaults: [],
       batChargeState: PowerSource.BatChargeState.IsNotCharging,
       batFunctionalWhileCharging: true,
       endpointList: [],
@@ -2194,8 +2215,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {DeviceEnergyManagement.EsaType} [esaType] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
    * @param {boolean} [esaCanGenerate] - Indicates if the ESA can generate energy. Defaults to `false`.
    * @param {DeviceEnergyManagement.EsaState} [esaState] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
-   * @param {number} [absMinPower] - The absolute minimum power in mW. Defaults to `0`.
-   * @param {number} [absMaxPower] - The absolute maximum power in mW. Defaults to `0`.
+   * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -2207,8 +2228,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
    */
   createDefaultDeviceEnergyManagementClusterServer(esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other, esaCanGenerate = false, esaState = DeviceEnergyManagement.EsaState.Online, absMinPower = 0, absMaxPower = 0) {
-    this.behaviors.require(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting), {
+    this.behaviors.require(MatterbridgeDeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
       forecast: null, // A null value indicates that there is no forecast currently available
+      powerAdjustmentCapability: null, // A null value indicates that no power adjustment is currently possible, and nor is any adjustment currently active
       esaType, // Fixed attribute
       esaCanGenerate, // Fixed attribute
       esaState,
@@ -2260,11 +2282,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Power Topology Cluster Server with feature TreeTopology. Only needed for an electricalSensor device type.
+   * Creates a default Power Topology Cluster Server with feature TreeTopology (the endpoint provides or consumes power to/from itself and its child endpoints). Only needed for an electricalSensor device type.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultPowerTopologyClusterServer() {
+  createDefaultPowerTopologyClusterServer(): this {
     this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.TreeTopology));
     return this;
   }
@@ -2276,7 +2298,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} energyExported - The total production value in mW/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null) {
+  createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
     this.behaviors.require(ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy), {
       accuracy: {
         measurementType: MeasurementType.ElectricalEnergy,
@@ -2286,8 +2308,8 @@ export class MatterbridgeEndpoint extends Endpoint {
         accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
       },
       cumulativeEnergyReset: null,
-      cumulativeEnergyImported: energyImported ? { energy: energyImported } : null,
-      cumulativeEnergyExported: energyExported ? { energy: energyExported } : null,
+      cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
+      cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
     });
     return this;
   }
@@ -2301,7 +2323,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} frequency - The frequency value in millihertz.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null) {
+  createDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null): this {
     this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), {
       powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
       numberOfMeasurementTypes: 4,

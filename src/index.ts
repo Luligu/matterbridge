@@ -1,6 +1,5 @@
 /**
- * This file contains the entry point of Matterbridge.
- *
+ * @description This file contains the entry point of Matterbridge.
  * @file index.ts
  * @author Luca Liguori
  * @created 2023-12-29
@@ -40,12 +39,6 @@ export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export { addVirtualDevice } from './helpers.js';
-
-// Single class device types (these exports will be removed in the next release)
-export * from './roboticVacuumCleaner.js';
-export * from './laundryWasher.js';
-export * from './waterHeater.js';
-export * from './evse.js';
 
 const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 

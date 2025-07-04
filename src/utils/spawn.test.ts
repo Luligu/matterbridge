@@ -22,7 +22,7 @@ import { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_pro
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { Matterbridge } from '../matterbridge.ts';
-import spawnModule from './spawn.ts';
+import { spawnCommand } from './spawn.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -69,7 +69,7 @@ describe('Spawn', () => {
     const command = 'npm';
     const args = ['list', '--depth=0'];
 
-    const result = await spawnModule.spawnCommand(matterbridge, command, args);
+    const result = await spawnCommand(matterbridge, command, args);
 
     expect(spawn).toHaveBeenCalled();
     expect(result).toBe(true);
@@ -94,7 +94,7 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    const result = await spawnModule.spawnCommand(matterbridge, command, args);
+    const result = await spawnCommand(matterbridge, command, args);
 
     expect(result).toBe(true);
     expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn command sudo with`));
@@ -113,7 +113,7 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    await expect(spawnModule.spawnCommand(matterbridge, command, args)).rejects.toThrow('Spawn error');
+    await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow('Spawn error');
 
     expect(matterbridge.log.log).toHaveBeenCalledWith('error', expect.stringContaining(`Failed to start child process`));
   });
@@ -131,7 +131,7 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    await expect(spawnModule.spawnCommand(matterbridge, command, args)).rejects.toThrow();
+    await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow();
 
     expect(matterbridge.log.log).toHaveBeenCalledWith('error', expect.stringContaining(`closed with code 1 and signal null`));
   });
@@ -149,7 +149,7 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    await expect(spawnModule.spawnCommand(matterbridge, command, args)).rejects.toThrow();
+    await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow();
 
     expect(matterbridge.log.log).toHaveBeenCalledWith('error', expect.stringContaining(`exited with code 1 and signal null`));
   });
@@ -184,7 +184,7 @@ describe('Spawn', () => {
         },
       } as any;
     });
-    await spawnModule.spawnCommand(matterbridge, command, args);
+    await spawnCommand(matterbridge, command, args);
 
     expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn output (stdout): Hello from stdout`));
     expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn verbose (stderr): Hello from stderr`));

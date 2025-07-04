@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.0.2
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -28,6 +28,7 @@ import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
+import EventEmitter from 'node:events';
 
 // Third-party modules
 import express from 'express';
@@ -41,12 +42,12 @@ import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/cluster
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter } from './utils/export.js';
-import { ApiClusters, ApiClustersResponse, ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
+import { ApiClusters, ApiClustersResponse, ApiDevices, ApiDevicesMatter, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
 import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
-import spawn from './utils/spawn.js';
+import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
 
 /**
  * Websocket message ID for logging.
@@ -140,7 +141,16 @@ export const WS_ID_SHELLY_SYS_UPDATE = 100;
  */
 export const WS_ID_SHELLY_MAIN_UPDATE = 101;
 
-export class Frontend {
+/**
+ * Represents the Matterbridge events.
+ */
+interface FrontendEvents {
+  server_listening: [protocol: string, port: number, address?: string];
+  server_error: [error: Error];
+  websocket_server_listening: [host: string];
+}
+
+export class Frontend extends EventEmitter<FrontendEvents> {
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
   private port = 8283;
@@ -152,6 +162,7 @@ export class Frontend {
   private webSocketServer: WebSocketServer | undefined;
 
   constructor(matterbridge: Matterbridge) {
+    super();
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({ logName: 'Frontend', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
   }
@@ -204,24 +215,31 @@ export class Frontend {
 
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
-      this.httpServer = createServer(this.expressApp);
+      try {
+        this.httpServer = createServer(this.expressApp);
+      } catch (error) {
+        this.log.error(`Failed to create HTTP server: ${error}`);
+        this.emit('server_error', error as Error);
+        return;
+      }
 
       // Listen on the specified port
       if (hasParameter('ingress')) {
         this.httpServer.listen(this.port, '0.0.0.0', () => {
           this.log.info(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${this.port}${UNDERLINEOFF}${rs}`);
+          this.emit('server_listening', 'http', this.port, '0.0.0.0');
         });
       } else {
         this.httpServer.listen(this.port, () => {
           if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
           if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+          this.emit('server_listening', 'http', this.port);
         });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.httpServer.on('error', (error: any) => {
+      this.httpServer.on('error', (error: Error) => {
         this.log.error(`Frontend http server error listening on ${this.port}`);
-        switch (error.code) {
+        switch ((error as NodeJS.ErrnoException).code) {
           case 'EACCES':
             this.log.error(`Port ${this.port} requires elevated privileges`);
             break;
@@ -230,6 +248,7 @@ export class Frontend {
             break;
         }
         this.initializeError = true;
+        this.emit('server_error', error);
         return;
       });
     } else {
@@ -240,6 +259,7 @@ export class Frontend {
         this.log.info(`Loaded certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}`);
       } catch (error) {
         this.log.error(`Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}: ${error}`);
+        this.emit('server_error', error as Error);
         return;
       }
       let key: string | undefined;
@@ -248,6 +268,7 @@ export class Frontend {
         this.log.info(`Loaded key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}`);
       } catch (error) {
         this.log.error(`Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}: ${error}`);
+        this.emit('server_error', error as Error);
         return;
       }
       let ca: string | undefined;
@@ -260,24 +281,31 @@ export class Frontend {
       const serverOptions: https.ServerOptions = { cert, key, ca };
 
       // Create an HTTPS server with the SSL certificate and private key (ca is optional) and attach the express app
-      this.httpsServer = https.createServer(serverOptions, this.expressApp);
+      try {
+        this.httpsServer = https.createServer(serverOptions, this.expressApp);
+      } catch (error) {
+        this.log.error(`Failed to create HTTPS server: ${error}`);
+        this.emit('server_error', error as Error);
+        return;
+      }
 
       // Listen on the specified port
       if (hasParameter('ingress')) {
         this.httpsServer.listen(this.port, '0.0.0.0', () => {
           this.log.info(`The frontend https server is listening on ${UNDERLINE}https://0.0.0.0:${this.port}${UNDERLINEOFF}${rs}`);
+          this.emit('server_listening', 'https', this.port, '0.0.0.0');
         });
       } else {
         this.httpsServer.listen(this.port, () => {
           if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
           if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+          this.emit('server_listening', 'https', this.port);
         });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.httpsServer.on('error', (error: any) => {
+      this.httpsServer.on('error', (error: Error) => {
         this.log.error(`Frontend https server error listening on ${this.port}`);
-        switch (error.code) {
+        switch ((error as NodeJS.ErrnoException).code) {
           case 'EACCES':
             this.log.error(`Port ${this.port} requires elevated privileges`);
             break;
@@ -286,6 +314,7 @@ export class Frontend {
             break;
         }
         this.initializeError = true;
+        this.emit('server_error', error);
         return;
       });
     }
@@ -340,6 +369,7 @@ export class Frontend {
 
     this.webSocketServer.on('listening', () => {
       this.log.info(`The WebSocketServer is listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
+      this.emit('websocket_server_listening', wssHost);
     });
 
     this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
@@ -347,7 +377,6 @@ export class Frontend {
     });
 
     // Subscribe to cli events
-    const { cliEmitter } = await import('./cli.js');
     cliEmitter.removeAllListeners();
     cliEmitter.on('uptime', (systemUptime: string, processUptime: string) => {
       this.wssSendUptimeUpdate(systemUptime, processUptime);
@@ -519,6 +548,7 @@ export class Frontend {
       res.type('text/plain');
       // res.download(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
       res.download(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
+        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge log file');
@@ -540,6 +570,7 @@ export class Frontend {
       }
       res.type('text/plain');
       res.download(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), 'matter.log', (error) => {
+        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading log file ${this.matterbridge.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter log file');
@@ -561,6 +592,7 @@ export class Frontend {
       }
       res.type('text/plain');
       res.download(path.join(os.tmpdir(), 'shelly.log'), 'shelly.log', (error) => {
+        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading Shelly system log file: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading Shelly system log file');
@@ -649,7 +681,8 @@ export class Frontend {
 
         // Install the plugin package
         if (filename.endsWith('.tgz')) {
-          await spawn.spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
+          const { spawnCommand } = await import('./utils/spawn.js');
+          await spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
           this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
           this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
           this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
@@ -790,8 +823,6 @@ export class Frontend {
     matterbridgeInformation: MatterbridgeInformation;
     systemInformation: SystemInformation;
   }> {
-    const { lastCpuUsage } = await import('./cli.js');
-
     // Update the system information
     this.matterbridge.systemInformation.totalMemory = this.formatMemoryUsage(os.totalmem());
     this.matterbridge.systemInformation.freeMemory = this.formatMemoryUsage(os.freemem());
@@ -825,13 +856,13 @@ export class Frontend {
   /**
    * Retrieves the reachable attribute.
    *
-   * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
+   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint object.
    * @returns {boolean} The reachable attribute.
    */
   private getReachability(device: MatterbridgeEndpoint): boolean {
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return false;
-
     if (device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) return device.getAttribute(BridgedDeviceBasicInformation.Cluster.id, 'reachable') as boolean;
+    if (device.mode === 'server' && device.serverNode && device.serverNode.state.basicInformation.reachable !== undefined) return device.serverNode.state.basicInformation.reachable;
     if (this.matterbridge.bridgeMode === 'childbridge') return true;
     return false;
   }
@@ -863,6 +894,24 @@ export class Frontend {
     // Child endpoints
     for (const child of endpoint.getChildEndpoints()) {
       if (child.hasClusterServer(PowerSource.Cluster.id)) return powerSource(child);
+    }
+  }
+
+  /**
+   * Retrieves the matter pairing code from a given device.
+   *
+   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint object to retrieve the QR pairing code from.
+   * @returns {ApiDevicesMatter | undefined} An ApiDevicesMatter object or undefined if not found.
+   */
+  private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiDevicesMatter | undefined {
+    if (device.mode === 'server' && device.serverNode && device.serverContext) {
+      return {
+        commissioned: device.serverNode.state.commissioning.commissioned,
+        qrPairingCode: device.serverNode.state.commissioning.pairingCodes.qrPairingCode,
+        manualPairingCode: device.serverNode.state.commissioning.pairingCodes.manualPairingCode,
+        fabricInformations: this.matterbridge.sanitizeFabricInformations(Object.values(device.serverNode.state.commissioning.fabrics)),
+        sessionInformations: this.matterbridge.sanitizeSessionInformation(Object.values(device.serverNode.state.sessions.sessions)),
+      } as ApiDevicesMatter;
     }
   }
 
@@ -1034,16 +1083,15 @@ export class Frontend {
    * Retrieves the devices from Matterbridge.
    *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
-   * @returns {Promise<ApiDevices[]>} A promise that resolves to an array of ApiDevices.
+   * @returns {Promise<ApiDevices[]>} A promise that resolves to an array of ApiDevices for the frontend.
    */
   private async getDevices(pluginName?: string): Promise<ApiDevices[]> {
     const devices: ApiDevices[] = [];
-    this.matterbridge.devices.forEach(async (device) => {
+    for (const device of this.matterbridge.devices.array()) {
       // Filter by pluginName if provided
-      if (pluginName && pluginName !== device.plugin) return;
+      if (pluginName && pluginName !== device.plugin) continue;
       // Check if the device has the required properties
-      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return;
-      const cluster = this.getClusterTextFromDevice(device);
+      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
       devices.push({
         pluginName: device.plugin,
         type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
@@ -1055,9 +1103,10 @@ export class Frontend {
         uniqueId: device.uniqueId,
         reachable: this.getReachability(device),
         powerSource: this.getPowerSource(device),
-        cluster: cluster,
+        matter: this.getMatterDataFromDevice(device),
+        cluster: this.getClusterTextFromDevice(device),
       });
-    });
+    }
     return devices;
   }
 
@@ -1188,8 +1237,8 @@ export class Frontend {
           return;
         }
         this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
-        spawn
-          .spawnCommand(this.matterbridge, 'npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
+        const { spawnCommand } = await import('./utils/spawn.js');
+        spawnCommand(this.matterbridge, 'npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
           .then((response) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
             this.wssSendCloseSnackbarMessage(`Installing package ${data.params.packageName}...`);
@@ -1261,8 +1310,8 @@ export class Frontend {
         }
         // Uninstall the package
         this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
-        spawn
-          .spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
+        const { spawnCommand } = await import('./utils/spawn.js');
+        spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
           .then((response) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
             this.wssSendCloseSnackbarMessage(`Uninstalling package ${data.params.packageName}...`);

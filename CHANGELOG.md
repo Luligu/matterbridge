@@ -8,21 +8,50 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.1.1] - 2025-07-04
+
+### Development Breaking Changes
+
+- [exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from `matterbridge/devices`. Please update your imports to use the new export path. Refer to the [documentation](README-DEV.md) for details on imports.
+- [MatterbridgeEndpoint]: Added the mode property: `server` will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device.
+
+### Added
+
+- [LaundryDryer]: Added LaundryDryer (not supported by the Home app) class and Jest test.
+- [DeviceEnergyManagement]: Added MatterbridgeDeviceEnergyManagementServer with power adjustment methods.
+- [SolarPower]: Added SolarPower class and Jest test (working on Home Assistant and SmartThings). Thanks Ludovic BOUÉ.
+- [BatteryStorage]: Added BatteryStorage class and Jest test (working on Home Assistant and SmartThings). Thanks Ludovic BOUÉ.
+- [HeatPump]: Added HeatPump class and Jest test (working on Home Assistant and SmartThings).
+- [test]: Improved test units on Frontend class and all Matterbridge classes (coverage 93%).
+
+### Changed
+
+- [package]: Updated dependencies.
+- [matter.js]: Bumped `matter.js` to 0.15.1 (https://github.com/project-chip/matter.js/discussions/2220). Great job matter.js!
+- [frontend]: Added all esa devices.
+- [frontend]: New default values: devices on the home page and icon view on the devices page.
+- [imports]: Added dynamic imports to Matterbridge and Frontend classes.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.1.0] - 2025-06-28
 
 ### Added
 
-- [DevContainer]: Added support for the **Matterbridge Dev Container** with an optimized named volume for `node_modules`.
+- [DevContainer]: Added support for the [**Matterbridge Dev Container**](https://github.com/Luligu/matterbridge/blob/dev/README-DEV.md#matterbridge-dev-container) with an optimized named volume for `node_modules`.
+- [DevContainer]: Added support for the [**Matterbridge Plugin Dev Container**](https://github.com/Luligu/matterbridge/blob/dev/README-DEV.md#matterbridge-plugin-dev-container) with an optimized named volume for `matterbridge` and `node_modules`.
 - [GitHub]: Added GitHub issue templates for bug reports and feature requests.
-- [Systemd]: Added a systemd service file for Matterbridge in the systemd directory.
+- [Systemd]: Added a systemd service example file for Matterbridge in the systemd directory.
 - [ESLint]: Refactored ESLint configuration for TypeScript and improved plugin integration.
 - [ESLint]: Added the plugins `eslint-plugin-promise`, `eslint-plugin-jsdoc`, and `@vitest/eslint-plugin`.
-- [Vitest]: Added Vitest for TypeScript project testing. It will replace Jest, which does not work correctly with ESM module mocks.
+- [Vitest]: Added `Vitest` for TypeScript project testing. It will replace Jest, which does not work correctly with ESM module mocks.
 - [JSDoc]: Added missing JSDoc comments, including `@param` and `@returns` tags.
 - [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='server'. It allows to advertise a single device like an autonomous device with its server node to be paired. The device is not bridged (alpha stage).
 - [MatterbridgeEndpoint]: Add MatterbridgeEndpoint mode='matter'. It allows to add a single device to the Matterbridge server node next to the aggregator. The device is not bridged (alpha stage).
 - [storage]: Improved error handling of corrupted storage.
-- [test]: Improved test units on Matterbridge classes.
+- [test]: Improved test units on Matterbridge classes (coverage 91%).
 
 ### Changed
 

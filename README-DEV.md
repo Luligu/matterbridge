@@ -1,10 +1,12 @@
-# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
+# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge development
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver)](https://hub.docker.com/r/luligu/matterbridge)
 [![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge.svg)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
+![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
+[![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
 
 [![power by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
 [![power by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
@@ -28,7 +30,7 @@ The Matterbridge Plugin Template has an already configured Jest / Vitest test un
 
 It also has a workflow configured to run on push and pull request that build, lint and test the plugin on node 20, 22 and 24 with ubuntu, macOS and windows.
 
-## Dev Container
+## Matterbridge Dev Container
 
 Using a Dev Container provides a fully isolated, reproducible, and pre-configured development environment. This ensures that all contributors have the same tools, extensions, and dependencies, eliminating "works on my machine" issues. It also makes onboarding new developers fast and hassle-free, as everything needed is set up automatically.
 
@@ -36,7 +38,19 @@ For improved efficiency, the setup uses named Docker volumes for `node_modules`.
 
 To start the Dev Container, simply open the project folder in [Visual Studio Code](https://code.visualstudio.com/) and, if prompted, click "Reopen in Container". Alternatively, use the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`), search for "Dev Containers: Reopen in Container", and select it. VS Code will automatically build and start the containerized environment for you.
 
-> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be much faster.
+> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as as fast as from the local folder.
+
+Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
+
+## Matterbridge Plugin Dev Container
+
+Using a Dev Container provides a fully isolated, reproducible, and pre-configured development environment. This ensures that all contributors have the same tools, extensions, and dependencies, eliminating "works on my machine" issues. It also makes onboarding new developers fast and hassle-free, as everything needed is set up automatically.
+
+For improved efficiency, the setup uses named Docker volumes for `matterbridge` and `node_modules`. This means that the dev of matterbridge and the plugin dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes.
+
+To start the Dev Container, simply open the project folder in [Visual Studio Code](https://code.visualstudio.com/) and, if prompted, click "Reopen in Container". Alternatively, use the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`), search for "Dev Containers: Reopen in Container", and select it. VS Code will automatically build and start the containerized environment for you.
+
+> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as fast as from the local folder.
 
 Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
 

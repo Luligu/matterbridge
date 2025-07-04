@@ -367,7 +367,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       plugin.help = this.getHelp(packageJson);
       plugin.changelog = this.getChangelog(packageJson);
       plugin.funding = this.getFunding(packageJson);
-      if (!plugin.path) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no path`);
       if (!plugin.type) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no type`);
 
       // Check for @project-chip and @matter packages in dependencies and devDependencies
