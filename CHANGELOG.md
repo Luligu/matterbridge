@@ -17,6 +17,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [test]: Improved test units on Frontend class and all Matterbridge classes (coverage 94%).
+
 ### Changed
 
 - [package]: Updated dependencies.

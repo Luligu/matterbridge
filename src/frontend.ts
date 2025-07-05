@@ -46,7 +46,7 @@ import { ApiClusters, ApiClustersResponse, ApiDevices, ApiDevicesMatter, BaseReg
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
-import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
+import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
 
 /**
@@ -878,7 +878,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Retrieves the power source attribute.
    *
-   * @param {MatterbridgeEndpoint} endpoint - The MatterbridgeDevice object.
+   * @param {MatterbridgeEndpoint} endpoint - The MatterbridgeDevice to retrieve the power source from.
    * @returns {'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined} The power source attribute.
    */
   private getPowerSource(endpoint: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined {
@@ -906,9 +906,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Retrieves the matter pairing code from a given device.
+   * Retrieves the commissioned status, matter pairing codes, fabrics and sessions from a given device.
    *
-   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint object to retrieve the QR pairing code from.
+   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint to retrieve the data from.
    * @returns {ApiDevicesMatter | undefined} An ApiDevicesMatter object or undefined if not found.
    */
   private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiDevicesMatter | undefined {
@@ -925,58 +925,34 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   /**
    * Retrieves the cluster text description from a given device.
+   * The output is a string with the attributes description of the cluster servers in the device to show in the frontend.
    *
-   * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
+   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint to retrieve the cluster text from.
    * @returns {string} The attributes description of the cluster servers in the device.
    */
   private getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return '';
 
-    const getAttribute = (device: MatterbridgeEndpoint, cluster: string, attribute: string) => {
-      let value = undefined;
-      Object.entries(device.state)
-        .filter(([clusterName]) => clusterName.toLowerCase() === cluster.toLowerCase())
-        .forEach(([, clusterAttributes]) => {
-          Object.entries(clusterAttributes)
-            .filter(([attributeName]) => attributeName.toLowerCase() === attribute.toLowerCase())
-            .forEach(([, attributeValue]) => {
-              value = attributeValue;
-            });
-        });
-      if (value === undefined) this.log.error(`Cluster ${cluster} or attribute ${attribute} not found in device ${device.deviceName}`);
-      return value as unknown;
-    };
-
     const getUserLabel = (device: MatterbridgeEndpoint) => {
       const labelList = getAttribute(device, 'userLabel', 'labelList') as { label: string; value: string }[];
-      if (!labelList) return;
-      const composed = labelList.find((entry) => entry.label === 'composed');
-      if (composed) return 'Composed: ' + composed.value;
-      else return '';
+      if (labelList) {
+        const composed = labelList.find((entry) => entry.label === 'composed');
+        if (composed) return 'Composed: ' + composed.value;
+      }
+      return '';
     };
 
     const getFixedLabel = (device: MatterbridgeEndpoint) => {
       const labelList = getAttribute(device, 'fixedLabel', 'labelList') as { label: string; value: string }[];
-      if (!labelList) return;
-      const composed = labelList.find((entry) => entry.label === 'composed');
-      if (composed) return 'Composed: ' + composed.value;
-      else return '';
+      if (labelList) {
+        const composed = labelList.find((entry) => entry.label === 'composed');
+        if (composed) return 'Composed: ' + composed.value;
+      }
+      return '';
     };
 
     let attributes = '';
     let supportedModes: { label: string; mode: number }[] = [];
-
-    /*
-    Object.keys(device.behaviors.supported).forEach((clusterName) => {
-      const clusterBehavior = device.behaviors.supported[lowercaseFirstLetter(clusterName)] as ClusterBehavior.Type | undefined;
-      // console.log(`Device: ${device.deviceName} => Cluster: ${clusterName} Behavior: ${clusterBehavior?.id}`, clusterBehavior);
-      if (clusterBehavior && clusterBehavior.cluster && clusterBehavior.cluster.attributes) {
-        Object.entries(clusterBehavior.cluster.attributes).forEach(([attributeName, attribute]) => {
-          // console.log(`${device.deviceName} => Cluster: ${clusterName} Attribute: ${attributeName}`, attribute);
-        });
-      }
-    });
-    */
 
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
@@ -996,7 +972,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (modeClusters.includes(clusterName) && attributeName === 'currentMode') {
         const supportedMode = supportedModes.find((mode) => mode.mode === attributeValue);
         if (supportedMode) attributes += `Mode: ${supportedMode.label} `;
-        else attributes += `Mode: ${attributeValue} `;
       }
       const operationalStateClusters = ['operationalState', 'rvcOperationalState'];
       if (operationalStateClusters.includes(clusterName) && attributeName === 'operationalState') attributes += `OpState: ${attributeValue} `;

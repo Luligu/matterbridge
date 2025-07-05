@@ -434,8 +434,7 @@ describe('Matterbridge frontend express with http', () => {
       // eslint-disable-next-line n/no-unsupported-features/node-builtins
       await fs.access(path.join(os.tmpdir(), `matterbridge.backup.zip`), fs.constants.F_OK);
     } catch (error) {
-      await fs.copyFile('./src/mock/test.zip.txt', path.join(os.tmpdir(), `matterbridge.backup.zip`));
-      // await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(matterbridge.matterbridgeDirectory), path.join(matterbridge.matterbridgePluginDirectory));
+      await fs.copyFile('./src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.backup.zip`));
     }
 
     const response = await makeRequest('/api/download-backup', 'GET');
@@ -463,7 +462,7 @@ describe('Matterbridge frontend express with http', () => {
 
   test('POST /api/uploadpackage with matterbridge-plugin-template.tgz', async () => {
     // Read the test file
-    const testFileContent = await fs.readFile('./src/mock/matterbridge-plugin-template.tgz');
+    const testFileContent = await fs.readFile('./src/mock/matterbridge-plugin-template._tgz');
     const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
