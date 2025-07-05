@@ -1476,7 +1476,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.matterbridge.matterbridgeManualPairingCode = pairingCodes?.manualPairingCode;
         this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Started fabrics share`, 0);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes, success: true }));
       } else if (data.method === '/api/stopadvertise') {
         await this.matterbridge.stopAdvertiseServerNode(this.matterbridge.serverNode);
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = false;
@@ -1648,12 +1648,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                     logFormat: MatterLogFormat.PLAIN,
                   });
                 } catch (error) {
+                  /* istanbul ignore next */
                   this.log.debug(`Error adding the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
                 }
               } else {
                 try {
                   Logger.removeLogger('matterfilelogger');
                 } catch (error) {
+                  /* istanbul ignore next */
                   this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
                 }
               }
@@ -1712,13 +1714,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.matterDiscriminator = data.params.value;
               await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', data.params.value);
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             } else {
               this.log.debug(`Reset matter commissioning discriminator to ${CYAN}undefined${db}`);
               this.matterbridge.matterbridgeInformation.matterDiscriminator = undefined;
               await this.matterbridge.nodeContext?.remove('matterdiscriminator');
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: false }));
             }
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             break;
           case 'setmatterpasscode':
             data.params.value = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
@@ -1727,13 +1730,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Set matter commissioning passcode to ${CYAN}${data.params.value}${db}`);
               await this.matterbridge.nodeContext?.set<number>('matterpasscode', data.params.value);
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             } else {
               this.log.debug(`Reset matter commissioning passcode to ${CYAN}undefined${db}`);
               this.matterbridge.matterbridgeInformation.matterPasscode = undefined;
               await this.matterbridge.nodeContext?.remove('matterpasscode');
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: false }));
             }
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             break;
           case 'setvirtualmode':
             if (isValidString(data.params.value, 1) && ['disabled', 'light', 'outlet', 'switch', 'mounted_switch'].includes(data.params.value)) {

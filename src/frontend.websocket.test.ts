@@ -347,6 +347,12 @@ describe('Matterbridge frontend', () => {
     expect(shutdown).toHaveBeenCalled();
   }, 60000);
 
+  test('Websocket API send /api/create-backup', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/create-backup', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/create-backup', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  }, 60000);
+
   test('Websocket API send /api/unregister', async () => {
     const unregister = jest.spyOn(matterbridge as any, 'unregisterAndShutdownProcess').mockImplementationOnce(() => {
       // Simulate a successful command execution
@@ -363,6 +369,36 @@ describe('Matterbridge frontend', () => {
     const msg = await waitMessageId(++WS_ID, '/api/reset', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/reset', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
     expect(reset).toHaveBeenCalled();
+  }, 60000);
+
+  test('Websocket API send /api/factoryreset', async () => {
+    const reset = jest.spyOn(matterbridge as any, 'shutdownProcessAndFactoryReset').mockImplementationOnce(() => {
+      // Simulate a successful command execution
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/factoryreset', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/factoryreset', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(reset).toHaveBeenCalled();
+    expect(msg.success).toBe(true);
+  }, 60000);
+
+  test('Websocket API send /api/advertise', async () => {
+    const advertise = jest.spyOn(matterbridge as any, 'advertiseServerNode').mockImplementationOnce(() => {
+      // Simulate a successful command execution
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/advertise', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/advertise', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(advertise).toHaveBeenCalled();
+    expect(msg.success).toBe(true);
+  }, 60000);
+
+  test('Websocket API send /api/stopadvertise', async () => {
+    const stopAdvertise = jest.spyOn(matterbridge as any, 'stopAdvertiseServerNode').mockImplementationOnce(() => {
+      // Simulate a successful command execution
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/stopadvertise', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/stopadvertise', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(stopAdvertise).toHaveBeenCalled();
+    expect(msg.success).toBe(true);
   }, 60000);
 
   test('Websocket API send /api/shellysysupdate', async () => {
@@ -674,15 +710,70 @@ describe('Matterbridge frontend', () => {
     expect(data.success).toBe(true);
     expect(await matterbridge.nodeContext?.get('bridgeMode')).toBe('childbridge');
 
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmbloglevel', value: 'Debug' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterbridgeLogLevel')).toBe(LogLevel.DEBUG);
+
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmbloglevel', value: 'Info' } }));
     data = await waitMessageId(WS_ID);
     expect(data.success).toBe(true);
     expect(await matterbridge.nodeContext?.get('matterbridgeLogLevel')).toBe(LogLevel.INFO);
 
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmbloglevel', value: 'Notice' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterbridgeLogLevel')).toBe(LogLevel.NOTICE);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmbloglevel', value: 'Warn' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterbridgeLogLevel')).toBe(LogLevel.WARN);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmbloglevel', value: 'Error' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterbridgeLogLevel')).toBe(LogLevel.ERROR);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmbloglevel', value: 'Fatal' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterbridgeLogLevel')).toBe(LogLevel.FATAL);
+
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmblogfile', value: true } }));
     data = await waitMessageId(WS_ID);
     expect(data.success).toBe(true);
     expect(await matterbridge.nodeContext?.get('matterbridgeFileLog')).toBe(true);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmblogfile', value: false } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterbridgeFileLog')).toBe(false);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmjloglevel', value: 'Debug' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterLogLevel')).toBe(MatterLogLevel.DEBUG);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmjloglevel', value: 'Info' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterLogLevel')).toBe(MatterLogLevel.INFO);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmjloglevel', value: 'Notice' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterLogLevel')).toBe(MatterLogLevel.NOTICE);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmjloglevel', value: 'Warn' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterLogLevel')).toBe(MatterLogLevel.WARN);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmjloglevel', value: 'Error' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterLogLevel')).toBe(MatterLogLevel.ERROR);
 
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmjloglevel', value: 'Fatal' } }));
     data = await waitMessageId(WS_ID);
@@ -693,6 +784,11 @@ describe('Matterbridge frontend', () => {
     data = await waitMessageId(WS_ID);
     expect(data.success).toBe(true);
     expect(await matterbridge.nodeContext?.get('matterFileLog')).toBe(true);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmjlogfile', value: false } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('matterFileLog')).toBe(false);
 
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmdnsinterface', value: 'eth1' } }));
     data = await waitMessageId(WS_ID);
@@ -723,10 +819,20 @@ describe('Matterbridge frontend', () => {
     expect(data.success).toBe(true);
     expect(await matterbridge.nodeContext?.get('matterdiscriminator')).toBe(3040);
 
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterdiscriminator', value: '900' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(false);
+    expect(await matterbridge.nodeContext?.get('matterdiscriminator')).toBe(undefined);
+
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterpasscode', value: '20202026' } }));
     data = await waitMessageId(WS_ID);
     expect(data.success).toBe(true);
     expect(await matterbridge.nodeContext?.get('matterpasscode')).toBe(20202026);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterpasscode', value: '2000' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(false);
+    expect(await matterbridge.nodeContext?.get('matterpasscode')).toBe(undefined);
 
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setvirtualmode', value: 'disabled' } }));
     data = await waitMessageId(WS_ID);
