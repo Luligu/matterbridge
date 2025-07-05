@@ -178,7 +178,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   // Matterbridge log files
   public log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
-  public matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+  public matterbridgeLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   public matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
 
   public plugins!: PluginManager;
@@ -549,7 +549,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Create the file logger for matterbridge (context: matterbridgeFileLog)
     if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
-      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), this.log.logLevel, true);
+      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbridgeLoggerFile), this.log.logLevel, true);
       this.matterbridgeInformation.fileLogger = true;
     }
 
