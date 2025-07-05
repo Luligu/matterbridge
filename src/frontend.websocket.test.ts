@@ -630,6 +630,10 @@ describe('Matterbridge frontend', () => {
       return matterbridge.plugins.get('matterbridge-mock4')?.loaded === true;
     });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added plugin/));
+
+    await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath: '' } });
+    await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath } });
+    await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath: 'matterbridge-mock4' } });
   }, 60000);
 
   test('Websocket API /api/disableplugin', async () => {
@@ -642,6 +646,8 @@ describe('Matterbridge frontend', () => {
       return matterbridge.plugins.get('matterbridge-mock4')?.enabled === false;
     });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Disabled plugin/));
+
+    await waitMessageId(++WS_ID, '/api/disableplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/disableplugin', params: { pluginName: '' } });
   }, 60000);
 
   test('Websocket API /api/enableplugin', async () => {
@@ -654,6 +660,8 @@ describe('Matterbridge frontend', () => {
       return matterbridge.plugins.get('matterbridge-mock4')?.enabled === true;
     });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Enabled plugin/));
+
+    await waitMessageId(++WS_ID, '/api/enableplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/enableplugin', params: { pluginName: '' } });
   }, 60000);
 
   test('Websocket API /api/savepluginconfig', async () => {
@@ -664,6 +672,10 @@ describe('Matterbridge frontend', () => {
     expect(data.response).toBeUndefined();
     expect(data.success).toBe(true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Saving config for plugin/));
+
+    await waitMessageId(++WS_ID, '/api/savepluginconfig', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/savepluginconfig', params: { pluginName: '', formData } });
+    await waitMessageId(++WS_ID, '/api/savepluginconfig', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/savepluginconfig', params: { pluginName, formData: {} } });
+    await waitMessageId(++WS_ID, '/api/savepluginconfig', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/savepluginconfig', params: { pluginName: 'matterbridge-notvalid', formData } });
   }, 60000);
 
   test('Websocket API /api/removeplugin', async () => {
@@ -676,6 +688,8 @@ describe('Matterbridge frontend', () => {
       return matterbridge.plugins.get('matterbridge-mock4') === undefined;
     });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Removed plugin/));
+
+    await waitMessageId(++WS_ID, '/api/removeplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/removeplugin', params: { pluginName: '' } });
   }, 60000);
 
   test('Websocket API /api/action with wrong plugin', async () => {
@@ -683,6 +697,15 @@ describe('Matterbridge frontend', () => {
     expect(data.success).toBeUndefined();
     expect(data.response).toBeUndefined();
     expect(data.error).toBeDefined();
+
+    await waitMessageId(++WS_ID, '/api/action', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/action', params: { plugin: 'matterbridge-notvalid', action: 'test' } });
+  }, 60000);
+
+  test('Websocket API /api/action', async () => {
+    const data = await waitMessageId(++WS_ID, '/api/action', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/action', params: { plugin: 'matterbridge-mock2', action: 'test' } });
+    expect(data.success).toBeTruthy();
+    expect(data.response).toBeUndefined();
+    expect(data.error).toBeUndefined();
   }, 60000);
 
   test('Websocket API /api/config', async () => {

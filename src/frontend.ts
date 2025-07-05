@@ -35,7 +35,7 @@ import express from 'express';
 import WebSocket, { WebSocketServer } from 'ws';
 import multer from 'multer';
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW, nt } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt } from 'node-ansi-logger';
 // @matter
 import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/main';
 import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
@@ -1402,9 +1402,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         this.log.info(`Saving config for plugin ${plg}${data.params.pluginName}${nf}...`);
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
-        if (!plugin) {
-          this.log.warn(`Plugin ${plg}${data.params.pluginName}${wr} not found in matterbridge`);
-        } else {
+        if (plugin) {
           this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true);
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
           this.wssSendRefreshRequired('pluginsRestart');
