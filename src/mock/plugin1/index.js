@@ -7,6 +7,11 @@ export default function initializePlugin(matterbridge, log, config) {
 }
 
 class MockPlatform extends MatterbridgeDynamicPlatform {
+  constructor(matterbridge, log, config) {
+    super(matterbridge, log, config);
+    if (!config.whitelist) config.whitelist = [];
+    if (!config.blackList) config.blackList = [];
+  }
   async onStart(reason) {
     await this.ready;
     this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);

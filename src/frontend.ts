@@ -1794,6 +1794,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             if (!restartRequired) this.wssSendRefreshRequired('pluginsRestart');
             this.wssSendRestartRequired(false);
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` }));
@@ -1836,6 +1837,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             if (!restartRequired) this.wssSendRefreshRequired('pluginsRestart');
             this.wssSendRestartRequired(false);
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` }));

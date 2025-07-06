@@ -684,7 +684,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @param {boolean} configure - Optional flag indicating whether to configure the plugin after loading. Default is false.
    * @returns {Promise<MatterbridgePlatform | undefined>} A Promise that resolves to the loaded MatterbridgePlatform instance or undefined.
    */
-  async load(plugin: RegisteredPlugin, start = false, message = '', configure = false): Promise<MatterbridgePlatform | undefined> {
+  async load(plugin: RegisteredPlugin, start: boolean = false, message: string = '', configure: boolean = false): Promise<MatterbridgePlatform | undefined> {
     const { promises } = await import('node:fs');
     const { default: path } = await import('node:path');
     if (!plugin.enabled) {
@@ -772,7 +772,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @param {boolean} [configure] - Indicates whether to configure the plugin after starting (default false).
    * @returns {Promise<RegisteredPlugin | undefined>} A promise that resolves when the plugin is started successfully, or rejects with an error if starting the plugin fails.
    */
-  async start(plugin: RegisteredPlugin, message?: string, configure = false): Promise<RegisteredPlugin | undefined> {
+  async start(plugin: RegisteredPlugin, message?: string, configure: boolean = false): Promise<RegisteredPlugin | undefined> {
     if (!plugin.loaded) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded`);
       return undefined;
@@ -954,7 +954,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or rejects if an error occurs.
    * @throws {Error} If the plugin's configuration is not found.
    */
-  async saveConfigFromPlugin(plugin: RegisteredPlugin, restartRequired = false): Promise<void> {
+  async saveConfigFromPlugin(plugin: RegisteredPlugin, restartRequired: boolean = false): Promise<void> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
     if (!plugin.platform?.config) {
