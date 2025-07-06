@@ -158,7 +158,7 @@ describe('Matterbridge Device serverMode=server', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
   }, 60000);
 
-  test('Restart initialize()', async () => {
+  test('Restart initialize() with -bridge', async () => {
     const startServerNodeSpy = jest.spyOn(matterbridge as any, 'startServerNode');
 
     expect((matterbridge as any).initialized).toBeFalsy();
@@ -233,7 +233,7 @@ describe('Matterbridge Device serverMode=server', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating server node for device`));
   });
 
-  test('Finally Matterbridge.destroyInstance()', async () => {
+  test('Finally Matterbridge.destroyInstance() with -bridge', async () => {
     const stopServerNodeSpy = jest.spyOn(matterbridge as any, 'stopServerNode');
 
     // Close the Matterbridge instance
