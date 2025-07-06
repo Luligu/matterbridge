@@ -916,14 +916,21 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {PowerSource.WiredCurrentType} wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - order: The order of the power source is a persisted attribute that indicates the order in which the power sources are used.
+   * - description: The description of the power source is a fixed attribute that describes the power source type.
+   * - wiredCurrentType: The type of wired current is a fixed attribute that indicates the type of wired current used by the power source (AC or DC).
    */
   createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac): this {
     this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Wired), {
-      wiredCurrentType,
-      description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
+      // Base attributes
       status: PowerSource.PowerSourceStatus.Active,
       order: 0,
+      description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
       endpointList: [],
+      // Wired feature attributes
+      wiredCurrentType,
     });
     return this;
   }
@@ -936,7 +943,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} batVoltage - The battery voltage (default: 1500).
    * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
    * @param {number} batQuantity - The quantity of the battery (default: 1).
+   * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - order: The order of the power source is a persisted attribute that indicates the order in which the power sources are used.
+   * - description: The description of the power source is a fixed attribute that describes the power source type.
+   * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
+   * - batReplacementDescription: The description of the battery replacement is a fixed attribute that describes the battery type.
+   * - batQuantity: The quantity of the battery is a fixed attribute that indicates how many batteries are present in the device.
    */
   createDefaultPowerSourceReplaceableBatteryClusterServer(
     batPercentRemaining: number = 100,
@@ -944,20 +959,24 @@ export class MatterbridgeEndpoint extends Endpoint {
     batVoltage: number = 1500,
     batReplacementDescription: string = 'Battery type',
     batQuantity: number = 1,
+    batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.UserReplaceable,
   ): this {
     this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable), {
+      // Base attributes
       status: PowerSource.PowerSourceStatus.Active,
       order: 0,
       description: 'Primary battery',
+      endpointList: [],
+      // Battery feature attributes
       batVoltage,
       batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
       batChargeLevel,
       batReplacementNeeded: false,
-      batReplaceability: PowerSource.BatReplaceability.UserReplaceable,
+      batReplaceability,
       activeBatFaults: undefined,
+      // Replaceable feature attributes
       batReplacementDescription,
       batQuantity,
-      endpointList: [],
     });
     return this;
   }
@@ -968,24 +987,38 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100).
    * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
    * @param {number} [batVoltage] - The battery voltage in mV (default: 1500).
+   * @param {PowerSource.BatReplaceability} [batReplaceability] - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - order: The order of the power source is a persisted attribute that indicates the order in which the power sources are used.
+   * - description: The description of the power source is a fixed attribute that describes the power source type.
+   * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
    */
-  createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500) {
+  createDefaultPowerSourceRechargeableBatteryClusterServer(
+    batPercentRemaining: number = 100,
+    batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
+    batVoltage: number = 1500,
+    batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
+  ): this {
     this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
+      // Base attributes
       status: PowerSource.PowerSourceStatus.Active,
       order: 0,
       description: 'Primary battery',
+      endpointList: [],
+      // Battery feature attributes
       batVoltage,
       batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
       batTimeRemaining: null, // Indicates the estimated time in seconds before the battery will no longer be able to provide power to the Node
       batChargeLevel,
       batReplacementNeeded: false,
-      batReplaceability: PowerSource.BatReplaceability.Unspecified,
+      batReplaceability,
       batPresent: true,
       activeBatFaults: [],
+      // Rechargeable feature attributes
       batChargeState: PowerSource.BatChargeState.IsNotCharging,
       batFunctionalWhileCharging: true,
-      endpointList: [],
     });
     return this;
   }
