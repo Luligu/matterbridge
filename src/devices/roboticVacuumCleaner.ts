@@ -91,6 +91,9 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {RvcRunMode.ModeOption[]} [supportedModes] - The supported modes for the RvcRunMode cluster. Defaults to a predefined set of modes.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - supportedModes is a fixed attribute that defines the run modes available for the robotic vacuum cleaner.
    */
   createDefaultRvcRunModeClusterServer(currentMode?: number, supportedModes?: RvcRunMode.ModeOption[]): this {
     this.behaviors.require(MatterbridgeRvcRunModeServer, {
@@ -112,6 +115,9 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {RvcCleanMode.ModeOption[]} [supportedModes] - The supported modes for the RvcCleanMode cluster. Defaults to a predefined set of modes.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - supportedModes is a fixed attribute that defines the clean modes available for the robotic vacuum cleaner.
    */
   createDefaultRvcCleanModeClusterServer(currentMode?: number, supportedModes?: RvcCleanMode.ModeOption[]): this {
     this.behaviors.require(MatterbridgeRvcCleanModeServer, {
@@ -130,7 +136,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    *
    * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the ServiceArea cluster. Defaults to a predefined set of areas.
    * @param {number[]} [selectedAreas] - The selected areas for the ServiceArea cluster. Defaults to an empty array (all areas allowed).
-   * @param {number} [currentArea] - The current area of the ServiceArea cluster. Defaults to 1 (Living).
+   * @param {number} [currentArea] - The current areaId (not the index in the array!) of the ServiceArea cluster. Defaults to 1 (Living).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultServiceAreaClusterServer(supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number): this {
@@ -168,9 +174,9 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * Creates a default RvcOperationalState Cluster Server.
    *
    * @param {string[] | null} [phaseList] - The list of phases for the RvcOperationalState cluster. Defaults to null.
-   * @param {number | null} [currentPhase] - The current phase of the RvcOperationalState cluster. Defaults to null.
+   * @param {number | null} [currentPhase] - The current phase (the index of the phaseList) of the RvcOperationalState cluster. Defaults to null.
    * @param {RvcOperationalState.OperationalStateStruct[]} [operationalStateList] - The list of operational states for the RvcOperationalState cluster. Defaults to a predefined set of states.
-   * @param {RvcOperationalState.OperationalState} [operationalState] - The current operational state of the RvcOperationalState cluster. Defaults to Docked.
+   * @param {RvcOperationalState.OperationalState} [operationalState] - The current operationalStateId of the RvcOperationalState cluster. Defaults to Docked.
    * @param {RvcOperationalState.ErrorStateStruct} [operationalError] - The current operational error of the RvcOperationalState cluster. Defaults to NoError.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
