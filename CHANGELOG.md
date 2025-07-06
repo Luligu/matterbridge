@@ -8,6 +8,25 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.1.2] - 2025-07-06
+
+### Development Breaking Changes
+
+- [exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from `matterbridge/devices`. Please update your imports to use the new export path. Refer to the [documentation](README-DEV.md) for details on imports.
+- [MatterbridgeEndpoint]: Added the mode property: `server` will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the [documentation](README-DEV.md) for details on using mode.
+
+### Added
+
+- [test]: Improved test units on Frontend class (coverage 97%).
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.1.1] - 2025-07-04
 
 ### Development Breaking Changes

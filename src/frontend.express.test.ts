@@ -9,6 +9,20 @@ process.argv = ['node', 'frontend.test.js', '-logger', 'debug', '-matterlogger',
 
 import { jest } from '@jest/globals';
 
+// Mock the createZip from createZip module before importing it
+/*
+jest.unstable_mockModule('./utils/createZip.js', async () => {
+  return {
+    __esModule: true,
+    createZip: jest.fn((outputPath: string, ...sourcePaths: string[]) => {
+      return Promise.resolve(100); // Mocked return value for the zip creation
+    }),
+  };
+});
+const createZip = await import('./utils/createZip.js');
+const createZipMock = createZip.createZip as jest.MockedFunction<typeof createZip.createZip>;
+*/
+
 import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
@@ -98,6 +112,49 @@ describe('Matterbridge frontend express with http', () => {
       );
       req.on('error', reject);
       if (data) req.write(data);
+      req.end();
+    });
+  };
+
+  const makeMultipartRequest = (path: string, filename: string, fileContent: Buffer) => {
+    return new Promise<{ status: number; body: any }>((resolve, reject) => {
+      const boundary = '----formdata-boundary';
+      const formData = [
+        `--${boundary}`,
+        `Content-Disposition: form-data; name="filename"`,
+        '',
+        filename,
+        `--${boundary}`,
+        `Content-Disposition: form-data; name="file"; filename="${filename}"`,
+        `Content-Type: application/octet-stream`,
+        '',
+        fileContent.toString('binary'),
+        `--${boundary}--`,
+        '',
+      ].join('\r\n');
+
+      const req = http.request(
+        `http://localhost:8283${path}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            'Content-Length': Buffer.byteLength(formData, 'binary'),
+          },
+        },
+        (res) => {
+          let responseBody = '';
+          res.on('data', (chunk) => (responseBody += chunk));
+          res.on('end', () => {
+            resolve({
+              status: res.statusCode || 500,
+              body: responseBody,
+            });
+          });
+        },
+      );
+      req.on('error', reject);
+      req.write(formData, 'binary');
       req.end();
     });
   };
@@ -235,14 +292,14 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('GET /api/view-mblog', async () => {
-    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterbrideLoggerFile), 'Test log content', 'utf8');
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterbridgeLoggerFile), 'Test log content', 'utf8');
     const response = await makeRequest('/api/view-mblog', 'GET');
 
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body).toBe('Test log content');
 
-    await fs.unlink(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterbrideLoggerFile));
+    await fs.unlink(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterbridgeLoggerFile));
   }, 30000);
 
   test('GET /api/view-mjlog error', async () => {
@@ -283,7 +340,7 @@ describe('Matterbridge frontend express with http', () => {
     await fs.unlink(path.join(matterbridge.matterbridgeDirectory, 'shelly.log'));
   }, 30000);
 
-  test('GET /api/download-mblog', async () => {
+  test('GET /api/download-mblog no log', async () => {
     const response = await makeRequest('/api/download-mblog', 'GET');
 
     expect(response.status).toBe(200);
@@ -291,7 +348,18 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body).toBe('Enable the matterbridge log on file in the settings to download the matterbridge log.');
   }, 30000);
 
-  test('GET /api/download-mjlog', async () => {
+  test('GET /api/download-mblog', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterbridgeLoggerFile), 'Test log content', 'utf8');
+    const response = await makeRequest('/api/download-mblog', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+    expect(response.body).toBe('Test log content');
+
+    await fs.unlink(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterbridgeLoggerFile));
+  }, 30000);
+
+  test('GET /api/download-mjlog no log', async () => {
     const response = await makeRequest('/api/download-mjlog', 'GET');
 
     expect(response.status).toBe(200);
@@ -299,12 +367,34 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body).toBe('Enable the matter log on file in the settings to download the matter log.');
   }, 30000);
 
-  test('GET /api/shellydownloadsystemlog', async () => {
+  test('GET /api/download-mjlog', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterLoggerFile), 'Test log content', 'utf8');
+    const response = await makeRequest('/api/download-mjlog', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+    expect(response.body).toBe('Test log content');
+
+    await fs.unlink(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterLoggerFile));
+  }, 30000);
+
+  test('GET /api/shellydownloadsystemlog no log', async () => {
     const response = await makeRequest('/api/shellydownloadsystemlog', 'GET');
 
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body).toBe('Create the Shelly system log before downloading it.');
+  }, 30000);
+
+  test('GET /api/shellydownloadsystemlog', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, 'shelly.log'), 'Test shelly log content', 'utf8');
+    const response = await makeRequest('/api/shellydownloadsystemlog', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+    expect(response.body).toBe('Test shelly log content');
+
+    await fs.unlink(path.join(matterbridge.matterbridgeDirectory, 'shelly.log'));
   }, 30000);
 
   test('GET /api/download-mbstorage', async () => {
@@ -344,8 +434,7 @@ describe('Matterbridge frontend express with http', () => {
       // eslint-disable-next-line n/no-unsupported-features/node-builtins
       await fs.access(path.join(os.tmpdir(), `matterbridge.backup.zip`), fs.constants.F_OK);
     } catch (error) {
-      await fs.copyFile('./src/mock/test.zip.txt', path.join(os.tmpdir(), `matterbridge.backup.zip`));
-      // await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(matterbridge.matterbridgeDirectory), path.join(matterbridge.matterbridgePluginDirectory));
+      await fs.copyFile('./src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.backup.zip`));
     }
 
     const response = await makeRequest('/api/download-backup', 'GET');
@@ -354,6 +443,42 @@ describe('Matterbridge frontend express with http', () => {
     expect(typeof response.body).toBe('string');
     expect(response.body.startsWith('PK')).toBe(true);
   }, 60000);
+
+  test('POST /api/uploadpackage with invalid request', async () => {
+    // Read the test file
+    const response = await makeRequest('/api/uploadpackage', 'POST', { filename: 'test.zip' });
+    expect(response.status).toBe(500);
+  }, 30000);
+
+  test('POST /api/uploadpackage with test.zip', async () => {
+    // Read the test file
+    const testFileContent = await fs.readFile('./src/mock/test.zip');
+    const response = await makeMultipartRequest('/api/uploadpackage', 'test.zip', testFileContent);
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+    expect(response.body).toContain('File test.zip uploaded successfully');
+    await expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/test.zip'))).resolves.toBeUndefined();
+  }, 30000);
+
+  test('POST /api/uploadpackage with matterbridge-plugin-template.tgz', async () => {
+    // Read the test file
+    const testFileContent = await fs.readFile('./src/mock/matterbridge-plugin-template._tgz');
+    const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+    expect(response.body).toContain('Plugin package matterbridge-plugin-template.tgz uploaded and installed successfully');
+    await expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/matterbridge-plugin-template.tgz'))).resolves.toBeUndefined();
+  }, 30000);
+
+  test('POST /api/uploadpackage with wrong tgz', async () => {
+    // Read the test file
+    const testFileContent = await fs.readFile('./src/mock/test.zip');
+    const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
+    expect(response.status).toBe(500);
+    expect(typeof response.body).toBe('string');
+    expect(response.body).toContain('Error uploading or installing plugin package matterbridge-plugin-template.tgz');
+    await expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/matterbridge-plugin-template.tgz'))).resolves.toBeUndefined();
+  }, 30000);
 
   test('GET Fallback for routing', async () => {
     const response = await makeRequest('/whatever', 'GET');

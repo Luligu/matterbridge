@@ -5,7 +5,7 @@ const FRONTEND_PORT = 8285;
 const NAME = 'Frontend';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString(), '-debug'];
 
 import { jest } from '@jest/globals';
 
@@ -31,6 +31,8 @@ const { Frontend } = await import('./frontend.ts');
 import type { Matterbridge as MatterbridgeType } from './matterbridge.ts';
 import type { Frontend as FrontendType } from './frontend.ts';
 import { cliEmitter } from './cliEmitter.ts';
+import { Lifecycle } from '@matter/general';
+import { PowerSource } from '@matter/main/clusters/power-source';
 
 /*
 const processExitSpy = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
@@ -142,6 +144,74 @@ describe('Matterbridge frontend', () => {
     expect((frontend as any).formatOsUpTime(60)).toBe('1 minute');
     expect((frontend as any).formatOsUpTime(30)).toBe('30 seconds');
     expect((frontend as any).formatOsUpTime(0)).toBe('0 seconds');
+  });
+
+  test('Frontend getReachability', () => {
+    // Test the getReachability functionality
+    expect((frontend as any).getReachability({ lifecycle: { isReady: false } })).toBeFalsy();
+    expect((frontend as any).getReachability({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeFalsy();
+    expect((frontend as any).getReachability({ hasClusterServer: () => true, getAttribute: () => true, lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } })).toBeTruthy();
+    expect(
+      (frontend as any).getReachability({ hasClusterServer: () => false, mode: 'server', serverNode: { state: { basicInformation: { reachable: true } } }, lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } }),
+    ).toBeTruthy();
+    matterbridge.bridgeMode = 'childbridge';
+    expect((frontend as any).getReachability({ hasClusterServer: () => false, lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } })).toBeTruthy();
+    matterbridge.bridgeMode = 'bridge';
+    expect((frontend as any).getReachability({ hasClusterServer: () => false, lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } })).toBeFalsy();
+  });
+
+  test('Frontend getPowerSource', () => {
+    // Undefined if not active
+    expect((frontend as any).getPowerSource({ lifecycle: { isReady: false } })).toBeUndefined();
+    expect((frontend as any).getPowerSource({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeUndefined();
+
+    // Wired ac
+    let device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } };
+    device['hasClusterServer'] = jest.fn(() => true);
+    device['getAttribute'] = jest.fn((cluster: number, attribute: string) => {
+      if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { wired: true };
+      if (cluster === PowerSource.Cluster.id && attribute === 'wiredCurrentType') return PowerSource.WiredCurrentType.Ac;
+    });
+    expect((frontend as any).getPowerSource(device)).toBe('ac');
+
+    // Battery
+    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } };
+    device['hasClusterServer'] = jest.fn(() => true);
+    device['getAttribute'] = jest.fn((cluster: number, attribute: string) => {
+      if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { battery: true };
+      if (cluster === PowerSource.Cluster.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
+    });
+    expect((frontend as any).getPowerSource(device)).toBe('ok');
+
+    // Not wired nor battery
+    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } };
+    device['hasClusterServer'] = jest.fn(() => true);
+    device['getAttribute'] = jest.fn((cluster: number, attribute: string) => {
+      if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return {};
+    });
+    expect((frontend as any).getPowerSource(device)).toBe(undefined);
+
+    // Child endpoints
+    device['hasClusterServer'].mockImplementationOnce(() => false);
+    device['getChildEndpoints'] = jest.fn(() => [device]);
+    expect((frontend as any).getPowerSource(device)).toBe(undefined);
+  });
+
+  test('Frontend getMatterDataFromDevice', () => {
+    const device = { mode: 'server', serverNode: { state: { commissioning: { commissioned: true, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: '123' }, fabrics: {} }, sessions: { sessions: {} } } }, serverContext: {} };
+    expect((frontend as any).getMatterDataFromDevice(device)).toEqual({
+      'commissioned': true,
+      'fabricInformations': [],
+      'manualPairingCode': '123',
+      'qrPairingCode': 'QR',
+      'sessionInformations': [],
+    });
+  });
+
+  test('Frontend getClusterTextFromDevice', () => {
+    // Undefined if not active
+    expect((frontend as any).getClusterTextFromDevice({ lifecycle: { isReady: false } })).toBe('');
+    expect((frontend as any).getClusterTextFromDevice({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBe('');
   });
 
   test('Frontend.stop()', async () => {

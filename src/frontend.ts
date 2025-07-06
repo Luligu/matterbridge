@@ -35,7 +35,7 @@ import express from 'express';
 import WebSocket, { WebSocketServer } from 'ws';
 import multer from 'multer';
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW, nt } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt } from 'node-ansi-logger';
 // @matter
 import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/main';
 import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
@@ -46,7 +46,7 @@ import { ApiClusters, ApiClustersResponse, ApiDevices, ApiDevicesMatter, BaseReg
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
-import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
+import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
 
 /**
@@ -498,11 +498,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/view-mblog', async (req, res) => {
       this.log.debug('The frontend sent /api/view-mblog');
       try {
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'utf8');
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), 'utf8');
         res.type('text/plain');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error reading matterbridge log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        this.log.error(`Error reading matterbridge log file ${this.matterbridge.matterbridgeLoggerFile}: ${error instanceof Error ? error.message : error}`);
         res.status(500).send('Error reading matterbridge log file. Please enable the matterbridge log on file in the settings.');
       }
     });
@@ -528,29 +528,28 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/plain');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error reading shelly log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        this.log.error(`Error reading shelly log file ${this.matterbridge.matterbridgeLoggerFile}: ${error instanceof Error ? error.message : error}`);
         res.status(500).send('Error reading shelly log file. Please create the shelly system log before loading it.');
       }
     });
 
     // Endpoint to download the matterbridge log
     this.expressApp.get('/api/download-mblog', async (req, res) => {
-      this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile)}`);
+      this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile)}`);
       try {
         // eslint-disable-next-line n/no-unsupported-features/node-builtins
-        await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), fs.constants.F_OK);
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'utf8');
-        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), data, 'utf-8');
+        await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), fs.constants.F_OK);
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), 'utf8');
+        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbridgeLoggerFile), data, 'utf-8');
       } catch (error) {
-        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), 'Enable the matterbridge log on file in the settings to download the matterbridge log.', 'utf-8');
+        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbridgeLoggerFile), 'Enable the matterbridge log on file in the settings to download the matterbridge log.', 'utf-8');
         this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
       res.type('text/plain');
-      // res.download(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
-      res.download(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
+      res.download(path.join(os.tmpdir(), this.matterbridge.matterbridgeLoggerFile), 'matterbridge.log', (error) => {
         /* istanbul ignore if */
         if (error) {
-          this.log.error(`Error downloading log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
+          this.log.error(`Error downloading log file ${this.matterbridge.matterbridgeLoggerFile}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge log file');
         }
       });
@@ -558,7 +557,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Endpoint to download the matter log
     this.expressApp.get('/api/download-mjlog', async (req, res) => {
-      this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile)}`);
+      this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile)}`);
       try {
         // eslint-disable-next-line n/no-unsupported-features/node-builtins
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), fs.constants.F_OK);
@@ -605,6 +604,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.debug('The frontend sent /api/download-mbstorage');
       await createZip(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.nodeStorageName}.zip`), path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.nodeStorageName));
       res.download(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.nodeStorageName}.zip`), `matterbridge.${this.matterbridge.nodeStorageName}.zip`, (error) => {
+        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file ${`matterbridge.${this.matterbridge.nodeStorageName}.zip`}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge storage file');
@@ -617,6 +617,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.debug('The frontend sent /api/download-mjstorage');
       await createZip(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.matterStorageName}.zip`), path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterStorageName));
       res.download(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.matterStorageName}.zip`), `matterbridge.${this.matterbridge.matterStorageName}.zip`, (error) => {
+        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading the matter storage matterbridge.${this.matterbridge.matterStorageName}.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter storage zip file');
@@ -629,6 +630,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.debug('The frontend sent /api/download-pluginstorage');
       await createZip(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), this.matterbridge.matterbridgePluginDirectory);
       res.download(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), `matterbridge.pluginstorage.zip`, (error) => {
+        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge plugin storage file');
@@ -641,9 +643,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.debug('The frontend sent /api/download-pluginconfig');
       await createZip(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), path.relative(process.cwd(), path.join(this.matterbridge.matterbridgeDirectory, '*.config.json')));
       res.download(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), `matterbridge.pluginconfig.zip`, (error) => {
+        /* istanbul ignore if */
         if (error) {
-          this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading the matterbridge plugin storage file');
+          this.log.error(`Error downloading file matterbridge.pluginconfig.zip: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matterbridge plugin config file');
         }
       });
     });
@@ -652,6 +655,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/download-backup', async (req, res) => {
       this.log.debug('The frontend sent /api/download-backup');
       res.download(path.join(os.tmpdir(), `matterbridge.backup.zip`), `matterbridge.backup.zip`, (error) => {
+        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
@@ -664,6 +668,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       const { filename } = req.body;
       const file = req.file;
 
+      /* istanbul ignore if */
       if (!file || !filename) {
         this.log.error(`uploadpackage: invalid request: file and filename are required`);
         res.status(400).send('Invalid request: file and filename are required');
@@ -718,6 +723,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Close the WebSocket server
     if (this.webSocketServer) {
+      this.log.debug('Closing WebSocket server...');
       // Close all active connections
       this.webSocketServer.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
@@ -744,6 +750,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Close the http server
     if (this.httpServer) {
+      this.log.debug('Closing http server...');
       await withTimeout(
         new Promise<void>((resolve) => {
           this.httpServer?.close((error) => {
@@ -765,6 +772,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Close the https server
     if (this.httpsServer) {
+      this.log.debug('Closing https server...');
       await withTimeout(
         new Promise<void>((resolve) => {
           this.httpsServer?.close((error) => {
@@ -870,7 +878,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Retrieves the power source attribute.
    *
-   * @param {MatterbridgeEndpoint} endpoint - The MatterbridgeDevice object.
+   * @param {MatterbridgeEndpoint} endpoint - The MatterbridgeDevice to retrieve the power source from.
    * @returns {'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined} The power source attribute.
    */
   private getPowerSource(endpoint: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined {
@@ -898,13 +906,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Retrieves the matter pairing code from a given device.
+   * Retrieves the commissioned status, matter pairing codes, fabrics and sessions from a given device.
    *
-   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint object to retrieve the QR pairing code from.
+   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint to retrieve the data from.
    * @returns {ApiDevicesMatter | undefined} An ApiDevicesMatter object or undefined if not found.
    */
   private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiDevicesMatter | undefined {
-    if (device.mode === 'server' && device.serverNode && device.serverContext) {
+    if (device.mode === 'server' && device.serverNode) {
       return {
         commissioned: device.serverNode.state.commissioning.commissioned,
         qrPairingCode: device.serverNode.state.commissioning.pairingCodes.qrPairingCode,
@@ -917,58 +925,34 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   /**
    * Retrieves the cluster text description from a given device.
+   * The output is a string with the attributes description of the cluster servers in the device to show in the frontend.
    *
-   * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
+   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint to retrieve the cluster text from.
    * @returns {string} The attributes description of the cluster servers in the device.
    */
   private getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return '';
 
-    const getAttribute = (device: MatterbridgeEndpoint, cluster: string, attribute: string) => {
-      let value = undefined;
-      Object.entries(device.state)
-        .filter(([clusterName]) => clusterName.toLowerCase() === cluster.toLowerCase())
-        .forEach(([, clusterAttributes]) => {
-          Object.entries(clusterAttributes)
-            .filter(([attributeName]) => attributeName.toLowerCase() === attribute.toLowerCase())
-            .forEach(([, attributeValue]) => {
-              value = attributeValue;
-            });
-        });
-      if (value === undefined) this.log.error(`Cluster ${cluster} or attribute ${attribute} not found in device ${device.deviceName}`);
-      return value as unknown;
-    };
-
     const getUserLabel = (device: MatterbridgeEndpoint) => {
       const labelList = getAttribute(device, 'userLabel', 'labelList') as { label: string; value: string }[];
-      if (!labelList) return;
-      const composed = labelList.find((entry) => entry.label === 'composed');
-      if (composed) return 'Composed: ' + composed.value;
-      else return '';
+      if (labelList) {
+        const composed = labelList.find((entry) => entry.label === 'composed');
+        if (composed) return 'Composed: ' + composed.value;
+      }
+      return '';
     };
 
     const getFixedLabel = (device: MatterbridgeEndpoint) => {
       const labelList = getAttribute(device, 'fixedLabel', 'labelList') as { label: string; value: string }[];
-      if (!labelList) return;
-      const composed = labelList.find((entry) => entry.label === 'composed');
-      if (composed) return 'Composed: ' + composed.value;
-      else return '';
+      if (labelList) {
+        const composed = labelList.find((entry) => entry.label === 'composed');
+        if (composed) return 'Composed: ' + composed.value;
+      }
+      return '';
     };
 
     let attributes = '';
     let supportedModes: { label: string; mode: number }[] = [];
-
-    /*
-    Object.keys(device.behaviors.supported).forEach((clusterName) => {
-      const clusterBehavior = device.behaviors.supported[lowercaseFirstLetter(clusterName)] as ClusterBehavior.Type | undefined;
-      // console.log(`Device: ${device.deviceName} => Cluster: ${clusterName} Behavior: ${clusterBehavior?.id}`, clusterBehavior);
-      if (clusterBehavior && clusterBehavior.cluster && clusterBehavior.cluster.attributes) {
-        Object.entries(clusterBehavior.cluster.attributes).forEach(([attributeName, attribute]) => {
-          // console.log(`${device.deviceName} => Cluster: ${clusterName} Attribute: ${attributeName}`, attribute);
-        });
-      }
-    });
-    */
 
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
@@ -988,7 +972,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (modeClusters.includes(clusterName) && attributeName === 'currentMode') {
         const supportedMode = supportedModes.find((mode) => mode.mode === attributeValue);
         if (supportedMode) attributes += `Mode: ${supportedMode.label} `;
-        else attributes += `Mode: ${attributeValue} `;
       }
       const operationalStateClusters = ['operationalState', 'rvcOperationalState'];
       if (operationalStateClusters.includes(clusterName) && attributeName === 'operationalState') attributes += `OpState: ${attributeValue} `;
@@ -1419,9 +1402,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         this.log.info(`Saving config for plugin ${plg}${data.params.pluginName}${nf}...`);
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
-        if (!plugin) {
-          this.log.warn(`Plugin ${plg}${data.params.pluginName}${wr} not found in matterbridge`);
-        } else {
+        if (plugin) {
           this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true);
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
           this.wssSendRefreshRequired('pluginsRestart');
@@ -1493,7 +1474,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.matterbridge.matterbridgeManualPairingCode = pairingCodes?.manualPairingCode;
         this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Started fabrics share`, 0);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes, success: true }));
       } else if (data.method === '/api/stopadvertise') {
         await this.matterbridge.stopAdvertiseServerNode(this.matterbridge.serverNode);
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = false;
@@ -1627,7 +1608,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.fileLogger = data.params.value;
               await this.matterbridge.nodeContext?.set('matterbridgeFileLog', data.params.value);
               // Create the file logger for matterbridge
-              if (data.params.value) AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), this.matterbridge.matterbridgeInformation.loggerLevel, true);
+              if (data.params.value) AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), this.matterbridge.matterbridgeInformation.loggerLevel, true);
               else AnsiLogger.setGlobalLogfile(undefined);
               client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }
@@ -1665,12 +1646,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                     logFormat: MatterLogFormat.PLAIN,
                   });
                 } catch (error) {
+                  /* istanbul ignore next */
                   this.log.debug(`Error adding the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
                 }
               } else {
                 try {
                   Logger.removeLogger('matterfilelogger');
                 } catch (error) {
+                  /* istanbul ignore next */
                   this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
                 }
               }
@@ -1729,13 +1712,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.matterDiscriminator = data.params.value;
               await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', data.params.value);
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             } else {
               this.log.debug(`Reset matter commissioning discriminator to ${CYAN}undefined${db}`);
               this.matterbridge.matterbridgeInformation.matterDiscriminator = undefined;
               await this.matterbridge.nodeContext?.remove('matterdiscriminator');
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: false }));
             }
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             break;
           case 'setmatterpasscode':
             data.params.value = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
@@ -1744,13 +1728,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Set matter commissioning passcode to ${CYAN}${data.params.value}${db}`);
               await this.matterbridge.nodeContext?.set<number>('matterpasscode', data.params.value);
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             } else {
               this.log.debug(`Reset matter commissioning passcode to ${CYAN}undefined${db}`);
               this.matterbridge.matterbridgeInformation.matterPasscode = undefined;
               await this.matterbridge.nodeContext?.remove('matterpasscode');
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: false }));
             }
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             break;
           case 'setvirtualmode':
             if (isValidString(data.params.value, 1) && ['disabled', 'light', 'outlet', 'switch', 'mounted_switch'].includes(data.params.value)) {
@@ -1809,6 +1794,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             if (!restartRequired) this.wssSendRefreshRequired('pluginsRestart');
             this.wssSendRestartRequired(false);
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` }));
@@ -1851,6 +1837,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             if (!restartRequired) this.wssSendRefreshRequired('pluginsRestart');
             this.wssSendRestartRequired(false);
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` }));

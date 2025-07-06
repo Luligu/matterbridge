@@ -528,6 +528,7 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     await add(device);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
 
   test('getClusterServerOptions CT', async () => {
@@ -590,48 +591,50 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'FixedLabel', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
-    await device.addFixedLabel('Composed', 'Light');
+    await device.addFixedLabel('composed', 'Light');
     expect(device.hasAttributeServer(FixedLabel.Cluster, 'labelList')).toBe(true);
     expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(false);
     const options = device.getClusterServerOptions(FixedLabel.Cluster);
     expect(options).toBeDefined();
-    expect(options).toEqual({ 'labelList': [{ 'label': 'Composed', 'value': 'Light' }] });
+    expect(options).toEqual({ 'labelList': [{ 'label': 'composed', 'value': 'Light' }] });
 
     expect(device.getAttribute(FixedLabel.Cluster, 'labelList', device.log)).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}fixedLabel.labelList${er} error: Endpoint`));
 
     await add(device);
 
-    await device.addFixedLabel('Composed2', 'Light');
+    await device.addFixedLabel('composed2', 'Light');
     const labelList = device.getAttribute(FixedLabel.Cluster, 'labelList', device.log);
     expect(labelList).toEqual([
-      { 'label': 'Composed', 'value': 'Light' },
-      { 'label': 'Composed2', 'value': 'Light' },
+      { 'label': 'composed', 'value': 'Light' },
+      { 'label': 'composed2', 'value': 'Light' },
     ]);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
 
   test('addUserLabel', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'UserLabel', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
-    await device.addUserLabel('Composed', 'Light');
+    await device.addUserLabel('composed', 'Light');
     expect(device.hasAttributeServer(FixedLabel.Cluster, 'labelList')).toBe(false);
     expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(true);
     const options = device.getClusterServerOptions(UserLabel.Cluster);
     expect(options).toBeDefined();
-    expect(options).toEqual({ 'labelList': [{ 'label': 'Composed', 'value': 'Light' }] });
+    expect(options).toEqual({ 'labelList': [{ 'label': 'composed', 'value': 'Light' }] });
 
     expect(device.getAttribute(UserLabel.Cluster, 'labelList', device.log)).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}userLabel.labelList${er} error: Endpoint`));
 
     await add(device);
 
-    await device.addUserLabel('Composed2', 'Light');
+    await device.addUserLabel('composed2', 'Light');
     const labelList = device.getAttribute(UserLabel.Cluster, 'labelList', device.log);
     expect(labelList).toEqual([
-      { 'label': 'Composed', 'value': 'Light' },
-      { 'label': 'Composed2', 'value': 'Light' },
+      { 'label': 'composed', 'value': 'Light' },
+      { 'label': 'composed2', 'value': 'Light' },
     ]);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
 
   test('subscribeAttribute without await', async () => {
@@ -960,6 +963,8 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
 
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
+
     let count = 0;
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       // console.warn('forEachAttribute', clusterName, clusterId, attributeName, attributeId, attributeValue);
@@ -1129,6 +1134,7 @@ describe('Matterbridge ' + NAME, () => {
       const childEndpoint = device.getChildEndpointByName(name);
       expect(childEndpoint).toBeDefined();
       if (!childEndpoint) return;
+      (matterbridge as any).frontend.getClusterTextFromDevice(childEndpoint);
       return childEndpoint.getAttribute(Descriptor.Cluster.id, attribute, device.log);
     };
     expect(getChildDescriptorAttribute('contactChild-1', 'deviceTypeList')).toEqual([{ deviceType: contactSensor.code, revision: contactSensor.revision }]);

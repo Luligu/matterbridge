@@ -272,9 +272,9 @@ You create a Matter device with a new instance of MatterbridgeEndpoint(definitio
 - @param {boolean} [debug] - Debug flag.
 
 ```typescript
-    const device = new MatterbridgeEndpoint([contactSensor, powerSource], { uniqueStorageKey: 'Eve door', mode: 'matter' }, this.config.debug as boolean)
+    const device = new MatterbridgeEndpoint([contactSensor, powerSource], { id: 'EntryDoor' })
       .createDefaultIdentifyClusterServer()
-      .createDefaultBasicInformationClusterServer('My contact sensor', '0123456789')
+      .createDefaultBasicInformationClusterServer('My entry door', '0123456789')
       .createDefaultBooleanStateClusterServer(true)
       .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
       .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
@@ -285,6 +285,18 @@ In the above example we create a contact sensor device type with also a power so
 All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the 'Matter-1.4-Device-Library-Specification.pdf'.
 
 All default cluster helpers are available as methods of MatterbridgeEndpoint.
+
+## MatterbridgeEndpointOptions
+
+```typescript
+    const robot = new RoboticVacuumCleaner('Robot Vacuum', 'RVC1238777820', 'server');
+```
+
+In the above example we create a Rvc device type with its own server node.
+
+The mode=`server` property of MatterbridgeEndpointOptions, allows to create an independent (not bridged) Matter device with its server node. In this case the bridge mode is not relevant.
+
+The mode=`matter` property of MatterbridgeEndpointOptions, allows to create a (not bridged) Matter device that is added to the Matterbridge server node alongside the aggregator.
 
 # Contribution Guidelines
 

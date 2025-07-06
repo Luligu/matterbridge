@@ -206,7 +206,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('log the server node', async () => {
     expect(server).toBeDefined();
-    Logger.get('ServerNode').info(server);
+    // Logger.get('ServerNode').info(server);
   });
 
   test('create a onOffLight device', async () => {
@@ -387,42 +387,52 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add lift coverDevice device to serverNode', async () => {
     expect(await server.add(coverLift)).toBeDefined();
+    (matterbridge as any).frontend.getClusterTextFromDevice(coverLift);
   });
 
   test('add tilt coverDevice device to serverNode', async () => {
     expect(await server.add(coverLiftTilt)).toBeDefined();
+    (matterbridge as any).frontend.getClusterTextFromDevice(coverLiftTilt);
   });
 
   test('add lockDevice device to serverNode', async () => {
     expect(await server.add(lock)).toBeDefined();
+    (matterbridge as any).frontend.getClusterTextFromDevice(lock);
   });
 
   test('add fan device to serverNode', async () => {
     expect(await server.add(fan)).toBeDefined();
+    (matterbridge as any).frontend.getClusterTextFromDevice(fan);
   });
 
   test('add thermostat device to serverNode', async () => {
     expect(await server.add(thermostat)).toBeDefined();
+    (matterbridge as any).frontend.getClusterTextFromDevice(thermostat);
   });
 
   test('add valve device to serverNode', async () => {
     expect(await server.add(valve)).toBeDefined();
+    (matterbridge as any).frontend.getClusterTextFromDevice(valve);
   });
 
   test('add mode device to serverNode', async () => {
     expect(await server.add(mode)).toBeDefined();
+    (matterbridge as any).frontend.getClusterTextFromDevice(mode);
   });
 
   test('add smoke device to serverNode', async () => {
     expect(await server.add(smoke)).toBeDefined();
+    (matterbridge as any).frontend.getClusterTextFromDevice(smoke);
   });
 
   test('add leak device to serverNode', async () => {
     expect(await server.add(leak)).toBeDefined();
+    (matterbridge as any).frontend.getClusterTextFromDevice(leak);
   });
 
   test('add laundry device to serverNode', async () => {
     expect(await server.add(laundry)).toBeDefined();
+    (matterbridge as any).frontend.getClusterTextFromDevice(laundry);
   });
 
   test('getClusterId and getAttributeId of onOffLight device behaviors', async () => {
@@ -594,6 +604,7 @@ describe('Matterbridge ' + NAME, () => {
   test('add the Rvc device', async () => {
     expect(await server.add(rvc)).toBeDefined();
     expect(rvc.lifecycle.isReady).toBe(true);
+    (matterbridge as any).frontend.getClusterTextFromDevice(rvc);
   });
 
   test('create a Water Heater device', async () => {
@@ -609,6 +620,7 @@ describe('Matterbridge ' + NAME, () => {
   test('add the Water Heater device', async () => {
     expect(await server.add(heater)).toBeDefined();
     expect(heater.lifecycle.isReady).toBe(true);
+    (matterbridge as any).frontend.getClusterTextFromDevice(heater);
   });
 
   test('create an Evse device', async () => {
@@ -629,6 +641,7 @@ describe('Matterbridge ' + NAME, () => {
   test('add the Evse device', async () => {
     expect(await server.add(evse)).toBeDefined();
     expect(evse.lifecycle.isReady).toBe(true);
+    (matterbridge as any).frontend.getClusterTextFromDevice(evse);
   });
 
   test('start server node', async () => {

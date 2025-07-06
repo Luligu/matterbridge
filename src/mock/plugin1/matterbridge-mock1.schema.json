@@ -1,0 +1,56 @@
+{
+  "title": "Matterbridge mock plugin 1",
+  "description": "matterbridge-mock1 v. 0.0.1 by https://github.com/Luligu",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Plugin name",
+      "type": "string",
+      "readOnly": true,
+      "ui:widget": "hidden"
+    },
+    "type": {
+      "description": "Plugin type",
+      "type": "string",
+      "readOnly": true,
+      "ui:widget": "hidden"
+    },
+    "version": {
+      "description": "Plugin version",
+      "type": "string",
+      "readOnly": true,
+      "default": "0.0.1",
+      "ui:widget": "hidden"
+    },
+    "whiteList": {
+      "description": "Only the devices in the list will be exposed. If the list is empty, all the devices will be exposed.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "uniqueItems": true,
+      "selectFrom": "name"
+    },
+    "blackList": {
+      "description": "The devices in the list will not be exposed. If the list is empty, no devices will be excluded.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "uniqueItems": true,
+      "selectFrom": "name"
+    },
+    "debug": {
+      "description": "Enable the debug for the plugin.",
+      "type": "boolean",
+      "default": false
+    },
+    "unregisterOnShutdown": {
+      "description": "Unregister all devices on shutdown. This will remove all devices from the controller when the plugin is stopped.",
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

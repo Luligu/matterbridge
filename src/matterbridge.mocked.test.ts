@@ -105,7 +105,7 @@ describe('Matterbridge mocked', () => {
     expect((matterbridge as any).failCountLimit).toBe(120);
 
     expect(matterbridge.log).toBeDefined();
-    expect(matterbridge.matterbrideLoggerFile).toBe('matterbridge.Jest.log');
+    expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.Jest.log');
     expect(matterbridge.matterLoggerFile).toBe('matter.Jest.log');
 
     expect(matterbridge.plugins).toBeUndefined();

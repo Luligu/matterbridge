@@ -4,25 +4,28 @@ const MATTER_PORT = 6015;
 const NAME = 'MatterbridgeDeviceMatter';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
+process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
 import { jest } from '@jest/globals';
+
 import path from 'node:path';
 import { rmSync } from 'node:fs';
+
 import { Environment } from '@matter/main';
+
 import { AnsiLogger, db, er, LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.ts';
-import { PluginManager } from './pluginManager.ts';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { DeviceManager } from './deviceManager.ts';
 import { dev, plg } from './matterbridgeTypes.ts';
 
+/*
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   // eslint-disable-next-line no-console
   console.log('mockImplementation of process.exit() called');
   return undefined as never;
 });
+*/
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -53,8 +56,6 @@ rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge  Device serverMode=matter', () => {
   let matterbridge: Matterbridge;
-  let plugins: PluginManager;
-  let devices: DeviceManager;
   let matterDevice: MatterbridgeEndpoint;
 
   beforeEach(async () => {
@@ -71,6 +72,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
+
     expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
     expect((matterbridge as any).checkUpdateInterval).toBeDefined();
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -78,15 +80,6 @@ describe('Matterbridge  Device serverMode=matter', () => {
     expect(matterbridge.profile).toBeUndefined();
     expect(matterbridge.bridgeMode).toBe('bridge');
     expect(Environment.default.vars.get('path.root')).toBe(path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
-
-    // Clear all plugins
-    plugins = matterbridge.plugins;
-    matterbridge.plugins.clear();
-    await matterbridge.plugins.saveToStorage();
-
-    // Clear all devices
-    devices = matterbridge.devices;
-    matterbridge.devices.clear();
 
     expect((matterbridge as any).initialized).toBeTruthy();
     expect((matterbridge as any).log).toBeDefined();
@@ -135,50 +128,45 @@ describe('Matterbridge  Device serverMode=matter', () => {
   }, 60000);
 
   test('add mocked plugin pluginmatterdevice', async () => {
-    expect(plugins.length).toBe(0);
+    expect(matterbridge.plugins.length).toBe(0);
 
     await new Promise<void>((resolve) => {
-      plugins.once('added', (name) => {
+      matterbridge.plugins.once('added', (name) => {
         if (name === 'matterdevicetest') resolve();
       });
-      plugins.add('./src/mock/pluginmatterdevice');
+      matterbridge.plugins.add('./src/mock/pluginmatterdevice');
     });
 
-    expect(plugins.length).toBe(1);
-    expect(plugins.get('matterdevicetest')).toBeDefined();
-    expect(plugins.get('matterdevicetest')?.type).toBe('AnyPlatform');
+    expect(matterbridge.plugins.length).toBe(1);
+    expect(matterbridge.plugins.get('matterdevicetest')).toBeDefined();
+    expect(matterbridge.plugins.get('matterdevicetest')?.type).toBe('AnyPlatform');
   });
 
-  test('load plugins', async () => {
+  test('load mocked plugin matterdevicetest', async () => {
     expect(matterbridge.plugins.size).toBe(1);
     expect(matterbridge.devices.size).toBe(0);
 
     await new Promise<void>((resolve) => {
-      plugins.once('loaded', (name) => {
+      matterbridge.plugins.once('loaded', (name) => {
         if (name === 'matterdevicetest') resolve();
       });
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      plugins.load(plugins.get('matterdevicetest')!);
+      const plugin = matterbridge.plugins.get('matterdevicetest');
+      expect(plugin).toBeDefined();
+      if (plugin) matterbridge.plugins.load(plugin);
     });
 
     expect(matterbridge.plugins.size).toBe(1);
     expect(matterbridge.devices.size).toBe(0);
-    expect(plugins.get('matterdevicetest')).toBeDefined();
-    expect(plugins.get('matterdevicetest')?.type).toBe('DynamicPlatform');
+    expect(matterbridge.plugins.get('matterdevicetest')).toBeDefined();
+    expect(matterbridge.plugins.get('matterdevicetest')?.type).toBe('DynamicPlatform');
   });
 
   test('Matterbridge.destroyInstance()', async () => {
     // Close the Matterbridge instance
     await matterbridge.destroyInstance(10);
 
-    // Let any already‐queued microtasks run first
-    await Promise.resolve();
-
-    // Wait for the cleanup to finish
-    await new Promise<void>((resolve) => setTimeout(resolve, 500));
-
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
   }, 60000);
 
@@ -190,8 +178,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
     expect((matterbridge as any).initialized).toBeTruthy();
-    plugins = matterbridge.plugins;
-    expect(plugins.length).toBe(1);
+    expect(matterbridge.plugins.length).toBe(1);
 
     const online = new Promise<void>((resolve) => {
       matterbridge.on('online', (name) => {
@@ -200,20 +187,18 @@ describe('Matterbridge  Device serverMode=matter', () => {
     });
 
     const started = new Promise<void>((resolve) => {
-      plugins.on('started', (name) => {
+      matterbridge.plugins.on('started', (name) => {
         if (name === 'matterdevicetest') resolve();
       });
     });
 
     await Promise.all([online, started]);
 
-    await new Promise<void>((resolve) => setTimeout(resolve, 500));
-
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Adding matter endpoint ${plg}matterdevicetest${db}:${dev}Matter node device${db} to Matterbridge server node...`));
 
-    expect(plugins.get('matterdevicetest')).toBeDefined();
-    expect(plugins.get('matterdevicetest')?.serverNode).toBeUndefined();
-    expect(plugins.get('matterdevicetest')?.aggregatorNode).toBeUndefined();
+    expect(matterbridge.plugins.get('matterdevicetest')).toBeDefined();
+    expect(matterbridge.plugins.get('matterdevicetest')?.serverNode).toBeUndefined();
+    expect(matterbridge.plugins.get('matterdevicetest')?.aggregatorNode).toBeUndefined();
 
     expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
     expect(matterbridge.serverNode?.lifecycle.isOnline).toBeTruthy();
@@ -230,12 +215,14 @@ describe('Matterbridge  Device serverMode=matter', () => {
   }, 60000);
 
   test('Should log error if addBridgedEndpoint fails', async () => {
+    // Simulate no server node
     const server = matterbridge.serverNode;
-    matterbridge.serverNode = undefined as any; // Simulate no server node
+    matterbridge.serverNode = undefined as any;
     await matterbridge.addBridgedEndpoint('matterdevicetest', { mode: 'matter' } as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Server node not found for Matterbridge`);
     matterbridge.serverNode = server; // Restore server node
 
+    // Simulate serverNode.add() failure
     jest.clearAllMocks();
     jest.spyOn(matterbridge.serverNode as any, 'add').mockImplementationOnce(() => {
       throw new Error('Test error creating server node');
@@ -245,17 +232,15 @@ describe('Matterbridge  Device serverMode=matter', () => {
   });
 
   test('Finally Matterbridge.destroyInstance()', async () => {
+    const stopServerNodeSpy = jest.spyOn(matterbridge as any, 'stopServerNode');
+
     // Close the Matterbridge instance
     await matterbridge.destroyInstance(10);
 
-    // Let any already‐queued microtasks run first
-    await Promise.resolve();
-
-    // Wait for the cleanup to finish
-    await new Promise<void>((resolve) => setTimeout(resolve, 500));
-
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
+
+    expect(stopServerNodeSpy).toHaveBeenCalledTimes(1);
   }, 60000);
 });

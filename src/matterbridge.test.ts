@@ -83,7 +83,7 @@ describe('Matterbridge', () => {
       expect(matterbridge.profile).toBe('Jest');
       expect(matterbridge.nodeStorageName).toBe('storage.Jest');
       expect(matterbridge.matterStorageName).toBe('matterstorage.Jest');
-      expect(matterbridge.matterbrideLoggerFile).toBe('matterbridge.Jest.log');
+      expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.Jest.log');
       expect(matterbridge.matterLoggerFile).toBe('matter.Jest.log');
       expect(matterbridge.serverNode).toBeUndefined();
       expect(matterbridge.aggregatorNode).toBeUndefined();
@@ -140,7 +140,7 @@ describe('Matterbridge', () => {
       expect(matterbridge.profile).toBe('Jest');
       expect(matterbridge.nodeStorageName).toBe('storage.Jest');
       expect(matterbridge.matterStorageName).toBe('matterstorage.Jest');
-      expect(matterbridge.matterbrideLoggerFile).toBe('matterbridge.Jest.log');
+      expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.Jest.log');
       expect(matterbridge.matterLoggerFile).toBe('matter.Jest.log');
       expect((matterbridge as any).initialized).toBeTruthy();
       expect((matterbridge as any).log).toBeDefined();

@@ -336,12 +336,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`updateAttribute ${hk}colorControl.colorTemperatureMireds${er} error: Endpoint`));
 
     await add(device);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
 
     loggerLogSpy.mockClear();
     await device.configureColorControlMode(ColorControl.ColorMode.ColorTemperatureMireds);
     await device.setAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds', 360, device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}ColorControl${db}.${hk}colorTemperatureMireds${db}`));
     expect(device.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(360);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
 
     loggerLogSpy.mockClear();
     await updateAttribute(device, ColorControlServer, 'colorTemperatureMireds', 350, device.log);
@@ -372,7 +374,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(await device.updateAttribute('colorControl', 'colorCapabilities', colorCapabilities)).toBe(true);
 
     await device.configureColorControlMode(ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
+
     await device.configureColorControlMode(ColorControl.ColorMode.CurrentXAndCurrentY);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
 
     expect(device.hasAttributeServer(ColorControl.Cluster, 'colorMode')).toBe(true);
     expect(device.hasAttributeServer(ColorControl.Cluster, 'currentX')).toBe(true);
@@ -583,6 +588,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
 
   test('createDefaultHepaFilterMonitoringClusterServer', async () => {
@@ -662,6 +668,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(PumpConfigurationAndControl.Cluster.id, 'operationMode')).toBe(PumpConfigurationAndControl.OperationMode.Normal);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
 
   test('createDefaultSmokeCOAlarmClusterServer', async () => {
@@ -722,6 +729,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
 
     await add(device);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
 
     await device.triggerSwitchEvent('Press', device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('triggerSwitchEvent Press error: Switch cluster with LatchingSwitch not found'));
