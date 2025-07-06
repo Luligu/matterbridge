@@ -14,6 +14,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from `matterbridge/devices`. Please update your imports to use the new export path. Refer to the [documentation](README-DEV.md) for details on imports.
 - [MatterbridgeEndpoint]: Added the mode property: `server` will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the [documentation](README-DEV.md) for details on using mode.
+- [RoboticVacuumCleaner]: The signature of the constructor has changed to add the mode property. Mode `server` will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the [documentation](README-DEV.md) for details on using mode.
 
 ### Added
 
