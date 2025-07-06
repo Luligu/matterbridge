@@ -912,7 +912,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {ApiDevicesMatter | undefined} An ApiDevicesMatter object or undefined if not found.
    */
   private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiDevicesMatter | undefined {
-    if (device.mode === 'server' && device.serverNode && device.serverContext) {
+    if (device.mode === 'server' && device.serverNode) {
       return {
         commissioned: device.serverNode.state.commissioning.commissioned,
         qrPairingCode: device.serverNode.state.commissioning.pairingCodes.qrPairingCode,

@@ -23,25 +23,7 @@
  */
 
 // @matter
-import {
-  ActionContext,
-  AtLeastOne,
-  Behavior,
-  ClusterId,
-  Endpoint,
-  EndpointNumber,
-  EndpointType,
-  HandlerFunction,
-  Lifecycle,
-  MutableEndpoint,
-  NamedHandler,
-  ServerNode,
-  StorageContext,
-  SupportedBehaviors,
-  UINT16_MAX,
-  UINT32_MAX,
-  VendorId,
-} from '@matter/main';
+import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, ServerNode, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
 import { DeviceClassification } from '@matter/main/model';
 import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
 // @matter clusters
@@ -301,8 +283,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Always use createDefaultBasicInformationClusterServer() to create the BasicInformation cluster server.
    */
   mode: 'server' | 'matter' | undefined = undefined;
-  /** The server context of the endpoint, if it is a single not bridged endpoint */
-  serverContext: StorageContext | undefined;
   /** The server node of the endpoint, if it is a single not bridged endpoint */
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
 

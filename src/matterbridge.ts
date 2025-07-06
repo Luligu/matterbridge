@@ -1417,7 +1417,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.debug('Matterbridge reachability timeout cleared');
       }
 
-      // Calling the shutdown method of each plugin and clear the plugins reachability timeout
+      // Call the shutdown method of each plugin and clear the plugins reachability timeout
       for (const plugin of this.plugins) {
         if (!plugin.enabled || plugin.error) continue;
         await this.plugins.shutdown(plugin, 'Matterbridge is closing: ' + message, false);
@@ -1450,7 +1450,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         if (device.mode === 'server' && device.serverNode) {
           await this.stopServerNode(device.serverNode);
           device.serverNode = undefined;
-          device.serverContext = undefined;
         }
       }
       this.log.notice('Stopped matter server nodes');
@@ -1582,8 +1581,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private async createDeviceServerNode(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
     if (device.mode === 'server' && !device.serverNode && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
       this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);
-      device.serverContext = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
-      device.serverNode = await this.createServerNode(device.serverContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      const context = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
+      device.serverNode = await this.createServerNode(context, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node...`);
       await device.serverNode.add(device);
       this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node`);
@@ -1598,7 +1597,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {boolean} [start] - Whether to start the server node after adding the device. Default is `false`.
    * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
    */
-  private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint, start = false): Promise<void> {
+  private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint, start: boolean = false): Promise<void> {
     if (!plugin.locked && device.deviceType && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
       plugin.locked = true;
       plugin.device = device;
@@ -1612,13 +1611,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Creates and configures the server node for a dynamic plugin.
+   * Creates and configures the server node and the aggregator node for a dynamic plugin.
    *
    * @param {RegisteredPlugin} plugin - The plugin to configure.
    * @param {boolean} [start] - Whether to start the server node after adding the aggregator node.
-   * @returns {Promise<void>} A promise that resolves when the server node for the dynamic plugin is created and configured.
+   * @returns {Promise<void>} A promise that resolves when the server node and the aggregator node for the dynamic plugin is created and configured.
    */
-  private async createDynamicPlugin(plugin: RegisteredPlugin, start = false): Promise<void> {
+  private async createDynamicPlugin(plugin: RegisteredPlugin, start: boolean = false): Promise<void> {
     if (!plugin.locked) {
       plugin.locked = true;
       plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
