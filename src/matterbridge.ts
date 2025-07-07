@@ -733,11 +733,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await this.logNodeAndSystemInfo();
     this.log.notice(
       `Matterbridge version ${this.matterbridgeVersion} ` +
-        `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
-        `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
-        `${hasParameter('controller') ? 'mode controller ' : ''}` +
-        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
-        `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
+      `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
+      `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
+      `${hasParameter('controller') ? 'mode controller ' : ''}` +
+      `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
+      `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
     );
 
     // Check node version and throw error
@@ -2736,14 +2736,14 @@ const commissioningController = new CommissioningController({
           peerNodeId: session.peerNodeId.toString(),
           fabric: session.fabric
             ? {
-                fabricIndex: session.fabric.fabricIndex,
-                fabricId: session.fabric.fabricId.toString(),
-                nodeId: session.fabric.nodeId.toString(),
-                rootNodeId: session.fabric.rootNodeId.toString(),
-                rootVendorId: session.fabric.rootVendorId,
-                rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
-                label: session.fabric.label,
-              }
+              fabricIndex: session.fabric.fabricIndex,
+              fabricId: session.fabric.fabricId.toString(),
+              nodeId: session.fabric.nodeId.toString(),
+              rootNodeId: session.fabric.rootNodeId.toString(),
+              rootVendorId: session.fabric.rootVendorId,
+              rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
+              label: session.fabric.label,
+            }
             : undefined,
           isPeerActive: session.isPeerActive,
           lastInteractionTimestamp: session.lastInteractionTimestamp?.toString(),
@@ -2806,6 +2806,9 @@ const commissioningController = new CommissioningController({
         break;
       case 65521:
         vendorName = '(MatterServer)';
+        break;
+      case 5256:
+        vendorName = '(Flic, Shortcut Labs AB)';
         break;
     }
     return vendorName;
