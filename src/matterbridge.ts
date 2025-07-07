@@ -2807,8 +2807,8 @@ const commissioningController = new CommissioningController({
       case 0x1488:
         vendorName = '(ShortcutLabsFlic)';
         break;
-      case 65521:
-        vendorName = '(MatterServer)';
+      case 65521: // 0xFFF1
+        vendorName = '(MatterTest)';
         break;
     }
     return vendorName;
