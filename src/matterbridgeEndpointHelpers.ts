@@ -830,9 +830,9 @@ export function getDefaultRelativeHumidityMeasurementClusterServer(measuredValue
 /**
  * Get the default PressureMeasurement cluster server options.
  *
- * @param {number | null} measuredValue - The measured value for the pressure.
- * @param {number | null} minMeasuredValue - The minimum measured value for the pressure.
- * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure.
+ * @param {number | null} measuredValue - The measured value for the pressure in kPa x 10.
+ * @param {number | null} minMeasuredValue - The minimum measured value for the pressure in kPa x 10.
+ * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure in kPa x 10.
  * @returns {Behavior.Options<MatterbridgePressureMeasurementServer>} - The default options for the PressureMeasurement cluster server.
  */
 export function getDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
