@@ -152,17 +152,17 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
         },
         {
           areaId: 2,
-          mapId: 1,
+          mapId: 2,
           areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: AreaNamespaceTag.Kitchen.tag }, landmarkInfo: null },
         },
         {
           areaId: 3,
-          mapId: 2,
+          mapId: 3,
           areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: AreaNamespaceTag.Bedroom.tag }, landmarkInfo: null },
         },
         {
           areaId: 4,
-          mapId: 2,
+          mapId: 4,
           areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: AreaNamespaceTag.Bathroom.tag }, landmarkInfo: null },
         },
       ],
@@ -176,6 +176,14 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
         {
           mapId: 2,
           name: 'First floor',
+        },
+        {
+          mapId: 3,
+          name: 'Bedroom',
+        },
+        {
+          mapId: 4,
+          name: 'Bathroom',
         },
       ],
       estimatedEndTime: null,
