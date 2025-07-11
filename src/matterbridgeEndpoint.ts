@@ -2044,13 +2044,15 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default momentary switch cluster server with features MomentarySwitch, MomentarySwitchRelease, MomentarySwitchLongPress and MomentarySwitchMultiPress.
+   * Creates a default momentary switch cluster server with features MomentarySwitch, MomentarySwitchRelease, MomentarySwitchLongPress and MomentarySwitchMultiPress
+   * and events initialPress, longPress, shortRelease, longRelease, multiPressOngoing, multiPressComplete.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * This method adds a cluster server with default momentary switch features and configuration suitable for (AppleHome) Single Double Long automations.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultSwitchClusterServer() {
+  createDefaultSwitchClusterServer(): this {
     this.behaviors.require(
       MatterbridgeSwitchServer.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress).enable({
         events: { initialPress: true, longPress: true, shortRelease: true, longRelease: true, multiPressOngoing: true, multiPressComplete: true },
@@ -2065,13 +2067,35 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a default momentary switch cluster server with feature MomentarySwitch and event initialPress.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * This method adds a cluster server with default momentary switch features and configuration suitable for (AppleHome) Single press.
+   */
+  createDefaultMomentarySwitchClusterServer(): this {
+    this.behaviors.require(
+      MatterbridgeSwitchServer.with(Switch.Feature.MomentarySwitch).enable({
+        events: { initialPress: true },
+      }),
+      {
+        numberOfPositions: 2,
+        currentPosition: 0,
+      },
+    );
+    return this;
+  }
+
+  /**
    * Creates a default latching switch cluster server with features LatchingSwitch.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * This method adds a cluster server with default latching switch features and configuration suitable for a latching switch with 2 positions.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultLatchingSwitchClusterServer() {
+  createDefaultLatchingSwitchClusterServer(): this {
     this.behaviors.require(
       SwitchServer.with(Switch.Feature.LatchingSwitch).enable({
         events: { switchLatched: true },
