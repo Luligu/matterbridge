@@ -155,6 +155,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
           mapId: 2,
           areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: AreaNamespaceTag.Kitchen.tag }, landmarkInfo: null },
         },
+        /* Workaround because waiting for a fix https://github.com/project-chip/matter.js/issues/2238 */
         {
           areaId: 3,
           mapId: 3,
