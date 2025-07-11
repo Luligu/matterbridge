@@ -2072,7 +2072,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * This method adds a cluster server with default momentary switch features and configuration suitable for (AppleHome) Single press.
+   * This method adds a cluster server with default momentary switch features and configuration suitable for Single press automations.
    */
   createDefaultMomentarySwitchClusterServer(): this {
     this.behaviors.require(
