@@ -152,17 +152,19 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
         },
         {
           areaId: 2,
+          /* Have to set mapId=1 when matter.js bug is fixed */ 
           mapId: 2,
           areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: AreaNamespaceTag.Kitchen.tag }, landmarkInfo: null },
         },
-        /* Workaround because waiting for a fix https://github.com/project-chip/matter.js/issues/2238 */
         {
           areaId: 3,
+          /* Have to set mapId=2 when matter.js bug is fixed */ 
           mapId: 3,
           areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: AreaNamespaceTag.Bedroom.tag }, landmarkInfo: null },
         },
         {
           areaId: 4,
+          /* Have to set mapId=2 when matter.js bug is fixed */ 
           mapId: 4,
           areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: AreaNamespaceTag.Bathroom.tag }, landmarkInfo: null },
         },
@@ -178,10 +180,12 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
           mapId: 2,
           name: 'First floor',
         },
+        /* Workaround because waiting for a matter.js fix https://github.com/project-chip/matter.js/issues/2238 */
         {
           mapId: 3,
           name: 'Bedroom',
         },
+        /* Workaround because waiting for a matter.js fix */
         {
           mapId: 4,
           name: 'Bathroom',
