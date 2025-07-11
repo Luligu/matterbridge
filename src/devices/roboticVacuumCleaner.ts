@@ -57,7 +57,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the robotic vacuum cleaner. Defaults to a predefined set of areas.
    * @param {number[]} [selectedAreas] - The selected areas for the robotic vacuum cleaner. Defaults to an empty array (all areas allowed).
    * @param {number} [currentArea] - The current area of the robotic vacuum cleaner. Defaults to 1 (Living).
-   * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults to a predefined set of maps. 
+   * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults to a predefined set of maps.
    */
   constructor(
     name: string,
@@ -139,7 +139,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the ServiceArea cluster. Defaults to a predefined set of areas.
    * @param {number[]} [selectedAreas] - The selected areas for the ServiceArea cluster. Defaults to an empty array (all areas allowed).
    * @param {number} [currentArea] - The current areaId (not the index in the array!) of the ServiceArea cluster. Defaults to 1 (Living).
-   * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults to a predefined set of maps. 
+   * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults to a predefined set of maps.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultServiceAreaClusterServer(supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number, supportedMaps?: ServiceArea.Map[]): this {
@@ -148,7 +148,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
         {
           areaId: 1,
           mapId: 1,
-          areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: AreaNamespaceTag.LivingRoom.tag, }, landmarkInfo: null },
+          areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: AreaNamespaceTag.LivingRoom.tag }, landmarkInfo: null },
         },
         {
           areaId: 2,
@@ -171,11 +171,11 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
       supportedMaps: supportedMaps ?? [
         {
           mapId: 1,
-          name: "Ground floor",
+          name: 'Ground floor',
         },
         {
           mapId: 2,
-          name: "First floor",
+          name: 'First floor',
         },
       ],
       estimatedEndTime: null,
