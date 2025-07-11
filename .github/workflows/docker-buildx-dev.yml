@@ -38,8 +38,9 @@ jobs:
           SHA=${GITHUB_SHA::7}
           DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
           echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
+          echo "ORIG_SHA=$SHA"    >> $GITHUB_ENV
 
-      - name: Bump to date-commit-stamped version
+      - name: Bump to date-commit-stamped version --no-git-tag-version tag ${{ env.DEV_TAG }} sha ${{ env.ORIG_SHA }}
         run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version
 
       - name: Log in to Docker Hub
