@@ -21,6 +21,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [endpoint]: Improved jsdoc description on endpoint helpers.
+- [endpoint]: Added createDefaultMomentarySwitchClusterServer() cluster helper.
 
 ### Changed
 
