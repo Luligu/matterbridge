@@ -152,19 +152,19 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
         },
         {
           areaId: 2,
-          /* Have to set mapId=1 when matter.js bug is fixed */ 
+          /* Have to set mapId=1 when matter.js bug is fixed */
           mapId: 2,
           areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: AreaNamespaceTag.Kitchen.tag }, landmarkInfo: null },
         },
         {
           areaId: 3,
-          /* Have to set mapId=2 when matter.js bug is fixed */ 
+          /* Have to set mapId=2 when matter.js bug is fixed */
           mapId: 3,
           areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: AreaNamespaceTag.Bedroom.tag }, landmarkInfo: null },
         },
         {
           areaId: 4,
-          /* Have to set mapId=2 when matter.js bug is fixed */ 
+          /* Have to set mapId=2 when matter.js bug is fixed */
           mapId: 4,
           areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: AreaNamespaceTag.Bathroom.tag }, landmarkInfo: null },
         },
