@@ -42,7 +42,7 @@ import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/cluster
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter } from './utils/export.js';
-import { ApiClusters, ApiClustersResponse, ApiDevices, ApiDevicesMatter, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
+import { ApiClusters, ApiClustersResponse, ApiDevices, ApiDevicesMatter, BaseRegisteredPlugin, FrontendRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
@@ -844,6 +844,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Update the matterbridge information
     this.matterbridge.matterbridgeInformation.bridgeMode = this.matterbridge.bridgeMode;
     this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
+    this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
     this.matterbridge.matterbridgeInformation.loggerLevel = this.matterbridge.log.logLevel;
     this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
     this.matterbridge.matterbridgeInformation.mattermdnsinterface = this.matterbridge.mdnsInterface;
@@ -852,12 +853,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.matterbridgeInformation.matterPort = (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
     this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
     this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
-    this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.matterbridgePaired;
-    this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeQrPairingCode;
-    this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeManualPairingCode;
-    this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.matterbridgeFabricInformations;
-    this.matterbridge.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridge.matterbridgeSessionInformations;
-    this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
+
+    // Update the matterbridge information in bridge mode
+    if (this.matterbridge.bridgeMode === 'bridge' && this.matterbridge.serverNode) {
+      this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.serverNode.state.commissioning.commissioned;
+      this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : this.matterbridge.serverNode.state.commissioning.pairingCodes.qrPairingCode;
+      this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : this.matterbridge.serverNode.state.commissioning.pairingCodes.manualPairingCode;
+      this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.sanitizeFabricInformations(Object.values(this.matterbridge.serverNode.state.commissioning.fabrics));
+      this.matterbridge.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridge.sanitizeSessionInformation(Object.values(this.matterbridge.serverNode.state.sessions.sessions));
+    }
     return { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: this.matterbridge.matterbridgeInformation };
   }
 
@@ -906,7 +910,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Retrieves the commissioned status, matter pairing codes, fabrics and sessions from a given device.
+   * Retrieves the commissioned status, matter pairing codes, fabrics and sessions from a given device in server mode.
    *
    * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint to retrieve the data from.
    * @returns {ApiDevicesMatter | undefined} An ApiDevicesMatter object or undefined if not found.
@@ -1024,7 +1028,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {BaseRegisteredPlugin[]} An array of BaseRegisteredPlugin.
    */
   private getBaseRegisteredPlugins(): BaseRegisteredPlugin[] {
-    const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
+    if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
+    const baseRegisteredPlugins: FrontendRegisteredPlugin[] = [];
     for (const plugin of this.matterbridge.plugins) {
       baseRegisteredPlugins.push({
         path: plugin.path,
@@ -1045,18 +1050,19 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         loaded: plugin.loaded,
         started: plugin.started,
         configured: plugin.configured,
-        paired: plugin.paired,
         restartRequired: plugin.restartRequired,
-        fabricInformations: plugin.fabricInformations,
-        sessionInformations: plugin.sessionInformations,
         registeredDevices: plugin.registeredDevices,
         addedDevices: plugin.addedDevices,
-        qrPairingCode: plugin.qrPairingCode,
-        manualPairingCode: plugin.manualPairingCode,
         configJson: plugin.configJson,
         schemaJson: plugin.schemaJson,
         hasWhiteList: plugin.configJson?.whiteList !== undefined,
         hasBlackList: plugin.configJson?.blackList !== undefined,
+        // Childbridge mode specific data
+        paired: plugin.serverNode?.state.commissioning.commissioned,
+        qrPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode?.state.commissioning.pairingCodes.qrPairingCode,
+        manualPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode?.state.commissioning.pairingCodes.manualPairingCode,
+        fabricInformations: plugin.serverNode ? this.matterbridge.sanitizeFabricInformations(Object.values(plugin.serverNode?.state.commissioning.fabrics)) : undefined,
+        sessionInformations: plugin.serverNode ? this.matterbridge.sanitizeSessionInformation(Object.values(plugin.serverNode?.state.sessions.sessions)) : undefined,
       });
     }
     return baseRegisteredPlugins;
@@ -1069,6 +1075,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {Promise<ApiDevices[]>} A promise that resolves to an array of ApiDevices for the frontend.
    */
   private async getDevices(pluginName?: string): Promise<ApiDevices[]> {
+    if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const devices: ApiDevices[] = [];
     for (const device of this.matterbridge.devices.array()) {
       // Filter by pluginName if provided
@@ -1470,8 +1477,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/advertise') {
         const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = true;
-        this.matterbridge.matterbridgeQrPairingCode = pairingCodes?.qrPairingCode;
-        this.matterbridge.matterbridgeManualPairingCode = pairingCodes?.manualPairingCode;
+        // this.matterbridge.matterbridgeQrPairingCode = pairingCodes?.qrPairingCode;
+        // this.matterbridge.matterbridgeManualPairingCode = pairingCodes?.manualPairingCode;
         this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Started fabrics share`, 0);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes, success: true }));

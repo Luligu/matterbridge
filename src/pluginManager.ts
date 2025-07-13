@@ -151,8 +151,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         description: plugin.description,
         author: plugin.author,
         enabled: plugin.enabled,
-        qrPairingCode: plugin.qrPairingCode,
-        manualPairingCode: plugin.manualPairingCode,
       });
     }
     await this.nodeContext.set<RegisteredPlugin[]>('plugins', plugins);

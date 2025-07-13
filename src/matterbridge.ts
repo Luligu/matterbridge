@@ -46,7 +46,6 @@ import {
   StorageService,
   Environment,
   ServerNode,
-  FabricIndex,
   SessionsBehavior,
   UINT32_MAX,
   UINT16_MAX,
@@ -133,6 +132,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     matterbridgeSessionInformations: [],
     matterbridgePaired: false,
     matterbridgeAdvertise: false,
+    matterbridgeEndAdvertise: false,
     bridgeMode: '',
     restartMode: '',
     virtualMode: 'outlet',
@@ -164,11 +164,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
   public matterbridgeDevVersion = '';
-  public matterbridgeQrPairingCode: string | undefined;
-  public matterbridgeManualPairingCode: string | undefined;
-  public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
-  public matterbridgeSessionInformations: SanitizedSession[] | undefined;
-  public matterbridgePaired: boolean | undefined;
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
   public profile = getParameter('profile');
@@ -191,7 +186,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public nodeContext: NodeStorage | undefined;
 
   // Cleanup
-  private hasCleanupStarted = false;
+  public hasCleanupStarted = false;
   private initialized = false;
   private execRunningCount = 0;
   private startMatterInterval: NodeJS.Timeout | undefined;
@@ -493,15 +488,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using passcode ${CYAN}${this.passcode}${nf} and discriminator ${CYAN}${this.discriminator}${nf} from pairing file.`);
       }
       // Set the certification if it is present in the pairing file
-      /*
+      /* istanbul ignore next if */
       if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
         const hexStringToUint8Array = (hexString: string) => {
           const matches = hexString.match(/.{1,2}/g);
           return matches ? new Uint8Array(matches.map((byte) => parseInt(byte, 16))) : new Uint8Array();
         };
-        // const hexString = Buffer.from('Test string', 'utf-8').toString('hex');
-        // console.log(hexString, Buffer.from(hexStringToUint8Array(hexString)).toString('utf-8'));
-
         this.certification = {
           privateKey: hexStringToUint8Array(pairingFileJson.privateKey),
           certificate: hexStringToUint8Array(pairingFileJson.certificate),
@@ -510,7 +502,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         };
         this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using privateKey, certificate, intermediateCertificate and declaration from pairing file.`);
       }
-      */
     } catch (error) {
       this.log.debug(`Pairing file ${CYAN}${pairingFilePath}${db} not found: ${error instanceof Error ? error.message : error}`);
     }
@@ -815,10 +806,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       let index = 0;
       for (const plugin of this.plugins) {
         if (index !== this.plugins.length - 1) {
-          this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled ${plugin.paired ? GREEN : RED}paired${nf}`);
+          this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled${nf}`);
           this.log.info(`│ └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         } else {
-          this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled ${plugin.paired ? GREEN : RED}paired${nf}`);
+          this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled${nf}`);
           this.log.info(`  └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         }
         index++;
@@ -1022,8 +1013,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.configured = false;
       plugin.registeredDevices = undefined;
       plugin.addedDevices = undefined;
-      plugin.qrPairingCode = undefined;
-      plugin.manualPairingCode = undefined;
       this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
     }
     this.frontend.wssSendRefreshRequired('plugins');
@@ -1614,10 +1603,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * Creates and configures the server node and the aggregator node for a dynamic plugin.
    *
    * @param {RegisteredPlugin} plugin - The plugin to configure.
-   * @param {boolean} [start] - Whether to start the server node after adding the aggregator node.
    * @returns {Promise<void>} A promise that resolves when the server node and the aggregator node for the dynamic plugin is created and configured.
    */
-  private async createDynamicPlugin(plugin: RegisteredPlugin, start: boolean = false): Promise<void> {
+  private async createDynamicPlugin(plugin: RegisteredPlugin): Promise<void> {
     if (!plugin.locked) {
       plugin.locked = true;
       plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
@@ -1625,7 +1613,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
       plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
       await plugin.serverNode.add(plugin.aggregatorNode);
-      if (start) await this.startServerNode(plugin.serverNode);
     }
   }
 
@@ -1760,6 +1747,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (!allStarted) return;
       clearInterval(this.startMatterInterval);
       this.startMatterInterval = undefined;
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second to ensure all plugins server nodes are ready
       this.log.debug('Cleared startMatterInterval interval in childbridge mode');
 
       // Configure the plugins
@@ -2152,7 +2140,7 @@ const commissioningController = new CommissioningController({
    * @param {number} [discriminator] - The discriminator for the server node. Defaults to 3850.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint>>} A promise that resolves to the created server node.
    */
-  private async createServerNode(storageContext: StorageContext, port = 5540, passcode = 20242025, discriminator = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
+  private async createServerNode(storageContext: StorageContext, port: number = 5540, passcode: number = 20242025, discriminator: number = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
     const storeId = await storageContext.get<string>('storeId');
     this.log.notice(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
     this.log.debug(`- deviceName: ${await storageContext.get('deviceName')}`);
@@ -2219,25 +2207,6 @@ const commissioningController = new CommissioningController({
       },
     });
 
-    const sanitizeFabrics = (fabrics: Record<FabricIndex, ExposedFabricInformation>, resetSessions = false) => {
-      // New type of fabric information: Record<FabricIndex, ExposedFabricInformation>
-      const sanitizedFabrics = this.sanitizeFabricInformations(Array.from(Object.values(fabrics)));
-      this.log.info(`Fabrics: ${debugStringify(sanitizedFabrics)}`);
-      if (this.bridgeMode === 'bridge') {
-        this.matterbridgeFabricInformations = sanitizedFabrics;
-        if (resetSessions) this.matterbridgeSessionInformations = undefined; // Changed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
-        this.matterbridgePaired = true;
-      }
-      if (this.bridgeMode === 'childbridge') {
-        const plugin = this.plugins.get(storeId);
-        if (plugin) {
-          plugin.fabricInformations = sanitizedFabrics;
-          if (resetSessions) plugin.sessionInformations = undefined; // Changed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
-          plugin.paired = true;
-        }
-      }
-    };
-
     /**
      * This event is triggered when the device is initially commissioned successfully.
      * This means: It is added to the first fabric.
@@ -2248,53 +2217,23 @@ const commissioningController = new CommissioningController({
     });
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
-    serverNode.lifecycle.decommissioned.on(() => this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`));
+    serverNode.lifecycle.decommissioned.on(() => {
+      this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`);
+      clearTimeout(this.endAdvertiseTimeout);
+    });
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
     serverNode.lifecycle.online.on(async () => {
       this.log.notice(`Server node for ${storeId} is online`);
-
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
-        if (this.bridgeMode === 'bridge') {
-          this.matterbridgeQrPairingCode = qrPairingCode;
-          this.matterbridgeManualPairingCode = manualPairingCode;
-          this.matterbridgeFabricInformations = undefined;
-          this.matterbridgeSessionInformations = undefined;
-          this.matterbridgePaired = false;
-          this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
-          this.log.notice(`Manual pairing code: ${manualPairingCode}`);
-          if (this.matterStorageService) {
-            const storageManager = await this.matterStorageService.open(storeId);
-            const storageContext = storageManager.createContext('persist');
-            await storageContext.set('qrPairingCode', qrPairingCode);
-            await storageContext.set('manualPairingCode', manualPairingCode);
-          }
-        }
-        if (this.bridgeMode === 'childbridge') {
-          const plugin = this.plugins.get(storeId);
-          if (plugin) {
-            plugin.qrPairingCode = qrPairingCode;
-            plugin.manualPairingCode = manualPairingCode;
-            plugin.fabricInformations = undefined;
-            plugin.sessionInformations = undefined;
-            plugin.paired = false;
-            this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
-            this.log.notice(`Manual pairing code: ${manualPairingCode}`);
-            if (this.matterStorageService) {
-              const storageManager = await this.matterStorageService.open(storeId);
-              const storageContext = storageManager.createContext('persist');
-              await storageContext.set('qrPairingCode', qrPairingCode);
-              await storageContext.set('manualPairingCode', manualPairingCode);
-            }
-          }
-        }
+        this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
+        this.log.notice(`Manual pairing code: ${manualPairingCode}`);
         // Set a timeout to show that advertising stops after 15 minutes if not commissioned
         this.startEndAdvertiseTimer(serverNode);
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
-        sanitizeFabrics(serverNode.state.commissioning.fabrics, true);
       }
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
@@ -2305,23 +2244,7 @@ const commissioningController = new CommissioningController({
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
     serverNode.lifecycle.offline.on(() => {
       this.log.notice(`Server node for ${storeId} is offline`);
-      if (this.bridgeMode === 'bridge') {
-        this.matterbridgeQrPairingCode = undefined;
-        this.matterbridgeManualPairingCode = undefined;
-        this.matterbridgeFabricInformations = undefined;
-        this.matterbridgeSessionInformations = undefined;
-        this.matterbridgePaired = undefined;
-      }
-      if (this.bridgeMode === 'childbridge') {
-        const plugin = this.plugins.get(storeId);
-        if (plugin) {
-          plugin.qrPairingCode = undefined;
-          plugin.manualPairingCode = undefined;
-          plugin.fabricInformations = undefined;
-          plugin.sessionInformations = undefined;
-          plugin.paired = undefined;
-        }
-      }
+      this.matterbridgeInformation.matterbridgeEndAdvertise = true; // Set the end advertise flag to true, so the frontend won't show the QR code anymore
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
@@ -2346,23 +2269,8 @@ const commissioningController = new CommissioningController({
           break;
       }
       this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
-      sanitizeFabrics(serverNode.state.commissioning.fabrics);
       this.frontend.wssSendRefreshRequired('fabrics');
     });
-
-    const sanitizeSessions = (sessions: SessionsBehavior.Session[]) => {
-      const sanitizedSessions = this.sanitizeSessionInformation(sessions);
-      this.log.debug(`Sessions: ${debugStringify(sanitizedSessions)}`);
-      if (this.bridgeMode === 'bridge') {
-        this.matterbridgeSessionInformations = sanitizedSessions;
-      }
-      if (this.bridgeMode === 'childbridge') {
-        const plugin = this.plugins.get(storeId);
-        if (plugin) {
-          plugin.sessionInformations = sanitizedSessions;
-        }
-      }
-    };
 
     /**
      * This event is triggered when an operative new session was opened by a Controller.
@@ -2370,7 +2278,6 @@ const commissioningController = new CommissioningController({
      */
     serverNode.events.sessions.opened.on((session) => {
       this.log.notice(`Session opened on server node for ${storeId}: ${debugStringify(session)}`);
-      sanitizeSessions(Object.values(serverNode.state.sessions.sessions));
       this.frontend.wssSendRefreshRequired('sessions');
     });
 
@@ -2379,14 +2286,12 @@ const commissioningController = new CommissioningController({
      */
     serverNode.events.sessions.closed.on((session) => {
       this.log.notice(`Session closed on server node for ${storeId}: ${debugStringify(session)}`);
-      sanitizeSessions(Object.values(serverNode.state.sessions.sessions));
       this.frontend.wssSendRefreshRequired('sessions');
     });
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
     serverNode.events.sessions.subscriptionsChanged.on((session) => {
       this.log.notice(`Session subscriptions changed on server node for ${storeId}: ${debugStringify(session)}`);
-      sanitizeSessions(Object.values(serverNode.state.sessions.sessions));
       this.frontend.wssSendRefreshRequired('sessions');
     });
 
@@ -2408,17 +2313,7 @@ const commissioningController = new CommissioningController({
     this.endAdvertiseTimeout = setTimeout(
       () => {
         if (matterServerNode.lifecycle.isCommissioned) return;
-        if (this.bridgeMode === 'bridge') {
-          this.matterbridgeQrPairingCode = undefined;
-          this.matterbridgeManualPairingCode = undefined;
-        }
-        if (this.bridgeMode === 'childbridge') {
-          const plugin = this.plugins.get(matterServerNode.id);
-          if (plugin) {
-            plugin.qrPairingCode = undefined;
-            plugin.manualPairingCode = undefined;
-          }
-        }
+        this.matterbridgeInformation.matterbridgeEndAdvertise = true;
         this.frontend.wssSendRefreshRequired('plugins');
         this.frontend.wssSendRefreshRequired('settings');
         this.frontend.wssSendRefreshRequired('fabrics');
@@ -2449,7 +2344,7 @@ const commissioningController = new CommissioningController({
    * @param {number} [timeout] - The timeout in milliseconds for stopping the server node. Defaults to 30 seconds.
    * @returns {Promise<void>} A promise that resolves when the server node has stopped.
    */
-  private async stopServerNode(matterServerNode: ServerNode, timeout = 30000): Promise<void> {
+  private async stopServerNode(matterServerNode: ServerNode, timeout: number = 30000): Promise<void> {
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
 
