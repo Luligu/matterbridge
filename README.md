@@ -376,6 +376,10 @@ AEG RX 9 / Electrolux Pure i9 robot vacuum plugin for Matterbridge.
 
 A Matterbridge plugin for Airthings air quality monitors via the Airthings Consumer API.
 
+### [Daikin AC](https://github.com/andrasg/matterbridge-daikin-ac)
+
+The plugin uses local connection to Daikin Wifi modules. The plugin does not work with Daikin cloud (Onecta) connected devices.
+
 ## How to install and add a plugin with the frontend (best option)
 
 Just open the frontend on the link provided in the log, select a plugin and click install.
