@@ -372,6 +372,10 @@ to the Matter smart home ecosystem via their local MQTT APIs.
 
 AEG RX 9 / Electrolux Pure i9 robot vacuum plugin for Matterbridge.
 
+### [Roborock robot](https://github.com/RinDevJunior/matterbridge-roborock-vacuum-plugin)
+
+Roborock robot vacuum plugin for Matterbridge.
+
 ### [Airthings](https://github.com/michaelahern/matterbridge-airthings)
 
 A Matterbridge plugin for Airthings air quality monitors via the Airthings Consumer API.
