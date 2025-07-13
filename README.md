@@ -380,6 +380,10 @@ A Matterbridge plugin for Airthings air quality monitors via the Airthings Consu
 
 The plugin uses local connection to Daikin Wifi modules. The plugin does not work with Daikin cloud (Onecta) connected devices.
 
+### [Roborock](https://github.com/RinDevJunior/matterbridge-roborock-vacuum-plugin)
+
+Matterbridge Roborock Platform Plugin is a dynamic platform plugin for Matterbridge that integrates Roborock vacuums into the Matter ecosystem, enabling control via Apple Home and other Matter-compatible apps.
+
 ## How to install and add a plugin with the frontend (best option)
 
 Just open the frontend on the link provided in the log, select a plugin and click install.
