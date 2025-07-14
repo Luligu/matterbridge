@@ -8,15 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.1.3] - 2025-07-13
-
-### Development Breaking Changes
-
-- [exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from `matterbridge/devices`. Please update your imports to use the new export path. Refer to the [documentation](README-DEV.md) for details on imports.
-
-- [MatterbridgeEndpoint]: Added the mode property: `server` will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the [documentation](README-DEV.md) for details on using mode.
-
-- [RoboticVacuumCleaner]: The signature of the constructor has changed to add the mode property. Mode `server` will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the [documentation](README-DEV.md) for details on using mode.
+## [3.1.3] - 2025-07-14
 
 ### Added
 
@@ -132,8 +124,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [package]: Downgrade jest to 29.7.0.
 - [energy]: Added parameter for cumulativeEnergyExported to the helper. For solar power device.
 - [platform]: Removed long deprecated methods: validateEntityBlackList and validateDeviceWhiteBlackList. Use validateDevice and validateEntity.
-
-### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

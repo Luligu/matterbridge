@@ -1,8 +1,10 @@
-import { vi, describe, it, expect, beforeEach, afterEach, MockInstance } from 'vitest';
-import { Matterbridge } from '../src/matterbridge.ts';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import path from 'node:path';
-import spawn from '../src/utils/spawn.ts';
+
+import { vi, describe, it, expect, beforeEach, afterEach, MockInstance } from 'vitest';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+
+import * as spawn from '../src/utils/spawn.ts';
+import { Matterbridge } from '../src/matterbridge.ts';
 
 const NAME = 'ViMatterbridgeGlobal';
 const HOMEDIR = path.join('jest', NAME);
