@@ -69,18 +69,22 @@ export interface BaseRegisteredPlugin {
   loaded?: boolean;
   started?: boolean;
   configured?: boolean;
-  paired?: boolean;
   restartRequired?: boolean;
-  fabricInformations?: SanitizedExposedFabricInformation[];
-  sessionInformations?: SanitizedSession[];
   registeredDevices?: number;
   addedDevices?: number;
-  qrPairingCode?: string;
-  manualPairingCode?: string;
   configJson?: PlatformConfig;
   schemaJson?: PlatformSchema;
   hasWhiteList?: boolean;
   hasBlackList?: boolean;
+}
+
+// Simplified interface for sending the plugins data to the frontend
+export interface FrontendRegisteredPlugin extends BaseRegisteredPlugin {
+  paired?: boolean;
+  qrPairingCode?: string;
+  manualPairingCode?: string;
+  fabricInformations?: SanitizedExposedFabricInformation[];
+  sessionInformations?: SanitizedSession[];
 }
 
 // Define an interface for storing the system information
@@ -118,12 +122,13 @@ export interface MatterbridgeInformation {
   matterbridgeLatestVersion: string;
   matterbridgeDevVersion: string;
   matterbridgeSerialNumber: string;
+  matterbridgeAdvertise: boolean | undefined;
+  matterbridgeEndAdvertise: boolean;
+  matterbridgePaired: boolean | undefined;
   matterbridgeQrPairingCode: string | undefined;
   matterbridgeManualPairingCode: string | undefined;
   matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
   matterbridgeSessionInformations: SanitizedSession[] | undefined;
-  matterbridgePaired: boolean | undefined;
-  matterbridgeAdvertise: boolean | undefined;
   bridgeMode: string;
   restartMode: string;
   virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';

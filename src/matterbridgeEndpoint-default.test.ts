@@ -735,6 +735,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('triggerSwitchEvent Press error: Switch cluster with LatchingSwitch not found'));
 
     expect((device.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).momentarySwitch).toBe(true);
+    expect((device.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).momentarySwitchRelease).toBe(true);
+    expect((device.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).momentarySwitchLongPress).toBe(true);
+    expect((device.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).momentarySwitchMultiPress).toBe(true);
     expect((device.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).latchingSwitch).toBe(false);
 
     loggerLogSpy.mockClear();
@@ -742,6 +745,35 @@ describe('Matterbridge ' + NAME, () => {
     await device.triggerSwitchEvent('Double', device.log);
     await device.triggerSwitchEvent('Long', device.log);
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
+  });
+
+  test('createDefaultMomentarySwitchClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(genericSwitch, { uniqueStorageKey: 'SwitchMomentarySingle' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultMomentarySwitchClusterServer();
+    expect(device.hasAttributeServer(Switch.Cluster.id, 'numberOfPositions')).toBe(true);
+    expect(device.hasAttributeServer(Switch.Cluster.id, 'currentPosition')).toBe(true);
+    expect(device.hasAttributeServer(Switch.Cluster.id, 'multiPressMax')).toBe(false);
+
+    await device.triggerSwitchEvent('Single', device.log);
+    await device.triggerSwitchEvent('Double', device.log);
+    await device.triggerSwitchEvent('Long', device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
+
+    await add(device);
+    expect((matterbridge as any).frontend.getClusterTextFromDevice(device)).toBe('Position: 0');
+
+    expect((device.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).momentarySwitch).toBe(true);
+    expect((device.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).momentarySwitchRelease).toBe(false);
+    expect((device.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).momentarySwitchLongPress).toBe(false);
+    expect((device.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).momentarySwitchMultiPress).toBe(false);
+    expect((device.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).latchingSwitch).toBe(false);
+
+    loggerLogSpy.mockClear();
+    await device.triggerSwitchEvent('Single', device.log);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger endpoint ${or}${device.id}:${device.number}${db} event ${hk}Switch.SinglePress${db}`));
   });
 
   test('createDefaultLatchingSwitchClusterServer', async () => {

@@ -2044,13 +2044,15 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default momentary switch cluster server with features MomentarySwitch, MomentarySwitchRelease, MomentarySwitchLongPress and MomentarySwitchMultiPress.
+   * Creates a default momentary switch cluster server with features MomentarySwitch, MomentarySwitchRelease, MomentarySwitchLongPress and MomentarySwitchMultiPress
+   * and events initialPress, longPress, shortRelease, longRelease, multiPressOngoing, multiPressComplete.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * This method adds a cluster server with default momentary switch features and configuration suitable for (AppleHome) Single Double Long automations.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultSwitchClusterServer() {
+  createDefaultSwitchClusterServer(): this {
     this.behaviors.require(
       MatterbridgeSwitchServer.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress).enable({
         events: { initialPress: true, longPress: true, shortRelease: true, longRelease: true, multiPressOngoing: true, multiPressComplete: true },
@@ -2065,13 +2067,35 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a default momentary switch cluster server with feature MomentarySwitch and event initialPress.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * This method adds a cluster server with default momentary switch features and configuration suitable for Single press automations.
+   */
+  createDefaultMomentarySwitchClusterServer(): this {
+    this.behaviors.require(
+      MatterbridgeSwitchServer.with(Switch.Feature.MomentarySwitch).enable({
+        events: { initialPress: true },
+      }),
+      {
+        numberOfPositions: 2,
+        currentPosition: 0,
+      },
+    );
+    return this;
+  }
+
+  /**
    * Creates a default latching switch cluster server with features LatchingSwitch.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * This method adds a cluster server with default latching switch features and configuration suitable for a latching switch with 2 positions.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultLatchingSwitchClusterServer() {
+  createDefaultLatchingSwitchClusterServer(): this {
     this.behaviors.require(
       SwitchServer.with(Switch.Feature.LatchingSwitch).enable({
         events: { switchLatched: true },
@@ -2407,10 +2431,19 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default PressureMeasurement cluster server.
    *
-   * @param {number | null} measuredValue - The measured value for the pressure.
-   * @param {number | null} minMeasuredValue - The minimum measured value for the pressure.
-   * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure.
+   * @param {number | null} measuredValue - The measured value for the pressure in kPa x 10.
+   * @param {number | null} minMeasuredValue - The minimum measured value for the pressure in kPa x 10.
+   * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure in kPa x 10.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - MeasuredValue = 10 x Pressure in kPa
+   * - MeasuredValue = 1 x Pressure in hPa
+   * - MeasuredValue = 33.8639 x Pressure in inHg
+   *
+   * Conversion:
+   * - 1 kPa = 10 hPa
+   * - 1 inHg = 33.8639 hPa
    */
   createDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
     this.behaviors.require(PressureMeasurementServer, getDefaultPressureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
@@ -2490,6 +2523,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @param {number} [uncertainty] - The uncertainty value (optional).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
   createDefaultTvocMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air, uncertainty?: number) {
     this.behaviors.require(TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2509,6 +2545,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The measurement medium (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   * 
+   * @remarks
+   * The measurementMedium attribute is fixed and cannot be changed after creation.
    */
   createLevelTvocMeasurementClusterServer(levelValue = ConcentrationMeasurement.LevelValue.Unknown, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.LevelIndication, ConcentrationMeasurement.Feature.MediumLevel, ConcentrationMeasurement.Feature.CriticalLevel), {
@@ -2525,6 +2564,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
   createDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(CarbonMonoxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2545,6 +2587,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
   createDefaultCarbonDioxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(CarbonDioxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2565,6 +2610,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
   createDefaultFormaldehydeConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(FormaldehydeConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2585,6 +2633,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
   createDefaultPm1ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(Pm1ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2605,6 +2656,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
   createDefaultPm25ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(Pm25ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2625,6 +2679,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
   createDefaultPm10ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(Pm10ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2645,6 +2702,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
   createDefaultOzoneConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(OzoneConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2665,6 +2725,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
   createDefaultRadonConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(RadonConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2685,6 +2748,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
   createDefaultNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(NitrogenDioxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {

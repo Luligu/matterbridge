@@ -350,8 +350,9 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).getVendorIdName(4718)).toContain('Xiaomi');
       expect((matterbridge as any).getVendorIdName(4742)).toContain('eWeLink');
       expect((matterbridge as any).getVendorIdName(5264)).toContain('Shelly');
-      expect((matterbridge as any).getVendorIdName(65521)).toContain('MatterServer');
-      expect((matterbridge as any).getVendorIdName(matterbridge.aggregatorVendorId)).toContain('MatterServer');
+      expect((matterbridge as any).getVendorIdName(0x1488)).toContain('ShortcutLabsFlic');
+      expect((matterbridge as any).getVendorIdName(65521)).toContain('MatterTest');
+      expect((matterbridge as any).getVendorIdName(matterbridge.aggregatorVendorId)).toContain('MatterTest');
       expect((matterbridge as any).getVendorIdName(1)).toContain('Unknown vendorId');
     });
 

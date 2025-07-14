@@ -8,6 +8,28 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.1.3] - 2025-07-14
+
+### Added
+
+- [endpoint]: Improved jsdoc description on endpoint helpers.
+- [endpoint]: Added createDefaultMomentarySwitchClusterServer() cluster helper.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [vendorId]: Added Shortcut Labs Flic (0x1488).
+- [server]: Refactored serverNode event handlers and types.
+- [matterbridge]: Removed duplicated properties.
+
+### Fixed
+
+- [shutdown]: Fixed error messages from frontend when Matterbridge is shutting down.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.1.2] - 2025-07-06
 
 ### Development Breaking Changes
@@ -102,8 +124,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [package]: Downgrade jest to 29.7.0.
 - [energy]: Added parameter for cumulativeEnergyExported to the helper. For solar power device.
 - [platform]: Removed long deprecated methods: validateEntityBlackList and validateDeviceWhiteBlackList. Use validateDevice and validateEntity.
-
-### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
