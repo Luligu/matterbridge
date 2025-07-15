@@ -15,6 +15,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Updated dependencies.
+- [bin]: Updated matterbridge bin.
 
 ### Fixed
 
