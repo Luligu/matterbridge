@@ -16,6 +16,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [package]: Updated dependencies.
 - [bin]: Updated matterbridge bin.
+- [network]: Refactor network logging to improve clarity and update logging format.
 
 ### Fixed
 
