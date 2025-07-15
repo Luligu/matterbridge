@@ -43,7 +43,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "matterbridge": "bin/matterbridge"
+    "matterbridge": "bin/matterbridge.js"
   },
   "engines": {
     "node": ">=18.0.0 <19.0.0 || >=20.0.0 <21.0.0 || >=22.0.0 <23.0.0 || >=24.0.0 <25.0.0"

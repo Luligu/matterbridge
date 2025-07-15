@@ -50,6 +50,9 @@ jobs:
       - name: Install matterbridge
         run: npm install -g .
 
+      - name: Test matterbridge cli
+        run: matterbridge -loginterfaces
+
       - name: Test the project
         run: npm run test
 
