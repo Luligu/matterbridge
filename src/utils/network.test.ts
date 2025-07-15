@@ -45,7 +45,7 @@ import { get, RequestOptions } from 'node:https';
 import { exec, ChildProcess, ExecException } from 'node:child_process';
 import { PassThrough } from 'node:stream';
 import { ClientRequest, IncomingMessage } from 'node:http';
-import { AnsiLogger, idn, rs, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger, idn, rs, LogLevel, BLUE, nf } from 'node-ansi-logger';
 
 import { getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname, getNpmPackageVersion, getGlobalNodeModules } from './network.js';
 
@@ -168,24 +168,17 @@ describe('logInterfaces()', () => {
   };
 
   beforeAll(() => {
-    jest.spyOn(os, 'networkInterfaces').mockReturnValue(fakeIfaces as any);
+    jest.spyOn(os, 'networkInterfaces').mockReturnValueOnce(fakeIfaces as any);
   });
 
   afterAll(() => {});
 
-  it('logs nothing when debug=false', () => {
-    logInterfaces(false);
-    expect(loggerLogSpy).not.toHaveBeenCalled();
-  });
-
   it('logs interface details when debug=true', () => {
-    logInterfaces(true);
+    logInterfaces();
     // First call: Available Network Interfaces:
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Available Network Interfaces:');
     // Second: Interface: <idn>eth0<rs>
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Interface: ${idn}eth0${rs}`);
-    // Third: Details: <detail>
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Details:', fakeIfaces.eth0[0]);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Network interface ${BLUE}eth0${nf}:`);
   });
 });
 

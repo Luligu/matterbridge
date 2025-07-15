@@ -1,10 +1,9 @@
 /**
- * This file contains the network functions.
- *
+ * @description This file contains the network functions.
  * @file network.ts
  * @author Luca Liguori
  * @created 2024-02-17
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -28,7 +27,7 @@ import os from 'node:os';
 import type { ExecException } from 'node:child_process';
 
 // AnsiLogger module
-import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, CYAN, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
 /**
  * Retrieves the IPv4 address of the first non-internal network interface.
@@ -110,22 +109,25 @@ export function getMacAddress(): string | undefined {
 /**
  * Logs the available network interfaces and their details.
  *
- * @param {boolean} [debug] - Whether to enable logging of network interface details (default is true).
  * @returns {void}
  */
-export function logInterfaces(debug = true) {
+export function logInterfaces(): void {
   const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
   log.logLevel = LogLevel.INFO;
   log.logName = 'LogInterfaces';
 
-  const networkInterfaces = os.networkInterfaces();
-  if (debug) log.info('Available Network Interfaces:');
-  for (const [interfaceName, networkInterface] of Object.entries(networkInterfaces)) {
-    if (!networkInterface) break;
-    if (debug) log.info(`Interface: ${idn}${interfaceName}${rs}`);
-    for (const detail of networkInterface) {
-      if (debug) log.info('Details:', detail);
+  log.info('Available Network Interfaces:');
+  const availableAddresses = Object.entries(os.networkInterfaces());
+  for (const [ifaceName, ifaces] of availableAddresses) {
+    if (ifaces && ifaces.length > 0) {
+      log.info(`Network interface ${BLUE}${ifaceName}${nf}:`);
+      ifaces.forEach((iface) => {
+        log.info(
+          `- ${CYAN}${iface.family}${nf} address ${CYAN}${iface.address}${nf} netmask ${CYAN}${iface.netmask}${nf} mac ${CYAN}${iface.mac}${nf}` +
+            `${iface.scopeid ? ` scopeid ${CYAN}${iface.scopeid}${nf}` : ''}${iface.cidr ? ` cidr ${CYAN}${iface.cidr}${nf}` : ''} ${CYAN}${iface.internal ? 'internal' : 'external'}${nf}`,
+        );
+      });
     }
   }
 }
@@ -160,7 +162,7 @@ export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): 
  * @returns {Promise<string>} A promise that resolves to the version string of the package.
  * @throws {Error} If the request fails or the tag is not found.
  */
-export async function getNpmPackageVersion(packageName: string, tag = 'latest', timeout = 10000): Promise<string> {
+export async function getNpmPackageVersion(packageName: string, tag: string = 'latest', timeout: number = 10000): Promise<string> {
   const https = await import('node:https');
   return new Promise((resolve, reject) => {
     const url = `https://registry.npmjs.org/${packageName}`;
