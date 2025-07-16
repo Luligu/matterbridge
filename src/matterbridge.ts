@@ -30,7 +30,7 @@ import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt, BLUE } from 'node-ansi-logger';
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
@@ -594,9 +594,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     const availableInterfaces = Object.keys(networkInterfaces);
     for (const [ifaceName, ifaces] of availableAddresses) {
       if (ifaces && ifaces.length > 0) {
-        this.log.debug(`Network interface: ${CYAN}${ifaceName}${db}:`);
+        this.log.debug(`Network interface ${BLUE}${ifaceName}${db}:`);
         ifaces.forEach((iface) => {
-          this.log.debug(`- ${CYAN}${iface.family}${db} address ${CYAN}${iface.address}${db} netmask ${CYAN}${iface.netmask}${db} mac ${CYAN}${iface.mac}${db} scopeid ${CYAN}${iface.scopeid}${db} ${iface.internal ? 'internal' : 'external'}`);
+          this.log.debug(
+            `- ${CYAN}${iface.family}${db} address ${CYAN}${iface.address}${db} netmask ${CYAN}${iface.netmask}${db} mac ${CYAN}${iface.mac}${db}` +
+              `${iface.scopeid ? ` scopeid ${CYAN}${iface.scopeid}${db}` : ''}${iface.cidr ? ` cidr ${CYAN}${iface.cidr}${db}` : ''} ${CYAN}${iface.internal ? 'internal' : 'external'}${db}`,
+          );
         });
       }
     }
@@ -844,7 +847,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     if (hasParameter('loginterfaces')) {
       const { logInterfaces } = await import('./utils/network.js');
-      this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
+      // this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
       logInterfaces();
       this.shutdown = true;
       return;

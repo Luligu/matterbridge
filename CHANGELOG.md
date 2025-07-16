@@ -8,6 +8,27 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.1.4] - 2025-07-16
+
+### Added
+
+- [frontend]: Added support for p12 certificates. Add cert.p12 and cert.pass in the '.matterbridge/cert' directory. If both .p12 and cert.pem are present, only the .p12 will be used. See the README.md for more info.
+- [frontend]: Added support for p12 certificates with mTLS: both the server and the client must present the correct certificate. Add the parameter '-mtls'. See the README.md for more info.
+- [frontend]: Improved test units on Frontend class (total coverage 98%).
+
+### Changed
+
+- [package]: Updated dependencies.
+- [network]: Refactor network logging to improve clarity and update logging format.
+
+### Fixed
+
+- [bin]: Updated matterbridge bin.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.1.3] - 2025-07-14
 
 ### Added

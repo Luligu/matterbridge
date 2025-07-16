@@ -646,7 +646,7 @@ describe('Matterbridge', () => {
 
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-loginterfaces'];
       await (matterbridge as any).parseCommandLine();
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} network interfaces log`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Network interface`));
       await shutdownPromise;
       matterbridge.shutdown = false;
       matterbridge.removeAllListeners('shutdown');

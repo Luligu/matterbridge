@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: dev
-          fetch-depth: 0
+          # fetch-depth: 0
           # Ensure full history is available for versioning
           # This is important to ensure that the git SHA is accurate for the versioning
           # and to allow the script to check if the dev version has changed since the last publish.
@@ -41,7 +41,7 @@ jobs:
           echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
           echo "ORIG_SHA=$SHA"    >> $GITHUB_ENV
 
-      - name: Bump to date-stamped dev version (no git tag)
+      - name: Bump to date-stamped dev version --no-git-tag-version tag ${{ env.DEV_TAG }} sha ${{ env.ORIG_SHA }}
         run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version
 
       - name: Install dependencies

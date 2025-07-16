@@ -86,19 +86,19 @@ Avoid using VLAN and firewall blocking the communications between the controller
 
 Follow these steps to install Matterbridge:
 
-```
+```bash
 npm install -g matterbridge --omit=dev
 ```
 
 on Linux or macOS you may need the necessary permissions:
 
-```
+```bash
 sudo npm install -g matterbridge --omit=dev
 ```
 
 Test the installation with:
 
-```
+```bash
 matterbridge
 ```
 
@@ -110,7 +110,7 @@ You can then change the bridge mode and other parameters from the frontend.
 
 ### mode bridge
 
-```
+```bash
 matterbridge -bridge
 ```
 
@@ -120,7 +120,7 @@ Matterbridge only exposes itself, and you have to pair it scanning the QR code s
 
 ### mode childbridge
 
-```
+```bash
 matterbridge -childbridge
 ```
 
@@ -130,7 +130,7 @@ Matterbridge exposes each registered plugins, and you have to pair each one by s
 
 ### Use matterbridge -help to see the command line syntax
 
-```
+```bash
 matterbridge -help
 ```
 
@@ -142,7 +142,7 @@ You can change the default port by adding the frontend parameter when you run it
 
 Here's how to specify a different port number:
 
-```
+```bash
 matterbridge -frontend [port number]
 ```
 
@@ -394,15 +394,15 @@ To install i.e. https://github.com/Luligu/matterbridge-zigbee2mqtt
 
 On windows:
 
-```
+```powershell
 cd $HOME\Matterbridge
 npm install -g matterbridge-zigbee2mqtt
 matterbridge -add matterbridge-zigbee2mqtt
 ```
 
-On linux:
+On linux or macOS:
 
-```
+```bash
 cd ~/Matterbridge
 sudo npm install -g matterbridge-zigbee2mqtt
 matterbridge -add matterbridge-zigbee2mqtt
@@ -410,43 +410,43 @@ matterbridge -add matterbridge-zigbee2mqtt
 
 ## How to add a plugin to Matterbridge from a terminal
 
-```
+```bash
 matterbridge -add [plugin path or plugin name]
 ```
 
 ## How to remove a plugin from Matterbridge from a terminal
 
-```
+```bash
 matterbridge -remove [plugin path or plugin name]
 ```
 
 ## How to disable a registered plugin from a terminal
 
-```
+```bash
 matterbridge -disable [plugin path or plugin name]
 ```
 
 ## How to enable a registered plugin from a terminal
 
-```
+```bash
 matterbridge -enable [plugin path or plugin name]
 ```
 
 ## How to remove the commissioning information for Matterbridge so you can pair it again (bridge mode). Shutdown Matterbridge before!
 
-```
+```bash
 matterbridge -reset
 ```
 
 ## How to remove the commissioning information for a registered plugin so you can pair it again (childbridge mode). Shutdown Matterbridge before!
 
-```
+```bash
 matterbridge -reset [plugin path or plugin name]
 ```
 
 ## How to factory reset Matterbridge. Shutdown Matterbridge before!
 
-```
+```bash
 matterbridge -factoryreset
 ```
 
@@ -456,7 +456,7 @@ This will reset the internal storages. All commissioning informations will be lo
 
 ## How to enable HTTPS for the frontend
 
-### Provide your own certificates
+### Provide your own standard certificate, key and ca (optional)
 
 Place your own certificates in the `.matterbridge/cert` directory:
 
@@ -466,12 +466,33 @@ Place your own certificates in the `.matterbridge/cert` directory:
 
 ![image](screenshot/Screenshot%20Certificates.png)
 
+Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
+
+### Provide your own 'PKCS#12' certificate and the passphrase
+
+Place your own p12 certificate (binary file) and the passphrase (text file) in the `.matterbridge/cert` directory:
+
+- `cert.p12`
+- `cert.pass`
+
+Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
+
 ### Change the command line
 
-Add the **-ssl** parameter to the command line. If desired, you can also change the frontend port with **-frontend 443**.
+Add the **-ssl** parameter to the command line.
 
-```sh
+If desired, you can also change the frontend port with **-frontend 443**.
+
+```bash
 matterbridge -ssl -frontend 443
+```
+
+Add the **-mtls** parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible).
+
+The browser must provide the client certificate: on Windows you need to import it in Current User → Personal → Certificates with certmgr.msc.
+
+```bash
+matterbridge -ssl -mtls -frontend 443
 ```
 
 ### Restart
@@ -497,6 +518,8 @@ Wait a few minutes to allow the logs to to accumulate.
 Then, from the dots menu in the frontend, download the `matterbridge.log` and `matter.log` files.
 
 ![image](screenshot/Screenshot%20Debug%20Download%20Logs.png)
+
+Don't forget to unselect the debug mode when is no more needed. The network traffic and cpu usage is very high in debug mode.
 
 # Known general issues
 

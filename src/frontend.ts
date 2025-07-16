@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -27,7 +27,7 @@ import { Server as HttpServer, createServer, IncomingMessage } from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
-import { promises as fs } from 'node:fs';
+import { existsSync, promises as fs } from 'node:fs';
 import EventEmitter from 'node:events';
 
 // Third-party modules
@@ -147,14 +147,15 @@ export const WS_ID_SHELLY_MAIN_UPDATE = 101;
 interface FrontendEvents {
   server_listening: [protocol: string, port: number, address?: string];
   server_error: [error: Error];
+  server_stopped: [];
   websocket_server_listening: [host: string];
+  websocket_server_stopped: [];
 }
 
 export class Frontend extends EventEmitter<FrontendEvents> {
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
   private port = 8283;
-  private initializeError = false;
 
   private expressApp: express.Express | undefined;
   private httpServer: HttpServer | undefined;
@@ -216,6 +217,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
       try {
+        this.log.debug(`Creating HTTP server...`);
         this.httpServer = createServer(this.expressApp);
       } catch (error) {
         this.log.error(`Failed to create HTTP server: ${error}`);
@@ -247,42 +249,76 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.log.error(`Port ${this.port} is already in use`);
             break;
         }
-        this.initializeError = true;
         this.emit('server_error', error);
         return;
       });
     } else {
-      // Load the SSL certificate, the private key and optionally the CA certificate
       let cert: string | undefined;
-      try {
-        cert = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem'), 'utf8');
-        this.log.info(`Loaded certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}`);
-      } catch (error) {
-        this.log.error(`Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}: ${error}`);
-        this.emit('server_error', error as Error);
-        return;
-      }
       let key: string | undefined;
-      try {
-        key = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem'), 'utf8');
-        this.log.info(`Loaded key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}`);
-      } catch (error) {
-        this.log.error(`Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}: ${error}`);
-        this.emit('server_error', error as Error);
-        return;
-      }
       let ca: string | undefined;
-      try {
-        ca = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8');
-        this.log.info(`Loaded CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem')}`);
-      } catch (error) {
-        this.log.info(`CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem')} not loaded: ${error}`);
+      let fullChain: string | undefined;
+
+      let pfx: Buffer | undefined;
+      let passphrase: string | undefined;
+
+      let httpsServerOptions: https.ServerOptions = {};
+
+      if (existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'))) {
+        // Load the p12 certificate and the passphrase
+        try {
+          pfx = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
+          this.log.info(`Loaded p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12')}`);
+        } catch (error) {
+          this.log.error(`Error reading p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12')}: ${error}`);
+          this.emit('server_error', error as Error);
+          return;
+        }
+        try {
+          passphrase = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass'), 'utf8');
+          passphrase = passphrase.trim(); // Ensure no extra characters
+          this.log.info(`Loaded p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass')}`);
+        } catch (error) {
+          this.log.error(`Error reading p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass')}: ${error}`);
+          this.emit('server_error', error as Error);
+          return;
+        }
+        httpsServerOptions = { pfx, passphrase };
+      } else {
+        // Load the SSL certificate, the private key and optionally the CA certificate. If the CA certificate is present, it will be used to create a full chain certificate.
+        try {
+          cert = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem'), 'utf8');
+          this.log.info(`Loaded certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}`);
+        } catch (error) {
+          this.log.error(`Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}: ${error}`);
+          this.emit('server_error', error as Error);
+          return;
+        }
+        try {
+          key = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem'), 'utf8');
+          this.log.info(`Loaded key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}`);
+        } catch (error) {
+          this.log.error(`Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}: ${error}`);
+          this.emit('server_error', error as Error);
+          return;
+        }
+        try {
+          ca = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8');
+          fullChain = `${cert}\n${ca}`;
+          this.log.info(`Loaded CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem')}`);
+        } catch (error) {
+          this.log.info(`CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem')} not loaded: ${error}`);
+        }
+        httpsServerOptions = { cert: fullChain ?? cert, key, ca };
       }
-      const serverOptions: https.ServerOptions = { cert, key, ca };
+      if (hasParameter('mtls')) {
+        httpsServerOptions.requestCert = true; // Request client certificate
+        httpsServerOptions.rejectUnauthorized = true; // Require client certificate validation
+      }
 
       // Create an HTTPS server with the SSL certificate and private key (ca is optional) and attach the express app
       try {
-        this.httpsServer = https.createServer(serverOptions, this.expressApp);
+        this.log.debug(`Creating HTTPS server...`);
+        this.httpsServer = https.createServer(httpsServerOptions, this.expressApp);
       } catch (error) {
         this.log.error(`Failed to create HTTPS server: ${error}`);
         this.emit('server_error', error as Error);
@@ -313,17 +349,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.log.error(`Port ${this.port} is already in use`);
             break;
         }
-        this.initializeError = true;
         this.emit('server_error', error);
         return;
       });
     }
 
-    if (this.initializeError) return;
-
     // Create a WebSocket server and attach it to the http or https server
     const wssPort = this.port;
     const wssHost = hasParameter('ssl') ? `wss://${this.matterbridge.systemInformation.ipv4Address}:${wssPort}` : `ws://${this.matterbridge.systemInformation.ipv4Address}:${wssPort}`;
+    this.log.debug(`Creating WebSocketServer on host ${CYAN}${wssHost}${db}...`);
     this.webSocketServer = new WebSocketServer(hasParameter('ssl') ? { server: this.httpsServer } : { server: this.httpServer });
 
     this.webSocketServer.on('connection', (ws: WebSocket, request: IncomingMessage) => {
@@ -359,6 +393,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       });
 
       ws.on('error', (error: Error) => {
+        // istanbul ignore next
         this.log.error(`WebSocket client error: ${error}`);
       });
     });
@@ -737,6 +772,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.error(`Error closing WebSocket server: ${error}`);
             } else {
               this.log.debug('WebSocket server closed successfully');
+              this.emit('websocket_server_stopped');
             }
             resolve();
           });
@@ -758,6 +794,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.error(`Error closing http server: ${error}`);
             } else {
               this.log.debug('Http server closed successfully');
+              this.emit('server_stopped');
             }
             resolve();
           });
@@ -780,6 +817,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.error(`Error closing https server: ${error}`);
             } else {
               this.log.debug('Https server closed successfully');
+              this.emit('server_stopped');
             }
             resolve();
           });
@@ -1269,6 +1307,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                 });
             } else {
               // The package is matterbridge
+              // istanbul ignore next if
               if (this.matterbridge.restartMode !== '') {
                 this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
                 this.matterbridge.shutdownProcess();
