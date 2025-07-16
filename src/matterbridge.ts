@@ -176,8 +176,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterbridgeLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   public matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
 
-  public plugins!: PluginManager;
-  public devices!: DeviceManager;
+  public plugins = new PluginManager(this);
+  public devices = new DeviceManager(this);
   public frontend = new Frontend(this);
 
   // Matterbridge storage
@@ -687,12 +687,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`Virtual mode ${this.matterbridgeInformation.virtualMode}.`);
 
     // Initialize PluginManager
-    this.plugins = new PluginManager(this);
-    await this.plugins.loadFromStorage();
     this.plugins.logLevel = this.log.logLevel;
+    await this.plugins.loadFromStorage();
 
     // Initialize DeviceManager
-    this.devices = new DeviceManager(this);
     this.devices.logLevel = this.log.logLevel;
 
     // Get the plugins from node storage and create the plugins node storage contexts

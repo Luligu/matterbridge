@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.1.2
+ * @version 1.1.3
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -28,8 +28,6 @@ import type { ExecException } from 'node:child_process';
 
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr } from 'node-ansi-logger';
-// NodeStorage module
-import { NodeStorage } from 'node-persist-manager';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
@@ -51,15 +49,12 @@ interface PluginManagerEvents {
 
 export class PluginManager extends EventEmitter<PluginManagerEvents> {
   private _plugins = new Map<string, RegisteredPlugin>();
-  private nodeContext: NodeStorage;
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
 
   constructor(matterbridge: Matterbridge) {
     super();
     this.matterbridge = matterbridge;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.nodeContext = (matterbridge as any).nodeContext;
     this.log = new AnsiLogger({ logName: 'PluginManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.log.logLevel });
     this.log.debug('Matterbridge plugin manager starting...');
   }
@@ -124,8 +119,11 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @returns {Promise<RegisteredPlugin[]>} A promise that resolves to an array of registered plugins.
    */
   async loadFromStorage(): Promise<RegisteredPlugin[]> {
+    if (!this.matterbridge.nodeContext) {
+      throw new Error('loadFromStorage: node context is not available.');
+    }
     // Load the array from storage and convert it to a map
-    const pluginsArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+    const pluginsArray = await this.matterbridge.nodeContext.get<RegisteredPlugin[]>('plugins', []);
     for (const plugin of pluginsArray) this._plugins.set(plugin.name, plugin);
     return pluginsArray;
   }
@@ -139,6 +137,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @returns {Promise<RegisteredPlugin[]>} A promise that resolves to an array of registered plugins.
    */
   async saveToStorage(): Promise<number> {
+    if (!this.matterbridge.nodeContext) {
+      throw new Error('loadFromStorage: node context is not available.');
+    }
     // Convert the map to an array
     const plugins: RegisteredPlugin[] = [];
     const pluginArrayFromMap = Array.from(this._plugins.values());
@@ -153,7 +154,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         enabled: plugin.enabled,
       });
     }
-    await this.nodeContext.set<RegisteredPlugin[]>('plugins', plugins);
+    await this.matterbridge.nodeContext.set<RegisteredPlugin[]>('plugins', plugins);
     this.log.debug(`Saved ${BLUE}${plugins.length}${db} plugins to storage`);
     return plugins.length;
   }

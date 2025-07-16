@@ -92,9 +92,9 @@ describe('PluginManager', () => {
   test('Load matterbridge', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeInstanceOf(Matterbridge);
-    plugins = (matterbridge as any).plugins;
+    plugins = matterbridge.plugins;
     expect(plugins).toBeInstanceOf(PluginManager);
-    devices = (matterbridge as any).devices;
+    devices = matterbridge.devices;
     expect(devices).toBeInstanceOf(DeviceManager);
   }, 60000);
 
@@ -107,6 +107,15 @@ describe('PluginManager', () => {
     plugins.clear();
     expect(await plugins.saveToStorage()).toBe(0);
     expect(await plugins.loadFromStorage()).toHaveLength(0);
+  });
+
+  test('save and load from storage with no context', async () => {
+    plugins.clear();
+    const context = matterbridge.nodeContext;
+    matterbridge.nodeContext = undefined;
+    await expect(plugins.saveToStorage()).rejects.toThrow(new Error('loadFromStorage: node context is not available.'));
+    await expect(plugins.loadFromStorage()).rejects.toThrow(new Error('loadFromStorage: node context is not available.'));
+    matterbridge.nodeContext = context;
   });
 
   test('size returns correct number of plugins', () => {

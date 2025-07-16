@@ -92,11 +92,6 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.matterbridgeVersion).toBe('');
     expect(matterbridge.matterbridgeLatestVersion).toBe('');
     expect(matterbridge.matterbridgeDevVersion).toBe('');
-    expect(matterbridge.matterbridgeQrPairingCode).toBeUndefined();
-    expect(matterbridge.matterbridgeManualPairingCode).toBeUndefined();
-    expect(matterbridge.matterbridgeFabricInformations).toBeUndefined();
-    expect(matterbridge.matterbridgeSessionInformations).toBeUndefined();
-    expect(matterbridge.matterbridgePaired).toBeUndefined();
     expect(matterbridge.bridgeMode).toBe('');
     expect(matterbridge.restartMode).toBe('');
     expect(matterbridge.profile).toBe('Jest');
@@ -108,8 +103,8 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.Jest.log');
     expect(matterbridge.matterLoggerFile).toBe('matter.Jest.log');
 
-    expect(matterbridge.plugins).toBeUndefined();
-    expect(matterbridge.devices).toBeUndefined();
+    expect(matterbridge.plugins).toBeDefined();
+    expect(matterbridge.devices).toBeDefined();
 
     expect(matterbridge.frontend).toBeDefined();
     expect((matterbridge.frontend as any).httpServer).toBeUndefined();
