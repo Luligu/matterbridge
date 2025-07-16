@@ -479,8 +479,8 @@ describe('Matterbridge frontend', () => {
   test('Frontend.start() -ssl with p12 cert', async () => {
     process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
-    setDebug(true);
-    frontend.logLevel = LogLevel.DEBUG;
+    // setDebug(true);
+    // frontend.logLevel = LogLevel.DEBUG;
 
     copyFileSync(path.join('src/mock/certs/server.p12'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
     copyFileSync(path.join('src/mock/certs/server.pass'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pass'));
@@ -506,10 +506,8 @@ describe('Matterbridge frontend', () => {
       }
     });
     await frontend.start(FRONTEND_PORT);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error reading p12 certificate file`));
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to create HTTPS server: Error: Test error`));
 
-    setDebug(true);
+    setDebug(false);
 
     await new Promise<void>((resolve) => {
       frontend.on('server_listening', (protocol, port) => {
@@ -537,7 +535,76 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded CA certificate file`));
 
     const client = new WebSocket(`wss://localhost:${FRONTEND_PORT}`, {
-      ca: readFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8'), // Provide CA certificate for validation
+      ca: readFileSync(path.join('src/mock/certs/ca.crt'), 'utf8'), // Provide CA certificate for validation
+      rejectUnauthorized: true, // Force certificate validation
+    });
+    await new Promise<void>((resolve, reject) => {
+      client.on('open', () => {
+        console.log(`WebSocket connection established`);
+        resolve();
+      });
+      client.on('message', (data) => {
+        console.log(`Received message: ${data}`);
+      });
+      client.on('close', () => {
+        console.warn(`WebSocket connection closed`);
+      });
+      client.on('error', (error) => {
+        console.error(`WebSocket error: ${error}`);
+        reject(error);
+      });
+    });
+    client.ping(); // Send a ping to test the connection
+    client.pong(); // Send a pong to test the connection
+    client.send('test'); // Send a message to test the connection
+
+    await new Promise<void>((resolve) => {
+      frontend.on('websocket_server_stopped', () => {
+        // console.log(`WebSocket server stopped`);
+      });
+      frontend.on('server_stopped', () => {
+        // console.log(`Server stopped`);
+        resolve();
+      });
+      frontend.stop();
+    });
+  });
+
+  test('Frontend.start() -ssl with p12 cert and mTLS', async () => {
+    process.argv = ['node', 'frontend.test.js', '-ssl', '-mtls', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+
+    copyFileSync(path.join('src/mock/certs/server.p12'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
+    copyFileSync(path.join('src/mock/certs/server.pass'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pass'));
+
+    await new Promise<void>((resolve) => {
+      frontend.on('server_listening', (protocol, port) => {
+        expect(protocol).toBe('https');
+        expect(port).toBe(FRONTEND_PORT);
+      });
+      frontend.on('websocket_server_listening', (host) => {
+        expect(host.startsWith('wss://')).toBe(true);
+        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+        resolve();
+      });
+      frontend.start(FRONTEND_PORT);
+    });
+
+    expect((matterbridge as any).initialized).toBe(true);
+    expect((matterbridge as any).frontend.httpServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeDefined();
+    expect((matterbridge as any).frontend.expressApp).toBeDefined();
+    expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
+    expect(startSpy).toHaveBeenNthCalledWith(1, FRONTEND_PORT);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded p12 certificate file`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded p12 passphrase file`));
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded certificate file`));
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded key file`));
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded CA certificate file`));
+
+    const client = new WebSocket(`wss://localhost:${FRONTEND_PORT}`, {
+      cert: readFileSync(path.join('src/mock/certs/client.crt'), 'utf8'), // Provide certificate for validation
+      key: readFileSync(path.join('src/mock/certs/client.key'), 'utf8'), // Provide key for validation
+      ca: readFileSync(path.join('src/mock/certs/ca.crt'), 'utf8'), // Provide CA certificate for validation
       rejectUnauthorized: true, // Force certificate validation
     });
     await new Promise<void>((resolve, reject) => {

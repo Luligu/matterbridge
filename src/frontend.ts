@@ -261,7 +261,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       let pfx: Buffer | undefined;
       let passphrase: string | undefined;
 
-      let serverOptions: https.ServerOptions = {};
+      let httpsServerOptions: https.ServerOptions = {};
 
       if (existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'))) {
         // Load the p12 certificate and the passphrase
@@ -282,7 +282,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.emit('server_error', error as Error);
           return;
         }
-        serverOptions = { pfx, passphrase };
+        httpsServerOptions = { pfx, passphrase };
       } else {
         // Load the SSL certificate, the private key and optionally the CA certificate. If the CA certificate is present, it will be used to create a full chain certificate.
         try {
@@ -308,13 +308,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         } catch (error) {
           this.log.info(`CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem')} not loaded: ${error}`);
         }
-        serverOptions = { cert: fullChain ?? cert, key, ca };
+        httpsServerOptions = { cert: fullChain ?? cert, key, ca };
+      }
+      if (hasParameter('mtls')) {
+        httpsServerOptions.requestCert = true; // Request client certificate
+        httpsServerOptions.rejectUnauthorized = true; // Require client certificate validation
       }
 
       // Create an HTTPS server with the SSL certificate and private key (ca is optional) and attach the express app
       try {
         this.log.debug(`Creating HTTPS server...`);
-        this.httpsServer = https.createServer(serverOptions, this.expressApp);
+        this.httpsServer = https.createServer(httpsServerOptions, this.expressApp);
       } catch (error) {
         this.log.error(`Failed to create HTTPS server: ${error}`);
         this.emit('server_error', error as Error);

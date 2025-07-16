@@ -456,15 +456,6 @@ This will reset the internal storages. All commissioning informations will be lo
 
 ## How to enable HTTPS for the frontend
 
-### Provide your own 'PKCS#12' certificate and the passphrase
-
-Place your own p12 certificate (binary file) and the passphrase (text file) in the `.matterbridge/cert` directory:
-
-- `cert.p12`
-- `cert.pass`
-
-Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
-
 ### Provide your own standard certificate, key and ca (optional)
 
 Place your own certificates in the `.matterbridge/cert` directory:
@@ -477,12 +468,35 @@ Place your own certificates in the `.matterbridge/cert` directory:
 
 Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
 
+### Provide your own 'PKCS#12' certificate and the passphrase
+
+Place your own p12 certificate (binary file) and the passphrase (text file) in the `.matterbridge/cert` directory:
+
+- `cert.p12`
+- `cert.pass`
+
+Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
+
 ### Change the command line
 
-Add the **-ssl** parameter to the command line. If desired, you can also change the frontend port with **-frontend 443**.
+Add the **-ssl** parameter to the command line.
+
+If desired, you can also change the frontend port with **-frontend 443**.
 
 ```bash
 matterbridge -ssl -frontend 443
+```
+
+Add the **-mtls** parameter to the command line if you want to request the client to authenticate itself (this is the most secure connection possible).
+
+If desired, you can also change the frontend port with **-frontend 443**.
+
+The browser must provide the client certificate.
+
+On Windows you need to import it in Current User → Personal → Certificates with certmgr.msc.
+
+```bash
+matterbridge -ssl -mtls -frontend 443
 ```
 
 ### Restart
