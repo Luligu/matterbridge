@@ -8,11 +8,11 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.1.4] - 2025-07-??
+## [3.1.4] - 2025-07-16
 
 ### Added
 
-- [frontend]: Added support for p12 certificates. Add cert.p12 and cert.pass in the '.matterbridge/cert' directory. If both .p12 and cert.pem are present, only the .p12 will be used. See the README.md.
+- [frontend]: Added support for p12 certificates. Add cert.p12 and cert.pass in the '.matterbridge/cert' directory. If both .p12 and cert.pem are present, only the .p12 will be used. See the README.md for more info.
 - [frontend]: Improved test units on Frontend class (total coverage 98%).
 
 ### Changed
