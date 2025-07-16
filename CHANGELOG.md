@@ -14,6 +14,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [matterbridge]: Refactored initialization of DeviceManager and PluginManager
+- [pluginManager]: Refactored PluginManager removing unused install/uninstall methods
+
 ### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub">

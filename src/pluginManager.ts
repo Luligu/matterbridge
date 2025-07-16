@@ -24,7 +24,7 @@
 
 // Node.js import
 import EventEmitter from 'node:events';
-import type { ExecException } from 'node:child_process';
+// import type { ExecException } from 'node:child_process';
 
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr } from 'node-ansi-logger';
@@ -100,7 +100,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         await callback(plugin);
       } catch (err) {
         this.log.error(`Error processing forEach plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
-        // throw error;
       }
     });
     await Promise.all(tasks);
@@ -597,81 +596,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       return null;
     }
-  }
-
-  /**
-   * Installs a plugin by its name.
-   *
-   * This method first uninstalls any existing version of the plugin, then installs the plugin globally using npm.
-   * It logs the installation process and retrieves the installed version of the plugin.
-   *
-   * @param {string} name - The name of the plugin to install.
-   * @returns {Promise<string | undefined>} A promise that resolves to the installed version of the plugin, or undefined if the installation failed.
-   */
-  async install(name: string): Promise<string | undefined> {
-    const { exec } = await import('node:child_process');
-    await this.uninstall(name);
-    this.log.info(`Installing plugin ${plg}${name}${nf}`);
-    return new Promise((resolve) => {
-      exec(`npm install -g ${name} --omit=dev`, (error: ExecException | null, stdout: string, stderr: string) => {
-        if (error) {
-          this.log.error(`Failed to install plugin ${plg}${name}${er}: ${error}`);
-          this.log.debug(`Failed to install plugin ${plg}${name}${db}: ${stderr}`);
-          resolve(undefined);
-        } else {
-          this.log.info(`Installed plugin ${plg}${name}${nf}`);
-          this.log.debug(`Installed plugin ${plg}${name}${db}: ${stdout}`);
-
-          // Get the installed version
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          exec(`npm list -g ${name} --depth=0`, (listError, listStdout, listStderr) => {
-            if (listError) {
-              this.log.error(`List error: ${listError}`);
-              resolve(undefined);
-            }
-            // Clean the output to get only the package name and version
-            const lines = listStdout.split('\n');
-            const versionLine = lines.find((line) => line.includes(`${name}@`));
-            if (versionLine) {
-              const version = versionLine.split('@')[1].trim();
-              this.log.info(`Installed plugin ${plg}${name}@${version}${nf}`);
-              this.emit('installed', name, version);
-              resolve(version);
-            } else {
-              resolve(undefined);
-            }
-          });
-        }
-      });
-    });
-  }
-
-  /**
-   * Uninstalls a plugin by its name.
-   *
-   * This method uninstalls a globally installed plugin using npm. It logs the uninstallation process
-   * and returns the name of the uninstalled plugin if successful, or undefined if the uninstallation failed.
-   *
-   * @param {string} name - The name of the plugin to uninstall.
-   * @returns {Promise<string | undefined>} A promise that resolves to the name of the uninstalled plugin, or undefined if the uninstallation failed.
-   */
-  async uninstall(name: string): Promise<string | undefined> {
-    const { exec } = await import('node:child_process');
-    this.log.info(`Uninstalling plugin ${plg}${name}${nf}`);
-    return new Promise((resolve) => {
-      exec(`npm uninstall -g ${name}`, (error: ExecException | null, stdout: string, stderr: string) => {
-        if (error) {
-          this.log.error(`Failed to uninstall plugin ${plg}${name}${er}: ${error}`);
-          this.log.debug(`Failed to uninstall plugin ${plg}${name}${db}: ${stderr}`);
-          resolve(undefined);
-        } else {
-          this.log.info(`Uninstalled plugin ${plg}${name}${nf}`);
-          this.log.debug(`Uninstalled plugin ${plg}${name}${db}: ${stdout}`);
-          this.emit('uninstalled', name);
-          resolve(name);
-        }
-      });
-    });
   }
 
   /**
