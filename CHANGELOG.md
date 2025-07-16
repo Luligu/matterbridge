@@ -19,10 +19,11 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Updated dependencies.
-- [bin]: Updated matterbridge bin.
 - [network]: Refactor network logging to improve clarity and update logging format.
 
 ### Fixed
+
+- [bin]: Updated matterbridge bin.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

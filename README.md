@@ -487,13 +487,9 @@ If desired, you can also change the frontend port with **-frontend 443**.
 matterbridge -ssl -frontend 443
 ```
 
-Add the **-mtls** parameter to the command line if you want to request the client to authenticate itself (this is the most secure connection possible).
+Add the **-mtls** parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible).
 
-If desired, you can also change the frontend port with **-frontend 443**.
-
-The browser must provide the client certificate.
-
-On Windows you need to import it in Current User → Personal → Certificates with certmgr.msc.
+The browser must provide the client certificate: on Windows you need to import it in Current User → Personal → Certificates with certmgr.msc.
 
 ```bash
 matterbridge -ssl -mtls -frontend 443
@@ -522,6 +518,8 @@ Wait a few minutes to allow the logs to to accumulate.
 Then, from the dots menu in the frontend, download the `matterbridge.log` and `matter.log` files.
 
 ![image](screenshot/Screenshot%20Debug%20Download%20Logs.png)
+
+Don't forget to unselect the debug mode when is no more needed. The network traffic and cpu usage is very high in debug mode.
 
 # Known general issues
 
