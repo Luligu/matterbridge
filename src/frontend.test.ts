@@ -1,5 +1,7 @@
 // src\frontend.express.test.ts
 
+/* eslint-disable no-console */
+
 const MATTER_PORT = 6005;
 const FRONTEND_PORT = 8285;
 const NAME = 'Frontend';
@@ -22,8 +24,9 @@ const http = await import('node:http');
 const createServerMock = http.createServer as jest.MockedFunction<typeof http.createServer>;
 
 import path from 'node:path';
-import { rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, readFileSync, rmSync } from 'node:fs';
 import { AnsiLogger, db, LogLevel, rs, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
+import { WebSocket } from 'ws';
 
 // Dynamically import after mocking
 const { Matterbridge } = await import('./matterbridge.ts');
@@ -33,6 +36,7 @@ import type { Frontend as FrontendType } from './frontend.ts';
 import { cliEmitter } from './cliEmitter.ts';
 import { Lifecycle } from '@matter/general';
 import { PowerSource } from '@matter/main/clusters/power-source';
+import { wait } from './utils/wait.ts';
 
 /*
 const processExitSpy = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
@@ -64,6 +68,30 @@ if (!debug) {
   consoleInfoSpy = jest.spyOn(console, 'info');
   consoleWarnSpy = jest.spyOn(console, 'warn');
   consoleErrorSpy = jest.spyOn(console, 'error');
+}
+
+function setDebug(debug: boolean) {
+  if (debug) {
+    loggerLogSpy.mockRestore();
+    consoleLogSpy.mockRestore();
+    consoleDebugSpy.mockRestore();
+    consoleInfoSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+    consoleLogSpy = jest.spyOn(console, 'log');
+    consoleDebugSpy = jest.spyOn(console, 'debug');
+    consoleInfoSpy = jest.spyOn(console, 'info');
+    consoleWarnSpy = jest.spyOn(console, 'warn');
+    consoleErrorSpy = jest.spyOn(console, 'error');
+  } else {
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
+  }
 }
 
 // Cleanup the matter environment
@@ -249,6 +277,7 @@ describe('Matterbridge frontend', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
     expect(startSpy).toHaveBeenNthCalledWith(1, FRONTEND_PORT);
     expect(createServerMock).toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to create HTTP server: Error: Test error`);
   });
 
   test('Frontend.start() -ingress', async () => {
@@ -316,7 +345,7 @@ describe('Matterbridge frontend', () => {
   test('Frontend.start() -ssl without key certs', async () => {
     process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
-    writeFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pem'), 'cert', 'utf8');
+    copyFileSync(path.join('src/mock/certs/server.crt'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pem'));
 
     frontend.start(FRONTEND_PORT);
     await new Promise<void>((resolve) => {
@@ -331,47 +360,221 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error reading key file`));
   });
 
-  test('Frontend.start() -ssl without ca certs', async () => {
+  test('Frontend.start() -ssl without ca cert', async () => {
     process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
-    writeFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pem'), 'cert', 'utf8');
-    writeFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/key.pem'), 'key', 'utf8');
+    copyFileSync(path.join('src/mock/certs/server.key'), path.join(matterbridge.matterbridgeDirectory, 'certs/key.pem'));
 
-    frontend.start(FRONTEND_PORT);
     await new Promise<void>((resolve) => {
-      frontend.once('server_error', () => resolve());
+      frontend.on('server_listening', (protocol, port) => {
+        expect(protocol).toBe('https');
+        expect(port).toBe(FRONTEND_PORT);
+      });
+      frontend.on('websocket_server_listening', (host) => {
+        expect(host.startsWith('wss://')).toBe(true);
+        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+        resolve();
+      });
+      frontend.start(FRONTEND_PORT);
     });
+
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).frontend.httpServer).toBeUndefined();
-    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeDefined();
     expect((matterbridge as any).frontend.expressApp).toBeDefined();
-    expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
+    expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
     expect(startSpy).toHaveBeenNthCalledWith(1, FRONTEND_PORT);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded certificate file`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded key file`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`ca.pem not loaded`));
+
+    await new Promise<void>((resolve) => {
+      frontend.on('websocket_server_stopped', () => {
+        // console.log(`WebSocket server stopped`);
+      });
+      frontend.on('server_stopped', () => {
+        // console.log(`Server stopped`);
+        resolve();
+      });
+      frontend.stop();
+    });
   });
 
-  test('Frontend.start() -ssl', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+  test('Frontend.start() -ssl with ca cert', async () => {
+    process.argv = ['node', 'frontend.test.js', '-ingress', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
-    writeFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pem'), 'cert', 'utf8');
-    writeFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/key.pem'), 'key', 'utf8');
-    writeFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'ca', 'utf8');
+    copyFileSync(path.join('src/mock/certs/ca.crt'), path.join(matterbridge.matterbridgeDirectory, 'certs/ca.pem'));
 
-    frontend.start();
     await new Promise<void>((resolve) => {
-      frontend.once('server_error', () => resolve());
+      frontend.on('server_listening', (protocol, port) => {
+        expect(protocol).toBe('https');
+        expect(port).toBe(FRONTEND_PORT);
+      });
+      frontend.on('websocket_server_listening', (host) => {
+        expect(host.startsWith('wss://')).toBe(true);
+        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+        resolve();
+      });
+      frontend.start(FRONTEND_PORT);
     });
+
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).frontend.httpServer).toBeUndefined();
-    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeDefined();
     expect((matterbridge as any).frontend.expressApp).toBeDefined();
-    expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
-    expect(startSpy).toHaveBeenNthCalledWith(1);
+    expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
+    expect(startSpy).toHaveBeenNthCalledWith(1, FRONTEND_PORT);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded p12 certificate file`));
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded p12 passphrase file`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded certificate file`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded key file`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded CA certificate file`));
+
+    const client = new WebSocket(`wss://localhost:${FRONTEND_PORT}`, {
+      ca: readFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8'), // Provide CA certificate for validation
+      rejectUnauthorized: true, // Force certificate validation
+    });
+    await new Promise<void>((resolve, reject) => {
+      client.on('open', () => {
+        console.log(`WebSocket connection established`);
+        resolve();
+      });
+      client.on('message', (data) => {
+        console.log(`Received message: ${data}`);
+      });
+      client.on('close', () => {
+        console.warn(`WebSocket connection closed`);
+      });
+      client.on('error', (error) => {
+        console.error(`WebSocket error: ${error}`);
+        reject(error);
+      });
+    });
+
+    // Test httpsServer on error
+    const errorEACCES = new Error('Test error');
+    (errorEACCES as any).code = 'EACCES';
+    (frontend as any).httpsServer.emit('error', errorEACCES);
+
+    const errorEADDRINUSE = new Error('Test error');
+    (errorEADDRINUSE as any).code = 'EADDRINUSE';
+    (frontend as any).httpsServer.emit('error', errorEADDRINUSE);
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Port ${FRONTEND_PORT} requires elevated privileges`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Port ${FRONTEND_PORT} is already in use`);
+
+    await new Promise<void>((resolve) => {
+      frontend.on('websocket_server_stopped', () => {
+        // console.log(`WebSocket server stopped`);
+      });
+      frontend.on('server_stopped', () => {
+        // console.log(`Server stopped`);
+        resolve();
+      });
+      frontend.stop();
+    });
+    await wait(500); // Wait for the server to stop completely
+  });
+
+  test('Frontend.start() -ssl with p12 cert', async () => {
+    process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+
+    setDebug(true);
+    frontend.logLevel = LogLevel.DEBUG;
+
+    copyFileSync(path.join('src/mock/certs/server.p12'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
+    copyFileSync(path.join('src/mock/certs/server.pass'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pass'));
+
+    // Test the frontend error on start with p12 certificate
+    loggerLogSpy.mockImplementation((...args: string[]) => {
+      if (args[1].startsWith('Loaded p12 certificate file')) {
+        throw new Error('Test error');
+      }
+    });
+    await frontend.start(FRONTEND_PORT);
+    // Test the frontend error on start with p12 passphrase
+    loggerLogSpy.mockImplementation((...args: string[]) => {
+      if (args[1].startsWith('Loaded p12 passphrase file')) {
+        throw new Error('Test error');
+      }
+    });
+    await frontend.start(FRONTEND_PORT);
+    // Test the frontend error on start with p12 passphrase
+    loggerLogSpy.mockImplementation((...args: string[]) => {
+      if (args[1].startsWith('Creating HTTPS server')) {
+        throw new Error('Test error');
+      }
+    });
+    await frontend.start(FRONTEND_PORT);
+    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error reading p12 certificate file`));
+    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to create HTTPS server: Error: Test error`));
+
+    setDebug(true);
+
+    await new Promise<void>((resolve) => {
+      frontend.on('server_listening', (protocol, port) => {
+        expect(protocol).toBe('https');
+        expect(port).toBe(FRONTEND_PORT);
+      });
+      frontend.on('websocket_server_listening', (host) => {
+        expect(host.startsWith('wss://')).toBe(true);
+        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+        resolve();
+      });
+      frontend.start(FRONTEND_PORT);
+    });
+
+    expect((matterbridge as any).initialized).toBe(true);
+    expect((matterbridge as any).frontend.httpServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeDefined();
+    expect((matterbridge as any).frontend.expressApp).toBeDefined();
+    expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
+    expect(startSpy).toHaveBeenNthCalledWith(1, FRONTEND_PORT);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded p12 certificate file`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded p12 passphrase file`));
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded certificate file`));
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded key file`));
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded CA certificate file`));
+
+    const client = new WebSocket(`wss://localhost:${FRONTEND_PORT}`, {
+      ca: readFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8'), // Provide CA certificate for validation
+      rejectUnauthorized: true, // Force certificate validation
+    });
+    await new Promise<void>((resolve, reject) => {
+      client.on('open', () => {
+        console.log(`WebSocket connection established`);
+        resolve();
+      });
+      client.on('message', (data) => {
+        console.log(`Received message: ${data}`);
+      });
+      client.on('close', () => {
+        console.warn(`WebSocket connection closed`);
+      });
+      client.on('error', (error) => {
+        console.error(`WebSocket error: ${error}`);
+        reject(error);
+      });
+    });
+    client.ping(); // Send a ping to test the connection
+    client.pong(); // Send a pong to test the connection
+    client.send('test'); // Send a message to test the connection
+
+    await new Promise<void>((resolve) => {
+      frontend.on('websocket_server_stopped', () => {
+        // console.log(`WebSocket server stopped`);
+      });
+      frontend.on('server_stopped', () => {
+        // console.log(`Server stopped`);
+        resolve();
+      });
+      frontend.stop();
+    });
   });
 
   test('Matterbridge.destroyInstance()', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 1000);
+    await matterbridge.destroyInstance(10, 500);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
 
     expect(stopSpy).toHaveBeenCalledTimes(1);

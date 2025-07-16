@@ -12,6 +12,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [frontend]: Added support for p12 certificates. Add cert.p12 and cert.pass in the '.matterbridge/cert' directory. If both .p12 and cert.pem are present, only the .p12 will be used. See the README.md.
+- [frontend]: Improved test units on Frontend class (total coverage 98%).
+
 ### Changed
 
 - [package]: Updated dependencies.

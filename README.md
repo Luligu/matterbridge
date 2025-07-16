@@ -456,7 +456,16 @@ This will reset the internal storages. All commissioning informations will be lo
 
 ## How to enable HTTPS for the frontend
 
-### Provide your own certificates
+### Provide your own 'PKCS#12' certificate and the passphrase
+
+Place your own p12 certificate (binary file) and the passphrase (text file) in the `.matterbridge/cert` directory:
+
+- `cert.p12`
+- `cert.pass`
+
+Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
+
+### Provide your own standard certificate, key and ca (optional)
 
 Place your own certificates in the `.matterbridge/cert` directory:
 
@@ -465,6 +474,8 @@ Place your own certificates in the `.matterbridge/cert` directory:
 - `ca.pem` (optional)
 
 ![image](screenshot/Screenshot%20Certificates.png)
+
+Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
 
 ### Change the command line
 
