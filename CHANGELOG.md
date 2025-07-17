@@ -16,6 +16,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [matterbridge]: Refactored initialization of DeviceManager and PluginManager
 - [pluginManager]: Refactored PluginManager removing unused install/uninstall methods
+- [pluginManager]: Added loading of default plugin config when a plugin is added the first time. It must be a file in the package root named '[PLUGIN-NAME].config.json'.
 
 ### Fixed
 

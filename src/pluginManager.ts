@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.1.3
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -773,7 +773,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @param {boolean} [force] - Whether to force the shutdown even if the plugin is not loaded or started.
    * @returns {Promise<RegisteredPlugin | undefined>} A promise that resolves to the shut down plugin object, or undefined if the shutdown failed.
    */
-  async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices = false, force = false): Promise<RegisteredPlugin | undefined> {
+  async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices: boolean = false, force: boolean = false): Promise<RegisteredPlugin | undefined> {
     this.log.debug(`Shutting down plugin ${plg}${plugin.name}${db}`);
     if (!plugin.loaded) {
       this.log.debug(`Plugin ${plg}${plugin.name}${db} not loaded`);
@@ -828,6 +828,8 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     const { promises } = await import('node:fs');
     const { shelly_config, somfytahoma_config, zigbee2mqtt_config } = await import('./defaultConfigSchema.js');
     const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
+    const defaultConfigFile = plugin.path.replace('package.json', `${plugin.name}.config.json`);
+
     try {
       await promises.access(configFile);
       const data = await promises.readFile(configFile, 'utf8');
@@ -843,11 +845,22 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     } catch (err) {
       const nodeErr = err as NodeJS.ErrnoException;
       if (nodeErr.code === 'ENOENT') {
+        this.log.debug(`Config file ${configFile} for plugin ${plg}${plugin.name}${db} does not exist, creating new config file...`);
         let config: PlatformConfig;
-        if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
-        else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
-        else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
-        else config = { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
+        try {
+          await promises.access(defaultConfigFile);
+          const data = await promises.readFile(defaultConfigFile, 'utf8');
+          config = JSON.parse(data) as PlatformConfig;
+          this.log.debug(`Loaded default config file ${defaultConfigFile} for plugin ${plg}${plugin.name}${db}.`);
+        } catch (_err) {
+          this.log.debug(`Default config file ${defaultConfigFile} for plugin ${plg}${plugin.name}${db} does not exist, creating new config file...`);
+          // TODO: Remove this when all these plugins have their own default config file
+          // istanbul ignore next if
+          if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
+          else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
+          else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
+          else config = { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
+        }
         try {
           await promises.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
           this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
@@ -912,7 +925,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @param {boolean} [restartRequired] - Indicates whether a restart is required after saving the configuration.
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or returns if an error occurs.
    */
-  async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig, restartRequired = false): Promise<void> {
+  async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig, restartRequired: boolean = false): Promise<void> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
     if (!config.name || !config.type || config.name !== plugin.name) {

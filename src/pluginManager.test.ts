@@ -715,42 +715,63 @@ describe('PluginManager', () => {
         // Ignore error
       }
     };
-
     expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
+    const defaultConfigFile = plugin.path.replace('package.json', `${plugin.name}.config.json`);
 
+    // Test write error
     await deleteConfig();
     jest.spyOn(fs, 'writeFile').mockImplementationOnce(async () => {
-      throw new Error('Test error');
+      throw new Error('Test write error');
     });
     let config = await plugins.loadConfig(plugin);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating config file ${configFileName} for plugin ${plg}${plugin.name}${er}: Test error`));
+    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', debug: false, unregisterOnShutdown: false });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating config file ${configFileName} for plugin ${plg}${plugin.name}${er}: Test write error`));
     loggerLogSpy.mockClear();
 
+    // Test access error
     await deleteConfig();
     jest.spyOn(fs, 'access').mockImplementationOnce(async () => {
-      throw new Error('Test error');
+      throw new Error('Test access error');
     });
     config = await plugins.loadConfig(plugin);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error accessing config file ${configFileName} for plugin ${plg}${plugin.name}${er}: Test error`));
+    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', debug: false, unregisterOnShutdown: false });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error accessing config file ${configFileName} for plugin ${plg}${plugin.name}${er}: Test access error`));
     loggerLogSpy.mockClear();
 
+    // Test create new config file
     await deleteConfig();
     config = await plugins.loadConfig(plugin);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Created config file ${configFileName} for plugin ${plg}${plugin.name}${db}.`);
+    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', debug: false, unregisterOnShutdown: false });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Config file ${configFileName} for plugin ${plg}${plugin.name}${db} does not exist, creating new config file...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Default config file ${defaultConfigFile} for plugin ${plg}${plugin.name}${db} does not exist, creating new config file...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Created config file ${configFileName} for plugin ${plg}${plugin.name}${db}.`);
     loggerLogSpy.mockClear();
 
+    // Test load config file
     config = await plugins.loadConfig(plugin);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded config file ${configFileName} for plugin ${plg}${plugin.name}${db}.`);
-    expect(config).not.toBeUndefined();
-    expect(config).not.toBeNull();
-    expect(config.name).toBe(plugin.name);
-    expect(config.type).toBe(plugin.type);
-    expect(config.type).toBe('AnyPlatform');
-    expect(config.debug).toBeDefined();
-    expect(config.unregisterOnShutdown).toBeDefined();
+    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', debug: false, unregisterOnShutdown: false });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded config file ${configFileName} for plugin ${plg}${plugin.name}${db}.`);
+    loggerLogSpy.mockClear();
+
+    // Test default values false for debug and unregisterOnShutdown
+    config.debug = undefined;
+    config.unregisterOnShutdown = undefined;
+    await plugins.saveConfigFromJson(plugin, config);
+    config = await plugins.loadConfig(plugin);
+    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', debug: false, unregisterOnShutdown: false });
+    loggerLogSpy.mockClear();
+
+    // Test default config file in plugin package path
+    await deleteConfig();
+    await fs.writeFile(defaultConfigFile, JSON.stringify(config, null, 2), 'utf8');
+    config = await plugins.loadConfig(plugin);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Config file ${configFileName} for plugin ${plg}${plugin.name}${db} does not exist, creating new config file...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded default config file ${defaultConfigFile} for plugin ${plg}${plugin.name}${db}.`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Created config file ${configFileName} for plugin ${plg}${plugin.name}${db}.`);
+    loggerLogSpy.mockClear();
   });
 
   test('save config from plugin matterbridge-example-accessory-platform', async () => {
