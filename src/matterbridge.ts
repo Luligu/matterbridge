@@ -1165,6 +1165,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
       } catch (error) {
+        // istanbul ignore next
         this.log.error(`Error getting global node_modules directory: ${error}`);
       }
     } else this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
@@ -1333,16 +1334,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   /**
    * Unregister all devices and shut down the process.
+   *
+   * @param {number} [timeout] - The timeout duration to wait for the message exchange to complete in milliseconds. Default is 1000.
+   * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
-  async unregisterAndShutdownProcess() {
+  async unregisterAndShutdownProcess(timeout: number = 1000): Promise<void> {
     this.log.info('Unregistering all devices and shutting down...');
     for (const plugin of this.plugins) {
       await this.removeAllBridgedEndpoints(plugin.name, 250);
     }
     this.log.debug('Waiting for the MessageExchange to finish...');
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second for MessageExchange to finish
+    await new Promise((resolve) => setTimeout(resolve, timeout)); // Wait for MessageExchange to finish
     this.log.debug('Cleaning up and shutting down...');
-    await this.cleanup('unregistered all devices and shutting down...', false);
+    await this.cleanup('unregistered all devices and shutting down...', false, timeout);
   }
 
   /**
@@ -1367,7 +1371,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {number} [timeout] - The timeout duration to wait for the message exchange to complete in milliseconds. Default is 1000.
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
-  protected async cleanup(message: string, restart = false, timeout: number = 1000): Promise<void> {
+  protected async cleanup(message: string, restart: boolean = false, timeout: number = 1000): Promise<void> {
     if (this.initialized && !this.hasCleanupStarted) {
       this.emit('cleanup_started');
       this.hasCleanupStarted = true;
@@ -1516,6 +1520,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.info(`Removing matter storage backup directory: ${backup}`);
           await fs.rm(backup, { recursive: true });
         } catch (error) {
+          // istanbul ignore next if
           if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
             this.log.error(`Error removing matter storage directory: ${error}`);
           }
@@ -1529,6 +1534,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.info(`Removing matterbridge storage backup directory: ${backup}`);
           await fs.rm(backup, { recursive: true });
         } catch (error) {
+          // istanbul ignore next if
           if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
             this.log.error(`Error removing matterbridge storage directory: ${error}`);
           }
@@ -1585,10 +1591,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    *
    * @param {RegisteredPlugin} plugin - The plugin to configure.
    * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
-   * @param {boolean} [start] - Whether to start the server node after adding the device. Default is `false`.
    * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
    */
-  private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint, start: boolean = false): Promise<void> {
+  private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
     if (!plugin.locked && device.deviceType && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
       plugin.locked = true;
       plugin.device = device;
@@ -1597,7 +1602,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node`);
       await plugin.serverNode.add(device);
-      if (start) await this.startServerNode(plugin.serverNode);
     }
   }
 
