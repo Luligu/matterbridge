@@ -24,14 +24,13 @@
 
 // Node.js import
 import EventEmitter from 'node:events';
-// import type { ExecException } from 'node:child_process';
 
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr } from 'node-ansi-logger';
 
 // Matterbridge
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import type { Matterbridge } from './matterbridge.js';
+import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
 import { logError } from './utils/error.js';
 
