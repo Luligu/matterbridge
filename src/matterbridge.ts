@@ -57,7 +57,7 @@ import { BasicInformationServer } from '@matter/main/behaviors/basic-information
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
+import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory, wait } from './utils/export.js';
 import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -846,7 +846,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     if (hasParameter('loginterfaces')) {
       const { logInterfaces } = await import('./utils/network.js');
-      // this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
       logInterfaces();
       this.shutdown = true;
       return;
@@ -1684,7 +1683,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Configure the plugins
       this.configureTimeout = setTimeout(async () => {
-        for (const plugin of this.plugins) {
+        for (const plugin of this.plugins.array()) {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
             if ((await this.plugins.configure(plugin)) === undefined) {
@@ -1714,10 +1713,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /**
    * Starts the Matterbridge in childbridge mode.
    *
-   * @private
+   * @param {number} [delay] - The delay before starting the childbridge. Default is 1000 milliseconds.
+   *
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  private async startChildbridge(): Promise<void> {
+  private async startChildbridge(delay: number = 1000): Promise<void> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
 
     await this.startPlugins();
@@ -1726,7 +1726,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     let failCount = 0;
     this.startMatterInterval = setInterval(async () => {
       let allStarted = true;
-      for (const plugin of this.plugins) {
+      for (const plugin of this.plugins.array()) {
         if (!plugin.enabled) continue;
         if (plugin.error) {
           clearInterval(this.startMatterInterval);
@@ -1745,7 +1745,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.debug(`Waiting (failSafeCount=${failCount}/${this.failCountLimit}) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
           failCount++;
           if (failCount > this.failCountLimit) {
-            this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error mode.`);
+            this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
             plugin.error = true;
           }
         }
@@ -1753,12 +1753,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (!allStarted) return;
       clearInterval(this.startMatterInterval);
       this.startMatterInterval = undefined;
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second to ensure all plugins server nodes are ready
+      if (delay > 0) await wait(delay); // Wait for the specified delay to ensure all plugins server nodes are ready
       this.log.debug('Cleared startMatterInterval interval in childbridge mode');
 
       // Configure the plugins
       this.configureTimeout = setTimeout(async () => {
-        for (const plugin of this.plugins) {
+        for (const plugin of this.plugins.array()) {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
             if ((await this.plugins.configure(plugin)) === undefined) {
@@ -2239,6 +2239,7 @@ const commissioningController = new CommissioningController({
         // Set a timeout to show that advertising stops after 15 minutes if not commissioned
         this.startEndAdvertiseTimer(serverNode);
       } else {
+        // istanbul ignore next
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
       }
       this.frontend.wssSendRefreshRequired('plugins');

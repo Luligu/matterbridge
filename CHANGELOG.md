@@ -13,6 +13,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [error]: Added error logging functions and corresponding tests.
+- [frontend]: Improved test units on Matterbridge class (total coverage 99%).
 
 ### Changed
 

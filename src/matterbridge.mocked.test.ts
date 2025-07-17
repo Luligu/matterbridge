@@ -9,15 +9,29 @@ jest.unstable_mockModule('./utils/spawn.js', () => ({
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
-const spawn = await import('./utils/spawn.js');
-const spawnCommandMock = spawn.spawnCommand as jest.MockedFunction<typeof spawn.spawnCommand>;
+const spawnModule = await import('./utils/spawn.js');
+const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
+
+// Mock the wait from wait module before importing it
+jest.unstable_mockModule('./utils/wait.js', () => ({
+  wait: jest.fn((ms: number) => {
+    return Promise.resolve(); // Mock the wait function to resolve immediately
+  }),
+}));
+const waitModule = await import('./utils/wait.js');
+const waitMock = waitModule.wait as jest.MockedFunction<typeof waitModule.wait>;
+
+const pluginsLoadSpy = jest.spyOn(PluginManager.prototype, 'load');
+const pluginsStartSpy = jest.spyOn(PluginManager.prototype, 'start');
+const pluginsConfigureSpy = jest.spyOn(PluginManager.prototype, 'configure');
+const pluginsShutdownSpy = jest.spyOn(PluginManager.prototype, 'shutdown');
 
 import { jest } from '@jest/globals';
 import os from 'node:os';
 import path from 'node:path';
 import { rmSync, writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
 
-import { AnsiLogger, CYAN, LogLevel, nf, nt, TimestampFormat, wr } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, er, LogLevel, nf, nt, pl, TimestampFormat, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import { getParameter } from './utils/export.ts';
@@ -51,6 +65,30 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
+function setDebug(debug: boolean) {
+  if (debug) {
+    loggerLogSpy.mockRestore();
+    consoleLogSpy.mockRestore();
+    consoleDebugSpy.mockRestore();
+    consoleInfoSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+    consoleLogSpy = jest.spyOn(console, 'log');
+    consoleDebugSpy = jest.spyOn(console, 'debug');
+    consoleInfoSpy = jest.spyOn(console, 'info');
+    consoleWarnSpy = jest.spyOn(console, 'warn');
+    consoleErrorSpy = jest.spyOn(console, 'error');
+  } else {
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
+  }
+}
+
 // Cleanup the matter environment
 rmSync(HOMEDIR, { recursive: true, force: true });
 
@@ -77,6 +115,19 @@ describe('Matterbridge mocked', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
+  });
+
+  test('mocked spawnCommand', async () => {
+    const { spawnCommand } = await import('./utils/spawn.js');
+    const result = await spawnCommand(matterbridge, 'echo', ['Hello, World!']);
+    expect(result).toBe(true);
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'echo', ['Hello, World!']);
+  });
+
+  test('mocked wait', async () => {
+    const { wait } = await import('./utils/wait.js');
+    await wait(1000, 'Test Wait', true);
+    expect(waitMock).toHaveBeenCalledWith(1000, 'Test Wait', true);
   });
 
   test('Matterbridge.loadInstance(false)', async () => {
@@ -597,29 +648,38 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() parseCommandLine', async () => {
+    // setDebug(true);
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await matterbridge.initialize();
+    // const startMatterStorageSpy = jest.spyOn(matterbridge as any, 'startMatterStorage').mockImplementation(async () => Promise.resolve());
+    // const stopMatterStorageSpy = jest.spyOn(matterbridge as any, 'stopMatterStorage').mockImplementation(async () => Promise.resolve());
+    // const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
+    expect(matterbridge.getPlugins().length).toBe(6);
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-help'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Usage: matterbridge [options]'));
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-list'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Registered plugins'));
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-logstorage'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${plg}Matterbridge${nf} storage log`));
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-loginterfaces'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Available Network Interfaces:`));
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-disable', './src/mock/plugin1'];
     matterbridge.shutdown = false;
@@ -656,6 +716,11 @@ describe('Matterbridge mocked', () => {
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
+
+    // startMatterStorageSpy.mockRestore();
+    // stopMatterStorageSpy.mockRestore();
+    // cleanupSpy.mockRestore();
+    // setDebug(false);
   });
 
   test('Matterbridge.initialize() startBridge and startChildbridge', async () => {
@@ -696,7 +761,7 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() restartProcess', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await matterbridge.initialize();
-    let cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
+    const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
 
     await matterbridge.restartProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('restarting...', true);
@@ -724,15 +789,253 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    (matterbridge as any).startMatterInterval = setInterval(() => {}, 60000);
-    // (matterbridge as any).initialized = true;
-    // (matterbridge as any).hasCleanupStarted = false;
-    cleanupSpy.mockRestore();
-    cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup');
     await matterbridge.unregisterAndShutdownProcess(10);
     expect(removeAllBridgedEndpointsSpy).toHaveBeenCalled();
-    expect((matterbridge as any).startMatterInterval).toBeUndefined();
     expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false, 10);
     matterbridge.plugins.clear();
+
+    cleanupSpy.mockRestore();
   });
+
+  test('Matterbridge.initialize() cleanup()', async () => {
+    process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    const plugin = matterbridge.plugins.get('matterbridge-mock1');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    plugin.enabled = true;
+    plugin.error = false;
+    plugin.reachabilityTimeout = setTimeout(() => {}, 60000);
+    const pluginsShutdownSpy = jest.spyOn(matterbridge.plugins as any, 'shutdown').mockImplementation(async () => {
+      return Promise.resolve();
+    });
+
+    (matterbridge as any).startMatterInterval = setInterval(() => {}, 60000);
+    (matterbridge as any).configureTimeout = setTimeout(() => {}, 60000);
+    (matterbridge as any).reachabilityTimeout = setTimeout(() => {}, 60000);
+    await (matterbridge as any).cleanup('cleanup test', false, 10);
+    expect((matterbridge as any).startMatterInterval).toBeUndefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeUndefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeUndefined();
+    expect((matterbridge as any).configureTimeout).toBeUndefined();
+    expect((matterbridge as any).reachabilityTimeout).toBeUndefined();
+    expect(plugin.reachabilityTimeout).toBeUndefined();
+
+    const instance = (Matterbridge as any).instance;
+    (matterbridge as any).initialized = true; // Set initialized to true to allow cleanup
+    (matterbridge as any).hasCleanupStarted = false; // Set hasCleanupStarted to false to allow cleanup
+    await (matterbridge as any).cleanup('updating...', true, 10);
+    (Matterbridge as any).instance = instance; // Restore the instance after cleanup
+    (matterbridge as any).initialized = true; // Set initialized to true to allow cleanup
+    (matterbridge as any).hasCleanupStarted = false; // Set hasCleanupStarted to false to allow cleanup
+    await (matterbridge as any).cleanup('restarting...', true, 10);
+    (Matterbridge as any).instance = instance; // Restore the instance after cleanup
+
+    matterbridge.plugins.clear();
+    pluginsShutdownSpy.mockRestore();
+  });
+
+  test('Matterbridge.initialize() startBridge()', async () => {
+    // Setup test environment
+    jest.useFakeTimers();
+    const createServerNodeSpy = jest.spyOn(matterbridge as any, 'createServerNode').mockImplementation(async () => Promise.resolve({ add: jest.fn() }));
+    const createAggregatorNodeSpy = jest.spyOn(matterbridge as any, 'createAggregatorNode').mockImplementation(async () => Promise.resolve({}));
+    const startPluginsSpy = jest.spyOn(matterbridge as any, 'startPlugins').mockImplementation(async () => Promise.resolve());
+    const startServerNodeSpy = jest.spyOn(matterbridge as any, 'startServerNode').mockImplementation(async () => Promise.resolve());
+
+    process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+    matterbridge.plugins.clear();
+    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    const plugin1 = matterbridge.plugins.get('matterbridge-mock1');
+    expect(plugin1).toBeDefined();
+    if (!plugin1) return;
+    plugin1.enabled = true;
+    plugin1.error = false;
+    const plugin2 = matterbridge.plugins.get('matterbridge-mock2');
+    expect(plugin2).toBeDefined();
+    if (!plugin2) return;
+    plugin2.enabled = true;
+    plugin2.error = false;
+    const plugin3 = matterbridge.plugins.get('matterbridge-mock3');
+    expect(plugin3).toBeDefined();
+    if (!plugin3) return;
+    plugin3.enabled = false;
+
+    // test throw error for matterStorageManager not initialized
+    const saveMatterStorageManager = matterbridge.matterStorageManager;
+    matterbridge.matterStorageManager = undefined;
+    await expect((matterbridge as any).startBridge()).rejects.toThrow();
+    matterbridge.matterStorageManager = saveMatterStorageManager;
+
+    // test throw error for matterbridgeContext not initialized
+    const saveMatterStorageContext = matterbridge.matterbridgeContext;
+    matterbridge.matterbridgeContext = undefined;
+    await expect((matterbridge as any).startBridge()).rejects.toThrow();
+    matterbridge.matterbridgeContext = saveMatterStorageContext;
+
+    await (matterbridge as any).startBridge();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Starting start matter interval in bridge mode`));
+
+    jest.advanceTimersByTime(1000); // Simulate 1 second for the interval
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Waiting (failSafeCount=0/120) in startMatterInterval interval`));
+    (matterbridge as any).failCountLimit = 0; // Set failCountLimit to 0 to trigger the fail-safe check
+
+    jest.advanceTimersByTime(1000); // Simulate 1 second for the interval
+    expect(plugin1.error).toBe(true);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error waiting for plugin ${plg}${plugin1.name}${er} to load and start. Plugin is in error state.`));
+
+    jest.advanceTimersByTime(1000); // Simulate 1 second for the interval
+    expect((matterbridge as any).startMatterInterval).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`The plugin ${plg}${plugin1.name}${er} is in error state.`));
+
+    await (matterbridge as any).startBridge();
+    plugin1.error = false; // Reset plugin error state for next tests
+    plugin1.loaded = true; // Set plugin as loaded to continue testing
+    plugin1.started = true; // Set plugin as started to continue testing
+    plugin2.error = false; // Reset plugin error state for next tests
+    plugin2.loaded = true; // Set plugin as loaded to continue testing
+    plugin2.started = true; // Set plugin as started to continue testing
+    plugin3.enabled = false;
+    jest.advanceTimersByTime(1000); // Simulate 1 second for the interval
+    expect(startServerNodeSpy).toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Cleared startMatterInterval interval for Matterbridge`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Matterbridge bridge started successfully`));
+
+    pluginsConfigureSpy.mockImplementation(async (plugin: RegisteredPlugin) => {
+      if (plugin.name === 'matterbridge-mock1') {
+        plugin.configured = false; // Simulate not successful configuration
+        return Promise.resolve(undefined as any);
+      } else return Promise.reject(new Error(`Mocked error for plugin ${plugin.name}`));
+    });
+    jest.advanceTimersByTime(60000); // Simulate 1 minute for the interval
+    jest.useRealTimers();
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for the next tick
+    expect(pluginsConfigureSpy).toHaveBeenCalledTimes(2);
+    expect((matterbridge as any).startMatterInterval).toBeUndefined(); // Reset the interval after testing
+
+    // Reset test environment
+    matterbridge.plugins.clear();
+    matterbridge.serverNode = undefined;
+    matterbridge.aggregatorNode = undefined;
+    matterbridge.plugins.clear();
+    createServerNodeSpy.mockRestore();
+    createAggregatorNodeSpy.mockRestore();
+    startPluginsSpy.mockRestore();
+    startServerNodeSpy.mockRestore();
+  });
+
+  test('Matterbridge.initialize() startChildbridge()', async () => {
+    // Setup test environment
+    jest.useFakeTimers();
+    const createServerNodeSpy = jest.spyOn(matterbridge as any, 'createServerNode').mockImplementation(async () => Promise.resolve({ add: jest.fn() }));
+    const createAggregatorNodeSpy = jest.spyOn(matterbridge as any, 'createAggregatorNode').mockImplementation(async () => Promise.resolve({}));
+    const startPluginsSpy = jest.spyOn(matterbridge as any, 'startPlugins').mockImplementation(async () => Promise.resolve());
+    const startServerNodeSpy = jest.spyOn(matterbridge as any, 'startServerNode').mockImplementation(async () => Promise.resolve());
+
+    process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+    matterbridge.plugins.clear();
+    // prettier-ignore-start
+    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'AccessoryPlatform', version: '1.0.0', addedDevices: 0, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'AccessoryPlatform', version: '1.0.0', addedDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'AccessoryPlatform', version: '1.0.0', addedDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock4', path: './src/mock/plugin4/package.json', type: 'DynamicPlatform', version: '1.0.0', addedDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock5', path: './src/mock/plugin5/package.json', type: 'DynamicPlatform', version: '1.0.0', addedDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock6', path: './src/mock/plugin6/package.json', type: 'DynamicPlatform', version: '1.0.0', addedDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    // prettier-ignore-end
+    const plugin1 = matterbridge.plugins.get('matterbridge-mock1') as RegisteredPlugin;
+    plugin1.enabled = true;
+    plugin1.error = false;
+    const plugin2 = matterbridge.plugins.get('matterbridge-mock2') as RegisteredPlugin;
+    plugin2.enabled = true;
+    plugin2.error = false;
+    const plugin3 = matterbridge.plugins.get('matterbridge-mock3') as RegisteredPlugin;
+    plugin3.enabled = true;
+    plugin3.error = false;
+    plugin3.enabled = false;
+    const plugin4 = matterbridge.plugins.get('matterbridge-mock4') as RegisteredPlugin;
+    plugin4.enabled = true;
+    plugin4.error = false;
+    const plugin5 = matterbridge.plugins.get('matterbridge-mock5') as RegisteredPlugin;
+    plugin5.enabled = true;
+    plugin5.error = false;
+    const plugin6 = matterbridge.plugins.get('matterbridge-mock6') as RegisteredPlugin;
+    plugin6.enabled = true;
+    plugin6.error = false;
+
+    // test throw error for matterStorageManager not initialized
+    const saveMatterStorageManager = matterbridge.matterStorageManager;
+    matterbridge.matterStorageManager = undefined;
+    await expect((matterbridge as any).startChildbridge()).rejects.toThrow();
+    matterbridge.matterStorageManager = saveMatterStorageManager;
+
+    await (matterbridge as any).startChildbridge(0);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Starting start matter interval in childbridge mode...`));
+    jest.advanceTimersByTime(1000); // Simulate 1 second for the start interval
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Waiting (failSafeCount=0/120)`));
+
+    (matterbridge as any).failCountLimit = 0; // Set failCountLimit to 0 to trigger the fail-safe check. It will put the plugin in error state
+    jest.advanceTimersByTime(1000); // Advance 1 second for the start interval
+    expect(plugin1.error).toBe(true);
+    expect(plugin2.error).toBe(true);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error waiting for plugin ${plg}${plugin1.name}${er} to load and start. Plugin is in error state.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error waiting for plugin ${plg}${plugin2.name}${er} to load and start. Plugin is in error state.`));
+
+    jest.advanceTimersByTime(1000); // Simulate 1 second for the start interval. It will clear the interval for error state of the first plugin
+    expect((matterbridge as any).startMatterInterval).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`The plugin ${plg}${plugin1.name}${er} is in error state.`));
+    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`The plugin ${plg}${plugin2.name}${er} is in error state.`));
+    jest.clearAllMocks();
+
+    await (matterbridge as any).startChildbridge(0);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Starting start matter interval in childbridge mode...`));
+    plugin1.error = plugin2.error = plugin3.error = plugin4.error = plugin5.error = plugin6.error = false; // Reset error state for next tests
+    plugin1.enabled = plugin1.loaded = plugin1.started = true;
+    plugin2.enabled = plugin2.loaded = plugin2.started = true;
+    plugin3.enabled = plugin3.loaded = plugin3.started = true;
+    plugin4.enabled = plugin4.loaded = plugin4.started = true;
+    plugin5.enabled = plugin5.loaded = plugin5.started = true;
+    plugin6.enabled = plugin6.loaded = plugin6.started = true;
+    plugin6.enabled = false; // Disable plugin6 to test the childbridge mode
+    plugin2.serverNode = {} as any; // Mock serverNode for plugin2
+    plugin2.storageContext = {} as any; // Mock storageContext for plugin2
+    plugin2.nodeContext = {} as any; // Mock storageContext for plugin2
+    plugin3.serverNode = {} as any; // Mock serverNode for plugin3
+    plugin4.serverNode = {} as any; // Mock serverNode for plugin4
+    plugin4.storageContext = {} as any; // Mock storageContext for plugin4
+    jest.advanceTimersByTime(1000); // Simulate 1 second for the interval to execute
+    expect((matterbridge as any).startMatterInterval).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Cleared startMatterInterval interval in childbridge mode`));
+    expect((matterbridge as any).configureTimeout).toBeDefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Matterbridge childbridge started successfully`));
+
+    pluginsConfigureSpy.mockImplementation(async (plugin: RegisteredPlugin) => {
+      if (plugin.name === 'matterbridge-mock5') {
+        return Promise.reject(new Error(`Mocked error for plugin ${plugin.name}`));
+      } else {
+        plugin.configured = false; // Simulate not successful configuration
+        return Promise.resolve(undefined as any);
+      }
+    });
+    jest.advanceTimersByTime(60000); // Simulate 1 minute for the interval
+    jest.useRealTimers();
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for the next tick
+    expect(plugin5.error).toBe(true);
+    expect(pluginsConfigureSpy).toHaveBeenCalledTimes(5);
+
+    // Reset test environment
+    matterbridge.plugins.clear();
+    matterbridge.serverNode = undefined;
+    matterbridge.aggregatorNode = undefined;
+    matterbridge.plugins.clear();
+    createServerNodeSpy.mockRestore();
+    createAggregatorNodeSpy.mockRestore();
+    startPluginsSpy.mockRestore();
+    startServerNodeSpy.mockRestore();
+    pluginsConfigureSpy.mockRestore();
+  }, 10000);
 });

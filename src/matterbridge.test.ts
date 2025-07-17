@@ -340,6 +340,7 @@ describe('Matterbridge', () => {
     });
 
     test('getVendorIdName', () => {
+      expect((matterbridge as any).getVendorIdName(undefined)).toBe('');
       expect((matterbridge as any).getVendorIdName(4937)).toContain('AppleHome');
       expect((matterbridge as any).getVendorIdName(4996)).toContain('AppleKeyChain');
       expect((matterbridge as any).getVendorIdName(4362)).toContain('SmartThings');
