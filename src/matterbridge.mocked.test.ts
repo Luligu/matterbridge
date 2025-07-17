@@ -665,44 +665,51 @@ describe('Matterbridge mocked', () => {
     const startChildBridgeSpy = jest.spyOn(matterbridge as any, 'startChildbridge').mockImplementation(async () => Promise.resolve());
     expect(matterbridge.nodeContext).toBeDefined();
     await matterbridge.nodeContext?.remove('bridgeMode');
+    jest.clearAllMocks();
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR];
-    jest.clearAllMocks();
     await (matterbridge as any).parseCommandLine();
     expect(frontendStartSpy).toHaveBeenCalled();
     expect(startBridgeSpy).toHaveBeenCalled();
     expect(startChildBridgeSpy).not.toHaveBeenCalled();
     expect(await matterbridge.nodeContext?.get<string>('bridgeMode', '')).toBe('bridge');
+    jest.clearAllMocks();
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR, '-bridge'];
-    jest.clearAllMocks();
     await (matterbridge as any).parseCommandLine();
     expect(frontendStartSpy).toHaveBeenCalled();
     expect(startBridgeSpy).toHaveBeenCalled();
     expect(startChildBridgeSpy).not.toHaveBeenCalled();
+    jest.clearAllMocks();
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR, '-childbridge'];
-    jest.clearAllMocks();
     await (matterbridge as any).parseCommandLine();
     expect(frontendStartSpy).toHaveBeenCalled();
     expect(startBridgeSpy).not.toHaveBeenCalled();
     expect(startChildBridgeSpy).toHaveBeenCalled();
+
+    frontendStartSpy.mockRestore();
+    startBridgeSpy.mockRestore();
+    startChildBridgeSpy.mockRestore();
   });
 
   test('Matterbridge.initialize() restartProcess', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await matterbridge.initialize();
-    const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
+    let cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
 
     await matterbridge.restartProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('restarting...', true);
+    jest.clearAllMocks();
 
     await matterbridge.shutdownProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('shutting down...', false);
+    jest.clearAllMocks();
 
     await matterbridge.updateProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
     expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']));
+    jest.clearAllMocks();
 
     spawnCommandMock.mockImplementationOnce(() => {
       return Promise.reject(new Error('Mocked spawnCommand error for updateProcess'));
@@ -711,10 +718,21 @@ describe('Matterbridge mocked', () => {
     expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
     expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error updating matterbridge:'));
+    jest.clearAllMocks();
 
-    await matterbridge.unregisterAndShutdownProcess();
-    expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false);
-
+    const removeAllBridgedEndpointsSpy = jest.spyOn(matterbridge as any, 'removeAllBridgedEndpoints').mockImplementationOnce(async () => {
+      return Promise.resolve();
+    });
+    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    (matterbridge as any).startMatterInterval = setInterval(() => {}, 60000);
+    // (matterbridge as any).initialized = true;
+    // (matterbridge as any).hasCleanupStarted = false;
     cleanupSpy.mockRestore();
+    cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup');
+    await matterbridge.unregisterAndShutdownProcess(10);
+    expect(removeAllBridgedEndpointsSpy).toHaveBeenCalled();
+    expect((matterbridge as any).startMatterInterval).toBeUndefined();
+    expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false, 10);
+    matterbridge.plugins.clear();
   });
 });
