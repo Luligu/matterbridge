@@ -41,12 +41,14 @@ export function logError(log: AnsiLogger, message: string, error: unknown): void
 /**
  * Logs an error message using the provided AnsiLogger instance with detailed inspection.
  * Uses util.inspect to get a detailed view of the error with a stack depth of 10 levels.
+ * If the error is an Error instance, it also includes the error message.
  *
  * @param {AnsiLogger} log - The AnsiLogger instance to use for logging.
  * @param {string} message - The error message to log.
  * @param {unknown} error - The error object or value to log. Will be inspected with depth 10.
  */
 export function inspectError(log: AnsiLogger, message: string, error: unknown): void {
-  const inspectedError = inspect(error, { depth: 10, colors: false, showHidden: false });
-  log.error(`${message}: ${inspectedError}`);
+  const errorMessage = error instanceof Error ? `${error.message}\n` : '';
+  const inspectedError = inspect(error, { depth: 10, colors: true, showHidden: false });
+  log.error(`${message}: ${errorMessage}${inspectedError}`);
 }
