@@ -991,6 +991,7 @@ describe('Matterbridge mocked', () => {
     // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`The plugin ${plg}${plugin2.name}${er} is in error state.`));
     jest.clearAllMocks();
 
+    matterbridge.devices.set({ name: 'Test Device 1', uniqueId: '123', mode: 'server', serverNode: {} } as any); // Mock a device in server mode
     await (matterbridge as any).startChildbridge(0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Starting start matter interval in childbridge mode...`));
     plugin1.error = plugin2.error = plugin3.error = plugin4.error = plugin5.error = plugin6.error = false; // Reset error state for next tests
@@ -1002,8 +1003,10 @@ describe('Matterbridge mocked', () => {
     plugin6.enabled = plugin6.loaded = plugin6.started = true;
     plugin6.enabled = false; // Disable plugin6 to test the childbridge mode
     plugin2.serverNode = {} as any; // Mock serverNode for plugin2
+    plugin2.aggregatorNode = {} as any; // Mock aggregatorNode for plugin2
     plugin2.storageContext = {} as any; // Mock storageContext for plugin2
     plugin2.nodeContext = {} as any; // Mock storageContext for plugin2
+    plugin2.type = 'DynamicPlatform'; // Set type to DynamicPlatform for plugin2
     plugin3.serverNode = {} as any; // Mock serverNode for plugin3
     plugin4.serverNode = {} as any; // Mock serverNode for plugin4
     plugin4.storageContext = {} as any; // Mock storageContext for plugin4
@@ -1029,6 +1032,7 @@ describe('Matterbridge mocked', () => {
 
     // Reset test environment
     matterbridge.plugins.clear();
+    matterbridge.devices.clear();
     matterbridge.serverNode = undefined;
     matterbridge.aggregatorNode = undefined;
     matterbridge.plugins.clear();
