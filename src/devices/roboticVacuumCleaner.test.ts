@@ -177,7 +177,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(73);
+    expect(attributes.length).toBe(74);
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {
