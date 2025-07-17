@@ -75,6 +75,7 @@
         "--coverage",
         "--maxWorkers=100%",
         "matterbridge.test.ts",
+        "matterbridge.mocked.test.ts",
         "matterbridge.matterjs.test.ts",
         "matterbridge.bridge.test.ts",
         "matterbridge.childbridge.test.ts",
