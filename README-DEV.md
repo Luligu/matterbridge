@@ -313,7 +313,9 @@ Each plugin has a minimal default config file injected by Matterbridge when it i
 
 It is possible to add a different default config file to be loaded the first time the user installs the plugin.
 
-Matterbridge (only on the first load of the plugin) looks for the default config file in the root of the plugin package. The file must be named '[PLUGIN-NAME].config.json' (i.e. 'matterbridge-test.config.json').
+Matterbridge (only on the first load of the plugin and if a config file is not already present in the .matterbridge directory) looks for the default config file in the root of the plugin package. The file must be named '[PLUGIN-NAME].config.json' (i.e. 'matterbridge-test.config.json').
+
+In all subsequent loads the config file is loaded from the '.matterbridge' directory.
 
 ## Plugin schema file
 
