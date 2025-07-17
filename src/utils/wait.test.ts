@@ -257,7 +257,7 @@ describe('withTimeout()', () => {
     const promise = new Promise<string>((resolve) => {
       setTimeout(() => resolve('ok'), 50);
     });
-    const wrapped = withTimeout(promise, 100);
+    const wrapped = withTimeout(promise);
 
     // Spy on clearTimeout to ensure it's called
     const clearSpy = jest.spyOn(global, 'clearTimeout');

@@ -38,7 +38,7 @@ export const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFo
  * @param {boolean} [debug] - Optional. If true, debug messages will be logged to the console. Default is false.
  * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
  */
-export async function waiter(name: string, check: () => boolean, exitWithReject = false, resolveTimeout = 5000, resolveInterval = 500, debug = false): Promise<boolean> {
+export async function waiter(name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false): Promise<boolean> {
   if (check()) return true;
   log.logLevel = LogLevel.DEBUG;
   log.logName = 'Waiter';
@@ -72,7 +72,7 @@ export async function waiter(name: string, check: () => boolean, exitWithReject 
  * @param {boolean} debug - Whether to enable debug logging. Default is false.
  * @returns {Promise<void>} A Promise that resolves after the specified timeout.
  */
-export async function wait(timeout = 1000, name?: string, debug = false): Promise<void> {
+export async function wait(timeout: number = 1000, name?: string, debug: boolean = false): Promise<void> {
   log.logLevel = LogLevel.DEBUG;
   log.logName = 'Wait';
   if (debug) log.debug(`Wait "${name}" started...`);
@@ -94,7 +94,7 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
  * @param {boolean} [reThrow] - Optional. If true, the promise will rethrow the original promise and will reject on timeout. Default is true.
  * @returns {Promise<T>} A new promise that resolves or rejects based on the original promise and the timeout.
  */
-export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs = 10000, reThrow = true): Promise<T> {
+export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs: number = 10000, reThrow: boolean = true): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => {
       if (reThrow) {
