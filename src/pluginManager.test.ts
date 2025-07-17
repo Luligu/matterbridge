@@ -21,9 +21,8 @@ jest.unstable_mockModule('node:child_process', async () => {
   };
 });
 
-const { exec } = await import('node:child_process');
 import { ExecException, execSync } from 'node:child_process';
-import { promises as fs, rmSync } from 'node:fs';
+import { promises as fs, promises, rmSync } from 'node:fs';
 import path from 'node:path';
 import { AnsiLogger, db, er, LogLevel, nf, nt } from 'node-ansi-logger';
 
@@ -803,12 +802,17 @@ describe('PluginManager', () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
+    await plugins.shutdown(plugin, 'Test with Jest', true, true);
+    const packageJson = JSON.parse(await promises.readFile(plugin.path, 'utf8'));
+    packageJson.description = undefined;
+    await fs.writeFile(plugin.path, JSON.stringify(packageJson, null, 2), 'utf8');
     const platform = await plugins.load(plugin);
     expect(platform).toBeDefined();
     expect(plugin.platform).toBeDefined();
     if (!plugin.platform) return;
     expect(plugin.name).toBe('matterbridge-example-accessory-platform');
     expect(plugin.type).toBe('AccessoryPlatform');
+    loggerLogSpy.mockClear();
 
     // Test save config error from plugin
     const config = plugin.platform.config;
@@ -1013,7 +1017,7 @@ describe('PluginManager', () => {
     expect(plugin.configured).toBeFalsy();
 
     plugin.loaded = false;
-    const result = await plugins.start(plugin, 'Test with Jest', false);
+    const result = await plugins.start(plugin, 'Test with Jest');
     expect(result).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Plugin ${plg}${plugin?.name}${er} not loaded`);
     plugin.loaded = true;
@@ -1293,6 +1297,8 @@ describe('PluginManager', () => {
 
     plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
     expect(plugin).not.toBeUndefined();
+
+    plugin = await plugins.shutdown(plugin as RegisteredPlugin, 'Test with Jest');
   });
 
   test('uninstall example plugins', async () => {

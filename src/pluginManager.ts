@@ -33,6 +33,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, d
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
+import { logError } from './utils/error.js';
 
 interface PluginManagerEvents {
   added: [name: string];
@@ -99,7 +100,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       try {
         await callback(plugin);
       } catch (err) {
-        this.log.error(`Error processing forEach plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+        logError(this.log, `Error processing forEach plugin ${plg}${plugin.name}${er}`, err);
       }
     });
     await Promise.all(tasks);
@@ -248,7 +249,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       this.log.debug(`Resolved plugin path ${plg}${pluginPath}${db}: ${packageJsonPath}`);
       return packageJsonPath;
     } catch (err) {
-      this.log.error(`Failed to resolve plugin path ${plg}${pluginPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Failed to resolve plugin path ${plg}${pluginPath}${er}`, err);
       return null;
     }
   }
@@ -415,7 +416,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
 
       return packageJson;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Failed to parse package.json of plugin ${plg}${plugin.name}${er}`, err);
       plugin.error = true;
       return null;
     }
@@ -460,7 +461,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       this.emit('enabled', plugin.name);
       return plugin;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Failed to parse package.json of plugin ${plg}${nameOrPath}${er}`, err);
       return null;
     }
   }
@@ -504,7 +505,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       this.emit('disabled', plugin.name);
       return plugin;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Failed to parse package.json of plugin ${plg}${nameOrPath}${er}`, err);
       return null;
     }
   }
@@ -548,7 +549,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       this.emit('removed', plugin.name);
       return plugin;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Failed to parse package.json of plugin ${plg}${nameOrPath}${er}`, err);
       return null;
     }
   }
@@ -591,9 +592,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       await this.saveToStorage();
       const plugin = this._plugins.get(packageJson.name);
       this.emit('added', packageJson.name);
+      // istanbul ignore next
       return plugin || null;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Failed to parse package.json of plugin ${plg}${nameOrPath}${er}`, err);
       return null;
     }
   }
@@ -645,7 +647,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         config.name = plugin.name;
         config.version = packageJson.version;
 
-        const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.log.logLevel });
+        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.log.logLevel });
         const platform = pluginInstance.default(this.matterbridge, log, config) as MatterbridgePlatform;
         config.type = platform.type;
         platform.name = packageJson.name;
@@ -681,7 +683,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         plugin.error = true;
       }
     } catch (err) {
-      this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Failed to load plugin ${plg}${plugin.name}${er}`, err);
       plugin.error = true;
     }
     return undefined;
@@ -719,7 +721,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       return plugin;
     } catch (err) {
       plugin.error = true;
-      this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Failed to start plugin ${plg}${plugin.name}${er}`, err);
     }
     return undefined;
   }
@@ -756,7 +758,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       return plugin;
     } catch (err) {
       plugin.error = true;
-      this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Failed to configure plugin ${plg}${plugin.name}${er}`, err);
     }
     return undefined;
   }
@@ -809,7 +811,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       this.emit('shutdown', plugin.name);
       return plugin;
     } catch (err) {
-      this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Failed to shut down plugin ${plg}${plugin.name}${er}`, err);
     }
     return undefined;
   }
@@ -867,11 +869,11 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           // this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
           return config;
         } catch (err) {
-          this.log.error(`Error creating config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+          logError(this.log, `Error creating config file ${configFile} for plugin ${plg}${plugin.name}${er}`, err);
           return config;
         }
       } else {
-        this.log.error(`Error accessing config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+        logError(this.log, `Error accessing config file ${configFile} for plugin ${plg}${plugin.name}${er}`, err);
         return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
       }
     }
@@ -906,7 +908,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, plugin.platform.config);
       return Promise.resolve();
     } catch (err) {
-      this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}`, err);
       return Promise.reject(err);
     }
   }
@@ -944,7 +946,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
     } catch (err) {
-      this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      logError(this.log, `Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}`, err);
       return;
     }
   }

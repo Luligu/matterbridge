@@ -12,6 +12,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [error]: Added error logging functions and corresponding tests.
+
 ### Changed
 
 - [matterbridge]: Refactored initialization of DeviceManager and PluginManager
