@@ -57,7 +57,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the robotic vacuum cleaner. Defaults to a predefined set of areas.
    * @param {number[]} [selectedAreas] - The selected areas for the robotic vacuum cleaner. Defaults to an empty array (all areas allowed).
    * @param {number} [currentArea] - The current area of the robotic vacuum cleaner. Defaults to 1 (Living).
-   * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults to a predefined set of maps.
+   * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults to null.
    */
   constructor(
     name: string,
@@ -147,50 +147,28 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
       supportedAreas: supportedAreas ?? [
         {
           areaId: 1,
-          mapId: 1,
+          mapId: null,
           areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: AreaNamespaceTag.LivingRoom.tag }, landmarkInfo: null },
         },
         {
           areaId: 2,
-          /* Have to set mapId=1 when matter.js bug is fixed */
-          mapId: 2,
+          mapId: null,
           areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: AreaNamespaceTag.Kitchen.tag }, landmarkInfo: null },
         },
         {
           areaId: 3,
-          /* Have to set mapId=2 when matter.js bug is fixed */
-          mapId: 3,
+          mapId: null,
           areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: AreaNamespaceTag.Bedroom.tag }, landmarkInfo: null },
         },
         {
           areaId: 4,
-          /* Have to set mapId=2 when matter.js bug is fixed */
-          mapId: 4,
+          mapId: null,
           areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: AreaNamespaceTag.Bathroom.tag }, landmarkInfo: null },
         },
       ],
       selectedAreas: selectedAreas ?? [],
       currentArea: currentArea ?? 1,
-      supportedMaps: supportedMaps ?? [
-        {
-          mapId: 1,
-          name: 'Ground floor',
-        },
-        {
-          mapId: 2,
-          name: 'First floor',
-        },
-        /* Workaround because waiting for a matter.js fix https://github.com/project-chip/matter.js/issues/2238 */
-        {
-          mapId: 3,
-          name: 'Bedroom',
-        },
-        /* Workaround because waiting for a matter.js fix */
-        {
-          mapId: 4,
-          name: 'Bathroom',
-        },
-      ],
+      supportedMaps: null,
       estimatedEndTime: null,
     });
     return this;
