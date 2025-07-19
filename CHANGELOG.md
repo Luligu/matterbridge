@@ -8,12 +8,13 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.1.5] - 2025-07-??
+## [3.1.5] - 2025-07-19
 
 ### Added
 
 - [error]: Added error logging functions and corresponding tests.
 - [frontend]: Improved test units on Matterbridge class (total coverage 99%).
+- [rvc] Add RVC SupportedMaps Attribute from ServiceArea cluster. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/355).
 
 ### Changed
 

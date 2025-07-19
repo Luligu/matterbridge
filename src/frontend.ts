@@ -893,7 +893,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
 
     // Update the matterbridge information in bridge mode
-    if (this.matterbridge.bridgeMode === 'bridge' && this.matterbridge.serverNode) {
+    if (this.matterbridge.bridgeMode === 'bridge' && this.matterbridge.serverNode && !this.matterbridge.hasCleanupStarted) {
       this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.serverNode.state.commissioning.commissioned;
       this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : this.matterbridge.serverNode.state.commissioning.pairingCodes.qrPairingCode;
       this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : this.matterbridge.serverNode.state.commissioning.pairingCodes.manualPairingCode;
