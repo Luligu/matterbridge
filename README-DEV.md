@@ -298,6 +298,65 @@ The mode=`server` property of MatterbridgeEndpointOptions, allows to create an i
 
 The mode=`matter` property of MatterbridgeEndpointOptions, allows to create a (not bridged) Matter device that is added to the Matterbridge server node alongside the aggregator.
 
+## Plugin config file
+
+Each plugin has a minimal default config file injected by Matterbridge when it is loaded:
+
+```typescript
+{
+  name: plugin.name, // i.e. matterbridge-test
+  type: plugin.type, // i.e. AccessoryPlatform or DynamicPlatform (on the first run is AnyPlatform cause it is still unknown)
+  debug: false,
+  unregisterOnShutdown: false
+}
+```
+
+It is possible to add a different default config file to be loaded the first time the user installs the plugin.
+
+Matterbridge (only on the first load of the plugin and if a config file is not already present in the .matterbridge directory) looks for the default config file in the root of the plugin package. The file must be named '[PLUGIN-NAME].config.json' (i.e. 'matterbridge-test.config.json').
+
+In all subsequent loads the config file is loaded from the '.matterbridge' directory.
+
+## Plugin schema file
+
+Each plugin has a minimal default schema file injected by Matterbridge when it is loaded:
+
+```typescript
+{
+  title: plugin.description,
+  description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
+  type: 'object',
+  properties: {
+    name: {
+      description: 'Plugin name',
+      type: 'string',
+      readOnly: true,
+    },
+    type: {
+      description: 'Plugin type',
+      type: 'string',
+      readOnly: true,
+    },
+    debug: {
+      description: 'Enable the debug for the plugin (development only)',
+      type: 'boolean',
+      default: false,
+    },
+    unregisterOnShutdown: {
+      description: 'Unregister all devices on shutdown (development only)',
+      type: 'boolean',
+      default: false,
+    },
+  },
+}
+```
+
+It is possible to add a different default schema file.
+
+The schema file is loaded from the root of the plugin package. The file must be named '[PLUGIN-NAME].schema.json' (i.e. 'matterbridge-test.schema.json').
+
+The properties of the schema file shall correspond to the properties of the config file.
+
 # Contribution Guidelines
 
 Thank you for your interest in contributing to my project!

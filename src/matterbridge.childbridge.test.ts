@@ -177,6 +177,36 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Only one device is allowed per AccessoryPlatform plugin.`));
   });
 
+  test('addBridgedEndpoint for AccessoryPlatform with mode = matter', async () => {
+    jest.spyOn(matterbridge, 'subscribeAttributeChanged' as any).mockImplementationOnce(async () => {
+      return Promise.resolve();
+    });
+    expect(await plugins.add('./src/mock/plugin4')).not.toBeNull();
+    const plugin = plugins.get('matterbridge-mock4');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    plugin.type = 'AccessoryPlatform';
+    plugin.serverNode = { add: jest.fn() } as any;
+    await matterbridge.addBridgedEndpoint('matterbridge-mock4', { mode: 'matter', uniqueId: '123', uniqueStorageKey: 'invalidDevice' } as any);
+    expect(await plugins.remove('./src/mock/plugin4')).not.toBeNull();
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Only one device is allowed per AccessoryPlatform plugin.`));
+  });
+
+  test('addBridgedEndpoint for DynamicPlatform with mode = matter', async () => {
+    jest.spyOn(matterbridge, 'subscribeAttributeChanged' as any).mockImplementationOnce(async () => {
+      return Promise.resolve();
+    });
+    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    const plugin = plugins.get('matterbridge-mock1');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    plugin.type = 'DynamicPlatform';
+    plugin.serverNode = { add: jest.fn() } as any;
+    await matterbridge.addBridgedEndpoint('matterbridge-mock1', { mode: 'matter', uniqueId: '123', uniqueStorageKey: 'invalidDevice' } as any);
+    expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Only one device is allowed per AccessoryPlatform plugin.`));
+  });
+
   test('addBridgedEndpoint fails adding for AccessoryPlatform', async () => {
     expect(await plugins.add('./src/mock/plugin4')).not.toBeNull();
     const plugin = plugins.get('matterbridge-mock4');

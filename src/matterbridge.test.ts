@@ -101,8 +101,8 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).nodeContext).toBeUndefined();
       expect((matterbridge as any).globalModulesDirectory).toBe('');
       expect((matterbridge as any).matterbridgeLatestVersion).toBe('');
-      expect((matterbridge as any).plugins).toBeUndefined();
-      expect((matterbridge as any).devices).toBeUndefined();
+      expect((matterbridge as any).plugins).toBeDefined();
+      expect((matterbridge as any).devices).toBeDefined();
 
       expect((matterbridge as any).frontend.httpServer).toBeUndefined();
       expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
@@ -340,6 +340,7 @@ describe('Matterbridge', () => {
     });
 
     test('getVendorIdName', () => {
+      expect((matterbridge as any).getVendorIdName(undefined)).toBe('');
       expect((matterbridge as any).getVendorIdName(4937)).toContain('AppleHome');
       expect((matterbridge as any).getVendorIdName(4996)).toContain('AppleKeyChain');
       expect((matterbridge as any).getVendorIdName(4362)).toContain('SmartThings');

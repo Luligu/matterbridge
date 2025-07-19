@@ -57,7 +57,7 @@ import { BasicInformationServer } from '@matter/main/behaviors/basic-information
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
+import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory, wait } from './utils/export.js';
 import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -176,8 +176,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterbridgeLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   public matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
 
-  public plugins!: PluginManager;
-  public devices!: DeviceManager;
+  public plugins = new PluginManager(this);
+  public devices = new DeviceManager(this);
   public frontend = new Frontend(this);
 
   // Matterbridge storage
@@ -687,12 +687,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`Virtual mode ${this.matterbridgeInformation.virtualMode}.`);
 
     // Initialize PluginManager
-    this.plugins = new PluginManager(this);
-    await this.plugins.loadFromStorage();
     this.plugins.logLevel = this.log.logLevel;
+    await this.plugins.loadFromStorage();
 
     // Initialize DeviceManager
-    this.devices = new DeviceManager(this);
     this.devices.logLevel = this.log.logLevel;
 
     // Get the plugins from node storage and create the plugins node storage contexts
@@ -782,7 +780,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       - nosudo:                force not to use sudo to install or update packages if the internal logic fails
       - norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted
       - novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
-      - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
+      - ssl:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
+      - mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https)
       - vendorId:              override the default vendorId 0xfff1
       - vendorName:            override the default vendorName "Matterbridge"
       - productId:             override the default productId 0x8000
@@ -847,7 +846,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     if (hasParameter('loginterfaces')) {
       const { logInterfaces } = await import('./utils/network.js');
-      // this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
       logInterfaces();
       this.shutdown = true;
       return;
@@ -1166,6 +1164,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
       } catch (error) {
+        // istanbul ignore next
         this.log.error(`Error getting global node_modules directory: ${error}`);
       }
     } else this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
@@ -1334,16 +1333,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   /**
    * Unregister all devices and shut down the process.
+   *
+   * @param {number} [timeout] - The timeout duration to wait for the message exchange to complete in milliseconds. Default is 1000.
+   * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
-  async unregisterAndShutdownProcess() {
+  async unregisterAndShutdownProcess(timeout: number = 1000): Promise<void> {
     this.log.info('Unregistering all devices and shutting down...');
     for (const plugin of this.plugins) {
       await this.removeAllBridgedEndpoints(plugin.name, 250);
     }
     this.log.debug('Waiting for the MessageExchange to finish...');
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second for MessageExchange to finish
+    await new Promise((resolve) => setTimeout(resolve, timeout)); // Wait for MessageExchange to finish
     this.log.debug('Cleaning up and shutting down...');
-    await this.cleanup('unregistered all devices and shutting down...', false);
+    await this.cleanup('unregistered all devices and shutting down...', false, timeout);
   }
 
   /**
@@ -1368,7 +1370,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {number} [timeout] - The timeout duration to wait for the message exchange to complete in milliseconds. Default is 1000.
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
-  protected async cleanup(message: string, restart = false, timeout: number = 1000): Promise<void> {
+  protected async cleanup(message: string, restart: boolean = false, timeout: number = 1000): Promise<void> {
     if (this.initialized && !this.hasCleanupStarted) {
       this.emit('cleanup_started');
       this.hasCleanupStarted = true;
@@ -1517,6 +1519,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.info(`Removing matter storage backup directory: ${backup}`);
           await fs.rm(backup, { recursive: true });
         } catch (error) {
+          // istanbul ignore next if
           if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
             this.log.error(`Error removing matter storage directory: ${error}`);
           }
@@ -1530,6 +1533,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.info(`Removing matterbridge storage backup directory: ${backup}`);
           await fs.rm(backup, { recursive: true });
         } catch (error) {
+          // istanbul ignore next if
           if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
             this.log.error(`Error removing matterbridge storage directory: ${error}`);
           }
@@ -1586,10 +1590,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    *
    * @param {RegisteredPlugin} plugin - The plugin to configure.
    * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
-   * @param {boolean} [start] - Whether to start the server node after adding the device. Default is `false`.
    * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
    */
-  private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint, start: boolean = false): Promise<void> {
+  private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
     if (!plugin.locked && device.deviceType && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
       plugin.locked = true;
       plugin.device = device;
@@ -1598,7 +1601,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node`);
       await plugin.serverNode.add(device);
-      if (start) await this.startServerNode(plugin.serverNode);
     }
   }
 
@@ -1681,7 +1683,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Configure the plugins
       this.configureTimeout = setTimeout(async () => {
-        for (const plugin of this.plugins) {
+        for (const plugin of this.plugins.array()) {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
             if ((await this.plugins.configure(plugin)) === undefined) {
@@ -1711,10 +1713,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /**
    * Starts the Matterbridge in childbridge mode.
    *
-   * @private
+   * @param {number} [delay] - The delay before starting the childbridge. Default is 1000 milliseconds.
+   *
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  private async startChildbridge(): Promise<void> {
+  private async startChildbridge(delay: number = 1000): Promise<void> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
 
     await this.startPlugins();
@@ -1723,7 +1726,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     let failCount = 0;
     this.startMatterInterval = setInterval(async () => {
       let allStarted = true;
-      for (const plugin of this.plugins) {
+      for (const plugin of this.plugins.array()) {
         if (!plugin.enabled) continue;
         if (plugin.error) {
           clearInterval(this.startMatterInterval);
@@ -1742,7 +1745,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.debug(`Waiting (failSafeCount=${failCount}/${this.failCountLimit}) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
           failCount++;
           if (failCount > this.failCountLimit) {
-            this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error mode.`);
+            this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
             plugin.error = true;
           }
         }
@@ -1750,12 +1753,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (!allStarted) return;
       clearInterval(this.startMatterInterval);
       this.startMatterInterval = undefined;
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second to ensure all plugins server nodes are ready
+      if (delay > 0) await wait(delay); // Wait for the specified delay to ensure all plugins server nodes are ready
       this.log.debug('Cleared startMatterInterval interval in childbridge mode');
 
       // Configure the plugins
       this.configureTimeout = setTimeout(async () => {
-        for (const plugin of this.plugins) {
+        for (const plugin of this.plugins.array()) {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
             if ((await this.plugins.configure(plugin)) === undefined) {
@@ -2236,6 +2239,7 @@ const commissioningController = new CommissioningController({
         // Set a timeout to show that advertising stops after 15 minutes if not commissioned
         this.startEndAdvertiseTimer(serverNode);
       } else {
+        // istanbul ignore next
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
       }
       this.frontend.wssSendRefreshRequired('plugins');

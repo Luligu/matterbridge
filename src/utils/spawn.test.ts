@@ -189,4 +189,103 @@ describe('Spawn', () => {
     expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn output (stdout): Hello from stdout`));
     expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn verbose (stderr): Hello from stderr`));
   });
+
+  it('should use sudo on non-win32 platform for npm command without docker or nosudo flags', async () => {
+    const originalPlatform = process.platform;
+    Object.defineProperty(process, 'platform', {
+      value: 'linux',
+      writable: true,
+    });
+    process.argv = ['node', 'spawn.test.js'];
+    const command = 'npm';
+    const args = ['install', '-g', 'test-package'];
+
+    (spawn as jest.MockedFunction<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: jest.fn((event: string, callback: () => void) => {
+          if (event === 'disconnect' && callback) {
+            setTimeout(() => {
+              callback();
+            }, 100);
+          }
+        }),
+      } as any;
+    });
+
+    const result = await spawnCommand(matterbridge, command, args);
+
+    expect(result).toBe(true);
+    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining('Spawn command sudo with npm install -g test-package'));
+
+    Object.defineProperty(process, 'platform', {
+      value: originalPlatform,
+      writable: true,
+    });
+  });
+
+  it('should not use sudo on non-win32 platform when docker flag is present', async () => {
+    const originalPlatform = process.platform;
+    Object.defineProperty(process, 'platform', {
+      value: 'linux',
+      writable: true,
+    });
+    process.argv = ['node', 'spawn.test.js', '-docker'];
+    const command = 'npm';
+    const args = ['install', '-g', 'test-package'];
+
+    (spawn as jest.MockedFunction<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: jest.fn((event: string, callback: () => void) => {
+          if (event === 'disconnect' && callback) {
+            setTimeout(() => {
+              callback();
+            }, 100);
+          }
+        }),
+      } as any;
+    });
+
+    const result = await spawnCommand(matterbridge, command, args);
+
+    expect(result).toBe(true);
+    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining('Spawn command npm with install -g test-package'));
+
+    Object.defineProperty(process, 'platform', {
+      value: originalPlatform,
+      writable: true,
+    });
+  });
+
+  it('should not use sudo on non-win32 platform for non-npm commands', async () => {
+    const originalPlatform = process.platform;
+    Object.defineProperty(process, 'platform', {
+      value: 'darwin',
+      writable: true,
+    });
+    process.argv = ['node', 'spawn.test.js'];
+    const command = 'ls';
+    const args = ['-la'];
+
+    (spawn as jest.MockedFunction<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: jest.fn((event: string, callback: () => void) => {
+          if (event === 'disconnect' && callback) {
+            setTimeout(() => {
+              callback();
+            }, 100);
+          }
+        }),
+      } as any;
+    });
+
+    const result = await spawnCommand(matterbridge, command, args);
+
+    expect(result).toBe(true);
+    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining('Spawn command ls with -la'));
+
+    Object.defineProperty(process, 'platform', {
+      value: originalPlatform,
+      writable: true,
+    });
+  });
 });
