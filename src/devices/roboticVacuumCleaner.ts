@@ -168,7 +168,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
       ],
       selectedAreas: selectedAreas ?? [],
       currentArea: currentArea ?? 1,
-      supportedMaps: null,
+      supportedMaps: supportedMaps ??: ServiceArea.Map[], // Indicates that the device is currently unable to provide this information
       estimatedEndTime: null,
     });
     return this;
