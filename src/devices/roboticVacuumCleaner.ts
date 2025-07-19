@@ -22,7 +22,7 @@
  */
 
 // Matter.js
-import { MaybePromise } from '@matter/main';
+import { AreaNamespaceTag, MaybePromise } from '@matter/main';
 import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
 import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
 import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
@@ -57,6 +57,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the robotic vacuum cleaner. Defaults to a predefined set of areas.
    * @param {number[]} [selectedAreas] - The selected areas for the robotic vacuum cleaner. Defaults to an empty array (all areas allowed).
    * @param {number} [currentArea] - The current area of the robotic vacuum cleaner. Defaults to 1 (Living).
+   * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults to empty list.
    */
   constructor(
     name: string,
@@ -73,6 +74,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
     supportedAreas?: ServiceArea.Area[],
     selectedAreas?: number[],
     currentArea?: number,
+    supportedMaps?: ServiceArea.Map[],
   ) {
     super([roboticVacuumCleaner, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, mode }, true);
     this.createDefaultIdentifyClusterServer()
@@ -81,7 +83,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
       .createDefaultRvcRunModeClusterServer(currentRunMode, supportedRunModes)
       .createDefaultRvcCleanModeClusterServer(currentCleanMode, supportedCleanModes)
       .createDefaultRvcOperationalStateClusterServer(phaseList, currentPhase, operationalStateList, operationalState)
-      .createDefaultServiceAreaClusterServer(supportedAreas, selectedAreas, currentArea);
+      .createDefaultServiceAreaClusterServer(supportedAreas, selectedAreas, currentArea, supportedMaps);
   }
 
   /**
@@ -137,34 +139,36 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the ServiceArea cluster. Defaults to a predefined set of areas.
    * @param {number[]} [selectedAreas] - The selected areas for the ServiceArea cluster. Defaults to an empty array (all areas allowed).
    * @param {number} [currentArea] - The current areaId (not the index in the array!) of the ServiceArea cluster. Defaults to 1 (Living).
+   * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults empty list.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultServiceAreaClusterServer(supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number): this {
-    this.behaviors.require(MatterbridgeServiceAreaServer, {
+  createDefaultServiceAreaClusterServer(supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number, supportedMaps?: ServiceArea.Map[]): this {
+    this.behaviors.require(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps), {
       supportedAreas: supportedAreas ?? [
         {
           areaId: 1,
           mapId: null,
-          areaInfo: { locationInfo: { locationName: 'Living', floorNumber: null, areaType: null }, landmarkInfo: null },
+          areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: AreaNamespaceTag.LivingRoom.tag }, landmarkInfo: null },
         },
         {
           areaId: 2,
           mapId: null,
-          areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: null, areaType: null }, landmarkInfo: null },
+          areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: AreaNamespaceTag.Kitchen.tag }, landmarkInfo: null },
         },
         {
           areaId: 3,
           mapId: null,
-          areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: null, areaType: null }, landmarkInfo: null },
+          areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: AreaNamespaceTag.Bedroom.tag }, landmarkInfo: null },
         },
         {
           areaId: 4,
           mapId: null,
-          areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: null, areaType: null }, landmarkInfo: null },
+          areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: AreaNamespaceTag.Bathroom.tag }, landmarkInfo: null },
         },
       ],
       selectedAreas: selectedAreas ?? [],
       currentArea: currentArea ?? 1,
+      supportedMaps: supportedMaps ?? [], // Indicates that the device is currently unable to provide this information
       estimatedEndTime: null,
     });
     return this;
