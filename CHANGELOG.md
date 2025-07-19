@@ -13,17 +13,15 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [error]: Added error logging functions and corresponding tests.
-- [frontend]: Improved test units on Matterbridge class (total coverage 99%).
+- [matterbridge]: Improved test units on Matterbridge class (total coverage 99%).
 - [rvc] Add RVC SupportedMaps Attribute from ServiceArea cluster. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/355).
 
 ### Changed
 
-- [matterbridge]: Refactored initialization of DeviceManager and PluginManager
-- [pluginManager]: Refactored PluginManager removing unused install/uninstall methods
+- [matterbridge]: Refactored initialization of DeviceManager and PluginManager.
+- [pluginManager]: Refactored PluginManager removing unused install/uninstall methods.
 - [pluginManager]: Added loading of default plugin config when a plugin is added the first time. It must be a file in the package root named '[PLUGIN-NAME].config.json'.
 - [readme-dev]: Added [documentation](README-DEV.md) for default plugin config and schema files.
-
-### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
