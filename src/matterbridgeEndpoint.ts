@@ -1840,20 +1840,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     speedMax = 10,
     speedSetting = 0,
     speedCurrent = 0,
-    rockSupport = { rockLeftRight: true, rockUpDown: false, rockRound: false, }, // Indicate rock left to right support
-    rockSetting = { rockLeftRight: false, rockUpDown: false, rockRound: false, }, // rockLeftRight default to off
-    windSupport = { sleepWind: false, naturalWind: true, }, // wind support on
-    windSetting = { sleepWind: false, naturalWind: false, }, // naturalWind defaut to off
+    rockSupport = { rockLeftRight: true, rockUpDown: false, rockRound: false }, // Indicate rock left to right support
+    rockSetting = { rockLeftRight: false, rockUpDown: false, rockRound: false }, // rockLeftRight default to off
+    windSupport = { sleepWind: false, naturalWind: true }, // wind support on
+    windSetting = { sleepWind: false, naturalWind: false }, // naturalWind defaut to off
     airflowDirection = FanControl.AirflowDirection.Forward, // Default airflow direction
   ) {
-    this.behaviors.require(MatterbridgeFanControlServer.with(
-      FanControl.Feature.MultiSpeed,
-      FanControl.Feature.Auto,
-      FanControl.Feature.Step,
-      FanControl.Feature.Rocking,
-      FanControl.Feature.Wind,
-      FanControl.Feature.AirflowDirection,
-    ), {
+    this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step, FanControl.Feature.Rocking, FanControl.Feature.Wind, FanControl.Feature.AirflowDirection), {
       fanMode, // Writable and persistent attribute
       fanModeSequence, // Fixed attribute
       percentSetting, // Writable attribute
@@ -1869,7 +1862,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       windSupport, // Fixed attribute
       windSetting, // Writable attribute
       // airflowDirection
-      airflowDirection // Writable attribute
+      airflowDirection, // Writable attribute
     });
     return this;
   }
