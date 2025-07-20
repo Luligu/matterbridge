@@ -260,12 +260,12 @@ describe('Matterbridge ' + NAME, () => {
     await server.close();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 500));
   });
 
   test('stop the mDNS service', async () => {
     expect(server).toBeDefined();
     await server.env.get(MdnsService)[Symbol.asyncDispose]();
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 500));
   });
 });
