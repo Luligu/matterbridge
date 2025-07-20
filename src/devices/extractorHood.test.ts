@@ -1,7 +1,7 @@
 // src/devices/extractorHood.test.ts
 
 const MATTER_PORT = 6023;
-const NAME = 'BaseTest';
+const NAME = 'ExtractorHood';
 const HOMEDIR = path.join('jest', NAME);
 
 import { rmSync } from 'node:fs';
@@ -15,7 +15,6 @@ import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFor
 import { MdnsService } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { RootEndpoint } from '@matter/main/endpoints/root';
-import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
 import { Identify } from '@matter/main/clusters/identify';
 import { PowerSource } from '@matter/main/clusters/power-source';
 import { ActivatedCarbonFilterMonitoring } from '@matter/main/clusters/activated-carbon-filter-monitoring';
@@ -202,7 +201,7 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.state['hepaFilterMonitoring'] as any).acceptedCommandList).toEqual([0]);
     expect((device.state['hepaFilterMonitoring'] as any).generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(device, 'hepaFilterMonitoring', 'resetCondition', {}); // Reset condition
-    await wait(50); // Wait for the device to be ready
+    await wait(100); // Wait for the device to be ready
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeHepaFilterMonitoringServer: resetCondition called`);
   });
@@ -215,7 +214,7 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.state['activatedCarbonFilterMonitoring'] as any).acceptedCommandList).toEqual([0]);
     expect((device.state['activatedCarbonFilterMonitoring'] as any).generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(device, 'activatedCarbonFilterMonitoring', 'resetCondition', {}); // Reset condition
-    await wait(50); // Wait for the device to be ready
+    await wait(100); // Wait for the device to be ready
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called`);
   });
@@ -223,13 +222,13 @@ describe('Matterbridge ' + NAME, () => {
   test('write attributes fanMode and percentSetting of fanControl cluster', async () => {
     await device.setAttribute('fanControl', 'fanMode', 1); // Set fan mode to 1
     await invokeSubscribeHandler(device, 'fanControl', 'fanMode', 1, 1);
-    await wait(50); // Wait for the device to be ready
+    await wait(100); // Wait for the device to be ready
     expect(device.getAttribute('fanControl', 'fanMode')).toBe(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Fan control fanMode attribute changed: 1`);
 
     await device.setAttribute('fanControl', 'percentSetting', 50); // Set percent setting to 50
     await invokeSubscribeHandler(device, 'fanControl', 'percentSetting', 50, 50);
-    await wait(50); // Wait for the device to be ready
+    await wait(100); // Wait for the device to be ready
     expect(device.getAttribute('fanControl', 'percentSetting')).toBe(50);
     expect(device.getAttribute('fanControl', 'percentCurrent')).toBe(50);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Fan control percentSetting attribute changed: 50`);
@@ -239,7 +238,7 @@ describe('Matterbridge ' + NAME, () => {
     const epochSeconds = Math.floor(Date.now() / 1000); // Current epoch time in seconds
     await device.setAttribute('hepaFilterMonitoring', 'lastChangedTime', epochSeconds); // Set last changed time
     await invokeSubscribeHandler(device, 'hepaFilterMonitoring', 'lastChangedTime', epochSeconds, epochSeconds);
-    await wait(50); // Wait for the device to be ready
+    await wait(100); // Wait for the device to be ready
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Hepa filter monitoring lastChangedTime attribute changed: ${epochSeconds}`);
     expect(device.getAttribute('hepaFilterMonitoring', 'lastChangedTime')).toBe(epochSeconds);
   });
@@ -248,7 +247,7 @@ describe('Matterbridge ' + NAME, () => {
     const epochSeconds = Math.floor(Date.now() / 1000); // Current epoch time in seconds
     await device.setAttribute('activatedCarbonFilterMonitoring', 'lastChangedTime', epochSeconds); // Set last changed time
     await invokeSubscribeHandler(device, 'activatedCarbonFilterMonitoring', 'lastChangedTime', epochSeconds, epochSeconds);
-    await wait(50); // Wait for the device to be ready
+    await wait(100); // Wait for the device to be ready
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Activated carbon filter monitoring lastChangedTime attribute changed: ${epochSeconds}`);
     expect(device.getAttribute('activatedCarbonFilterMonitoring', 'lastChangedTime')).toBe(epochSeconds);
   });
@@ -260,12 +259,12 @@ describe('Matterbridge ' + NAME, () => {
     await server.close();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 
   test('stop the mDNS service', async () => {
     expect(server).toBeDefined();
     await server.env.get(MdnsService)[Symbol.asyncDispose]();
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 });
