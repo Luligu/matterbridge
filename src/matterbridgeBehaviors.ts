@@ -64,6 +64,8 @@ import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-m
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 
 // AnsiLogger module
+import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
+
 import { AnsiLogger } from './logger/export.js';
 // MatterbridgeEndpoint
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
@@ -506,21 +508,23 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
   }
 }
 
-export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoringServer {
+export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition) {
   override resetCondition(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('resetCondition', { cluster: MatterbridgeHepaFilterMonitoringServer.id, attributes: this.state, endpoint: this.endpoint });
+    this.state.condition = 100; // Reset condition to 100%
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000); // TlvEpochS (seconds since Unix epoch)
     device.log.debug(`MatterbridgeHepaFilterMonitoringServer: resetCondition called`);
   }
 }
 
-export class MatterbridgeActivatedCarbonFilterMonitoringServer extends ActivatedCarbonFilterMonitoringServer {
+export class MatterbridgeActivatedCarbonFilterMonitoringServer extends ActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition) {
   override resetCondition(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('resetCondition', { cluster: MatterbridgeActivatedCarbonFilterMonitoringServer.id, attributes: this.state, endpoint: this.endpoint });
+    this.state.condition = 100; // Reset condition to 100%
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000); // TlvEpochS (seconds since Unix epoch)
     device.log.debug(`MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called`);
   }
