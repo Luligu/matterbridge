@@ -1859,8 +1859,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       speedSetting, // Writable attribute
       speedCurrent,
       // Rocking feature
+      rockSupport, // Fixed attribute
       rockSetting, // Writable attribute
       // Wind feature
+      windSupport, // Fixed attribute
       windSetting, // Writable attribute
     });
     return this;
