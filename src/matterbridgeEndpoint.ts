@@ -85,8 +85,6 @@ import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/rado
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import { FanControlServer } from '@matter/main/behaviors/fan-control';
 import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
-import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
-import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
 
 // AnsiLogger module
@@ -113,6 +111,8 @@ import {
   MatterbridgeOperationalStateServer,
   MatterbridgeDeviceEnergyManagementModeServer,
   MatterbridgeDeviceEnergyManagementServer,
+  MatterbridgeActivatedCarbonFilterMonitoringServer,
+  MatterbridgeHepaFilterMonitoringServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -246,6 +246,9 @@ export interface MatterbridgeEndpointCommands {
 
   // Temperature Control
   setTemperature: HandlerFunction;
+
+  // Resource Monitoring
+  resetCondition: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {
@@ -1831,6 +1834,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default HEPA Filter Monitoring Cluster Server with features Condition and ReplacementProductList.
    * It supports ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, and ResourceMonitoring.Feature.ReplacementProductList.
    *
+   * @param {number} condition - The initial condition value (range 0-100). Default is 100.
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
    * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is true.
    * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is null.
@@ -1848,14 +1852,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * The replacement product list is initialized as an empty array.
    */
   createDefaultHepaFilterMonitoringClusterServer(
+    condition: number = 100,
     changeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
     inPlaceIndicator: boolean | undefined = true,
     lastChangedTime: number | null | undefined = null,
     replacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
   ): this {
-    this.behaviors.require(HepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList), {
+    this.behaviors.require(MatterbridgeHepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList), {
       // Feature.Condition
-      condition: 100,
+      condition,
       degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Fixed attribute
       // Feature.ReplacementProductList
       replacementProductList, // Fixed attribute
@@ -1871,6 +1876,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default Activated Carbon Filter Monitoring Cluster Server with features Condition and ReplacementProductList.
    * It supports ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, and ResourceMonitoring.Feature.ReplacementProductList.
    *
+   * @param {number} condition - The initial condition value (range 0-100). Default is 100.
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
    * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is undefined.
    * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is undefined.
@@ -1888,14 +1894,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * The replacement product list is initialized as an empty array.
    */
   createDefaultActivatedCarbonFilterMonitoringClusterServer(
+    condition: number = 100,
     changeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
     inPlaceIndicator: boolean | undefined = true,
     lastChangedTime: number | null | undefined = null,
     replacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
   ): this {
-    this.behaviors.require(ActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList), {
+    this.behaviors.require(MatterbridgeActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList), {
       // Feature.Condition
-      condition: 100,
+      condition,
       degradationDirection: ResourceMonitoring.DegradationDirection.Down,
       // Feature.ReplacementProductList
       replacementProductList, // Fixed attribute
