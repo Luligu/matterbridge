@@ -1830,12 +1830,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - windSupport is fixed.
    * - windSetting is writable.
    */
-
-  /*
-    0 RockLeftRight Indicate rock left to right
-    1 RockUpDown Indicate rock up and down
-    2 RockRound Indicate rock around
-  */
   createCompleteFanControlClusterServer(
     fanMode = FanControl.FanMode.Off,
     fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto,
@@ -1847,7 +1841,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     rockSupport = { rockLeftRight: true, rockUpDown: false, rockRound: false, }, // Indicate rock left to right
     rockSetting = { rockLeftRight: false, rockUpDown: false, rockRound: false, }, // rockLeftRight default to off
     windSupport = { sleepWind: false, naturalWind: true, }, // Indicate wind on
-    windSetting = { sleepWind: false, naturalWind: true, }, // naturalWind defaut to off
+    windSetting = { sleepWind: false, naturalWind: false, }, // naturalWind defaut to off
   ) {
     this.behaviors.require(MatterbridgeFanControlServer.with(
       FanControl.Feature.MultiSpeed,
@@ -1866,6 +1860,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       speedCurrent,
       // Rocking feature
       rockSetting, // Writable attribute
+      // Wind feature
       windSetting, // Writable attribute
     });
     return this;
