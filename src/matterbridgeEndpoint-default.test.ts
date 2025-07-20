@@ -559,6 +559,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(false);
 
     await add(device);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(true);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).step).toBe(true);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).multiSpeed).toBe(false);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
   });
 
@@ -571,8 +574,13 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'fanMode')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentSetting')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(false);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(false);
 
     await add(device);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(false);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).step).toBe(false);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).multiSpeed).toBe(false);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
   });
 
@@ -585,8 +593,13 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'fanMode')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentSetting')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(true);
 
     await add(device);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(true);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).step).toBe(true);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).multiSpeed).toBe(true);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
     (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
