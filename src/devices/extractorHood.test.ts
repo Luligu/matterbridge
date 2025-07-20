@@ -1,7 +1,7 @@
-// src/dishwasher.test.ts
+// src/devices/extractorHood.test.ts
 
-const MATTER_PORT = 6022;
-const NAME = 'Dishwasher';
+const MATTER_PORT = 6023;
+const NAME = 'BaseTest';
 const HOMEDIR = path.join('jest', NAME);
 
 import { rmSync } from 'node:fs';
@@ -9,21 +9,28 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+
 // matter.js
 import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
 import { MdnsService } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { RootEndpoint } from '@matter/main/endpoints/root';
-import { DishwasherModeServer, TemperatureControlServer } from '@matter/main/behaviors';
-import { DishwasherAlarm, DishwasherMode, Identify, OnOff, OperationalState, PowerSource, TemperatureControl } from '@matter/main/clusters';
+import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
+import { Identify } from '@matter/main/clusters/identify';
+import { PowerSource } from '@matter/main/clusters/power-source';
+import { ActivatedCarbonFilterMonitoring } from '@matter/main/clusters/activated-carbon-filter-monitoring';
+import { HepaFilterMonitoring } from '@matter/main/clusters/hepa-filter-monitoring';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
+import { ExtractorHood } from './extractorHood.js';
+import { FanControl } from '@matter/main/clusters';
 import { inspectError } from '../utils/error.js';
-
-import { Dishwasher, MatterbridgeDishwasherModeServer } from './dishwasher.js';
-import { MatterbridgeNumberTemperatureControlServer } from './laundryWasher.js';
+import { invokeBehaviorCommand, invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';
+import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
+import { MatterbridgeActivatedCarbonFilterMonitoringServer, MatterbridgeHepaFilterMonitoringServer } from '../matterbridgeBehaviors.js';
+import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
+import { wait } from '../utils/wait.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -123,20 +130,18 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator.lifecycle.isReady).toBeTruthy();
   });
 
-  test('create a dishwasher device', async () => {
-    device = new Dishwasher('Dishwasher Test Device', 'DW123456');
+  test('create a water heater device', async () => {
+    device = new ExtractorHood('Extractor Hood Test Device', 'EH123456');
     expect(device).toBeDefined();
-    expect(device.id).toBe('DishwasherTestDevice-DW123456');
+    expect(device.id).toBe('ExtractorHoodTestDevice-EH123456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherAlarm.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(FanControl.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(HepaFilterMonitoring.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(ActivatedCarbonFilterMonitoring.Cluster.id)).toBeTruthy();
   });
 
-  test('add a dishwasher device', async () => {
+  test('add a water heater device', async () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
     try {
@@ -145,13 +150,9 @@ describe('Matterbridge ' + NAME, () => {
       inspectError(device.log, `Error adding device ${device.deviceName}`, error);
       return;
     }
-    expect(server.parts.has('DishwasherTestDevice-DW123456')).toBeTruthy();
+    expect(server.parts.has('ExtractorHoodTestDevice-EH123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDishwasherModeServer initialized: currentMode is 2`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80°`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
   });
 
   test('start the server node', async () => {
@@ -190,75 +191,66 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(72); // 72 attributes for the dishwasher device
+    expect(attributes.length).toBe(64); // ExtractorHood has 64 attributes
   });
 
-  test('invoke MatterbridgeDishwasherModeServer commands', async () => {
-    expect(device.behaviors.has(DishwasherModeServer)).toBeTruthy();
-    expect(device.behaviors.has(MatterbridgeDishwasherModeServer)).toBeTruthy();
-    expect(device.behaviors.elementsOf(DishwasherModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect(device.behaviors.elementsOf(MatterbridgeDishwasherModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((device as any).state['dishwasherMode'].acceptedCommandList).toEqual([0]);
-    expect((device as any).state['dishwasherMode'].generatedCommandList).toEqual([1]);
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'onOff', 'off', {}); // Dead Front state
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'dishwasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `DishwasherModeServer: changeToMode called with invalid mode 0`);
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'dishwasherMode', 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `ChangeToMode (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `DishwasherModeServer: changeToMode called with mode 1 => Light`);
+  test('invoke MatterbridgeHepaFilterMonitoringServer commands', async () => {
+    expect(device.behaviors.has(HepaFilterMonitoringServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeHepaFilterMonitoringServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(HepaFilterMonitoringServer).commands.has('resetCondition')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeHepaFilterMonitoringServer).commands.has('resetCondition')).toBeTruthy();
+    expect((device.state['hepaFilterMonitoring'] as any).acceptedCommandList).toEqual([0]);
+    expect((device.state['hepaFilterMonitoring'] as any).generatedCommandList).toEqual([]);
+    await invokeBehaviorCommand(device, 'hepaFilterMonitoring', 'resetCondition', {}); // Reset condition
+    await wait(50); // Wait for the device to be ready
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeHepaFilterMonitoringServer: resetCondition called`);
   });
 
-  test('remove the laundry washer device', async () => {
-    expect(server).toBeDefined();
-    expect(device).toBeDefined();
-    await device.delete();
-    expect(server.parts.has('DishwasherTestDevice-DW123456')).toBeFalsy();
-    expect(server.parts.has(device)).toBeFalsy();
+  test('invoke MatterbridgeActivatedCarbonFilterMonitoringServer commands', async () => {
+    expect(device.behaviors.has(ActivatedCarbonFilterMonitoringServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeActivatedCarbonFilterMonitoringServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(ActivatedCarbonFilterMonitoringServer).commands.has('resetCondition')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeActivatedCarbonFilterMonitoringServer).commands.has('resetCondition')).toBeTruthy();
+    expect((device.state['activatedCarbonFilterMonitoring'] as any).acceptedCommandList).toEqual([0]);
+    expect((device.state['activatedCarbonFilterMonitoring'] as any).generatedCommandList).toEqual([]);
+    await invokeBehaviorCommand(device, 'activatedCarbonFilterMonitoring', 'resetCondition', {}); // Reset condition
+    await wait(50); // Wait for the device to be ready
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called`);
   });
 
-  test('create a dishwasher device with number temperature control', async () => {
-    device = new Dishwasher('Dishwasher Test Device', 'DW123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
-    expect(device).toBeDefined();
-    expect(device.id).toBe('DishwasherTestDevice-DW123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherAlarm.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
+  test('write attributes fanMode and percentSetting of fanControl cluster', async () => {
+    await device.setAttribute('fanControl', 'fanMode', 1); // Set fan mode to 1
+    await invokeSubscribeHandler(device, 'fanControl', 'fanMode', 1, 1);
+    await wait(50); // Wait for the device to be ready
+    expect(device.getAttribute('fanControl', 'fanMode')).toBe(1);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Fan control fanMode attribute changed: 1`);
+
+    await device.setAttribute('fanControl', 'percentSetting', 50); // Set percent setting to 50
+    await invokeSubscribeHandler(device, 'fanControl', 'percentSetting', 50, 50);
+    await wait(50); // Wait for the device to be ready
+    expect(device.getAttribute('fanControl', 'percentSetting')).toBe(50);
+    expect(device.getAttribute('fanControl', 'percentCurrent')).toBe(50);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Fan control percentSetting attribute changed: 50`);
   });
 
-  test('add a dishwasher device with number temperature control', async () => {
-    expect(server).toBeDefined();
-    expect(device).toBeDefined();
-    await server.add(device);
-    expect(server.parts.has('DishwasherTestDevice-DW123456')).toBeTruthy();
-    expect(server.parts.has(device)).toBeTruthy();
-    expect(device.lifecycle.isReady).toBeTruthy();
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDishwasherModeServer initialized: currentMode is 2`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
+  test('write attributes lastChangedTime of hepa cluster', async () => {
+    const epochSeconds = Math.floor(Date.now() / 1000); // Current epoch time in seconds
+    await device.setAttribute('hepaFilterMonitoring', 'lastChangedTime', epochSeconds); // Set last changed time
+    await invokeSubscribeHandler(device, 'hepaFilterMonitoring', 'lastChangedTime', epochSeconds, epochSeconds);
+    await wait(50); // Wait for the device to be ready
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Hepa filter monitoring lastChangedTime attribute changed: ${epochSeconds}`);
+    expect(device.getAttribute('hepaFilterMonitoring', 'lastChangedTime')).toBe(epochSeconds);
   });
 
-  test('invoke MatterbridgeNumberTemperatureControlServer commands', async () => {
-    expect(device.behaviors.has(TemperatureControlServer)).toBeTruthy();
-    expect(device.behaviors.has(MatterbridgeNumberTemperatureControlServer)).toBeTruthy();
-    expect(device.behaviors.elementsOf(TemperatureControlServer).commands.has('setTemperature')).toBeTruthy();
-    expect(device.behaviors.elementsOf(MatterbridgeNumberTemperatureControlServer).commands.has('setTemperature')).toBeTruthy();
-    expect((device.state['temperatureControl'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['temperatureControl'] as any).generatedCommandList).toEqual([]);
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperature: 3 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature 3`);
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperature: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
+  test('write attributes lastChangedTime of activated carbon cluster', async () => {
+    const epochSeconds = Math.floor(Date.now() / 1000); // Current epoch time in seconds
+    await device.setAttribute('activatedCarbonFilterMonitoring', 'lastChangedTime', epochSeconds); // Set last changed time
+    await invokeSubscribeHandler(device, 'activatedCarbonFilterMonitoring', 'lastChangedTime', epochSeconds, epochSeconds);
+    await wait(50); // Wait for the device to be ready
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Activated carbon filter monitoring lastChangedTime attribute changed: ${epochSeconds}`);
+    expect(device.getAttribute('activatedCarbonFilterMonitoring', 'lastChangedTime')).toBe(epochSeconds);
   });
 
   test('close the server node', async () => {
