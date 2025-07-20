@@ -1804,7 +1804,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a fan control cluster server with features MultiSpeed, Auto, Step, Rock and Wind.
+   * Creates a fan control cluster server with features MultiSpeed, Auto, Step, Rock, Wind and AirflowDirection.
    *
    * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
@@ -1842,6 +1842,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     rockSetting = { rockLeftRight: false, rockUpDown: false, rockRound: false, }, // rockLeftRight default to off
     windSupport = { sleepWind: false, naturalWind: true, }, // Indicate wind on
     windSetting = { sleepWind: false, naturalWind: false, }, // naturalWind defaut to off
+    airflowDirection = FanControl.AirflowDirection.Forward, // Default airflow direction
   ) {
     this.behaviors.require(MatterbridgeFanControlServer.with(
       FanControl.Feature.MultiSpeed,
@@ -1849,6 +1850,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       FanControl.Feature.Step,
       FanControl.Feature.Rocking,
       FanControl.Feature.Wind,
+      FanControl.Feature.AirflowDirection,
     ), {
       fanMode, // Writable and persistent attribute
       fanModeSequence, // Fixed attribute
@@ -1864,6 +1866,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Wind feature
       windSupport, // Fixed attribute
       windSetting, // Writable attribute
+      // airflowDirection
+      airflowDirection // Writable attribute
     });
     return this;
   }
