@@ -1817,6 +1817,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {object} [rockSetting] - The rock setting configuration.
    * @param {object} [windSupport] - The wind support configuration.
    * @param {object} [windSetting] - The wind setting configuration.
+   * @param {FanControl.AirflowDirection} [airflowDirection] - The airflow direction. Defaults to `FanControl.AirflowDirection.Forward`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1829,6 +1830,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - rockSetting is writable.
    * - windSupport is fixed.
    * - windSetting is writable.
+   * - airflowDirection is writable.
    */
   createCompleteFanControlClusterServer(
     fanMode = FanControl.FanMode.Off,
@@ -1838,9 +1840,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     speedMax = 10,
     speedSetting = 0,
     speedCurrent = 0,
-    rockSupport = { rockLeftRight: true, rockUpDown: false, rockRound: false, }, // Indicate rock left to right
+    rockSupport = { rockLeftRight: true, rockUpDown: false, rockRound: false, }, // Indicate rock left to right support
     rockSetting = { rockLeftRight: false, rockUpDown: false, rockRound: false, }, // rockLeftRight default to off
-    windSupport = { sleepWind: false, naturalWind: true, }, // Indicate wind on
+    windSupport = { sleepWind: false, naturalWind: true, }, // wind support on
     windSetting = { sleepWind: false, naturalWind: false, }, // naturalWind defaut to off
     airflowDirection = FanControl.AirflowDirection.Forward, // Default airflow direction
   ) {
