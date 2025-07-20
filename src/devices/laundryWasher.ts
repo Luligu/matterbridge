@@ -99,7 +99,7 @@ export class LaundryWasher extends MatterbridgeEndpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultLaundryWasherModeClusterServer(
-    currentMode = 2,
+    currentMode: number = 2,
     supportedModes: LaundryWasherMode.ModeOption[] = [
       { label: 'Delicate', mode: 1, modeTags: [{ value: LaundryWasherMode.ModeTag.Delicate }] },
       { label: 'Normal', mode: 2, modeTags: [{ value: LaundryWasherMode.ModeTag.Normal }] },
@@ -125,7 +125,7 @@ export class LaundryWasher extends MatterbridgeEndpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultLaundryWasherControlsClusterServer(
-    spinSpeedCurrent = 2,
+    spinSpeedCurrent: number = 2,
     spinSpeeds: string[] = ['400', '800', '1200', '1600'],
     numberOfRinses: LaundryWasherControls.NumberOfRinses = LaundryWasherControls.NumberOfRinses.Normal,
     supportedRinses: LaundryWasherControls.NumberOfRinses[] = [LaundryWasherControls.NumberOfRinses.None, LaundryWasherControls.NumberOfRinses.Normal, LaundryWasherControls.NumberOfRinses.Max, LaundryWasherControls.NumberOfRinses.Extra],
@@ -143,11 +143,11 @@ export class LaundryWasher extends MatterbridgeEndpoint {
    * Creates a TemperatureControl Cluster Server with feature TemperatureLevel.
    *
    * @param {number} selectedTemperatureLevel - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
-   * @param {string[]} supportedTemperatureLevels - The supported temperature levels. Defaults to ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']. Fixed attribute.
+   * @param {string[]} supportedTemperatureLevels - The supported temperature levels. Defaults to ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°'].
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createLevelTemperatureControlClusterServer(selectedTemperatureLevel = 1, supportedTemperatureLevels = ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']): this {
+  createLevelTemperatureControlClusterServer(selectedTemperatureLevel: number = 1, supportedTemperatureLevels: string[] = ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']): this {
     this.behaviors.require(MatterbridgeLevelTemperatureControlServer.with(TemperatureControl.Feature.TemperatureLevel), {
       selectedTemperatureLevel,
       supportedTemperatureLevels,
@@ -164,7 +164,7 @@ export class LaundryWasher extends MatterbridgeEndpoint {
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createNumberTemperatureControlClusterServer(temperatureSetpoint = 40 * 100, minTemperature = 30 * 100, maxTemperature = 60 * 100, step = 10 * 100): this {
+  createNumberTemperatureControlClusterServer(temperatureSetpoint: number = 40 * 100, minTemperature: number = 30 * 100, maxTemperature: number = 60 * 100, step: number = 10 * 100): this {
     this.behaviors.require(MatterbridgeNumberTemperatureControlServer.with(TemperatureControl.Feature.TemperatureNumber, TemperatureControl.Feature.TemperatureStep), {
       temperatureSetpoint,
       minTemperature, // Fixed attribute

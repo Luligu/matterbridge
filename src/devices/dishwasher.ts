@@ -1,8 +1,8 @@
 /**
- * @description This file contains the LaundryDryer class.
- * @file src/devices/laundryDryer.ts
+ * @description This file contains the Dishwasher class.
+ * @file src/devices/dishwasher.ts
  * @author Luca Liguori
- * @created 2025-06-29
+ * @created 2025-05-25
  * @version 1.1.0
  * @license Apache-2.0
  *
@@ -22,26 +22,29 @@
  */
 
 // Imports from @matter
+import { MaybePromise } from '@matter/main';
 import { OperationalState } from '@matter/main/clusters/operational-state';
-import { LaundryWasherMode } from '@matter/main/clusters/laundry-washer-mode';
 import { TemperatureControl } from '@matter/main/clusters/temperature-control';
-import { LaundryDryerControls } from '@matter/main/clusters/laundry-dryer-controls';
-import { LaundryDryerControlsServer } from '@matter/main/behaviors/laundry-dryer-controls';
+import { ModeBase } from '@matter/main/clusters/mode-base';
+import { DishwasherModeServer } from '@matter/main/behaviors/dishwasher-mode';
+import { DishwasherAlarmServer } from '@matter/main/behaviors/dishwasher-alarm';
+import { DishwasherMode } from '@matter/main/clusters/dishwasher-mode';
 
 // Matterbridge
-import { laundryDryer, powerSource } from '../matterbridgeDeviceTypes.js';
+import { dishwasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
 
-import { MatterbridgeLaundryWasherModeServer, MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './laundryWasher.js';
+import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './laundryWasher.js';
 
-export class LaundryDryer extends MatterbridgeEndpoint {
+export class Dishwasher extends MatterbridgeEndpoint {
   /**
-   * Creates an instance of the LaundryDryer class.
+   * Creates an instance of the DishWasher class.
    *
-   * @param {string} name - The name of the laundry dryer.
-   * @param {string} serial - The serial number of the laundry dryer.
-   * @param {number} [currentMode] - The current mode of the laundry dryer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off. Persistent attribute.
-   * @param {LaundryWasherMode.ModeOption[]} [supportedModes] - The supported modes of the laundry dryer. Defaults to a set of common modes (which include Delicate, Normal, Heavy, and Whites). Fixed attribute.
+   * @param {string} name - The name of the dish washer.
+   * @param {string} serial - The serial number of the dish washer.
+   * @param {number} [currentMode] - The current mode of the dish washer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off. Persistent attribute.
+   * @param {DishwasherMode.ModeOption[]} [supportedModes] - The supported modes of the dish washer. Defaults to a set of common modes (which include Light, Normal, Heavy). Fixed attribute.
    * @param {number} [selectedTemperatureLevel] - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
    * @param {string[]} [supportedTemperatureLevels] - The supported temperature levels. Defaults to ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']. Fixed attribute.
    * @param {number} [temperatureSetpoint] - The temperature setpoint * 100. Defaults to 40 * 100 (which corresponds to 40°C).
@@ -58,7 +61,7 @@ export class LaundryDryer extends MatterbridgeEndpoint {
     name: string,
     serial: string,
     currentMode?: number,
-    supportedModes?: LaundryWasherMode.ModeOption[],
+    supportedModes?: DishwasherMode.ModeOption[],
     selectedTemperatureLevel?: number,
     supportedTemperatureLevels?: string[],
     temperatureSetpoint?: number,
@@ -67,56 +70,16 @@ export class LaundryDryer extends MatterbridgeEndpoint {
     step?: number,
     operationalState?: OperationalState.OperationalStateEnum,
   ) {
-    super([laundryDryer, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([dishwasher, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer();
-    this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Laundry Dryer');
+    this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Dishwasher');
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDeadFrontOnOffClusterServer(true);
-    this.createDefaultLaundryWasherModeClusterServer(currentMode, supportedModes);
-    this.createDefaultLaundryDryerControlsClusterServer(1);
+    this.createDefaultDishwasherModeClusterServer(currentMode, supportedModes);
+    this.createDefaultDishwasherAlarmClusterServer();
     if (temperatureSetpoint) this.createNumberTemperatureControlClusterServer(temperatureSetpoint, minTemperature, maxTemperature, step);
     else this.createLevelTemperatureControlClusterServer(selectedTemperatureLevel, supportedTemperatureLevels);
     this.createDefaultOperationalStateClusterServer(operationalState);
-  }
-
-  /**
-   * Creates a default Laundry Washer Mode Cluster Server.
-   *
-   * @param {number} currentMode - The current mode of the laundry washer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off. Persistent attribute.
-   * @param {LaundryWasherMode.ModeOption[]} supportedModes - The supported modes of the laundry washer. Defaults to a set of common modes (which include Delicate, Normal, Heavy, and Whites). Fixed attribute.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultLaundryWasherModeClusterServer(
-    currentMode: number = 2,
-    supportedModes: LaundryWasherMode.ModeOption[] = [
-      { label: 'Delicate', mode: 1, modeTags: [{ value: LaundryWasherMode.ModeTag.Delicate }] },
-      { label: 'Normal', mode: 2, modeTags: [{ value: LaundryWasherMode.ModeTag.Normal }] },
-      { label: 'Heavy', mode: 3, modeTags: [{ value: LaundryWasherMode.ModeTag.Heavy }] },
-      { label: 'Whites', mode: 4, modeTags: [{ value: LaundryWasherMode.ModeTag.Whites }] },
-    ],
-  ): this {
-    this.behaviors.require(MatterbridgeLaundryWasherModeServer, {
-      supportedModes, // Fixed attribute.
-      currentMode, // Persistent attribute.
-    });
-    return this;
-  }
-
-  /**
-   * Creates a default Laundry Dryer Controls Cluster Server.
-   *
-   * @param {LaundryDryerControls.DrynessLevel} selectedDrynessLevel - The selected dryness level. Default is undefined.
-   * @param {LaundryDryerControls.DrynessLevel[]} supportedDrynessLevels - The supported dryness levels. Default is [Low, Normal, Extra, Max].
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultLaundryDryerControlsClusterServer(selectedDrynessLevel?: LaundryDryerControls.DrynessLevel, supportedDrynessLevels?: LaundryDryerControls.DrynessLevel[]): this {
-    this.behaviors.require(LaundryDryerControlsServer, {
-      supportedDrynessLevels: supportedDrynessLevels ?? [LaundryDryerControls.DrynessLevel.Low, LaundryDryerControls.DrynessLevel.Normal, LaundryDryerControls.DrynessLevel.Extra, LaundryDryerControls.DrynessLevel.Max],
-      selectedDrynessLevel, // Writable
-    });
-    return this;
   }
 
   /**
@@ -153,5 +116,75 @@ export class LaundryDryer extends MatterbridgeEndpoint {
       step, // Fixed attribute
     });
     return this;
+  }
+
+  /**
+   * Creates a default Dishwasher Mode Cluster Server.
+   *
+   * @param {number} currentMode - The current mode of the dishwasher. Persistent attribute.
+   * @param {DishwasherMode.ModeOption[]} supportedModes - The supported modes of the dishwasher. Defaults to a set of common modes (Light, Normal, Heavy). Fixed attribute.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultDishwasherModeClusterServer(
+    currentMode: number = 2,
+    supportedModes: DishwasherMode.ModeOption[] = [
+      { label: 'Light', mode: 1, modeTags: [{ value: DishwasherMode.ModeTag.Light }] },
+      { label: 'Normal', mode: 2, modeTags: [{ value: DishwasherMode.ModeTag.Normal }] },
+      { label: 'Heavy', mode: 3, modeTags: [{ value: DishwasherMode.ModeTag.Heavy }] },
+    ],
+  ): this {
+    this.behaviors.require(MatterbridgeDishwasherModeServer, {
+      supportedModes,
+      currentMode,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default Dishwasher Alarm Cluster Server.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultDishwasherAlarmClusterServer(): this {
+    this.behaviors.require(DishwasherAlarmServer, {
+      mask: { inflowError: true, drainError: true, doorError: true, tempTooLow: true, tempTooHigh: true, waterLevelError: true },
+      state: { inflowError: false, drainError: false, doorError: false, tempTooLow: false, tempTooHigh: false, waterLevelError: false },
+      supported: { inflowError: true, drainError: true, doorError: true, tempTooLow: true, tempTooHigh: true, waterLevelError: true },
+    });
+    return this;
+  }
+}
+
+export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
+  override initialize() {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeDishwasherModeServer initialized: currentMode is ${this.state.currentMode}`);
+    this.state.currentMode = 2;
+    this.reactTo(this.agent.get(MatterbridgeOnOffServer).events.onOff$Changed, this.handleOnOffChange);
+  }
+
+  // Dead Front OnOff Cluster
+  protected handleOnOffChange(onOff: boolean) {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    if (onOff === false) {
+      device.log.info('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
+      this.state.currentMode = 2;
+    }
+  }
+
+  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('changeToMode', { request, cluster: DishwasherModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
+    if (supportedMode) {
+      device.log.info(`DishwasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);
+      this.state.currentMode = request.newMode;
+      return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+    } else {
+      device.log.error(`DishwasherModeServer: changeToMode called with invalid mode ${request.newMode}`);
+      return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Invalid mode' };
+    }
   }
 }
