@@ -1829,51 +1829,80 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default HEPA Filter Monitoring Cluster Server with features Condition and ReplacementProductList.
-   * It supports ResourceMonitoring.Feature.Condition and ResourceMonitoring.Feature.ReplacementProductList.
+   * It supports ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, and ResourceMonitoring.Feature.ReplacementProductList.
    *
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
-   * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is undefined.
-   * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is undefined.
+   * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is true.
+   * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is null.
+   * @param {ResourceMonitoring.ReplacementProduct[]} replacementProductList - The list of replacement products. Default is an empty array. It is a fixed attribute.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The HEPA Filter Monitoring Cluster Server is used to monitor the status of HEPA filters.
+   * It provides information about the condition of the filter, whether it is in place, and the last time it was changed.
+   * The change indication can be used to indicate if the filter needs to be replaced or serviced.
+   * The replacement product list can be used to provide a list of replacement products for the filter.
+   * The condition attribute is fixed at 100, indicating a healthy filter.
+   * The degradation direction is fixed at ResourceMonitoring.DegradationDirection.Down, indicating that a lower value indicates a worse condition.
+   * The replacement product list is initialized as an empty array.
    */
   createDefaultHepaFilterMonitoringClusterServer(
     changeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
-    inPlaceIndicator: boolean | undefined = undefined,
-    lastChangedTime: number | undefined = undefined,
+    inPlaceIndicator: boolean | undefined = true,
+    lastChangedTime: number | null | undefined = null,
+    replacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
   ): this {
-    this.behaviors.require(HepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.ReplacementProductList), {
-      condition: 100, // Feature.Condition
-      degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Feature.Condition
+    this.behaviors.require(HepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList), {
+      // Feature.Condition
+      condition: 100,
+      degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Fixed attribute
+      // Feature.ReplacementProductList
+      replacementProductList, // Fixed attribute
+      // Base attributes
       changeIndication,
       inPlaceIndicator,
-      lastChangedTime,
-      replacementProductList: [], // Feature.ReplacementProductList
+      lastChangedTime, // Writable and persistent across restarts
     });
     return this;
   }
 
   /**
    * Creates a default Activated Carbon Filter Monitoring Cluster Server with features Condition and ReplacementProductList.
+   * It supports ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, and ResourceMonitoring.Feature.ReplacementProductList.
    *
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
    * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is undefined.
    * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is undefined.
+   * @param {ResourceMonitoring.ReplacementProduct[]} replacementProductList - The list of replacement products. Default is an empty array. It is a fixed attribute.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The Activated Carbon Filter Monitoring Cluster Server is used to monitor the status of activated carbon filters.
+   * It provides information about the condition of the filter, whether it is in place, and the last time it was changed.
+   * The change indication can be used to indicate if the filter needs to be replaced or serviced.
+   * The replacement product list can be used to provide a list of replacement products for the filter.
+   * The condition attribute is fixed at 100, indicating a healthy filter.
+   * The degradation direction is fixed at ResourceMonitoring.DegradationDirection.Down, indicating that a lower value indicates a worse condition.
+   * The replacement product list is initialized as an empty array.
    */
   createDefaultActivatedCarbonFilterMonitoringClusterServer(
     changeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
-    inPlaceIndicator: boolean | undefined = undefined,
-    lastChangedTime: number | undefined = undefined,
+    inPlaceIndicator: boolean | undefined = true,
+    lastChangedTime: number | null | undefined = null,
+    replacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
   ): this {
-    this.behaviors.require(ActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.ReplacementProductList), {
-      condition: 100, // Feature.Condition
-      degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Feature.Condition
+    this.behaviors.require(ActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList), {
+      // Feature.Condition
+      condition: 100,
+      degradationDirection: ResourceMonitoring.DegradationDirection.Down,
+      // Feature.ReplacementProductList
+      replacementProductList, // Fixed attribute
+      // Base attributes
       changeIndication,
       inPlaceIndicator,
-      lastChangedTime,
-      replacementProductList: [], // Feature.ReplacementProductList
+      lastChangedTime, // Writable and persistent across restarts
     });
     return this;
   }
