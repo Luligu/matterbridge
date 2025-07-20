@@ -1804,6 +1804,74 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a fan control cluster server with features MultiSpeed, Auto, and Step.
+   *
+   * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
+   * @param {number} [percentSetting] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent] - The initial percent current. Defaults to 0.
+   * @param {number} [speedMax] - The maximum speed setting. Defaults to 10.
+   * @param {number} [speedSetting] - The initial speed setting. Defaults to 0.
+   * @param {number} [speedCurrent] - The initial speed current. Defaults to 0.
+   * @param {object} [rockSupport] - The rock support configuration.
+   * @param {object} [rockSetting] - The rock setting configuration.
+   * @param {object} [windSupport] - The wind support configuration.
+   * @param {object} [windSetting] - The wind setting configuration.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - fanmode is writable and persists across reboots.
+   * - fanModeSequence is fixed.
+   * - percentSetting is writable.
+   * - speedMax is fixed.
+   * - speedSetting is writable.
+   * - rockSupport is fixed.
+   * - rockSetting is writable.
+   * - windSupport is fixed.
+   * - windSetting is writable.
+   */
+
+  /*
+    0 RockLeftRight Indicate rock left to right
+    1 RockUpDown Indicate rock up and down
+    2 RockRound Indicate rock around
+  */
+  createCompleteFanControlClusterServer(
+    fanMode = FanControl.FanMode.Off,
+    fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto,
+    percentSetting = 0,
+    percentCurrent = 0,
+    speedMax = 10,
+    speedSetting = 0,
+    speedCurrent = 0,
+    rockSupport = { rockLeftRight: true, rockUpDown: false, rockRound: false, }, // Indicate rock left to right
+    rockSetting = { rockLeftRight: false, rockUpDown: false, rockRound: false, }, // rockLeftRight default to off
+    windSupport = { sleepWind: false, naturalWind: true, }, // Indicate wind on
+    windSetting = { sleepWind: false, naturalWind: true, }, // naturalWind defaut to off
+  ) {
+    this.behaviors.require(MatterbridgeFanControlServer.with(
+      FanControl.Feature.MultiSpeed,
+      FanControl.Feature.Auto,
+      FanControl.Feature.Step,
+      FanControl.Feature.Rocking,
+      FanControl.Feature.Wind,
+    ), {
+      fanMode, // Writable and persistent attribute
+      fanModeSequence, // Fixed attribute
+      percentSetting, // Writable attribute
+      percentCurrent,
+      // MultiSpeed feature
+      speedMax, // Fixed attribute
+      speedSetting, // Writable attribute
+      speedCurrent,
+      // Rocking feature
+      rockSetting, // Writable attribute
+      windSetting, // Writable attribute
+    });
+    return this;
+  }
+
+  /**
    * Creates a base fan control cluster server without features.
    *
    * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
