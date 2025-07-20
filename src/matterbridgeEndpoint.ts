@@ -1804,7 +1804,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a fan control cluster server with features MultiSpeed, Auto, and Step.
+   * Creates a fan control cluster server with features MultiSpeed, Auto, Step, Rock and Wind.
    *
    * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
