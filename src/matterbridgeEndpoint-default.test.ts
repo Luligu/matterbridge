@@ -604,6 +604,24 @@ describe('Matterbridge ' + NAME, () => {
     (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
 
+  test('createCompleteFanControlClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(fanDevice, { uniqueStorageKey: 'Fan4' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultGroupsClusterServer();
+    device.createCompleteFanControlClusterServer();
+    expect(device.hasAttributeServer(FanControl.Cluster, 'fanMode')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'percentSetting')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'rockSupport')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'windSupport')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
+  });
+
   test('createDefaultHepaFilterMonitoringClusterServer', async () => {
     const device = new MatterbridgeEndpoint(airPurifier, { uniqueStorageKey: 'AirPurifier' });
     expect(device).toBeDefined();
