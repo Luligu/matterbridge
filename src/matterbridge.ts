@@ -191,6 +191,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private initialized = false;
   private execRunningCount = 0;
   private startMatterInterval: NodeJS.Timeout | undefined;
+  private startMatterIntervalMs = 1000;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
@@ -1740,7 +1741,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('bridge_started');
       this.log.notice('Matterbridge bridge started successfully');
-    }, 1000);
+    }, this.startMatterIntervalMs);
   }
 
   /**
@@ -1845,7 +1846,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('childbridge_started');
       this.log.notice('Matterbridge childbridge started successfully');
-    }, 1000);
+    }, this.startMatterIntervalMs);
   }
 
   /**
