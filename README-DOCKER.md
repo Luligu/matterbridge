@@ -171,3 +171,38 @@ docker logs \
 ```bash
 docker logs --tail 1000 -f matterbridge
 ```
+
+### Prevent the logs to grow
+
+If you want to prevent the docker logs to grow too much, you can configure Docker's logging options globally.
+
+**Warning**: This will restart Docker and affect all running containers.
+
+```bash
+sudo nano /etc/docker/daemon.json
+```
+
+Add or update the logging configuration in the daemon.json file:
+
+```json
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m",
+    "max-file": "3"
+  }
+}
+```
+
+Where:
+
+- `max-size`: Maximum size of each log file (e.g., "10m", "100m", "1g")
+- `max-file`: Maximum number of log files to keep
+
+Save the file and restart Docker:
+
+```bash
+sudo systemctl restart docker
+```
+
+**Note**: This configuration applies to new containers. Existing containers will need to be recreated to use the new logging settings.
