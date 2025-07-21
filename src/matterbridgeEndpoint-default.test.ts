@@ -618,6 +618,12 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(true);
 
     await add(device);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(true);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).step).toBe(true);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).multiSpeed).toBe(true);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).rocking).toBe(true);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).wind).toBe(true);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).airflowDirection).toBe(true);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
     (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
