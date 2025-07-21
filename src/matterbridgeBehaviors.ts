@@ -43,6 +43,7 @@ import { OperationalState } from '@matter/main/clusters/operational-state';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 import { ServiceArea } from '@matter/main/clusters/service-area';
 import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
 import { OnOffServer } from '@matter/main/behaviors/on-off';
@@ -64,8 +65,6 @@ import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-m
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 
 // AnsiLogger module
-import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
-
 import { AnsiLogger } from './logger/export.js';
 // MatterbridgeEndpoint
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
