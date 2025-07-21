@@ -782,6 +782,7 @@ export function getDefaultOperationalStateClusterServer(operationalState: Operat
   return optionsFor(MatterbridgeOperationalStateServer, {
     phaseList: [],
     currentPhase: null,
+    countdownTime: null,
     operationalStateList: [
       { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
       { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
