@@ -122,26 +122,6 @@ describe('Matterbridge frontend', () => {
     jest.restoreAllMocks();
   });
 
-  const waitMessageId = async (id: number, method?: string, message?: Record<string, any>): Promise<Record<string, any>> => {
-    const response = new Promise<Record<string, any>>((resolve) => {
-      const onMessage = (event: WebSocket.MessageEvent) => {
-        // console.log('received message:', event.data);
-        const data = JSON.parse(event.data as string);
-        expect(data).toBeDefined();
-        if (data.id === id && (method ? data.method === method : true)) {
-          ws.removeEventListener('message', onMessage);
-          resolve(data);
-        }
-      };
-      ws.addEventListener('message', onMessage);
-    });
-    if (message) {
-      ws.send(JSON.stringify(message));
-      // console.log('sent message:', message);
-    }
-    return response;
-  };
-
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
@@ -150,6 +130,28 @@ describe('Matterbridge frontend', () => {
   afterAll(async () => {
     ws.close();
   }, 60000);
+
+  let messageId = 0;
+  let messageMethod: string | undefined = '';
+  let messageResolve: (value: Record<string, any>) => void;
+
+  const onMessage = (event: WebSocket.MessageEvent) => {
+    // console.log('received message:', event.data);
+    const data = JSON.parse(event.data as string);
+    expect(data).toBeDefined();
+    if (data.id === messageId && (messageMethod ? data.method === messageMethod : true)) {
+      messageResolve(data);
+    }
+  };
+
+  const waitMessageId = async (id: number, method?: string, message?: Record<string, any>): Promise<Record<string, any>> => {
+    return new Promise<Record<string, any>>((resolve) => {
+      messageId = id;
+      messageMethod = method;
+      messageResolve = resolve;
+      if (message) ws.send(JSON.stringify(message));
+    });
+  };
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
@@ -301,6 +303,7 @@ describe('Matterbridge frontend', () => {
     await waiter('Websocket connected', () => { return ws.readyState === WebSocket.OPEN; });
     expect(ws.readyState).toBe(WebSocket.OPEN);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/WebSocketServer client ".*" connected to Matterbridge/));
+    ws.addEventListener('message', onMessage);
   });
 
   test('Websocket API send bad json message', async () => {
