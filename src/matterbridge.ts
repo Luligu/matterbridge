@@ -1345,7 +1345,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.info('Unregistering all devices and shutting down...');
     for (const plugin of this.plugins.array()) {
       if (plugin.error || !plugin.enabled) continue;
+      const registeredDevices = plugin.registeredDevices;
+      const addedDevices = plugin.addedDevices;
       await this.plugins.shutdown(plugin, 'unregistering all devices and shutting down...', false, true);
+      plugin.registeredDevices = registeredDevices;
+      plugin.addedDevices = addedDevices;
       await this.removeAllBridgedEndpoints(plugin.name, 100);
     }
     this.log.debug('Waiting for the MessageExchange to finish...');

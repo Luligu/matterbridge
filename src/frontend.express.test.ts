@@ -219,6 +219,20 @@ describe('Matterbridge frontend express with http', () => {
     matterbridge.nodeContext = originalNodeContext;
   });
 
+  test('POST /api/login with nodeContext error', async () => {
+    // Temporarily mock the nodeContext
+    const getMock = jest.spyOn(matterbridge.nodeContext as any, 'get').mockImplementation(() => {
+      throw new Error('NodeContext error');
+    });
+    const response = await makeRequest('/api/login', 'POST', { password: 'testpassword' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.valid).toBe(false);
+
+    // Restore the nodeContext
+    getMock.mockRestore();
+  });
+
   test('GET /health', async () => {
     const response = await makeRequest('/health', 'GET');
 

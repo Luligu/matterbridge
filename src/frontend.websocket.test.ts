@@ -38,11 +38,11 @@ import { LogLevel as MatterLogLevel } from '@matter/main';
 import { Identify } from '@matter/main/clusters';
 
 import { Matterbridge } from './matterbridge.ts';
-import { wait, waiter } from './utils/export.ts';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.ts';
 import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.ts';
+import { wait, waiter } from './utils/wait.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
@@ -737,6 +737,20 @@ describe('Matterbridge frontend', () => {
     expect(data.error).toBeDefined();
 
     await waitMessageId(++WS_ID, '/api/action', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/action', params: { plugin: 'matterbridge-notvalid', action: 'test' } });
+  });
+
+  test('Websocket API /api/action with throw', async () => {
+    const plugin = matterbridge.plugins.get('matterbridge-mock2');
+    expect(plugin).toBeDefined();
+    expect(plugin?.platform).toBeDefined();
+    if (!plugin || !plugin.platform) return;
+    jest.spyOn(plugin.platform, 'onAction').mockImplementationOnce(async () => {
+      throw new Error('Test error in action');
+    });
+    const data = await waitMessageId(++WS_ID, '/api/action', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/action', params: { plugin: 'matterbridge-mock2', action: 'test' } });
+    expect(data.success).toBeUndefined();
+    expect(data.response).toBeUndefined();
+    expect(data.error).toBeDefined();
   });
 
   test('Websocket API /api/action', async () => {

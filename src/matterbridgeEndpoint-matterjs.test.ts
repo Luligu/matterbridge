@@ -138,7 +138,7 @@ if (!debug) {
   consoleWarnSpy = jest.spyOn(console, 'warn');
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
-// Cleanup the matter environment
+// Cleanup the test environment
 rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge ' + NAME, () => {
