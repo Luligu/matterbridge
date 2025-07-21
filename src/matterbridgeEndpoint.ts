@@ -1814,9 +1814,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [speedSetting] - The initial speed setting. Defaults to 0.
    * @param {number} [speedCurrent] - The initial speed current. Defaults to 0.
    * @param {object} [rockSupport] - The rock support configuration.
+   * @param {boolean} rockSupport.rockLeftRight - Indicates support for rocking left to right. Defaults to true.
+   * @param {boolean} rockSupport.rockUpDown - Indicates support for rocking up and down. Defaults to true.
+   * @param {boolean} rockSupport.rockRound - Indicates support for round rocking. Defaults to true.
    * @param {object} [rockSetting] - The rock setting configuration.
+   * @param {boolean} rockSetting.rockLeftRight - Indicates the current setting for rocking left to right. Defaults to true.
+   * @param {boolean} rockSetting.rockUpDown - Indicates the current setting for rocking up and down. Defaults to true.
+   * @param {boolean} rockSetting.rockRound - Indicates the current setting for round rocking. Defaults to true.
    * @param {object} [windSupport] - The wind support configuration.
+   * @param {boolean} windSupport.sleepWind - Indicates support for sleep wind. Defaults to true.
+   * @param {boolean} windSupport.naturalWind - Indicates support for natural wind. Defaults to true.
    * @param {object} [windSetting] - The wind setting configuration.
+   * @param {boolean} windSetting.sleepWind - Indicates the current setting for sleep wind. Defaults to false.
+   * @param {boolean} windSetting.naturalWind - Indicates the current setting for natural wind. Defaults to true.
    * @param {FanControl.AirflowDirection} [airflowDirection] - The airflow direction. Defaults to `FanControl.AirflowDirection.Forward`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
@@ -1833,20 +1843,21 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - airflowDirection is writable.
    */
   createCompleteFanControlClusterServer(
-    fanMode = FanControl.FanMode.Off,
+    fanMode: FanControl.FanMode = FanControl.FanMode.Off,
     fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto,
-    percentSetting = 0,
-    percentCurrent = 0,
-    speedMax = 10,
-    speedSetting = 0,
-    speedCurrent = 0,
-    rockSupport = { rockLeftRight: true, rockUpDown: false, rockRound: false }, // Indicate rock left to right support
-    rockSetting = { rockLeftRight: false, rockUpDown: false, rockRound: false }, // rockLeftRight default to off
-    windSupport = { sleepWind: false, naturalWind: true }, // wind support on
-    windSetting = { sleepWind: false, naturalWind: false }, // naturalWind defaut to off
-    airflowDirection = FanControl.AirflowDirection.Forward, // Default airflow direction
-  ) {
+    percentSetting: number = 0,
+    percentCurrent: number = 0,
+    speedMax: number = 10,
+    speedSetting: number = 0,
+    speedCurrent: number = 0,
+    rockSupport: { rockLeftRight: boolean; rockUpDown: boolean; rockRound: boolean } = { rockLeftRight: true, rockUpDown: true, rockRound: true },
+    rockSetting: { rockLeftRight: boolean; rockUpDown: boolean; rockRound: boolean } = { rockLeftRight: true, rockUpDown: false, rockRound: false },
+    windSupport: { sleepWind: boolean; naturalWind: boolean } = { sleepWind: true, naturalWind: true },
+    windSetting: { sleepWind: boolean; naturalWind: boolean } = { sleepWind: false, naturalWind: true },
+    airflowDirection: FanControl.AirflowDirection = FanControl.AirflowDirection.Forward,
+  ): this {
     this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step, FanControl.Feature.Rocking, FanControl.Feature.Wind, FanControl.Feature.AirflowDirection), {
+      // Base fan control attributes
       fanMode, // Writable and persistent attribute
       fanModeSequence, // Fixed attribute
       percentSetting, // Writable attribute
@@ -1861,7 +1872,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Wind feature
       windSupport, // Fixed attribute
       windSetting, // Writable attribute
-      // airflowDirection
+      // AirflowDirection feature
       airflowDirection, // Writable attribute
     });
     return this;
