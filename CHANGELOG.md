@@ -17,6 +17,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [enpoint]: Added resetCondition command for HEPA and Activated Carbon Filter Monitoring Cluster Server.
 - [dishwasher]: Added Dishwasher class and Jest test. It is not supported by the Home app.
 - [extractorHood]: Added ExtractorHood class and Jest test.
+- [fan]: Added the createCompleteFanControlClusterServer() cluster helper that create a fan device with all the features. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/362).
 
 ### Changed
 
