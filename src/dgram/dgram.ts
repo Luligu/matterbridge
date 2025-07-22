@@ -21,14 +21,13 @@
  * limitations under the License.
  */
 
-// AnsiLogger imports
-
 // Node.js imports
 import dgram from 'node:dgram';
 import EventEmitter from 'node:events';
 import { AddressInfo } from 'node:net';
 import os from 'node:os';
 
+// AnsiLogger imports
 import { AnsiLogger, BLUE, db, idn, LogLevel, nf, rs, TimestampFormat } from 'node-ansi-logger';
 
 /**

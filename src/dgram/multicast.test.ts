@@ -1,3 +1,13 @@
+/**
+ * @description Multicast class test
+ * @file multicast.test.ts
+ * @author Luca Liguori
+ * @created 2025-03-22
+ * @version 1.0.0
+ * @license Apache-2.0
+ * @copyright 2025, 2026, 2027 Luca Liguori.
+ */
+
 import os from 'node:os';
 import { AddressInfo } from 'node:net';
 import { Socket } from 'node:dgram';

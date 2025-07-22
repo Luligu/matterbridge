@@ -5,6 +5,7 @@
  * @created 2025-07-21
  * @version 1.0.0
  * @license Apache-2.0
+ * @copyright 2025, 2026, 2027 Luca Liguori.
  */
 
 import { AddressInfo } from 'node:net';

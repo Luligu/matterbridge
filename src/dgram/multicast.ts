@@ -21,12 +21,11 @@
  * limitations under the License.
  */
 
-// AnsiLogger imports
-
 // Node.js imports
 import { AddressInfo } from 'node:net';
 import os from 'node:os';
 
+// AnsiLogger imports
 import { BLUE, CYAN, db, RED, YELLOW } from 'node-ansi-logger';
 
 // Net imports

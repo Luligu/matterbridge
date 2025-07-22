@@ -21,13 +21,14 @@
  * limitations under the License.
  */
 
-// Matterbridge imports
+// Net imports
 import dgram from 'node:dgram';
 import { AddressInfo } from 'node:net';
 
-import { BLUE, CYAN, db, er, GREEN, idn, MAGENTA, nf, rs } from 'matterbridge/logger';
+// AnsiLogger imports
+import { BLUE, CYAN, db, er, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
 
-// Net imports
+// Matterbridge imports
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, Multicast } from './multicast.js';
 
 // Node.js imports
