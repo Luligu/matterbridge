@@ -298,8 +298,8 @@ export class Dgram extends EventEmitter<DgramEvents> {
     for (const name in interfaces) {
       const iface = interfaces[name];
       if (iface) {
-        const ipv6Address = iface.find((addr) => addr.family === 'IPv6' && !addr.internal);
-        if (ipv6Address && ipv6Address.scopeid !== undefined) {
+        const ipv6Address = iface.find((addr) => addr.family === 'IPv6' && !addr.internal && addr.scopeid);
+        if (ipv6Address) {
           return process.platform === 'win32' ? '%' + String(ipv6Address.scopeid) : '%' + name; // Use the scope ID for Windows, or the interface name for non-Windows platforms
         }
       }

@@ -76,8 +76,8 @@ describe('Mdns Real Interaction Tests', () => {
     if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
 
     // Create two mDNS instances that will communicate with each other
-    mdnsServer = new Mdns('mDNS Server', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true);
-    mdnsClient = new Mdns('mDNS Client', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true);
+    mdnsServer = new Mdns('mDNS Server', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, undefined, '0.0.0.0');
+    mdnsClient = new Mdns('mDNS Client', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, undefined, '0.0.0.0');
 
     // Wait for both instances to be ready
     const serverReadyPromise = new Promise<void>((resolve) => {
