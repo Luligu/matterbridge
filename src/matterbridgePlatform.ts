@@ -313,7 +313,7 @@ export class MatterbridgePlatform {
    *
    * @param {number} [delay] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    */
-  async unregisterAllDevices(delay = 0) {
+  async unregisterAllDevices(delay: number = 0) {
     await this.matterbridge.removeAllBridgedEndpoints(this.name, delay);
     this._registeredEndpoints.clear();
     this._registeredEndpointsByName.clear();

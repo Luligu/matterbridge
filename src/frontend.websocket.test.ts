@@ -38,11 +38,11 @@ import { LogLevel as MatterLogLevel } from '@matter/main';
 import { Identify } from '@matter/main/clusters';
 
 import { Matterbridge } from './matterbridge.ts';
-import { wait, waiter } from './utils/export.ts';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.ts';
 import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.ts';
+import { wait, waiter } from './utils/wait.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
@@ -122,26 +122,6 @@ describe('Matterbridge frontend', () => {
     jest.restoreAllMocks();
   });
 
-  const waitMessageId = async (id: number, method?: string, message?: Record<string, any>): Promise<Record<string, any>> => {
-    const response = new Promise<Record<string, any>>((resolve) => {
-      const onMessage = (event: WebSocket.MessageEvent) => {
-        // console.log('received message:', event.data);
-        const data = JSON.parse(event.data as string);
-        expect(data).toBeDefined();
-        if (data.id === id && (method ? data.method === method : true)) {
-          ws.removeEventListener('message', onMessage);
-          resolve(data);
-        }
-      };
-      ws.addEventListener('message', onMessage);
-    });
-    if (message) {
-      ws.send(JSON.stringify(message));
-      // console.log('sent message:', message);
-    }
-    return response;
-  };
-
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
@@ -150,6 +130,28 @@ describe('Matterbridge frontend', () => {
   afterAll(async () => {
     ws.close();
   }, 60000);
+
+  let messageId = 0;
+  let messageMethod: string | undefined = '';
+  let messageResolve: (value: Record<string, any>) => void;
+
+  const onMessage = (event: WebSocket.MessageEvent) => {
+    // console.log('received message:', event.data);
+    const data = JSON.parse(event.data as string);
+    expect(data).toBeDefined();
+    if (data.id === messageId && (messageMethod ? data.method === messageMethod : true)) {
+      messageResolve(data);
+    }
+  };
+
+  const waitMessageId = async (id: number, method?: string, message?: Record<string, any>): Promise<Record<string, any>> => {
+    return new Promise<Record<string, any>>((resolve) => {
+      messageId = id;
+      messageMethod = method;
+      messageResolve = resolve;
+      if (message) ws.send(JSON.stringify(message));
+    });
+  };
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
@@ -301,6 +303,7 @@ describe('Matterbridge frontend', () => {
     await waiter('Websocket connected', () => { return ws.readyState === WebSocket.OPEN; });
     expect(ws.readyState).toBe(WebSocket.OPEN);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/WebSocketServer client ".*" connected to Matterbridge/));
+    ws.addEventListener('message', onMessage);
   });
 
   test('Websocket API send bad json message', async () => {
@@ -737,6 +740,20 @@ describe('Matterbridge frontend', () => {
     expect(data.error).toBeDefined();
 
     await waitMessageId(++WS_ID, '/api/action', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/action', params: { plugin: 'matterbridge-notvalid', action: 'test' } });
+  });
+
+  test('Websocket API /api/action with throw', async () => {
+    const plugin = matterbridge.plugins.get('matterbridge-mock2');
+    expect(plugin).toBeDefined();
+    expect(plugin?.platform).toBeDefined();
+    if (!plugin || !plugin.platform) return;
+    jest.spyOn(plugin.platform, 'onAction').mockImplementationOnce(async () => {
+      throw new Error('Test error in action');
+    });
+    const data = await waitMessageId(++WS_ID, '/api/action', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/action', params: { plugin: 'matterbridge-mock2', action: 'test' } });
+    expect(data.success).toBeUndefined();
+    expect(data.response).toBeUndefined();
+    expect(data.error).toBeDefined();
   });
 
   test('Websocket API /api/action', async () => {

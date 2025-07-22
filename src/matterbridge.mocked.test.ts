@@ -5,7 +5,7 @@ const HOMEDIR = path.join('jest', NAME);
 
 // Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./utils/spawn.js', () => ({
-  spawnCommand: jest.fn((matterbridge: Matterbridge, command: string, args: string[]) => {
+  spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
@@ -14,12 +14,23 @@ const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof 
 
 // Mock the wait from wait module before importing it
 jest.unstable_mockModule('./utils/wait.js', () => ({
-  wait: jest.fn((ms: number) => {
+  waiter: jest.fn((name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false) => {
+    // console.warn(`Mocked waiter called with name: ${name}, exitWithReject: ${exitWithReject}, resolveTimeout: ${resolveTimeout}, resolveInterval: ${resolveInterval}, debug: ${debug}`);
+    return Promise.resolve(true); // Mock the waiter function to resolve immediately
+  }),
+  wait: jest.fn((timeout: number = 1000, name?: string, debug: boolean = false) => {
+    // console.warn(`Mocked wait called with timeout: ${timeout}, name: ${name}, debug: ${debug}`);
     return Promise.resolve(); // Mock the wait function to resolve immediately
+  }),
+  withTimeout: jest.fn((promise: Promise<any>, timeoutMillisecs: number = 10000, reThrow: boolean = true) => {
+    // console.warn(`Mocked withTimeout called with timeoutMillisecs: ${timeoutMillisecs}, reThrow: ${reThrow}`);
+    return Promise.resolve(); // Mock the withTimeout function to resolve immediately
   }),
 }));
 const waitModule = await import('./utils/wait.js');
-const waitMock = waitModule.wait as jest.MockedFunction<typeof waitModule.wait>;
+const wait = waitModule.wait as jest.MockedFunction<typeof waitModule.wait>;
+const waiter = waitModule.waiter as jest.MockedFunction<typeof waitModule.waiter>;
+const withTimeout = waitModule.withTimeout as jest.MockedFunction<typeof waitModule.withTimeout>;
 
 const pluginsLoadSpy = jest.spyOn(PluginManager.prototype, 'load');
 const pluginsStartSpy = jest.spyOn(PluginManager.prototype, 'start');
@@ -34,8 +45,10 @@ import { rmSync, writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
 import { AnsiLogger, CYAN, er, LogLevel, nf, nt, pl, TimestampFormat, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
-import { getParameter } from './utils/export.ts';
-import { Matterbridge } from './matterbridge.ts';
+import { getParameter } from './utils/commandLine.ts';
+// import { Matterbridge } from './matterbridge.ts';
+const { Matterbridge } = await import('./matterbridge.ts');
+import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import { VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
@@ -93,7 +106,7 @@ function setDebug(debug: boolean) {
 rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge mocked', () => {
-  let matterbridge: Matterbridge;
+  let matterbridge: MatterbridgeType;
 
   beforeEach(async () => {
     // Reset the process.argv to simulate command line arguments
@@ -121,13 +134,27 @@ describe('Matterbridge mocked', () => {
     const { spawnCommand } = await import('./utils/spawn.js');
     const result = await spawnCommand(matterbridge, 'echo', ['Hello, World!']);
     expect(result).toBe(true);
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'echo', ['Hello, World!']);
+    expect(spawnCommand).toHaveBeenCalledWith(matterbridge, 'echo', ['Hello, World!']);
   });
 
   test('mocked wait', async () => {
-    const { wait } = await import('./utils/wait.js');
     await wait(1000, 'Test Wait', true);
-    expect(waitMock).toHaveBeenCalledWith(1000, 'Test Wait', true);
+    expect(wait).toHaveBeenCalledWith(1000, 'Test Wait', true);
+  });
+
+  test('mocked waiter', async () => {
+    const condition = jest.fn(() => true);
+    const result = await waiter('Test Waiter', condition, false, 5000, 500, true);
+    expect(result).toBe(true);
+    expect(condition).not.toHaveBeenCalled();
+    expect(waiter).toHaveBeenCalledWith('Test Waiter', condition, false, 5000, 500, true);
+  });
+
+  test('mocked withTimeout', async () => {
+    const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+    const result = await withTimeout(promise, 2000);
+    expect(result).toBeUndefined();
+    expect(withTimeout).toHaveBeenCalledWith(promise, 2000);
   });
 
   test('Matterbridge.loadInstance(false)', async () => {
@@ -451,7 +478,7 @@ describe('Matterbridge mocked', () => {
     const parseSpy = jest.spyOn(PluginManager.prototype, 'parse').mockImplementation(async (plugin: RegisteredPlugin) => {
       return null; // Simulate a plugin that does not return a valid instance
     });
-    spawnCommandMock.mockImplementationOnce((matterbridge: Matterbridge, command: string, args: string[]) => {
+    spawnCommandMock.mockImplementationOnce((matterbridge: MatterbridgeType, command: string, args: string[]) => {
       return Promise.reject(new Error(`Mocked spawnCommand error for command: ${command} with args: ${args.join(' ')}`));
     });
     await matterbridge.initialize();
@@ -648,7 +675,6 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() parseCommandLine', async () => {
-    // setDebug(true);
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await matterbridge.initialize();
@@ -720,7 +746,6 @@ describe('Matterbridge mocked', () => {
     // startMatterStorageSpy.mockRestore();
     // stopMatterStorageSpy.mockRestore();
     // cleanupSpy.mockRestore();
-    // setDebug(false);
   });
 
   test('Matterbridge.initialize() startBridge and startChildbridge', async () => {
@@ -783,18 +808,38 @@ describe('Matterbridge mocked', () => {
     expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
     expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error updating matterbridge:'));
-    jest.clearAllMocks();
 
-    const removeAllBridgedEndpointsSpy = jest.spyOn(matterbridge as any, 'removeAllBridgedEndpoints').mockImplementationOnce(async () => {
+    cleanupSpy.mockRestore();
+  });
+
+  test('Matterbridge.initialize() unregisterAndShutdownProcess', async () => {
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+    const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup');
+    const removeAllBridgedEndpointsSpy = jest.spyOn(matterbridge as any, 'removeAllBridgedEndpoints').mockImplementation(async () => {
       return Promise.resolve();
     });
-    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+
+    matterbridge.plugins.set({ name: 'matterbridge-mock1', enabled: true, path: './src/mock/plugin1/package.json', type: 'DynamicPlatform', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
     await matterbridge.unregisterAndShutdownProcess(10);
     expect(removeAllBridgedEndpointsSpy).toHaveBeenCalled();
     expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false, 10);
-    matterbridge.plugins.clear();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('unregistered all devices and shutting down...'));
+    jest.clearAllMocks();
 
+    matterbridge.plugins.set({ name: 'matterbridge-mock1', enabled: true, path: './src/mock/plugin1/package.json', type: 'DynamicPlatform', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    (matterbridge as any).initialized = true;
+    matterbridge.hasCleanupStarted = false;
+    matterbridge.bridgeMode = 'childbridge';
+    await matterbridge.unregisterAndShutdownProcess(10);
+    expect(removeAllBridgedEndpointsSpy).toHaveBeenCalled();
+    expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false, 10);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('unregistered all devices and shutting down...'));
+
+    matterbridge.plugins.clear();
+    matterbridge.bridgeMode = 'bridge';
     cleanupSpy.mockRestore();
+    removeAllBridgedEndpointsSpy.mockRestore();
   });
 
   test('Matterbridge.initialize() cleanup()', async () => {

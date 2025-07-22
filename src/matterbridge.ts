@@ -57,7 +57,8 @@ import { BasicInformationServer } from '@matter/main/behaviors/basic-information
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory, wait } from './utils/export.js';
+import { getParameter, getIntParameter, hasParameter, copyDirectory, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
+import { withTimeout, waiter, wait } from './utils/wait.js';
 import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -190,6 +191,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private initialized = false;
   private execRunningCount = 0;
   private startMatterInterval: NodeJS.Timeout | undefined;
+  private startMatterIntervalMs = 1000;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
@@ -326,9 +328,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Let any already‐queued microtasks run first
     await Promise.resolve();
     // Wait for the cleanup to finish
-    await new Promise((resolve) => {
-      setTimeout(resolve, pause);
-    });
+    await wait(pause, 'destroyInstance start', true);
     // Cleanup
     await this.cleanup('destroying instance...', false, timeout);
     // Close servers mdns service
@@ -340,9 +340,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Let any already‐queued microtasks run first
     await Promise.resolve();
     // Wait for the cleanup to finish
-    await new Promise((resolve) => {
-      setTimeout(resolve, pause);
-    });
+    await wait(pause, 'destroyInstance stop', true);
   }
 
   /**
@@ -1247,7 +1245,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {boolean} [unlink] - Whether to unlink the log file before creating a new one.
    * @returns {Function} - A function that logs formatted messages to the log file.
    */
-  public async createMatterFileLogger(filePath: string, unlink = false) {
+  public async createMatterFileLogger(filePath: string, unlink: boolean = false): Promise<(level: MatterLogLevel, formattedLog: string) => Promise<void>> {
     // 2024-08-21 08:55:19.488 DEBUG InteractionMessenger Sending DataReport chunk with 28 attributes and 0 events: 1004 bytes
     let fileSize = 0;
     if (unlink) {
@@ -1302,23 +1300,29 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Restarts the process by exiting the current instance and loading a new instance.
+   * Restarts the process by exiting the current instance and loading a new instance (/api/restart).
+   *
+   * @returns {Promise<void>} A promise that resolves when the restart is completed.
    */
-  async restartProcess() {
+  async restartProcess(): Promise<void> {
     await this.cleanup('restarting...', true);
   }
 
   /**
-   * Shut down the process.
+   * Shut down the process (/api/shutdown).
+   *
+   * @returns {Promise<void>} A promise that resolves when the shutdown is completed.
    */
-  async shutdownProcess() {
+  async shutdownProcess(): Promise<void> {
     await this.cleanup('shutting down...', false);
   }
 
   /**
-   * Update matterbridge and shut down the process.
+   * Update matterbridge and shut down the process (virtual device 'Update Matterbridge').
+   *
+   * @returns {Promise<void>} A promise that resolves when the update is completed.
    */
-  async updateProcess() {
+  async updateProcess(): Promise<void> {
     this.log.info('Updating matterbridge...');
     try {
       const { spawnCommand } = await import('./utils/spawn.js');
@@ -1332,33 +1336,44 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Unregister all devices and shut down the process.
+   * Unregister all devices and shut down the process (/api/unregister).
    *
    * @param {number} [timeout] - The timeout duration to wait for the message exchange to complete in milliseconds. Default is 1000.
+   *
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
   async unregisterAndShutdownProcess(timeout: number = 1000): Promise<void> {
     this.log.info('Unregistering all devices and shutting down...');
-    for (const plugin of this.plugins) {
-      await this.removeAllBridgedEndpoints(plugin.name, 250);
+    for (const plugin of this.plugins.array()) {
+      if (plugin.error || !plugin.enabled) continue;
+      const registeredDevices = plugin.registeredDevices;
+      const addedDevices = plugin.addedDevices;
+      await this.plugins.shutdown(plugin, 'unregistering all devices and shutting down...', false, true);
+      plugin.registeredDevices = registeredDevices;
+      plugin.addedDevices = addedDevices;
+      await this.removeAllBridgedEndpoints(plugin.name, 100);
     }
     this.log.debug('Waiting for the MessageExchange to finish...');
-    await new Promise((resolve) => setTimeout(resolve, timeout)); // Wait for MessageExchange to finish
+    await wait(timeout); // Wait for MessageExchange to finish
     this.log.debug('Cleaning up and shutting down...');
     await this.cleanup('unregistered all devices and shutting down...', false, timeout);
   }
 
   /**
-   * Reset commissioning and shut down the process.
+   * Reset commissioning and shut down the process (/api/reset).
+   *
+   * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
-  async shutdownProcessAndReset() {
+  async shutdownProcessAndReset(): Promise<void> {
     await this.cleanup('shutting down with reset...', false);
   }
 
   /**
-   * Factory reset and shut down the process.
+   * Factory reset and shut down the process (/api/factory-reset).
+   *
+   * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
-  async shutdownProcessAndFactoryReset() {
+  async shutdownProcessAndFactoryReset(): Promise<void> {
     await this.cleanup('shutting down with factory reset...', false);
   }
 
@@ -1368,6 +1383,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {string} message - The cleanup message.
    * @param {boolean} [restart] - Indicates whether to restart the instance after cleanup. Default is `false`.
    * @param {number} [timeout] - The timeout duration to wait for the message exchange to complete in milliseconds. Default is 1000.
+   *
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
   protected async cleanup(message: string, restart: boolean = false, timeout: number = 1000): Promise<void> {
@@ -1425,7 +1441,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Stop matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
       this.log.debug('Waiting for the MessageExchange to finish...');
-      await new Promise((resolve) => setTimeout(resolve, timeout)); // Wait for MessageExchange to finish
+      await wait(timeout, 'Waiting for the MessageExchange to finish...', true);
       if (this.bridgeMode === 'bridge') {
         if (this.serverNode) {
           await this.stopServerNode(this.serverNode);
@@ -1457,6 +1473,24 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         await this.matterStorageManager?.createContext('sessions')?.clearAll();
         await this.matterbridgeContext?.clearAll();
         this.log.info('Matter storage reset done! Remove the bridge from the controller.');
+      }
+
+      // Unregister all devices
+      if (message === 'unregistered all devices and shutting down...') {
+        if (this.bridgeMode === 'bridge') {
+          await this.matterStorageManager?.createContext('root')?.createContext('parts')?.createContext('Matterbridge')?.createContext('parts')?.clearAll();
+          await this.matterStorageManager?.createContext('root')?.createContext('subscription')?.clearAll();
+          await this.matterStorageManager?.createContext('sessions')?.clearAll();
+        } else if (this.bridgeMode === 'childbridge') {
+          for (const plugin of this.plugins.array()) {
+            if (plugin.type === 'DynamicPlatform') {
+              await plugin.storageContext?.createContext('root')?.createContext('parts')?.createContext(plugin.name)?.createContext('parts')?.clearAll();
+            }
+            await plugin.storageContext?.createContext('root')?.createContext('subscription')?.clearAll();
+            await plugin.storageContext?.createContext('sessions')?.clearAll();
+          }
+        }
+        this.log.info('Matter storage reset done!');
       }
 
       // Stop matter storage
@@ -1707,7 +1741,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('bridge_started');
       this.log.notice('Matterbridge bridge started successfully');
-    }, 1000);
+    }, this.startMatterIntervalMs);
   }
 
   /**
@@ -1812,7 +1846,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('childbridge_started');
       this.log.notice('Matterbridge childbridge started successfully');
-    }, 1000);
+    }, this.startMatterIntervalMs);
   }
 
   /**
@@ -2568,13 +2602,13 @@ const commissioningController = new CommissioningController({
    * It also applies a delay between each removal if specified.
    * The delay is useful to allow the controllers to receive a single subscription for each device removed.
    */
-  async removeAllBridgedEndpoints(pluginName: string, delay = 0): Promise<void> {
+  async removeAllBridgedEndpoints(pluginName: string, delay: number = 0): Promise<void> {
     this.log.debug(`Removing all bridged endpoints for plugin ${plg}${pluginName}${db}${delay > 0 ? ` with delay ${delay} ms` : ''}`);
     for (const device of this.devices.array().filter((device) => device.plugin === pluginName)) {
       await this.removeBridgedEndpoint(pluginName, device);
-      if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+      if (delay > 0) await wait(delay);
     }
-    if (delay > 0) await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (delay > 0) await wait(2000);
   }
 
   /**

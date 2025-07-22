@@ -85,8 +85,6 @@ import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/rado
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import { FanControlServer } from '@matter/main/behaviors/fan-control';
 import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
-import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
-import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
 
 // AnsiLogger module
@@ -113,6 +111,8 @@ import {
   MatterbridgeOperationalStateServer,
   MatterbridgeDeviceEnergyManagementModeServer,
   MatterbridgeDeviceEnergyManagementServer,
+  MatterbridgeActivatedCarbonFilterMonitoringServer,
+  MatterbridgeHepaFilterMonitoringServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -246,6 +246,9 @@ export interface MatterbridgeEndpointCommands {
 
   // Temperature Control
   setTemperature: HandlerFunction;
+
+  // Resource Monitoring
+  resetCondition: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {
@@ -1752,8 +1755,34 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - fanModeSequence is fixed.
    * - percentSetting is writable.
    */
-  createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off, fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto, percentSetting = 0, percentCurrent = 0) {
+  createDefaultFanControlClusterServer(fanMode: FanControl.FanMode = FanControl.FanMode.Off, fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto, percentSetting: number = 0, percentCurrent: number = 0): this {
     this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.Auto, FanControl.Feature.Step), {
+      // Base fan control attributes
+      fanMode, // Writable and persistent attribute
+      fanModeSequence, // Fixed attribute
+      percentSetting, // Writable attribute
+      percentCurrent,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a base fan control cluster server without features.
+   *
+   * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHigh`.
+   * @param {number} [percentSetting] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent] - The initial percent current. Defaults to 0.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * fanmode is writable and persists across reboots.
+   * fanModeSequence is fixed.
+   * percentSetting is writable.
+   */
+  createBaseFanControlClusterServer(fanMode: FanControl.FanMode = FanControl.FanMode.Off, fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHigh, percentSetting: number = 0, percentCurrent: number = 0): this {
+    this.behaviors.require(FanControlServer, {
+      // Base fan control attributes
       fanMode, // Writable and persistent attribute
       fanModeSequence, // Fixed attribute
       percentSetting, // Writable attribute
@@ -1782,15 +1811,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - speedSetting is writable.
    */
   createMultiSpeedFanControlClusterServer(
-    fanMode = FanControl.FanMode.Off,
+    fanMode: FanControl.FanMode = FanControl.FanMode.Off,
     fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto,
-    percentSetting = 0,
-    percentCurrent = 0,
-    speedMax = 10,
-    speedSetting = 0,
-    speedCurrent = 0,
-  ) {
+    percentSetting: number = 0,
+    percentCurrent: number = 0,
+    speedMax: number = 10,
+    speedSetting: number = 0,
+    speedCurrent: number = 0,
+  ): this {
     this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step), {
+      // Base fan control attributes
       fanMode, // Writable and persistent attribute
       fanModeSequence, // Fixed attribute
       percentSetting, // Writable attribute
@@ -1804,76 +1834,160 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a base fan control cluster server without features.
+   * Creates a fan control cluster server with features MultiSpeed, Auto, Step, Rock, Wind and AirflowDirection.
    *
    * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
-   * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHigh`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
    * @param {number} [percentSetting] - The initial percent setting. Defaults to 0.
    * @param {number} [percentCurrent] - The initial percent current. Defaults to 0.
+   * @param {number} [speedMax] - The maximum speed setting. Defaults to 10.
+   * @param {number} [speedSetting] - The initial speed setting. Defaults to 0.
+   * @param {number} [speedCurrent] - The initial speed current. Defaults to 0.
+   * @param {object} [rockSupport] - The rock support configuration.
+   * @param {boolean} rockSupport.rockLeftRight - Indicates support for rocking left to right. Defaults to true.
+   * @param {boolean} rockSupport.rockUpDown - Indicates support for rocking up and down. Defaults to true.
+   * @param {boolean} rockSupport.rockRound - Indicates support for round rocking. Defaults to true.
+   * @param {object} [rockSetting] - The rock setting configuration.
+   * @param {boolean} rockSetting.rockLeftRight - Indicates the current setting for rocking left to right. Defaults to true.
+   * @param {boolean} rockSetting.rockUpDown - Indicates the current setting for rocking up and down. Defaults to true.
+   * @param {boolean} rockSetting.rockRound - Indicates the current setting for round rocking. Defaults to true.
+   * @param {object} [windSupport] - The wind support configuration.
+   * @param {boolean} windSupport.sleepWind - Indicates support for sleep wind. Defaults to true.
+   * @param {boolean} windSupport.naturalWind - Indicates support for natural wind. Defaults to true.
+   * @param {object} [windSetting] - The wind setting configuration.
+   * @param {boolean} windSetting.sleepWind - Indicates the current setting for sleep wind. Defaults to false.
+   * @param {boolean} windSetting.naturalWind - Indicates the current setting for natural wind. Defaults to true.
+   * @param {FanControl.AirflowDirection} [airflowDirection] - The airflow direction. Defaults to `FanControl.AirflowDirection.Forward`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * fanmode is writable and persists across reboots.
-   * fanModeSequence is fixed.
-   * percentSetting is writable.
+   * - fanmode is writable and persists across reboots.
+   * - fanModeSequence is fixed.
+   * - percentSetting is writable.
+   * - speedMax is fixed.
+   * - speedSetting is writable.
+   * - rockSupport is fixed.
+   * - rockSetting is writable.
+   * - windSupport is fixed.
+   * - windSetting is writable.
+   * - airflowDirection is writable.
    */
-  createBaseFanControlClusterServer(fanMode = FanControl.FanMode.Off, fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHigh, percentSetting = 0, percentCurrent = 0) {
-    this.behaviors.require(FanControlServer, {
+  createCompleteFanControlClusterServer(
+    fanMode: FanControl.FanMode = FanControl.FanMode.Off,
+    fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto,
+    percentSetting: number = 0,
+    percentCurrent: number = 0,
+    speedMax: number = 10,
+    speedSetting: number = 0,
+    speedCurrent: number = 0,
+    rockSupport: { rockLeftRight: boolean; rockUpDown: boolean; rockRound: boolean } = { rockLeftRight: true, rockUpDown: true, rockRound: true },
+    rockSetting: { rockLeftRight: boolean; rockUpDown: boolean; rockRound: boolean } = { rockLeftRight: true, rockUpDown: false, rockRound: false },
+    windSupport: { sleepWind: boolean; naturalWind: boolean } = { sleepWind: true, naturalWind: true },
+    windSetting: { sleepWind: boolean; naturalWind: boolean } = { sleepWind: false, naturalWind: true },
+    airflowDirection: FanControl.AirflowDirection = FanControl.AirflowDirection.Forward,
+  ): this {
+    this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step, FanControl.Feature.Rocking, FanControl.Feature.Wind, FanControl.Feature.AirflowDirection), {
+      // Base fan control attributes
       fanMode, // Writable and persistent attribute
       fanModeSequence, // Fixed attribute
       percentSetting, // Writable attribute
       percentCurrent,
+      // MultiSpeed feature
+      speedMax, // Fixed attribute
+      speedSetting, // Writable attribute
+      speedCurrent,
+      // Rocking feature
+      rockSupport, // Fixed attribute
+      rockSetting, // Writable attribute
+      // Wind feature
+      windSupport, // Fixed attribute
+      windSetting, // Writable attribute
+      // AirflowDirection feature
+      airflowDirection, // Writable attribute
     });
     return this;
   }
 
   /**
    * Creates a default HEPA Filter Monitoring Cluster Server with features Condition and ReplacementProductList.
-   * It supports ResourceMonitoring.Feature.Condition and ResourceMonitoring.Feature.ReplacementProductList.
+   * It supports ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, and ResourceMonitoring.Feature.ReplacementProductList.
    *
+   * @param {number} condition - The initial condition value (range 0-100). Default is 100.
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
-   * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is undefined.
-   * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is undefined.
+   * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is true.
+   * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is null.
+   * @param {ResourceMonitoring.ReplacementProduct[]} replacementProductList - The list of replacement products. Default is an empty array. It is a fixed attribute.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The HEPA Filter Monitoring Cluster Server is used to monitor the status of HEPA filters.
+   * It provides information about the condition of the filter, whether it is in place, and the last time it was changed.
+   * The change indication can be used to indicate if the filter needs to be replaced or serviced.
+   * The replacement product list can be used to provide a list of replacement products for the filter.
+   * The condition attribute is fixed at 100, indicating a healthy filter.
+   * The degradation direction is fixed at ResourceMonitoring.DegradationDirection.Down, indicating that a lower value indicates a worse condition.
+   * The replacement product list is initialized as an empty array.
    */
   createDefaultHepaFilterMonitoringClusterServer(
+    condition: number = 100,
     changeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
-    inPlaceIndicator: boolean | undefined = undefined,
-    lastChangedTime: number | undefined = undefined,
+    inPlaceIndicator: boolean | undefined = true,
+    lastChangedTime: number | null | undefined = null,
+    replacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
   ): this {
-    this.behaviors.require(HepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.ReplacementProductList), {
-      condition: 100, // Feature.Condition
-      degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Feature.Condition
+    this.behaviors.require(MatterbridgeHepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList), {
+      // Feature.Condition
+      condition,
+      degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Fixed attribute
+      // Feature.ReplacementProductList
+      replacementProductList, // Fixed attribute
+      // Base attributes
       changeIndication,
       inPlaceIndicator,
-      lastChangedTime,
-      replacementProductList: [], // Feature.ReplacementProductList
+      lastChangedTime, // Writable and persistent across restarts
     });
     return this;
   }
 
   /**
    * Creates a default Activated Carbon Filter Monitoring Cluster Server with features Condition and ReplacementProductList.
+   * It supports ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, and ResourceMonitoring.Feature.ReplacementProductList.
    *
+   * @param {number} condition - The initial condition value (range 0-100). Default is 100.
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
    * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is undefined.
    * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is undefined.
+   * @param {ResourceMonitoring.ReplacementProduct[]} replacementProductList - The list of replacement products. Default is an empty array. It is a fixed attribute.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The Activated Carbon Filter Monitoring Cluster Server is used to monitor the status of activated carbon filters.
+   * It provides information about the condition of the filter, whether it is in place, and the last time it was changed.
+   * The change indication can be used to indicate if the filter needs to be replaced or serviced.
+   * The replacement product list can be used to provide a list of replacement products for the filter.
+   * The condition attribute is fixed at 100, indicating a healthy filter.
+   * The degradation direction is fixed at ResourceMonitoring.DegradationDirection.Down, indicating that a lower value indicates a worse condition.
+   * The replacement product list is initialized as an empty array.
    */
   createDefaultActivatedCarbonFilterMonitoringClusterServer(
+    condition: number = 100,
     changeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
-    inPlaceIndicator: boolean | undefined = undefined,
-    lastChangedTime: number | undefined = undefined,
+    inPlaceIndicator: boolean | undefined = true,
+    lastChangedTime: number | null | undefined = null,
+    replacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
   ): this {
-    this.behaviors.require(ActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.ReplacementProductList), {
-      condition: 100, // Feature.Condition
-      degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Feature.Condition
+    this.behaviors.require(MatterbridgeActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList), {
+      // Feature.Condition
+      condition,
+      degradationDirection: ResourceMonitoring.DegradationDirection.Down,
+      // Feature.ReplacementProductList
+      replacementProductList, // Fixed attribute
+      // Base attributes
       changeIndication,
       inPlaceIndicator,
-      lastChangedTime,
-      replacementProductList: [], // Feature.ReplacementProductList
+      lastChangedTime, // Writable and persistent across restarts
     });
     return this;
   }

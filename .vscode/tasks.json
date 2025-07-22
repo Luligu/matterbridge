@@ -96,6 +96,7 @@
         "--no-warnings",
         "--experimental-vm-modules",
         "node_modules/jest/bin/jest.js",
+        "--verbose",
         "--coverage",
         "--maxWorkers=100%",
         "frontend.*.test.ts"
@@ -228,6 +229,7 @@
         "unicast.test.ts",
         "multicast.test.ts",
         "mdns.test.ts",
+        "mdns.real.test.ts"
       ],
       "group": {
         "kind": "test",
@@ -238,7 +240,9 @@
     {
       "type": "npm",
       "script": "lint",
-      "problemMatcher": ["$eslint-stylish"],
+      "problemMatcher": [
+        "$eslint-stylish"
+      ],
       "label": "npm: lint"
     }
   ]

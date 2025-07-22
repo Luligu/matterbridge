@@ -43,6 +43,7 @@ import { OperationalState } from '@matter/main/clusters/operational-state';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 import { ServiceArea } from '@matter/main/clusters/service-area';
 import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
 import { OnOffServer } from '@matter/main/behaviors/on-off';
@@ -60,6 +61,8 @@ import { OperationalStateServer } from '@matter/main/behaviors/operational-state
 import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
 import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
 import { DeviceEnergyManagementModeServer } from '@matter/main/behaviors/device-energy-management-mode';
+import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
+import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -501,6 +504,28 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
     device.commandHandler.executeHandler('changeToMode', { request, cluster: ModeSelectServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode: ${request.newMode}`);
     super.changeToMode(request);
+  }
+}
+
+export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition) {
+  override resetCondition(): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('resetCondition', { cluster: MatterbridgeHepaFilterMonitoringServer.id, attributes: this.state, endpoint: this.endpoint });
+    this.state.condition = 100; // Reset condition to 100%
+    this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000); // TlvEpochS (seconds since Unix epoch)
+    device.log.debug(`MatterbridgeHepaFilterMonitoringServer: resetCondition called`);
+  }
+}
+
+export class MatterbridgeActivatedCarbonFilterMonitoringServer extends ActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition) {
+  override resetCondition(): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('resetCondition', { cluster: MatterbridgeActivatedCarbonFilterMonitoringServer.id, attributes: this.state, endpoint: this.endpoint });
+    this.state.condition = 100; // Reset condition to 100%
+    this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000); // TlvEpochS (seconds since Unix epoch)
+    device.log.debug(`MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called`);
   }
 }
 

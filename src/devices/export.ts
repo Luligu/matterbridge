@@ -7,3 +7,5 @@ export * from './evse.js';
 export * from './solarPower.js';
 export * from './batteryStorage.js';
 export * from './heatPump.js';
+export * from './extractorHood.js';
+export * from './dishwasher.js';

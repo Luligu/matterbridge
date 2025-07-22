@@ -769,6 +769,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         new Promise<void>((resolve) => {
           this.webSocketServer?.close((error) => {
             if (error) {
+              // istanbul ignore next
               this.log.error(`Error closing WebSocket server: ${error}`);
             } else {
               this.log.debug('WebSocket server closed successfully');
@@ -791,6 +792,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         new Promise<void>((resolve) => {
           this.httpServer?.close((error) => {
             if (error) {
+              // istanbul ignore next
               this.log.error(`Error closing http server: ${error}`);
             } else {
               this.log.debug('Http server closed successfully');
@@ -814,6 +816,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         new Promise<void>((resolve) => {
           this.httpsServer?.close((error) => {
             if (error) {
+              // istanbul ignore next
               this.log.error(`Error closing https server: ${error}`);
             } else {
               this.log.debug('Https server closed successfully');
@@ -981,6 +984,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const composed = labelList.find((entry) => entry.label === 'composed');
         if (composed) return 'Composed: ' + composed.value;
       }
+      // istanbul ignore next cause is not reachable
       return '';
     };
 
@@ -990,6 +994,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const composed = labelList.find((entry) => entry.label === 'composed');
         if (composed) return 'Composed: ' + composed.value;
       }
+      // istanbul ignore next cause is not reacheable
       return '';
     };
 
@@ -1188,6 +1193,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // this.log.debug(`***getClusters: found ${childEndpoints.length} child endpoints for device ${endpoint.deviceName} plugin ${pluginName} and endpoint number ${endpointNumber}`);
     // }
     childEndpoints.forEach((childEndpoint) => {
+      // istanbul ignore if cause is not reachable: should never happen but ...
       if (!childEndpoint.maybeId || !childEndpoint.maybeNumber) {
         this.log.error(`getClusters: no child endpoint found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
         return;

@@ -8,6 +8,26 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.1.6] - 2025-07-22
+
+### Added
+
+- [reset]: Improved "Reset all devices" command in the frontend. It will shutdown all the plugins and recreate the devices with new state and enpoint numbers even if the device is not selected.
+- [enpoint]: Enhanced HEPA and Activated Carbon Filter Monitoring Cluster Server methods with additional features and improved default parameters.
+- [enpoint]: Added resetCondition MAtter command for HEPA and Activated Carbon Filter Monitoring Cluster Server.
+- [dishwasher]: Added Dishwasher class and Jest test. It is not supported by the Home app.
+- [extractorHood]: Added ExtractorHood class and Jest test. It is not supported by the Home app.
+- [fan]: Added the createCompleteFanControlClusterServer() cluster helper that create a fan device with all the features. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/362).
+- [docker]: Added logging configuration instructions to [docker setup](README-DOCKER.md).
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.1.5] - 2025-07-19
 
 ### Added
