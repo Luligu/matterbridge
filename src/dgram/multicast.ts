@@ -149,8 +149,7 @@ export class Multicast extends Dgram {
         }
       }
     });
-    // eslint-disable-next-line no-console
-    console.log(`Dgram multicast socket setting multicast interface to ${BLUE}${this.interfaceAddress}${db} for ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
+    this.log.debug(`Dgram multicast socket setting multicast interface to ${BLUE}${this.interfaceAddress}${db} for ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
     this.socket.setMulticastInterface(this.interfaceAddress as string);
     this.log.debug(`Dgram multicast socket multicastInterface set to ${BLUE}${this.interfaceAddress}${db}`);
     this.emit('ready', address);
