@@ -2292,9 +2292,16 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default OperationalState Cluster Server.
    *
-   * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state.
+   * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state id.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * This method adds a cluster server with a default operational state configuration:
+   * - { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
+   * - { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
+   * - { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
+   * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
    */
   createDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped): this {
     this.behaviors.require(MatterbridgeOperationalStateServer, getDefaultOperationalStateClusterServer(operationalState));

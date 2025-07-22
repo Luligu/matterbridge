@@ -775,13 +775,22 @@ export async function triggerEvent(
 /**
  * Get the default OperationalState Cluster Server.
  *
- * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state.
+ * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state id.
+ *
  * @returns {Behavior.Options<MatterbridgeOperationalStateServer>} - The default options for the OperationalState cluster server.
+ *
+ * @remarks
+ * This method adds a cluster server with a default operational state configuration:
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
  */
 export function getDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped) {
   return optionsFor(MatterbridgeOperationalStateServer, {
     phaseList: [],
     currentPhase: null,
+    countdownTime: null,
     operationalStateList: [
       { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
       { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
