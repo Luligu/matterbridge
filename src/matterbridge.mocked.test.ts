@@ -174,7 +174,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.restartMode).toBe('');
     expect(matterbridge.profile).toBe('Jest');
     expect(matterbridge.shutdown).toBe(false);
-    expect(matterbridge.edge).toBe(true);
+    expect((matterbridge as any).edge).toBe(undefined);
     expect((matterbridge as any).failCountLimit).toBe(120);
 
     expect(matterbridge.log).toBeDefined();
