@@ -2,7 +2,7 @@ name: Build Docker Image latest with buildx
 
 on:
   # Allow manual dispatch and trigger from publish.yml
-  # Use with:
+  # Use in other repository workflows with:
   # - name: Trigger Matterbridge Docker Build Main
   #   uses: actions/github-script@v7
   #   with:

@@ -22,6 +22,23 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
+## [3.1.7] - 2025-07-24
+
+### Added
+
+- [docker]: Added trigger of Build Docker Image latest from publish.yml.
+- [docker]: Added on demand trigger for Build Docker Image latest from other plugins.
+- [mdns]: Added bin mb_mdns.
+- [coap]: Added bin mb_coap.
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.1.6] - 2025-07-22
 
 ### Added
