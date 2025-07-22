@@ -169,7 +169,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public restartMode: 'service' | 'docker' | '' = '';
   public profile = getParameter('profile');
   public shutdown = false;
-  public edge = true;
   private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
 
   // Matterbridge log files
