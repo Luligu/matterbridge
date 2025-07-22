@@ -93,6 +93,8 @@ export class Multicast extends Dgram {
     this.log.debug(`Dgram multicast socket listening on ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
     this.socket.setBroadcast(true);
     this.log.debug(`Dgram multicast socket broadcast enabled`);
+    this.socket.setTTL(255);
+    this.log.debug(`Dgram multicast socket TTL set to 255`);
     this.socket.setMulticastTTL(255);
     this.log.debug(`Dgram multicast socket multicast TTL set to 255`);
     this.socket.setMulticastLoopback(true);
@@ -114,25 +116,25 @@ export class Multicast extends Dgram {
       const ifaceIpv6 = interfaces.find((iface) => iface.family === 'IPv6' && this.socketType === 'udp6');
       if (ifaceIpv6) {
         iface = ifaceIpv6;
-        membershipInterface = ifaceIpv6.address;
+        membershipInterface = ifaceIpv6.address + (ifaceIpv6.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceIpv6.scopeid) : '%' + name) : '');
       }
-      // Find the first Unique Local IPv6 Address (ULA)
+      // Find the first Unique Local Address (ULA) IPv6
       const ifaceUla = interfaces.find((iface) => iface.family === 'IPv6' && this.socketType === 'udp6' && iface.address.startsWith('fd'));
       if (ifaceUla) {
         iface = ifaceUla;
-        membershipInterface = ifaceUla.address + (this.socketType === 'udp6' && ifaceUla.scopeid ? (process.platform === 'win32' ? '%' + String(ifaceUla.scopeid) : '%' + name) : '');
+        membershipInterface = ifaceUla.address + (ifaceUla.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceUla.scopeid) : '%' + name) : '');
       }
-      // Find the first Unique Local IPv6 Address (ULA) with prefix length /64 (netmask ffff:ffff:ffff:ffff::)
+      // Find the first Unique Local Address (ULA) IPv6 with prefix length /64 (netmask ffff:ffff:ffff:ffff::)
       const ifaceUla64 = interfaces.find((iface) => iface.family === 'IPv6' && this.socketType === 'udp6' && iface.address.startsWith('fd') && iface.netmask === 'ffff:ffff:ffff:ffff::');
       if (ifaceUla64) {
         iface = ifaceUla64;
-        membershipInterface = ifaceUla64.address + (this.socketType === 'udp6' && ifaceUla64.scopeid ? (process.platform === 'win32' ? '%' + String(ifaceUla64.scopeid) : '%' + name) : '');
+        membershipInterface = ifaceUla64.address + (ifaceUla64.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceUla64.scopeid) : '%' + name) : '');
       }
       // Find the first Link-local IPv6 Address
       const ifaceLinkLocal = interfaces.find((iface) => iface.family === 'IPv6' && this.socketType === 'udp6' && iface.address.startsWith('fe80'));
       if (ifaceLinkLocal) {
         iface = ifaceLinkLocal;
-        membershipInterface = ifaceLinkLocal.address + (this.socketType === 'udp6' && ifaceLinkLocal.scopeid ? (process.platform === 'win32' ? '%' + String(ifaceLinkLocal.scopeid) : '%' + name) : '');
+        membershipInterface = ifaceLinkLocal.address + (ifaceLinkLocal.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceLinkLocal.scopeid) : '%' + name) : '');
       }
       // Add the interface address to the multicast group
       if (iface && membershipInterface) {
