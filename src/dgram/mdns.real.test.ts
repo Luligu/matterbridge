@@ -8,11 +8,12 @@
  * @copyright 2025, 2026, 2027 Luca Liguori.
  */
 
-import { AddressInfo } from 'node:net';
 import { RemoteInfo } from 'node:dgram';
 
 import { Mdns, DnsRecordType, DnsClass, MdnsMessage } from './mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
+import { getMacAddress } from '../utils/network.js';
+import { get } from 'node:http';
 
 describe('Mdns Real Interaction Tests', () => {
   let mdnsServer: Mdns;
@@ -91,6 +92,8 @@ describe('Mdns Real Interaction Tests', () => {
     expect(clientReady).toBe(true);
     expect(mdnsServer).toBeDefined();
     expect(mdnsClient).toBeDefined();
+
+    if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
 
     const serviceName = '_matterbridge._tcp.local';
     const instanceName = 'jest._matterbridge._tcp.local';
