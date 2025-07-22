@@ -12,6 +12,8 @@ import { RemoteInfo } from 'node:dgram';
 
 import { AnsiLogger } from 'node-ansi-logger';
 
+import { jest } from '@jest/globals';
+
 import { Mdns, DnsRecordType, DnsClass, MdnsMessage } from './mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
 import { getMacAddress } from '../utils/network.js';
