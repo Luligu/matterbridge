@@ -249,6 +249,9 @@ describe('Mdns', () => {
       const cb = args[args.length - 1];
       if (typeof cb === 'function') cb(new Error('Send failed'));
     });
+    mdns.on('error', (err: Error) => {
+      //
+    });
 
     const rdata = mdns.encodeDnsName('foo.local');
     mdns.sendResponse('foo.local', DnsRecordType.PTR, DnsClass.IN, 120, rdata);

@@ -228,7 +228,8 @@
         "dgram.test.ts",
         "unicast.test.ts",
         "multicast.test.ts",
-        "mdns.test.ts"
+        "mdns.test.ts",
+        "mdns.real.test.ts"
       ],
       "group": {
         "kind": "test",
