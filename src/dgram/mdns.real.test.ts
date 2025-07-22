@@ -73,6 +73,8 @@ describe('Mdns Real Interaction Tests', () => {
   let clientReady = false;
 
   beforeAll(async () => {
+    if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
+
     // Create two mDNS instances that will communicate with each other
     mdnsServer = new Mdns('mDNS Server', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true);
     mdnsClient = new Mdns('mDNS Client', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true);
@@ -103,6 +105,8 @@ describe('Mdns Real Interaction Tests', () => {
   });
 
   afterAll(async () => {
+    if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
+
     // Wait for both instances to be closed
     const serverClosedPromise = new Promise<void>((resolve) => {
       mdnsServer.on('close', () => {
@@ -132,6 +136,8 @@ describe('Mdns Real Interaction Tests', () => {
   });
 
   test('should have both mDNS instances ready', () => {
+    if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
+
     expect(serverReady).toBe(true);
     expect(clientReady).toBe(true);
     expect(mdnsServer).toBeDefined();
@@ -139,12 +145,12 @@ describe('Mdns Real Interaction Tests', () => {
   });
 
   test('should send query from client and receive response from server', async () => {
+    if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
+
     expect(serverReady).toBe(true);
     expect(clientReady).toBe(true);
     expect(mdnsServer).toBeDefined();
     expect(mdnsClient).toBeDefined();
-
-    if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
 
     const serviceName = '_matterbridge._tcp.local';
     const instanceName = 'jest._matterbridge._tcp.local';
