@@ -273,6 +273,41 @@ export class Dgram extends EventEmitter<DgramEvents> {
   }
 
   /**
+   * Retrieves the names of all available network interfaces.
+   *
+   * @returns {string[]} An array of network interface names.
+   */
+  getInterfacesNames(): string[] {
+    const interfaces = os.networkInterfaces();
+    const interfaceNames: string[] = [];
+    for (const name in interfaces) {
+      if (interfaces[name]) {
+        interfaceNames.push(name);
+      }
+    }
+    return interfaceNames;
+  }
+
+  /**
+   *  Retrieves the scope ID for all interfaces address '::'.
+   *
+   * @returns {string} The scope ID of the first found IPv6 address or an empty string.
+   */
+  getIpv6ScopeIdForAllInterfacesAddress(): string {
+    const interfaces = os.networkInterfaces();
+    for (const name in interfaces) {
+      const iface = interfaces[name];
+      if (iface) {
+        const ipv6Address = iface.find((addr) => addr.family === 'IPv6' && !addr.internal);
+        if (ipv6Address && ipv6Address.scopeid !== undefined) {
+          return process.platform === 'win32' ? '%' + String(ipv6Address.scopeid) : '%' + name; // Use the scope ID for Windows, or the interface name for non-Windows platforms
+        }
+      }
+    }
+    return '';
+  }
+
+  /**
    * Retrieves the interface name from the scope id of an IPv6 address.
    *
    * @param {number} scopeId - The scope id of the IPv6 address.

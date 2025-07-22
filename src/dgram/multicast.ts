@@ -149,9 +149,14 @@ export class Multicast extends Dgram {
         }
       }
     });
-    this.log.debug(`Dgram multicast socket setting multicast interface to ${BLUE}${this.interfaceAddress}${db} for ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
-    this.socket.setMulticastInterface(this.interfaceAddress as string);
-    this.log.debug(`Dgram multicast socket multicastInterface set to ${BLUE}${this.interfaceAddress}${db}`);
+    // If the interfaceAddress is '::', we need to set the default outgoing multicast interface to '::' + the scope ID for all interfaces address.
+    let interfaceAddress = this.interfaceAddress;
+    if (this.socketType === 'udp6' && this.interfaceAddress === '::') {
+      interfaceAddress = '::' + this.getIpv6ScopeIdForAllInterfacesAddress();
+    }
+    this.log.debug(`Dgram multicast socket setting multicastInterface to ${BLUE}${interfaceAddress}${db} for ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
+    this.socket.setMulticastInterface(interfaceAddress as string);
+    this.log.debug(`Dgram multicast socket multicastInterface set to ${BLUE}${interfaceAddress}${db}`);
     this.emit('ready', address);
   }
 

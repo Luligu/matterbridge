@@ -251,6 +251,9 @@ describe('Dgram', () => {
     const ipv4Address = dgram.getIpv4InterfaceAddress('eth0');
     expect(ipv4Address).toBe('192.168.1.120');
 
+    expect(dgram.getInterfacesNames()).toEqual(['eth0']);
+    expect(dgram.getIpv6ScopeIdForAllInterfacesAddress()).toEqual('');
+
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
       dgram.socket.close();
@@ -262,6 +265,9 @@ describe('Dgram', () => {
     jest.spyOn(os, 'networkInterfaces').mockReturnValue({});
 
     expect(() => dgram.getIpv4InterfaceAddress()).toThrow("Didn't find an external IPv4 network interface");
+
+    expect(dgram.getInterfacesNames()).toEqual([]);
+    expect(dgram.getIpv6ScopeIdForAllInterfacesAddress()).toEqual('');
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
@@ -275,6 +281,9 @@ describe('Dgram', () => {
 
     expect(() => dgram.getIpv4InterfaceAddress()).toThrow("Didn't find an external IPv4 network interface");
 
+    expect(dgram.getInterfacesNames()).toEqual([]);
+    expect(dgram.getIpv6ScopeIdForAllInterfacesAddress()).toEqual('');
+
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
       dgram.socket.close();
@@ -286,6 +295,9 @@ describe('Dgram', () => {
     jest.spyOn(os, 'networkInterfaces').mockReturnValue({ internalonly: [{ address: '192.168.1.120', family: 'IPv4', internal: true, netmask: '255.255.255.0', mac: '00:00:00:00:00:00', cidr: null }] });
 
     expect(() => dgram.getIpv4InterfaceAddress('internalonly')).toThrow('Interface internalonly does not have an external IPv4 address');
+
+    expect(dgram.getInterfacesNames()).toEqual(['internalonly']);
+    expect(dgram.getIpv6ScopeIdForAllInterfacesAddress()).toEqual('');
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
@@ -299,6 +311,8 @@ describe('Dgram', () => {
     dgram.getIpv4InterfaceAddress('NoName');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Interface "${'NoName'}" not found. Using first external IPv4 interface.`);
 
+    expect(dgram.getInterfacesNames()).toEqual(['eth0']);
+
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
       dgram.socket.close();
@@ -310,6 +324,9 @@ describe('Dgram', () => {
     jest.spyOn(os, 'networkInterfaces').mockReturnValue({});
 
     expect(() => dgram.getIpv6InterfaceAddress()).toThrow("Didn't find an external IPv6 network interface");
+
+    expect(dgram.getInterfacesNames()).toEqual([]);
+    expect(dgram.getIpv6ScopeIdForAllInterfacesAddress()).toEqual('');
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
@@ -329,6 +346,8 @@ describe('Dgram', () => {
     const info = dgram.getIpv6InterfaceAddress('NoName');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Interface "${'NoName'}" not found. Using first external IPv6 interface.`);
 
+    expect(dgram.getInterfacesNames()).toEqual(['eth0']);
+
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
       dgram.socket.close();
@@ -347,6 +366,8 @@ describe('Dgram', () => {
     const info = dgram.getIpv6InterfaceAddress();
     expect(info).toBeDefined();
     expect(info).toBe(`fe80::5a71:b2f6:7bc8:d00b%` + (process.platform === 'win32' ? `2` : `eth0`));
+
+    expect(dgram.getInterfacesNames()).toEqual(['eth0']);
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);

@@ -173,7 +173,7 @@ describe('Multicast', () => {
   });
 
   test('Create the multicast with udp6 on all interfaces', async () => {
-    setDebug(true);
+    // setDebug(true);
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
     expect(mcast).not.toBeUndefined();
     expect(mcast).toBeInstanceOf(Multicast);
@@ -203,7 +203,7 @@ describe('Multicast', () => {
     await closed;
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Stopping dgram multicast socket...'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Stopped dgram multicast socket.'));
-    setDebug(false);
+    // setDebug(false);
   });
 
   test('Create multicast with undefined interfaces in network interface list', async () => {
