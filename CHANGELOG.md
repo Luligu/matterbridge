@@ -28,8 +28,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [docker]: Added trigger of Build Docker Image latest from publish.yml.
 - [docker]: Added trigger of Build Docker Image dev from publish-dev-daily.yml.
-- [docker]: Added on demand trigger for Build Docker Image latest from other plugins.
-- [docker]: Added on demand trigger for Build Docker Image dev from other plugins.
+- [docker]: Added on demand trigger for Build Docker Image latest from other plugins workflows.
+- [docker]: Added on demand trigger for Build Docker Image dev from other plugins workflows.
 - [mdns]: Added bin mb_mdns.
 - [coap]: Added bin mb_coap.
 

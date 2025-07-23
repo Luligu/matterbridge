@@ -2,7 +2,7 @@ name: Build Docker Image dev with buildx
 
 on:
   # Use in other repository workflows with:
-  # - name: Trigger Matterbridge Docker Build Main
+  # - name: Trigger Matterbridge Docker Build Dev
   #   uses: actions/github-script@v7
   #   with:
   #     github-token: ${{ secrets.TRIGGER_TOKEN }}

@@ -80,9 +80,11 @@ jobs:
 
           if [ "$PUBLISHED_SHA" = "$CURRENT_SHA" ]; then
             # nothing new → skip
+            echo "✅ No new commits since last dev publish - skipping"
             echo "should_publish=false" >> $GITHUB_OUTPUT
           else
             # new commit → proceed
+            echo "🚀 New commits detected - proceeding with dev publish"
             echo "should_publish=true"  >> $GITHUB_OUTPUT
           fi
 
