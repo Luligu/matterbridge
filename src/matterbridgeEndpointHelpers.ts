@@ -188,10 +188,28 @@ export function generateUniqueId(deviceName: string): string {
  * @param {string} param4 - The fourth parameter.
  * @returns {string} A unique ID generated from the concatenation of the parameters using MD5 hashing.
  */
-export function createUniqueId(param1: string, param2: string, param3: string, param4: string) {
+export function createUniqueId(param1: string, param2: string, param3: string, param4: string): string {
   const hash = createHash('md5');
   hash.update(param1 + param2 + param3 + param4);
   return hash.digest('hex');
+}
+
+/**
+ * Retrieves the features for a specific behavior.
+ *
+ * @param {Endpoint} endpoint - The endpoint to retrieve the features from.
+ * @param {string} behavior - The behavior to retrieve the features for.
+ *
+ * @returns {Record<string, boolean | undefined>} The features for the specified behavior.
+ *
+ * @remarks Use with:
+ * ```typescript
+ *     expect(featuresFor(device, 'powerSource').wired).toBe(true);
+ * ```
+ */
+export function featuresFor(endpoint: Endpoint, behavior: string): Record<string, boolean | undefined> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (endpoint.behaviors.supported as any)[lowercaseFirstLetter(behavior)]['cluster']['supportedFeatures'];
 }
 
 /**
@@ -200,7 +218,7 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
  * @param {ClusterId[]} clusterServerList - The list of ClusterId to map.
  * @returns {Behavior.Type[]} An array of Behavior.Type corresponding to the ClusterId in the server list.
  */
-export function getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]) {
+export function getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]): Behavior.Type[] {
   // Map Server ClusterId to Behavior.Type
   const behaviorTypes: Behavior.Type[] = [];
   clusterServerList.forEach((clusterId) => {
@@ -215,7 +233,7 @@ export function getBehaviourTypesFromClusterServerIds(clusterServerList: Cluster
  * @param {ClusterId[]} clusterClientList - The list of ClusterId to map.
  * @returns {Behavior.Type[]} An array of Behavior.Type corresponding to the ClusterId in the client list.
  */
-export function getBehaviourTypesFromClusterClientIds(clusterClientList: ClusterId[]) {
+export function getBehaviourTypesFromClusterClientIds(clusterClientList: ClusterId[]): Behavior.Type[] {
   // Map Client ClusterId to Behavior.Type
   const behaviorTypes: Behavior.Type[] = [];
   clusterClientList.forEach((_clusterId) => {
@@ -230,7 +248,7 @@ export function getBehaviourTypesFromClusterClientIds(clusterClientList: Cluster
  * @param {ClusterId} clusterId - The ClusterId to map.
  * @returns {Behavior.Type} The corresponding Behavior.Type for the given ClusterId.
  */
-export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
+export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behavior.Type {
   // Map ClusterId to Server Behavior.Type
   if (clusterId === PowerSource.Cluster.id) return PowerSourceServer.with(PowerSource.Feature.Wired);
   if (clusterId === UserLabel.Cluster.id) return UserLabelServer;
