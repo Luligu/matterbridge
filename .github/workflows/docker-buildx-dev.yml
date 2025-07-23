@@ -1,13 +1,6 @@
 name: Build Docker Image dev with buildx
 
 on:
-  # Push on dev branch
-  push:
-    branches:
-      - dev
-    paths-ignore:
-      - 'screenshot/**' # any file under screenshot/
-      - '**/*.md' # any .md anywhere
   # Runs daily at 00:00 UTC
   schedule:
     - cron: '0 0 * * *'
