@@ -1,7 +1,6 @@
 name: Build Docker Image latest with buildx
 
 on:
-  # Allow manual dispatch and trigger from publish.yml
   # Use in other repository workflows with:
   # - name: Trigger Matterbridge Docker Build Main
   #   uses: actions/github-script@v7
@@ -14,6 +13,8 @@ on:
   #         workflow_id: 'docker-buildx-main.yml',
   #         ref: 'main'
   #       })
+
+  # Allow manual dispatch and trigger from other workflows
   workflow_dispatch:
 
 jobs:
