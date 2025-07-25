@@ -211,8 +211,12 @@ export class Mdns extends Multicast {
         const ptr =
           result.answers?.find((record) => record.name === '_shelly._tcp.local' && record.type === DnsRecordType.PTR) ||
           result.answers?.find((record) => record.name === '_http._tcp.local' && record.type === DnsRecordType.PTR) ||
-          result.answers?.find((record) => record.type === DnsRecordType.PTR);
-        this.deviceResponses.set(rinfo.address, { rinfo, response: result, dataPTR: ptr?.data });
+          result.answers?.find((record) => record.type === DnsRecordType.PTR) ||
+          result.answers?.find((record) => record.type === DnsRecordType.TXT) ||
+          result.answers
+            ? result.answers[0]
+            : undefined; // Fallback to the first answer if no PTR or TXT found
+        this.deviceResponses.set(rinfo.address, { rinfo, response: result, dataPTR: ptr?.type === DnsRecordType.PTR ? ptr?.data : ptr?.name });
         this.onResponse(rinfo, result);
       }
       this.logMdnsMessage(result);

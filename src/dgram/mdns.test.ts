@@ -435,7 +435,7 @@ describe('Mdns', () => {
     mdns.onMessage(responseMsg, newRinfo);
 
     const stored = mdns.deviceResponses.get('9.10.11.12');
-    expect(stored?.dataPTR).toBeUndefined();
+    expect(stored?.dataPTR).toBe('example.local');
   });
 
   it('should handle query messages in onMessage', () => {
