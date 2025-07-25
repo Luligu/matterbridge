@@ -207,5 +207,6 @@ or if you prefers to only give access to npm without password try with (e.g. rad
 save the file and reload the settings with:
 
 ```bash
+sudo chmod 0440 /etc/sudoers.d/matterbridge
 sudo visudo -c
 ```
