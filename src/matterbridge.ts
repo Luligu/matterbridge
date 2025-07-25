@@ -218,7 +218,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   port: number | undefined; // first server node port
   passcode: number | undefined; // first server node passcode
   discriminator: number | undefined; // first server node discriminator
-  certification: DeviceCertification.Definition | undefined; // device certification
+  certification: DeviceCertification.Configuration | undefined; // device certification
 
   // Matter nodes
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
