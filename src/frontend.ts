@@ -1074,7 +1074,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const baseRegisteredPlugins: FrontendRegisteredPlugin[] = [];
     for (const plugin of this.matterbridge.plugins) {
-      if (plugin.serverNode && !plugin.serverNode.lifecycle.isOnline) continue; // Skip plugins that are not online
       baseRegisteredPlugins.push({
         path: plugin.path,
         type: plugin.type,
@@ -1102,11 +1101,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         hasWhiteList: plugin.configJson?.whiteList !== undefined,
         hasBlackList: plugin.configJson?.blackList !== undefined,
         // Childbridge mode specific data
-        paired: plugin.serverNode?.state.commissioning.commissioned,
-        qrPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode?.state.commissioning.pairingCodes.qrPairingCode,
-        manualPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode?.state.commissioning.pairingCodes.manualPairingCode,
-        fabricInformations: plugin.serverNode ? this.matterbridge.sanitizeFabricInformations(Object.values(plugin.serverNode?.state.commissioning.fabrics)) : undefined,
-        sessionInformations: plugin.serverNode ? this.matterbridge.sanitizeSessionInformation(Object.values(plugin.serverNode?.state.sessions.sessions)) : undefined,
+        paired: plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.commissioned : undefined,
+        qrPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.pairingCodes.qrPairingCode : undefined,
+        manualPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.pairingCodes.manualPairingCode : undefined,
+        fabricInformations: plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? this.matterbridge.sanitizeFabricInformations(Object.values(plugin.serverNode.state.commissioning.fabrics)) : undefined,
+        sessionInformations: plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? this.matterbridge.sanitizeSessionInformation(Object.values(plugin.serverNode.state.sessions.sessions)) : undefined,
       });
     }
     return baseRegisteredPlugins;
@@ -1458,11 +1457,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         for (const device of this.matterbridge.devices) {
           if (device.plugin === plugin.name) {
-            this.log.debug(`Removing device ${device.deviceName} (0x${device.deviceType?.toString(16).padStart(4, '0')}) from plugin ${plugin.name}`);
+            this.log.debug(`Removing device ${device.deviceName} from plugin ${plugin.name}`);
             this.matterbridge.devices.remove(device);
           }
         }
         await this.matterbridge.plugins.load(plugin, true, 'The plugin has been restarted', true);
+        if (plugin.serverNode) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (this.matterbridge as any).startServerNode(plugin.serverNode);
+        }
         this.wssSendSnackbarMessage(`Restarted plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
