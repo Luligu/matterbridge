@@ -1,5 +1,5 @@
 // src\utils\hex.test.ts
-import { bufferToHex, hexToBuffer } from './hex.ts';
+import { bufferToHex, hexToBuffer, pemToBuffer } from './hex.ts';
 
 describe('bufferToHex()', () => {
   it('throws error for non-ArrayBufferLike input', () => {
@@ -55,5 +55,72 @@ describe('hexToBuffer()', () => {
     const hex = bufferToHex(original);
     const round = hexToBuffer(hex);
     expect(round).toEqual(original);
+  });
+});
+
+describe('pemToBuffer()', () => {
+  it('should throw TypeError if input is not a string', () => {
+    expect(() => pemToBuffer(123 as any)).toThrow(TypeError);
+    expect(() => pemToBuffer(123 as any)).toThrow('Expected a string for PEM input');
+  });
+
+  it('should throw error for invalid PEM format without BEGIN/END markers', () => {
+    expect(() => pemToBuffer('invalid pem content')).toThrow('Invalid PEM format: missing BEGIN/END markers');
+  });
+
+  it('should throw error for PEM with no content between markers', () => {
+    const emptyPem = `-----BEGIN CERTIFICATE-----
+-----END CERTIFICATE-----`;
+    expect(() => pemToBuffer(emptyPem)).toThrow('Invalid PEM format: no content found between BEGIN/END markers');
+  });
+
+  it('should decode a valid PEM certificate', () => {
+    const pemCert = `-----BEGIN CERTIFICATE-----
+MIIBkTCB+wIJAMlyFqk69v+9MA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNVBAMMCWxv
+Y2FsaG9zdDAeFw0yMzAxMDEwMDAwMDBaFw0yNDAxMDEwMDAwMDBaMBQxEjAQBgNV
+BAMMCWxvY2FsaG9zdDBcMA0GCSqGSIb3DQEBAQUAA0sAMEgCQQDTwqq/3Hn+DjZ4
+-----END CERTIFICATE-----`;
+
+    const result = pemToBuffer(pemCert);
+    expect(result).toBeInstanceOf(Uint8Array);
+    expect(result.length).toBeGreaterThan(0);
+
+    // Verify first few bytes match expected ASN.1 DER structure for certificate
+    expect(result[0]).toBe(0x30); // SEQUENCE tag
+    expect(result[1]).toBe(0x82); // Length indicator
+  });
+
+  it('should handle PEM with different types (RSA PRIVATE KEY)', () => {
+    const pemKey = `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA7/+9MA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNVBAMMCWxvY2Fs
+aG9zdDAeFw0yMzAxMDEwMDAwMDBaFw0yNDAxMDEwMDAwMDBaMBQxEjAQBgNVBAMM
+-----END RSA PRIVATE KEY-----`;
+
+    const result = pemToBuffer(pemKey);
+    expect(result).toBeInstanceOf(Uint8Array);
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  it('should handle PEM with extra whitespace and empty lines', () => {
+    const pemWithWhitespace = `
+    -----BEGIN CERTIFICATE-----
+    
+    MIIBkTCB+wIJAMlyFqk69v+9MA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNVBAMMCWxv
+    Y2FsaG9zdDAeFw0yMzAxMDEwMDAwMDBaFw0yNDAxMDEwMDAwMDBaMBQxEjAQBgNV
+    
+    -----END CERTIFICATE-----
+    `;
+
+    const result = pemToBuffer(pemWithWhitespace);
+    expect(result).toBeInstanceOf(Uint8Array);
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  it('should throw error for invalid base64 content', () => {
+    const invalidPem = `-----BEGIN CERTIFICATE-----
+This is not valid base64!@#$%
+-----END CERTIFICATE-----`;
+
+    expect(() => pemToBuffer(invalidPem)).toThrow('Invalid PEM format: contains invalid base64 characters');
   });
 });
