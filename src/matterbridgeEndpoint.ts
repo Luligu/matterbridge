@@ -551,7 +551,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ClusterId[]} serverList - The list of cluster IDs to add.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  addClusterServers(serverList: ClusterId[]) {
+  addClusterServers(serverList: ClusterId[]): this {
     addClusterServers(this, serverList);
     return this;
   }
@@ -563,7 +563,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} value - The value of the label.
    * @returns {Promise<this>} The current MatterbridgeEndpoint instance for chaining.
    */
-  async addFixedLabel(label: string, value: string) {
+  async addFixedLabel(label: string, value: string): Promise<this> {
     await addFixedLabel(this, label, value);
     return this;
   }
@@ -575,7 +575,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} value - The value of the label.
    * @returns {Promise<this>} The current MatterbridgeEndpoint instance for chaining.
    */
-  async addUserLabel(label: string, value: string) {
+  async addUserLabel(label: string, value: string): Promise<this> {
     await addUserLabel(this, label, value);
     return this;
   }
@@ -1742,7 +1742,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default fan control cluster server with features Auto, and Step.
+   * Creates a default fan control cluster server with features Auto, and Step and mode Off Low Med High Auto.
    *
    * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
@@ -1767,7 +1767,29 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a base fan control cluster server without features.
+   * Creates an On Off fan control cluster server without features and mode Off High.
+   *
+   * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * fanmode is writable and persists across reboots.
+   * fanModeSequence is fixed.
+   * percentSetting is writable.
+   */
+  createOnOffFanControlClusterServer(fanMode: FanControl.FanMode = FanControl.FanMode.Off): this {
+    this.behaviors.require(FanControlServer, {
+      // Base fan control attributes
+      fanMode, // Writable and persistent attribute
+      fanModeSequence: FanControl.FanModeSequence.OffHigh, // Fixed attribute
+      percentSetting: 0, // Writable attribute
+      percentCurrent: 0,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a base fan control cluster server without features and mode Off Low Med High.
    *
    * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHigh`.
@@ -1792,7 +1814,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a fan control cluster server with features MultiSpeed, Auto, and Step.
+   * Creates a fan control cluster server with features MultiSpeed, Auto, and Step and mode Off Low Med High Auto.
    *
    * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
@@ -1834,7 +1856,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a fan control cluster server with features MultiSpeed, Auto, Step, Rock, Wind and AirflowDirection.
+   * Creates a fan control cluster server with features MultiSpeed, Auto, Step, Rock, Wind and AirflowDirection and mode Off Low Med High Auto.
    *
    * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
@@ -2186,7 +2208,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * This method adds a cluster server with default momentary switch features and configuration suitable for Single press automations.
+   * This method adds a cluster server with default momentary switch features and configuration suitable for a Single press automations.
+   * It is supported by the Home app.
    */
   createDefaultMomentarySwitchClusterServer(): this {
     this.behaviors.require(
