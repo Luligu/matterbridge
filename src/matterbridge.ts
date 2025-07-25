@@ -516,15 +516,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
       // Set the certification for matter.js if it is present in the pairing file
       if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
-        const hexStringToUint8Array = (hexString: string) => {
-          const matches = hexString.match(/.{1,2}/g);
-          return matches ? new Uint8Array(matches.map((byte) => parseInt(byte, 16))) : new Uint8Array();
-        };
+        const { hexToBuffer } = await import('./utils/hex.js');
         this.certification = {
-          privateKey: hexStringToUint8Array(pairingFileJson.privateKey),
-          certificate: hexStringToUint8Array(pairingFileJson.certificate),
-          intermediateCertificate: hexStringToUint8Array(pairingFileJson.intermediateCertificate),
-          declaration: hexStringToUint8Array(pairingFileJson.declaration),
+          privateKey: hexToBuffer(pairingFileJson.privateKey),
+          certificate: hexToBuffer(pairingFileJson.certificate),
+          intermediateCertificate: hexToBuffer(pairingFileJson.intermediateCertificate),
+          declaration: hexToBuffer(pairingFileJson.declaration),
         };
         this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using privateKey, certificate, intermediateCertificate and declaration from pairing file.`);
       }
