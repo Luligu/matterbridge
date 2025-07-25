@@ -1453,7 +1453,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (plugin.serverNode) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (this.matterbridge as any).stopServerNode(plugin.serverNode);
-          plugin.serverNode = undefined; // Reset serverNode to allow reloading
+          plugin.serverNode = undefined;
         }
         for (const device of this.matterbridge.devices) {
           if (device.plugin === plugin.name) {
@@ -1462,6 +1462,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           }
         }
         await this.matterbridge.plugins.load(plugin, true, 'The plugin has been restarted', true);
+        plugin.restartRequired = false; // Reset restartRequired
         if (plugin.serverNode) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (this.matterbridge as any).startServerNode(plugin.serverNode);
