@@ -8,6 +8,7 @@ import Button from '@mui/material/Button';
 
 // @mui/icons-material
 import Refresh from '@mui/icons-material/Refresh';
+import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 
 // Frontend
 import { WebSocketLogs } from './WebSocketLogs';
@@ -112,7 +113,10 @@ function Home() {
             </div>
             <div className="MbfWindowBody" style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <h4 style={{ margin: 0 }}>Matterbridge has been updated. You are viewing an outdated web UI. Please refresh the page now.</h4>
-              <Button onClick={() => window.location.reload()} endIcon={<Refresh />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Refresh</Button>
+              <div>
+                <Button onClick={() => window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank')} endIcon={<AnnouncementOutlinedIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Changelog</Button>
+                <Button onClick={() => window.location.reload()} endIcon={<Refresh />} style={{ marginLeft: '10px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Refresh</Button>
+              </div>
             </div>
           </div>
         }
