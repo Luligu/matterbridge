@@ -19,6 +19,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [package]: Updated dependencies.
 
+### Fixed
+
+- [switch]: Added conditional handling for momentary switch events in MatterbridgeEndpoint for single press only switches.
+
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
