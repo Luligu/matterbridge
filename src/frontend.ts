@@ -519,7 +519,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      res.json(this.getBaseRegisteredPlugins());
+      res.json(this.getPlugins());
     });
 
     // Endpoint to provide devices
@@ -1066,14 +1066,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Retrieves the base registered plugins sanitized for res.json().
+   * Retrieves the registered plugins sanitized for res.json().
    *
    * @returns {BaseRegisteredPlugin[]} An array of BaseRegisteredPlugin.
    */
-  private getBaseRegisteredPlugins(): BaseRegisteredPlugin[] {
+  private getPlugins(): BaseRegisteredPlugin[] {
     if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const baseRegisteredPlugins: FrontendRegisteredPlugin[] = [];
     for (const plugin of this.matterbridge.plugins) {
+      if (plugin.serverNode && !plugin.serverNode.lifecycle.isOnline) continue; // Skip plugins that are not online
       baseRegisteredPlugins.push({
         path: plugin.path,
         type: plugin.type,
@@ -1443,6 +1444,29 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+      } else if (data.method === '/api/restartplugin') {
+        if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/restartplugin' }));
+          return;
+        }
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
+        await this.matterbridge.plugins.shutdown(plugin, 'The plugin is restarting.', false, true);
+        if (plugin.serverNode) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (this.matterbridge as any).stopServerNode(plugin.serverNode);
+          plugin.serverNode = undefined; // Reset serverNode to allow reloading
+        }
+        for (const device of this.matterbridge.devices) {
+          if (device.plugin === plugin.name) {
+            this.log.debug(`Removing device ${device.deviceName} (0x${device.deviceType?.toString(16).padStart(4, '0')}) from plugin ${plugin.name}`);
+            this.matterbridge.devices.remove(device);
+          }
+        }
+        await this.matterbridge.plugins.load(plugin, true, 'The plugin has been restarted', true);
+        this.wssSendSnackbarMessage(`Restarted plugin ${data.params.pluginName}`, 5, 'success');
+        this.wssSendRefreshRequired('plugins');
+        this.wssSendRefreshRequired('devices');
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/savepluginconfig') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/savepluginconfig' }));
@@ -1536,7 +1560,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/settings') {
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() }));
       } else if (data.method === '/api/plugins') {
-        const response = this.getBaseRegisteredPlugins();
+        const response = this.getPlugins();
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
       } else if (data.method === '/api/devices') {
         const devices = await this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
