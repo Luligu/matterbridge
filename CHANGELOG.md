@@ -12,7 +12,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [certification]: Improved certification management in pairing.json.
+- [certification]: Improved certification management in pairing.json. Added pemToBuffer function for converting PEM strings to Uint8Array.
 - [workflow]: Update permissions and change GitHub token for Docker build trigger
 
 ### Changed
