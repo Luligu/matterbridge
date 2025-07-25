@@ -8,7 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.1.7] - 2025-07-24
+## [3.1.7] - 2025-07-25
 
 ### Added
 
