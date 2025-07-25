@@ -211,3 +211,60 @@ export function pemToBuffer(pem: string, validate: boolean = false): Uint8Array 
     throw new Error(`Failed to decode base64 content: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
+
+/**
+ * Extracts the raw 32-byte private key scalar from an EC private key PEM.
+ *
+ * This function parses an EC private key in PEM format and extracts the raw
+ * 32-byte private scalar (the "d" value) used in elliptic curve cryptography.
+ * This is the actual secret key material.
+ *
+ * @param {string} pemPrivateKey - The EC private key in PEM format
+ * @returns {Uint8Array} The raw 32-byte private key scalar
+ * @throws {Error} If the input is not a valid EC private key PEM
+ *
+ * @example
+ * ```typescript
+ * const pemKey = `-----BEGIN EC PRIVATE KEY-----
+ * MHcCAQEEIFBxqFkUxMoN2JkUXLFeiZnLNUpftjLi0sKMbZ6uajHXoAoGCCqGSM49
+ * AwEHoUQDQgAEcJ3eH/rG3zf9WmqMjh5eBSkeXz3Cb4Fig1rTosfHmgyjx/WnLPEe
+ * BF4SHvLo0G2COJEHa/VDE5EiKWO9ZR6AOQ==
+ * -----END EC PRIVATE KEY-----`;
+ *
+ * const rawKey = extractPrivateKeyRaw(pemKey);
+ * console.log(rawKey.length); // 32
+ * console.log(bufferToHex(rawKey)); // hex representation of the private scalar
+ * ```
+ */
+export function extractPrivateKeyRaw(pemPrivateKey: string): Uint8Array {
+  if (typeof pemPrivateKey !== 'string') {
+    throw new TypeError('Expected a string for PEM private key input');
+  }
+
+  // Extract the private key block
+  const keyBlock = /-----BEGIN (?:EC )?PRIVATE KEY-----[^-]+-----END (?:EC )?PRIVATE KEY-----/s.exec(pemPrivateKey);
+  if (!keyBlock) {
+    throw new Error('No EC PRIVATE KEY block found in the supplied PEM');
+  }
+
+  try {
+    // Create a private key object
+    const privateKey = createPrivateKey(keyBlock[0]);
+
+    // Export as PKCS#8 DER format
+    const pkcs8Der = privateKey.export({ format: 'der', type: 'pkcs8' }) as Buffer;
+
+    // For P-256 curves, the private scalar is the last 32 bytes of the PKCS#8 DER
+    // istanbul ignore next
+    if (pkcs8Der.length < 32) {
+      throw new Error('Invalid private key: DER data too short');
+    }
+
+    // Extract the last 32 bytes which contain the raw private scalar
+    const rawPrivateKey = pkcs8Der.subarray(pkcs8Der.length - 32);
+
+    return new Uint8Array(rawPrivateKey);
+  } catch (error) {
+    throw new Error(`Failed to extract private key: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}

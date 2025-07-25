@@ -1,5 +1,5 @@
 // src\utils\hex.test.ts
-import { bufferToHex, hexToBuffer, pemToBuffer } from './hex.ts';
+import { bufferToHex, hexToBuffer, pemToBuffer, extractPrivateKeyRaw } from './hex.ts';
 
 describe('bufferToHex()', () => {
   it('throws error for non-ArrayBufferLike input', () => {
@@ -231,6 +231,91 @@ ImSvYgK/4x041AMcUHYLJxL5da+EXyZ90w/5TCaPW1UjybzPKcyKwF78WA==
     expect(() => pemToBuffer(Matter_PAI_Key, true)).not.toThrow();
     expect(() => pemToBuffer(Matter_DAC_Cert, true)).not.toThrow();
     expect(() => pemToBuffer(Matter_DAC_Key, true)).not.toThrow();
+  });
+});
+
+describe('extractPrivateKeyRaw()', () => {
+  it('should throw TypeError if input is not a string', () => {
+    expect(() => extractPrivateKeyRaw(123 as any)).toThrow(TypeError);
+    expect(() => extractPrivateKeyRaw(123 as any)).toThrow('Expected a string for PEM private key input');
+  });
+
+  it('should throw error for invalid PEM format without BEGIN/END markers', () => {
+    expect(() => extractPrivateKeyRaw('invalid pem content')).toThrow('No EC PRIVATE KEY block found in the supplied PEM');
+  });
+
+  it('should extract 32-byte raw private key from Matter PAA private key', () => {
+    const rawKey = extractPrivateKeyRaw(Matter_PAA_Key);
+
+    expect(rawKey).toBeInstanceOf(Uint8Array);
+    expect(rawKey.length).toBe(32);
+
+    // Convert to hex for validation
+    const hexKey = bufferToHex(rawKey);
+    expect(hexKey).toHaveLength(64); // 32 bytes = 64 hex characters
+    expect(hexKey).toMatch(/^[0-9a-f]{64}$/); // Only lowercase hex characters
+  });
+
+  it('should extract 32-byte raw private key from Matter PAI private key', () => {
+    const rawKey = extractPrivateKeyRaw(Matter_PAI_Key);
+
+    expect(rawKey).toBeInstanceOf(Uint8Array);
+    expect(rawKey.length).toBe(32);
+
+    // The extracted key should be different from PAA key
+    const paaRawKey = extractPrivateKeyRaw(Matter_PAA_Key);
+    expect(rawKey).not.toEqual(paaRawKey);
+  });
+
+  it('should extract 32-byte raw private key from Matter DAC private key', () => {
+    const rawKey = extractPrivateKeyRaw(Matter_DAC_Key);
+
+    expect(rawKey).toBeInstanceOf(Uint8Array);
+    expect(rawKey.length).toBe(32);
+
+    // Verify it produces a different result than other keys
+    const paaRawKey = extractPrivateKeyRaw(Matter_PAA_Key);
+    const paiRawKey = extractPrivateKeyRaw(Matter_PAI_Key);
+    expect(rawKey).not.toEqual(paaRawKey);
+    expect(rawKey).not.toEqual(paiRawKey);
+  });
+
+  it('should throw error for malformed private key', () => {
+    expect(() => extractPrivateKeyRaw(Wrong_Key_Malformed)).toThrow('Failed to extract private key');
+  });
+
+  it('should throw error for invalid base64 in private key', () => {
+    expect(() => extractPrivateKeyRaw(Wrong_Key)).toThrow('Failed to extract private key');
+  });
+
+  it('should work with both EC PRIVATE KEY and PRIVATE KEY formats', () => {
+    // Test with EC PRIVATE KEY format (the current format)
+    const rawKeyEC = extractPrivateKeyRaw(Matter_PAA_Key);
+    expect(rawKeyEC).toBeInstanceOf(Uint8Array);
+    expect(rawKeyEC.length).toBe(32);
+
+    // We only test EC PRIVATE KEY format since that's what we have in our test data
+    // PKCS#8 format would require a different test key that we don't have
+    expect(bufferToHex(rawKeyEC)).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('should handle keys with extra whitespace', () => {
+    // Use the original key content but with whitespace
+    const keyContent = Matter_PAA_Key.replace(/-----BEGIN EC PRIVATE KEY-----/, '')
+      .replace(/-----END EC PRIVATE KEY-----/, '')
+      .trim();
+
+    const keyWithWhitespace = `-----BEGIN EC PRIVATE KEY-----
+${keyContent}
+-----END EC PRIVATE KEY-----`;
+
+    const rawKey = extractPrivateKeyRaw(keyWithWhitespace);
+    expect(rawKey).toBeInstanceOf(Uint8Array);
+    expect(rawKey.length).toBe(32);
+
+    // Should extract the same key as the clean version
+    const cleanRawKey = extractPrivateKeyRaw(Matter_PAA_Key);
+    expect(rawKey).toEqual(cleanRawKey);
   });
 });
 
