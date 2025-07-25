@@ -496,22 +496,22 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
  * Adds a fixed label to the FixedLabel cluster. The FixedLabel cluster is created if it does not exist.
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
- * @param {string} label - The label to add.
- * @param {string} value - The value of the label.
+ * @param {string} label - The label to add. Max 16 characters.
+ * @param {string} value - The value of the label. Max 16 characters.
  */
 export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
   if (!endpoint.hasClusterServer(FixedLabel.Cluster.id)) {
     endpoint.log.debug(`addFixedLabel: add cluster ${hk}FixedLabel${db}:${hk}fixedLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     endpoint.behaviors.require(FixedLabelServer, {
-      labelList: [{ label, value }],
+      labelList: [{ label: label.substring(0, 16), value: value.substring(0, 16) }],
     });
     return;
   }
   endpoint.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
   let labelList = endpoint.getAttribute(FixedLabel.Cluster.id, 'labelList', endpoint.log) as { label: string; value: string }[];
   if (isValidArray(labelList)) {
-    labelList = labelList.filter((entry) => entry.label !== label);
-    labelList.push({ label, value });
+    labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
+    labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
     await endpoint.setAttribute(FixedLabel.Cluster.id, 'labelList', labelList, endpoint.log);
   }
 }
@@ -520,22 +520,22 @@ export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: strin
  * Adds a user label to the UserLabel cluster. The UserLabel cluster is created if it does not exist.
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
- * @param {string} label - The label to add.
- * @param {string} value - The value of the label.
+ * @param {string} label - The label to add. Max 16 characters.
+ * @param {string} value - The value of the label. Max 16 characters.
  */
 export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
   if (!endpoint.hasClusterServer(UserLabel.Cluster.id)) {
     endpoint.log.debug(`addUserLabel: add cluster ${hk}UserLabel${db}:${hk}userLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     endpoint.behaviors.require(UserLabelServer, {
-      labelList: [{ label, value }],
+      labelList: [{ label: label.substring(0, 16), value: value.substring(0, 16) }],
     });
     return;
   }
   endpoint.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
   let labelList = endpoint.getAttribute(UserLabel.Cluster.id, 'labelList', endpoint.log) as { label: string; value: string }[];
   if (isValidArray(labelList)) {
-    labelList = labelList.filter((entry) => entry.label !== label);
-    labelList.push({ label, value });
+    labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
+    labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
     await endpoint.setAttribute(UserLabel.Cluster.id, 'labelList', labelList, endpoint.log);
   }
 }
