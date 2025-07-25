@@ -166,7 +166,9 @@ export function HomePlugins({selectPlugin}) {
       Cell: ({ row: plugin }) => (
         <div style={{ margin: '0px', padding: '0px', gap: '4px', display: 'flex', flexDirection: 'row' }}>
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
-            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip> &&
+            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
+          }
+          {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
             <Tooltip title="Restart the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => handleRestartPlugin(plugin.original)} size="small"><RestartAltIcon/></IconButton></Tooltip>
           }
           <Tooltip title="Plugin config" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton disabled={plugin.original.restartRequired === true} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
