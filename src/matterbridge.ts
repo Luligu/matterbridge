@@ -227,6 +227,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   aggregatorVendorName = getParameter('vendorName') ?? 'Matterbridge';
   aggregatorProductId = getIntParameter('productId') ?? 0x8000;
   aggregatorProductName = getParameter('productName') ?? 'Matterbridge aggregator';
+  aggregatorDeviceType = DeviceTypeId(getIntParameter('deviceType') ?? bridge.code);
+  aggregatorSerialNumber = getParameter('serialNumber');
+  aggregatorUniqueId = getParameter('uniqueId');
 
   protected static instance: Matterbridge | undefined;
 
@@ -465,18 +468,45 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         productName?: string;
         passcode?: number;
         discriminator?: number;
+        deviceType?: DeviceTypeId;
+        serialNumber?: string;
+        uniqueId?: string;
         remoteUrl?: string;
-        privateKey?: string;
+        privateKey?: string; // Raw part 32 bytes hex string
         certificate?: string;
         intermediateCertificate?: string;
         declaration?: string;
       };
 
-      // Set the vendorId, vendorName, productId and productName if they are present in the pairing file
-      if (isValidNumber(pairingFileJson.vendorId)) this.aggregatorVendorId = VendorId(pairingFileJson.vendorId);
-      if (isValidString(pairingFileJson.vendorName, 3)) this.aggregatorVendorName = pairingFileJson.vendorName;
-      if (isValidNumber(pairingFileJson.productId)) this.aggregatorProductId = pairingFileJson.productId;
-      if (isValidString(pairingFileJson.productName, 3)) this.aggregatorProductName = pairingFileJson.productName;
+      // Set the vendorId, vendorName, productId, productName, deviceType, serialNumber, uniqueId if they are present in the pairing file
+      if (isValidNumber(pairingFileJson.vendorId)) {
+        this.aggregatorVendorId = VendorId(pairingFileJson.vendorId);
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using vendorId ${CYAN}${this.aggregatorVendorId}${nf} from pairing file.`);
+      }
+      if (isValidString(pairingFileJson.vendorName, 3)) {
+        this.aggregatorVendorName = pairingFileJson.vendorName;
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using vendorName ${CYAN}${this.aggregatorVendorName}${nf} from pairing file.`);
+      }
+      if (isValidNumber(pairingFileJson.productId)) {
+        this.aggregatorProductId = pairingFileJson.productId;
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using productId ${CYAN}${this.aggregatorProductId}${nf} from pairing file.`);
+      }
+      if (isValidString(pairingFileJson.productName, 3)) {
+        this.aggregatorProductName = pairingFileJson.productName;
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using productName ${CYAN}${this.aggregatorProductName}${nf} from pairing file.`);
+      }
+      if (isValidNumber(pairingFileJson.deviceType)) {
+        this.aggregatorDeviceType = DeviceTypeId(pairingFileJson.deviceType);
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using deviceType ${CYAN}${this.aggregatorDeviceType}(0x${this.aggregatorDeviceType.toString(16).padStart(4, '0')})${nf} from pairing file.`);
+      }
+      if (isValidString(pairingFileJson.serialNumber, 3)) {
+        this.aggregatorSerialNumber = pairingFileJson.serialNumber;
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using serialNumber ${CYAN}${this.aggregatorSerialNumber}${nf} from pairing file.`);
+      }
+      if (isValidString(pairingFileJson.uniqueId, 3)) {
+        this.aggregatorUniqueId = pairingFileJson.uniqueId;
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using uniqueId ${CYAN}${this.aggregatorUniqueId}${nf} from pairing file.`);
+      }
 
       // Override the passcode and discriminator if they are present in the pairing file
       if (isValidNumber(pairingFileJson.passcode) && isValidNumber(pairingFileJson.discriminator)) {
@@ -484,8 +514,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.discriminator = pairingFileJson.discriminator;
         this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using passcode ${CYAN}${this.passcode}${nf} and discriminator ${CYAN}${this.discriminator}${nf} from pairing file.`);
       }
-      // Set the certification if it is present in the pairing file
-      /* istanbul ignore next if */
+      // Set the certification for matter.js if it is present in the pairing file
       if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
         const hexStringToUint8Array = (hexString: string) => {
           const matches = hexString.match(/.{1,2}/g);
@@ -883,6 +912,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Start the matter storage and create the matterbridge context
     try {
       await this.startMatterStorage();
+      if (this.aggregatorSerialNumber && this.aggregatorUniqueId && this.matterStorageService) {
+        const storageManager = await this.matterStorageService.open('Matterbridge');
+        const storageContext = storageManager?.createContext('persist');
+        if (this.aggregatorSerialNumber) await storageContext?.set('serialNumber', this.aggregatorSerialNumber);
+        if (this.aggregatorUniqueId) await storageContext?.set('uniqueId', this.aggregatorUniqueId);
+        this.matterbridgeInformation.matterbridgeSerialNumber = this.aggregatorSerialNumber;
+      }
     } catch (error) {
       this.log.fatal(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
       throw new Error(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
@@ -1646,7 +1682,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private async createDynamicPlugin(plugin: RegisteredPlugin): Promise<void> {
     if (!plugin.locked) {
       plugin.locked = true;
-      plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
+      plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', this.aggregatorDeviceType, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
       plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
       plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
       plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
@@ -2081,7 +2117,17 @@ const commissioningController = new CommissioningController({
     this.matterStorageManager = await this.matterStorageService.open('Matterbridge');
     this.log.info('Matter node storage manager "Matterbridge" created');
 
-    this.matterbridgeContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', bridge.code, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, this.aggregatorProductName);
+    this.matterbridgeContext = await this.createServerNodeContext(
+      'Matterbridge',
+      'Matterbridge',
+      this.aggregatorDeviceType,
+      this.aggregatorVendorId,
+      this.aggregatorVendorName,
+      this.aggregatorProductId,
+      this.aggregatorProductName,
+      this.aggregatorSerialNumber,
+      this.aggregatorUniqueId,
+    );
     this.matterbridgeInformation.matterbridgeSerialNumber = await this.matterbridgeContext.get('serialNumber', '');
 
     this.log.info('Matter node storage started');
@@ -2133,9 +2179,20 @@ const commissioningController = new CommissioningController({
    * @param {number} productId - The product ID.
    * @param {string} productName - The product name.
    * @param {string} [serialNumber] - The serial number of the device (optional).
+   * @param {string} [uniqueId] - The unique ID of the device (optional).
    * @returns {Promise<StorageContext>} The storage context for the commissioning server.
    */
-  private async createServerNodeContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string, serialNumber?: string): Promise<StorageContext> {
+  private async createServerNodeContext(
+    pluginName: string,
+    deviceName: string,
+    deviceType: DeviceTypeId,
+    vendorId: number,
+    vendorName: string,
+    productId: number,
+    productName: string,
+    serialNumber?: string,
+    uniqueId?: string,
+  ): Promise<StorageContext> {
     const { randomBytes } = await import('node:crypto');
     if (!this.matterStorageService) throw new Error('No storage service initialized');
 
@@ -2153,7 +2210,7 @@ const commissioningController = new CommissioningController({
     await storageContext.set('nodeLabel', productName.slice(0, 32));
     await storageContext.set('productLabel', productName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
-    await storageContext.set('uniqueId', await storageContext.get('uniqueId', 'UI' + random));
+    await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
     await storageContext.set('softwareVersion', isValidNumber(parseVersionString(this.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridgeVersion) : 1);
     await storageContext.set('softwareVersionString', isValidString(this.matterbridgeVersion, 5, 64) ? this.matterbridgeVersion : '1.0.0');
     await storageContext.set('hardwareVersion', isValidNumber(parseVersionString(this.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.systemInformation.osRelease) : 1);
