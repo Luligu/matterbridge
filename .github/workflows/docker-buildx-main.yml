@@ -1,17 +1,20 @@
 name: Build Docker Image latest with buildx
 
 on:
-  # Push on main branch
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'screenshot/**' # any file under screenshot/
-      - '**/*.md' # any .md anywhere
-  # Runs daily at 00:00 UTC
-  schedule:
-    - cron: '0 0 * * *'
-  # Allow manual dispatch
+  # Use in other repository workflows with:
+  # - name: Trigger Matterbridge Docker Build Main
+  #   uses: actions/github-script@v7
+  #   with:
+  #     github-token: ${{ secrets.TRIGGER_TOKEN }}
+  #     script: |
+  #       await github.rest.actions.createWorkflowDispatch({
+  #         owner: 'Luligu',
+  #         repo: 'matterbridge',
+  #         workflow_id: 'docker-buildx-main.yml',
+  #         ref: 'main'
+  #       })
+
+  # Allow manual dispatch and trigger from other workflows
   workflow_dispatch:
 
 jobs:

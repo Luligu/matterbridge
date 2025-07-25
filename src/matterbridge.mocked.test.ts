@@ -174,7 +174,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.restartMode).toBe('');
     expect(matterbridge.profile).toBe('Jest');
     expect(matterbridge.shutdown).toBe(false);
-    expect(matterbridge.edge).toBe(true);
+    expect((matterbridge as any).edge).toBe(undefined);
     expect((matterbridge as any).failCountLimit).toBe(120);
 
     expect(matterbridge.log).toBeDefined();
@@ -677,6 +677,29 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() parseCommandLine', async () => {
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    writeFileSync(
+      path.join(HOMEDIR, '.mattercert', 'pairing.json'),
+      JSON.stringify(
+        {
+          serialNumber: 'xxxx',
+          uniqueId: 'yyyy',
+          vendorId: 65521,
+          vendorName: 'Matterbridge',
+          productId: 32768,
+          productName: 'Matterbridge aggregator',
+          deviceType: 14,
+          passcode: 20252026,
+          discriminator: 2355,
+          privateKey: 'FFFF',
+          certificate: 'FFFF',
+          intermediateCertificate: 'FFFF',
+          declaration: 'FFFF',
+        },
+        null,
+        2,
+      ),
+      'utf-8',
+    ); // Create a dummy file to avoid errors
     await matterbridge.initialize();
     // const startMatterStorageSpy = jest.spyOn(matterbridge as any, 'startMatterStorage').mockImplementation(async () => Promise.resolve());
     // const stopMatterStorageSpy = jest.spyOn(matterbridge as any, 'stopMatterStorage').mockImplementation(async () => Promise.resolve());
@@ -685,6 +708,9 @@ describe('Matterbridge mocked', () => {
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-help'];
     matterbridge.shutdown = false;
+    matterbridge.aggregatorSerialNumber = 'xxxx';
+    matterbridge.aggregatorUniqueId = 'yyyy';
+    matterbridge.matterStorageService = { open: jest.fn().mockImplementation(async () => Promise.resolve()) } as any; // Mock the matterStorageService to avoid errors
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Usage: matterbridge [options]'));

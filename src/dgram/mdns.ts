@@ -21,17 +21,14 @@
  * limitations under the License.
  */
 
-// Net imports
+// Node.js imports
 import dgram from 'node:dgram';
-import { AddressInfo } from 'node:net';
 
 // AnsiLogger imports
 import { BLUE, CYAN, db, er, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
 
-// Matterbridge imports
-import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, Multicast } from './multicast.js';
-
-// Node.js imports
+// Net imports
+import { Multicast } from './multicast.js';
 
 export const enum DnsRecordType {
   A = 1,
@@ -214,8 +211,12 @@ export class Mdns extends Multicast {
         const ptr =
           result.answers?.find((record) => record.name === '_shelly._tcp.local' && record.type === DnsRecordType.PTR) ||
           result.answers?.find((record) => record.name === '_http._tcp.local' && record.type === DnsRecordType.PTR) ||
-          result.answers?.find((record) => record.type === DnsRecordType.PTR);
-        this.deviceResponses.set(rinfo.address, { rinfo, response: result, dataPTR: ptr?.data });
+          result.answers?.find((record) => record.type === DnsRecordType.PTR) ||
+          result.answers?.find((record) => record.type === DnsRecordType.TXT) ||
+          result.answers
+            ? result.answers[0]
+            : undefined; // Fallback to the first answer if no PTR or TXT found
+        this.deviceResponses.set(rinfo.address, { rinfo, response: result, dataPTR: ptr?.type === DnsRecordType.PTR ? ptr?.data : ptr?.name });
         this.onResponse(rinfo, result);
       }
       this.logMdnsMessage(result);
@@ -840,89 +841,4 @@ export class Mdns extends Multicast {
       this.log.info(`- ${MAGENTA}${rinfo}${nf} family ${BLUE}${response.rinfo.family}${nf} address ${BLUE}${response.rinfo.address}${nf} port ${BLUE}${response.rinfo.port}${nf} PTR ${GREEN}${response.dataPTR}${nf}`);
     });
   }
-}
-
-// CLI entry point for manual testing: node dist/dgram/mdns.js --mdns-udp4 --mdns-udp6 --mdns-query
-// istanbul ignore next if
-if (process.argv.includes('--mdns-udp4') || process.argv.includes('--mdns-udp6')) {
-  // const mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, 'Loopback Pseudo-Interface 1', '127.0.0.1');
-  // const mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, 'Loopback Pseudo-Interface 1', '::1');
-  const mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, undefined, '0.0.0.0');
-  const mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, undefined, '::');
-  mdnsIpv6.listNetworkInterfaces();
-
-  /**
-   * Cleanup and log device information before exiting.
-   */
-  function cleanupAndLogAndExit() {
-    if (process.argv.includes('--mdns-udp4')) mdnsIpv4.stop();
-    if (process.argv.includes('--mdns-udp6')) mdnsIpv6.stop();
-    if (process.argv.includes('--mdns-udp4')) mdnsIpv4.logDevices();
-    if (process.argv.includes('--mdns-udp6')) mdnsIpv6.logDevices();
-    // eslint-disable-next-line n/no-process-exit
-    process.exit(0);
-  }
-
-  /**
-   *  Queries mDNS services over UDP IPv4 and sends a response for a specific service instance.
-   *  This function sends a query for Shelly, HTTP, and services, and responds with the appropriate PTR records.
-   */
-  const queryUdp4 = () => {
-    mdnsIpv4.sendQuery([
-      { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
-      { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
-      { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
-      { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
-    ]);
-
-    const ptrRdata = mdnsIpv4.encodeDnsName('matterbridge._http._tcp.local');
-    mdnsIpv4.sendResponse('_http._tcp.local', DnsRecordType.PTR, DnsClass.IN, 120, ptrRdata);
-  };
-
-  /**
-   *  Queries mDNS services over UDP IPv6 and sends a response for a specific service instance.
-   *  This function sends a query for Shelly, HTTP, and services, and responds with the appropriate PTR records.
-   */
-  const queryUdp6 = () => {
-    mdnsIpv6.sendQuery([
-      { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-    ]);
-
-    const ptrRdata = mdnsIpv6.encodeDnsName('matterbridge._http._tcp.local');
-    mdnsIpv6.sendResponse('_http._tcp.local', DnsRecordType.PTR, DnsClass.IN, 120, ptrRdata);
-  };
-
-  // Handle Ctrl+C (SIGINT) to stop and log devices
-  process.on('SIGINT', () => {
-    cleanupAndLogAndExit();
-  });
-
-  if (process.argv.includes('--mdns-udp4')) {
-    mdnsIpv4.start();
-    mdnsIpv4.on('ready', (address: AddressInfo) => {
-      mdnsIpv4.log.info(`mdnsIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
-      if (!process.argv.includes('--mdns-query')) return; // Skip querying if --mdns-query is not specified
-      queryUdp4();
-      setInterval(() => {
-        queryUdp4();
-      }, 10000).unref();
-    });
-  }
-  if (process.argv.includes('--mdns-udp6')) {
-    mdnsIpv6.start();
-    mdnsIpv6.on('ready', (address: AddressInfo) => {
-      mdnsIpv6.log.info(`mdnsIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
-      if (!process.argv.includes('--mdns-query')) return; // Skip querying if --mdns-query is not specified
-      queryUdp6();
-      setInterval(() => {
-        queryUdp6();
-      }, 10000).unref();
-    });
-  }
-  setTimeout(() => {
-    cleanupAndLogAndExit();
-  }, 600000); // 10 minutes timeout to exit if no activity
 }

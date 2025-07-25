@@ -8,6 +8,30 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.1.7] - 2025-07-25
+
+### Added
+
+- [docker]: Added trigger of Build Docker Image latest from publish.yml.
+- [docker]: Added trigger of Build Docker Image dev from publish-dev-daily.yml.
+- [docker]: Added on demand trigger for Build Docker Image latest from other plugins workflows.
+- [docker]: Added on demand trigger for Build Docker Image dev from other plugins workflows.
+- [mdns]: Added bin mb_mdns.
+- [coap]: Added bin mb_coap.
+- [operationalState]: Improved documentation on createDefaultOperationalStateClusterServer() and added the optional attribute countdownTime. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/363).
+- [momentarySwitch]: Added createDefaultMomentarySwitchClusterServer(). It creates a single click only switch. It is supported by the Home app.
+- [fixedLabels]: Improved documentation and added character length check.
+- [userLabels]: Improved documentation and added character length check.
+- [certification]: Improved certification management in pairing.json with new properties.
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.1.6] - 2025-07-22
 
 ### Added

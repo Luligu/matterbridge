@@ -56,6 +56,7 @@ import {
   ColorControlBehavior,
   ColorControlServer,
   DescriptorBehavior,
+  FanControlBehavior,
   FormaldehydeConcentrationMeasurementServer,
   NitrogenDioxideConcentrationMeasurementServer,
   OccupancySensingServer,
@@ -98,7 +99,7 @@ import {
   waterLeakDetector,
   waterValve,
 } from './matterbridgeDeviceTypes.ts';
-import { capitalizeFirstLetter, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.ts';
+import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -576,6 +577,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(false);
+    expect(featuresFor(device, 'FanControl')).toEqual({});
 
     await add(device);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(false);
@@ -595,6 +597,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(true);
+    expect(featuresFor(device, 'FanControl')).toEqual({ 'airflowDirection': false, 'auto': true, 'multiSpeed': true, 'rocking': false, 'step': true, 'wind': false });
 
     await add(device);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(true);
@@ -616,6 +619,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'rockSupport')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'windSupport')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(true);
+    expect(featuresFor(device, 'FanControl')).toEqual({ 'airflowDirection': true, 'auto': true, 'multiSpeed': true, 'rocking': true, 'step': true, 'wind': true });
 
     await add(device);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(true);
@@ -624,6 +628,31 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).rocking).toBe(true);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).wind).toBe(true);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).airflowDirection).toBe(true);
+    expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
+  });
+
+  test('createOnOffFanControlClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(fanDevice, { uniqueStorageKey: 'Fan5' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultGroupsClusterServer();
+    device.createOnOffFanControlClusterServer();
+    expect(device.hasAttributeServer(FanControl.Cluster, 'fanMode')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'percentSetting')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(false);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'rockSupport')).toBe(false);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'windSupport')).toBe(false);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(false);
+    expect(featuresFor(device, 'FanControl')).toEqual({});
+
+    await add(device);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(false);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).step).toBe(false);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).multiSpeed).toBe(false);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).rocking).toBe(false);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).wind).toBe(false);
+    expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).airflowDirection).toBe(false);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
     (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });

@@ -1,12 +1,6 @@
 name: Build Docker Image edge with buildx
 
 on:
-  push:
-    branches:
-      - edge
-    paths-ignore:
-      - 'screenshot/**' # any file under screenshot/
-      - '**/*.md' # any .md anywhere
   # Allow manual dispatch
   workflow_dispatch:
 

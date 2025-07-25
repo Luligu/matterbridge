@@ -20,9 +20,9 @@
 
 The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on **Docker Hub**.
 
-The image (tag **latest**) includes matterbridge and all plugins with the latest release (as published on npm). You can just pull the new image and matterbridge with all plugins will be the latest release published on npm.
+The image (tag **latest**) includes matterbridge and all official plugins with the latest release (as published on npm). You can just pull the new image and matterbridge with all plugins will be the latest release published on npm.
 
-The image (tag **dev**) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest release pushed on GitHub. It is possible that the devs are outdated by published latests.
+The image (tag **dev**) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest dev release pushed on GitHub. It is possible that the devs are outdated by published latests.
 
 You can directly select and add a plugin without installing it.
 
@@ -71,7 +71,7 @@ After adding your user to the docker group, you need to log out and log back in 
 
 ### Run the Docker container and start it
 
-The container must have full access to the host network (needed for mdns).
+The container must have full access to the host network (needed for mdns and Matter protocol).
 
 ```bash
 sudo docker run --name matterbridge \

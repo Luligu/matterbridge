@@ -229,7 +229,8 @@
         "unicast.test.ts",
         "multicast.test.ts",
         "mdns.test.ts",
-        "mdns.real.test.ts"
+        "mdns.real.test.ts",
+        "coap.test.ts"
       ],
       "group": {
         "kind": "test",

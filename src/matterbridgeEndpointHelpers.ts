@@ -188,10 +188,28 @@ export function generateUniqueId(deviceName: string): string {
  * @param {string} param4 - The fourth parameter.
  * @returns {string} A unique ID generated from the concatenation of the parameters using MD5 hashing.
  */
-export function createUniqueId(param1: string, param2: string, param3: string, param4: string) {
+export function createUniqueId(param1: string, param2: string, param3: string, param4: string): string {
   const hash = createHash('md5');
   hash.update(param1 + param2 + param3 + param4);
   return hash.digest('hex');
+}
+
+/**
+ * Retrieves the features for a specific behavior.
+ *
+ * @param {Endpoint} endpoint - The endpoint to retrieve the features from.
+ * @param {string} behavior - The behavior to retrieve the features for.
+ *
+ * @returns {Record<string, boolean | undefined>} The features for the specified behavior.
+ *
+ * @remarks Use with:
+ * ```typescript
+ *     expect(featuresFor(device, 'powerSource').wired).toBe(true);
+ * ```
+ */
+export function featuresFor(endpoint: Endpoint, behavior: string): Record<string, boolean | undefined> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (endpoint.behaviors.supported as any)[lowercaseFirstLetter(behavior)]['cluster']['supportedFeatures'];
 }
 
 /**
@@ -200,7 +218,7 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
  * @param {ClusterId[]} clusterServerList - The list of ClusterId to map.
  * @returns {Behavior.Type[]} An array of Behavior.Type corresponding to the ClusterId in the server list.
  */
-export function getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]) {
+export function getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]): Behavior.Type[] {
   // Map Server ClusterId to Behavior.Type
   const behaviorTypes: Behavior.Type[] = [];
   clusterServerList.forEach((clusterId) => {
@@ -215,7 +233,7 @@ export function getBehaviourTypesFromClusterServerIds(clusterServerList: Cluster
  * @param {ClusterId[]} clusterClientList - The list of ClusterId to map.
  * @returns {Behavior.Type[]} An array of Behavior.Type corresponding to the ClusterId in the client list.
  */
-export function getBehaviourTypesFromClusterClientIds(clusterClientList: ClusterId[]) {
+export function getBehaviourTypesFromClusterClientIds(clusterClientList: ClusterId[]): Behavior.Type[] {
   // Map Client ClusterId to Behavior.Type
   const behaviorTypes: Behavior.Type[] = [];
   clusterClientList.forEach((_clusterId) => {
@@ -230,7 +248,7 @@ export function getBehaviourTypesFromClusterClientIds(clusterClientList: Cluster
  * @param {ClusterId} clusterId - The ClusterId to map.
  * @returns {Behavior.Type} The corresponding Behavior.Type for the given ClusterId.
  */
-export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
+export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behavior.Type {
   // Map ClusterId to Server Behavior.Type
   if (clusterId === PowerSource.Cluster.id) return PowerSourceServer.with(PowerSource.Feature.Wired);
   if (clusterId === UserLabel.Cluster.id) return UserLabelServer;
@@ -478,22 +496,22 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
  * Adds a fixed label to the FixedLabel cluster. The FixedLabel cluster is created if it does not exist.
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
- * @param {string} label - The label to add.
- * @param {string} value - The value of the label.
+ * @param {string} label - The label to add. Max 16 characters.
+ * @param {string} value - The value of the label. Max 16 characters.
  */
 export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
   if (!endpoint.hasClusterServer(FixedLabel.Cluster.id)) {
     endpoint.log.debug(`addFixedLabel: add cluster ${hk}FixedLabel${db}:${hk}fixedLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     endpoint.behaviors.require(FixedLabelServer, {
-      labelList: [{ label, value }],
+      labelList: [{ label: label.substring(0, 16), value: value.substring(0, 16) }],
     });
     return;
   }
   endpoint.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
   let labelList = endpoint.getAttribute(FixedLabel.Cluster.id, 'labelList', endpoint.log) as { label: string; value: string }[];
   if (isValidArray(labelList)) {
-    labelList = labelList.filter((entry) => entry.label !== label);
-    labelList.push({ label, value });
+    labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
+    labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
     await endpoint.setAttribute(FixedLabel.Cluster.id, 'labelList', labelList, endpoint.log);
   }
 }
@@ -502,22 +520,22 @@ export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: strin
  * Adds a user label to the UserLabel cluster. The UserLabel cluster is created if it does not exist.
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
- * @param {string} label - The label to add.
- * @param {string} value - The value of the label.
+ * @param {string} label - The label to add. Max 16 characters.
+ * @param {string} value - The value of the label. Max 16 characters.
  */
 export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
   if (!endpoint.hasClusterServer(UserLabel.Cluster.id)) {
     endpoint.log.debug(`addUserLabel: add cluster ${hk}UserLabel${db}:${hk}userLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     endpoint.behaviors.require(UserLabelServer, {
-      labelList: [{ label, value }],
+      labelList: [{ label: label.substring(0, 16), value: value.substring(0, 16) }],
     });
     return;
   }
   endpoint.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
   let labelList = endpoint.getAttribute(UserLabel.Cluster.id, 'labelList', endpoint.log) as { label: string; value: string }[];
   if (isValidArray(labelList)) {
-    labelList = labelList.filter((entry) => entry.label !== label);
-    labelList.push({ label, value });
+    labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
+    labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
     await endpoint.setAttribute(UserLabel.Cluster.id, 'labelList', labelList, endpoint.log);
   }
 }
@@ -775,13 +793,22 @@ export async function triggerEvent(
 /**
  * Get the default OperationalState Cluster Server.
  *
- * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state.
+ * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state id.
+ *
  * @returns {Behavior.Options<MatterbridgeOperationalStateServer>} - The default options for the OperationalState cluster server.
+ *
+ * @remarks
+ * This method adds a cluster server with a default operational state configuration:
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
  */
 export function getDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped) {
   return optionsFor(MatterbridgeOperationalStateServer, {
     phaseList: [],
     currentPhase: null,
+    countdownTime: null,
     operationalStateList: [
       { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
       { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
