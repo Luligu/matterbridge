@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+import { createPublicKey, createPrivateKey, X509Certificate } from 'node:crypto';
+
 /**
  * Converts an ArrayBuffer or Uint8Array to a hexadecimal string.
  *
@@ -102,12 +104,13 @@ export function hexToBuffer(hex: string): Uint8Array {
  * This function extracts the base64 content and converts it to binary data using Node.js Buffer API.
  *
  * @param {string} pem - The PEM formatted string to convert.
+ * @param {boolean} validate - Whether to validate the PEM content using Node.js crypto module. Default is false.
  * @returns {Uint8Array} A Uint8Array representing the decoded binary data.
  *
  * @throws {TypeError} If the input is not a string.
- * @throws {Error} If the PEM format is invalid or contains invalid base64 characters.
+ * @throws {Error} If the PEM format is invalid, contains invalid base64 characters, or validation fails.
  */
-export function pemToBuffer(pem: string): Uint8Array {
+export function pemToBuffer(pem: string, validate: boolean = false): Uint8Array {
   // Ensure the input is a string
   if (typeof pem !== 'string') {
     throw new TypeError('Expected a string for PEM input');
@@ -161,7 +164,48 @@ export function pemToBuffer(pem: string): Uint8Array {
     const buffer = Buffer.from(base64String, 'base64');
 
     // Convert Buffer to Uint8Array
-    return new Uint8Array(buffer);
+    const result = new Uint8Array(buffer);
+
+    // Validate PEM content using Node.js crypto module if requested
+    if (validate) {
+      try {
+        // Determine PEM type from the header and validate accordingly
+        const pemType = cleaned.match(/-----BEGIN\s+([^-]+)-----/)?.[1]?.trim();
+
+        if (pemType?.includes('CERTIFICATE')) {
+          // Use X509Certificate for robust certificate validation
+          const cert = new X509Certificate(pem);
+          // Check validity period
+          if (cert.validFrom && cert.validTo) {
+            const now = Date.now();
+            const from = Date.parse(cert.validFrom);
+            const to = Date.parse(cert.validTo);
+            // istanbul ignore next if
+            if (now < from || now > to) {
+              throw new Error('Certificate is not currently valid');
+            }
+          }
+          // Check subject/issuer fields
+          // istanbul ignore next if
+          if (!cert.subject || !cert.issuer) {
+            throw new Error('Certificate missing subject or issuer');
+          }
+          // Optionally check signature (not possible without CA chain)
+        } else if (pemType?.includes('PRIVATE KEY')) {
+          // For private keys, try to create a private key
+          createPrivateKey({ key: pem, format: 'pem' });
+        } else if (pemType?.includes('PUBLIC KEY')) {
+          // For public keys, try to create a public key
+          createPublicKey({ key: pem, format: 'pem' });
+        }
+        // If no specific type is detected, skip validation
+      } catch (validationError) {
+        // istanbul ignore next
+        throw new Error(`PEM validation failed: ${validationError instanceof Error ? validationError.message : String(validationError)}`);
+      }
+    }
+
+    return result;
   } catch (error) {
     // istanbul ignore next
     throw new Error(`Failed to decode base64 content: ${error instanceof Error ? error.message : String(error)}`);
