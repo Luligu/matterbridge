@@ -2412,8 +2412,8 @@ const commissioningController = new CommissioningController({
         this.frontend.wssSendRefreshRequired('settings');
         this.frontend.wssSendRefreshRequired('fabrics');
         this.frontend.wssSendRefreshRequired('sessions');
-        this.frontend.wssSendSnackbarMessage(`Advertising on server node for ${matterServerNode.id} stopped. Restart to commission.`, 0);
-        this.log.notice(`Advertising on server node for ${matterServerNode.id} stopped. Restart to commission.`);
+        this.frontend.wssSendSnackbarMessage(`Advertising stopped. Restart to commission again.`, 0);
+        this.log.notice(`Advertising stopped. Restart to commission again.`);
       },
       15 * 60 * 1000,
     ).unref();
