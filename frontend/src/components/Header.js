@@ -273,6 +273,10 @@ function Header() {
           if (debug) console.log('Header received restart_required');
           setRestart(true);
         }
+        if (msg.method === 'restart_not_required') {
+          if (debug) console.log('Header received restart_not_required');
+          setRestart(false);
+        }
         if (msg.method === 'update_required') {
           if (debug) console.log('Header received update_required');
           setUpdate(true);
