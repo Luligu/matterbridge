@@ -102,11 +102,11 @@ export async function getMatterbridgeDevVersion(matterbridge: Matterbridge): Pro
     matterbridge.matterbridgeDevVersion = version;
     matterbridge.matterbridgeInformation.matterbridgeDevVersion = version;
     await matterbridge.nodeContext?.set<string>('matterbridgeDevVersion', version);
-    if (matterbridge.matterbridgeVersion.includes('-dev.') && matterbridge.matterbridgeVersion !== version) {
+    if (matterbridge.matterbridgeVersion.includes('-dev-') && matterbridge.matterbridgeVersion !== version) {
       matterbridge.log.notice(`Matterbridge@dev is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${matterbridge.matterbridgeDevVersion}.`);
       matterbridge.frontend.wssSendRefreshRequired('matterbridgeDevVersion');
-      matterbridge.frontend.wssSendUpdateRequired();
-    } else {
+      matterbridge.frontend.wssSendUpdateRequired(true);
+    } else if (matterbridge.matterbridgeVersion.includes('-dev-') && matterbridge.matterbridgeVersion === version) {
       matterbridge.log.debug(`Matterbridge@dev is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${matterbridge.matterbridgeDevVersion}.`);
     }
     return version;
