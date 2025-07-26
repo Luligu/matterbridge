@@ -1462,11 +1462,16 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           }
         }
         await this.matterbridge.plugins.load(plugin, true, 'The plugin has been restarted', true);
-        plugin.restartRequired = false; // Reset restartRequired
-        if (plugin.serverNode) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (this.matterbridge as any).startServerNode(plugin.serverNode);
+        plugin.restartRequired = false; // Reset plugin restartRequired
+        let needRestart = 0;
+        for (const plugin of this.matterbridge.plugins) {
+          if (plugin.restartRequired) needRestart++;
         }
+        if (needRestart === 0) {
+          this.wssSendRestartNotRequired(true); // Reset global restart required message
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (plugin.serverNode) await (this.matterbridge as any).startServerNode(plugin.serverNode);
         this.wssSendSnackbarMessage(`Restarted plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
@@ -2018,7 +2023,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    *
    * @param {boolean} snackbar - If true, a snackbar message will be sent to all connected clients.
    */
-  wssSendRestartRequired(snackbar = true) {
+  wssSendRestartRequired(snackbar: boolean = true) {
     this.log.debug('Sending a restart required message to all connected clients');
     this.matterbridge.matterbridgeInformation.restartRequired = true;
     if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
@@ -2026,6 +2031,23 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', params: {} }));
+      }
+    });
+  }
+
+  /**
+   * Sends a no need to restart WebSocket message to all connected clients.
+   *
+   * @param {boolean} snackbar - If true, the snackbar message will be cleared from all connected clients.
+   */
+  wssSendRestartNotRequired(snackbar: boolean = true) {
+    this.log.debug('Sending a restart not required message to all connected clients');
+    this.matterbridge.matterbridgeInformation.restartRequired = false;
+    if (snackbar === true) this.wssSendCloseSnackbarMessage(`Restart required`);
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', params: {} }));
       }
     });
   }
