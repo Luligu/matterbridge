@@ -12,11 +12,12 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [Jest]: Total coverage 100%.
 - [certification]: Improved certification management in pairing.json. Added pemToBuffer function for converting PEM strings to Uint8Array.
 - [workflow]: Update permissions and change GitHub token for Docker build triggers.
 - [frontend]: Improved test units on Frontend class (total coverage 100%).
 - [frontend]: Bump version 2.7.1.
-- [frontend]: Added Changelog button when a new version is installed.
+- [frontend]: Added Changelog button that appears in the frontend when a new version is installed.
 - [frontend]: Added restart plugin in childbridge mode.
 
 ### Changed
