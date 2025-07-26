@@ -94,7 +94,7 @@ function Header() {
     logMessage('Matterbridge', `Downloading Shelly system log...`);
     showSnackbarMessage('Downloading Shelly system log...', 5);
     window.location.href = './api/shellydownloadsystemlog';
-};
+  };
 
   const handleRestartClick = () => {
     if (settings.matterbridgeInformation.restartMode === '') {
@@ -266,7 +266,7 @@ function Header() {
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log('Header received settings:', msg.response);
           setSettings(msg.response);
-          setRestart(msg.response.matterbridgeInformation.restartRequired);
+          setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
           setUpdate(msg.response.matterbridgeInformation.updateRequired);
         }
         // Broadcast messages
@@ -282,7 +282,7 @@ function Header() {
         }
         if (msg.method === 'restart_not_required') {
           if (debug) console.log('Header received restart_not_required');
-          setRestart(false);
+          setRestart(settings.matterbridgeInformation.fixedRestartRequired);
         }
         if (msg.method === 'update_required') {
           if (debug) console.log('Header received update_required');
