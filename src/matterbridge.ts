@@ -153,6 +153,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     matterDiscriminator: undefined,
     matterPasscode: undefined,
     restartRequired: false,
+    fixedRestartRequired: false,
     updateRequired: false,
   };
 

@@ -279,6 +279,8 @@ function Header() {
         if (msg.method === 'restart_required') {
           if (debug) console.log('Header received restart_required');
           setRestart(true);
+          if(msg.params.fixed === true) 
+            setSettings(prevSettings => ({ ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, fixedRestartRequired: true } }));
         }
         if (msg.method === 'restart_not_required') {
           if (debug) console.log('Header received restart_not_required');

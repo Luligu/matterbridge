@@ -21,6 +21,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Added Changelog button that appears in the frontend when a new version is installed and the frontend needs to be updated (page refresh).
 - [frontend]: Added restart plugin in childbridge mode.
 - [frontend]: Added update to stable and update to dev banner. The update to dev pops up only if you are on the dev.
+- [frontend]: Added new menu item for manual update check.
 
 ### Changed
 

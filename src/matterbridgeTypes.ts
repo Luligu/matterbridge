@@ -148,6 +148,7 @@ export interface MatterbridgeInformation {
   matterDiscriminator: number | undefined;
   matterPasscode: number | undefined;
   restartRequired: boolean;
+  fixedRestartRequired: boolean;
   updateRequired: boolean;
 }
 
