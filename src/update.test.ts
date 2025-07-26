@@ -124,18 +124,18 @@ describe('getMatterbridgeLatestVersion', () => {
   it('should update to the dev version if versions differ', async () => {
     const { getNpmPackageVersion } = await import('./utils/network.js');
 
-    matterbridgeMock.matterbridgeVersion = '1.0.0-dev.1';
+    matterbridgeMock.matterbridgeVersion = '1.0.0-dev-1';
 
     // Set the return value for this specific test case
-    (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.1.0-dev.1');
+    (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.1.0-dev-1');
 
     await getMatterbridgeDevVersion(matterbridgeMock);
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
-    expect(matterbridgeMock.matterbridgeVersion).toBe('1.0.0-dev.1');
-    expect(matterbridgeMock.matterbridgeDevVersion).toBe('1.1.0-dev.1');
-    expect(matterbridgeMock.matterbridgeInformation.matterbridgeDevVersion).toBe('1.1.0-dev.1');
-    expect(matterbridgeMock.log.notice).toHaveBeenCalledWith('Matterbridge@dev is out of date. Current version: 1.0.0-dev.1. Latest dev version: 1.1.0-dev.1.');
+    expect(matterbridgeMock.matterbridgeVersion).toBe('1.0.0-dev-1');
+    expect(matterbridgeMock.matterbridgeDevVersion).toBe('1.1.0-dev-1');
+    expect(matterbridgeMock.matterbridgeInformation.matterbridgeDevVersion).toBe('1.1.0-dev-1');
+    expect(matterbridgeMock.log.notice).toHaveBeenCalledWith('Matterbridge@dev is out of date. Current version: 1.0.0-dev-1. Latest dev version: 1.1.0-dev-1.');
     expect(matterbridgeMock.frontend.wssSendRefreshRequired).toHaveBeenCalledWith('matterbridgeDevVersion');
     expect(matterbridgeMock.frontend.wssSendUpdateRequired).toHaveBeenCalled();
   });
@@ -143,18 +143,18 @@ describe('getMatterbridgeLatestVersion', () => {
   it('should log a debug message if the dev version is up to date', async () => {
     const { getNpmPackageVersion } = await import('./utils/network.js');
 
-    matterbridgeMock.matterbridgeVersion = '1.0.0-dev.1';
+    matterbridgeMock.matterbridgeVersion = '1.0.0-dev-1';
 
     // Set the return value for this specific test case
-    (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.0.0-dev.1');
+    (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.0.0-dev-1');
 
     await getMatterbridgeDevVersion(matterbridgeMock);
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
-    expect(matterbridgeMock.matterbridgeVersion).toBe('1.0.0-dev.1');
-    expect(matterbridgeMock.matterbridgeDevVersion).toBe('1.0.0-dev.1');
-    expect(matterbridgeMock.matterbridgeInformation.matterbridgeDevVersion).toBe('1.0.0-dev.1');
-    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith('Matterbridge@dev is up to date. Current version: 1.0.0-dev.1. Latest dev version: 1.0.0-dev.1.');
+    expect(matterbridgeMock.matterbridgeVersion).toBe('1.0.0-dev-1');
+    expect(matterbridgeMock.matterbridgeDevVersion).toBe('1.0.0-dev-1');
+    expect(matterbridgeMock.matterbridgeInformation.matterbridgeDevVersion).toBe('1.0.0-dev-1');
+    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith('Matterbridge@dev is up to date. Current version: 1.0.0-dev-1. Latest dev version: 1.0.0-dev-1.');
     expect(matterbridgeMock.frontend.wssSendRefreshRequired).not.toHaveBeenCalled();
     expect(matterbridgeMock.frontend.wssSendUpdateRequired).not.toHaveBeenCalled();
   });
