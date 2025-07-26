@@ -264,6 +264,10 @@ export function HomeDevices() {
           if(debug) console.log('HomeDevices received restart_required');
           setRestart(true);
         }
+        if (msg.method === 'restart_not_required') {
+          if(debug) console.log('HomeDevices received restart_not_required');
+          setRestart(false);
+        }
         if (msg.method === 'state_update') {
           if (msg.params.plugin && msg.params.serialNumber && msg.params.cluster.includes('BasicInformationServer') && msg.params.attribute === 'reachable') {
             if(debug) console.log(`HomeDevices updating device reachability for plugin ${msg.params.plugin} serial ${msg.params.serialNumber} value ${msg.params.value}`);
