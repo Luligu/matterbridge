@@ -33,6 +33,7 @@ function Header() {
   // States
   const [restart, setRestart] = useState(false);
   const [update, setUpdate] = useState(false);
+  const [updateDev, setUpdateDev] = useState(false);
   const [settings, setSettings] = useState(null);
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -65,6 +66,10 @@ function Header() {
 
   const handleUpdateDevClick = () => {
     sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge@dev', restart: true } });
+  };
+
+  const handleUpdateCheckClick = () => {
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/checkupdates", src: "Frontend", dst: "Matterbridge", params: { } });
   };
 
   const handleShellySystemUpdateClick = () => {
@@ -175,6 +180,8 @@ function Header() {
       handleUpdateClick();
     } else if (value === 'updatedev') {
       handleUpdateDevClick();
+    } else if (value === 'updatecheck') {
+      handleUpdateCheckClick();
     } else if (value === 'shelly-sys-update') {
       handleShellySystemUpdateClick();
     } else if (value === 'shelly-main-update') {
@@ -281,6 +288,10 @@ function Header() {
           if (debug) console.log('Header received update_required');
           setUpdate(true);
         }
+        if (msg.method === 'update_required_dev') {
+          if (debug) console.log('Header received update_required_dev');
+          setUpdateDev(true);
+        }
         if (msg.id === WS_ID_SHELLY_SYS_UPDATE) {
           if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
           setSettings(prevSettings => ({ ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellySysUpdate: msg.params.available } }));
@@ -331,17 +342,24 @@ function Header() {
             <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span>
           </Tooltip>
         }
-        {!settings.matterbridgeInformation.readOnly && !update &&
-          <Tooltip title="Matterbridge version">
-            <span className="status-information" onClick={handleChangelogClick}>
-              v.{settings.matterbridgeInformation.matterbridgeVersion}
+        {!settings.matterbridgeInformation.readOnly && update &&
+          <Tooltip title="New Matterbridge stable version available, click to install">
+            <span className="status-warning" onClick={handleUpdateClick}>
+              Update to stable v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
             </span>
           </Tooltip>
         }
-        {!settings.matterbridgeInformation.readOnly && update &&
-          <Tooltip title="New Matterbridge version available, click to install">
-            <span className="status-warning" onClick={handleUpdateClick}>
-              Update v.{settings.matterbridgeInformation.matterbridgeVersion} to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
+        {!settings.matterbridgeInformation.readOnly && updateDev &&
+          <Tooltip title="New Matterbridge dev version available, click to install">
+            <span className="status-warning" onClick={handleUpdateDevClick}>
+              Update to dev v.{settings.matterbridgeInformation.matterbridgeDevVersion}
+            </span>
+          </Tooltip>
+        }
+        {!settings.matterbridgeInformation.readOnly &&
+          <Tooltip title="Matterbridge version, click to see the changelog">
+            <span className="status-information" onClick={handleChangelogClick}>
+              v.{settings.matterbridgeInformation.matterbridgeVersion}
             </span>
           </Tooltip>
         }
@@ -429,13 +447,19 @@ function Header() {
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
             <MenuItem onClick={() => handleMenuCloseConfirm('update')}>
               <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
-              <ListItemText primary="Install latest" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
+              <ListItemText primary="Install latest stable" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
             </MenuItem>
           }
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
             <MenuItem onClick={() => handleMenuCloseConfirm('updatedev')}>
               <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
               <ListItemText primary="Install latest dev" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
+            </MenuItem>
+          }
+          {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
+            <MenuItem onClick={() => handleMenuCloseConfirm('updatecheck')}>
+              <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+              <ListItemText primary="Check for updates" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
             </MenuItem>
           }
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate &&
