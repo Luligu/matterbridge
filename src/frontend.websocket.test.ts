@@ -444,6 +444,11 @@ describe('Matterbridge frontend', () => {
     expect(msg.success).toBe(true);
   });
 
+  test('Websocket API send /api/checkupdates', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/checkupdates', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/checkupdates', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+  });
+
   test('Websocket API send /api/shellysysupdate', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/shellysysupdate', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/shellysysupdate', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));

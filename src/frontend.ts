@@ -1494,6 +1494,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendRestartRequired();
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
         }
+      } else if (data.method === '/api/checkupdates') {
+        const { checkUpdates } = await import('./update.js');
+        checkUpdates(this.matterbridge);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/shellysysupdate') {
         const { triggerShellySysUpdate } = await import('./shelly.js');
         triggerShellySysUpdate(this.matterbridge);
@@ -1997,6 +2001,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} changed - The changed value. If null, the whole page will be refreshed.
    * possible values:
    * - 'matterbridgeLatestVersion'
+   * - 'matterbridgeDevVersion'
    * - 'matterbridgeAdvertise'
    * - 'online'
    * - 'offline'
@@ -2055,14 +2060,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Sends a need to update WebSocket message to all connected clients.
    *
+   * @param {boolean} devVersion - If true, the update is for a development version.
    */
-  wssSendUpdateRequired() {
+  wssSendUpdateRequired(devVersion: boolean = false) {
     this.log.debug('Sending an update required message to all connected clients');
     this.matterbridge.matterbridgeInformation.updateRequired = true;
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_UPDATE_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', params: {} }));
+        client.send(JSON.stringify({ id: WS_ID_UPDATE_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: devVersion ? 'update_required_dev' : 'update_required', params: {} }));
       }
     });
   }
