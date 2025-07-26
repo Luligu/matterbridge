@@ -14,6 +14,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [Jest]: Total coverage 100%.
 - [certification]: Improved certification management in pairing.json. Added pemToBuffer function for converting PEM strings to Uint8Array.
+- [certification]: Improved certification management in pairing.json. Added extractPrivateKeyRaw function for extrating the raw part of PEM private key to Uint8Array.
 - [workflow]: Update permissions and change GitHub token for Docker build triggers.
 - [frontend]: Improved test units on Frontend class (total coverage 100%).
 - [frontend]: Bump version 2.7.1.
