@@ -54,7 +54,11 @@ function Header() {
   };
 
   const handleChangelogClick = () => {
-    window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
+    if(settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-')) {
+      window.open(`https://github.com/Luligu/matterbridge/blob/dev/CHANGELOG.md`, '_blank');
+    } else {
+      window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
+    }
   };
 
   const handleDiscordLogoClick = () => {
