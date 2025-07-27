@@ -42,10 +42,13 @@ export async function checkUpdates(matterbridge: Matterbridge): Promise<void> {
   const latestVersion = getMatterbridgeLatestVersion(matterbridge);
   const devVersion = getMatterbridgeDevVersion(matterbridge);
   const pluginsVersions = [];
+  const pluginsDevVersions = [];
   const shellyUpdates = [];
   for (const plugin of matterbridge.plugins) {
     const pluginVersion = getPluginLatestVersion(matterbridge, plugin);
     pluginsVersions.push(pluginVersion);
+    const pluginDevVersion = getPluginDevVersion(matterbridge, plugin);
+    pluginsDevVersions.push(pluginDevVersion);
   }
 
   if (hasParameter('shelly')) {
@@ -56,7 +59,7 @@ export async function checkUpdates(matterbridge: Matterbridge): Promise<void> {
     const mainUpdate = getShellyMainUpdate(matterbridge);
     shellyUpdates.push(mainUpdate);
   }
-  await Promise.all([latestVersion, devVersion, ...pluginsVersions, ...shellyUpdates]);
+  await Promise.all([latestVersion, devVersion, ...pluginsVersions, ...pluginsDevVersions, ...shellyUpdates]);
 }
 
 /**
@@ -83,6 +86,7 @@ export async function getMatterbridgeLatestVersion(matterbridge: Matterbridge): 
     }
     return version;
   } catch (error) {
+    // logError(matterbridge.log, `Error getting Matterbridge latest version`, error);
     matterbridge.log.warn(`Error getting Matterbridge latest version: ${error instanceof Error ? error.message : error}`);
   }
 }
@@ -138,5 +142,31 @@ export async function getPluginLatestVersion(matterbridge: Matterbridge, plugin:
     return version;
   } catch (error) {
     matterbridge.log.warn(`Error getting plugin ${plg}${plugin.name}${wr} latest version: ${error instanceof Error ? error.message : error}`);
+  }
+}
+
+/**
+ * Retrieves the latest dev version of a plugin and updates the plugin's devVersion property.
+ * If there is an error retrieving the latest version, logs an error message.
+ *
+ * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ * @param {RegisteredPlugin} plugin - The plugin for which to retrieve the latest version.
+ * @returns {Promise<string | undefined>} A promise that resolves when the latest dev version is retrieved.
+ */
+export async function getPluginDevVersion(matterbridge: Matterbridge, plugin: RegisteredPlugin): Promise<string | undefined> {
+  const { getNpmPackageVersion } = await import('./utils/network.js');
+
+  try {
+    const version = await getNpmPackageVersion(plugin.name, 'dev');
+    plugin.devVersion = version;
+    if (plugin.version.includes('-dev-') && plugin.version !== plugin.devVersion) {
+      matterbridge.log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest dev version: ${plugin.devVersion}.`);
+      matterbridge.frontend.wssSendRefreshRequired('plugins');
+    } else if (plugin.version.includes('-dev-') && plugin.version === plugin.devVersion) {
+      matterbridge.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest dev version: ${plugin.devVersion}.`);
+    }
+    return version;
+  } catch (error) {
+    matterbridge.log.debug(`Error getting plugin ${plg}${plugin.name}${db} latest dev version: ${error instanceof Error ? error.message : error}`);
   }
 }
