@@ -135,10 +135,13 @@ export function HomePlugins({selectPlugin}) {
       accessor: 'version',
       Cell: ({ row: plugin }) => (
         <>
-          {plugin.original.latestVersion === undefined || plugin.original.latestVersion === plugin.original.version || (matterbridgeInfo && matterbridgeInfo.readOnly) ?
-            <Tooltip title="Plugin version">{plugin.original.version}</Tooltip> :
-            <Tooltip title="New plugin version available, click to install"><span className="status-warning" onClick={() => handleUpdatePlugin(plugin.original)}>Update v.{plugin.original.version} to v.{plugin.original.latestVersion}</span></Tooltip>
+          {plugin.original.latestVersion !== undefined && plugin.original.latestVersion !== plugin.original.version && matterbridgeInfo && !matterbridgeInfo.readOnly &&
+            <Tooltip title="New plugin stable version available, click to install"><span className="status-warning" style={{ marginRight: '10px' }} onClick={() => handleUpdatePlugin(plugin.original)}>Update to v.{plugin.original.latestVersion}</span></Tooltip>
           }
+          {plugin.original.version.includes('-dev-') && plugin.original.devVersion !== undefined && plugin.original.devVersion !== plugin.original.version && matterbridgeInfo && !matterbridgeInfo.readOnly &&
+            <Tooltip title="New plugin dev version available, click to install"><span className="status-warning" style={{ marginRight: '10px' }} onClick={() => handleUpdateDevPlugin(plugin.original)}>Update to new dev v.{plugin.original.devVersion.split('-dev-')[0]}</span></Tooltip>
+          }
+          <Tooltip title="Plugin version">{plugin.original.version}</Tooltip>
         </>
       ),
     },
@@ -319,6 +322,11 @@ export function HomePlugins({selectPlugin}) {
   const handleUpdatePlugin = (plugin) => {
     if (debug) console.log('handleUpdatePlugin plugin:', plugin.name);
     sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: plugin.name, restart: false } });
+  };
+
+  const handleUpdateDevPlugin = (plugin) => {
+    if (debug) console.log('handleUpdateDevPlugin plugin:', plugin.name);
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: plugin.name+'@dev', restart: false } });
   };
 
   const handleRemovePlugin = (plugin) => {

@@ -346,16 +346,16 @@ function Header() {
           </Tooltip>
         }
         {!settings.matterbridgeInformation.readOnly && update &&
-          <Tooltip title="New Matterbridge stable version available, click to install">
+          <Tooltip title="New Matterbridge version available, click to install">
             <span className="status-warning" onClick={handleUpdateClick}>
-              Update to stable v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
+              Update to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
             </span>
           </Tooltip>
         }
         {!settings.matterbridgeInformation.readOnly && updateDev &&
           <Tooltip title="New Matterbridge dev version available, click to install">
             <span className="status-warning" onClick={handleUpdateDevClick}>
-              Update to dev v.{settings.matterbridgeInformation.matterbridgeDevVersion}
+              Update to new dev v.{settings.matterbridgeInformation.matterbridgeDevVersion.split('-dev-')[0]}
             </span>
           </Tooltip>
         }
@@ -409,7 +409,7 @@ function Header() {
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
-          <Tooltip title="Update matterbridge">
+          <Tooltip title="Update matterbridge to latest version">
             <IconButton style={{ color: update ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
