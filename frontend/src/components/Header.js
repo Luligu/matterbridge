@@ -32,6 +32,7 @@ function Header() {
   const { online, sendMessage, logMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // States
   const [restart, setRestart] = useState(false);
+  const [fixedRestart, setFixedRestart] = useState(false);
   const [update, setUpdate] = useState(false);
   const [updateDev, setUpdateDev] = useState(false);
   const [settings, setSettings] = useState(null);
@@ -267,6 +268,7 @@ function Header() {
           if (debug) console.log('Header received settings:', msg.response);
           setSettings(msg.response);
           setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
+          setFixedRestart(msg.response.matterbridgeInformation.fixedRestartRequired);
           setUpdate(msg.response.matterbridgeInformation.updateRequired);
         }
         // Broadcast messages
@@ -277,14 +279,13 @@ function Header() {
           }
         }
         if (msg.method === 'restart_required') {
-          if (debug) console.log('Header received restart_required');
+          if (debug) console.log(`Header received restart_required with fixed: ${msg.params.fixed}`);
           setRestart(true);
-          if(msg.params.fixed === true) 
-            setSettings(prevSettings => ({ ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, fixedRestartRequired: true } }));
+          if(msg.params.fixed === true) setFixedRestart(true);
         }
         if (msg.method === 'restart_not_required') {
-          if (debug) console.log('Header received restart_not_required');
-          setRestart(settings.matterbridgeInformation.fixedRestartRequired);
+          if (debug) console.log(`Header received restart_not_required`);
+          setRestart(false);
         }
         if (msg.method === 'update_required') {
           if (debug) console.log('Header received update_required');
@@ -429,13 +430,13 @@ function Header() {
           </Tooltip>
         }
         <Tooltip title="Restart matterbridge">
-          <IconButton style={{ color: restart ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleRestartClick}>
+          <IconButton style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleRestartClick}>
             <RestartAltIcon />
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation.restartMode === '' ? (
           <Tooltip title="Shut down matterbridge">
-            <IconButton style={{ color: restart ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleShutdownClick}>
+            <IconButton style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleShutdownClick}>
               <PowerSettingsNewIcon />
             </IconButton>
           </Tooltip>
