@@ -16,11 +16,13 @@ If you like this project and find it useful, please consider giving it a star on
 - [certification]: Improved certification management in pairing.json. Added pemToBuffer function for converting PEM strings to Uint8Array.
 - [certification]: Improved certification management in pairing.json. Added extractPrivateKeyRaw function for extrating the raw part of PEM private key to Uint8Array.
 - [workflow]: Update permissions and change GitHub token for Docker build triggers.
+- [update]: Added support for retrieving and logging plugin development versions.
 - [frontend]: Improved test units on Frontend class (total coverage 100%).
 - [frontend]: Bump version 2.7.1.
 - [frontend]: Added Changelog button that appears in the frontend when a new version is installed and the frontend needs to be updated (page refresh).
 - [frontend]: Added restart plugin in childbridge mode.
-- [frontend]: Added update to stable and update to dev banner. The update to dev pops up only if you are on the dev.
+- [frontend]: Added update to stable and update to dev banner. The update to new appears only if you are on the dev and there is a new dev version.
+- [frontend]: Added update to stable and update to dev banner for plugins. The update to new dev appears only if you are on the dev and there is a new dev version.
 - [frontend]: Added new menu item for manual update check.
 
 ### Changed

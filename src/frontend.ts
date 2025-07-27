@@ -1086,6 +1086,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         changelog: plugin.changelog,
         funding: plugin.funding,
         latestVersion: plugin.latestVersion,
+        devVersion: plugin.devVersion,
         serialNumber: plugin.serialNumber,
         locked: plugin.locked,
         error: plugin.error,
@@ -1313,6 +1314,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                 });
             } else {
               // The package is matterbridge
+              // istanbul ignore next
               this.matterbridge.matterbridgeInformation.fixedRestartRequired = true;
               // istanbul ignore next if
               if (this.matterbridge.restartMode !== '') {

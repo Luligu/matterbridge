@@ -58,6 +58,7 @@ export interface BaseRegisteredPlugin {
   path: string;
   type: string;
   latestVersion?: string;
+  devVersion?: string;
   serialNumber?: string;
   homepage?: string;
   help?: string;
