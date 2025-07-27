@@ -1215,7 +1215,7 @@ describe('Matterbridge frontend', () => {
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('restart_required');
-    expect(data.params).toEqual({});
+    expect(data.params).toEqual({ 'fixed': false });
     expect(data.response).toBeUndefined();
     expect(data.error).toBeUndefined();
     expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith('Restart required', 0);
