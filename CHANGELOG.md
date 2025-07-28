@@ -8,6 +8,36 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.1.8] - 2025-07-28
+
+### Added
+
+- [Jest]: Total coverage 100%.
+- [certification]: Improved certification management in pairing.json. Added pemToBuffer function for converting PEM strings to Uint8Array.
+- [certification]: Improved certification management in pairing.json. Added extractPrivateKeyRaw function for extrating the raw part of PEM private key to Uint8Array.
+- [workflow]: Update permissions and change GitHub token for Docker build triggers.
+- [update]: Added support for retrieving and logging plugin development versions.
+- [frontend]: Improved test units on Frontend class (total coverage 100%).
+- [frontend]: Bump version 2.7.1.
+- [frontend]: Added Changelog button that appears in the frontend when a new version is installed and the frontend needs to be updated (page refresh).
+- [frontend]: Added restart plugin in childbridge mode.
+- [frontend]: Added update to stable and update to dev banner. The update to new appears only if you are on the dev and there is a new dev version.
+- [frontend]: Added update to stable and update to dev banner for plugins. The update to new dev appears only if you are on the dev and there is a new dev version.
+- [frontend]: Added new menu item for manual update check.
+
+### Changed
+
+- [package]: Updated dependencies.
+
+### Fixed
+
+- [switch]: Added conditional handling for momentary switch events in MatterbridgeEndpoint for single press only switches.
+- [advertise]: Changed the message advertise stopped to work also in childbridge mode.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.1.7] - 2025-07-25
 
 ### Added

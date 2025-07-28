@@ -32,7 +32,9 @@ function Header() {
   const { online, sendMessage, logMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // States
   const [restart, setRestart] = useState(false);
+  const [fixedRestart, setFixedRestart] = useState(false);
   const [update, setUpdate] = useState(false);
+  const [updateDev, setUpdateDev] = useState(false);
   const [settings, setSettings] = useState(null);
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -52,7 +54,11 @@ function Header() {
   };
 
   const handleChangelogClick = () => {
-    window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
+    if(settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-')) {
+      window.open(`https://github.com/Luligu/matterbridge/blob/dev/CHANGELOG.md`, '_blank');
+    } else {
+      window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
+    }
   };
 
   const handleDiscordLogoClick = () => {
@@ -65,6 +71,10 @@ function Header() {
 
   const handleUpdateDevClick = () => {
     sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge@dev', restart: true } });
+  };
+
+  const handleUpdateCheckClick = () => {
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/checkupdates", src: "Frontend", dst: "Matterbridge", params: { } });
   };
 
   const handleShellySystemUpdateClick = () => {
@@ -89,7 +99,7 @@ function Header() {
     logMessage('Matterbridge', `Downloading Shelly system log...`);
     showSnackbarMessage('Downloading Shelly system log...', 5);
     window.location.href = './api/shellydownloadsystemlog';
-};
+  };
 
   const handleRestartClick = () => {
     if (settings.matterbridgeInformation.restartMode === '') {
@@ -175,6 +185,8 @@ function Header() {
       handleUpdateClick();
     } else if (value === 'updatedev') {
       handleUpdateDevClick();
+    } else if (value === 'updatecheck') {
+      handleUpdateCheckClick();
     } else if (value === 'shelly-sys-update') {
       handleShellySystemUpdateClick();
     } else if (value === 'shelly-main-update') {
@@ -259,7 +271,8 @@ function Header() {
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log('Header received settings:', msg.response);
           setSettings(msg.response);
-          setRestart(msg.response.matterbridgeInformation.restartRequired);
+          setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
+          setFixedRestart(msg.response.matterbridgeInformation.fixedRestartRequired);
           setUpdate(msg.response.matterbridgeInformation.updateRequired);
         }
         // Broadcast messages
@@ -270,12 +283,21 @@ function Header() {
           }
         }
         if (msg.method === 'restart_required') {
-          if (debug) console.log('Header received restart_required');
+          if (debug) console.log(`Header received restart_required with fixed: ${msg.params.fixed}`);
           setRestart(true);
+          if(msg.params.fixed === true) setFixedRestart(true);
+        }
+        if (msg.method === 'restart_not_required') {
+          if (debug) console.log(`Header received restart_not_required`);
+          setRestart(false);
         }
         if (msg.method === 'update_required') {
           if (debug) console.log('Header received update_required');
           setUpdate(true);
+        }
+        if (msg.method === 'update_required_dev') {
+          if (debug) console.log('Header received update_required_dev');
+          setUpdateDev(true);
         }
         if (msg.id === WS_ID_SHELLY_SYS_UPDATE) {
           if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
@@ -327,17 +349,24 @@ function Header() {
             <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span>
           </Tooltip>
         }
-        {!settings.matterbridgeInformation.readOnly && !update &&
-          <Tooltip title="Matterbridge version">
-            <span className="status-information" onClick={handleChangelogClick}>
-              v.{settings.matterbridgeInformation.matterbridgeVersion}
-            </span>
-          </Tooltip>
-        }
         {!settings.matterbridgeInformation.readOnly && update &&
           <Tooltip title="New Matterbridge version available, click to install">
             <span className="status-warning" onClick={handleUpdateClick}>
-              Update v.{settings.matterbridgeInformation.matterbridgeVersion} to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
+              Update to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
+            </span>
+          </Tooltip>
+        }
+        {!settings.matterbridgeInformation.readOnly && updateDev &&
+          <Tooltip title="New Matterbridge dev version available, click to install">
+            <span className="status-warning" onClick={handleUpdateDevClick}>
+              Update to new dev v.{settings.matterbridgeInformation.matterbridgeDevVersion.split('-dev-')[0]}
+            </span>
+          </Tooltip>
+        }
+        {!settings.matterbridgeInformation.readOnly &&
+          <Tooltip title="Matterbridge version, click to see the changelog">
+            <span className="status-information" onClick={handleChangelogClick}>
+              v.{settings.matterbridgeInformation.matterbridgeVersion}
             </span>
           </Tooltip>
         }
@@ -384,7 +413,7 @@ function Header() {
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
-          <Tooltip title="Update matterbridge">
+          <Tooltip title="Update matterbridge to latest version">
             <IconButton style={{ color: update ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
@@ -405,13 +434,13 @@ function Header() {
           </Tooltip>
         }
         <Tooltip title="Restart matterbridge">
-          <IconButton style={{ color: restart ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleRestartClick}>
+          <IconButton style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleRestartClick}>
             <RestartAltIcon />
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation.restartMode === '' ? (
           <Tooltip title="Shut down matterbridge">
-            <IconButton style={{ color: restart ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleShutdownClick}>
+            <IconButton style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleShutdownClick}>
               <PowerSettingsNewIcon />
             </IconButton>
           </Tooltip>
@@ -425,13 +454,19 @@ function Header() {
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
             <MenuItem onClick={() => handleMenuCloseConfirm('update')}>
               <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
-              <ListItemText primary="Install latest" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
+              <ListItemText primary="Install latest stable" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
             </MenuItem>
           }
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
             <MenuItem onClick={() => handleMenuCloseConfirm('updatedev')}>
               <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
               <ListItemText primary="Install latest dev" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
+            </MenuItem>
+          }
+          {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
+            <MenuItem onClick={() => handleMenuCloseConfirm('updatecheck')}>
+              <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+              <ListItemText primary="Check for updates" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
             </MenuItem>
           }
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate &&

@@ -681,19 +681,19 @@ describe('Matterbridge mocked', () => {
       path.join(HOMEDIR, '.mattercert', 'pairing.json'),
       JSON.stringify(
         {
+          vendorId: 65523,
+          vendorName: 'Matterbridge certificate',
+          productId: 32769,
+          productName: 'Matterbridge certificate aggregator',
+          passcode: 20202021,
+          discriminator: 2111,
+          deviceType: 21,
           serialNumber: 'xxxx',
           uniqueId: 'yyyy',
-          vendorId: 65521,
-          vendorName: 'Matterbridge',
-          productId: 32768,
-          productName: 'Matterbridge aggregator',
-          deviceType: 14,
-          passcode: 20252026,
-          discriminator: 2355,
-          privateKey: 'FFFF',
-          certificate: 'FFFF',
-          intermediateCertificate: 'FFFF',
-          declaration: 'FFFF',
+          privateKey: '00FF',
+          certificate: '0204',
+          intermediateCertificate: '0102',
+          declaration: '030304',
         },
         null,
         2,
@@ -701,6 +701,20 @@ describe('Matterbridge mocked', () => {
       'utf-8',
     ); // Create a dummy file to avoid errors
     await matterbridge.initialize();
+    expect(matterbridge.aggregatorVendorId).toBe(65523);
+    expect(matterbridge.aggregatorVendorName).toBe('Matterbridge certificate');
+    expect(matterbridge.aggregatorProductId).toBe(32769);
+    expect(matterbridge.aggregatorProductName).toBe('Matterbridge certificate aggregator');
+    expect(matterbridge.passcode).toBe(20202021);
+    expect(matterbridge.discriminator).toBe(2111);
+    expect(matterbridge.aggregatorDeviceType).toBe(21);
+    expect(matterbridge.aggregatorSerialNumber).toBe('xxxx');
+    expect(matterbridge.aggregatorUniqueId).toBe('yyyy');
+    expect(matterbridge.certification?.privateKey).toEqual(new Uint8Array([0x00, 0xff]));
+    expect(matterbridge.certification?.certificate).toEqual(new Uint8Array([0x02, 0x04]));
+    expect(matterbridge.certification?.intermediateCertificate).toEqual(new Uint8Array([0x01, 0x02]));
+    expect(matterbridge.certification?.declaration).toEqual(new Uint8Array([0x03, 0x03, 0x04]));
+
     // const startMatterStorageSpy = jest.spyOn(matterbridge as any, 'startMatterStorage').mockImplementation(async () => Promise.resolve());
     // const stopMatterStorageSpy = jest.spyOn(matterbridge as any, 'stopMatterStorage').mockImplementation(async () => Promise.resolve());
     // const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());

@@ -239,6 +239,25 @@
       "problemMatcher": []
     },
     {
+      "label": "Test: Utils",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "update.test.ts"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
       "type": "npm",
       "script": "lint",
       "problemMatcher": [

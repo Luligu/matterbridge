@@ -519,7 +519,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      res.json(this.getBaseRegisteredPlugins());
+      res.json(this.getPlugins());
     });
 
     // Endpoint to provide devices
@@ -1066,11 +1066,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Retrieves the base registered plugins sanitized for res.json().
+   * Retrieves the registered plugins sanitized for res.json().
    *
    * @returns {BaseRegisteredPlugin[]} An array of BaseRegisteredPlugin.
    */
-  private getBaseRegisteredPlugins(): BaseRegisteredPlugin[] {
+  private getPlugins(): BaseRegisteredPlugin[] {
     if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const baseRegisteredPlugins: FrontendRegisteredPlugin[] = [];
     for (const plugin of this.matterbridge.plugins) {
@@ -1086,6 +1086,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         changelog: plugin.changelog,
         funding: plugin.funding,
         latestVersion: plugin.latestVersion,
+        devVersion: plugin.devVersion,
         serialNumber: plugin.serialNumber,
         locked: plugin.locked,
         error: plugin.error,
@@ -1101,11 +1102,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         hasWhiteList: plugin.configJson?.whiteList !== undefined,
         hasBlackList: plugin.configJson?.blackList !== undefined,
         // Childbridge mode specific data
-        paired: plugin.serverNode?.state.commissioning.commissioned,
-        qrPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode?.state.commissioning.pairingCodes.qrPairingCode,
-        manualPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode?.state.commissioning.pairingCodes.manualPairingCode,
-        fabricInformations: plugin.serverNode ? this.matterbridge.sanitizeFabricInformations(Object.values(plugin.serverNode?.state.commissioning.fabrics)) : undefined,
-        sessionInformations: plugin.serverNode ? this.matterbridge.sanitizeSessionInformation(Object.values(plugin.serverNode?.state.sessions.sessions)) : undefined,
+        paired: plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.commissioned : undefined,
+        qrPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.pairingCodes.qrPairingCode : undefined,
+        manualPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.pairingCodes.manualPairingCode : undefined,
+        fabricInformations: plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? this.matterbridge.sanitizeFabricInformations(Object.values(plugin.serverNode.state.commissioning.fabrics)) : undefined,
+        sessionInformations: plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? this.matterbridge.sanitizeSessionInformation(Object.values(plugin.serverNode.state.sessions.sessions)) : undefined,
       });
     }
     return baseRegisteredPlugins;
@@ -1301,9 +1302,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                       });
                   } else {
                     // The plugin is already registered
-                    this.wssSendSnackbarMessage(`Restart required`, 0);
+                    this.matterbridge.matterbridgeInformation.fixedRestartRequired = true;
                     this.wssSendRefreshRequired('plugins');
-                    this.wssSendRestartRequired();
+                    this.wssSendRestartRequired(true, true);
                   }
                   return;
                 })
@@ -1313,13 +1314,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                 });
             } else {
               // The package is matterbridge
+              // istanbul ignore next
+              this.matterbridge.matterbridgeInformation.fixedRestartRequired = true;
               // istanbul ignore next if
               if (this.matterbridge.restartMode !== '') {
                 this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
                 this.matterbridge.shutdownProcess();
               } else {
-                this.wssSendSnackbarMessage(`Restart required`, 0);
-                this.wssSendRestartRequired();
+                this.wssSendRestartRequired(true, true);
               }
             }
             return;
@@ -1443,6 +1445,39 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+      } else if (data.method === '/api/restartplugin') {
+        if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/restartplugin' }));
+          return;
+        }
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
+        await this.matterbridge.plugins.shutdown(plugin, 'The plugin is restarting.', false, true);
+        if (plugin.serverNode) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (this.matterbridge as any).stopServerNode(plugin.serverNode);
+          plugin.serverNode = undefined;
+        }
+        for (const device of this.matterbridge.devices) {
+          if (device.plugin === plugin.name) {
+            this.log.debug(`Removing device ${device.deviceName} from plugin ${plugin.name}`);
+            this.matterbridge.devices.remove(device);
+          }
+        }
+        await this.matterbridge.plugins.load(plugin, true, 'The plugin has been restarted', true);
+        plugin.restartRequired = false; // Reset plugin restartRequired
+        let needRestart = 0;
+        for (const plugin of this.matterbridge.plugins) {
+          if (plugin.restartRequired) needRestart++;
+        }
+        if (needRestart === 0) {
+          this.wssSendRestartNotRequired(true); // Reset global restart required message
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (plugin.serverNode) await (this.matterbridge as any).startServerNode(plugin.serverNode);
+        this.wssSendSnackbarMessage(`Restarted plugin ${data.params.pluginName}`, 5, 'success');
+        this.wssSendRefreshRequired('plugins');
+        this.wssSendRefreshRequired('devices');
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/savepluginconfig') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/savepluginconfig' }));
@@ -1461,6 +1496,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendRestartRequired();
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
         }
+      } else if (data.method === '/api/checkupdates') {
+        const { checkUpdates } = await import('./update.js');
+        checkUpdates(this.matterbridge);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/shellysysupdate') {
         const { triggerShellySysUpdate } = await import('./shelly.js');
         triggerShellySysUpdate(this.matterbridge);
@@ -1536,7 +1575,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/settings') {
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() }));
       } else if (data.method === '/api/plugins') {
-        const response = this.getBaseRegisteredPlugins();
+        const response = this.getPlugins();
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
       } else if (data.method === '/api/devices') {
         const devices = await this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
@@ -1964,6 +2003,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} changed - The changed value. If null, the whole page will be refreshed.
    * possible values:
    * - 'matterbridgeLatestVersion'
+   * - 'matterbridgeDevVersion'
    * - 'matterbridgeAdvertise'
    * - 'online'
    * - 'offline'
@@ -1988,16 +2028,35 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Sends a need to restart WebSocket message to all connected clients.
    *
-   * @param {boolean} snackbar - If true, a snackbar message will be sent to all connected clients.
+   * @param {boolean} snackbar - If true, a snackbar message will be sent to all connected clients. Default is true.
+   * @param {boolean} fixed - If true, the restart is fixed and will not be reset by plugin restarts. Default is false.
    */
-  wssSendRestartRequired(snackbar = true) {
+  wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false) {
     this.log.debug('Sending a restart required message to all connected clients');
     this.matterbridge.matterbridgeInformation.restartRequired = true;
+    this.matterbridge.matterbridgeInformation.fixedRestartRequired = fixed;
     if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', params: {} }));
+        client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', params: { fixed } }));
+      }
+    });
+  }
+
+  /**
+   * Sends a no need to restart WebSocket message to all connected clients.
+   *
+   * @param {boolean} snackbar - If true, the snackbar message will be cleared from all connected clients.
+   */
+  wssSendRestartNotRequired(snackbar: boolean = true) {
+    this.log.debug('Sending a restart not required message to all connected clients');
+    this.matterbridge.matterbridgeInformation.restartRequired = false;
+    if (snackbar === true) this.wssSendCloseSnackbarMessage(`Restart required`);
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', params: {} }));
       }
     });
   }
@@ -2005,14 +2064,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Sends a need to update WebSocket message to all connected clients.
    *
+   * @param {boolean} devVersion - If true, the update is for a development version.
    */
-  wssSendUpdateRequired() {
+  wssSendUpdateRequired(devVersion: boolean = false) {
     this.log.debug('Sending an update required message to all connected clients');
     this.matterbridge.matterbridgeInformation.updateRequired = true;
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_UPDATE_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', params: {} }));
+        client.send(JSON.stringify({ id: WS_ID_UPDATE_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: devVersion ? 'update_required_dev' : 'update_required', params: {} }));
       }
     });
   }

@@ -153,6 +153,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     matterDiscriminator: undefined,
     matterPasscode: undefined,
     restartRequired: false,
+    fixedRestartRequired: false,
     updateRequired: false,
   };
 
@@ -218,7 +219,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   port: number | undefined; // first server node port
   passcode: number | undefined; // first server node passcode
   discriminator: number | undefined; // first server node discriminator
-  certification: DeviceCertification.Definition | undefined; // device certification
+  certification: DeviceCertification.Configuration | undefined; // device certification
 
   // Matter nodes
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
@@ -516,15 +517,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
       // Set the certification for matter.js if it is present in the pairing file
       if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
-        const hexStringToUint8Array = (hexString: string) => {
-          const matches = hexString.match(/.{1,2}/g);
-          return matches ? new Uint8Array(matches.map((byte) => parseInt(byte, 16))) : new Uint8Array();
-        };
+        const { hexToBuffer } = await import('./utils/hex.js');
         this.certification = {
-          privateKey: hexStringToUint8Array(pairingFileJson.privateKey),
-          certificate: hexStringToUint8Array(pairingFileJson.certificate),
-          intermediateCertificate: hexStringToUint8Array(pairingFileJson.intermediateCertificate),
-          declaration: hexStringToUint8Array(pairingFileJson.declaration),
+          privateKey: hexToBuffer(pairingFileJson.privateKey),
+          certificate: hexToBuffer(pairingFileJson.certificate),
+          intermediateCertificate: hexToBuffer(pairingFileJson.intermediateCertificate),
+          declaration: hexToBuffer(pairingFileJson.declaration),
         };
         this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using privateKey, certificate, intermediateCertificate and declaration from pairing file.`);
       }
@@ -2415,8 +2413,8 @@ const commissioningController = new CommissioningController({
         this.frontend.wssSendRefreshRequired('settings');
         this.frontend.wssSendRefreshRequired('fabrics');
         this.frontend.wssSendRefreshRequired('sessions');
-        this.frontend.wssSendSnackbarMessage(`Advertising on server node for ${matterServerNode.id} stopped. Restart to commission.`, 0);
-        this.log.notice(`Advertising on server node for ${matterServerNode.id} stopped. Restart to commission.`);
+        this.frontend.wssSendSnackbarMessage(`Advertising stopped. Restart to commission again.`, 0);
+        this.log.notice(`Advertising stopped. Restart to commission again.`);
       },
       15 * 60 * 1000,
     ).unref();

@@ -58,6 +58,7 @@ export interface BaseRegisteredPlugin {
   path: string;
   type: string;
   latestVersion?: string;
+  devVersion?: string;
   serialNumber?: string;
   homepage?: string;
   help?: string;
@@ -148,6 +149,7 @@ export interface MatterbridgeInformation {
   matterDiscriminator: number | undefined;
   matterPasscode: number | undefined;
   restartRequired: boolean;
+  fixedRestartRequired: boolean;
   updateRequired: boolean;
 }
 

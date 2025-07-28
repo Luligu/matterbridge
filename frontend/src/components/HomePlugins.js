@@ -25,6 +25,7 @@ import Unpublished from '@mui/icons-material/Unpublished';
 import DeleteForever from '@mui/icons-material/DeleteForever';
 import QrCode2 from '@mui/icons-material/QrCode2';
 import Settings from '@mui/icons-material/Settings';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -134,10 +135,13 @@ export function HomePlugins({selectPlugin}) {
       accessor: 'version',
       Cell: ({ row: plugin }) => (
         <>
-          {plugin.original.latestVersion === undefined || plugin.original.latestVersion === plugin.original.version || (matterbridgeInfo && matterbridgeInfo.readOnly) ?
-            <Tooltip title="Plugin version">{plugin.original.version}</Tooltip> :
-            <Tooltip title="New plugin version available, click to install"><span className="status-warning" onClick={() => handleUpdatePlugin(plugin.original)}>Update v.{plugin.original.version} to v.{plugin.original.latestVersion}</span></Tooltip>
+          {plugin.original.latestVersion !== undefined && plugin.original.latestVersion !== plugin.original.version && matterbridgeInfo && !matterbridgeInfo.readOnly &&
+            <Tooltip title="New plugin stable version available, click to install"><span className="status-warning" style={{ marginRight: '10px' }} onClick={() => handleUpdatePlugin(plugin.original)}>Update to v.{plugin.original.latestVersion}</span></Tooltip>
           }
+          {plugin.original.version.includes('-dev-') && plugin.original.devVersion !== undefined && plugin.original.devVersion !== plugin.original.version && matterbridgeInfo && !matterbridgeInfo.readOnly &&
+            <Tooltip title="New plugin dev version available, click to install"><span className="status-warning" style={{ marginRight: '10px' }} onClick={() => handleUpdateDevPlugin(plugin.original)}>Update to new dev v.{plugin.original.devVersion.split('-dev-')[0]}</span></Tooltip>
+          }
+          <Tooltip title="Plugin version">{plugin.original.version}</Tooltip>
         </>
       ),
     },
@@ -165,7 +169,10 @@ export function HomePlugins({selectPlugin}) {
       Cell: ({ row: plugin }) => (
         <div style={{ margin: '0px', padding: '0px', gap: '4px', display: 'flex', flexDirection: 'row' }}>
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
-            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0' }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
+            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
+          }
+          {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
+            <Tooltip title="Restart the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => handleRestartPlugin(plugin.original)} size="small"><RestartAltIcon/></IconButton></Tooltip>
           }
           <Tooltip title="Plugin config" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton disabled={plugin.original.restartRequired === true} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly &&
@@ -317,9 +324,19 @@ export function HomePlugins({selectPlugin}) {
     sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: plugin.name, restart: false } });
   };
 
+  const handleUpdateDevPlugin = (plugin) => {
+    if (debug) console.log('handleUpdateDevPlugin plugin:', plugin.name);
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: plugin.name+'@dev', restart: false } });
+  };
+
   const handleRemovePlugin = (plugin) => {
     if (debug) console.log('handleRemovePlugin plugin:', plugin.name);
     sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/removeplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
+  };
+
+  const handleRestartPlugin = (plugin) => {
+    if (debug) console.log('handleRestartPlugin plugin:', plugin.name);
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/restartplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
   };
 
   const handleEnableDisablePlugin = (plugin) => {

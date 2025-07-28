@@ -142,6 +142,7 @@ import {
   subscribeAttribute,
   invokeBehaviorCommand,
   triggerEvent,
+  featuresFor,
 } from './matterbridgeEndpointHelpers.js';
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
@@ -2267,9 +2268,11 @@ export class MatterbridgeEndpoint extends Endpoint {
         await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
         await this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
         await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        await this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        await this.triggerEvent(Switch.Cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 1 }, log);
+        if (featuresFor(this, 'Switch').momentarySwitchRelease) {
+          await this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
+          await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+          await this.triggerEvent(Switch.Cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 1 }, log);
+        }
       }
       if (event === 'Double') {
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.DoublePress${db}`);
