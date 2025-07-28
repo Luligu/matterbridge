@@ -14,6 +14,7 @@ screenshot/
 src/
 temp/
 test/
+vitest/
 
 # Specific files that should be ignored
 .gitattributes
