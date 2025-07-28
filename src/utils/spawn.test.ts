@@ -190,6 +190,52 @@ describe('Spawn', () => {
     expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn verbose (stderr): Hello from stderr`));
   });
 
+  it('should mock a spawn command on windows and send data on stdout and stderr', async () => {
+    const originalPlatform = process.platform;
+    Object.defineProperty(process, 'platform', {
+      value: 'win32',
+      writable: true,
+    });
+    const command = 'npm';
+    const args = ['list', '--depth=0'];
+
+    (spawn as jest.MockedFunction<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: jest.fn((event: string, callback: () => void) => {
+          if (event === 'disconnect' && callback) {
+            setTimeout(() => {
+              callback();
+            }, 500);
+          }
+        }),
+
+        stdout: {
+          on: jest.fn((event: string, callback: (data: Buffer) => void) => {
+            if (event === 'data' && callback) {
+              callback(Buffer.from('Hello from stdout'));
+            }
+          }),
+        },
+        stderr: {
+          on: jest.fn((event: string, callback: (data: Buffer) => void) => {
+            if (event === 'data' && callback) {
+              callback(Buffer.from('Hello from stderr'));
+            }
+          }),
+        },
+      } as any;
+    });
+    await spawnCommand(matterbridge, command, args);
+
+    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn output (stdout): Hello from stdout`));
+    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn verbose (stderr): Hello from stderr`));
+
+    Object.defineProperty(process, 'platform', {
+      value: originalPlatform,
+      writable: true,
+    });
+  });
+
   it('should use sudo on non-win32 platform for npm command without docker or nosudo flags', async () => {
     const originalPlatform = process.platform;
     Object.defineProperty(process, 'platform', {

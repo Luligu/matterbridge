@@ -249,6 +249,7 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
+        "spawn.test.ts",
         "update.test.ts"
       ],
       "group": {
