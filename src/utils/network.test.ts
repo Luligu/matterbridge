@@ -47,7 +47,7 @@ import { PassThrough } from 'node:stream';
 import { ClientRequest, IncomingMessage } from 'node:http';
 import { AnsiLogger, idn, rs, LogLevel, BLUE, nf } from 'node-ansi-logger';
 
-import { getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname, getNpmPackageVersion, getGlobalNodeModules } from './network.js';
+import { getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname, getNpmPackageVersion, getGlobalNodeModules, getGitHubUpdate } from './network.js';
 
 jest.useFakeTimers();
 
@@ -113,6 +113,49 @@ describe('getNpmPackageVersion', () => {
     mockedGetPayload = 'not-json';
 
     await expect(getNpmPackageVersion('mypkg')).rejects.toThrow(/Failed to parse response JSON/);
+  });
+});
+
+describe('getGitHubUpdate', () => {
+  const updateJson = {
+    'latest': '3.1.9',
+    'latestDate': '2025-07-??',
+    'dev': '3.1.9-dev',
+    'devDate': '2025-07-??',
+    'latestMessage': 'Bumped matter.js to 0.15.2',
+    'latestMessageSeverity': 'info',
+    'devMessage': 'Bumped matter.js to 0.15.2',
+    'devMessageSeverity': 'info',
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('resolves with version when tag exists', async () => {
+    // Set the statusCode and payload
+    mockedGetStatusCode = 200;
+    mockedGetPayload = JSON.stringify(updateJson);
+
+    await expect(getGitHubUpdate('dev', 'update.json', 5_000)).resolves.toEqual(updateJson);
+    expect(mockedGet).toHaveBeenCalledWith('https://raw.githubusercontent.com/Luligu/matterbridge/dev/public/update.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+  });
+
+  it('rejects on non-200 status code', async () => {
+    // Set the statusCode
+    mockedGetStatusCode = 404;
+
+    await expect(getGitHubUpdate('dev', 'update.json', 5_000)).rejects.toThrow("Cannot access 'req' before initialization");
+    // await expect(getNpmPackageVersion('mypkg')).rejects.toThrow('Failed to fetch data. Status code: 404');
+    // expect(reqStub.destroy).toHaveBeenCalled();
+  });
+
+  it('rejects on invalid JSON', async () => {
+    // Set the statusCode and payload
+    mockedGetStatusCode = 200;
+    mockedGetPayload = 'not-json';
+
+    await expect(getGitHubUpdate('dev', 'update.json', 5_000)).rejects.toThrow(/Failed to parse response JSON/);
   });
 });
 

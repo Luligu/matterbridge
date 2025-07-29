@@ -250,7 +250,8 @@
         "--coverage",
         "--maxWorkers=100%",
         "spawn.test.ts",
-        "update.test.ts"
+        "update.test.ts",
+        "network.test.ts",
       ],
       "group": {
         "kind": "test",

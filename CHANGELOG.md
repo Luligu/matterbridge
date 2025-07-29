@@ -12,6 +12,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [update]: Added a Snackbar message for available updates from npm. It differs for latest and dev versions. The update is performed at restart (1 minute after) and each 12 hours.
+- [update]: First steps of update and log important messages from GitHub.
+
 ### Changed
 
 - [package]: Updated dependencies.

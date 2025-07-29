@@ -10,6 +10,7 @@ coverage/
 jest/
 mock/
 node_modules/
+public/
 screenshot/
 src/
 temp/
