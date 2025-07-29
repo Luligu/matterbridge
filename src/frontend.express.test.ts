@@ -445,7 +445,6 @@ describe('Matterbridge frontend express with http', () => {
 
   test('GET /api/download-backup', async () => {
     try {
-      // eslint-disable-next-line n/no-unsupported-features/node-builtins
       await fs.access(path.join(os.tmpdir(), `matterbridge.backup.zip`), fs.constants.F_OK);
     } catch (error) {
       await fs.copyFile('./src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.backup.zip`));

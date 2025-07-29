@@ -459,7 +459,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Certificate management
     const pairingFilePath = path.join(this.matterbridgeCertDirectory, 'pairing.json');
     try {
-      // eslint-disable-next-line n/no-unsupported-features/node-builtins
       await fs.access(pairingFilePath, fs.constants.R_OK);
       const pairingFileContent = await fs.readFile(pairingFilePath, 'utf8');
       const pairingFileJson = JSON.parse(pairingFileContent) as {

@@ -572,7 +572,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/download-mblog', async (req, res) => {
       this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile)}`);
       try {
-        // eslint-disable-next-line n/no-unsupported-features/node-builtins
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), fs.constants.F_OK);
         const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), 'utf8');
         await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbridgeLoggerFile), data, 'utf-8');
@@ -594,7 +593,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/download-mjlog', async (req, res) => {
       this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile)}`);
       try {
-        // eslint-disable-next-line n/no-unsupported-features/node-builtins
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), fs.constants.F_OK);
         const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'utf8');
         await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), data, 'utf-8');
@@ -616,7 +614,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/shellydownloadsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellydownloadsystemlog');
       try {
-        // eslint-disable-next-line n/no-unsupported-features/node-builtins
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), fs.constants.F_OK);
         const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
         await fs.writeFile(path.join(os.tmpdir(), 'shelly.log'), data, 'utf-8');

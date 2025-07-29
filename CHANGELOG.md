@@ -8,7 +8,14 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.1.9] - 2025-07-??
+### Breaking Changes
+
+Removed node 18 support.
+Please install Node.js 22 LTS.
+Don't use Node.js Current but always the Node.js LTS.
+Node.js 23, like all odd-numbered versions, is not supported.
+
+## [3.2.0] - 2025-07-??
 
 ### Added
 
@@ -19,6 +26,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [package]: Updated dependencies.
 - [matter.js]: Bumped `matter.js` to 0.15.2 (https://github.com/project-chip/matter.js/discussions/2203). Great job matter.js!
+- [node.js]: Removed node 18 support.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

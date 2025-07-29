@@ -1,7 +1,7 @@
 {
-  "latest": "3.1.9",
+  "latest": "3.2.0",
   "latestDate": "2025-07-??",
-  "dev": "3.1.9-dev",
+  "dev": "3.2.0-dev-123456",
   "devDate": "2025-07-??",
   "latestMessage": "Bumped matter.js to 0.15.2",
   "latestMessageSeverity": "info",
