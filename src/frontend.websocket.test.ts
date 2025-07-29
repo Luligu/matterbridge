@@ -159,6 +159,7 @@ describe('Matterbridge frontend', () => {
   const stopServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'stopServerNode');
 
   const addPluginSpy = jest.spyOn(PluginManager.prototype, 'add');
+  const loadPluginSpy = jest.spyOn(PluginManager.prototype, 'load');
 
   const wssSendSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendSnackbarMessage');
   const wssSendCloseSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendCloseSnackbarMessage');
@@ -620,7 +621,7 @@ describe('Matterbridge frontend', () => {
 
   test('Websocket API /api/install', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test', restart: false } });
-    await wait(1000); // Wait for the installation to complete
+    await wait(500); // Wait for the installation to complete
     expect(msg.response).toBe(true);
     expect(msg.error).not.toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
@@ -629,11 +630,12 @@ describe('Matterbridge frontend', () => {
     expect(wssSendCloseSnackbarMessageSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`);
     expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(`Installed package matterbridge-test`, 5, 'success');
     expect(addPluginSpy).toHaveBeenCalledWith('matterbridge-test');
+    expect(loadPluginSpy).toHaveBeenCalled();
   }, 60000);
 
   test('Websocket API /api/install second time', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test', restart: false } });
-    await wait(1000); // Wait for the installation to complete
+    await wait(500); // Wait for the installation to complete
     expect(msg.response).toBe(true);
     expect(msg.error).not.toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
@@ -642,6 +644,7 @@ describe('Matterbridge frontend', () => {
     expect(wssSendCloseSnackbarMessageSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`);
     expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(`Installed package matterbridge-test`, 5, 'success');
     expect(addPluginSpy).toHaveBeenCalledWith('matterbridge-test');
+    expect(loadPluginSpy).not.toHaveBeenCalled();
   }, 60000);
 
   test('Websocket API /api/install with wrong package name', async () => {
