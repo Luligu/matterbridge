@@ -363,7 +363,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           optional: SupportedBehaviors(...getBehaviourTypesFromClusterClientIds(firstDefinition.optionalClientClusters)),
         },
       },
-      behaviors: options.tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : {},
+      behaviors: options.tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : SupportedBehaviors(DescriptorServer),
     };
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
