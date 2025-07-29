@@ -15,6 +15,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Updated dependencies.
+- [matter.js]: Bumped `matter.js` to 0.15.2 (https://github.com/project-chip/matter.js/discussions/2203). Great job matter.js!
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
