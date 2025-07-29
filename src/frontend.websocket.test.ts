@@ -621,7 +621,7 @@ describe('Matterbridge frontend', () => {
 
   test('Websocket API /api/install', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test', restart: false } });
-    await wait(500); // Wait for the installation to complete
+    await wait(1000); // Wait for the installation to complete
     expect(msg.response).toBe(true);
     expect(msg.error).not.toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
@@ -635,7 +635,7 @@ describe('Matterbridge frontend', () => {
 
   test('Websocket API /api/install second time', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test', restart: false } });
-    await wait(500); // Wait for the installation to complete
+    await wait(1000); // Wait for the installation to complete
     expect(msg.response).toBe(true);
     expect(msg.error).not.toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
