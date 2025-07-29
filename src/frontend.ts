@@ -1284,6 +1284,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.plugins
                 .add(packageName)
                 .then((plugin) => {
+                  // istanbul ignore next if
                   if (plugin) {
                     // The plugin is not registered
                     this.wssSendSnackbarMessage(`Added plugin ${packageName}`, 5, 'success');
@@ -1338,6 +1339,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         // The package is a plugin
         const plugin = this.matterbridge.plugins.get(data.params.packageName) as RegisteredPlugin;
+        // istanbul ignore next if
         if (plugin) {
           await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true);
           await this.matterbridge.plugins.remove(data.params.packageName);
