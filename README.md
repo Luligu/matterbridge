@@ -69,7 +69,7 @@ https://matter-smarthome.de/en/interview/an-alternative-to-the-official-matter-s
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
 
 If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions.
-The supported versions of node are 18, 20 and 22. Please install Node.js 22 LTS.
+The supported versions of node are 20 and 22. Please install Node.js 22 LTS. Don't use Node.js Current but always the Node.js LTS.
 Node.js 23, like all odd-numbered versions, is not supported.
 Nvm is not a good choice and should not be used for production.
 
