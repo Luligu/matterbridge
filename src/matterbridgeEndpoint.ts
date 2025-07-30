@@ -1049,11 +1049,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     vendorName: string = 'Matterbridge',
     productId: number = 0x8000,
     productName: string = 'Matterbridge device',
-    softwareVersion = 1,
-    softwareVersionString = '1.0.0',
-    hardwareVersion = 1,
-    hardwareVersionString = '1.0.0',
-  ) {
+    softwareVersion: number = 1,
+    softwareVersionString: string = '1.0.0',
+    hardwareVersion: number = 1,
+    hardwareVersionString: string = '1.0.0',
+  ): this {
     this.log.logName = deviceName;
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
@@ -1099,11 +1099,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     vendorId: number = 0xfff1,
     vendorName: string = 'Matterbridge',
     productName: string = 'Matterbridge device',
-    softwareVersion = 1,
-    softwareVersionString = '1.0.0',
-    hardwareVersion = 1,
-    hardwareVersionString = '1.0.0',
-  ) {
+    softwareVersion: number = 1,
+    softwareVersionString: string = '1.0.0',
+    hardwareVersion: number = 1,
+    hardwareVersionString: string = '1.0.0',
+  ): this {
     this.log.logName = deviceName;
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;

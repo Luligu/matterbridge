@@ -19,8 +19,9 @@ Node.js 23, like all odd-numbered versions, is not supported.
 
 ### Added
 
-- [update]: Added a Snackbar message for available updates from npm. It differs for latest and dev versions. The update is performed at restart (1 minute after) and each 12 hours.
+- [update]: Added a Snackbar message for available updates from npm. It differs for latest and dev versions. The update check, as always, is performed at restart (1 minute after) and each 12 hours. It can be triggered manually from the frontend.
 - [update]: First steps of update and log important messages from GitHub.
+- [build]: Add workflow_dispatch trigger and enhance dependency management in CI.
 
 ### Changed
 
