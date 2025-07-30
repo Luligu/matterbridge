@@ -9,6 +9,7 @@ on:
     paths-ignore:
       - 'screenshot/**' # any file under screenshot/
       - '**/*.md' # any .md anywhere
+  workflow_dispatch:
 
 jobs:
   build:
@@ -61,5 +62,9 @@ jobs:
           npm outdated || true
           npm audit || true
           npm audit fix || true
+          npm update || true
           npm outdated || true
+          npm run format || true
+          npm run lint:fix || true
           npm run build
+          npm run test
