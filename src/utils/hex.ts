@@ -38,7 +38,7 @@ import { createPublicKey, createPrivateKey, X509Certificate } from 'node:crypto'
  *
  * @throws {TypeError} If the input is not an ArrayBuffer or ArrayBufferView.
  */
-export function bufferToHex(buffer: ArrayBufferLike): string {
+export function bufferToHex(buffer: ArrayBufferLike | Uint8Array): string {
   // Check if the input is an ArrayBuffer or ArrayBufferView
   if (!(buffer instanceof ArrayBuffer || ArrayBuffer.isView(buffer))) {
     throw new TypeError('Expected input to be an ArrayBuffer or ArrayBufferView');

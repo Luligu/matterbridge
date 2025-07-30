@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",            // 👈 Force CJS output for Jest
+    "outDir": "./dist-test",         // 👈 Optional: for manual tsc usage/debugging
+    "rootDir": ".",
+    "noEmit": true,                  // 👈 Optional: prevents actual file writes during ts-jest usage
+    "types": ["jest", "node"]        // 👈 Add Jest globals
+  },
+  "include": ["**/test/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
