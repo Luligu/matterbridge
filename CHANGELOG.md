@@ -21,7 +21,8 @@ Node.js 23, like all odd-numbered versions, is not supported.
 
 - [update]: Added a Snackbar message for available updates from npm. It differs for latest and dev versions. The update check, as always, is performed at restart (1 minute after) and each 12 hours. It can be triggered manually from the frontend.
 - [update]: First steps of update and log important messages from GitHub.
-- [build]: Add workflow_dispatch trigger and enhance dependency management in CI.
+- [build]: Added workflow_dispatch trigger and enhance dependency management in CI.
+- [build]: Added macOS 15 to the CI matrix for Node.js builds.
 
 ### Changed
 
