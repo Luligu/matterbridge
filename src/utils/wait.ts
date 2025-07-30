@@ -23,7 +23,7 @@
  */
 
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat } from '../logger/export.js';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 export const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 

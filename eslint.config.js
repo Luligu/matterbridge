@@ -123,7 +123,7 @@ export default defineConfig([
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.jest.json', // Or your shared tsconfig
+        project: './tsconfig.jest.json',
         sourceType: 'module',
         ecmaVersion: 'latest',
       },
