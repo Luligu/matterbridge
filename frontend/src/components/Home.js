@@ -41,7 +41,8 @@ function Home() {
     if (!selectPlugin) {
       setSelectPlugin(plugin);
     } else {
-      setSelectPlugin(undefined);
+      if(selectPlugin.name === plugin.name) setSelectPlugin(undefined);
+      else setSelectPlugin(plugin);
     }
   }, [selectPlugin]);
 

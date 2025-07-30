@@ -23,6 +23,8 @@ Node.js 23, like all odd-numbered versions, is not supported.
 - [update]: First steps of update and log important messages from GitHub.
 - [build]: Added workflow_dispatch trigger and enhance dependency management in CI.
 - [build]: Added macOS 15 to the CI matrix for Node.js builds.
+- [frontend]: Bump version 2.7.2.
+- [frontend]: Added the plugin name on the QR/Fabrics when in childbridge mode. Changed operational mode to one click only.
 
 ### Changed
 

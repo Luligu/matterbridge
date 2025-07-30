@@ -82,8 +82,9 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
             </div>
           ))}
         </div>
-        <div className="MbfWindowFooter" style={{ padding: 0, margin: 0, height: '30px' }}>
+        <div className="MbfWindowFooter" style={{ padding: 0, margin: 0, height: '50px' }}>
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>Serial number: {plugin.serialNumber}</p>
+          <p className="MbfWindowFooterText" style={{ padding: 0, margin: 0, fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>{plugin.name}</p>
         </div>
       </div>
     );
@@ -108,8 +109,9 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
         </div>
         <QRCodeSVG value={plugin.qrPairingCode} size={256} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
-        <div className="MbfWindowFooter" style={{ padding: 0, marginTop: '-5px', height: '30px' }}>
+        <div className="MbfWindowFooter" style={{ padding: 0, marginTop: '-5px', height: '50px' }}>
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {plugin.manualPairingCode}</p>
+          <p className="MbfWindowFooterText" style={{ padding: 0, margin: 0, fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>{plugin.name}</p>
         </div>
       </div>
     );
@@ -134,8 +136,9 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
         </div>
         <Button onClick={handleRestartClick} endIcon={<RestartAltIcon />} style={{ margin: '20px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}> Restart</Button>
-        <div className="MbfWindowFooter" style={{ padding: 0, margin: 0, height: '30px' }}>
+        <div className="MbfWindowFooter" style={{ padding: 0, margin: 0, height: '50px' }}>
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Restart to generate a new QRCode.</p>
+          <p className="MbfWindowFooterText" style={{ padding: 0, margin: 0, fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>{plugin.name}</p>
         </div>
       </div>
     );
