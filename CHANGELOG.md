@@ -8,14 +8,14 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.2.0] - 2025-08-01
+
 ### Breaking Changes
 
 Removed node 18 support.
 Please install Node.js 22 LTS.
 Don't use Node.js Current but always the Node.js LTS.
 Node.js 23, like all odd-numbered versions, is not supported.
-
-## [3.2.0] - 2025-07-??
 
 ### Added
 
