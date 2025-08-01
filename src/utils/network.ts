@@ -178,7 +178,6 @@ export async function getNpmPackageVersion(packageName: string, tag: string = 'l
       if (res.statusCode !== 200) {
         clearTimeout(timeoutId);
         res.resume(); // Discard response data to close the socket properly
-        req.destroy(); // Forcefully close the request
         reject(new Error(`Failed to fetch data. Status code: ${res.statusCode}`));
         return;
       }
@@ -225,7 +224,6 @@ export async function getGitHubUpdate(branch: string, file: string, timeout: num
   return new Promise((resolve, reject) => {
     const url = `https://raw.githubusercontent.com/Luligu/matterbridge/${branch}/public/${file}`;
     const controller = new AbortController();
-    // istanbul ignore next
     const timeoutId = setTimeout(() => {
       controller.abort();
       reject(new Error(`Request timed out after ${timeout / 1000} seconds`));
@@ -237,7 +235,6 @@ export async function getGitHubUpdate(branch: string, file: string, timeout: num
       if (res.statusCode !== 200) {
         clearTimeout(timeoutId);
         res.resume(); // Discard response data to close the socket properly
-        req.destroy(); // Forcefully close the request
         reject(new Error(`Failed to fetch data. Status code: ${res.statusCode}`));
         return;
       }
