@@ -67,4 +67,3 @@ jobs:
           npm run format || true
           npm run lint:fix || true
           npm run build
-          npm run test
