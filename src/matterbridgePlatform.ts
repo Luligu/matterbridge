@@ -22,16 +22,15 @@
  * limitations under the License.
  */
 
-// Node.js module
+// Node.js modules
 import path from 'node:path';
 
-// AnsiLogger module
-import { EndpointNumber } from '@matter/main';
-// AnsiLogger module
-import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
-// Storage module
-import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 // Matter
+import { EndpointNumber } from '@matter/main';
+// Node AnsiLogger module
+import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
+// Node Storage module
+import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
@@ -292,6 +291,18 @@ export class MatterbridgePlatform {
     if (device.deviceName && checkNotLatinCharacters(device.deviceName)) {
       this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has non latin characters.`);
     }
+
+    /* TODO: Do we need to handle the childbridged mode with DynamicPlatform here if the implementation forgets to call createDefaultBridgedDeviceBasicInformationClusterServer?
+    if (this.matterbridge.bridgeMode === 'childbridge' && this.type === 'DynamicPlatform' && device.mode === undefined) {
+      const options = device.getClusterServerOptions(Descriptor.Cluster.id);
+      if (options) {
+        const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
+        deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
+      }
+      device.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
+    }
+    */
+
     await this.matterbridge.addBridgedEndpoint(this.name, device);
     if (device.uniqueId) this._registeredEndpoints.set(device.uniqueId, device);
     if (device.deviceName) this._registeredEndpointsByName.set(device.deviceName, device);

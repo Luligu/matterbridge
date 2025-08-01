@@ -1030,6 +1030,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Setup the default Basic Information Cluster Server attributes for the server node.
    *
+   * This method sets the device name, serial number, unique ID, vendor ID, vendor name, product ID, product name, software version, software version string, hardware version and hardware version string.
+   *
+   * In bridge mode, it also adds the bridgedNode device type to the deviceTypes map and the bridgedNode device type to the deviceTypeList of the Descriptor cluster and creates a default BridgedDeviceBasicInformationClusterServer.
+   *
+   * The actual BasicInformationClusterServer is created by the MatterbridgeEndpoint class for device.mode = 'server' and for the unique device of an AccessoryPlatform.
+   *
    * @param {string} deviceName - The name of the device.
    * @param {string} serialNumber - The serial number of the device.
    * @param {number} [vendorId] - The vendor ID of the device.  Default is 0xfff1 (Matter Test VendorId).
@@ -1067,10 +1073,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.hardwareVersion = hardwareVersion;
     this.hardwareVersionString = hardwareVersionString;
     if (MatterbridgeEndpoint.bridgeMode === 'bridge' && this.mode === undefined) {
+      this.deviceTypes.set(bridgedNode.code, bridgedNode);
       const options = this.getClusterServerOptions(Descriptor.Cluster.id);
       if (options) {
         const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
-        deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
+        if (!deviceTypeList.find((dt) => dt.deviceType === bridgedNode.code)) {
+          deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
+        }
       }
       this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
     }
