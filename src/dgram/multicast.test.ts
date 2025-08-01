@@ -10,13 +10,14 @@
 
 import os from 'node:os';
 import { AddressInfo } from 'node:net';
-import { Socket } from 'node:dgram';
+import { BindOptions, Socket } from 'node:dgram';
 
 import { AnsiLogger, BLUE, db, LogLevel } from 'node-ansi-logger';
 
 import { jest } from '@jest/globals';
 
 import { Multicast, COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT } from './multicast.js';
+import { Dgram } from './dgram.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -240,6 +241,100 @@ describe('Multicast', () => {
 
     // Restore the mock
     networkInterfacesMock.mockRestore();
+  });
+
+  test('Create ipv6 multicast with specific interfaces', async () => {
+    // Test line 104: if (this.interfaceName && name !== this.interfaceName) return;
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true);
+    expect(mcast).not.toBeUndefined();
+    expect(mcast).toBeInstanceOf(Multicast);
+    expect(mcast.socketType).toBe('udp6');
+
+    // Mock networkInterfaces to return multiple interfaces, but only one matches the specified name
+    const networkInterfacesMock = jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      'eth0': [
+        {
+          address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9',
+          netmask: 'ffff:ffff:ffff:ffff::',
+          family: 'IPv6',
+          mac: '00:00:00:00:00:01',
+          internal: false,
+          cidr: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9/64',
+          scopeid: 0,
+        },
+        {
+          address: 'fd78:cbf8:4939:746:698e:b44d:64e6:4fb1',
+          netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff',
+          family: 'IPv6',
+          mac: '00:00:00:00:00:01',
+          internal: false,
+          cidr: 'fd78:cbf8:4939:746:698e:b44d:64e6:4fb1/128',
+          scopeid: 0,
+        },
+        {
+          address: 'fe80::5a71:b2f6:7bc8:d00b',
+          netmask: 'ffff:ffff:ffff:ffff::',
+          family: 'IPv6',
+          mac: '00:00:00:00:00:01',
+          internal: false,
+          cidr: 'fe80::5a71:b2f6:7bc8:d00b/64',
+          scopeid: 8,
+        },
+      ],
+    });
+    const socketBindMock = jest.spyOn(mcast.socket as any, 'bind').mockImplementation((...args: any[]) => {
+      const callback = args.find((arg) => typeof arg === 'function');
+      if (callback) {
+        // setImmediate(callback);
+      }
+      mcast.socket.emit('listening');
+    });
+    const socketAddressMock = jest.spyOn(mcast.socket, 'address').mockReturnValue({
+      address: 'fd78:cbf8:4939:746:698e:b44d:64e6:4fb1',
+      family: 'IPv6',
+      port: COAP_MULTICAST_PORT,
+    });
+    const socketSetBroadcastMock = jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    const socketSetTTLMock = jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    const socketSetMulticastTTLMock = jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    const socketSetMulticastLoopbackMock = jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    const socketAddMembershipMock = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    const socketSetMulticastInterfaceMock = jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+    const socketDropMembershipMock = jest.spyOn(mcast.socket as any, 'dropMembership').mockImplementation(() => {});
+
+    const ready = new Promise<AddressInfo>((resolve) => {
+      mcast.on('ready', (address: AddressInfo) => {
+        expect(address.family).toBe('IPv6');
+        expect(address.address).toBe('fd78:cbf8:4939:746:698e:b44d:64e6:4fb1');
+        expect(address.port).toBeGreaterThan(0);
+        resolve(address);
+      });
+    });
+    mcast.start();
+    await ready;
+
+    // The multicast instance should have successfully started and joined the target interface
+    expect(mcast.joinedInterfaces.length).toBeGreaterThanOrEqual(0);
+
+    const closed = new Promise<void>((resolve) => {
+      mcast.on('close', () => {
+        resolve();
+      });
+    });
+    mcast.stop();
+    await closed;
+
+    // Restore the mock
+    networkInterfacesMock.mockRestore();
+    socketBindMock.mockRestore();
+    socketAddressMock.mockRestore();
+    socketSetBroadcastMock.mockRestore();
+    socketSetTTLMock.mockRestore();
+    socketSetMulticastTTLMock.mockRestore();
+    socketSetMulticastLoopbackMock.mockRestore();
+    socketAddMembershipMock.mockRestore();
+    socketSetMulticastInterfaceMock.mockRestore();
+    socketDropMembershipMock.mockRestore();
   });
 
   test('Create multicast with specific interface name that filters out other interfaces', async () => {

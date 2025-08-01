@@ -212,6 +212,60 @@ export async function getNpmPackageVersion(packageName: string, tag: string = 'l
 }
 
 /**
+ * Retrieves a file from the public directory of the Matterbridge GitHub repository.
+ *
+ * @param {string} branch - The branch from which to fetch the file.
+ * @param {string} file - The file path to fetch.
+ * @param {number} [timeout] - The timeout duration in milliseconds (default is 10000ms).
+ * @returns {Promise<Record<string, boolean | string | number>>} A promise that resolves to the parsed JSON object from the file.
+ * @throws {Error} If the request fails or the JSON parsing fails.
+ */
+export async function getGitHubUpdate(branch: string, file: string, timeout: number = 10000): Promise<Record<string, boolean | string | number>> {
+  const https = await import('node:https');
+  return new Promise((resolve, reject) => {
+    const url = `https://raw.githubusercontent.com/Luligu/matterbridge/${branch}/public/${file}`;
+    const controller = new AbortController();
+    // istanbul ignore next
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`Request timed out after ${timeout / 1000} seconds`));
+    }, timeout);
+
+    const req = https.get(url, { signal: controller.signal }, (res) => {
+      let data = '';
+
+      if (res.statusCode !== 200) {
+        clearTimeout(timeoutId);
+        res.resume(); // Discard response data to close the socket properly
+        req.destroy(); // Forcefully close the request
+        reject(new Error(`Failed to fetch data. Status code: ${res.statusCode}`));
+        return;
+      }
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        clearTimeout(timeoutId);
+        try {
+          const jsonData = JSON.parse(data);
+          resolve(jsonData);
+        } catch (error) {
+          reject(new Error(`Failed to parse response JSON: ${error instanceof Error ? error.message : error}`));
+        }
+      });
+    });
+
+    // istanbul ignore next
+    req.on('error', (error) => {
+      clearTimeout(timeoutId);
+      reject(new Error(`Request failed: ${error instanceof Error ? error.message : error}`));
+    });
+  });
+}
+
+/**
  * Retrieves the path to the global Node.js modules directory.
  *
  * @returns {Promise<string>} A promise that resolves to the path of the global Node.js modules directory.

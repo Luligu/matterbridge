@@ -23,11 +23,12 @@
  */
 
 // AnsiLogger module
-import { db, nt, wr } from 'node-ansi-logger';
+import { db, debugStringify, nt, wr } from 'node-ansi-logger';
 
 // Matterbridge module
 import { Matterbridge } from './matterbridge.js';
 import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
+import { isValidString } from './utils/isvalid.js';
 
 /**
  * Checks for updates for Matterbridge and its plugins.
@@ -39,6 +40,7 @@ import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
 export async function checkUpdates(matterbridge: Matterbridge): Promise<void> {
   const { hasParameter } = await import('./utils/commandLine.js');
 
+  const update = checkUpdatesAndLog(matterbridge);
   const latestVersion = getMatterbridgeLatestVersion(matterbridge);
   const devVersion = getMatterbridgeDevVersion(matterbridge);
   const pluginsVersions = [];
@@ -59,7 +61,36 @@ export async function checkUpdates(matterbridge: Matterbridge): Promise<void> {
     const mainUpdate = getShellyMainUpdate(matterbridge);
     shellyUpdates.push(mainUpdate);
   }
-  await Promise.all([latestVersion, devVersion, ...pluginsVersions, ...pluginsDevVersions, ...shellyUpdates]);
+  await Promise.all([update, latestVersion, devVersion, ...pluginsVersions, ...pluginsDevVersions, ...shellyUpdates]);
+}
+
+/**
+ * Checks for updates and logs from GitHub.
+ * If the update check fails, logs a warning message.
+ *
+ * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ */
+export async function checkUpdatesAndLog(matterbridge: Matterbridge): Promise<void> {
+  const { getGitHubUpdate } = await import('./utils/network.js');
+  const branch = matterbridge.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main';
+  try {
+    const updateJson = await getGitHubUpdate(branch, 'update.json', 5_000);
+    matterbridge.log.debug(`GitHub ${branch} update status: ${debugStringify(updateJson)}.`);
+    if (
+      isValidString(branch === 'main' ? updateJson.latestMessage : updateJson.devMessage, 1) &&
+      isValidString(branch === 'main' ? updateJson.latestMessageSeverity : updateJson.devMessageSeverity, 4) &&
+      ['info', 'warning', 'error', 'success'].includes(branch === 'main' ? (updateJson.latestMessageSeverity as string) : (updateJson.devMessageSeverity as string))
+    ) {
+      matterbridge.log.notice(`GitHub ${branch} update message: ${branch === 'main' ? updateJson.latestMessage : updateJson.devMessage}`);
+      matterbridge.frontend.wssSendSnackbarMessage(
+        branch === 'main' ? (updateJson.latestMessage as string) : (updateJson.devMessage as string),
+        0,
+        branch === 'main' ? (updateJson.latestMessageSeverity as 'info' | 'warning' | 'error' | 'success') : (updateJson.devMessageSeverity as 'info' | 'warning' | 'error' | 'success'),
+      );
+    }
+  } catch (error) {
+    matterbridge.log.debug(`Error checking GitHub ${branch} updates: ${error instanceof Error ? error.message : error}`);
+  }
 }
 
 /**
@@ -79,6 +110,7 @@ export async function getMatterbridgeLatestVersion(matterbridge: Matterbridge): 
     await matterbridge.nodeContext?.set<string>('matterbridgeLatestVersion', matterbridge.matterbridgeLatestVersion);
     if (matterbridge.matterbridgeVersion !== matterbridge.matterbridgeLatestVersion) {
       matterbridge.log.notice(`Matterbridge is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeLatestVersion}.`);
+      matterbridge.frontend.wssSendSnackbarMessage('Matterbridge latest update available', 0, 'info');
       matterbridge.frontend.wssSendRefreshRequired('matterbridgeLatestVersion');
       matterbridge.frontend.wssSendUpdateRequired();
     } else {
@@ -108,6 +140,7 @@ export async function getMatterbridgeDevVersion(matterbridge: Matterbridge): Pro
     await matterbridge.nodeContext?.set<string>('matterbridgeDevVersion', version);
     if (matterbridge.matterbridgeVersion.includes('-dev-') && matterbridge.matterbridgeVersion !== version) {
       matterbridge.log.notice(`Matterbridge@dev is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${matterbridge.matterbridgeDevVersion}.`);
+      matterbridge.frontend.wssSendSnackbarMessage('Matterbridge dev update available', 0, 'info');
       matterbridge.frontend.wssSendRefreshRequired('matterbridgeDevVersion');
       matterbridge.frontend.wssSendUpdateRequired(true);
     } else if (matterbridge.matterbridgeVersion.includes('-dev-') && matterbridge.matterbridgeVersion === version) {

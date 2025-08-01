@@ -217,6 +217,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.type.deviceType).toBe(deviceType.code);
     expect(light.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
     expect(light.type.deviceRevision).toBe(deviceType.revision);
+    expect(light.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
   });
 
   test('create a cover lift device', async () => {
@@ -224,6 +225,7 @@ describe('Matterbridge ' + NAME, () => {
     coverLift.addRequiredClusterServers();
     expect(coverLift).toBeDefined();
     expect(coverLift.id).toBe('WindowCoverLift');
+    expect(coverLift.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'windowCovering']);
   });
 
   test('create a cover tilt device', async () => {
@@ -232,6 +234,7 @@ describe('Matterbridge ' + NAME, () => {
     coverLiftTilt.addRequiredClusterServers();
     expect(coverLiftTilt).toBeDefined();
     expect(coverLiftTilt.id).toBe('WindowCoverTilt');
+    expect(coverLiftTilt.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'windowCovering', 'identify']);
   });
 
   test('create a lock device', async () => {
@@ -239,6 +242,7 @@ describe('Matterbridge ' + NAME, () => {
     lock.addRequiredClusterServers();
     expect(lock).toBeDefined();
     expect(lock.id).toBe('DoorLock');
+    expect(lock.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'doorLock']);
   });
 
   test('create a fan device', async () => {
@@ -246,6 +250,7 @@ describe('Matterbridge ' + NAME, () => {
     fan.addRequiredClusterServers();
     expect(fan).toBeDefined();
     expect(fan.id).toBe('Fan');
+    expect(fan.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'fanControl']);
   });
 
   test('create a thermostat device', async () => {
@@ -253,6 +258,7 @@ describe('Matterbridge ' + NAME, () => {
     thermostat.addRequiredClusterServers();
     expect(thermostat).toBeDefined();
     expect(thermostat.id).toBe('Thermostat');
+    expect(thermostat.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'thermostat']);
   });
 
   test('create a valve device', async () => {
@@ -260,6 +266,7 @@ describe('Matterbridge ' + NAME, () => {
     valve.addRequiredClusterServers();
     expect(valve).toBeDefined();
     expect(valve.id).toBe('WaterValve');
+    expect(valve.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'valveConfigurationAndControl']);
   });
 
   test('create a mode device', async () => {
@@ -270,6 +277,7 @@ describe('Matterbridge ' + NAME, () => {
     ]);
     expect(mode).toBeDefined();
     expect(mode.id).toBe('ModeSelect');
+    expect(mode.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'modeSelect']);
   });
 
   test('create a smoke device', async () => {
@@ -277,6 +285,7 @@ describe('Matterbridge ' + NAME, () => {
     smoke.addRequiredClusterServers();
     expect(smoke).toBeDefined();
     expect(smoke.id).toBe('SmokeSensor');
+    expect(smoke.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'smokeCoAlarm']);
   });
 
   test('create a water leak device', async () => {
@@ -285,6 +294,7 @@ describe('Matterbridge ' + NAME, () => {
     leak.addRequiredClusterServers();
     expect(leak).toBeDefined();
     expect(leak.id).toBe('LeakSensor');
+    expect(leak.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'booleanStateConfiguration', 'identify', 'booleanState']);
   });
 
   test('create a laundry device', async () => {
@@ -292,6 +302,7 @@ describe('Matterbridge ' + NAME, () => {
     laundry.addRequiredClusterServers();
     expect(laundry).toBeDefined();
     expect(laundry.id).toBe('Laundry');
+    expect(laundry.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'operationalState']);
   });
 
   test('create a waterHeater device', async () => {
@@ -301,6 +312,7 @@ describe('Matterbridge ' + NAME, () => {
     // heater.addRequiredClusterServers(); // Wait for the PR 304 to finish with the cluster helpers
     expect(heater).toBeDefined();
     expect(heater.id).toBe('WaterHeater');
+    expect(heater.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'thermostat']);
   });
 
   test('add BasicInformationCluster to onOffLight', async () => {
@@ -313,6 +325,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.vendorName).toBe('Matterbridge');
     expect(light.productId).toBe(0x8000);
     expect(light.productName).toBe('Light');
+    expect(light.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
   });
 
   test('add BridgedDeviceBasicInformationCluster to onOffLight', async () => {
@@ -326,12 +339,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.productId).toBe(undefined);
     expect(light.productName).toBe('Light');
     delete light.behaviors.supported.bridgedDeviceBasicInformation;
+    expect(light.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
   });
 
   test('add required clusters to onOffLight', async () => {
     expect(light).toBeDefined();
     light.createDefaultOnOffClusterServer(true, false, 10, 14);
     light.addRequiredClusterServers();
+    expect(light.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'identify', 'groups', 'levelControl', 'colorControl']);
     expect(light.behaviors.supported.descriptor).toBeDefined();
     expect(light.behaviors.has(DescriptorBehavior)).toBeTruthy();
     expect(light.behaviors.has(DescriptorServer)).toBeTruthy();

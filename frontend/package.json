@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "private": true,
   "homepage": "./",
   "scripts": {

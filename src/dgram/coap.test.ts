@@ -41,6 +41,8 @@ describe('Coap', () => {
     jest.spyOn(dgram, 'createSocket').mockReturnValue(mockSocket);
 
     coap = new Coap('test-coap', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true);
+
+    jest.spyOn(coap.log, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {

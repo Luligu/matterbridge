@@ -39,31 +39,32 @@ let consoleWarnSpy: MockInstance<typeof console.warn>;
 let consoleErrorSpy: MockInstance<typeof console.error>;
 const debug = false; // Set to true to enable debug logging
 
-if (!debug) {
-  loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = vi.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = vi.spyOn(console, 'log');
-  consoleDebugSpy = vi.spyOn(console, 'debug');
-  consoleInfoSpy = vi.spyOn(console, 'info');
-  consoleWarnSpy = vi.spyOn(console, 'warn');
-  consoleErrorSpy = vi.spyOn(console, 'error');
-}
-
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
 
   beforeEach(async () => {
+    // Set up spies before each test to ensure consistent timing
+    if (!debug) {
+      loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+      consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+      consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+      consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
+    } else {
+      loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log');
+      consoleLogSpy = vi.spyOn(console, 'log');
+      consoleDebugSpy = vi.spyOn(console, 'debug');
+      consoleInfoSpy = vi.spyOn(console, 'info');
+      consoleWarnSpy = vi.spyOn(console, 'warn');
+      consoleErrorSpy = vi.spyOn(console, 'error');
+    }
+
     matterbridge = await Matterbridge.loadInstance(false);
     // Set up required properties/mocks
     matterbridge.log = { debug: vi.fn(), info: vi.fn(), notice: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), now: vi.fn() } as any;
     // matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-    matterbridge.plugins = { array: () => [], clear: vi.fn(), [Symbol.iterator]: function* () {} } as any;
+    matterbridge.plugins = { array: () => [], clear: vi.fn(), [Symbol.iterator]: function* () {}, loadFromStorage: vi.fn() } as any;
     matterbridge.devices = { array: () => [], clear: vi.fn(), [Symbol.iterator]: function* () {} } as any;
     matterbridge.frontend = {
       start: vi.fn(),
@@ -77,6 +78,13 @@ describe('Matterbridge', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    // Restore spies after each test
+    loggerLogSpy?.mockRestore();
+    consoleLogSpy?.mockRestore();
+    consoleDebugSpy?.mockRestore();
+    consoleInfoSpy?.mockRestore();
+    consoleWarnSpy?.mockRestore();
+    consoleErrorSpy?.mockRestore();
   });
 
   it('should initialize system and matterbridge information', () => {
@@ -195,12 +203,9 @@ describe('Matterbridge', () => {
 
   it('should call unregisterAndShutdownProcess and cleanup', async () => {
     const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockResolvedValue(undefined);
-    matterbridge.log.info = vi.fn();
-    matterbridge.plugins = [{ name: 'p1' }] as any;
     matterbridge.removeAllBridgedEndpoints = vi.fn().mockResolvedValue(undefined);
-    matterbridge.devices.clear = vi.fn();
     await matterbridge.unregisterAndShutdownProcess();
-    expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false);
+    expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false, 1000);
     expect(matterbridge.log.info).toHaveBeenCalledWith(expect.stringContaining('Unregistering all devices and shutting down...'));
   });
 

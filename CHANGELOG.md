@@ -8,6 +8,34 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.2.0] - 2025-08-01
+
+### Breaking Changes
+
+Removed node 18 support.
+Please install Node.js 22 LTS.
+Don't use Node.js Current but always the Node.js LTS.
+Node.js 23, like all odd-numbered versions, is not supported.
+
+### Added
+
+- [update]: Added a Snackbar message for available updates from npm. It differs for latest and dev versions. The update check, as always, is performed at restart (1 minute after) and each 12 hours. It can be triggered manually from the frontend.
+- [update]: First steps of update and log important messages from GitHub.
+- [build]: Added workflow_dispatch trigger and enhance dependency management in CI.
+- [build]: Added macOS 15 to the CI matrix for Node.js builds.
+- [frontend]: Bump version 2.7.2.
+- [frontend]: Added the plugin name on the QR/Fabrics when in childbridge mode. Changed operational mode to one click only.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [matter.js]: Bumped `matter.js` to 0.15.2 (https://github.com/project-chip/matter.js/discussions/2203). Great job matter.js!
+- [node.js]: Removed node 18 support.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.1.8] - 2025-07-28
 
 ### Added

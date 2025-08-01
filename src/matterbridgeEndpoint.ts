@@ -363,7 +363,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           optional: SupportedBehaviors(...getBehaviourTypesFromClusterClientIds(firstDefinition.optionalClientClusters)),
         },
       },
-      behaviors: options.tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : {},
+      behaviors: options.tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : SupportedBehaviors(DescriptorServer),
     };
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
@@ -469,7 +469,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to get options for.
    * @returns {Record<string, boolean | number | bigint | string | object | null> | undefined} The options for the provided cluster server, or undefined if the cluster is not supported.
    */
-  getClusterServerOptions(cluster: Behavior.Type | ClusterType | ClusterId | string) {
+  getClusterServerOptions(cluster: Behavior.Type | ClusterType | ClusterId | string): Record<string, boolean | number | bigint | string | object | null> | undefined {
     const behavior = getBehavior(this, cluster);
     if (!behavior) return undefined;
     return this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
@@ -659,7 +659,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @returns {Behavior.Type[]} An array of all cluster servers.
    */
-  getAllClusterServers() {
+  getAllClusterServers(): Behavior.Type[] {
     return Object.values(this.behaviors.supported);
   }
 
@@ -668,7 +668,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @returns {string[]} An array of all cluster server names.
    */
-  getAllClusterServerNames() {
+  getAllClusterServerNames(): string[] {
     return Object.keys(this.behaviors.supported);
   }
 
@@ -717,7 +717,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * const endpoint = device.addChildDeviceType('Temperature', [temperatureSensor], { tagList: [{ mfgCode: null, namespaceId: LocationTag.Indoor.namespaceId, tag: LocationTag.Indoor.tag, label: null }] }, true);
    * ```
    */
-  addChildDeviceType(endpointName: string, definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
+  addChildDeviceType(endpointName: string, definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
     let alreadyAdded = false;
     let child = this.getChildEndpointByName(endpointName);
@@ -770,7 +770,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * const endpoint = device.addChildDeviceTypeWithClusterServer('Temperature', [temperatureSensor], [], { tagList: [{ mfgCode: null, namespaceId: LocationTag.Indoor.namespaceId, tag: LocationTag.Indoor.tag, label: null }] }, true);
    * ```
    */
-  addChildDeviceTypeWithClusterServer(endpointName: string, definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, serverList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
+  addChildDeviceTypeWithClusterServer(endpointName: string, definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, serverList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug: boolean = false): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let alreadyAdded = false;
     let child = this.getChildEndpointByName(endpointName);
@@ -1030,6 +1030,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Setup the default Basic Information Cluster Server attributes for the server node.
    *
+   * This method sets the device name, serial number, unique ID, vendor ID, vendor name, product ID, product name, software version, software version string, hardware version and hardware version string.
+   *
+   * In bridge mode, it also adds the bridgedNode device type to the deviceTypes map and the bridgedNode device type to the deviceTypeList of the Descriptor cluster and creates a default BridgedDeviceBasicInformationClusterServer.
+   *
+   * The actual BasicInformationClusterServer is created by the MatterbridgeEndpoint class for device.mode = 'server' and for the unique device of an AccessoryPlatform.
+   *
    * @param {string} deviceName - The name of the device.
    * @param {string} serialNumber - The serial number of the device.
    * @param {number} [vendorId] - The vendor ID of the device.  Default is 0xfff1 (Matter Test VendorId).
@@ -1049,11 +1055,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     vendorName: string = 'Matterbridge',
     productId: number = 0x8000,
     productName: string = 'Matterbridge device',
-    softwareVersion = 1,
-    softwareVersionString = '1.0.0',
-    hardwareVersion = 1,
-    hardwareVersionString = '1.0.0',
-  ) {
+    softwareVersion: number = 1,
+    softwareVersionString: string = '1.0.0',
+    hardwareVersion: number = 1,
+    hardwareVersionString: string = '1.0.0',
+  ): this {
     this.log.logName = deviceName;
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
@@ -1067,10 +1073,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.hardwareVersion = hardwareVersion;
     this.hardwareVersionString = hardwareVersionString;
     if (MatterbridgeEndpoint.bridgeMode === 'bridge' && this.mode === undefined) {
+      this.deviceTypes.set(bridgedNode.code, bridgedNode);
       const options = this.getClusterServerOptions(Descriptor.Cluster.id);
       if (options) {
         const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
-        deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
+        if (!deviceTypeList.find((dt) => dt.deviceType === bridgedNode.code)) {
+          deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
+        }
       }
       this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
     }
@@ -1099,11 +1108,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     vendorId: number = 0xfff1,
     vendorName: string = 'Matterbridge',
     productName: string = 'Matterbridge device',
-    softwareVersion = 1,
-    softwareVersionString = '1.0.0',
-    hardwareVersion = 1,
-    hardwareVersionString = '1.0.0',
-  ) {
+    softwareVersion: number = 1,
+    softwareVersionString: string = '1.0.0',
+    hardwareVersion: number = 1,
+    hardwareVersionString: string = '1.0.0',
+  ): this {
     this.log.logName = deviceName;
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
@@ -1146,7 +1155,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Identify.IdentifyType} [identifyType] - The type of identification. Defaults to Identify.IdentifyType.None.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultIdentifyClusterServer(identifyTime = 0, identifyType = Identify.IdentifyType.None) {
+  createDefaultIdentifyClusterServer(identifyTime: number = 0, identifyType: Identify.IdentifyType = Identify.IdentifyType.None): this {
     this.behaviors.require(MatterbridgeIdentifyServer, {
       identifyTime,
       identifyType,
@@ -1159,7 +1168,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultGroupsClusterServer() {
+  createDefaultGroupsClusterServer(): this {
     this.behaviors.require(GroupsServer);
     return this;
   }
@@ -1171,7 +1180,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks The scenes management cluster server is still provisional and so not yet implemented.
    */
-  createDefaultScenesClusterServer() {
+  createDefaultScenesClusterServer(): this {
     this.behaviors.require(ScenesManagementServer);
     return this;
   }
@@ -1186,7 +1195,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {OnOff.StartUpOnOff | null} [startUpOnOff] - The start-up OnOff state. Null means previous state.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
+  createDefaultOnOffClusterServer(onOff: boolean = false, globalSceneControl: boolean = false, onTime: number = 0, offWaitTime: number = 0, startUpOnOff: OnOff.StartUpOnOff | null = null): this {
     this.behaviors.require(MatterbridgeOnOffServer.with(OnOff.Feature.Lighting), {
       onOff,
       globalSceneControl,
@@ -1203,7 +1212,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createOnOffClusterServer(onOff = false) {
+  createOnOffClusterServer(onOff: boolean = false): this {
     this.behaviors.require(MatterbridgeOnOffServer, {
       onOff,
     });
@@ -1216,7 +1225,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDeadFrontOnOffClusterServer(onOff = false) {
+  createDeadFrontOnOffClusterServer(onOff: boolean = false): this {
     this.behaviors.require(MatterbridgeOnOffServer.with(OnOff.Feature.DeadFrontBehavior), {
       onOff,
     });
@@ -1229,7 +1238,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createOffOnlyOnOffClusterServer(onOff = false) {
+  createOffOnlyOnOffClusterServer(onOff: boolean = false): this {
     this.behaviors.require(MatterbridgeOnOffServer.with(OnOff.Feature.OffOnly), {
       onOff,
     });
@@ -1246,7 +1255,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} [startUpCurrentLevel] - The startUp on level (default: null).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null, startUpCurrentLevel: number | null = null) {
+  createDefaultLevelControlClusterServer(currentLevel: number = 254, minLevel: number = 1, maxLevel: number = 254, onLevel: number | null = null, startUpCurrentLevel: number | null = null): this {
     this.behaviors.require(MatterbridgeLevelControlServer.with(LevelControl.Feature.OnOff, LevelControl.Feature.Lighting), {
       currentLevel,
       minLevel,
@@ -1269,7 +1278,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} [onLevel] - The on level (default: null).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createLevelControlClusterServer(currentLevel = 254, onLevel: number | null = null) {
+  createLevelControlClusterServer(currentLevel: number = 254, onLevel: number | null = null): this {
     this.behaviors.require(MatterbridgeLevelControlServer, {
       currentLevel,
       onLevel,
@@ -1300,7 +1309,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks startUpColorTemperatureMireds persists across restarts.
    * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
-  createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+  createDefaultColorControlClusterServer(
+    currentX: number = 0,
+    currentY: number = 0,
+    currentHue: number = 0,
+    currentSaturation: number = 0,
+    colorTemperatureMireds: number = 500,
+    colorTempPhysicalMinMireds: number = 147,
+    colorTempPhysicalMaxMireds: number = 500,
+  ): this {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
       enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
@@ -1342,7 +1359,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks startUpColorTemperatureMireds persists across restarts.
    * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
-  createXyColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+  createXyColorControlClusterServer(currentX: number = 0, currentY: number = 0, colorTemperatureMireds: number = 500, colorTempPhysicalMinMireds: number = 147, colorTempPhysicalMaxMireds: number = 500): this {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.CurrentXAndCurrentY,
       enhancedColorMode: ColorControl.EnhancedColorMode.CurrentXAndCurrentY,
@@ -1379,7 +1396,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks startUpColorTemperatureMireds persists across restarts.
    * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
-  createHsColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+  createHsColorControlClusterServer(currentHue: number = 0, currentSaturation: number = 0, colorTemperatureMireds: number = 500, colorTempPhysicalMinMireds: number = 147, colorTempPhysicalMaxMireds: number = 500): this {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
       enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
@@ -1414,7 +1431,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks startUpColorTemperatureMireds persists across restarts.
    * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
-  createCtColorControlClusterServer(colorTemperatureMireds = 250, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+  createCtColorControlClusterServer(colorTemperatureMireds: number = 250, colorTempPhysicalMinMireds: number = 147, colorTempPhysicalMaxMireds: number = 500): this {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
       enhancedColorMode: ColorControl.EnhancedColorMode.ColorTemperatureMireds,
@@ -1463,7 +1480,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     positionPercent100ths?: number,
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.Rollershade,
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.RollerShade,
-  ) {
+  ): this {
     this.behaviors.require(MatterbridgeLiftWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
       type, // Must support feature Lift
       numberOfActuationsLift: 0,
@@ -1503,7 +1520,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     positionTiltPercent100ths?: number,
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindLift,
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorBlind,
-  ) {
+  ): this {
     this.behaviors.require(MatterbridgeLiftTiltWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
       type, // Must support features Lift and Tilt
       numberOfActuationsLift: 0,
@@ -1643,15 +1660,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultThermostatClusterServer(
-    localTemperature = 23,
-    occupiedHeatingSetpoint = 21,
-    occupiedCoolingSetpoint = 25,
-    minSetpointDeadBand = 1,
-    minHeatSetpointLimit = 0,
-    maxHeatSetpointLimit = 50,
-    minCoolSetpointLimit = 0,
-    maxCoolSetpointLimit = 50,
-  ) {
+    localTemperature: number = 23,
+    occupiedHeatingSetpoint: number = 21,
+    occupiedCoolingSetpoint: number = 25,
+    minSetpointDeadBand: number = 1,
+    minHeatSetpointLimit: number = 0,
+    maxHeatSetpointLimit: number = 50,
+    minCoolSetpointLimit: number = 0,
+    maxCoolSetpointLimit: number = 50,
+  ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode), {
       localTemperature: localTemperature * 100,
       systemMode: Thermostat.SystemMode.Auto,
@@ -1684,7 +1701,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultHeatingThermostatClusterServer(localTemperature = 23, occupiedHeatingSetpoint = 21, minHeatSetpointLimit = 0, maxHeatSetpointLimit = 50) {
+  createDefaultHeatingThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, minHeatSetpointLimit: number = 0, maxHeatSetpointLimit: number = 50): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating), {
       localTemperature: localTemperature * 100,
       systemMode: Thermostat.SystemMode.Heat,
@@ -1708,7 +1725,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultCoolingThermostatClusterServer(localTemperature = 23, occupiedCoolingSetpoint = 25, minCoolSetpointLimit = 0, maxCoolSetpointLimit = 50) {
+  createDefaultCoolingThermostatClusterServer(localTemperature: number = 23, occupiedCoolingSetpoint: number = 25, minCoolSetpointLimit: number = 0, maxCoolSetpointLimit: number = 50): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling), {
       localTemperature: localTemperature * 100,
       systemMode: Thermostat.SystemMode.Cool,
@@ -1733,7 +1750,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout (writeble).
    * - scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted (writeble).
    */
-  createDefaultThermostatUserInterfaceConfigurationClusterServer() {
+  createDefaultThermostatUserInterfaceConfigurationClusterServer(): this {
     this.behaviors.require(ThermostatUserInterfaceConfigurationServer, {
       temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius,
       keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout,
@@ -2025,7 +2042,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * All operating modes NOT supported by a lock SHALL be set to one. The value of the OperatingMode enumeration defines the related bit to be set.
    */
-  createDefaultDoorLockClusterServer(lockState = DoorLock.LockState.Locked, lockType = DoorLock.LockType.DeadBolt) {
+  createDefaultDoorLockClusterServer(lockState: DoorLock.LockState = DoorLock.LockState.Locked, lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt): this {
     this.behaviors.require(MatterbridgeDoorLockServer.enable({ events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true } }), {
       lockState,
       lockType,
@@ -2050,7 +2067,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * endpoint.createDefaultModeSelectClusterServer('Night mode', [{ label: 'Led ON', mode: 0, semanticTags: [] }, { label: 'Led OFF', mode: 1, semanticTags: [] }], 0, 0);
    */
-  createDefaultModeSelectClusterServer(description: string, supportedModes: ModeSelect.ModeOption[], currentMode = 0, startUpMode = 0) {
+  createDefaultModeSelectClusterServer(description: string, supportedModes: ModeSelect.ModeOption[], currentMode: number = 0, startUpMode: number = 0): this {
     this.behaviors.require(MatterbridgeModeSelectServer, {
       description: description,
       standardNamespace: null,
@@ -2068,7 +2085,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [valveLevel] - The valve level to set. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
+  createDefaultValveConfigurationAndControlClusterServer(valveState: ValveConfigurationAndControl.ValveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel: number = 0): this {
     this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level), {
       currentState: valveState,
       targetState: valveState,
@@ -2091,7 +2108,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {PumpConfigurationAndControl.OperationMode} [pumpMode] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultPumpConfigurationAndControlClusterServer(pumpMode = PumpConfigurationAndControl.OperationMode.Normal) {
+  createDefaultPumpConfigurationAndControlClusterServer(pumpMode: PumpConfigurationAndControl.OperationMode = PumpConfigurationAndControl.OperationMode.Normal): this {
     this.behaviors.require(PumpConfigurationAndControlServer.with(PumpConfigurationAndControl.Feature.ConstantSpeed), {
       minConstSpeed: null,
       maxConstSpeed: null,
@@ -2113,7 +2130,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {SmokeCoAlarm.AlarmState} coState - The state of the CO alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultSmokeCOAlarmClusterServer(smokeState = SmokeCoAlarm.AlarmState.Normal, coState = SmokeCoAlarm.AlarmState.Normal) {
+  createDefaultSmokeCOAlarmClusterServer(smokeState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal, coState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal): this {
     this.behaviors.require(
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm).enable({
         events: { smokeAlarm: true, interconnectSmokeAlarm: false, coAlarm: true, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
@@ -2138,7 +2155,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {SmokeCoAlarm.AlarmState} smokeState - The state of the smoke alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createSmokeOnlySmokeCOAlarmClusterServer(smokeState = SmokeCoAlarm.AlarmState.Normal) {
+  createSmokeOnlySmokeCOAlarmClusterServer(smokeState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal): this {
     this.behaviors.require(
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm).enable({
         events: { smokeAlarm: true, interconnectSmokeAlarm: false, coAlarm: false, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
@@ -2162,7 +2179,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {SmokeCoAlarm.AlarmState} coState - The state of the CO alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createCoOnlySmokeCOAlarmClusterServer(coState = SmokeCoAlarm.AlarmState.Normal) {
+  createCoOnlySmokeCOAlarmClusterServer(coState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal): this {
     this.behaviors.require(
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.CoAlarm).enable({
         events: { smokeAlarm: false, interconnectSmokeAlarm: false, coAlarm: true, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
@@ -2347,7 +2364,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Rain Sensor: true = rain, false = no rain
    * Contact Sensor: true = closed or contact, false = open or no contact
    */
-  createDefaultBooleanStateClusterServer(contact?: boolean) {
+  createDefaultBooleanStateClusterServer(contact?: boolean): this {
     this.behaviors.require(
       BooleanStateServer.enable({
         events: { stateChange: true },
@@ -2375,7 +2392,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [defaultSensitivityLevel] - The default sensitivity level. Defaults to `0` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultBooleanStateConfigurationClusterServer(sensorFault = false, currentSensitivityLevel = 0, supportedSensitivityLevels = 2, defaultSensitivityLevel = 0) {
+  createDefaultBooleanStateConfigurationClusterServer(sensorFault: boolean = false, currentSensitivityLevel: number = 0, supportedSensitivityLevels: number = 2, defaultSensitivityLevel: number = 0): this {
     this.behaviors.require(
       MatterbridgeBooleanStateConfigurationServer.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.SensitivityLevel).enable({
         events: { alarmsStateChanged: true, sensorFault: true },
@@ -2411,7 +2428,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - For example, a battery storage inverter that can charge its battery at a maximum power of 2000W and can
    * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
    */
-  createDefaultDeviceEnergyManagementClusterServer(esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other, esaCanGenerate = false, esaState = DeviceEnergyManagement.EsaState.Online, absMinPower = 0, absMaxPower = 0) {
+  createDefaultDeviceEnergyManagementClusterServer(
+    esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other,
+    esaCanGenerate: boolean = false,
+    esaState: DeviceEnergyManagement.EsaState = DeviceEnergyManagement.EsaState.Online,
+    absMinPower: number = 0,
+    absMaxPower: number = 0,
+  ): this {
     this.behaviors.require(MatterbridgeDeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
       forecast: null, // A null value indicates that there is no forecast currently available
       powerAdjustmentCapability: null, // A null value indicates that no power adjustment is currently possible, and nor is any adjustment currently active
@@ -2557,7 +2580,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} maxMeasuredValue - The maximum measured value of the temperature x 100.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+  createDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
     this.behaviors.require(TemperatureMeasurementServer, getDefaultTemperatureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
     return this;
   }
@@ -2570,7 +2593,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} maxMeasuredValue - The maximum measured value of the relative humidity x 100.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+  createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
     this.behaviors.require(RelativeHumidityMeasurementServer, getDefaultRelativeHumidityMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
     return this;
   }
@@ -2592,7 +2615,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - 1 kPa = 10 hPa
    * - 1 inHg = 33.8639 hPa
    */
-  createDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+  createDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
     this.behaviors.require(PressureMeasurementServer, getDefaultPressureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
     return this;
   }
@@ -2615,7 +2638,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - Lux to matter = Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0))
    * - Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0))
    */
-  createDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+  createDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
     this.behaviors.require(IlluminanceMeasurementServer, getDefaultIlluminanceMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
     return this;
   }
@@ -2628,7 +2651,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} maxMeasuredValue - The maximum measured value of the flow in 10 x m3/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+  createDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
     this.behaviors.require(FlowMeasurementServer, getDefaultFlowMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
     return this;
   }
@@ -2644,7 +2667,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks The default value for the occupancy sensor type is PIR.
    */
-  createDefaultOccupancySensingClusterServer(occupied = false, holdTime = 30, holdTimeMin = 1, holdTimeMax = 300) {
+  createDefaultOccupancySensingClusterServer(occupied: boolean = false, holdTime: number = 30, holdTimeMin: number = 1, holdTimeMax: number = 300): this {
     this.behaviors.require(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), getDefaultOccupancySensingClusterServer(occupied, holdTime, holdTimeMin, holdTimeMax));
     return this;
   }
@@ -2655,7 +2678,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {AirQuality.AirQualityEnum} airQuality The air quality level. Defaults to `AirQuality.AirQualityType.Unknown`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultAirQualityClusterServer(airQuality = AirQuality.AirQualityEnum.Unknown) {
+  createDefaultAirQualityClusterServer(airQuality: AirQuality.AirQualityEnum = AirQuality.AirQualityEnum.Unknown): this {
     this.behaviors.require(AirQualityServer.with(AirQuality.Feature.Fair, AirQuality.Feature.Moderate, AirQuality.Feature.VeryPoor, AirQuality.Feature.ExtremelyPoor), {
       airQuality,
     });
@@ -2674,7 +2697,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
-  createDefaultTvocMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air, uncertainty?: number) {
+  createDefaultTvocMeasurementClusterServer(
+    measuredValue: number | null = null,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+    uncertainty?: number,
+  ): this {
     this.behaviors.require(TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2687,16 +2715,19 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server with feature LevelIndication.
-   
+   * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server with feature LevelIndication, MediumLevel and CriticalLevel.
+   *
    * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The measurement medium (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   * 
+   *
    * @remarks
    * The measurementMedium attribute is fixed and cannot be changed after creation.
    */
-  createLevelTvocMeasurementClusterServer(levelValue = ConcentrationMeasurement.LevelValue.Unknown, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createLevelTvocMeasurementClusterServer(
+    levelValue: ConcentrationMeasurement.LevelValue = ConcentrationMeasurement.LevelValue.Unknown,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+  ): this {
     this.behaviors.require(TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.LevelIndication, ConcentrationMeasurement.Feature.MediumLevel, ConcentrationMeasurement.Feature.CriticalLevel), {
       levelValue,
       measurementMedium,
@@ -2715,7 +2746,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
-  createDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultCarbonMonoxideConcentrationMeasurementClusterServer(
+    measuredValue: number | null = null,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+  ): this {
     this.behaviors.require(CarbonMonoxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2738,7 +2773,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
-  createDefaultCarbonDioxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultCarbonDioxideConcentrationMeasurementClusterServer(
+    measuredValue: number | null = null,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+  ): this {
     this.behaviors.require(CarbonDioxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2761,7 +2800,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
-  createDefaultFormaldehydeConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultFormaldehydeConcentrationMeasurementClusterServer(
+    measuredValue: number | null = null,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+  ): this {
     this.behaviors.require(FormaldehydeConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2784,7 +2827,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
-  createDefaultPm1ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultPm1ConcentrationMeasurementClusterServer(
+    measuredValue: number | null = null,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+  ): this {
     this.behaviors.require(Pm1ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2807,7 +2854,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
-  createDefaultPm25ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultPm25ConcentrationMeasurementClusterServer(
+    measuredValue: number | null = null,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+  ): this {
     this.behaviors.require(Pm25ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2830,7 +2881,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
-  createDefaultPm10ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultPm10ConcentrationMeasurementClusterServer(
+    measuredValue: number | null = null,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+  ): this {
     this.behaviors.require(Pm10ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2853,7 +2908,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
-  createDefaultOzoneConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultOzoneConcentrationMeasurementClusterServer(
+    measuredValue: number | null = null,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+  ): this {
     this.behaviors.require(OzoneConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2876,7 +2935,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
-  createDefaultRadonConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultRadonConcentrationMeasurementClusterServer(
+    measuredValue: number | null = null,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+  ): this {
     this.behaviors.require(RadonConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2899,7 +2962,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
    */
-  createDefaultNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultNitrogenDioxideConcentrationMeasurementClusterServer(
+    measuredValue: number | null = null,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3,
+    measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
+  ): this {
     this.behaviors.require(NitrogenDioxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,

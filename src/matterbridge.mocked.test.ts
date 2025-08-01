@@ -6,6 +6,7 @@ const HOMEDIR = path.join('jest', NAME);
 // Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./utils/spawn.js', () => ({
   spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
+    // console.warn(`Mocked spawnCommand called with command: ${command}, args: ${args.join(' ')}`);
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));

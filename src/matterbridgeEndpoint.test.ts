@@ -14,6 +14,7 @@ import {
   BooleanState,
   BooleanStateCluster,
   Descriptor,
+  DescriptorCluster,
   FixedLabel,
   FlowMeasurement,
   Groups,
@@ -75,6 +76,7 @@ import {
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
+import { wait } from './utils/wait.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -296,6 +298,19 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.type.deviceType).toBe(deviceType.code);
     expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
     expect(device.type.deviceRevision).toBe(deviceType.revision);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
+
+    expect(device.behaviors.supported.descriptor).toBeDefined();
+    expect(device.behaviors.has(DescriptorBehavior)).toBeTruthy();
+    expect(device.behaviors.has(DescriptorServer)).toBeTruthy();
+    expect(device.hasClusterServer(DescriptorBehavior)).toBeTruthy();
+    expect(device.hasClusterServer(DescriptorServer)).toBeTruthy();
+    expect(device.hasClusterServer(DescriptorCluster)).toBeTruthy();
+    expect(device.hasClusterServer(Descriptor.Cluster)).toBeTruthy();
+    expect(device.hasClusterServer(DescriptorCluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Descriptor.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(DescriptorCluster.name)).toBeTruthy();
+
     expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
     expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
@@ -312,6 +327,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.type.deviceType).toBe(deviceType.code);
     expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
     expect(device.type.deviceRevision).toBe(deviceType.revision);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
+
+    expect(device.behaviors.supported.descriptor).toBeDefined();
+
     expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
     expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
@@ -329,6 +348,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.type.deviceType).toBe(deviceType.code);
     expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
     expect(device.type.deviceRevision).toBe(deviceType.revision);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
+
+    expect(device.behaviors.supported.descriptor).toBeDefined();
+
     expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
     expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
@@ -345,6 +368,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.type.deviceType).toBe(deviceType.code);
     expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
     expect(device.type.deviceRevision).toBe(deviceType.revision);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
+
+    expect(device.behaviors.supported.descriptor).toBeDefined();
+
     expect(device.hasAttributeServer('Descriptor', 'deviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'TagList')).toBe(true);
     expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ tagList: [{ mfgCode: null, namespaceId: 7, tag: 1, label: 'Light2' }], deviceTypeList: [{ deviceType: 256, revision: 3 }] });
@@ -361,6 +388,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.type.deviceType).toBe(deviceType.code);
     expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
     expect(device.type.deviceRevision).toBe(deviceType.revision);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
+
+    expect(device.behaviors.supported.descriptor).toBeDefined();
+
     expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
     expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
@@ -395,9 +426,11 @@ describe('Matterbridge ' + NAME, () => {
     const deviceType = onOffLight;
     const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight5', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
     device.createDefaultIdentifyClusterServer();
     device.createDefaultGroupsClusterServer();
     device.createDefaultOnOffClusterServer();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff']);
     expect(device.hasClusterServer(DescriptorBehavior)).toBe(true);
     expect(device.hasClusterServer(DescriptorServer)).toBe(true);
     expect(device.hasClusterServer(Descriptor.Cluster)).toBe(true);
@@ -456,9 +489,12 @@ describe('Matterbridge ' + NAME, () => {
     const deviceType = onOffLight;
     const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight6', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
     device.createDefaultIdentifyClusterServer();
     device.createDefaultGroupsClusterServer();
     device.createDefaultOnOffClusterServer();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff']);
+
     expect(device.hasAttributeServer(DescriptorBehavior, 'deviceTypeList')).toBe(true);
     expect(device.hasAttributeServer(DescriptorServer, 'deviceTypeList')).toBe(true);
     expect(device.hasAttributeServer(Descriptor.Cluster, 'deviceTypeList')).toBe(true);
@@ -490,11 +526,13 @@ describe('Matterbridge ' + NAME, () => {
   test('getClusterServerOptions', async () => {
     const device = new MatterbridgeEndpoint(colorTemperatureLight, { uniqueStorageKey: 'ColorLight1', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'ColorLight' }] });
     expect(device).toBeDefined();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
     device.createDefaultIdentifyClusterServer();
     device.createDefaultGroupsClusterServer();
     device.createDefaultOnOffClusterServer();
     device.createDefaultLevelControlClusterServer();
     device.createDefaultColorControlClusterServer();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff', 'levelControl', 'colorControl']);
     expect(device.hasAttributeServer(DescriptorBehavior, 'deviceTypeList')).toBe(true);
     expect(device.hasAttributeServer(IdentifyBehavior, 'identifyTime')).toBe(true);
     expect(device.hasAttributeServer(OnOffBehavior, 'onOff')).toBe(true);
@@ -539,6 +577,7 @@ describe('Matterbridge ' + NAME, () => {
     device.createDefaultOnOffClusterServer();
     device.createDefaultLevelControlClusterServer();
     device.createCtColorControlClusterServer();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff', 'levelControl', 'colorControl']);
     expect(device.hasAttributeServer(DescriptorBehavior, 'deviceTypeList')).toBe(true);
     expect(device.hasAttributeServer(IdentifyBehavior, 'identifyTime')).toBe(true);
     expect(device.hasAttributeServer(OnOffBehavior, 'onOff')).toBe(true);
@@ -592,6 +631,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     await device.addFixedLabel('composed', 'Light');
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff', 'fixedLabel']);
     expect(device.hasAttributeServer(FixedLabel.Cluster, 'labelList')).toBe(true);
     expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(false);
     const options = device.getClusterServerOptions(FixedLabel.Cluster);
@@ -617,6 +657,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     await device.addUserLabel('composed', 'Light');
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff', 'userLabel']);
     expect(device.hasAttributeServer(FixedLabel.Cluster, 'labelList')).toBe(false);
     expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(true);
     const options = device.getClusterServerOptions(UserLabel.Cluster);
@@ -644,6 +685,7 @@ describe('Matterbridge ' + NAME, () => {
     device.createDefaultBooleanStateClusterServer(true);
     expect(device.hasAttributeServer(IdentifyBehavior, 'identifyTime')).toBe(true);
     expect(device.hasAttributeServer(BooleanStateCluster, 'stateValue')).toBe(true);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'booleanState']);
 
     let newState = false;
     let oldState = false;
@@ -842,6 +884,7 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'Thermostat1' });
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'thermostat']);
     expect(device.hasClusterServer(DescriptorServer)).toBe(true);
     expect(device.hasClusterServer(IdentifyServer)).toBe(true);
     expect(device.hasClusterServer(GroupsServer)).toBe(false);
@@ -859,6 +902,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     device.addOptionalClusterServers();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'thermostat', 'groups']);
     expect(device.hasClusterServer(DescriptorServer)).toBe(true);
     expect(device.hasClusterServer(IdentifyServer)).toBe(true);
     expect(device.hasClusterServer(GroupsServer)).toBe(true);
@@ -874,6 +918,8 @@ describe('Matterbridge ' + NAME, () => {
   test('forEachAttribute Thermostat', async () => {
     const device = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'EachThermostat' });
     expect(device).toBeDefined();
+    device.addRequiredClusterServers();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'thermostat']);
 
     await add(device);
 
@@ -891,8 +937,9 @@ describe('Matterbridge ' + NAME, () => {
 
   test('forEachAttribute DishWasher', async () => {
     const device = new MatterbridgeEndpoint(dishwasher, { uniqueStorageKey: 'EachDishWasher' });
-    device.addRequiredClusterServers();
     expect(device).toBeDefined();
+    device.addRequiredClusterServers();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'operationalState']);
 
     await add(device);
 
@@ -911,9 +958,10 @@ describe('Matterbridge ' + NAME, () => {
 
   test('forEachAttribute LaundryWasher', async () => {
     const device = new MatterbridgeEndpoint(laundryWasher, { uniqueStorageKey: 'EachLaundryWasher' });
+    expect(device).toBeDefined();
     device.createOffOnlyOnOffClusterServer();
     device.addRequiredClusterServers();
-    expect(device).toBeDefined();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'operationalState']);
 
     await add(device);
 
@@ -934,11 +982,12 @@ describe('Matterbridge ' + NAME, () => {
 
   test('forEachAttribute ExtractorHood', async () => {
     const device = new MatterbridgeEndpoint(extractorHood, { uniqueStorageKey: 'EachExtractorHood' });
+    expect(device).toBeDefined();
     device.createOffOnlyOnOffClusterServer();
     device.createLevelControlClusterServer();
     device.createLevelTvocMeasurementClusterServer();
     device.addRequiredClusterServers();
-    expect(device).toBeDefined();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'levelControl', 'totalVolatileOrganicCompoundsConcentrationMeasurement', 'fanControl']);
 
     await add(device);
 
@@ -960,6 +1009,24 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     device.addOptionalClusterServers();
+    expect(device.getAllClusterServerNames()).toEqual([
+      'descriptor',
+      'matterbridge',
+      'identify',
+      'airQuality',
+      'temperatureMeasurement',
+      'relativeHumidityMeasurement',
+      'carbonMonoxideConcentrationMeasurement',
+      'carbonDioxideConcentrationMeasurement',
+      'nitrogenDioxideConcentrationMeasurement',
+      'ozoneConcentrationMeasurement',
+      'formaldehydeConcentrationMeasurement',
+      'pm1ConcentrationMeasurement',
+      'pm25ConcentrationMeasurement',
+      'pm10ConcentrationMeasurement',
+      'radonConcentrationMeasurement',
+      'totalVolatileOrganicCompoundsConcentrationMeasurement',
+    ]);
 
     await add(device);
 
