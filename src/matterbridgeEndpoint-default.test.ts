@@ -212,27 +212,12 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
   });
 
-  test('createDefaultBasicInformationClusterServer in bridge mode', async () => {
-    MatterbridgeEndpoint.bridgeMode = 'bridge';
+  test('createDefaultBasicInformationClusterServer', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight9', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDefaultBasicInformationClusterServer('OnOffLight', '1234', 0xfff1, 'Matterbridge', 0x8000, 'Light');
-    expect(MatterbridgeEndpoint.bridgeMode).toBe('bridge');
-    expect(device.hasClusterServer(BasicInformation.Cluster)).toBe(false);
-    expect(device.hasClusterServer(BridgedDeviceBasicInformation.Cluster)).toBe(true);
-
-    await add(device);
-  });
-
-  test('createDefaultBasicInformationClusterServer in childbridge mode', async () => {
-    MatterbridgeEndpoint.bridgeMode = 'childbridge';
-    const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight10', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
-    expect(device).toBeDefined();
-    device.createDefaultBasicInformationClusterServer('OnOffLight', '1234', 0xfff1, 'Matterbridge', 0x8000, 'Light');
-    expect(MatterbridgeEndpoint.bridgeMode).toBe('childbridge');
     expect(device.hasClusterServer(BasicInformation.Cluster)).toBe(false);
     expect(device.hasClusterServer(BridgedDeviceBasicInformation.Cluster)).toBe(false);
-    MatterbridgeEndpoint.bridgeMode = 'bridge';
 
     await add(device);
   });

@@ -977,7 +977,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Start the matterbridge in mode test
     if (hasParameter('test')) {
       this.bridgeMode = 'bridge';
-      MatterbridgeEndpoint.bridgeMode = 'bridge';
       return;
     }
 
@@ -997,7 +996,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Start matterbridge in bridge mode
     if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
       this.bridgeMode = 'bridge';
-      MatterbridgeEndpoint.bridgeMode = 'bridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startBridge();
       return;
@@ -1006,7 +1004,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Start matterbridge in childbridge mode
     if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
       this.bridgeMode = 'childbridge';
-      MatterbridgeEndpoint.bridgeMode = 'childbridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startChildbridge();
       return;

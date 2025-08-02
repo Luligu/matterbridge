@@ -652,6 +652,42 @@ describe('Matterbridge platform', () => {
     );
   });
 
+  test('registerDevice should log error if the device deviceName is undefined', async () => {
+    await platform.unregisterAllDevices();
+    expect((platform as any)._registeredEndpoints.size).toBe(0);
+    expect((platform as any)._registeredEndpointsByName.size).toBe(0);
+    expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();
+
+    const device = new MatterbridgeEndpoint(powerSource);
+    expect(device).toBeDefined();
+    expect(device.deviceName).toBeUndefined();
+    device.createDefaultBasicInformationClusterServer('', 'serial01234');
+    expect(device.deviceName).toBe('');
+    expect(device.serialNumber).toBe('serial01234');
+    await platform.registerDevice(device);
+    expect((platform as any)._registeredEndpoints.size).toBe(0);
+    expect((platform as any)._registeredEndpointsByName.size).toBe(0);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Device with uniqueId ${CYAN}${device.uniqueId}${er} has no deviceName. The device will not be added.`);
+  });
+
+  test('registerDevice should log error if the device serialNumber is undefined', async () => {
+    await platform.unregisterAllDevices();
+    expect((platform as any)._registeredEndpoints.size).toBe(0);
+    expect((platform as any)._registeredEndpointsByName.size).toBe(0);
+    expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();
+
+    const device = new MatterbridgeEndpoint(powerSource);
+    expect(device).toBeDefined();
+    expect(device.serialNumber).toBeUndefined();
+    device.createDefaultBasicInformationClusterServer('Device1234', '');
+    expect(device.deviceName).toBe('Device1234');
+    expect(device.serialNumber).toBe('');
+    await platform.registerDevice(device);
+    expect((platform as any)._registeredEndpoints.size).toBe(0);
+    expect((platform as any)._registeredEndpointsByName.size).toBe(0);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Device with uniqueId ${CYAN}${device.uniqueId}${er} has no serialNumber. The device will not be added.`);
+  });
+
   test('registerDevice should log error if the device name already exist', async () => {
     await platform.unregisterAllDevices();
     expect((platform as any)._registeredEndpoints.size).toBe(0);

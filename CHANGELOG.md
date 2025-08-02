@@ -13,6 +13,11 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [platform]: Added uniqueId validation in registerDevice method. It prevents to register a device if the implementation didn't call createDefaultBasicInformationClusterServer() or createDefaultBridgedDeviceBasicInformationClusterServer().
+- [platform]: Added deviceName validation in registerDevice method.
+- [platform]: Added serialNumber validation in registerDevice method.
+- [endpoint]: Removed static bridgedNode.
+- [endpoint]: Removed BasicInformationServer remap to BridgedDeviceBasicInformationServer.
+- [platform]: Added BasicInformationServer remap to BridgedDeviceBasicInformationServer when needed.
 
 ### Changed
 
