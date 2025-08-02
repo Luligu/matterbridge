@@ -1,9 +1,11 @@
 name: Deploy GitHub Pages
 
 on:
-  # Runs on pushes targeting the main and dev branches
+  # Runs on pushes targeting the main and dev branches, but only for changes in docs directory
   push:
     branches: ['main', 'dev']
+    paths:
+      - 'docs/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
