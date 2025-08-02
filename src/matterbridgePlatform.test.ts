@@ -636,6 +636,22 @@ describe('Matterbridge platform', () => {
     expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();
   });
 
+  test('registerDevice should log error if the device uniqueid is undefined', async () => {
+    await platform.unregisterAllDevices();
+    expect((platform as any)._registeredEndpoints.size).toBe(0);
+    expect((platform as any)._registeredEndpointsByName.size).toBe(0);
+    expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();
+
+    const device = new MatterbridgeEndpoint(powerSource);
+    await platform.registerDevice(device);
+    expect((platform as any)._registeredEndpoints.size).toBe(0);
+    expect((platform as any)._registeredEndpointsByName.size).toBe(0);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `Device with name ${CYAN}${device.deviceName}${er} has no uniqueId. Did you forget to call createDefaultBasicInformationClusterServer() or createDefaultBridgedDeviceBasicInformationClusterServer()? The device will not be added.`,
+    );
+  });
+
   test('registerDevice should log error if the device name already exist', async () => {
     await platform.unregisterAllDevices();
     expect((platform as any)._registeredEndpoints.size).toBe(0);

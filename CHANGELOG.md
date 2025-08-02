@@ -12,6 +12,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [platform]: Added uniqueId validation in registerDevice method. It prevents to register a device if the implementation didn't call createDefaultBasicInformationClusterServer() or createDefaultBridgedDeviceBasicInformationClusterServer().
+
 ### Changed
 
 - [package]: Updated dependencies.

@@ -284,6 +284,12 @@ export class MatterbridgePlatform {
    */
   async registerDevice(device: MatterbridgeEndpoint) {
     device.plugin = this.name;
+    if (!device.uniqueId) {
+      this.log.error(
+        `Device with name ${CYAN}${device.deviceName}${er} has no uniqueId. Did you forget to call createDefaultBasicInformationClusterServer() or createDefaultBridgedDeviceBasicInformationClusterServer()? The device will not be added.`,
+      );
+      return;
+    }
     if (device.deviceName && this._registeredEndpointsByName.has(device.deviceName)) {
       this.log.error(`Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
       return;
