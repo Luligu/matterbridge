@@ -3,7 +3,7 @@
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { waiter, wait, withTimeout, log } from './wait.ts';
+import { waiter, wait, withTimeout } from './wait.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -36,10 +36,6 @@ describe('waiter()', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
-    // Reset logger settings and spy on log.debug
-    log.logLevel = undefined as any;
-    log.logName = undefined as any;
-    // jest.spyOn(log, 'debug').mockImplementation(() => {});
     // Spy on global timer clearances
     clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(() => {});
     clearIntervalSpy = jest.spyOn(global, 'clearInterval').mockImplementation(() => {});
@@ -56,6 +52,13 @@ describe('waiter()', () => {
     const check = jest.fn().mockReturnValue(true);
     await expect(waiter('immediate', check as any)).resolves.toBe(true);
     expect(check).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves immediately with true if check returns true and logs when debug=true', async () => {
+    const check = jest.fn().mockReturnValue(true);
+    await expect(waiter('immediate-debug', check as any, false, 5000, 500, true)).resolves.toBe(true);
+    expect(check).toHaveBeenCalledTimes(1);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Waiter "immediate-debug" already true');
   });
 
   it('resolves true when check becomes true before timeout', async () => {
@@ -112,15 +115,11 @@ describe('waiter()', () => {
     const check = jest.fn().mockReturnValue(false);
     const promise = waiter('dbg', check as any, false, 200, 100, true);
 
-    // should log start
-    expect(log.logLevel).toBe(LogLevel.DEBUG);
-    expect(log.logName).toBe('Waiter');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Waiter "dbg" started...');
-
     // advance to timeout and await
     jest.advanceTimersByTime(200);
     await promise;
 
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Waiter "dbg" started...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Waiter "dbg" finished for timeout...');
   });
 
@@ -128,15 +127,11 @@ describe('waiter()', () => {
     const check = jest.fn().mockReturnValue(false);
     const promise = waiter('dbg', check as any, false, 200, 100, false);
 
-    // should log start
-    expect(log.logLevel).toBe(LogLevel.DEBUG);
-    expect(log.logName).toBe('Waiter');
-    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, 'Waiter "dbg" started...');
-
     // advance to timeout and await
     jest.advanceTimersByTime(200);
     await promise;
 
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, 'Waiter "dbg" started...');
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, 'Waiter "dbg" finished for timeout...');
   });
 });
@@ -144,48 +139,40 @@ describe('waiter()', () => {
 describe('wait()', () => {
   beforeEach(() => {
     jest.useFakeTimers();
-    // Reset logger settings
-    log.logLevel = undefined as any;
-    log.logName = undefined as any;
-    jest.spyOn(log, 'debug');
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
     jest.useRealTimers();
-    (log.debug as jest.Mock).mockRestore();
   });
 
-  it('sets logLevel to DEBUG and logName to "Wait"', () => {
+  it('completes after the specified timeout', async () => {
     const promise = wait(500);
-    expect(log.logLevel).toBe(LogLevel.DEBUG);
-    expect(log.logName).toBe('Wait');
     jest.advanceTimersByTime(500);
-    return promise;
+    await expect(promise).resolves.toBeUndefined();
   });
 
   it('resolves without debug when debug=false', async () => {
-    const resolved = jest.fn();
-    // eslint-disable-next-line promise/catch-or-return
-    wait(300, 'test-op', false).then(resolved);
-    expect(log.debug).not.toHaveBeenCalled();
-    await Promise.resolve();
-    expect(log.debug).not.toHaveBeenCalled();
+    const promise = wait(300, 'test-op', false);
+    jest.advanceTimersByTime(300);
+    await expect(promise).resolves.toBeUndefined();
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, 'Wait "test-op" started...');
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, 'Wait "test-op" finished...');
   });
 
   it('logs debug messages when debug=true', async () => {
     const promise = wait(200, 'myWait', true);
-    expect(log.debug).toHaveBeenCalledWith('Wait "myWait" started...');
-    (log.debug as jest.Mock).mockClear();
     jest.advanceTimersByTime(200);
     await promise;
-    expect(log.debug).toHaveBeenCalledWith('Wait "myWait" finished...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Wait "myWait" started...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Wait "myWait" finished...');
   });
 
   it('uses defaults when no args provided', async () => {
     const promise = wait();
-    expect(log.debug).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
-    await promise;
+    await expect(promise).resolves.toBeUndefined();
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Wait'));
   });
 });
 

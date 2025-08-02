@@ -25,8 +25,6 @@
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-export const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
-
 /**
  * Asynchronous waiter function that resolves when the provided condition is met or rejects on timeout.
  *
@@ -39,9 +37,11 @@ export const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFo
  * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
  */
 export async function waiter(name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false): Promise<boolean> {
-  if (check()) return true;
-  log.logLevel = LogLevel.DEBUG;
-  log.logName = 'Waiter';
+  const log = new AnsiLogger({ logName: 'MatterbridgeWaiter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  if (check()) {
+    if (debug) log.debug(`Waiter "${name}" already true`);
+    return true;
+  }
   if (debug) log.debug(`Waiter "${name}" started...`);
   return new Promise<boolean>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
@@ -50,7 +50,7 @@ export async function waiter(name: string, check: () => boolean, exitWithReject:
       clearInterval(intervalId);
       if (exitWithReject) reject(new Error(`Waiter "${name}" finished due to timeout`));
       else resolve(false);
-    }, resolveTimeout);
+    }, resolveTimeout).unref();
 
     const intervalId = setInterval(async () => {
       if (check()) {
@@ -60,7 +60,7 @@ export async function waiter(name: string, check: () => boolean, exitWithReject:
         resolve(true);
       }
       await Promise.resolve();
-    }, resolveInterval);
+    }, resolveInterval).unref();
   });
 }
 
@@ -73,16 +73,15 @@ export async function waiter(name: string, check: () => boolean, exitWithReject:
  * @returns {Promise<void>} A Promise that resolves after the specified timeout.
  */
 export async function wait(timeout: number = 1000, name?: string, debug: boolean = false): Promise<void> {
-  log.logLevel = LogLevel.DEBUG;
-  log.logName = 'Wait';
+  const log = new AnsiLogger({ logName: 'MatterbridgeWait', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   if (debug) log.debug(`Wait "${name}" started...`);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  return new Promise<void>((resolve, reject) => {
+
+  return new Promise<void>((resolve) => {
     const timeoutId = setTimeout(() => {
       if (debug) log.debug(`Wait "${name}" finished...`);
       clearTimeout(timeoutId);
       resolve();
-    }, timeout);
+    }, timeout).unref();
   });
 }
 
@@ -105,7 +104,7 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs: number = 1
     }, timeoutMillisecs).unref(); // Unref the timer to prevent it from keeping the event loop alive
     promise
       .then((result) => {
-        clearTimeout(timer); // Prevent memory leak
+        clearTimeout(timer); // Ensure timeout does not fire if promise resolves first
         resolve(result);
         return result;
       })
