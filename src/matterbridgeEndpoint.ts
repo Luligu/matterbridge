@@ -1119,7 +1119,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         events: { leave: true, reachableChanged: true },
       }),
       {
-        vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined,
+        vendorId: VendorId(vendorId),
         vendorName: vendorName.slice(0, 32),
         productName: productName.slice(0, 32),
         productUrl: this.productUrl.slice(0, 256),

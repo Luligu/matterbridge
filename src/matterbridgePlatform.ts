@@ -281,7 +281,21 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Registers a device with the Matterbridge platform.
+   * Registers a device with the Matterbridge platform and performs validation checks.
+   *
+   * This method also checks if the implementation called createDefaultBasicInformationClusterServer() instead of createDefaultBridgedDeviceBasicInformationClusterServer().
+   *
+   * This is correct with Accessory platforms so we check if we are running in bridge mode and add the bridgedNode and the BridgedDeviceBasicInformation cluster.
+   *
+   * If we are in bridge mode, we add the bridgedNode and the BridgedDeviceBasicInformation cluster.
+   *
+   * If we are in childbridge mode and the plugin is a 'DynamicPlatform', we add the bridgedNode and the BridgedDeviceBasicInformation cluster.
+   *
+   * if we are in childbridge mode and the plugin is a 'AccessoryPlatform', the device is not bridged.
+   *
+   * If the device.mode = 'server', the device is not bridged.
+   *
+   * If the device.mode = 'matter', the device is not bridged.
    *
    * @param {MatterbridgeEndpoint} device - The device to register.
    */
@@ -301,23 +315,19 @@ export class MatterbridgePlatform {
       this.log.error(`Device with uniqueId ${CYAN}${device.uniqueId}${er} has no serialNumber. The device will not be added.`);
       return;
     }
-    if (device.deviceName && this._registeredEndpointsByName.has(device.deviceName)) {
+    if (this._registeredEndpointsByName.has(device.deviceName)) {
       this.log.error(`Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
       return;
     }
-    if (device.deviceName && checkNotLatinCharacters(device.deviceName)) {
+    if (checkNotLatinCharacters(device.deviceName)) {
       this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has non latin characters.`);
     }
 
-    /**
-     * We check if the implementation called createDefaultBasicInformationClusterServer() instead of createDefaultBridgedDeviceBasicInformationClusterServer()
-     * This is correct with Accessory platforms so we check if we are running in bridge mode and add the bridgedNode and the BridgedDeviceBasicInformation cluster.
-     * If the device.mode = 'server', the device is not bridged.
-     * If the device.mode = 'matter', the device is not bridged.
-     */
+    // Validate bridgedNode and BridgedDeviceBasicInformation cluster
     if (device.mode === undefined && (this.matterbridge.bridgeMode === 'bridge' || (this.matterbridge.bridgeMode === 'childbridge' && this.type === 'DynamicPlatform'))) {
       // If the device is a bridged device, we add the bridgedNode to the deviceTypes map and to the Descriptor Cluster options
       if (!device.deviceTypes.has(bridgedNode.code)) {
+        this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has no bridgedNode device type. Adding it...`);
         device.deviceTypes.set(bridgedNode.code, bridgedNode);
         const options = device.getClusterServerOptions(Descriptor.Cluster.id);
         if (options) {
@@ -327,8 +337,10 @@ export class MatterbridgePlatform {
           }
         }
       }
+
       // If the device is a bridged device, we add the BridgedDeviceBasicInformation cluster
       if (!device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) {
+        this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has no BridgedDeviceBasicInformation cluster. Adding it...`);
         device.createDefaultBridgedDeviceBasicInformationClusterServer(
           device.deviceName,
           device.serialNumber,
