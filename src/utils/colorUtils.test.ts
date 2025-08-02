@@ -437,7 +437,7 @@ describe('Utils test', () => {
 
     test('Pure Yellow', async () => {
       const color = colors[2];
-      expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: -color.rgb.b });
+      expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
     test('Lime Green', async () => {
@@ -447,7 +447,7 @@ describe('Utils test', () => {
 
     test('Pure Green', async () => {
       const color = colors[4];
-      expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: -color.rgb.r, g: color.rgb.g, b: color.rgb.b });
+      expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
     test('Light Sea Green', async () => {
@@ -457,17 +457,17 @@ describe('Utils test', () => {
 
     test('Pure Cyan', async () => {
       const color = colors[6];
-      expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: -color.rgb.r, g: color.rgb.g, b: color.rgb.b });
+      expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
     test('Deep Sky Blue', async () => {
       const color = colors[7];
-      expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: -color.rgb.r, g: color.rgb.g, b: color.rgb.b });
+      expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
     test('Pure Blue', async () => {
       const color = colors[8];
-      expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: -color.rgb.r, g: color.rgb.g, b: color.rgb.b });
+      expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
     test('Blue Violet', async () => {
