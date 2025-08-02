@@ -375,6 +375,7 @@ export async function invokeBehaviorCommand(
  * @param {unknown} oldValue - The old value of the attribute.
  *
  * @returns {Promise<boolean>} A promise that resolves to true if the subscription handler was invoked successfully, false otherwise.
+ *
  * @deprecated Used ONLY in Jest tests.
  */
 export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, newValue: unknown, oldValue: unknown): Promise<boolean> {

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - Matterbridge</title>
+    <link rel="icon" type="image/svg+xml" href="matterbridge.svg">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            color: white;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 600px;
+            padding: 2rem;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+        
+        h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin: 0 0 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin: 0 0 2rem;
+            opacity: 0.9;
+        }
+        
+        p {
+            font-size: 1.125rem;
+            margin: 0 0 2rem;
+            opacity: 0.8;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: white;
+            color: #2563eb;
+            padding: 0.75rem 2rem;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .links {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+        
+        .links a:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="matterbridge.svg" alt="Matterbridge Logo" class="logo">
+        <h1>404</h1>
+        <h2>Page Not Found</h2>
+        <p>Sorry, the page you're looking for doesn't exist. It might have been moved, deleted, or you may have mistyped the URL.</p>
+        <a href="/" class="btn">🏠 Go Home</a>
+        
+        <div class="links">
+            <a href="README.md">📖 Documentation</a>
+            <a href="https://github.com/Luligu/matterbridge">🔗 GitHub</a>
+            <a href="https://www.npmjs.com/package/matterbridge">📦 NPM</a>
+        </div>
+    </div>
+</body>
+</html>
