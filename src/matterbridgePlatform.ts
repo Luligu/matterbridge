@@ -28,6 +28,7 @@ import path from 'node:path';
 // Matter
 import { EndpointNumber } from '@matter/main';
 import { Descriptor } from '@matter/main/clusters/descriptor';
+import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
 // Node AnsiLogger module
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
@@ -310,30 +311,36 @@ export class MatterbridgePlatform {
 
     /**
      * We check if the implementation called createDefaultBasicInformationClusterServer() instead of createDefaultBridgedDeviceBasicInformationClusterServer()
-     * This is correct with Accessory platforms so we check if we are running in bridge mode and add the bridgedNode.
+     * This is correct with Accessory platforms so we check if we are running in bridge mode and add the bridgedNode and the BridgedDeviceBasicInformation cluster.
+     * If the device.mode = 'server', the device is not bridged.
+     * If the device.mode = 'matter', the device is not bridged.
      */
-    if (device.mode === undefined && (this.matterbridge.bridgeMode === 'bridge' || (this.matterbridge.bridgeMode === 'childbridge' && this.type === 'DynamicPlatform')) && !device.deviceTypes.has(bridgedNode.code)) {
-      // If the device is a bridged device, we add the bridgedNode to the deviceTypes map
-      device.deviceTypes.set(bridgedNode.code, bridgedNode);
-      // We add also the bridgedNode to the Descriptor Cluster options
-      const options = device.getClusterServerOptions(Descriptor.Cluster.id);
-      if (options) {
-        const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
-        if (!deviceTypeList.find((dt) => dt.deviceType === bridgedNode.code)) {
-          deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
+    if (device.mode === undefined && (this.matterbridge.bridgeMode === 'bridge' || (this.matterbridge.bridgeMode === 'childbridge' && this.type === 'DynamicPlatform'))) {
+      // If the device is a bridged device, we add the bridgedNode to the deviceTypes map and to the Descriptor Cluster options
+      if (!device.deviceTypes.has(bridgedNode.code)) {
+        device.deviceTypes.set(bridgedNode.code, bridgedNode);
+        const options = device.getClusterServerOptions(Descriptor.Cluster.id);
+        if (options) {
+          const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
+          if (!deviceTypeList.find((dt) => dt.deviceType === bridgedNode.code)) {
+            deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
+          }
         }
       }
-      device.createDefaultBridgedDeviceBasicInformationClusterServer(
-        device.deviceName,
-        device.serialNumber,
-        device.vendorId,
-        device.vendorName,
-        device.productName,
-        device.softwareVersion,
-        device.softwareVersionString,
-        device.hardwareVersion,
-        device.hardwareVersionString,
-      );
+      // If the device is a bridged device, we add the BridgedDeviceBasicInformation cluster
+      if (!device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) {
+        device.createDefaultBridgedDeviceBasicInformationClusterServer(
+          device.deviceName,
+          device.serialNumber,
+          device.vendorId,
+          device.vendorName,
+          device.productName,
+          device.softwareVersion,
+          device.softwareVersionString,
+          device.hardwareVersion,
+          device.hardwareVersionString,
+        );
+      }
     }
 
     await this.matterbridge.addBridgedEndpoint(this.name, device);

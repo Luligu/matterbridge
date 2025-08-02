@@ -51,6 +51,30 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
+function setDebug(debug: boolean) {
+  if (debug) {
+    loggerLogSpy.mockRestore();
+    consoleLogSpy.mockRestore();
+    consoleDebugSpy.mockRestore();
+    consoleInfoSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+    consoleLogSpy = jest.spyOn(console, 'log');
+    consoleDebugSpy = jest.spyOn(console, 'debug');
+    consoleInfoSpy = jest.spyOn(console, 'info');
+    consoleWarnSpy = jest.spyOn(console, 'warn');
+    consoleErrorSpy = jest.spyOn(console, 'error');
+  } else {
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
+  }
+}
+
 // Cleanup the matter environment
 rmSync(HOMEDIR, { recursive: true, force: true });
 
@@ -533,6 +557,8 @@ describe('Matterbridge', () => {
     });
 
     test('matterbridge load and start mockPlugin1/2/3', async () => {
+      // setDebug(true);
+
       expect((matterbridge as any).initialized).toBe(true);
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
       expect((matterbridge as any).shutdown).toBe(false);
@@ -558,6 +584,8 @@ describe('Matterbridge', () => {
       await (matterbridge as any).plugins.start(plugins[2], 'Jest test');
       expect(plugins[2].started).toBeTruthy();
       expect(plugins[2].configured).toBeFalsy();
+
+      // setDebug(false);
     }, 10000);
 
     test('matterbridge -help', async () => {
