@@ -90,7 +90,7 @@ import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behavio
 // AnsiLogger module
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from './logger/export.js';
 // Matterbridge
-import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
+import { DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 import { isValidNumber, isValidObject, isValidString } from './utils/export.js';
 import {
   MatterbridgeServer,
@@ -268,8 +268,6 @@ export interface SerializedMatterbridgeEndpoint {
 }
 
 export class MatterbridgeEndpoint extends Endpoint {
-  /** The bridge mode of Matterbridge */
-  static bridgeMode: 'bridge' | 'childbridge' | '' = '';
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
 
@@ -1032,9 +1030,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * This method sets the device name, serial number, unique ID, vendor ID, vendor name, product ID, product name, software version, software version string, hardware version and hardware version string.
    *
-   * In bridge mode, it also adds the bridgedNode device type to the deviceTypes map and the bridgedNode device type to the deviceTypeList of the Descriptor cluster and creates a default BridgedDeviceBasicInformationClusterServer.
-   *
-   * The actual BasicInformationClusterServer is created by the MatterbridgeEndpoint class for device.mode = 'server' and for the unique device of an AccessoryPlatform.
+   * The actual BasicInformationClusterServer is created by the Matterbridge class for device.mode = 'server' and for the device of an AccessoryPlatform.
    *
    * @param {string} deviceName - The name of the device.
    * @param {string} serialNumber - The serial number of the device.
@@ -1072,22 +1068,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.softwareVersionString = softwareVersionString;
     this.hardwareVersion = hardwareVersion;
     this.hardwareVersionString = hardwareVersionString;
-    if (MatterbridgeEndpoint.bridgeMode === 'bridge' && this.mode === undefined) {
-      this.deviceTypes.set(bridgedNode.code, bridgedNode);
-      const options = this.getClusterServerOptions(Descriptor.Cluster.id);
-      if (options) {
-        const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
-        if (!deviceTypeList.find((dt) => dt.deviceType === bridgedNode.code)) {
-          deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
-        }
-      }
-      this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
-    }
     return this;
   }
 
   /**
    * Creates a default BridgedDeviceBasicInformationClusterServer for the aggregator endpoints.
+   *
+   * This method sets the device name, serial number, unique ID, vendor ID, vendor name, product name, software version, software version string, hardware version and hardware version string.
    *
    * @param {string} deviceName - The name of the device.
    * @param {string} serialNumber - The serial number of the device.
@@ -1100,7 +1087,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} [hardwareVersionString] - The hardware version string of the device. Default is '1.0.0'.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
-   * @remarks The bridgedNode device type must be added to the deviceTypeList of the Descriptor cluster.
+   * @remarks
+   * - The productId doesn't exist on the BridgedDeviceBasicInformation cluster.
+   * - The bridgedNode device type must be added to the deviceTypeList of the Descriptor cluster.
    */
   createDefaultBridgedDeviceBasicInformationClusterServer(
     deviceName: string,
