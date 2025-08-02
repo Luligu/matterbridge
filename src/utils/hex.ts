@@ -265,6 +265,7 @@ export function extractPrivateKeyRaw(pemPrivateKey: string): Uint8Array {
 
     return new Uint8Array(rawPrivateKey);
   } catch (error) {
+    // istanbul ignore next
     throw new Error(`Failed to extract private key: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
