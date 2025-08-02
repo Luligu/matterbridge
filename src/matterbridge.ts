@@ -1182,6 +1182,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (this.nodeContext) this.globalModulesDirectory = this.matterbridgeInformation.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
     if (this.globalModulesDirectory === '') {
       // First run of Matterbridge so the node storage is empty
+      this.log.debug(`Getting global node_modules directory...`);
       try {
         const { getGlobalNodeModules } = await import('./utils/network.js');
         this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
@@ -1191,6 +1192,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.error(`Error getting global node_modules directory: ${error}`);
       }
     } else {
+      // The global node_modules directory is already set in the node storage and we check if it is still valid
       this.log.debug(`Checking global node_modules directory: ${this.globalModulesDirectory}`);
       try {
         const { getGlobalNodeModules } = await import('./utils/network.js');
