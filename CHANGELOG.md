@@ -15,7 +15,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Updated dependencies.
-- [matter.js]: Bumped `matter.js` to 0.15.3 (https://github.com/project-chip/matter.js/discussions/2203). Great job matter.js!
+- [matter.js]: Bumped `matter.js` to 0.15.3.
 - [matter.js]: Bumped `typescript` to 5.9.2.
 
 <a href="https://www.buymeacoffee.com/luligugithub">

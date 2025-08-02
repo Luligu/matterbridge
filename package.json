@@ -148,8 +148,11 @@
     "install:vitest": "npm install --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin",
     "install:prettier": "npm install --save-dev --save-exact prettier eslint-config-prettier eslint-plugin-prettier"
   },
+  "overrides": {
+    "typescript": "5.9.2"
+  },
   "dependencies": {
-    "@matter/main": "0.15.2",
+    "@matter/main": "0.15.3",
     "archiver": "7.0.1",
     "express": "5.1.0",
     "glob": "11.0.3",
