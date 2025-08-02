@@ -4,6 +4,11 @@ on:
   # Allow manual dispatch
   workflow_dispatch:
 
+# Cancel previous runs when a new one is triggered
+concurrency:
+  group: docker-build-edge
+  cancel-in-progress: true
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
