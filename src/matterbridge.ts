@@ -1191,23 +1191,21 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
       } catch (error) {
-        // istanbul ignore next
         this.log.error(`Error getting global node_modules directory: ${error}`);
       }
-    } else this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-    /* removed cause is too expensive for the shelly board and not really needed. Why should the globalModulesDirectory change?
-    else {
-      this.getGlobalNodeModules()
-        .then(async (globalModulesDirectory) => {
-          this.globalModulesDirectory = globalModulesDirectory;
-          this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory;
-          this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-          await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
-        })
-        .catch((error) => {
-          this.log.error(`Error getting global node_modules directory: ${error}`);
-        });
-    }*/
+    } else {
+      this.log.debug(`Checking global node_modules directory: ${this.globalModulesDirectory}`);
+      try {
+        const { getGlobalNodeModules } = await import('./utils/network.js');
+        this.execRunningCount++;
+        this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
+        this.execRunningCount--;
+        this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+        await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
+      } catch (error) {
+        this.log.error(`Error checking global node_modules directory: ${error}`);
+      }
+    }
 
     // Matterbridge version
     const packageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));

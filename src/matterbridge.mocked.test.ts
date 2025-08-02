@@ -4,6 +4,19 @@ const NAME = 'MatterbridgeMocked';
 const HOMEDIR = path.join('jest', NAME);
 
 // Mock the spawnCommand from spawn module before importing it
+jest.unstable_mockModule('./utils/network.js', () => ({
+  getGlobalNodeModules: jest.fn(() => {
+    return Promise.resolve('usr/local/lib/node_modules'); // Mock the getGlobalNodeModules function to resolve immediately
+  }),
+  logInterfaces: jest.fn(() => {
+    return;
+  }),
+}));
+const networkModule = await import('./utils/network.js');
+const getGlobalNodeModulesMock = networkModule.getGlobalNodeModules as jest.MockedFunction<typeof networkModule.getGlobalNodeModules>;
+const logInterfacesMock = networkModule.logInterfaces as jest.MockedFunction<typeof networkModule.logInterfaces>;
+
+// Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./utils/spawn.js', () => ({
   spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
     // console.warn(`Mocked spawnCommand called with command: ${command}, args: ${args.join(' ')}`);
@@ -617,7 +630,7 @@ describe('Matterbridge mocked', () => {
     Logger.get('Jest').fatal('Test log message');
   });
 
-  test('Matterbridge.initialize() logNodeAndSystemInfo', async () => {
+  test('Matterbridge.initialize() logNodeAndSystemInfo networkInterfaces', async () => {
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     await matterbridge.initialize();
@@ -673,6 +686,40 @@ describe('Matterbridge mocked', () => {
     }); // Reset the spy to return an empty interface
     await (matterbridge as any).logNodeAndSystemInfo();
     expect(networkInterfacesSpy).toHaveBeenCalled();
+  });
+
+  test('Matterbridge.initialize() logNodeAndSystemInfo global node modules', async () => {
+    // Reset the process.argv to simulate command line arguments
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+    await (matterbridge as any).logNodeAndSystemInfo();
+    await wait(100);
+    expect(getGlobalNodeModulesMock).toHaveBeenCalled();
+    expect(matterbridge.globalModulesDirectory).toBe('usr/local/lib/node_modules');
+    expect(matterbridge.matterbridgeInformation.globalModulesDirectory).toBe(matterbridge.globalModulesDirectory);
+  });
+
+  test('Matterbridge.initialize() logNodeAndSystemInfo global node modules failed', async () => {
+    // Reset the process.argv to simulate command line arguments
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
+    getGlobalNodeModulesMock.mockImplementation(() => {
+      throw new Error('Test error for getGlobalNodeModules');
+    });
+
+    await matterbridge.initialize();
+    await matterbridge.nodeContext?.set<string>('globalModulesDirectory', '');
+    matterbridge.globalModulesDirectory = matterbridge.matterbridgeInformation.globalModulesDirectory = '';
+    await (matterbridge as any).logNodeAndSystemInfo();
+    await wait(100);
+    expect(getGlobalNodeModulesMock).toHaveBeenCalled();
+    expect(matterbridge.globalModulesDirectory).toBe('');
+    expect(matterbridge.matterbridgeInformation.globalModulesDirectory).toBe(matterbridge.globalModulesDirectory);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error getting global node_modules directory: Error: Test error for getGlobalNodeModules'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error checking global node_modules directory: Error: Test error for getGlobalNodeModules'));
+
+    getGlobalNodeModulesMock.mockImplementation(() => {
+      return Promise.resolve('usr/local/lib/node_modules');
+    });
   });
 
   test('Matterbridge.initialize() parseCommandLine', async () => {
@@ -746,7 +793,7 @@ describe('Matterbridge mocked', () => {
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Available Network Interfaces:`));
+    expect(logInterfacesMock).toHaveBeenCalled();
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-disable', './src/mock/plugin1'];
     matterbridge.shutdown = false;
@@ -1128,4 +1175,18 @@ describe('Matterbridge mocked', () => {
     startServerNodeSpy.mockRestore();
     pluginsConfigureSpy.mockRestore();
   }, 10000);
+
+  test('Matterbridge.initialize() removeAllBridgedEndpoints', async () => {
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    await matterbridge.initialize();
+    matterbridge.plugins.set({ name: 'matterbridge-mock1', enabled: true, path: './src/mock/plugin1/package.json', type: 'DynamicPlatform', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.devices.set({ name: 'Test Device 1', uniqueId: '123', plugin: 'matterbridge-mock1', serverNode: {} } as any); // Mock a device in server mode
+    await matterbridge.removeAllBridgedEndpoints('matterbridge-mock1', 1000);
+    expect(wait).toHaveBeenCalledWith(1000);
+    expect(wait).toHaveBeenCalledWith(2000);
+
+    // Reset test environment
+    matterbridge.plugins.clear();
+    matterbridge.devices.clear();
+  });
 });
