@@ -22,7 +22,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Updated dependencies.
-- [matter.js]: Bumped `matter.js` to 0.15.3.
+- [matter.js]: Bumped `matter.js` to 0.15.3. Thanks matter.js!
 - [matter.js]: Bumped `typescript` to 5.9.2.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
