@@ -189,7 +189,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   // Cleanup
   public hasCleanupStarted = false;
   private initialized = false;
-  private execRunningCount = 0;
   private startMatterInterval: NodeJS.Timeout | undefined;
   private startMatterIntervalMs = 1000;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
@@ -1185,9 +1184,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // First run of Matterbridge so the node storage is empty
       try {
         const { getGlobalNodeModules } = await import('./utils/network.js');
-        this.execRunningCount++;
         this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
-        this.execRunningCount--;
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
       } catch (error) {
@@ -1197,9 +1194,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.debug(`Checking global node_modules directory: ${this.globalModulesDirectory}`);
       try {
         const { getGlobalNodeModules } = await import('./utils/network.js');
-        this.execRunningCount++;
         this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
-        this.execRunningCount--;
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
       } catch (error) {
