@@ -4,7 +4,7 @@
  * @file wait.ts
  * @author Luca Liguori
  * @created 2025-02-16
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -37,7 +37,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
  * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
  */
 export async function waiter(name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false): Promise<boolean> {
-  const log = new AnsiLogger({ logName: 'MatterbridgeWaiter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  const log = new AnsiLogger({ logName: 'Waiter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   if (check()) {
     if (debug) log.debug(`Waiter "${name}" already true`);
     return true;
@@ -73,7 +73,7 @@ export async function waiter(name: string, check: () => boolean, exitWithReject:
  * @returns {Promise<void>} A Promise that resolves after the specified timeout.
  */
 export async function wait(timeout: number = 1000, name?: string, debug: boolean = false): Promise<void> {
-  const log = new AnsiLogger({ logName: 'MatterbridgeWait', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  const log = new AnsiLogger({ logName: 'Wait', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   if (debug) log.debug(`Wait "${name}" started...`);
 
   return new Promise<void>((resolve) => {
