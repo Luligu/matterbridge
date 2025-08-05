@@ -15,15 +15,20 @@ If you like this project and find it useful, please consider giving it a star on
 - [platform]: Added uniqueId validation in registerDevice method. It prevents to register a device if the implementation didn't call createDefaultBasicInformationClusterServer() or createDefaultBridgedDeviceBasicInformationClusterServer().
 - [platform]: Added deviceName validation in registerDevice method.
 - [platform]: Added serialNumber validation in registerDevice method.
-- [endpoint]: Removed static bridgedNode.
+- [endpoint]: Removed static MatterbridgeEndpoint.bridgeMode.
 - [endpoint]: Removed BasicInformationServer remap to BridgedDeviceBasicInformationServer.
 - [platform]: Added BasicInformationServer remap to BridgedDeviceBasicInformationServer when needed.
+- [frontend]: Bumped `frontend` version to 2.7.3.
 
 ### Changed
 
 - [package]: Updated dependencies.
 - [matter.js]: Bumped `matter.js` to 0.15.3. Thanks matter.js!
 - [matter.js]: Bumped `typescript` to 5.9.2.
+
+### Fixed
+
+- [frontend]: Fixed pointer on Discord icon.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
