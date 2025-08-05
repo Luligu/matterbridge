@@ -33,8 +33,10 @@ describe('deepCopy', () => {
 
   // Date
   test('deep copies Date instances', () => {
-    const date = new Date('2020-01-01');
+    const date = new Date('2020-01-01T12:00:00.000Z'); // Midday UTC
+    expect(date instanceof Date).toBe(true);
     const copy = deepCopy(date);
+    expect(copy instanceof Date).toBe(true);
     expect(copy).toEqual(date);
     expect(copy).not.toBe(date);
     // Changing original does not change copy
