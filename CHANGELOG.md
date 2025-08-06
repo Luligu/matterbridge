@@ -19,6 +19,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [endpoint]: Removed BasicInformationServer remap to BridgedDeviceBasicInformationServer.
 - [platform]: Added BasicInformationServer remap to BridgedDeviceBasicInformationServer when needed.
 - [frontend]: Bumped `frontend` version to 2.7.3.
+- [frontend]: Added frontend version to MatterbridgeInformation. It triggers the page reload message on the Home page.
 
 ### Changed
 
@@ -29,6 +30,8 @@ If you like this project and find it useful, please consider giving it a star on
 ### Fixed
 
 - [frontend]: Fixed pointer on Discord icon.
+- [deepcopy]: Fixed Date test case to use a specific UTC timestamp. It was failing on different timezones.
+- [frontend]: Fixed new Matterbridge message on the Home page.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

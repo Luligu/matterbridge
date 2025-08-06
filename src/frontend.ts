@@ -177,8 +177,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.debug(`Initializing the frontend ${hasParameter('ssl') ? 'https' : 'http'} server on port ${YELLOW}${this.port}${db}`);
 
     // Initialize multer with the upload directory
-    const uploadDir = path.join(this.matterbridge.matterbridgeDirectory, 'uploads');
-    await fs.mkdir(uploadDir, { recursive: true });
+    const uploadDir = path.join(this.matterbridge.matterbridgeDirectory, 'uploads'); // Is created by matterbridge initialize
     const upload = multer({ dest: uploadDir });
 
     // Create the express app that serves the frontend
@@ -213,6 +212,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Serve static files from '/static' endpoint
     this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'frontend/build')));
+
+    // Read the package.json file to get the frontend version
+    try {
+      this.log.debug(`Reading frontend package.json...`);
+      const frontendJson = await fs.readFile(path.join(this.matterbridge.rootDirectory, 'frontend/package.json'), 'utf8');
+      this.matterbridge.matterbridgeInformation.frontendVersion = JSON.parse(frontendJson)?.version;
+      this.log.debug(`Frontend version ${CYAN}${this.matterbridge.matterbridgeInformation.frontendVersion}${db}`);
+    } catch (error) {
+      // istanbul ignore next
+      this.log.error(`Failed to read frontend package.json: ${error instanceof Error ? error.message : String(error)}`);
+    }
 
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app

@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 // React
-import React, { useEffect, useState, useContext, useCallback, useRef } from 'react';
+import { useEffect, useState, useContext, useCallback, useRef } from 'react';
 
 // @mui/material
 import Button from '@mui/material/Button';
@@ -9,6 +9,7 @@ import Button from '@mui/material/Button';
 // @mui/icons-material
 import Refresh from '@mui/icons-material/Refresh';
 import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 // Frontend
 import { WebSocketLogs } from './WebSocketLogs';
@@ -30,6 +31,8 @@ function Home() {
   const [selectPlugin, setSelectPlugin] = useState(undefined);
   const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'devices'); // default devices
+  const [changelog, setChangelog] = useState('');
+  const [showChangelog, setShowChangelog] = useState(false);
   const [browserRefresh, setBrowserRefresh] = useState(false);
   // Contexts
   const { addListener, removeListener, online, sendMessage, logFilterLevel, logFilterSearch, autoScroll, getUniqueId } = useContext(WebSocketContext);
@@ -60,10 +63,18 @@ function Home() {
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
           setSelectPlugin(undefined);
-          if(localStorage.getItem('matterbridgeVersion') && msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
-            localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
+          if(msg.response.matterbridgeInformation.matterbridgeVersion) {
+            setChangelog(`https://github.com/Luligu/matterbridge/blob/${msg.response.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main' }/CHANGELOG.md`);
+          }
+          if(msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem('frontendVersion')) {
+            localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
             setBrowserRefresh(true);
           }
+          if(msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
+            localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
+            setShowChangelog(true);
+          }
+          
           if(msg.response.matterbridgeInformation.shellyBoard) {
             if(!localStorage.getItem('homePageMode')) {
               localStorage.setItem('homePageMode', 'devices');
@@ -106,18 +117,32 @@ function Home() {
       {/* Right column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
 
-        {/* Refresh page */}
+        {/* Refresh page on frontend updates */}
         {browserRefresh &&
           <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader">
-              <p className="MbfWindowHeaderText">Update</p>
+              <p className="MbfWindowHeaderText">Frontend Update</p>
             </div>
             <div className="MbfWindowBody" style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <h4 style={{ margin: 0 }}>Matterbridge has been updated. You are viewing an outdated web UI. Please refresh the page now.</h4>
+              <h4 style={{ margin: 0 }}>The frontend has been updated. You are viewing an outdated web UI. Please refresh the page now.</h4>
               <div>
-                <Button onClick={() => window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank')} endIcon={<AnnouncementOutlinedIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Changelog</Button>
                 <Button onClick={() => window.location.reload()} endIcon={<Refresh />} style={{ marginLeft: '10px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Refresh</Button>
               </div>
+            </div>
+          </div>
+        }
+        {/* Show changelog page on MMatterbridge updates */}
+        {showChangelog &&
+          <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
+            <div className="MbfWindowHeader">
+              <p className="MbfWindowHeaderText">Matterbridge Update</p>
+            </div>
+            <div className="MbfWindowBody" style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <h4 style={{ margin: 0 }}>Matterbridge has been updated.</h4>
+              <div>
+                <Button onClick={() => window.open(changelog, '_blank')} endIcon={<AnnouncementOutlinedIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Changelog</Button>
+                <Button onClick={() => window.location.reload()} endIcon={<CancelIcon />} style={{ marginLeft: '10px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Close</Button>
+            </div>
             </div>
           </div>
         }
