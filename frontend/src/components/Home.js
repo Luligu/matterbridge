@@ -66,11 +66,19 @@ function Home() {
           if(msg.response.matterbridgeInformation.matterbridgeVersion) {
             setChangelog(`https://github.com/Luligu/matterbridge/blob/${msg.response.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main' }/CHANGELOG.md`);
           }
-          if(msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem('frontendVersion')) {
+
+          if(localStorage.getItem('frontendVersion') === null) {
+            localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
+          }
+          else if(msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem('frontendVersion')) {
             localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
             setBrowserRefresh(true);
           }
-          if(msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
+          
+          if(localStorage.getItem('matterbridgeVersion') === null) {
+            localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
+          }
+          else if(msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
             localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
             setShowChangelog(true);
           }
