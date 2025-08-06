@@ -17,9 +17,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [platform]: Added serialNumber validation in registerDevice method.
 - [endpoint]: Removed static MatterbridgeEndpoint.bridgeMode.
 - [endpoint]: Removed BasicInformationServer remap to BridgedDeviceBasicInformationServer in MatterbridgeEndpoint.
-- [platform]: Added BasicInformationServer remap to BridgedDeviceBasicInformationServer in Platform when needed.
+- [platform]: Added BasicInformationServer remap to BridgedDeviceBasicInformationServer in MatterbridgePlatform registerDevice method when needed (bridgeMode = `bridge` and DynamicPlatform in `childbridge` mode).
 - [frontend]: Bumped `frontend` version to 2.7.3.
 - [frontend]: Added frontend version to MatterbridgeInformation. It triggers the page reload message on the Home page when updated.
+- [frontend]: Removed the sponsor badge. Added star and sponsor icons buttons.
 
 ### Changed
 
