@@ -139,7 +139,7 @@ function Home() {
             </div>
           </div>
         }
-        {/* Show changelog page on MMatterbridge updates */}
+        {/* Show changelog page on Matterbridge updates */}
         {showChangelog &&
           <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader">
