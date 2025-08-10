@@ -8,6 +8,36 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.2.1] - 2025-08-10
+
+### Added
+
+- [platform]: Added uniqueId validation in registerDevice method. It prevents to register a device if the implementation didn't call createDefaultBasicInformationClusterServer() or createDefaultBridgedDeviceBasicInformationClusterServer().
+- [platform]: Added deviceName validation in registerDevice method.
+- [platform]: Added serialNumber validation in registerDevice method.
+- [endpoint]: Removed static MatterbridgeEndpoint.bridgeMode.
+- [endpoint]: Removed BasicInformationServer remap to BridgedDeviceBasicInformationServer in MatterbridgeEndpoint.
+- [platform]: Added BasicInformationServer remap to BridgedDeviceBasicInformationServer in MatterbridgePlatform registerDevice method when needed (bridgeMode = `bridge` and platform type = `DynamicPlatform` in `childbridge` mode).
+- [frontend]: Bumped `frontend` version to 2.7.3.
+- [frontend]: Added frontend version to MatterbridgeInformation. It triggers the page reload message on the Home page when updated.
+- [frontend]: Removed the sponsor badge. Added star and sponsor icons buttons.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [matter.js]: Bumped `matter.js` to 0.15.3. Thanks matter.js!
+- [matter.js]: Bumped `typescript` to 5.9.2.
+
+### Fixed
+
+- [frontend]: Fixed pointer on Discord icon.
+- [deepcopy]: Fixed Date test case to use a specific UTC timestamp. It was failing on different timezones.
+- [frontend]: Fixed new Matterbridge version message on the Home page.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.2.0] - 2025-08-01
 
 ### Breaking Changes

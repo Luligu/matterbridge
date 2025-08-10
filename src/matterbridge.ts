@@ -189,7 +189,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   // Cleanup
   public hasCleanupStarted = false;
   private initialized = false;
-  private execRunningCount = 0;
   private startMatterInterval: NodeJS.Timeout | undefined;
   private startMatterIntervalMs = 1000;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
@@ -977,7 +976,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Start the matterbridge in mode test
     if (hasParameter('test')) {
       this.bridgeMode = 'bridge';
-      MatterbridgeEndpoint.bridgeMode = 'bridge';
       return;
     }
 
@@ -997,7 +995,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Start matterbridge in bridge mode
     if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
       this.bridgeMode = 'bridge';
-      MatterbridgeEndpoint.bridgeMode = 'bridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startBridge();
       return;
@@ -1006,7 +1003,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Start matterbridge in childbridge mode
     if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
       this.bridgeMode = 'childbridge';
-      MatterbridgeEndpoint.bridgeMode = 'childbridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startChildbridge();
       return;
@@ -1186,31 +1182,27 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (this.nodeContext) this.globalModulesDirectory = this.matterbridgeInformation.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
     if (this.globalModulesDirectory === '') {
       // First run of Matterbridge so the node storage is empty
+      this.log.debug(`Getting global node_modules directory...`);
       try {
         const { getGlobalNodeModules } = await import('./utils/network.js');
-        this.execRunningCount++;
         this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
-        this.execRunningCount--;
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
       } catch (error) {
-        // istanbul ignore next
         this.log.error(`Error getting global node_modules directory: ${error}`);
       }
-    } else this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-    /* removed cause is too expensive for the shelly board and not really needed. Why should the globalModulesDirectory change?
-    else {
-      this.getGlobalNodeModules()
-        .then(async (globalModulesDirectory) => {
-          this.globalModulesDirectory = globalModulesDirectory;
-          this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory;
-          this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-          await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
-        })
-        .catch((error) => {
-          this.log.error(`Error getting global node_modules directory: ${error}`);
-        });
-    }*/
+    } else {
+      // The global node_modules directory is already set in the node storage and we check if it is still valid
+      this.log.debug(`Checking global node_modules directory: ${this.globalModulesDirectory}`);
+      try {
+        const { getGlobalNodeModules } = await import('./utils/network.js');
+        this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
+        this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+        await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
+      } catch (error) {
+        this.log.error(`Error checking global node_modules directory: ${error}`);
+      }
+    }
 
     // Matterbridge version
     const packageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));

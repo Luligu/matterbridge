@@ -17,6 +17,11 @@ on:
   # Allow manual dispatch and trigger from other workflows
   workflow_dispatch:
 
+# Cancel previous runs when a new one is triggered
+concurrency:
+  group: docker-build-main
+  cancel-in-progress: true
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest

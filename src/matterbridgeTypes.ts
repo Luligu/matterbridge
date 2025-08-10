@@ -130,6 +130,7 @@ export interface MatterbridgeInformation {
   matterbridgeManualPairingCode: string | undefined;
   matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
   matterbridgeSessionInformations: SanitizedSession[] | undefined;
+  frontendVersion?: string;
   bridgeMode: string;
   restartMode: string;
   virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';

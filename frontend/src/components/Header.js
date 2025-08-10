@@ -6,6 +6,8 @@ import { Link } from 'react-router';
 
 // @mui
 import { Tooltip, IconButton, Menu, MenuItem, Divider, ListItemIcon, ListItemText } from '@mui/material';
+
+// @mui/icons-material
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
@@ -18,6 +20,8 @@ import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import BlockIcon from '@mui/icons-material/Block';
 import ViewHeadlineIcon from '@mui/icons-material/ViewHeadline';
+import StarIcon from '@mui/icons-material/Star';
+import Favorite from '@mui/icons-material/Favorite';
 
 // Frontend
 // import { sendCommandToMatterbridge } from './sendApiCommand';
@@ -63,6 +67,10 @@ function Header() {
 
   const handleDiscordLogoClick = () => {
     window.open(`https://discord.gg/QX58CDe6hd`, '_blank');
+  };
+
+  const handleStarClick = () => {
+    window.open('https://github.com/Luligu/matterbridge', '_blank');
   };
 
   const handleUpdateClick = () => {
@@ -344,11 +352,11 @@ function Header() {
         </nav>
       </div>
       <div className="sub-header">
-        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
+        {/*settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
           <Tooltip title="Sponsor Matterbridge and its plugins">
             <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span>
           </Tooltip>
-        }
+        */}
         {!settings.matterbridgeInformation.readOnly && update &&
           <Tooltip title="New Matterbridge version available, click to install">
             <span className="status-warning" onClick={handleUpdateClick}>
@@ -399,48 +407,62 @@ function Header() {
       <div className="sub-header" style={{ gap: '5px' }}>
         {settings.matterbridgeInformation.readOnly === false ? (
           <Tooltip title="Matterbridge discord group">
-            <img src="discord.svg" alt="Discord Logo" style={{ height: '25px' }} onClick={handleDiscordLogoClick}/>
+            <img src="discord.svg" alt="Discord Logo" style={{ cursor: 'pointer', height: '25px' }} onClick={handleDiscordLogoClick}/>
+          </Tooltip>
+        ) : null}
+        {settings.matterbridgeInformation.readOnly === false ? (
+          <Tooltip title="Give a star to Matterbridge">
+            <IconButton style={{ color: '#FFD700', margin: '0', padding: '0' }} onClick={handleStarClick}>
+              <StarIcon  />
+            </IconButton>
+          </Tooltip>
+        ) : null}
+        {settings.matterbridgeInformation.readOnly === false ? (
+          <Tooltip title="Sponsor Matterbridge">
+            <IconButton style={{ color: '#b6409c', margin: '0', padding: '0' }} onClick={handleSponsorClick}>
+              <Favorite  />
+            </IconButton>
           </Tooltip>
         ) : null}
         <Tooltip title="Matterbridge help">
-          <IconButton onClick={handleHelpClick}>
-            <HelpOutlineIcon style={{ color: 'var(--main-icon-color)' }} />
+          <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleHelpClick}>
+            <HelpOutlineIcon  />
           </IconButton>
         </Tooltip>
         <Tooltip title="Matterbridge changelog">
-          <IconButton onClick={handleChangelogClick}>
-            <AnnouncementOutlinedIcon style={{ color: 'var(--main-icon-color)' }} />
+          <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleChangelogClick}>
+            <AnnouncementOutlinedIcon  />
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
           <Tooltip title="Update matterbridge to latest version">
-            <IconButton style={{ color: update ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleUpdateClick}>
+            <IconButton style={{ color: update ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
         }
         {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate &&
           <Tooltip title="Shelly system update">
-            <IconButton style={{ color: 'var(--primary-color)' }} onClick={handleShellySystemUpdateClick}>
+            <IconButton style={{ color: 'var(--primary-color)', margin: '0', marginLeft: '5px', padding: '0px' }} onClick={handleShellySystemUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
         }
         {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellyMainUpdate &&
           <Tooltip title="Shelly software update">
-            <IconButton style={{ color: 'var(--primary-color)' }} onClick={handleShellyMainUpdateClick}>
+            <IconButton style={{ color: 'var(--primary-color)', margin: '0', marginLeft: '5px', padding: '0px' }} onClick={handleShellyMainUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
         }
         <Tooltip title="Restart matterbridge">
-          <IconButton style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleRestartClick}>
+          <IconButton style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0px' }} onClick={handleRestartClick}>
             <RestartAltIcon />
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation.restartMode === '' ? (
           <Tooltip title="Shut down matterbridge">
-            <IconButton style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)' }} onClick={handleShutdownClick}>
+            <IconButton style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0px' }} onClick={handleShutdownClick}>
               <PowerSettingsNewIcon />
             </IconButton>
           </Tooltip>

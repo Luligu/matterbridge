@@ -1,0 +1,86 @@
+title: Matterbridge
+description: >-
+  Matterbridge is a Matter plugin manager that allows you to have all your 
+  Matter devices up and running in minutes without dealing with complex pairing processes.
+
+baseurl: '/matterbridge'
+url: 'https://luligu.github.io'
+
+author:
+  name: Luligu
+  email:
+  github: Luligu
+
+repository: Luligu/matterbridge
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# GitHub Pages specific settings
+github:
+  repository_url: https://github.com/Luligu/matterbridge
+
+# Include and exclude files
+include:
+  - _pages
+exclude:
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - tsconfig*.json
+  - jest.config.js
+  - eslint.config.js
+  - prettier.config.js
+  - vite.config.ts
+  - '*.test.ts'
+  - coverage/
+  - dist/
+  - src/
+  - test/
+  - frontend/
+  - heap_profile/
+  - jest/
+  - systemd/
+  - vitest/
+  - bin/
+  - docker/
+
+# Collections
+collections:
+  pages:
+    output: true
+    permalink: /:name/
+
+# Default front matter
+defaults:
+  - scope:
+      path: ''
+      type: 'pages'
+    values:
+      layout: 'page'
+  - scope:
+      path: ''
+    values:
+      layout: 'default'
+
+# SEO settings
+twitter:
+  username:
+  card: summary_large_image
+
+social:
+  name: Matterbridge
+  links:
+    - https://github.com/Luligu/matterbridge
+    - https://www.npmjs.com/package/matterbridge
+    - https://hub.docker.com/r/luligu/matterbridge
+
+# Logo and favicon
+logo: matterbridge.svg

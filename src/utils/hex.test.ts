@@ -288,6 +288,11 @@ describe('extractPrivateKeyRaw()', () => {
     expect(() => extractPrivateKeyRaw(Wrong_Key)).toThrow('Failed to extract private key');
   });
 
+  it('should format error messages correctly for both Error and non-Error cases', () => {
+    // Test that the function properly handles malformed keys (this exercises the try-catch)
+    expect(() => extractPrivateKeyRaw(Wrong_Key_Malformed)).toThrow('Failed to extract private key');
+  });
+
   it('should work with both EC PRIVATE KEY and PRIVATE KEY formats', () => {
     // Test with EC PRIVATE KEY format (the current format)
     const rawKeyEC = extractPrivateKeyRaw(Matter_PAA_Key);

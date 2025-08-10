@@ -4,7 +4,7 @@
  * @file copyDirectory.ts
  * @author Luca Liguori
  * @created 2025-02-16
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -49,7 +49,7 @@ export async function copyDirectory(srcDir: string, destDir: string): Promise<bo
   if (srcDir === destDir) {
     throw new Error('Source and destination directories must be different.');
   }
-  const log = new AnsiLogger({ logName: 'Archive', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
+  const log = new AnsiLogger({ logName: 'CopyDirectory', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
   const fs = await import('node:fs').then((mod) => mod.promises);
   const path = await import('node:path');
