@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./
 COPY ./src ./src
+COPY ./frontend/package.json ./frontend/package.json
 COPY ./frontend/build ./frontend/build
 COPY ./bin ./bin
 RUN npm ci && \

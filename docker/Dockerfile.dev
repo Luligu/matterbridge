@@ -12,6 +12,7 @@ RUN apt-get update && \
 WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
 COPY ./src ./src
+COPY ./frontend/package.json ./frontend/package.json
 COPY ./frontend/build ./frontend/build
 COPY ./bin ./bin
 RUN npm ci && npm run build && npm link 
