@@ -14,6 +14,7 @@ RUN apt update && \
 WORKDIR /matterbridge
 COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
 COPY ./src ./src
+COPY ./frontend/package.json ./frontend/package.json
 COPY ./frontend/build ./frontend/build
 COPY ./bin ./bin
 RUN npm ci && \
