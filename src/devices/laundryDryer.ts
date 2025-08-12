@@ -32,7 +32,8 @@ import { LaundryDryerControlsServer } from '@matter/main/behaviors/laundry-dryer
 import { laundryDryer, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
-import { MatterbridgeLaundryWasherModeServer, MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './laundryWasher.js';
+import { MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';
+import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
 
 export class LaundryDryer extends MatterbridgeEndpoint {
   /**

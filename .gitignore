@@ -21,3 +21,4 @@ temp/
 heap_profile
 TODO.md
 crypto
+docs/Matter specifications/*.txt

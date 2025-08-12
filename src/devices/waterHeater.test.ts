@@ -17,10 +17,10 @@ import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { Identify, PowerSource, Thermostat, WaterHeaterManagement } from '@matter/main/clusters';
 import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } from '@matter/node/behaviors';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.ts';
-import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.ts';
-import { MatterbridgeThermostatServer } from '../matterbridgeBehaviors.ts';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.ts';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.js';
+import { MatterbridgeThermostatServer } from '../matterbridgeBehaviors.js';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

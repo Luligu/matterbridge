@@ -23,7 +23,7 @@ import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { inspectError } from '../utils/error.js';
 
 import { Dishwasher, MatterbridgeDishwasherModeServer } from './dishwasher.js';
-import { MatterbridgeNumberTemperatureControlServer } from './laundryWasher.js';
+import { MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

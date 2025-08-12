@@ -21,8 +21,9 @@ import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/main/
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { LaundryDryer } from './laundryDryer.ts';
-import { MatterbridgeLaundryWasherModeServer, MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './laundryWasher.ts';
+import { LaundryDryer } from './laundryDryer.js';
+import { MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';
+import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
