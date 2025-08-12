@@ -10,6 +10,16 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.2.3] - 2025-08-??
 
+### Added
+
+- [Oven]: Added Oven class and Jest test. It is not supported by the Home app.
+- [MicrowaveOven]: Added MicrowaveOven class and Jest test. It is not supported by the Home app.
+- [Matter]: Added Matter Specification Version 1.4 pdf files.
+
+### Changed
+
+- [package]: Updated dependencies.
+
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
