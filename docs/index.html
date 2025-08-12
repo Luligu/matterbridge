@@ -545,12 +545,20 @@
                 <h2>Trusted by the Community</h2>
                 <div class="stats-grid">
                     <div class="stat-item">
-                        <h3>15K+</h3>
-                        <p>NPM Downloads</p>
+                        <h3 id="npm-total-downloads">—</h3>
+                        <p>Total NPM Downloads</p>
                     </div>
                     <div class="stat-item">
-                        <h3>1.2K+</h3>
+                        <h3 id="npm-downloads">1.9K/wk</h3>
+                        <p>NPM Downloads (last week)</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3 id="github-stars">509</h3>
                         <p>GitHub Stars</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3 id="docker-pulls">—</h3>
+                        <p>Docker Pulls</p>
                     </div>
                     <div class="stat-item">
                         <h3>10+</h3>
@@ -705,6 +713,75 @@
     </footer>
 
     <script>
+        // Fetch dynamic stats for npm downloads (last week) and GitHub stars
+        (async () => {
+            try {
+                const npmResp = await fetch('https://api.npmjs.org/downloads/point/last-week/matterbridge');
+                if (npmResp.ok) {
+                    const npmData = await npmResp.json();
+                    const dl = npmData.downloads;
+                    const formatted = dl > 1000 ? (dl/1000).toFixed(1).replace(/\.0$/,'') + 'K' : dl.toString();
+                    const el = document.getElementById('npm-downloads');
+                    if (el) el.textContent = formatted + '/wk';
+                }
+            } catch(e) { /* silent */ }
+            try {
+                // Fetch full range starting from 2023-01-01 (approx project growth) to today for total downloads
+                const today = new Date();
+                const end = today.toISOString().slice(0,10);
+                const rangeResp = await fetch(`https://api.npmjs.org/downloads/range/2023-01-01:${end}/matterbridge`);
+                if (rangeResp.ok) {
+                    const rangeData = await rangeResp.json();
+                    if (Array.isArray(rangeData.downloads)) {
+                        const total = rangeData.downloads.reduce((acc, d) => acc + (d.downloads||0), 0);
+                        const formattedTotal = total >= 1_000_000 ? (total/1_000_000).toFixed(1).replace(/\.0$/,'') + 'M' : total >= 1000 ? (total/1000).toFixed(1).replace(/\.0$/,'') + 'K' : total.toString();
+                        const totalEl = document.getElementById('npm-total-downloads');
+                        if (totalEl) totalEl.textContent = formattedTotal;
+                    }
+                }
+            } catch(e) { /* silent */ }
+            try {
+                const ghResp = await fetch('https://api.github.com/repos/Luligu/matterbridge');
+                if (ghResp.ok) {
+                    const ghData = await ghResp.json();
+                    const stars = ghData.stargazers_count;
+                    const el = document.getElementById('github-stars');
+                    if (el) el.textContent = stars;
+                }
+            } catch(e) { /* silent */ }
+            async function updateDockerPulls() {
+                const pullsEl = document.getElementById('docker-pulls');
+                if (!pullsEl) return;
+                // Helper formatter
+                const fmt = n => n >= 1_000_000 ? (n/1_000_000).toFixed(1).replace(/\.0$/,'') + 'M' : n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,'') + 'K' : n.toString();
+                // 1) Try Docker Hub API (may be blocked by CORS on some browsers)
+                try {
+                    const dockerResp = await fetch('https://hub.docker.com/v2/repositories/luligu/matterbridge');
+                    if (dockerResp.ok) {
+                        const dockerData = await dockerResp.json();
+                        if (typeof dockerData.pull_count === 'number') {
+                            pullsEl.textContent = fmt(dockerData.pull_count);
+                            return;
+                        }
+                    }
+                } catch(_) { /* continue to fallback */ }
+                // 2) Fallback to shields.io JSON badge (always CORS enabled)
+                try {
+                    const shieldResp = await fetch('https://img.shields.io/docker/pulls/luligu/matterbridge.json');
+                    if (shieldResp.ok) {
+                        const shieldData = await shieldResp.json();
+                        if (shieldData && shieldData.value) {
+                            // shieldData.value already formatted (e.g., 1.2M) but normalize to our style
+                            pullsEl.textContent = shieldData.value.replace(/([0-9]+\.[0-9])0M/,'$1M');
+                            return;
+                        }
+                    }
+                } catch(_) { /* ignore */ }
+                // 3) Give up
+                pullsEl.textContent = 'n/a';
+            }
+            updateDockerPulls();
+        })();
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
