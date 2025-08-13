@@ -579,9 +579,27 @@
                 
                 <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">NPM Installation</h3>
                 <div class="code-block">npm install -g matterbridge --omit=dev</div>
+                <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
+                    On Linux/macOS you may need <code>sudo npm install -g matterbridge --omit=dev</code>. After installation start it manually with <code>matterbridge</code>.
+                </p>
                 
                 <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Docker Installation</h3>
                 <div class="code-block">docker run -it --name matterbridge -v matterbridge:/root/.matterbridge -p 8283:8283 --network host luligu/matterbridge:latest</div>
+                <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
+                    The Docker container starts Matterbridge automatically.
+                </p>
+                <h3 style="text-align: center; margin: 3rem 0 1rem; color: var(--primary-color);">Access the Frontend</h3>
+                <p style="text-align:center; font-size:1rem; color: var(--text-secondary); max-width:800px; margin:0 auto 1.25rem;">
+                    After starting Matterbridge (via Node.js or Docker) the web frontend is available by default on port <code>8283</code>.
+                </p>
+                <div class="code-block" style="line-height:1.4;">
+localhost:8283<br>
+http://&lt;your-ipv4-address&gt;:8283<br>
+http://[&lt;your-ipv6-address&gt;]:8283
+                </div>
+                <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:800px; margin:0.75rem auto;">
+                    Change the port with <code>-frontend &lt;port&gt;</code> (e.g. <code>matterbridge -frontend 8383</code>). Enable HTTPS with <code>-ssl</code>. For mutual TLS add <code>-mtls</code>. See the <a href="https://github.com/Luligu/matterbridge/blob/main/README.md#frontend" style="color: var(--primary-color); text-decoration:none;">Frontend docs</a> for certificate details.
+                </p>
                 
                 <div style="text-align: center; margin-top: 2rem;">
                     <a href="https://github.com/Luligu/matterbridge/blob/main/README.md" class="btn btn-primary">📖 Full Installation Guide</a>
