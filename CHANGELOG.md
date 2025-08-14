@@ -14,6 +14,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [Oven]: Added Oven class and Jest test. It is not supported by the Home app.
 - [MicrowaveOven]: Added MicrowaveOven class and Jest test. It is not supported by the Home app.
+- [Cooktop]: Added Cooktop class and Jest test. It is not supported by the Home app.
 - [Matter]: Added Matter Specification Version 1.4 pdf files.
 
 ### Changed

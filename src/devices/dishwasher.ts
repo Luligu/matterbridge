@@ -24,7 +24,6 @@
 // Imports from @matter
 import { MaybePromise } from '@matter/main';
 import { OperationalState } from '@matter/main/clusters/operational-state';
-import { TemperatureControl } from '@matter/main/clusters/temperature-control';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 import { DishwasherModeServer } from '@matter/main/behaviors/dishwasher-mode';
 import { DishwasherAlarmServer } from '@matter/main/behaviors/dishwasher-alarm';
@@ -35,7 +34,7 @@ import { dishwasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
 
-import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
+import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 export class Dishwasher extends MatterbridgeEndpoint {
   /**
@@ -77,45 +76,9 @@ export class Dishwasher extends MatterbridgeEndpoint {
     this.createDeadFrontOnOffClusterServer(true);
     this.createDefaultDishwasherModeClusterServer(currentMode, supportedModes);
     this.createDefaultDishwasherAlarmClusterServer();
-    if (temperatureSetpoint) this.createNumberTemperatureControlClusterServer(temperatureSetpoint, minTemperature, maxTemperature, step);
-    else this.createLevelTemperatureControlClusterServer(selectedTemperatureLevel, supportedTemperatureLevels);
+    if (temperatureSetpoint) createNumberTemperatureControlClusterServer(this, temperatureSetpoint, minTemperature, maxTemperature, step);
+    else createLevelTemperatureControlClusterServer(this, selectedTemperatureLevel, supportedTemperatureLevels);
     this.createDefaultOperationalStateClusterServer(operationalState);
-  }
-
-  /**
-   * Creates a TemperatureControl Cluster Server with feature TemperatureLevel.
-   *
-   * @param {number} selectedTemperatureLevel - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
-   * @param {string[]} supportedTemperatureLevels - The supported temperature levels. Defaults to ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°'].
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createLevelTemperatureControlClusterServer(selectedTemperatureLevel: number = 1, supportedTemperatureLevels: string[] = ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']): this {
-    this.behaviors.require(MatterbridgeLevelTemperatureControlServer.with(TemperatureControl.Feature.TemperatureLevel), {
-      selectedTemperatureLevel,
-      supportedTemperatureLevels,
-    });
-    return this;
-  }
-
-  /**
-   * Creates a TemperatureControl Cluster Server with features TemperatureNumber and TemperatureStep.
-   *
-   * @param {number} temperatureSetpoint - The temperature setpoint * 100. Defaults to 40 * 100 (which corresponds to 40°C).
-   * @param {number} minTemperature - The minimum temperature * 100. Defaults to 30 * 100 (which corresponds to 30°C). Fixed attribute.
-   * @param {number} maxTemperature - The maximum temperature * 100. Defaults to 60 * 100 (which corresponds to 60°C). Fixed attribute.
-   * @param {number} [step] - The step size for temperature changes. Defaults to 10 * 100 (which corresponds to 10°C). Fixed attribute.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createNumberTemperatureControlClusterServer(temperatureSetpoint: number = 40 * 100, minTemperature: number = 30 * 100, maxTemperature: number = 60 * 100, step: number = 10 * 100): this {
-    this.behaviors.require(MatterbridgeNumberTemperatureControlServer.with(TemperatureControl.Feature.TemperatureNumber, TemperatureControl.Feature.TemperatureStep), {
-      temperatureSetpoint,
-      minTemperature, // Fixed attribute
-      maxTemperature, // Fixed attribute
-      step, // Fixed attribute
-    });
-    return this;
   }
 
   /**

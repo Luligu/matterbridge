@@ -23,6 +23,7 @@
 
 // Imports from @matter
 import { MaybePromise } from '@matter/main';
+import { Semtag } from '@matter/types';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 import { OvenMode } from '@matter/main/clusters/oven-mode';
 import { OperationalState } from '@matter/main/clusters/operational-state';
@@ -33,7 +34,6 @@ import { OvenCavityOperationalStateServer } from '@matter/main/behaviors/oven-ca
 import { oven, powerSource, temperatureControlledCabinetHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
-import { Semtag } from '../matter/types.js';
 
 import { createLevelTemperatureControlClusterServer } from './temperatureControl.js';
 
@@ -56,6 +56,7 @@ export class Oven extends MatterbridgeEndpoint {
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Oven');
     this.createDefaultPowerSourceWiredClusterServer();
+    this.addFixedLabel('composed', 'Oven');
   }
 
   /**
