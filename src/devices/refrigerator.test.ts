@@ -14,8 +14,8 @@ import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFor
 import { MdnsService } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { RootEndpoint } from '@matter/main/endpoints/root';
-import { OvenCavityOperationalStateServer, OvenModeServer, RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/main/behaviors';
-import { Identify, OnOff, OperationalState, OvenCavityOperationalState, OvenMode, PowerSource, RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters';
+import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/main/behaviors';
+import { Identify, OnOff, PowerSource, RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
