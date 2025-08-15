@@ -357,6 +357,57 @@ The schema file is loaded from the root of the plugin package. The file must be 
 
 The properties of the schema file shall correspond to the properties of the config file.
 
+# Frequently asked questions
+
+## Why plugins cannot install matterbridge as a dependency, devDependency or peerDependency
+
+There must be one and only one instance of Matterbridge and matter.js in the node_modules directory.
+
+### What happens when matterbridge or matter.js are present like a devDependencies
+
+The plugins can be globally installed in different ways:
+
+- from npm (all devDependencies are installed in node_modules if the plugin is not correctly published)
+- from a tarball (all devDependencies are installed in node_modules if the tarball is not correctly built)
+- from a local path (devDependencies are always installed in node_modules!)
+
+In all these cases the devDependencies are always installed by npm and show up in the plugins `node_modules`:
+
+- npm install -g ./yourplugin
+- npm install -g git+https://github.com/you/yourplugin.git
+- npm install -g yourplugin
+
+In the first 2 cases the devDependeincies are always installed in node_modules!
+
+In the last (most dangerous case) they are installed when the user forgets to add --omit=dev or doesn't have NODE_ENV=production.
+
+This is also the reason why to be safe 100% all official plugins are published for production removing also devDependencies from package.json.
+
+I also lock the dependencies with npm shrinkwrap cause npm installs always the latest versions that mach your range in package.json but sometimes this just breaks the plugin. This permits to be sure that the user host machine has exactly the same dependencies you coded your plugin with.
+
+### The technical reason we cannot have matterbridge or @matter in the plugin node_modules.
+
+Module Resolution in Matterbridge Plugin System.
+When Matterbridge loads plugins on demand as ESM modules, the module resolution follows Node.js's standard module resolution algorithm. Here's how it works:
+
+**1. Plugin Loading Process**
+From the code in pluginManager.ts (lines 628-632), Matterbridge:
+
+Resolves the plugin's main entry point from its package.json
+Converts the file path to a URL using pathToFileURL()
+Uses dynamic import: await import(pluginUrl.href)
+
+**2. Module Resolution Priority**
+When the plugin code runs import statements, Node.js follows this resolution order:
+
+Plugin's local node_modules - Checked first
+Parent directories - Walks up the directory tree looking for node_modules
+Matterbridge's node_modules - Only reached if not found in plugin's dependencies
+
+**3. Key Behavior**
+Plugin's node_modules takes precedence - If a package exists in the plugin's own node_modules, that version will be used.
+Matterbridge's node_modules is used as fallback.
+
 # Contribution Guidelines
 
 Thank you for your interest in contributing to my project!
