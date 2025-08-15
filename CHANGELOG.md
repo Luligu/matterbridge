@@ -12,10 +12,12 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [Oven]: Added Oven class and Jest test. It is not supported by the Home app.
-- [MicrowaveOven]: Added MicrowaveOven class and Jest test. It is not supported by the Home app.
-- [Cooktop]: Added Cooktop class and Jest test. It is not supported by the Home app.
-- [Matter]: Added Matter Specification Version 1.4 pdf files.
+- [Oven]: Added Oven() class and Jest test. It is not supported by the Home app.
+- [MicrowaveOven]: Added MicrowaveOven() class and Jest test. It is not supported by the Home app.
+- [Cooktop]: Added Cooktop() class and Jest test. It is not supported by the Home app.
+- [Refrigerator]: Added Refrigerator() class and Jest test. It is not supported by the Home app.
+- [Pages]: Added first draft of https://luligu.github.io/matterbridge.
+- [Matter]: Added Matter Specification Version 1.0, 1.1, 1.2, 1.3, 1.4 and 1.4.1 pdf files.
 
 ### Changed
 

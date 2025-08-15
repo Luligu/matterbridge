@@ -6,6 +6,7 @@ export * from './dishwasher.js';
 export * from './microwaveOven.js';
 export * from './oven.js';
 export * from './cooktop.js';
+export * from './refrigerator.js';
 
 export * from './waterHeater.js';
 export * from './evse.js';
