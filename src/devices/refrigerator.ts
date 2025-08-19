@@ -58,7 +58,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
   }
 
   /**
-   * Adds a Temperature Controlled Cabinet Cooler to the refrigerator.
+   * Adds a Level Temperature Controlled Cabinet Cooler to the refrigerator.
    *
    * @param {string} name - The name of the cabinet.
    * @param {Semtag[]} tagList - The tagList associated with the cabinet.
@@ -73,6 +73,18 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * @remarks
    * 13.4.1 A Temperature Controlled Cabinet Cooler is a device that provides a cooled space for chilling food.
    * It is typically installed within a refrigerator.
+   *
+   * Example usage with specific namespace tags:
+   * ```
+   *  refrigerator.addCabinet('Refrigerator Top', [
+   *    { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: 'Refrigerator Top' },
+   *    { mfgCode: null, namespaceId: RefrigeratorTag.Refrigerator.namespaceId, tag: RefrigeratorTag.Refrigerator.tag, label: RefrigeratorTag.Refrigerator.label },
+   *  ]);
+   *  refrigerator.addCabinet('Freezer Bottom', [
+   *    { mfgCode: null, namespaceId: PositionTag.Bottom.namespaceId, tag: PositionTag.Bottom.tag, label: 'Freezer Bottom' },
+   *    { mfgCode: null, namespaceId: RefrigeratorTag.Freezer.namespaceId, tag: RefrigeratorTag.Freezer.tag, label: RefrigeratorTag.Freezer.label },
+   *  ]);
+   * ```
    */
   addCabinet(
     name: string,

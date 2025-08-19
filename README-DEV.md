@@ -424,5 +424,5 @@ I warmly welcome contributions to this project! Whether it's reporting bugs, pro
 
 - Create a new pull request against the dev from my repository and I'll be glad to check it out
 - Be sure to follow the existing code style
-- Add unit tests for any new or changed functionality if possible
+- Add unit tests for any new or changed functionality if possible cause Matterbridge has a 100% test coverage.
 - In your pull request, do describe what your changes do and how they work
