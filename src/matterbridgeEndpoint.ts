@@ -2079,21 +2079,26 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultValveConfigurationAndControlClusterServer(valveState: ValveConfigurationAndControl.ValveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel: number = 0): this {
-    this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level), {
+    this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(
+      ValveConfigurationAndControl.Feature.Level,
+      ValveConfigurationAndControl.Feature.TimeSync
+    ), {
       currentState: valveState,
       targetState: valveState,
       openDuration: null,
       defaultOpenDuration: null, // Writable and persistent across restarts
       remainingDuration: null,
-      valveFault: { generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false },
+      valveFault: { generalFault: false, blocked: false, leaking: true, notConnected: false, shortCircuit: false, currentExceeded: false },
       // Feature.Level
       currentLevel: valveLevel,
       targetLevel: valveLevel,
       defaultOpenLevel: 100, // Writable and persistent across restarts
       levelStep: 1, // Fixed
+      autoCloseTime: 1755615628, // The UTC time when the valve will close, depending on value of the OpenDuration attribute (EpochS). Default is null.
     });
     return this;
   }
+
 
   /**
    * Creates the default PumpConfigurationAndControl cluster server with features ConstantSpeed.

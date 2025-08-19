@@ -346,7 +346,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
   }
 }
 
-export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level) {
+export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level, ValveConfigurationAndControl.Feature.TimeSync) {
   override open(request: ValveConfigurationAndControl.OpenRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -360,6 +360,8 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
     this.state.currentLevel = request.targetLevel ?? 100;
     this.state.openDuration = request.openDuration ?? this.state.defaultOpenDuration;
     if (this.state.openDuration === null) this.state.remainingDuration = null;
+    // else this.state.remainingDuration = request.openDuration;
+    if (request.openDuration) this.state.autoCloseTime = Math.floor((new Date().getTime() / 1000) + request.openDuration); // TlvEpochS (seconds since Unix epoch)
 
     // open is not implemented in matter.js
     // super.open(request);
