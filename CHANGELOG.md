@@ -8,7 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.2.3] - 2025-08-??
+## [3.2.3] - 2025-08-20
 
 ### Added
 
@@ -18,6 +18,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [Refrigerator]: Added Refrigerator() class and Jest test. It is not supported by the Home app.
 - [Pages]: Added first draft of https://luligu.github.io/matterbridge.
 - [Matter]: Added Matter Specification Version 1.0, 1.1, 1.2, 1.3, 1.4 and 1.4.1 pdf files.
+- [Development]: Improved README-DEV.md.
 
 ### Changed
 

@@ -288,6 +288,11 @@ All default cluster helpers are available as methods of MatterbridgeEndpoint.
 
 ## MatterbridgeEndpointOptions
 
+- @param {Semtag[]} [tagList] - The tagList of the endpoint.
+- @param {'server' | 'matter'} [mode] - The mode for the endpoint.
+- @param {string} [id] - The unique storage key for the endpoint. If not provided, a default key will be used.
+- @param {EndpointNumber} [number] - The endpoint number for the endpoint. If not provided, the endpoint will be created with the next available endpoint number.
+
 ```typescript
     const robot = new RoboticVacuumCleaner('Robot Vacuum', 'RVC1238777820', 'server');
 ```
@@ -297,6 +302,89 @@ In the above example we create a Rvc device type with its own server node.
 The mode=`server` property of MatterbridgeEndpointOptions, allows to create an independent (not bridged) Matter device with its server node. In this case the bridge mode is not relevant.
 
 The mode=`matter` property of MatterbridgeEndpointOptions, allows to create a (not bridged) Matter device that is added to the Matterbridge server node alongside the aggregator.
+
+## MatterbridgeEndpoint single class devices
+
+For the device types listed below there are single class provided to createa a fully functional device.
+
+For a working example refer to the 'matterbridge-example-dynamic-platform'.
+
+### Chapter 12. Robotic Device Types - Single class device types
+
+```typescript
+const robot = new RoboticVacuumCleaner('Robot Vacuum', 'RVC1238777820', 'server');
+```
+
+### Chapter 13. Appliances Device Types - Single class device types
+
+```typescript
+    this.laundryWasher = new LaundryWasher('Laundry Washer', 'LW1234567890');
+```
+
+```typescript
+    this.laundryDryer = new LaundryDryer('Laundry Dryer', 'LDW1235227890');
+```
+
+```typescript
+    this.dishwasher = new Dishwasher('Dishwasher', 'DW1234567890');
+```
+
+```typescript
+    this.extractorHood = new ExtractorHood('Extractor Hood', 'EH1234567893');
+```
+
+```typescript
+    this.microwaveOven = new MicrowaveOven('Microwave Oven', 'MO1234567893');
+```
+
+The Oven is always a composed device. You create the Oven and add one or more cabinet.
+
+```typescript
+    this.oven = new Oven('Oven', 'OV1234567890');
+    this.oven.addCabinet('Upper Cabinet', [{ mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label }]);
+```
+
+The Cooktop is always a composed device. You create the Cooktop and add one or more surface.
+
+```typescript
+    this.cooktop = new Cooktop('Cooktop', 'CT1234567890');
+    this.cooktop.addSurface('Surface Top Left', [
+      { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label },
+      { mfgCode: null, namespaceId: PositionTag.Left.namespaceId, tag: PositionTag.Left.tag, label: PositionTag.Left.label },
+    ]);
+```
+
+The Refrigerator is always a composed device. You create the Refrigerator and add one or more cabinet.
+
+```typescript
+    const refrigerator = new Refrigerator('Refrigerator', 'RE1234567890');
+    refrigerator.addCabinet('Refrigerator Top', [
+      { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: 'Refrigerator Top' },
+      { mfgCode: null, namespaceId: RefrigeratorTag.Refrigerator.namespaceId, tag: RefrigeratorTag.Refrigerator.tag, label: RefrigeratorTag.Refrigerator.label },
+    ]);
+```
+
+### Chapter 14. Energy Device Types - Single class device types
+
+```typescript
+const waterHeater = new WaterHeater('Water Heater', 'WH3456177820');
+```
+
+```typescript
+const evse = new Evse('Evse', 'EV3456127820');
+```
+
+```typescript
+const solarPower = new SolarPower('Solar Power', 'SP3456127821');
+```
+
+```typescript
+const batteryStorage = new BatteryStorage('Battery Storage', 'BS3456127822');
+```
+
+```typescript
+const heatPump = new HeatPump('Heat Pump', 'HP1234567890');
+```
 
 ## Plugin config file
 
