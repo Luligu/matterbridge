@@ -19,6 +19,8 @@ import { Identify } from '@matter/main/clusters/identify';
 import { PowerSource } from '@matter/main/clusters/power-source';
 import { ActivatedCarbonFilterMonitoring } from '@matter/main/clusters/activated-carbon-filter-monitoring';
 import { HepaFilterMonitoring } from '@matter/main/clusters/hepa-filter-monitoring';
+import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
+import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
@@ -26,9 +28,7 @@ import { ExtractorHood } from './extractorHood.js';
 import { FanControl } from '@matter/main/clusters';
 import { inspectError } from '../utils/error.js';
 import { invokeBehaviorCommand, invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';
-import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
 import { MatterbridgeActivatedCarbonFilterMonitoringServer, MatterbridgeHepaFilterMonitoringServer } from '../matterbridgeBehaviors.js';
-import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 import { wait } from '../utils/wait.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;

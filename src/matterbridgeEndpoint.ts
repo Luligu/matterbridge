@@ -248,6 +248,10 @@ export interface MatterbridgeEndpointCommands {
   // Temperature Control
   setTemperature: HandlerFunction;
 
+  // Microwave Oven Control
+  setCookingParameters: HandlerFunction;
+  addMoreTime: HandlerFunction;
+
   // Resource Monitoring
   resetCondition: HandlerFunction;
 }

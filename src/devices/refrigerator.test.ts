@@ -1,7 +1,7 @@
-// src/dishwasher.test.ts
+// src/refrigerator.test.ts
 
-const MATTER_PORT = 6022;
-const NAME = 'Dishwasher';
+const MATTER_PORT = 6026;
+const NAME = 'Refrigerator';
 const HOMEDIR = path.join('jest', NAME);
 
 import { rmSync } from 'node:fs';
@@ -10,20 +10,19 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 // matter.js
-import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
+import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, PositionTag } from '@matter/main';
 import { MdnsService } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { RootEndpoint } from '@matter/main/endpoints/root';
-import { DishwasherModeServer, TemperatureControlServer } from '@matter/main/behaviors';
-import { DishwasherAlarm, DishwasherMode, Identify, OnOff, OperationalState, PowerSource, TemperatureControl } from '@matter/main/clusters';
+import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/main/behaviors';
+import { Identify, OnOff, PowerSource, RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { inspectError } from '../utils/error.js';
 
-import { Dishwasher, MatterbridgeDishwasherModeServer } from './dishwasher.js';
-import { MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
+import { MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from './refrigerator.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -56,7 +55,9 @@ describe('Matterbridge ' + NAME, () => {
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
-  let device: MatterbridgeEndpoint;
+  let device: Refrigerator;
+  let cabinet1: MatterbridgeEndpoint;
+  let cabinet2: MatterbridgeEndpoint;
 
   beforeAll(async () => {
     // Setup the matter environment
@@ -123,20 +124,29 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator.lifecycle.isReady).toBeTruthy();
   });
 
-  test('create a dishwasher device', async () => {
-    device = new Dishwasher('Dishwasher Test Device', 'DW123456');
+  test('create a refrigerator device', async () => {
+    device = new Refrigerator('Refrigerator Test Device', 'RF123456');
     expect(device).toBeDefined();
-    expect(device.id).toBe('DishwasherTestDevice-DW123456');
+    expect(device.id).toBe('RefrigeratorTestDevice-RF123456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherAlarm.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeFalsy();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'fixedLabel']);
+
+    cabinet1 = device.addCabinet('Refrigerator Test Cabinet Top', [{ mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label }]);
+    expect(cabinet1).toBeDefined();
+    expect(cabinet1.id).toBe('RefrigeratorTestCabinetTop');
+    expect(cabinet1.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeTruthy();
+    expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'temperatureControl', 'refrigeratorAndTemperatureControlledCabinetMode', 'temperatureMeasurement']);
+
+    cabinet2 = device.addCabinet('Freezer Test Cabinet Bottom', [{ mfgCode: null, namespaceId: PositionTag.Bottom.namespaceId, tag: PositionTag.Bottom.tag, label: PositionTag.Bottom.label }]);
+    expect(cabinet2).toBeDefined();
+    expect(cabinet2.id).toBe('FreezerTestCabinetBottom');
+    expect(cabinet2.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeTruthy();
+    expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'temperatureControl', 'refrigeratorAndTemperatureControlledCabinetMode', 'temperatureMeasurement']);
   });
 
-  test('add a dishwasher device', async () => {
+  test('add a refrigerator device', async () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
     try {
@@ -145,13 +155,11 @@ describe('Matterbridge ' + NAME, () => {
       inspectError(device.log, `Error adding device ${device.deviceName}`, error);
       return;
     }
-    expect(server.parts.has('DishwasherTestDevice-DW123456')).toBeTruthy();
+    expect(server.parts.has('RefrigeratorTestDevice-RF123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDishwasherModeServer initialized: currentMode is 2`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80°`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer initialized`);
   });
 
   test('start the server node', async () => {
@@ -190,75 +198,67 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(72); // 72 attributes for the dishwasher device
+    expect(attributes.length).toBe(39); // 39 attributes for the oven device
   });
 
-  test('invoke MatterbridgeDishwasherModeServer commands', async () => {
-    expect(device.behaviors.has(DishwasherModeServer)).toBeTruthy();
-    expect(device.behaviors.has(MatterbridgeDishwasherModeServer)).toBeTruthy();
-    expect(device.behaviors.elementsOf(DishwasherModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect(device.behaviors.elementsOf(MatterbridgeDishwasherModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((device as any).state['dishwasherMode'].acceptedCommandList).toEqual([0]);
-    expect((device as any).state['dishwasherMode'].generatedCommandList).toEqual([1]);
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'onOff', 'off', {}); // Dead Front state
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'dishwasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `DishwasherModeServer: changeToMode called with invalid mode 0`);
-    jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'dishwasherMode', 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `ChangeToMode (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `DishwasherModeServer: changeToMode called with mode 1 => Light`);
+  test('cabinet1 forEachAttribute', async () => {
+    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    cabinet1.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      expect(clusterName).toBeDefined();
+      expect(typeof clusterName).toBe('string');
+
+      expect(clusterId).toBeDefined();
+      expect(typeof clusterId).toBe('number');
+      expect(clusterId).toBeGreaterThanOrEqual(1);
+
+      expect(attributeName).toBeDefined();
+      expect(typeof attributeName).toBe('string');
+
+      expect(attributeId).toBeDefined();
+      expect(typeof attributeId).toBe('number');
+      expect(attributeId).toBeGreaterThanOrEqual(0);
+      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+    });
+    expect(attributes.length).toBe(40); // 40 attributes for the cabinet1 device
   });
 
-  test('remove the laundry washer device', async () => {
-    expect(server).toBeDefined();
-    expect(device).toBeDefined();
-    await device.delete();
-    expect(server.parts.has('DishwasherTestDevice-DW123456')).toBeFalsy();
-    expect(server.parts.has(device)).toBeFalsy();
+  test('cabinet2 forEachAttribute', async () => {
+    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    cabinet2.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      expect(clusterName).toBeDefined();
+      expect(typeof clusterName).toBe('string');
+
+      expect(clusterId).toBeDefined();
+      expect(typeof clusterId).toBe('number');
+      expect(clusterId).toBeGreaterThanOrEqual(1);
+
+      expect(attributeName).toBeDefined();
+      expect(typeof attributeName).toBe('string');
+
+      expect(attributeId).toBeDefined();
+      expect(typeof attributeId).toBe('number');
+      expect(attributeId).toBeGreaterThanOrEqual(0);
+      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+    });
+    expect(attributes.length).toBe(40); // 40 attributes for the cabinet2 device
   });
 
-  test('create a dishwasher device with number temperature control', async () => {
-    device = new Dishwasher('Dishwasher Test Device', 'DW123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
-    expect(device).toBeDefined();
-    expect(device.id).toBe('DishwasherTestDevice-DW123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherAlarm.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
-  });
+  test('invoke MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer commands', async () => {
+    expect(cabinet1.behaviors.has(RefrigeratorAndTemperatureControlledCabinetModeServer)).toBeTruthy();
+    expect(cabinet1.behaviors.has(MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer)).toBeTruthy();
+    expect(cabinet1.behaviors.elementsOf(RefrigeratorAndTemperatureControlledCabinetModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect((cabinet1 as any).state['refrigeratorAndTemperatureControlledCabinetMode'].acceptedCommandList).toEqual([0]);
+    expect((cabinet1 as any).state['refrigeratorAndTemperatureControlledCabinetMode'].generatedCommandList).toEqual([1]);
 
-  test('add a dishwasher device with number temperature control', async () => {
-    expect(server).toBeDefined();
-    expect(device).toBeDefined();
-    await server.add(device);
-    expect(server.parts.has('DishwasherTestDevice-DW123456')).toBeTruthy();
-    expect(server.parts.has(device)).toBeTruthy();
-    expect(device.lifecycle.isReady).toBeTruthy();
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDishwasherModeServer initialized: currentMode is 2`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
-  });
-
-  test('invoke MatterbridgeNumberTemperatureControlServer commands', async () => {
-    expect(device.behaviors.has(TemperatureControlServer)).toBeTruthy();
-    expect(device.behaviors.has(MatterbridgeNumberTemperatureControlServer)).toBeTruthy();
-    expect(device.behaviors.elementsOf(TemperatureControlServer).commands.has('setTemperature')).toBeTruthy();
-    expect(device.behaviors.elementsOf(MatterbridgeNumberTemperatureControlServer).commands.has('setTemperature')).toBeTruthy();
-    expect((device.state['temperatureControl'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['temperatureControl'] as any).generatedCommandList).toEqual([]);
+    // Change to mode 2
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperature: 3 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature 3`);
+    await invokeBehaviorCommand(cabinet1, 'refrigeratorAndTemperatureControlledCabinetMode', 'changeToMode', { newMode: 2 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestCabinetTop.3) called with mode 2 = RapidCool`);
+
+    // Change to mode 15
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperature: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
+    await invokeBehaviorCommand(cabinet1, 'refrigeratorAndTemperatureControlledCabinetMode', 'changeToMode', { newMode: 15 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestCabinetTop.3) called with invalid mode 15`);
   });
 
   test('close the server node', async () => {

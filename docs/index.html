@@ -465,8 +465,11 @@
                     <a href="https://github.com/Luligu/matterbridge" class="btn btn-primary">
                         🚀 Get Started
                     </a>
-                    <a href="README.md" class="btn btn-secondary">
+                    <a href="https://github.com/Luligu/matterbridge/blob/main/README.md" class="btn btn-secondary">
                         📖 Documentation
+                    </a>
+                    <a href="specifications.html" class="btn btn-secondary">
+                        📚 Matter Specs
                     </a>
                     <a href="https://www.npmjs.com/package/matterbridge" class="btn btn-secondary">
                         📦 NPM Package
@@ -485,9 +488,10 @@
                 <a href="#features" class="nav-link">Features</a>
                 <a href="#installation" class="nav-link">Installation</a>
                 <a href="#plugins" class="nav-link">Plugins</a>
-                <a href="README-DEV.md" class="nav-link">Development</a>
-                <a href="README-DOCKER.md" class="nav-link">Docker</a>
-                <a href="README-SERVICE.md" class="nav-link">Service</a>
+                <a href="specifications.html" class="nav-link">Matter Specs</a>
+                <a href="https://github.com/Luligu/matterbridge/blob/main/README-DEV.md" class="nav-link">Development</a>
+                <a href="https://github.com/Luligu/matterbridge/blob/main/README-DOCKER.md" class="nav-link">Docker</a>
+                <a href="https://github.com/Luligu/matterbridge/blob/main/README-SERVICE.md" class="nav-link">Service</a>
                 <a href="https://discord.gg/QX58CDe6hd" class="nav-link">Discord</a>
                 <a href="https://github.com/Luligu/matterbridge/discussions" class="nav-link">Support</a>
             </div>
@@ -545,12 +549,20 @@
                 <h2>Trusted by the Community</h2>
                 <div class="stats-grid">
                     <div class="stat-item">
-                        <h3>15K+</h3>
-                        <p>NPM Downloads</p>
+                        <h3 id="npm-total-downloads">—</h3>
+                        <p>Total NPM Downloads</p>
                     </div>
                     <div class="stat-item">
-                        <h3>1.2K+</h3>
+                        <h3 id="npm-downloads">1.9K/wk</h3>
+                        <p>NPM Downloads (last week)</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3 id="github-stars">509</h3>
                         <p>GitHub Stars</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3 id="docker-pulls">—</h3>
+                        <p>Docker Pulls</p>
                     </div>
                     <div class="stat-item">
                         <h3>10+</h3>
@@ -571,12 +583,30 @@
                 
                 <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">NPM Installation</h3>
                 <div class="code-block">npm install -g matterbridge --omit=dev</div>
+                <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
+                    On Linux/macOS you may need <code>sudo npm install -g matterbridge --omit=dev</code>. After installation start it manually with <code>matterbridge</code>.
+                </p>
                 
                 <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Docker Installation</h3>
                 <div class="code-block">docker run -it --name matterbridge -v matterbridge:/root/.matterbridge -p 8283:8283 --network host luligu/matterbridge:latest</div>
+                <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
+                    The Docker container starts Matterbridge automatically.
+                </p>
+                <h3 style="text-align: center; margin: 3rem 0 1rem; color: var(--primary-color);">Access the Frontend</h3>
+                <p style="text-align:center; font-size:1rem; color: var(--text-secondary); max-width:800px; margin:0 auto 1.25rem;">
+                    After starting Matterbridge (via Node.js or Docker) the web frontend is available by default on port <code>8283</code>.
+                </p>
+                <div class="code-block" style="line-height:1.4;">
+localhost:8283<br>
+http://&lt;your-ipv4-address&gt;:8283<br>
+http://[&lt;your-ipv6-address&gt;]:8283
+                </div>
+                <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:800px; margin:0.75rem auto;">
+                    Change the port with <code>-frontend &lt;port&gt;</code> (e.g. <code>matterbridge -frontend 8383</code>). Enable HTTPS with <code>-ssl</code>. For mutual TLS add <code>-mtls</code>. See the <a href="https://github.com/Luligu/matterbridge/blob/main/README.md#frontend" style="color: var(--primary-color); text-decoration:none;">Frontend docs</a> for certificate details.
+                </p>
                 
                 <div style="text-align: center; margin-top: 2rem;">
-                    <a href="README.md" class="btn btn-primary">📖 Full Installation Guide</a>
+                    <a href="https://github.com/Luligu/matterbridge/blob/main/README.md" class="btn btn-primary">📖 Full Installation Guide</a>
                 </div>
             </div>
         </section>
@@ -655,8 +685,8 @@
                 </div>
                 
                 <div style="text-align: center; margin-top: 3rem;">
-                    <a href="README.md#plugins" class="btn btn-primary">🔌 View All Plugins</a>
-                    <a href="README-DEV.md" class="btn btn-secondary">🛠️ Create Your Own</a>
+                    <a href="https://github.com/Luligu/matterbridge/blob/main/README.md#plugins" class="btn btn-primary">🔌 View All Plugins</a>
+                    <a href="https://github.com/Luligu/matterbridge/blob/main/README-DEV.md" class="btn btn-secondary">🛠️ Create Your Own</a>
                 </div>
             </div>
         </section>
@@ -667,11 +697,11 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h3>Documentation</h3>
-                    <a href="README.md">Getting Started</a>
-                    <a href="README-DEV.md">Development Guide</a>
-                    <a href="README-DOCKER.md">Docker Setup</a>
-                    <a href="README-SERVICE.md">Service Configuration</a>
-                    <a href="README-NGINX.md">Nginx Setup</a>
+                    <a href="https://github.com/Luligu/matterbridge/blob/main/README.md">Getting Started</a>
+                    <a href="https://github.com/Luligu/matterbridge/blob/main/README-DEV.md">Development Guide</a>
+                    <a href="https://github.com/Luligu/matterbridge/blob/main/README-DOCKER.md">Docker Setup</a>
+                    <a href="https://github.com/Luligu/matterbridge/blob/main/README-SERVICE.md">Service Configuration</a>
+                    <a href="https://github.com/Luligu/matterbridge/blob/main/README-NGINX.md">Nginx Setup</a>
                 </div>
                 
                 <div class="footer-section">
@@ -686,6 +716,7 @@
                     <h3>Resources</h3>
                     <a href="https://www.npmjs.com/package/matterbridge">NPM Package</a>
                     <a href="https://hub.docker.com/r/luligu/matterbridge">Docker Hub</a>
+                    <a href="specifications.html">Matter Specifications</a>
                     <a href="https://codecov.io/gh/Luligu/matterbridge">Code Coverage</a>
                     <a href="https://www.buymeacoffee.com/luligugithub">Support Development</a>
                 </div>
@@ -705,6 +736,75 @@
     </footer>
 
     <script>
+        // Fetch dynamic stats for npm downloads (last week) and GitHub stars
+        (async () => {
+            try {
+                const npmResp = await fetch('https://api.npmjs.org/downloads/point/last-week/matterbridge');
+                if (npmResp.ok) {
+                    const npmData = await npmResp.json();
+                    const dl = npmData.downloads;
+                    const formatted = dl > 1000 ? (dl/1000).toFixed(1).replace(/\.0$/,'') + 'K' : dl.toString();
+                    const el = document.getElementById('npm-downloads');
+                    if (el) el.textContent = formatted + '/wk';
+                }
+            } catch(e) { /* silent */ }
+            try {
+                // Fetch full range starting from 2023-01-01 (approx project growth) to today for total downloads
+                const today = new Date();
+                const end = today.toISOString().slice(0,10);
+                const rangeResp = await fetch(`https://api.npmjs.org/downloads/range/2023-01-01:${end}/matterbridge`);
+                if (rangeResp.ok) {
+                    const rangeData = await rangeResp.json();
+                    if (Array.isArray(rangeData.downloads)) {
+                        const total = rangeData.downloads.reduce((acc, d) => acc + (d.downloads||0), 0);
+                        const formattedTotal = total >= 1_000_000 ? (total/1_000_000).toFixed(1).replace(/\.0$/,'') + 'M' : total >= 1000 ? (total/1000).toFixed(1).replace(/\.0$/,'') + 'K' : total.toString();
+                        const totalEl = document.getElementById('npm-total-downloads');
+                        if (totalEl) totalEl.textContent = formattedTotal;
+                    }
+                }
+            } catch(e) { /* silent */ }
+            try {
+                const ghResp = await fetch('https://api.github.com/repos/Luligu/matterbridge');
+                if (ghResp.ok) {
+                    const ghData = await ghResp.json();
+                    const stars = ghData.stargazers_count;
+                    const el = document.getElementById('github-stars');
+                    if (el) el.textContent = stars;
+                }
+            } catch(e) { /* silent */ }
+            async function updateDockerPulls() {
+                const pullsEl = document.getElementById('docker-pulls');
+                if (!pullsEl) return;
+                // Helper formatter
+                const fmt = n => n >= 1_000_000 ? (n/1_000_000).toFixed(1).replace(/\.0$/,'') + 'M' : n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,'') + 'K' : n.toString();
+                // 1) Try Docker Hub API (may be blocked by CORS on some browsers)
+                try {
+                    const dockerResp = await fetch('https://hub.docker.com/v2/repositories/luligu/matterbridge');
+                    if (dockerResp.ok) {
+                        const dockerData = await dockerResp.json();
+                        if (typeof dockerData.pull_count === 'number') {
+                            pullsEl.textContent = fmt(dockerData.pull_count);
+                            return;
+                        }
+                    }
+                } catch(_) { /* continue to fallback */ }
+                // 2) Fallback to shields.io JSON badge (always CORS enabled)
+                try {
+                    const shieldResp = await fetch('https://img.shields.io/docker/pulls/luligu/matterbridge.json');
+                    if (shieldResp.ok) {
+                        const shieldData = await shieldResp.json();
+                        if (shieldData && shieldData.value) {
+                            // shieldData.value already formatted (e.g., 1.2M) but normalize to our style
+                            pullsEl.textContent = shieldData.value.replace(/([0-9]+\.[0-9])0M/,'$1M');
+                            return;
+                        }
+                    }
+                } catch(_) { /* ignore */ }
+                // 3) Give up
+                pullsEl.textContent = 'n/a';
+            }
+            updateDockerPulls();
+        })();
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {

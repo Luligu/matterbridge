@@ -8,6 +8,26 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.2.3] - 2025-08-20
+
+### Added
+
+- [Oven]: Added Oven() class and Jest test. It is not supported by the Home app.
+- [MicrowaveOven]: Added MicrowaveOven() class and Jest test. It is not supported by the Home app.
+- [Cooktop]: Added Cooktop() class and Jest test. It is not supported by the Home app.
+- [Refrigerator]: Added Refrigerator() class and Jest test. It is not supported by the Home app.
+- [Pages]: Added first draft of https://luligu.github.io/matterbridge.
+- [Matter]: Added Matter Specification Version 1.0, 1.1, 1.2, 1.3, 1.4 and 1.4.1 pdf files.
+- [Development]: Improved README-DEV.md.
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.2.2] - 2025-08-10
 
 ### Changed
