@@ -383,6 +383,18 @@ describe('Matterbridge platform', () => {
     expect(platform.selectEntity.size).toBe(0);
   });
 
+  test('should clear the entity selects', async () => {
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    await platform.ready;
+    expect(platform.storage).toBeDefined();
+    expect(platform.context).toBeDefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
+    platform.setSelectEntity('name1', 'description1', 'component');
+    platform.clearEntitySelect('name1');
+    expect(platform.selectDevice.size).toBe(0);
+    expect(platform.selectEntity.size).toBe(0);
+  });
+
   it('should update a not existing entity selects', async () => {
     const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
     await platform.ready;
