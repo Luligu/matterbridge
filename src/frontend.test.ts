@@ -38,11 +38,6 @@ import { Lifecycle } from '@matter/general';
 import { PowerSource } from '@matter/main/clusters/power-source';
 import { wait } from './utils/wait.ts';
 
-/*
-const processExitSpy = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
-  return undefined as never;
-});
-*/
 const startSpy = jest.spyOn(Frontend.prototype, 'start');
 const stopSpy = jest.spyOn(Frontend.prototype, 'stop');
 
