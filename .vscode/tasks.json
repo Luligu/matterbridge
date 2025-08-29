@@ -129,7 +129,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Test: Endpoint Classes",
+      "label": "Test: Endpoint Single Classes",
       "type": "shell",
       "command": "node",
       "args": [
@@ -140,14 +140,20 @@
         "--coverage",
         "--maxWorkers=100%",
         "src/devices/base.test.ts",
-        "src/devices/laundryWasher.test.ts",
-        "src/devices/laundryDryer.test.ts",
-        "src/devices/roboticVacuumCleaner.test.ts",
-        "src/devices/evse.test.ts",
-        "src/devices/waterHeater.test.ts",
-        "src/devices/solarPower.test.ts",
         "src/devices/batteryStorage.test.ts",
-        "src/devices/heatPump.test.ts"
+        "src/devices/cooktop.test.ts",
+        "src/devices/dishwasher.test.ts",
+        "src/devices/evse.test.ts",
+        "src/devices/extractorHood.test.ts",
+        "src/devices/heatPump.test.ts",
+        "src/devices/laundryDryer.test.ts",
+        "src/devices/laundryWasher.test.ts",
+        "src/devices/microwaveOven.test.ts",
+        "src/devices/oven.test.ts",
+        "src/devices/refrigerator.test.ts",
+        "src/devices/roboticVacuumCleaner.test.ts",
+        "src/devices/solarPower.test.ts",
+        "src/devices/waterHeater.test.ts",
       ],
       "group": {
         "kind": "test",

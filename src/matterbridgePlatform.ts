@@ -427,6 +427,17 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Clears the select for a single entity.
+   *
+   * @param {string} name - The name of the entity to clear.
+   * @returns {void}
+   */
+  async clearEntitySelect(name: string): Promise<void> {
+    this.selectEntity.delete(name);
+    await this.saveSelects();
+  }
+
+  /**
    * Set the select device in the platform map.
    *
    * @param {string} serial - The serial number of the device.
@@ -542,7 +553,7 @@ export class MatterbridgePlatform {
    * @param {boolean} [log] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the device is allowed, false otherwise.
    */
-  validateDevice(device: string | string[], log = true): boolean {
+  validateDevice(device: string | string[], log: boolean = true): boolean {
     if (!Array.isArray(device)) device = [device];
 
     let blackListBlocked = 0;
@@ -573,7 +584,7 @@ export class MatterbridgePlatform {
    * @param {boolean} [log] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the entity is allowed, false otherwise.
    */
-  validateEntity(device: string, entity: string, log = true): boolean {
+  validateEntity(device: string, entity: string, log: boolean = true): boolean {
     if (isValidArray(this.config.entityBlackList, 1) && this.config.entityBlackList.find((e) => e === entity)) {
       if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} because in entityBlackList`);
       return false;
