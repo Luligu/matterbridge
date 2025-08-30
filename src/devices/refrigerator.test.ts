@@ -137,13 +137,13 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet1).toBeDefined();
     expect(cabinet1.id).toBe('RefrigeratorTestCabinetTop');
     expect(cabinet1.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeTruthy();
-    expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'temperatureControl', 'refrigeratorAndTemperatureControlledCabinetMode', 'temperatureMeasurement']);
+    expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'temperatureControl', 'refrigeratorAndTemperatureControlledCabinetMode', 'refrigeratorAlarm', 'temperatureMeasurement']);
 
     cabinet2 = device.addCabinet('Freezer Test Cabinet Bottom', [{ mfgCode: null, namespaceId: PositionTag.Bottom.namespaceId, tag: PositionTag.Bottom.tag, label: PositionTag.Bottom.label }]);
     expect(cabinet2).toBeDefined();
     expect(cabinet2.id).toBe('FreezerTestCabinetBottom');
     expect(cabinet2.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeTruthy();
-    expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'temperatureControl', 'refrigeratorAndTemperatureControlledCabinetMode', 'temperatureMeasurement']);
+    expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'temperatureControl', 'refrigeratorAndTemperatureControlledCabinetMode', 'refrigeratorAlarm', 'temperatureMeasurement']);
   });
 
   test('add a refrigerator device', async () => {
@@ -219,7 +219,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(40); // 40 attributes for the cabinet1 device
+    expect(attributes.length).toBe(48); // 48 attributes for the cabinet1 device
   });
 
   test('cabinet2 forEachAttribute', async () => {
@@ -240,7 +240,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(40); // 40 attributes for the cabinet2 device
+    expect(attributes.length).toBe(48); // 48 attributes for the cabinet2 device
   });
 
   test('invoke MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer commands', async () => {
