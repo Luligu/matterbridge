@@ -13,6 +13,8 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [refrigerator]: Added RefrigeratorAlarm cluster.
+- [refrigerator]: Added setDoorOpenState method to set the doorOpen state of RefrigeratorAlarm cluster.
+- [refrigerator]: Added triggerDoorOpenState method to trigger the alert for the doorOpen state of RefrigeratorAlarm cluster.
 
 ### Changed
 
@@ -21,7 +23,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
-- [refrigerator]: Fix device type
+- [refrigerator]: Fix device type.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

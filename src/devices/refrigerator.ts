@@ -147,6 +147,40 @@ export class Refrigerator extends MatterbridgeEndpoint {
     });
     return endpoint;
   }
+
+  /**
+   * Sets the door open state for a specific cabinet.
+   *
+   * @param {string} cabinetName - The name of the cabinet.
+   * @param {boolean} doorOpen - Indicates if the door is open.
+   * @returns {MatterbridgeEndpoint | undefined} The updated MatterbridgeEndpoint instance or undefined if not found.
+   */
+  async setDoorOpenState(cabinetName: string, doorOpen: boolean): Promise<MatterbridgeEndpoint | undefined> {
+    const endpoint = this.getChildEndpointByName(cabinetName);
+    if (endpoint) {
+      await endpoint.setAttribute('RefrigeratorAlarm', 'state', { doorOpen }, endpoint.log);
+      return endpoint;
+    }
+  }
+
+  /**
+   * Triggers the notify event for door open state on a specific cabinet.
+   *
+   * @param {string} cabinetName - The name of the cabinet.
+   * @param {boolean} doorOpen - Indicates if the door is open.
+   * @returns {MatterbridgeEndpoint | undefined} The updated MatterbridgeEndpoint instance or undefined if not found.
+   */
+  async triggerDoorOpenState(cabinetName: string, doorOpen: boolean): Promise<MatterbridgeEndpoint | undefined> {
+    const endpoint = this.getChildEndpointByName(cabinetName);
+    if (endpoint) {
+      if (doorOpen) {
+        await endpoint.triggerEvent('RefrigeratorAlarm', 'notify', { active: { doorOpen: true }, inactive: { doorOpen: false }, state: { doorOpen: true }, mask: { doorOpen: true } }, endpoint.log);
+      } else {
+        await endpoint.triggerEvent('RefrigeratorAlarm', 'notify', { active: { doorOpen: false }, inactive: { doorOpen: true }, state: { doorOpen: false }, mask: { doorOpen: true } }, endpoint.log);
+      }
+      return endpoint;
+    }
+  }
 }
 
 // Server for RefrigeratorAndTemperatureControlledCabinetMode

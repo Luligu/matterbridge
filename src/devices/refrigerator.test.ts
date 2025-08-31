@@ -180,6 +180,32 @@ describe('Matterbridge ' + NAME, () => {
     expect(server.lifecycle.isOnline).toBeTruthy();
   });
 
+  test('cabinet1 open door', async () => {
+    expect(await device.setDoorOpenState('RefrigeratorTestCabinetTop', true)).toBeDefined();
+    expect(cabinet1.getAttribute('RefrigeratorAlarm', 'state')).toEqual({ doorOpen: true });
+  });
+
+  test('cabinet1 trigger alert on open door', async () => {
+    expect(await device.triggerDoorOpenState('RefrigeratorTestCabinetTop', true)).toBeDefined();
+  });
+
+  test('cabinet1 trigger alert on close door', async () => {
+    expect(await device.triggerDoorOpenState('RefrigeratorTestCabinetTop', false)).toBeDefined();
+  });
+
+  test('cabinet2 open door', async () => {
+    expect(await device.setDoorOpenState('FreezerTestCabinetBottom', true)).toBeDefined();
+    expect(cabinet2.getAttribute('RefrigeratorAlarm', 'state')).toEqual({ doorOpen: true });
+  });
+
+  test('cabinet2 trigger alert on open door', async () => {
+    expect(await device.triggerDoorOpenState('FreezerTestCabinetBottom', true)).toBeDefined();
+  });
+
+  test('cabinet2 trigger alert on close door', async () => {
+    expect(await device.triggerDoorOpenState('FreezerTestCabinetBottom', false)).toBeDefined();
+  });
+
   test('device forEachAttribute', async () => {
     const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
