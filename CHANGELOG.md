@@ -8,6 +8,29 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.2.5] - 2025-09-02
+
+### Added
+
+- [refrigerator]: Added RefrigeratorAlarm cluster.
+- [refrigerator]: Added setDoorOpenState method to set the doorOpen state of RefrigeratorAlarm cluster.
+- [refrigerator]: Added triggerDoorOpenState method to trigger the alert for the doorOpen state of RefrigeratorAlarm cluster.
+- [frontend]: Bumped `frontend` version to 2.7.4.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [devContainer]: Updated devContainer with repository name for the container.
+
+### Fixed
+
+- [refrigerator]: Fixed device type.
+- [frontend]: Fixed padding in QRDivDevice (devices in 'server' mode).
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.2.4] - 2025-08-29
 
 ### Added
@@ -17,8 +40,6 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Updated dependencies.
-
-### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

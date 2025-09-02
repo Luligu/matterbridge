@@ -25,11 +25,12 @@
 import { MaybePromise } from '@matter/main';
 import { Semtag } from '@matter/types';
 import { ModeBase } from '@matter/main/clusters/mode-base';
-import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/main/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
+import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/main/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
+import { RefrigeratorAlarmServer } from '@matter/main/behaviors/refrigerator-alarm';
 
 // Matterbridge
-import { oven, powerSource, temperatureControlledCabinetCooler } from '../matterbridgeDeviceTypes.js';
+import { powerSource, refrigerator, temperatureControlledCabinetCooler } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 
@@ -50,7 +51,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * - Use `addCabinet` to add one or more cabinets to the refrigerator.
    */
   constructor(name: string, serial: string) {
-    super([oven, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([refrigerator, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Refrigerator');
     this.createDefaultPowerSourceWiredClusterServer();
@@ -104,6 +105,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
     cabinet.createDefaultIdentifyClusterServer();
     createLevelTemperatureControlClusterServer(cabinet, selectedTemperatureLevel, supportedTemperatureLevels);
     this.createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(cabinet, currentMode, supportedModes);
+    this.createDefaultRefrigeratorAlarmClusterServer(cabinet, false);
     cabinet.createDefaultTemperatureMeasurementClusterServer(currentTemperature);
     return cabinet;
   }
@@ -127,6 +129,57 @@ export class Refrigerator extends MatterbridgeEndpoint {
       currentMode,
     });
     return endpoint;
+  }
+
+  /**
+   * Creates a default RefrigeratorAlarm Cluster Server.
+   *
+   * @param {MatterbridgeEndpoint} endpoint - The Matterbridge endpoint instance.
+   * @param {boolean} doorOpen - Indicates if the refrigerator door is open.
+   *
+   * @returns {MatterbridgeEndpoint} The updated MatterbridgeEndpoint instance.
+   */
+  createDefaultRefrigeratorAlarmClusterServer(endpoint: MatterbridgeEndpoint, doorOpen: boolean = false): MatterbridgeEndpoint {
+    endpoint.behaviors.require(RefrigeratorAlarmServer, {
+      mask: { doorOpen: true },
+      supported: { doorOpen: true },
+      state: { doorOpen },
+    });
+    return endpoint;
+  }
+
+  /**
+   * Sets the door open state for a specific cabinet.
+   *
+   * @param {string} cabinetName - The name of the cabinet.
+   * @param {boolean} doorOpen - Indicates if the door is open.
+   * @returns {MatterbridgeEndpoint | undefined} The updated MatterbridgeEndpoint instance or undefined if not found.
+   */
+  async setDoorOpenState(cabinetName: string, doorOpen: boolean): Promise<MatterbridgeEndpoint | undefined> {
+    const endpoint = this.getChildEndpointByName(cabinetName);
+    if (endpoint) {
+      await endpoint.setAttribute('RefrigeratorAlarm', 'state', { doorOpen }, endpoint.log);
+      return endpoint;
+    }
+  }
+
+  /**
+   * Triggers the notify event for door open state on a specific cabinet.
+   *
+   * @param {string} cabinetName - The name of the cabinet.
+   * @param {boolean} doorOpen - Indicates if the door is open.
+   * @returns {MatterbridgeEndpoint | undefined} The updated MatterbridgeEndpoint instance or undefined if not found.
+   */
+  async triggerDoorOpenState(cabinetName: string, doorOpen: boolean): Promise<MatterbridgeEndpoint | undefined> {
+    const endpoint = this.getChildEndpointByName(cabinetName);
+    if (endpoint) {
+      if (doorOpen) {
+        await endpoint.triggerEvent('RefrigeratorAlarm', 'notify', { active: { doorOpen: true }, inactive: { doorOpen: false }, state: { doorOpen: true }, mask: { doorOpen: true } }, endpoint.log);
+      } else {
+        await endpoint.triggerEvent('RefrigeratorAlarm', 'notify', { active: { doorOpen: false }, inactive: { doorOpen: true }, state: { doorOpen: false }, mask: { doorOpen: true } }, endpoint.log);
+      }
+      return endpoint;
+    }
   }
 }
 

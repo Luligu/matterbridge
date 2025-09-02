@@ -2621,7 +2621,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
-   * @remarks The default value for the illuminance measurement is null.
+   * @remarks
+   *
+   * The default value for the illuminance measurement is null.
+   *
    * This attribute SHALL indicate the illuminance in Lux (symbol lx) as follows:
    * •  MeasuredValue = 10,000 x log10(illuminance) + 1,
    *    where 1 lx <= illuminance <= 3.576 Mlx, corresponding to a MeasuredValue in the range 1 to 0xFFFE.

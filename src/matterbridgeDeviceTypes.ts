@@ -258,6 +258,15 @@ export interface EndpointOptions {
 
 // Chapter 2. Utility device types
 
+export const rootNode = DeviceTypeDefinition({
+  name: 'MA-rootNode',
+  code: 0x0016,
+  deviceClass: DeviceClasses.Node,
+  revision: 3,
+  requiredServerClusters: [], // Intentionally left empty
+  optionalServerClusters: [], // Intentionally left empty
+});
+
 export const powerSource = DeviceTypeDefinition({
   name: 'MA-powerSource',
   code: 0x0011,

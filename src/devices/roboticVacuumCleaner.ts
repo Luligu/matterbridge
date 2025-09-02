@@ -126,7 +126,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
       supportedModes: supportedModes ?? [
         { label: 'Vacuum', mode: 1, modeTags: [{ value: RvcCleanMode.ModeTag.Vacuum }] },
         { label: 'Mop', mode: 2, modeTags: [{ value: RvcCleanMode.ModeTag.Mop }] },
-        { label: 'Clean', mode: 3, modeTags: [{ value: RvcCleanMode.ModeTag.DeepClean }] },
+        { label: 'DeepClean', mode: 3, modeTags: [{ value: RvcCleanMode.ModeTag.DeepClean }] },
       ],
       currentMode: currentMode ?? 1,
     });
@@ -166,10 +166,10 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
           areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: AreaNamespaceTag.Bathroom.tag }, landmarkInfo: null },
         },
       ],
-      selectedAreas: selectedAreas ?? [],
-      currentArea: currentArea ?? 1,
-      supportedMaps: supportedMaps ?? [], // Indicates that the device is currently unable to provide this information
-      estimatedEndTime: null,
+      selectedAreas: selectedAreas ?? [], // Indicates the set of areas where the device SHOULD attempt to operate. If this attribute is empty, the device is not constrained to operate in any specific areas.
+      currentArea: currentArea ?? 1, // If not null, the value of this attribute shall match the AreaID field of an entry on the SupportedAreas attribute’s list. A null value indicates that the device is currently unable to provide this information.
+      supportedMaps: supportedMaps ?? [], // If empty, that indicates that the device is currently unable to provide this information
+      estimatedEndTime: null, // Indicates the estimated Epoch time for completing operating at the area indicated by the CurrentArea attribute, in seconds.
     });
     return this;
   }
