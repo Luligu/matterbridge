@@ -132,6 +132,12 @@ describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
   let device: MatterbridgeEndpoint;
 
+  // Helper to flush pending macrotask + multiple microtask queues
+  async function flushAsync(depth = 10) {
+    await new Promise((resolve) => setImmediate(resolve));
+    for (let i = 0; i < depth; i++) await Promise.resolve();
+  }
+
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
     matterbridge = await Matterbridge.loadInstance(true);
@@ -149,7 +155,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   afterEach(async () => {
-    //
+    await flushAsync();
   });
 
   afterAll(async () => {
