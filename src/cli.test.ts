@@ -174,13 +174,11 @@ describe('Matterbridge', () => {
     console.log('should call Inspector interval');
     jest.clearAllMocks();
     jest.advanceTimersByTime(60 * 1000); // Fast-forward time by 60 seconds
+    jest.useRealTimers();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Run heap snapshot interval`);
     expect(matterbridge).toBeDefined();
-  }, 10000);
-
-  it('should use real timers', async () => {
-    jest.useRealTimers();
-    expect(matterbridge).toBeDefined();
+    matterbridge.emit('stopmemorycheck');
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }, 10000);
 
   it('should shutdown matterbridge', async () => {
