@@ -161,10 +161,10 @@ describe('Matterbridge ' + NAME, () => {
   let heater: MatterbridgeEndpoint;
   let evse: MatterbridgeEndpoint;
 
-  // Helper to flush pending macrotask + multiple microtask queues
-  async function flushAsync(depth = 10) {
-    await new Promise((resolve) => setImmediate(resolve));
-    for (let i = 0; i < depth; i++) await Promise.resolve();
+  // Wait 'ticks' macrotask tick (setImmediate) then yield `microTurns` microtask turns so progressively chained Promise callbacks can settle
+  async function flushAsync(ticks: number = 3, microTurns: number = 10) {
+    for (let i = 0; i < ticks; i++) await new Promise((resolve) => setImmediate(resolve));
+    for (let i = 0; i < microTurns; i++) await Promise.resolve();
   }
 
   beforeAll(async () => {
