@@ -8,6 +8,23 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.2.6] - 2025-09-??
+
+### Added
+
+### Changed
+
+- [package]: Updated dependencies.
+- [package]: Bumped Jest to v. 30.1.3. (this version solves the broken ESM module mock).
+
+### Fixed
+
+- [jest]: Fixed cli test failing with Jest to v. 30.1.3.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.2.5] - 2025-09-02
 
 ### Added
