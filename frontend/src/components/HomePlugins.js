@@ -110,6 +110,7 @@ export function HomePlugins({selectPlugin}) {
   const getQRColor = (plugin) => {
     if (plugin === undefined) return 'red';
     if (!plugin.fabricInformations && !plugin.qrPairingCode && !plugin.manualPairingCode) return 'red';
+    if (plugin.paired === false && plugin.qrPairingCode && plugin.manualPairingCode) return 'var(--primary-color)';
     return 'var(--div-text-color)';
   };
 
