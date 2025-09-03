@@ -1807,6 +1807,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             plugin.error = true;
           }
         }
+        if (plugin.type === 'DynamicPlatform' && !plugin.locked) {
+          await this.createDynamicPlugin(plugin);
+        }
       }
       if (!allStarted) return;
       clearInterval(this.startMatterInterval);
