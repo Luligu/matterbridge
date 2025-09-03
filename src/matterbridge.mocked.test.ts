@@ -1143,7 +1143,7 @@ describe('Matterbridge mocked', () => {
     plugin3.serverNode = {} as any; // Mock serverNode for plugin3
     plugin4.serverNode = {} as any; // Mock serverNode for plugin4
     plugin4.storageContext = {} as any; // Mock storageContext for plugin4
-    jest.advanceTimersByTime(1000); // Simulate 1 second for the interval to execute
+    jest.advanceTimersByTime(2000); // Simulate 2 seconds for the interval to execute
     expect((matterbridge as any).startMatterInterval).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Cleared startMatterInterval interval in childbridge mode`));
     expect((matterbridge as any).configureTimeout).toBeDefined();
