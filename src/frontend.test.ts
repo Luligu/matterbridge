@@ -641,7 +641,7 @@ describe('Matterbridge frontend', () => {
 
   test('Matterbridge.destroyInstance()', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 500);
+    await matterbridge.destroyInstance(10, 100);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
 
     expect(stopSpy).toHaveBeenCalledTimes(1);
