@@ -12,6 +12,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [frontend]: Add color to QR icon in childbridge mode
+- [frontend]: Bumped `frontend` version to 2.7.5.
+- [childbridge]: Added restart needed when the plugin is first added in childbridge mode.
+
 ### Changed
 
 - [package]: Updated dependencies.

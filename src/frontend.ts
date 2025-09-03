@@ -1295,6 +1295,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                   if (plugin) {
                     // The plugin is not registered
                     this.wssSendSnackbarMessage(`Added plugin ${packageName}`, 5, 'success');
+                    // In childbridge mode the plugins server node is not started when added
+                    if (this.matterbridge.bridgeMode === 'childbridge') this.wssSendRestartRequired(true, true);
 
                     this.matterbridge.plugins
                       .load(plugin, true, 'The plugin has been added', true)
