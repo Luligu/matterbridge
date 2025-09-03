@@ -134,6 +134,21 @@ export function HomeDevices() {
   // Refs
   const uniqueId = useRef(getUniqueId());
 
+  const getQRColor = (matter) => {
+    if (matter === undefined) return 'red';
+    if (!matter.qrPairingCode && !matter.manualPairingCode && !matter.fabricInformations && !matter.sessionInformations) return 'red';
+    if (matter.commissioned === false && matter.qrPairingCode && matter.manualPairingCode) return 'var(--primary-color)';
+
+    var sessions = 0;
+    var subscriptions = 0;
+    for (const session of matter.sessionInformations ?? []) {
+      if (session.fabric && session.isPeerActive === true) sessions++;
+      if (session.numberOfActiveSubscriptions > 0) subscriptions += session.numberOfActiveSubscriptions;
+    }
+    if (matter.commissioned === true && matter.fabricInformations && matter.sessionInformations && sessions === 0 && subscriptions === 0) return 'var(--secondary-color)';
+    return 'var(--div-text-color)';
+  };
+
   const devicesColumns = [
     {
       Header: 'Plugin',
@@ -189,7 +204,7 @@ export function HomeDevices() {
               <IconButton
                 onClick={() => handleOpenQrDialog(row.original.matter)}
                 aria-label="Show the QRCode"
-                sx={{ margin: 0, padding: 0 }}
+                sx={{ margin: 0, padding: 0, color: getQRColor(row.original.matter) }}
               >
                 <QrCode2 fontSize="small"/>
               </IconButton>
