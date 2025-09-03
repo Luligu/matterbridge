@@ -19,6 +19,7 @@ import { Identify, OnOff, PowerSource, TemperatureControl, TemperatureMeasuremen
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { inspectError } from '../utils/error.js';
+import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from '../jest-utils/helpers.test.js';
 
 import { Cooktop } from './cooktop.js';
 
@@ -72,6 +73,8 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   afterAll(async () => {
+    // Wait 'ticks' macrotask tick (setImmediate) then yield `microTurns` microtask turns so progressively chained Promise callbacks can settle
+    await flushAsync();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -249,6 +252,16 @@ describe('Matterbridge ' + NAME, () => {
     expect(attributes.length).toBe(32); // 32 attributes for the surface2 device
   });
 
+  test('ensure all endpoint number persistence is flushed before closing', async () => {
+    expect(server).toBeDefined();
+    expect(server.lifecycle.isReady).toBeTruthy();
+    expect(server.lifecycle.isOnline).toBeTruthy();
+    if (server) {
+      await flushAllEndpointNumberPersistence(server);
+      await assertAllEndpointNumbersPersisted(server);
+    }
+  });
+
   test('close the server node', async () => {
     expect(server).toBeDefined();
     expect(server.lifecycle.isReady).toBeTruthy();
@@ -256,12 +269,10 @@ describe('Matterbridge ' + NAME, () => {
     await server.close();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
-    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 
   test('stop the mDNS service', async () => {
     expect(server).toBeDefined();
     await server.env.get(MdnsService)[Symbol.asyncDispose]();
-    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 });

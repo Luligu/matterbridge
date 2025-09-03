@@ -23,6 +23,7 @@ import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { inspectError } from '../utils/error.js';
 
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from './oven.js';
+import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from '../jest-utils/helpers.test.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -74,6 +75,8 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   afterAll(async () => {
+    // Wait 'ticks' macrotask tick (setImmediate) then yield `microTurns` microtask turns so progressively chained Promise callbacks can settle
+    await flushAsync();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -299,6 +302,16 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint OvenTestCabinetTop.3) called setting operational state to Stopped and operational error to No error`);
   });
 
+  test('ensure all endpoint number persistence is flushed before closing', async () => {
+    expect(server).toBeDefined();
+    expect(server.lifecycle.isReady).toBeTruthy();
+    expect(server.lifecycle.isOnline).toBeTruthy();
+    if (server) {
+      await flushAllEndpointNumberPersistence(server);
+      await assertAllEndpointNumbersPersisted(server);
+    }
+  });
+
   test('close the server node', async () => {
     expect(server).toBeDefined();
     expect(server.lifecycle.isReady).toBeTruthy();
@@ -306,12 +319,10 @@ describe('Matterbridge ' + NAME, () => {
     await server.close();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
-    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 
   test('stop the mDNS service', async () => {
     expect(server).toBeDefined();
     await server.env.get(MdnsService)[Symbol.asyncDispose]();
-    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 });

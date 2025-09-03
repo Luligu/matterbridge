@@ -114,6 +114,7 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.ts';
 import { WaterHeater } from './devices/waterHeater.ts';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.ts';
+import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from './jest-utils/helpers.test.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -138,6 +139,7 @@ if (!debug) {
   consoleWarnSpy = jest.spyOn(console, 'warn');
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
+
 // Cleanup the test environment
 rmSync(HOMEDIR, { recursive: true, force: true });
 
@@ -161,12 +163,6 @@ describe('Matterbridge ' + NAME, () => {
   let heater: MatterbridgeEndpoint;
   let evse: MatterbridgeEndpoint;
 
-  // Wait 'ticks' macrotask tick (setImmediate) then yield `microTurns` microtask turns so progressively chained Promise callbacks can settle
-  async function flushAsync(ticks: number = 3, microTurns: number = 10) {
-    for (let i = 0; i < ticks; i++) await new Promise((resolve) => setImmediate(resolve));
-    for (let i = 0; i < microTurns; i++) await Promise.resolve();
-  }
-
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance not initialized
     matterbridge = await Matterbridge.loadInstance(false);
@@ -189,7 +185,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   afterEach(async () => {
-    await flushAsync();
+    // await flushAsync();
   });
 
   afterAll(async () => {
@@ -1101,8 +1097,21 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer enableCharging called`);
   });
 
+  test('ensure all endpoint number persistence is flushed before closing', async () => {
+    expect(server).toBeDefined();
+    expect(server.lifecycle.isReady).toBeTruthy();
+    expect(server.lifecycle.isOnline).toBeTruthy();
+    if (server) {
+      // Ensure all endpoint number persistence is flushed before closing
+      await flushAllEndpointNumberPersistence(server);
+      await assertAllEndpointNumbersPersisted(server);
+    }
+  });
+
   test('close server node', async () => {
     expect(server).toBeDefined();
+    expect(server.lifecycle.isReady).toBeTruthy();
+    expect(server.lifecycle.isOnline).toBeTruthy();
     await server.close();
     await server.env.get(MdnsService)[Symbol.asyncDispose](); // loadInstance(false) so destroyInstance() does not stop the mDNS service
   });
@@ -1110,7 +1119,6 @@ describe('Matterbridge ' + NAME, () => {
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
-    // await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
+    await matterbridge.destroyInstance(10, 10);
   });
 });

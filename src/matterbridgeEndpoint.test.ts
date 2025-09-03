@@ -9,7 +9,7 @@ const HOMEDIR = path.join('jest', NAME);
 process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'info', '-matterlogger', 'info'];
 
 import { jest } from '@jest/globals';
-import { Lifecycle, EndpointNumber, ActionContext } from '@matter/main';
+import { Lifecycle, EndpointNumber, ActionContext, ServerNode, Endpoint, ServerNodeStore } from '@matter/main';
 import {
   BooleanState,
   BooleanStateCluster,
@@ -77,6 +77,7 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
 import { wait } from './utils/wait.ts';
+import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence } from './jest-utils/helpers.test.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -109,12 +110,6 @@ describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
   let device: MatterbridgeEndpoint;
 
-  // Wait 'ticks' macrotask tick (setImmediate) then yield `microTurns` microtask turns so progressively chained Promise callbacks can settle
-  async function flushAsync(ticks: number = 3, microTurns: number = 10) {
-    for (let i = 0; i < ticks; i++) await new Promise((resolve) => setImmediate(resolve));
-    for (let i = 0; i < microTurns; i++) await Promise.resolve();
-  }
-
   beforeAll(async () => {
     matterbridge = await Matterbridge.loadInstance(true);
 
@@ -131,7 +126,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   afterEach(async () => {
-    await flushAsync();
+    // await flushAsync();
   });
 
   afterAll(async () => {
@@ -1228,9 +1223,20 @@ describe('Matterbridge ' + NAME, () => {
     ]);
   });
 
+  test('ensure all endpoint number persistence is flushed before closing', async () => {
+    expect(matterbridge.serverNode).toBeDefined();
+    expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
+    expect(matterbridge.serverNode?.lifecycle.isOnline).toBeTruthy();
+    if (matterbridge.serverNode) {
+      // Ensure all endpoint number persistence is flushed before closing
+      await flushAllEndpointNumberPersistence(matterbridge.serverNode);
+      await assertAllEndpointNumbersPersisted(matterbridge.serverNode);
+    }
+  });
+
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 1000);
+    await matterbridge.destroyInstance(10, 10);
   });
 });

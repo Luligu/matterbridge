@@ -100,6 +100,7 @@ import {
   waterValve,
 } from './matterbridgeDeviceTypes.ts';
 import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.ts';
+import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence } from './jest-utils/helpers.test.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -155,7 +156,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   afterEach(async () => {
-    await flushAsync();
+    // await flushAsync();
   });
 
   afterAll(async () => {
@@ -1200,9 +1201,20 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(AirQuality.Cluster.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
   });
 
+  test('ensure all endpoint number persistence is flushed before closing', async () => {
+    expect(matterbridge.serverNode).toBeDefined();
+    expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
+    expect(matterbridge.serverNode?.lifecycle.isOnline).toBeTruthy();
+    if (matterbridge.serverNode) {
+      // Ensure all endpoint number persistence is flushed before closing
+      await flushAllEndpointNumberPersistence(matterbridge.serverNode);
+      await assertAllEndpointNumbersPersisted(matterbridge.serverNode);
+    }
+  });
+
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
+    await matterbridge.destroyInstance(10, 10);
   });
 });

@@ -221,13 +221,18 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend getMatterDataFromDevice', () => {
-    const device = { mode: 'server', serverNode: { state: { commissioning: { commissioned: true, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: '123' }, fabrics: {} }, sessions: { sessions: {} } } }, serverContext: {} };
+    const device = {
+      mode: 'server',
+      serverNode: { state: { basicInformation: { serialNumber: '12345' }, commissioning: { commissioned: true, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: '123' }, fabrics: {} }, sessions: { sessions: {} } } },
+      serverContext: {},
+    };
     expect((frontend as any).getMatterDataFromDevice(device)).toEqual({
-      'commissioned': true,
-      'fabricInformations': [],
-      'manualPairingCode': '123',
-      'qrPairingCode': 'QR',
-      'sessionInformations': [],
+      commissioned: true,
+      fabricInformations: [],
+      manualPairingCode: '123',
+      qrPairingCode: 'QR',
+      sessionInformations: [],
+      serialNumber: '12345',
     });
   });
 
