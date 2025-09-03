@@ -145,7 +145,7 @@ export function HomeDevices() {
       if (session.fabric && session.isPeerActive === true) sessions++;
       if (session.numberOfActiveSubscriptions > 0) subscriptions += session.numberOfActiveSubscriptions;
     }
-    if (matter.commissioned === true && matter.fabricInformations && matter.sessionInformations && sessions === 0 && subscriptions === 0) return 'var(--secondary-color)';
+    if (matter.commissioned === true && matter.fabricInformations && matter.sessionInformations && (sessions === 0 || subscriptions === 0)) return 'var(--secondary-color)';
     return 'var(--div-text-color)';
   };
 

@@ -118,7 +118,7 @@ export function HomePlugins({selectPlugin}) {
       if (session.fabric && session.isPeerActive === true) sessions++;
       if (session.numberOfActiveSubscriptions > 0) subscriptions += session.numberOfActiveSubscriptions;
     }
-    if (plugin.paired === true && plugin.fabricInformations && plugin.sessionInformations && sessions === 0 && subscriptions === 0) return 'var(--secondary-color)';
+    if (plugin.paired === true && plugin.fabricInformations && plugin.sessionInformations && (sessions === 0 || subscriptions === 0)) return 'var(--secondary-color)';
     return 'var(--div-text-color)';
   };
 

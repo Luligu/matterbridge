@@ -13,10 +13,10 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [frontend]: Added primary color to QR icon in childbridge mode if the plugin is not paired.
-- [frontend]: Added secondary color to QR icon in childbridge mode if the plugin server node is paired but has no sessions and no subscriptions.
+- [frontend]: Added secondary color to QR icon in childbridge mode if the plugin server node is paired but doesn't have at least 1 session and 1 subscription.
 - [frontend]: Added color red to QR icon in childbridge mode if the plugin server node is not online.
 - [frontend]: Added primary color to QR icon of 'server' mode devices if the device is not paired.
-- [frontend]: Added secondary color to QR icon of 'server' mode devices if the device server node is paired but has no sessions and no subscriptions.
+- [frontend]: Added secondary color to QR icon of 'server' mode devices if the device server node is paired but doesn't have at least 1 session and 1 subscription.
 - [frontend]: Added color red to QR icon of 'server' mode devices if the device server node is not online.
 - [frontend]: Added serialNumber to QR icon of 'server' mode devices.
 - [frontend]: Bumped `frontend` version to 2.7.5.
