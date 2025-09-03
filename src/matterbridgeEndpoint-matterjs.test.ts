@@ -114,7 +114,7 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.ts';
 import { WaterHeater } from './devices/waterHeater.ts';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.ts';
-import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from './jest-utils/helpers.test.ts';
+import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from './jest-utils/helpers.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

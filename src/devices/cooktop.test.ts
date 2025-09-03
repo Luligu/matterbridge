@@ -19,7 +19,7 @@ import { Identify, OnOff, PowerSource, TemperatureControl, TemperatureMeasuremen
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { inspectError } from '../utils/error.js';
-import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from '../jest-utils/helpers.test.js';
+import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from '../jest-utils/helpers.js';
 
 import { Cooktop } from './cooktop.js';
 

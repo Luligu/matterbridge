@@ -77,7 +77,7 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
 import { wait } from './utils/wait.ts';
-import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence } from './jest-utils/helpers.test.ts';
+import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence } from './jest-utils/helpers.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

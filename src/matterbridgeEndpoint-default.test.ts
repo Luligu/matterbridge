@@ -100,7 +100,7 @@ import {
   waterValve,
 } from './matterbridgeDeviceTypes.ts';
 import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.ts';
-import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence } from './jest-utils/helpers.test.ts';
+import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence } from './jest-utils/helpers.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

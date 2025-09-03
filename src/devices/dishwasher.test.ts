@@ -24,7 +24,7 @@ import { inspectError } from '../utils/error.js';
 
 import { Dishwasher, MatterbridgeDishwasherModeServer } from './dishwasher.js';
 import { MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
-import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from '../jest-utils/helpers.test.js';
+import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from '../jest-utils/helpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
