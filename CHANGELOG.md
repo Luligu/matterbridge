@@ -14,6 +14,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [frontend]: Added color red to QR icon in childbridge mode if the node is not up.
 - [frontend]: Added primary color to QR icon in childbridge mode if the plugin is not paired.
+- [frontend]: Added secondary color to QR icon in childbridge mode if the plugin server node has no sessions and no subscriptions.
 - [frontend]: Bumped `frontend` version to 2.7.5.
 - [childbridge]: Added restart needed when the plugin is first added in childbridge mode.
 - [childbridge]: Create the server node for Dynamic plugins even if they have 0 devices. This allow to pair empty plugins in huge setup.
@@ -25,7 +26,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
-- [jest]: Fixed cli test failing with Jest to v. 30.1.3.
+- [jest]: Fixed cli test failing with Jest v. 30.1.3.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

@@ -111,6 +111,14 @@ export function HomePlugins({selectPlugin}) {
     if (plugin === undefined) return 'red';
     if (!plugin.fabricInformations && !plugin.qrPairingCode && !plugin.manualPairingCode) return 'red';
     if (plugin.paired === false && plugin.qrPairingCode && plugin.manualPairingCode) return 'var(--primary-color)';
+
+    var sessions = 0;
+    var subscriptions = 0;
+    for (const session of plugin.sessionInformations ?? []) {
+      if (session.fabric && session.isPeerActive === true) sessions++;
+      if (session.numberOfActiveSubscriptions > 0) subscriptions += session.numberOfActiveSubscriptions;
+    }
+    if (plugin.paired === true && plugin.fabricInformations && plugin.sessionInformations && sessions === 0 && subscriptions === 0) return 'var(--secondary-color)';
     return 'var(--div-text-color)';
   };
 
@@ -240,7 +248,7 @@ export function HomePlugins({selectPlugin}) {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && (msg.params.changed === 'plugins' || msg.params.changed === 'pluginsRestart')) {
+        if (msg.method === 'refresh_required' && (msg.params.changed === 'plugins' || msg.params.changed === 'fabrics' || msg.params.changed === 'sessions' || msg.params.changed === 'pluginsRestart')) {
           if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
