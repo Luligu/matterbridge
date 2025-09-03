@@ -129,7 +129,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
   }
   return all.length;
 }
-  
+
 describe('Jest utils', () => {
   test('create the server node', async () => {
     expect(1).toBe(1);
