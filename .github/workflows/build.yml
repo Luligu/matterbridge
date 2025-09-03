@@ -64,6 +64,7 @@ jobs:
           npm audit fix || true
           npm update || true
           npx npm-check-updates -u || true
+          npm install || true
           npm outdated || true
           npm run format || true
           npm run lint:fix || true
