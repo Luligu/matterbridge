@@ -971,6 +971,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         manualPairingCode: device.serverNode.state.commissioning.pairingCodes.manualPairingCode,
         fabricInformations: this.matterbridge.sanitizeFabricInformations(Object.values(device.serverNode.state.commissioning.fabrics)),
         sessionInformations: this.matterbridge.sanitizeSessionInformation(Object.values(device.serverNode.state.sessions.sessions)),
+        serialNumber: device.serverNode.state.basicInformation.serialNumber,
       } as ApiDevicesMatter;
     }
   }

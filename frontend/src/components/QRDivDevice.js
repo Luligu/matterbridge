@@ -43,6 +43,9 @@ export const QRDivDevice = ({ open, onClose, data }) => {
               </p>
             </div>
           ))}
+          <div key={'serial'} style={{ margin: '0px', padding: '0px', gap: '0px', color: 'var(--secondary-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'center', fontSize: '14px' }}>
+            <p style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>Serial number: {data.serialNumber}</p>
+          </div>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Close</Button>
@@ -67,5 +70,7 @@ export const QRDivDevice = ({ open, onClose, data }) => {
         </DialogActions>
       </Dialog>
     );
+  } else {
+    return null;
   }
 };

@@ -18,6 +18,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Added primary color to QR icon of 'server' mode devices if the device is not paired.
 - [frontend]: Added secondary color to QR icon of 'server' mode devices if the device server node is paired but has no sessions and no subscriptions.
 - [frontend]: Added color red to QR icon of 'server' mode devices if the device server node is not online.
+- [frontend]: Added serialNumber to QR icon of 'server' mode devices.
 - [frontend]: Bumped `frontend` version to 2.7.5.
 - [childbridge]: Added restart needed when the plugin is first added in childbridge mode.
 - [childbridge]: Create the server node for Dynamic plugins even if they have 0 devices. This allow to pair empty plugins in huge setup.
