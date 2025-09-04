@@ -55,7 +55,7 @@ describe('Matterbridge Device serverMode=server', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
-  }, 30000);
+  });
 
   test('Matterbridge.loadInstance(true)', async () => {
     // Load Matterbridge instance and initialize it

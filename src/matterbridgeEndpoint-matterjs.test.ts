@@ -114,7 +114,7 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.ts';
 import { WaterHeater } from './devices/waterHeater.ts';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.ts';
-import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from './jest-utils/jestHelpers.js';
+import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync } from './jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -140,8 +140,8 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-// Cleanup the test environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the matter and test environment
+createTestEnvironment(HOMEDIR);
 
 describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
@@ -184,9 +184,7 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {
-    // await flushAsync();
-  });
+  afterEach(async () => {});
 
   afterAll(async () => {
     // Restore all mocks
@@ -1119,6 +1117,6 @@ describe('Matterbridge ' + NAME, () => {
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 10);
+    await matterbridge.destroyInstance(10, 250);
   });
 });

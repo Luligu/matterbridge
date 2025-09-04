@@ -81,10 +81,6 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
 
-  beforeAll(async () => {
-    //
-  });
-
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
@@ -93,7 +89,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
-  }, 30000);
+  });
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     // Load Matterbridge instance and initialize it
@@ -143,7 +139,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     await new Promise((resolve) => {
       matterbridge.once('online', resolve);
     });
-    await Promise.resolve();
+    // await Promise.resolve();
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);

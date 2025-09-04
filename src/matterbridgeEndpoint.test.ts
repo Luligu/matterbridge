@@ -77,7 +77,7 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
 import { wait } from './utils/wait.ts';
-import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence } from './jest-utils/jestHelpers.js';
+import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -103,8 +103,8 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the matter and test environment
+createTestEnvironment(HOMEDIR);
 
 describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
@@ -125,9 +125,7 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {
-    // await flushAsync();
-  });
+  afterEach(async () => {});
 
   afterAll(async () => {
     // Restore all mocks
@@ -1237,6 +1235,6 @@ describe('Matterbridge ' + NAME, () => {
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 10);
+    await matterbridge.destroyInstance(10, 250);
   });
 });

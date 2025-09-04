@@ -53,10 +53,6 @@ rmSync(HOMEDIR, { recursive: true, force: true });
 describe('Matterbridge matterjs', () => {
   let matterbridge: Matterbridge;
 
-  beforeAll(async () => {
-    //
-  });
-
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
@@ -81,7 +77,7 @@ describe('Matterbridge matterjs', () => {
     await new Promise((resolve) => {
       matterbridge.once('online', resolve);
     });
-    await Promise.resolve();
+    // await Promise.resolve();
 
     expect((matterbridge as any).endAdvertiseTimeout).toBeDefined();
 

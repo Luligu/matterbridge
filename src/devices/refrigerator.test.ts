@@ -23,7 +23,7 @@ import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { inspectError } from '../utils/error.js';
 
 import { MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from './refrigerator.js';
-import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence, flushAsync } from '../jest-utils/jestHelpers.js';
+import { addDevice, assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -49,82 +49,34 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the matter and test environment
+createTestEnvironment(HOMEDIR);
 
 describe('Matterbridge ' + NAME, () => {
-  const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
   let device: Refrigerator;
   let cabinet1: MatterbridgeEndpoint;
   let cabinet2: MatterbridgeEndpoint;
 
-  beforeAll(async () => {
-    // Setup the matter environment
-    environment.vars.set('log.level', MatterLogLevel.DEBUG);
-    environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', HOMEDIR);
-    environment.vars.set('runtime.signals', false);
-    environment.vars.set('runtime.exitcode', false);
-  });
+  beforeAll(async () => {});
 
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
   });
 
+  afterEach(async () => {});
+
   afterAll(async () => {
-    // Wait 'ticks' macrotask tick (setImmediate) then yield `microTurns` microtask turns so progressively chained Promise callbacks can settle
-    await flushAsync();
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create the server node', async () => {
-    // Create the server node
-    server = await ServerNode.create({
-      id: NAME + 'ServerNode',
-
-      productDescription: {
-        name: NAME + 'ServerNode',
-        deviceType: DeviceTypeId(RootEndpoint.deviceType),
-        vendorId: VendorId(0xfff1),
-        productId: 0x8000,
-      },
-
-      // Provide defaults for the BasicInformation cluster on the Root endpoint
-      basicInformation: {
-        vendorId: VendorId(0xfff1),
-        vendorName: 'Matterbridge',
-        productId: 0x8000,
-        productName: 'Matterbridge ' + NAME,
-        nodeLabel: NAME + 'ServerNode',
-        hardwareVersion: 1,
-        softwareVersion: 1,
-        reachable: true,
-      },
-
-      network: {
-        port: MATTER_PORT,
-      },
-    });
-    expect(server).toBeDefined();
-    expect(server.lifecycle.isReady).toBeTruthy();
-  });
-
-  test('create the aggregator node', async () => {
-    aggregator = new Endpoint(AggregatorEndpoint, { id: NAME + 'AggregatorNode' });
-    expect(aggregator).toBeDefined();
-  });
-
-  test('add the aggregator node to the server', async () => {
+  test('create and start the server node', async () => {
+    [server, aggregator] = await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-    await server.add(aggregator);
-    expect(server.parts.has(aggregator.id)).toBeTruthy();
-    expect(server.parts.has(aggregator)).toBeTruthy();
-    expect(aggregator.lifecycle.isReady).toBeTruthy();
   });
 
   test('create a refrigerator device', async () => {
@@ -150,37 +102,9 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add a refrigerator device', async () => {
-    expect(server).toBeDefined();
-    expect(device).toBeDefined();
-    try {
-      await server.add(device);
-    } catch (error) {
-      inspectError(device.log, `Error adding device ${device.deviceName}`, error);
-      return;
-    }
-    expect(server.parts.has('RefrigeratorTestDevice-RF123456')).toBeTruthy();
-    expect(server.parts.has(device)).toBeTruthy();
-    expect(device.lifecycle.isReady).toBeTruthy();
+    expect(await addDevice(server, device)).toBeTruthy();
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer initialized`);
-  });
-
-  test('start the server node', async () => {
-    // Run the server
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeFalsy();
-
-    // Wait for the server to be online
-    await new Promise<void>((resolve) => {
-      server.lifecycle.online.on(async () => {
-        resolve();
-      });
-      server.start();
-    });
-
-    // Check if the server is online
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeTruthy();
   });
 
   test('cabinet1 open door', async () => {
@@ -290,27 +214,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestCabinetTop.3) called with invalid mode 15`);
   });
 
-  test('ensure all endpoint number persistence is flushed before closing', async () => {
-    expect(server).toBeDefined();
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeTruthy();
-    if (server) {
-      await flushAllEndpointNumberPersistence(server);
-      await assertAllEndpointNumbersPersisted(server);
-    }
-  });
-
   test('close the server node', async () => {
     expect(server).toBeDefined();
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeTruthy();
-    await server.close();
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeFalsy();
-  });
-
-  test('stop the mDNS service', async () => {
-    expect(server).toBeDefined();
-    await server.env.get(MdnsService)[Symbol.asyncDispose]();
+    await stopServerNode(server);
   });
 });

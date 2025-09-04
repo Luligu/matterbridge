@@ -81,10 +81,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
 
-  beforeAll(async () => {
-    //
-  });
-
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();

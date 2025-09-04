@@ -3,7 +3,7 @@
  * @file src/jest/helpers.test.ts
  * @author Luca Liguori
  * @created 2025-09-03
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -21,7 +21,19 @@
  * limitations under the License.
  */
 
-import { Endpoint, ServerNode, ServerNodeStore } from '@matter/main';
+import { rmSync } from 'node:fs';
+import { inspect } from 'node:util';
+
+// Matterbridge imports
+import { DeviceTypeId, Endpoint, Environment, ServerNode, ServerNodeStore, VendorId, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Lifecycle } from '@matter/main';
+import { AggregatorEndpoint, RootEndpoint } from '@matter/main/endpoints';
+import { MdnsService } from '@matter/main/protocol';
+
+// Plugins imports
+/*
+import { DeviceTypeId, Endpoint, Environment, MdnsService, ServerNode, ServerNodeStore, VendorId, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from 'matterbridge/matter';
+import { RootEndpoint, AggregatorEndpoint } from 'matterbridge/matter/endpoints';
+*/
 
 /**
  * Advance the Node.js event loop deterministically to allow chained asynchronous work (Promises scheduled in
@@ -32,7 +44,7 @@ import { Endpoint, ServerNode, ServerNodeStore } from '@matter/main';
  *
  * @param {number} ticks       Number of macrotask (setImmediate) turns to yield (default 3).
  * @param {number} microTurns  Number of microtask drains (Promise.resolve chains) after macrotask yielding (default 10).
- * @param {number} pause       Final timer delay in ms; set 0 to disable (default 100).
+ * @param {number} pause       Final timer delay in ms; set 0 to disable (default 100ms).
  * @returns {Promise<void>}        Resolves after the requested event loop advancement has completed.
  */
 export async function flushAsync(ticks: number = 3, microTurns: number = 10, pause: number = 100): Promise<void> {
@@ -107,4 +119,200 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
     }
   }
   return all.length;
+}
+
+/**
+ * Create a Matterbridge Environment for testing.
+ * It will remove any existing home directory.
+ *
+ * @param {string} homeDir Home directory for the environment.
+ * @returns {Environment}  The created environment.
+ */
+export function createTestEnvironment(homeDir: string): Environment {
+  expect(homeDir).toBeDefined();
+  expect(typeof homeDir).toBe('string');
+  expect(homeDir.length).toBeGreaterThan(5); // avoid accidental deletion of short paths like "/" or "C:\"
+
+  // Cleanup any existing home directory
+  rmSync(homeDir, { recursive: true, force: true });
+
+  // Setup the matter environment
+  const environment = Environment.default;
+  environment.vars.set('log.level', MatterLogLevel.DEBUG);
+  environment.vars.set('log.format', MatterLogFormat.ANSI);
+  environment.vars.set('path.root', homeDir);
+  environment.vars.set('runtime.signals', false);
+  environment.vars.set('runtime.exitcode', false);
+  return environment;
+}
+
+/**
+ * Start a Matterbridge ServerNode for testing.
+ *
+ * @param {string} name Name of the server (used for logging and product description).
+ * @param {number} port TCP port to listen on.
+ * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
+ */
+export async function startServerNode(name: string, port: number): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+  // Create the server node
+  const server = await ServerNode.create({
+    id: name + 'ServerNode',
+
+    productDescription: {
+      name: name + 'ServerNode',
+      deviceType: DeviceTypeId(RootEndpoint.deviceType),
+      vendorId: VendorId(0xfff1),
+      productId: 0x8000,
+    },
+
+    // Provide defaults for the BasicInformation cluster on the Root endpoint
+    basicInformation: {
+      vendorId: VendorId(0xfff1),
+      vendorName: 'Matterbridge',
+      productId: 0x8000,
+      productName: 'Matterbridge ' + name,
+      nodeLabel: name + 'ServerNode',
+      hardwareVersion: 1,
+      softwareVersion: 1,
+      reachable: true,
+    },
+
+    network: {
+      port,
+    },
+  });
+  expect(server).toBeDefined();
+  expect(server.lifecycle.isReady).toBeTruthy();
+
+  // Create the aggregator node
+  const aggregator = new Endpoint(AggregatorEndpoint, {
+    id: name + 'AggregatorNode',
+  });
+  expect(aggregator).toBeDefined();
+
+  // Add the aggregator to the server
+  await server.add(aggregator);
+  expect(server.parts.has(aggregator.id)).toBeTruthy();
+  expect(server.parts.has(aggregator)).toBeTruthy();
+  expect(aggregator.lifecycle.isReady).toBeTruthy();
+
+  // Run the server
+  expect(server.lifecycle.isOnline).toBeFalsy();
+
+  // Wait for the server to be online
+  await new Promise<void>((resolve) => {
+    server.lifecycle.online.on(async () => {
+      resolve();
+    });
+    server.start();
+  });
+
+  // Check if the server is online
+  expect(server.lifecycle.isReady).toBeTruthy();
+  expect(server.lifecycle.isOnline).toBeTruthy();
+  expect(server.lifecycle.isCommissioned).toBeFalsy();
+  expect(server.lifecycle.isPartsReady).toBeTruthy();
+  expect(server.lifecycle.hasId).toBeTruthy();
+  expect(server.lifecycle.hasNumber).toBeTruthy();
+  expect(aggregator.lifecycle.isReady).toBeTruthy();
+  expect(aggregator.lifecycle.isInstalled).toBeTruthy();
+  expect(aggregator.lifecycle.isPartsReady).toBeTruthy();
+  expect(aggregator.lifecycle.hasId).toBeTruthy();
+  expect(aggregator.lifecycle.hasNumber).toBeTruthy();
+
+  return [server, aggregator];
+}
+
+/**
+ * Stop a Matterbridge ServerNode.
+ *
+ * @param {ServerNode<ServerNode.RootEndpoint>} server The server to stop.
+ * @returns {Promise<void>} Resolves when the server has stopped.
+ */
+export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>): Promise<void> {
+  // Flush any pending endpoint number persistence
+  await flushAllEndpointNumberPersistence(server);
+
+  // Ensure all endpoint numbers are persisted
+  await assertAllEndpointNumbersPersisted(server);
+
+  // Stop the server
+  expect(server).toBeDefined();
+  expect(server.lifecycle.isReady).toBeTruthy();
+  expect(server.lifecycle.isOnline).toBeTruthy();
+  await server.close();
+  expect(server.lifecycle.isReady).toBeTruthy();
+  expect(server.lifecycle.isOnline).toBeFalsy();
+
+  // stop the mDNS service
+  await server.env.get(MdnsService)[Symbol.asyncDispose]();
+
+  // Ensure the queue is empty and pause 100ms
+  await flushAsync();
+}
+
+/**
+ * Add a device (endpoint) to a server or aggregator.
+ *
+ * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>} owner The server or aggregator to add the device to.
+ * @param {Endpoint} device The device to add.
+ * @returns {Promise<void>} Resolves when the device has been added and is ready.
+ */
+export async function addDevice(owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>, device: Endpoint): Promise<boolean> {
+  expect(owner).toBeDefined();
+  expect(device).toBeDefined();
+  expect(owner.lifecycle.isReady).toBeTruthy();
+  expect(owner.construction.status).toBe(Lifecycle.Status.Active);
+  expect(owner.lifecycle.isPartsReady).toBeTruthy();
+
+  try {
+    await owner.add(device);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : error;
+    const errorInspect = inspect(error, { depth: 10 });
+    // eslint-disable-next-line no-console
+    console.error(`Error adding device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}\nstack: ${errorInspect}`);
+    return false;
+  }
+  expect(owner.parts.has(device)).toBeTruthy();
+  expect(owner.lifecycle.isPartsReady).toBeTruthy();
+  expect(device.lifecycle.isReady).toBeTruthy();
+  expect(device.lifecycle.isInstalled).toBeTruthy();
+  expect(device.lifecycle.hasId).toBeTruthy();
+  expect(device.lifecycle.hasNumber).toBeTruthy();
+  expect(device.construction.status).toBe(Lifecycle.Status.Active);
+  return true;
+}
+
+/**
+ * Add a device (endpoint) to a server or aggregator.
+ *
+ * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>} owner The server or aggregator to add the device to.
+ * @param {Endpoint} device The device to add.
+ * @returns {Promise<void>} Resolves when the device has been added and is ready.
+ */
+export async function deleteDevice(owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>, device: Endpoint): Promise<boolean> {
+  expect(owner).toBeDefined();
+  expect(device).toBeDefined();
+  expect(owner.lifecycle.isReady).toBeTruthy();
+  expect(owner.construction.status).toBe(Lifecycle.Status.Active);
+  expect(owner.lifecycle.isPartsReady).toBeTruthy();
+
+  try {
+    await device.delete();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : error;
+    const errorInspect = inspect(error, { depth: 10 });
+    // eslint-disable-next-line no-console
+    console.error(`Error deleting device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}\nstack: ${errorInspect}`);
+    return false;
+  }
+  expect(owner.parts.has(device)).toBeFalsy();
+  expect(owner.lifecycle.isPartsReady).toBeTruthy();
+  expect(device.lifecycle.isReady).toBeFalsy();
+  expect(device.lifecycle.isInstalled).toBeFalsy();
+  expect(device.lifecycle.hasId).toBeTruthy();
+  expect(device.lifecycle.hasNumber).toBeTruthy();
+  expect(device.construction.status).toBe(Lifecycle.Status.Destroyed);
+  return true;
 }

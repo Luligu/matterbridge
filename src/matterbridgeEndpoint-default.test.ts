@@ -100,7 +100,7 @@ import {
   waterValve,
 } from './matterbridgeDeviceTypes.ts';
 import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.ts';
-import { assertAllEndpointNumbersPersisted, flushAllEndpointNumberPersistence } from './jest-utils/jestHelpers.js';
+import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -126,18 +126,12 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the matter and test environment
+createTestEnvironment(HOMEDIR);
 
 describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
   let device: MatterbridgeEndpoint;
-
-  // Wait 'ticks' macrotask tick (setImmediate) then yield `microTurns` microtask turns so progressively chained Promise callbacks can settle
-  async function flushAsync(ticks: number = 3, microTurns: number = 10) {
-    for (let i = 0; i < ticks; i++) await new Promise((resolve) => setImmediate(resolve));
-    for (let i = 0; i < microTurns; i++) await Promise.resolve();
-  }
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
@@ -155,14 +149,12 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {
-    // await flushAsync();
-  });
+  afterEach(async () => {});
 
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
-  }, 30000);
+  });
 
   async function add(device: MatterbridgeEndpoint): Promise<void> {
     expect(device).toBeDefined();
@@ -1215,6 +1207,6 @@ describe('Matterbridge ' + NAME, () => {
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 10);
+    await matterbridge.destroyInstance(10, 250);
   });
 });
