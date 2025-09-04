@@ -22,6 +22,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bumped `frontend` version to 2.7.5.
 - [childbridge]: Added restart needed when the plugin is first added in childbridge mode.
 - [childbridge]: Create the server node for Dynamic plugins even if they have 0 devices. This allow to pair empty plugins in huge setup.
+- [select]: Enhanced documentation for Platform setSelectDevice, setSelectDeviceEntity, and setSelectEntity methods with schema examples.
 
 ### Changed
 
