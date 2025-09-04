@@ -1281,6 +1281,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a DeadFront OnOff cluster server with feature DeadFrontBehavior.
    *
+   * The "dead front" state is linked to the OnOff attribute
+   * in the On/Off cluster having the value False. Thus, the Off command of the On/Off cluster SHALL
+   * move the device into the "dead front" state, the On command of the On/Off cluster SHALL bring the
+   * device out of the "dead front" state, and the device SHALL adhere with the associated requirements
+   * on subscription handling and event reporting.
+   *
    * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
@@ -1802,18 +1808,26 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default thermostat user interface configuration cluster server.
    *
+   * @param {ThermostatUserInterfaceConfiguration.TemperatureDisplayMode} [temperatureDisplayMode] - The temperature display mode to set. Defaults to `ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius`.
+   * @param {ThermostatUserInterfaceConfiguration.KeypadLockout} [keypadLockout] - The keypad lockout mode. Defaults to `ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout`.
+   * @param {ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility} [scheduleProgrammingVisibility] - The schedule programming visibility. Defaults to `ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted`.
+   *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    * @remarks
    * The default values are:
-   * - temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius (writeble).
-   * - keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout (writeble).
-   * - scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted (writeble).
+   * - temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius (writable).
+   * - keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout (writable).
+   * - scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted (writable).
    */
-  createDefaultThermostatUserInterfaceConfigurationClusterServer(): this {
+  createDefaultThermostatUserInterfaceConfigurationClusterServer(
+    temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode = ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius,
+    keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout = ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout,
+    scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility = ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted,
+  ): this {
     this.behaviors.require(ThermostatUserInterfaceConfigurationServer, {
-      temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius,
-      keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout,
-      scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted,
+      temperatureDisplayMode,
+      keypadLockout,
+      scheduleProgrammingVisibility,
     });
     return this;
   }
@@ -2324,6 +2338,8 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Triggers a switch event on the specified endpoint.
+   * We usually use get from real devices something like 'single', 'double', 'long'.
+   * Here we convert it to the Matter sequence of events (taken from Matter specs).
    *
    * @param {string} event - The type of event to trigger. Possible values are 'Single', 'Double', 'Long' for momentarySwitch and 'Press', 'Release' for latchingSwitch.
    * @param {AnsiLogger} log - Optional logger to log the event.
