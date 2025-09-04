@@ -26,7 +26,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [MatterbridgeEndpoint]: Improved documentation in jsdoc.
 - [AirConditioner]: Added AirConditioner() class and Jest test. It is not supported by the Home app. Improved createDefaultThermostatUserInterfaceConfigurationClusterServer().
 - [DeviceTypes]: Add Chapter 10. Media Device Types.
-- [Speaker]: Added Speaker() class and Jest test.
+- [Speaker]: Added Speaker() class and Jest test. Supported only by SmartThings.
 
 ### Changed
 
