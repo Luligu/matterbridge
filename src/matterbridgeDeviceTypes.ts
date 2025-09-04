@@ -26,73 +26,90 @@
 import { ClusterId, DeviceTypeId, EndpointNumber } from '@matter/main';
 import { Semtag } from '@matter/main/types';
 // @matter clusters
+import { AccountLogin } from '@matter/main/clusters/account-login';
+import { Actions } from '@matter/main/clusters/actions';
+import { ActivatedCarbonFilterMonitoring } from '@matter/main/clusters/activated-carbon-filter-monitoring';
+import { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
+import { AirQuality } from '@matter/main/clusters/air-quality';
+import { ApplicationLauncher } from '@matter/main/clusters/application-launcher';
+import { AudioOutput } from '@matter/main/clusters/audio-output';
 import { BooleanState } from '@matter/main/clusters/boolean-state';
 import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
 import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
 import { CarbonDioxideConcentrationMeasurement } from '@matter/main/clusters/carbon-dioxide-concentration-measurement';
 import { CarbonMonoxideConcentrationMeasurement } from '@matter/main/clusters/carbon-monoxide-concentration-measurement';
+import { Channel } from '@matter/main/clusters/channel';
 import { ColorControl } from '@matter/main/clusters/color-control';
+import { CommissionerControl } from '@matter/main/clusters/commissioner-control';
+import { ContentControl } from '@matter/main/clusters/content-control';
+import { ContentLauncher } from '@matter/main/clusters/content-launcher';
 import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
+import { DishwasherAlarm } from '@matter/main/clusters/dishwasher-alarm';
+import { DishwasherMode } from '@matter/main/clusters/dishwasher-mode';
 import { DoorLock } from '@matter/main/clusters/door-lock';
+import { EcosystemInformation } from '@matter/main/clusters/ecosystem-information';
 import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
 import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
+import { EnergyEvse } from '@matter/main/clusters/energy-evse';
+import { EnergyEvseMode } from '@matter/main/clusters/energy-evse-mode';
+import { EnergyPreference } from '@matter/main/clusters/energy-preference';
 import { FanControl } from '@matter/main/clusters/fan-control';
 import { FlowMeasurement } from '@matter/main/clusters/flow-measurement';
 import { FormaldehydeConcentrationMeasurement } from '@matter/main/clusters/formaldehyde-concentration-measurement';
 import { Groups } from '@matter/main/clusters/groups';
+import { HepaFilterMonitoring } from '@matter/main/clusters/hepa-filter-monitoring';
 import { Identify } from '@matter/main/clusters/identify';
 import { IlluminanceMeasurement } from '@matter/main/clusters/illuminance-measurement';
+import { KeypadInput } from '@matter/main/clusters/keypad-input';
+import { LaundryDryerControls } from '@matter/main/clusters/laundry-dryer-controls';
+import { LaundryWasherControls } from '@matter/main/clusters/laundry-washer-controls';
+import { LaundryWasherMode } from '@matter/main/clusters/laundry-washer-mode';
 import { LevelControl } from '@matter/main/clusters/level-control';
+import { LowPower } from '@matter/main/clusters/low-power';
+import { MediaInput } from '@matter/main/clusters/media-input';
+import { MediaPlayback } from '@matter/main/clusters/media-playback';
+import { Messages } from '@matter/main/clusters/messages';
+import { MicrowaveOvenControl } from '@matter/main/clusters/microwave-oven-control';
+import { MicrowaveOvenMode } from '@matter/main/clusters/microwave-oven-mode';
 import { ModeSelect } from '@matter/main/clusters/mode-select';
 import { NitrogenDioxideConcentrationMeasurement } from '@matter/main/clusters/nitrogen-dioxide-concentration-measurement';
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 import { OnOff } from '@matter/main/clusters/on-off';
+import { OperationalState } from '@matter/main/clusters/operational-state';
+import { OtaSoftwareUpdateProvider } from '@matter/main/clusters/ota-software-update-provider';
+import { OtaSoftwareUpdateRequestor } from '@matter/main/clusters/ota-software-update-requestor';
+import { OvenCavityOperationalState } from '@matter/main/clusters/oven-cavity-operational-state';
+import { OvenMode } from '@matter/main/clusters/oven-mode';
 import { OzoneConcentrationMeasurement } from '@matter/main/clusters/ozone-concentration-measurement';
-import { Pm10ConcentrationMeasurement } from '@matter/main/clusters/pm10-concentration-measurement';
 import { Pm1ConcentrationMeasurement } from '@matter/main/clusters/pm1-concentration-measurement';
+import { Pm10ConcentrationMeasurement } from '@matter/main/clusters/pm10-concentration-measurement';
 import { Pm25ConcentrationMeasurement } from '@matter/main/clusters/pm25-concentration-measurement';
 import { PowerSource } from '@matter/main/clusters/power-source';
 import { PowerTopology } from '@matter/main/clusters/power-topology';
 import { PressureMeasurement } from '@matter/main/clusters/pressure-measurement';
 import { PumpConfigurationAndControl } from '@matter/main/clusters/pump-configuration-and-control';
 import { RadonConcentrationMeasurement } from '@matter/main/clusters/radon-concentration-measurement';
-import { RelativeHumidityMeasurement } from '@matter/main/clusters/relative-humidity-measurement';
-import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
-import { Switch } from '@matter/main/clusters/switch';
-import { TemperatureMeasurement } from '@matter/main/clusters/temperature-measurement';
-import { Thermostat } from '@matter/main/clusters/thermostat';
-import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/main/clusters/total-volatile-organic-compounds-concentration-measurement';
-import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
-import { WindowCovering } from '@matter/main/clusters/window-covering';
-import { AirQuality } from '@matter/main/clusters/air-quality';
-import { Actions } from '@matter/main/clusters/actions';
-import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
-import { EnergyPreference } from '@matter/main/clusters/energy-preference';
-import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
-import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
-import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
-import { HepaFilterMonitoring } from '@matter/main/clusters/hepa-filter-monitoring';
-import { ActivatedCarbonFilterMonitoring } from '@matter/main/clusters/activated-carbon-filter-monitoring';
-import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
-import { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
-import { EcosystemInformation } from '@matter/main/clusters/ecosystem-information';
-import { CommissionerControl } from '@matter/main/clusters/commissioner-control';
-import { DishwasherAlarm } from '@matter/main/clusters/dishwasher-alarm';
-import { DishwasherMode } from '@matter/main/clusters/dishwasher-mode';
-import { LaundryDryerControls } from '@matter/main/clusters/laundry-dryer-controls';
-import { LaundryWasherControls } from '@matter/main/clusters/laundry-washer-controls';
-import { LaundryWasherMode } from '@matter/main/clusters/laundry-washer-mode';
-import { MicrowaveOvenControl } from '@matter/main/clusters/microwave-oven-control';
-import { MicrowaveOvenMode } from '@matter/main/clusters/microwave-oven-mode';
-import { OperationalState } from '@matter/main/clusters/operational-state';
-import { OvenCavityOperationalState } from '@matter/main/clusters/oven-cavity-operational-state';
-import { OvenMode } from '@matter/main/clusters/oven-mode';
 import { RefrigeratorAlarm } from '@matter/main/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
+import { RelativeHumidityMeasurement } from '@matter/main/clusters/relative-humidity-measurement';
+import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
+import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
+import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
 import { ServiceArea } from '@matter/main/clusters/service-area';
+import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
+import { Switch } from '@matter/main/clusters/switch';
+import { TargetNavigator } from '@matter/main/clusters/target-navigator';
 import { TemperatureControl } from '@matter/main/clusters/temperature-control';
-import { OtaSoftwareUpdateRequestor } from '@matter/main/clusters/ota-software-update-requestor';
-import { EnergyEvse, EnergyEvseMode, OtaSoftwareUpdateProvider, WaterHeaterManagement, WaterHeaterMode } from '@matter/main/clusters';
+import { TemperatureMeasurement } from '@matter/main/clusters/temperature-measurement';
+import { Thermostat } from '@matter/main/clusters/thermostat';
+import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/main/clusters/total-volatile-organic-compounds-concentration-measurement';
+import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
+import { WakeOnLan } from '@matter/main/clusters/wake-on-lan';
+import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
+import { WaterHeaterMode } from '@matter/main/clusters/water-heater-mode';
+import { WindowCovering } from '@matter/main/clusters/window-covering';
 
 export enum DeviceClasses {
   /** Node device type. */
@@ -734,7 +751,8 @@ export const rainSensor = DeviceTypeDefinition({
   optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
 });
 
-// Closures device types
+// Chapter 8. Closures device types
+
 /**
  * A Door Lock is a device used to secure a door. It is possible to actuate a door lock either by means of a manual or a remote method.
  * Element Requirements:
@@ -761,7 +779,7 @@ export const coverDevice = DeviceTypeDefinition({
   optionalServerClusters: [Groups.Cluster.id],
 });
 
-// HVAC device types
+// Chapter 9. HVAC device types
 
 /**
  * A Thermostat device is capable of having either built-in or separate sensors for temperature,
@@ -846,7 +864,95 @@ export const airPurifier = DeviceTypeDefinition({
   optionalServerClusters: [Groups.Cluster.id, OnOff.Cluster.id, HepaFilterMonitoring.Cluster.id, ActivatedCarbonFilterMonitoring.Cluster.id],
 });
 
-// Generic device types
+// Chapter 10. Media Device Types
+
+/**
+ * 10.2. A Basic Video Player has playback controls (play, pause, etc.) and keypad remote controls (up, down, number input),
+ * but is not able to launch arbitrary content applications. It is a commissionable node.
+ *
+ * Required server clusters (minimum features per spec):
+ * - Media Playback (media playback controls)
+ * - Keypad Input (remote key events)
+ * - On/Off (basic power control)
+ *
+ * Optional server clusters (additional capabilities commonly implemented):
+ * - Audio Output (speaker selection / volume endpoints)
+ * - Channel (linear channel navigation)
+ * - Target Navigator (high level app / target navigation)
+ * - Media Input (input source selection)
+ * - Low Power (power saving / wake logic)
+ * - Wake On LAN (remote wake capabilities)
+ * - Messages (device messaging / notifications)
+ * - Content Control (parental or content access control)
+ */
+export const basicVideoPlayer = DeviceTypeDefinition({
+  name: 'MA-basicVideoPlayer',
+  code: 0x0028,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [OnOff.Cluster.id, MediaPlayback.Cluster.id, KeypadInput.Cluster.id],
+  optionalServerClusters: [WakeOnLan.Cluster.id, Channel.Cluster.id, TargetNavigator.Cluster.id, MediaInput.Cluster.id, LowPower.Cluster.id, AudioOutput.Cluster.id, ContentControl.Cluster.id, Messages.Cluster.id],
+});
+
+/**
+ * 10.3. A Casting Video Player supports Basic Video Player features and content launching features.
+ * It is a Commissioner and can launch Content Apps (Content Launcher cluster) and optionally expose
+ * an Application Launcher cluster when acting as a Content App Platform.
+ *
+ * Required server clusters (minimum features per spec):
+ * - Media Playback (playback controls)
+ * - Keypad Input (remote key events)
+ * - Content Launcher (content launching capability)
+ * - On/Off (basic power control)
+ *
+ * Optional server clusters (additional capabilities):
+ * - Application Launcher (hosting content apps)
+ * - Account Login (account / session association)
+ * - Audio Output (output / volume endpoints)
+ * - Channel (linear channel navigation)
+ * - Target Navigator (high level target navigation)
+ * - Media Input (input source selection)
+ * - Low Power (power saving / wake logic)
+ * - Wake On LAN (remote wake capabilities)
+ * - Messages (device messaging / notifications)
+ * - Content Control (parental or content access control)
+ */
+export const castingVideoPlayer = DeviceTypeDefinition({
+  name: 'MA-castingVideoPlayer',
+  code: 0x0023,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [OnOff.Cluster.id, MediaPlayback.Cluster.id, KeypadInput.Cluster.id, ContentLauncher.Cluster.id],
+  optionalServerClusters: [
+    WakeOnLan.Cluster.id,
+    Channel.Cluster.id,
+    TargetNavigator.Cluster.id,
+    MediaInput.Cluster.id,
+    LowPower.Cluster.id,
+    AudioOutput.Cluster.id,
+    ApplicationLauncher.Cluster.id,
+    AccountLogin.Cluster.id,
+    ContentControl.Cluster.id,
+    Messages.Cluster.id,
+  ],
+});
+
+/**
+ * 10.4. A Speaker device type controls the speaker.
+ * unmute/mute, the On/Off cluster SHALL be used. A value of TRUE for the OnOff attribute
+ * SHALL represent the volume on (not muted) state, while a value of FALSE SHALL represent the volume
+ * off (muted) state. For volume level control, the Level cluster SHALL be used.
+ */
+export const speakerDevice = DeviceTypeDefinition({
+  name: 'MA-speaker',
+  code: 0x0022,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [OnOff.Cluster.id, LevelControl.Cluster.id],
+  optionalServerClusters: [],
+});
+
+// Chapter 11. Generic Device Types
 
 export const modeSelect = DeviceTypeDefinition({
   name: 'MA-modeselect',
@@ -898,7 +1004,7 @@ export const aggregator = DeviceTypeDefinition({
 
 export const bridge = aggregator;
 
-// Robotic device types
+// Chapter 12. Robotic Device Types
 
 /**
  * A Robotic Vacuum Cleaner is a device that is capable of cleaning floors and other surfaces
