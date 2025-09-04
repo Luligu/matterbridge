@@ -25,7 +25,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [select]: Enhanced documentation for Platform setSelectDevice, setSelectDeviceEntity, and setSelectEntity methods with schema examples (see the Jsdoc of the methods).
 - [MatterbridgeEndpoint]: Improved documentation in jsdoc.
 - [AirConditioner]: Added AirConditioner() class and Jest test. It is not supported by the Home app. Improved createDefaultThermostatUserInterfaceConfigurationClusterServer().
-- [DeviceTypes]: Add Chapter 10. Media Device Types
+- [DeviceTypes]: Add Chapter 10. Media Device Types.
+- [Speaker]: Added Speaker() class and Jest test.
 
 ### Changed
 
