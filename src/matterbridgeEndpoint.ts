@@ -443,6 +443,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to check.
    * @returns {boolean} True if the cluster server is supported, false otherwise.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to check if the 'OnOff' cluster server is supported by the endpoint:
+   * ```typescript
+   * if(device.hasClusterServer(OnOffBehavior)) ...
+   * if(device.hasClusterServer(OnOffServer)) ...
+   * if(device.hasClusterServer(OnOffCluster)) ...
+   * if(device.hasClusterServer(OnOff.Cluster)) ...
+   * if(device.hasClusterServer(OnOff.Cluster.id)) ...
+   * if(device.hasClusterServer('OnOff')) ...
+   * ```
+   * The last has the advantage of being able to check for clusters without imports. Just use the name found in the Matter specs.
    */
   hasClusterServer(cluster: Behavior.Type | ClusterType | ClusterId | string): boolean {
     const behavior = getBehavior(this, cluster);
@@ -456,6 +469,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to check.
    * @param {string} attribute - The attribute name to check.
    * @returns {boolean} True if the attribute server is supported, false otherwise.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to check if the 'onOff' attribute of the 'OnOff' cluster server is supported by the endpoint:
+   * ```typescript
+   * if(device.hasAttributeServer(OnOffBehavior, 'onOff')) ...
+   * if(device.hasAttributeServer(OnOffServer, 'onOff')) ...
+   * if(device.hasAttributeServer(OnOffCluster, 'onOff')) ...
+   * if(device.hasAttributeServer(OnOff.Cluster, 'onOff')) ...
+   * if(device.hasAttributeServer(OnOff.Cluster.id, 'onOff')) ...
+   * if(device.hasAttributeServer('OnOff', 'onOff')) ...
+   * ```
+   * The last has the advantage of being able to check for clusters attributes without imports. Just use the names found in the Matter specs.
    */
   hasAttributeServer(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string): boolean {
     const behavior = getBehavior(this, cluster);
@@ -484,6 +510,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} attribute - The name of the attribute to retrieve.
    * @param {AnsiLogger} [log] - Optional logger for error and info messages.
    * @returns {any} The value of the attribute, or undefined if the attribute is not found.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the 'onOff' attribute of the 'OnOff' cluster server:
+   * ```typescript
+   * device.getAttribute(OnOffBehavior, 'onOff')
+   * device.getAttribute(OnOffServer, 'onOff')
+   * device.getAttribute(OnOffCluster, 'onOff')
+   * device.getAttribute(OnOff.Cluster, 'onOff')
+   * device.getAttribute(OnOff.Cluster.id, 'onOff')
+   * device.getAttribute('OnOff', 'onOff')
+   * ```
+   * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, log?: AnsiLogger): any {
@@ -498,6 +537,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean | number | bigint | string | object | null} value - The value to set for the attribute.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to set the 'onOff' attribute of the 'OnOff' cluster server:
+   * ```typescript
+   * await device.setAttribute(OnOffBehavior, 'onOff', true)
+   * await device.setAttribute(OnOffServer, 'onOff', true)
+   * await device.setAttribute(OnOffCluster, 'onOff', true)
+   * await device.setAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.setAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.setAttribute('OnOff', 'onOff', true)
+   * ```
+   * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
    */
   async setAttribute(clusterId: Behavior.Type | ClusterType | ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean> {
     return await setAttribute(this, clusterId, attribute, value, log);
@@ -511,6 +563,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean | number | bigint | string | object | null} value - The value to set for the attribute.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the update. Errors are logged to the endpoint logger.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to update the 'onOff' attribute of the 'OnOff' cluster server:
+   * ```typescript
+   * await device.updateAttribute(OnOffBehavior, 'onOff', true)
+   * await device.updateAttribute(OnOffServer, 'onOff', true)
+   * await device.updateAttribute(OnOffCluster, 'onOff', true)
+   * await device.updateAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.updateAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.updateAttribute('OnOff', 'onOff', true)
+   * ```
+   * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
    */
   async updateAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean> {
     return await updateAttribute(this, cluster, attribute, value, log);
@@ -525,7 +590,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
    * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
    *
-   * @remarks The listener function (cannot be async) will receive three parameters:
+   * @remarks
+   * The listener function (cannot be async!) will receive three parameters:
    * - `newValue`: The new value of the attribute.
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. When context.offline === true then the change is locally generated and not from the controller.
