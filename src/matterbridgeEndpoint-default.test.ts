@@ -265,6 +265,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(OnOff.Cluster, 'startUpOnOff')).toBe(true);
 
     await add(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createOnOffClusterServer', async () => {
@@ -275,6 +276,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(OnOff.Cluster, 'startUpOnOff')).toBe(false);
 
     await add(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDeadFrontOnOffClusterServer', async () => {
@@ -285,6 +287,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(OnOff.Cluster, 'startUpOnOff')).toBe(false);
 
     await add(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultLevelControlClusterServer', async () => {
@@ -295,6 +298,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(LevelControl.Cluster, 'startUpCurrentLevel')).toBe(true);
 
     await add(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultColorControlClusterServer', async () => {
@@ -373,6 +377,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(ColorControl.Cluster, 'colorTemperatureMireds')).toBe(true);
     expect(device.hasAttributeServer(ColorControl.Cluster, 'startUpColorTemperatureMireds')).toBe(true);
     expect(device.getAttribute(ColorControl.Cluster.id, 'currentX')).toBe(500);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createXyColorControlClusterServer', async () => {
@@ -389,6 +394,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(ColorControl.Cluster, 'startUpColorTemperatureMireds')).toBe(true);
 
     await add(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createHsColorControlClusterServer', async () => {
@@ -405,6 +411,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(ColorControl.Cluster, 'startUpColorTemperatureMireds')).toBe(true);
 
     await add(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createCtColorControlClusterServer', async () => {
@@ -421,6 +428,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(ColorControl.Cluster, 'startUpColorTemperatureMireds')).toBe(true);
 
     await add(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultWindowCoveringClusterServer', async () => {
@@ -453,6 +461,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50 and targetPositionLiftPercent100ths: 50.`));
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(50);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultLiftTiltWindowCoveringClusterServer', async () => {
@@ -488,6 +497,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')).toBe(50);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultThermostatClusterServer', async () => {
@@ -504,6 +514,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultHeatingThermostatClusterServer', async () => {
@@ -518,6 +529,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(Thermostat.SystemMode.Heat);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultCoolingThermostatClusterServer', async () => {
@@ -532,6 +544,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(Thermostat.SystemMode.Cool);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultFanControlClusterServer', async () => {
@@ -549,6 +562,7 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).step).toBe(true);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).multiSpeed).toBe(false);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createBaseFanControlClusterServer', async () => {
@@ -569,6 +583,7 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).step).toBe(false);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).multiSpeed).toBe(false);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createMultiSpeedFanControlClusterServer', async () => {
@@ -589,7 +604,7 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).step).toBe(true);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).multiSpeed).toBe(true);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
-    (matterbridge as any).frontend.getClusterTextFromDevice(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createCompleteFanControlClusterServer', async () => {
@@ -615,6 +630,7 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).airflowDirection).toBe(true);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
     (matterbridge as any).frontend.getClusterTextFromDevice(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createOnOffFanControlClusterServer', async () => {
@@ -640,6 +656,7 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).airflowDirection).toBe(false);
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
     (matterbridge as any).frontend.getClusterTextFromDevice(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultHepaFilterMonitoringClusterServer', async () => {
@@ -657,6 +674,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
     expect(device.getAttribute(HepaFilterMonitoring.Cluster.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
     expect(device.getAttribute(ActivatedCarbonFilterMonitoring.Cluster.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultDoorLockClusterServer', async () => {
@@ -670,6 +688,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(DoorLock.Cluster.id, 'lockState')).toBe(DoorLock.LockState.Locked);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultModeSelectClusterServer', async () => {
@@ -690,6 +709,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(ModeSelect.Cluster.id, 'currentMode')).toBe(0);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultValveConfigurationAndControlClusterServer', async () => {
@@ -705,6 +725,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
     expect(device.getAttribute(ValveConfigurationAndControl.Cluster.id, 'currentState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
     expect(device.getAttribute(ValveConfigurationAndControl.Cluster.id, 'currentLevel')).toBe(0);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultPumpConfigurationAndControlClusterServer', async () => {
@@ -719,7 +740,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(PumpConfigurationAndControl.Cluster.id, 'operationMode')).toBe(PumpConfigurationAndControl.OperationMode.Normal);
-    (matterbridge as any).frontend.getClusterTextFromDevice(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultSmokeCOAlarmClusterServer', async () => {
@@ -735,6 +756,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
     expect(device.getAttribute(SmokeCoAlarm.Cluster.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
     expect(device.getAttribute(SmokeCoAlarm.Cluster.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultSmokeCOAlarmClusterServer smoke only', async () => {
@@ -749,6 +771,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(SmokeCoAlarm.Cluster.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultSmokeCOAlarmClusterServer co only', async () => {
@@ -763,6 +786,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(SmokeCoAlarm.Cluster.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultSwitchClusterServer', async () => {
@@ -796,6 +820,7 @@ describe('Matterbridge ' + NAME, () => {
     await device.triggerSwitchEvent('Double', device.log);
     await device.triggerSwitchEvent('Long', device.log);
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultMomentarySwitchClusterServer', async () => {
@@ -825,6 +850,7 @@ describe('Matterbridge ' + NAME, () => {
     await device.triggerSwitchEvent('Single', device.log);
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger endpoint ${or}${device.id}:${device.number}${db} event ${hk}Switch.SinglePress${db}`));
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultLatchingSwitchClusterServer', async () => {
@@ -852,6 +878,7 @@ describe('Matterbridge ' + NAME, () => {
     await device.triggerSwitchEvent('Press', device.log);
     await device.triggerSwitchEvent('Release', device.log);
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultBooleanStateClusterServer', async () => {
@@ -954,6 +981,7 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
     await device.triggerEvent(BooleanState.Cluster.id, 'state', { stateValue: true });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}state${er} error: cluster booleanState not found on endpoint`));
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultBooleanStateConfigurationClusterServer for waterFreezeDetector', async () => {
@@ -977,6 +1005,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue')).toBe(true);
     expect(device.getAttribute(BooleanStateConfiguration.Cluster.id, 'currentSensitivityLevel')).toBe(0);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultBooleanStateConfigurationClusterServer for waterLeakDetector', async () => {
@@ -1000,6 +1029,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue')).toBe(true);
     expect(device.getAttribute(BooleanStateConfiguration.Cluster.id, 'currentSensitivityLevel')).toBe(0);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultBooleanStateConfigurationClusterServer for rainSensor', async () => {
@@ -1023,6 +1053,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue')).toBe(true);
     expect(device.getAttribute(BooleanStateConfiguration.Cluster.id, 'currentSensitivityLevel')).toBe(0);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('power source wired', async () => {
@@ -1035,6 +1066,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(PowerSource.Cluster.id, 'description')).toBe('AC Power');
     expect(device.getAttribute(PowerSource.Cluster.id, 'status')).toBe(PowerSource.PowerSourceStatus.Active);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('power source replaceable', async () => {
@@ -1047,6 +1079,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(PowerSource.Cluster.id, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
     expect(device.getAttribute(PowerSource.Cluster.id, 'batReplaceability')).toBe(PowerSource.BatReplaceability.UserReplaceable);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('power source rechargeable', async () => {
@@ -1059,6 +1092,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(PowerSource.Cluster.id, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
     expect(device.getAttribute(PowerSource.Cluster.id, 'batChargeState')).toBe(PowerSource.BatChargeState.IsNotCharging);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('energy measurements for electricalSensor', async () => {
@@ -1080,6 +1114,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(ElectricalEnergyMeasurement.Cluster.id, 'cumulativeEnergyImported')).toBe(null);
     expect(device.getAttribute(ElectricalPowerMeasurement.Cluster.id, 'voltage')).toBe(null);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultTemperatureMeasurementClusterServer', async () => {
@@ -1093,6 +1128,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue')).toBe(2100);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultRelativeHumidityMeasurementClusterServer', async () => {
@@ -1106,6 +1142,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue')).toBe(5000);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultPressureMeasurementClusterServer', async () => {
@@ -1119,6 +1156,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(PressureMeasurement.Cluster.id, 'measuredValue')).toBe(980);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultIlluminanceMeasurementClusterServer', async () => {
@@ -1132,6 +1170,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(IlluminanceMeasurement.Cluster.id, 'measuredValue')).toBe(1000);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultFlowMeasurementClusterServer', async () => {
@@ -1145,6 +1184,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(FlowMeasurement.Cluster.id, 'measuredValue')).toBe(200);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultOccupancySensingClusterServer', async () => {
@@ -1158,6 +1198,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(OccupancySensing.Cluster.id, 'occupancy')).toEqual({ occupied: true });
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultAirQualityClusterServer', async () => {
@@ -1192,6 +1233,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(AirQuality.Cluster.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('ensure all endpoint number persistence is flushed before closing', async () => {
