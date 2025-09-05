@@ -225,8 +225,9 @@ export class Mdns extends Multicast {
         this.log.debug(`mDNS message filtered out by filters: ${this.filters.join(', ')}`);
         for (const filter of this.filters) {
           const foundInQuestions = result.questions?.some((q) => q.name.includes(filter));
-          const foundInAnswers = result.answers?.some((a) => a.name.includes(filter) || a.data.includes(filter)) || result?.additionals?.some((a) => a.name.includes(filter) || a.data.includes(filter));
-          if (foundInQuestions || foundInAnswers) {
+          const foundInAnswers = result.answers?.some((a) => a.name.includes(filter) || a.data.includes(filter));
+          const foundInAdditionals = result.additionals?.some((a) => a.name.includes(filter) || a.data.includes(filter));
+          if (foundInQuestions || foundInAnswers || foundInAdditionals) {
             this.log.info(`Dgram mDNS server received a mDNS message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
             this.logMdnsMessage(result);
             return;

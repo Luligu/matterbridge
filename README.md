@@ -291,7 +291,7 @@ An Accessory platform plugin only exposes one device.
 
 This is an example of a dynamic platform plugin.
 
-It exposes 56 virtual devices.
+It exposes 57 virtual devices.
 
 All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
