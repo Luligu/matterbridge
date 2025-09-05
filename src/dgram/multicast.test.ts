@@ -206,45 +206,6 @@ describe('Multicast', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Stopped dgram multicast socket.'));
   });
 
-  /*
-  test('Create multicast with undefined interfaces in network interface list', async () => {
-    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true, undefined, '0.0.0.0');
-    expect(mcast).not.toBeUndefined();
-    expect(mcast).toBeInstanceOf(Multicast);
-    expect(mcast.socketType).toBe('udp4');
-
-    // Mock networkInterfaces to return an interface with undefined details
-    const networkInterfacesMock = jest.spyOn(os, 'networkInterfaces').mockReturnValue({
-      'test-interface': undefined,
-    });
-
-    const ready = new Promise<AddressInfo>((resolve) => {
-      mcast.on('ready', (address: AddressInfo) => {
-        expect(address.family).toBe('IPv4');
-        expect(address.address).toBe('0.0.0.0');
-        expect(address.port).toBeGreaterThan(0);
-        resolve(address);
-      });
-    });
-    mcast.start();
-    await ready;
-
-    // Should not attempt to join multicast group on undefined interface
-    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Dgram multicast socket joined multicast group'));
-
-    const closed = new Promise<void>((resolve) => {
-      mcast.on('close', () => {
-        resolve();
-      });
-    });
-    mcast.stop();
-    await closed;
-
-    // Restore the mock
-    networkInterfacesMock.mockRestore();
-  });
-  */
-
   test('Create ipv6 multicast with specific interfaces', async () => {
     // Test line 104: if (this.interfaceName && name !== this.interfaceName) return;
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true);
