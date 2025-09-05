@@ -626,7 +626,7 @@ describe('Matterbridge mocked', () => {
     // expect(createMatterLoggerSpy).not.toHaveBeenCalled();
     // expect(createMatterFileLoggerSpy).not.toHaveBeenCalled();
     expect(createDestinationMatterLoggerSpy).toHaveBeenCalled();
-    setDebug(true);
+    // setDebug(true);
     Logger.get('Jest').debug('Test debug log message');
     Logger.get('Jest').info('Test info log message');
     Logger.get('Jest').notice('Test notice log message');
@@ -639,11 +639,11 @@ describe('Matterbridge mocked', () => {
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test warn log message'));
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test error log message'));
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test fatal log message'));
-    setDebug(false);
+    // setDebug(false);
   });
 
   test('Matterbridge.initialize() logNodeAndSystemInfo networkInterfaces', async () => {
-    setDebug(false);
+    // setDebug(false);
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     await matterbridge.initialize();
