@@ -6,18 +6,16 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
-import { jest } from '@jest/globals';
-
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
+import { jest } from '@jest/globals';
 import { Environment } from '@matter/main';
-
 import { AnsiLogger, db, er, LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { dev, plg } from './matterbridgeTypes.ts';
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { dev, plg } from './matterbridgeTypes.js';
 
 /*
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {

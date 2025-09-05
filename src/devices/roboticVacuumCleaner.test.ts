@@ -4,23 +4,23 @@ const MATTER_PORT = 6002;
 const NAME = 'Rvc';
 const HOMEDIR = path.join('jest', NAME);
 
-import { jest } from '@jest/globals';
-import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
-import { rmSync } from 'node:fs';
 import path from 'node:path';
 
-import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Endpoint } from '@matter/main';
-import { RootEndpoint } from '@matter/main/endpoints';
-import { MdnsService } from '@matter/main/protocol';
+import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
+import { jest } from '@jest/globals';
+// matter.js
+import { ServerNode, Endpoint } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { Identify, PowerSource, RvcCleanMode, RvcOperationalState, RvcRunMode, ServiceArea } from '@matter/main/clusters';
 import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
 
+// Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviors.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+
+import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

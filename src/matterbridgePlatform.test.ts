@@ -7,19 +7,18 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR];
 
-import { jest } from '@jest/globals';
-
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
+import { jest } from '@jest/globals';
 import { AnsiLogger, CYAN, db, er, LogLevel, pl, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
-
-import { Matterbridge } from './matterbridge.ts';
-import { MatterbridgePlatform } from './matterbridgePlatform.ts';
-import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { Descriptor } from '@matter/main/clusters/descriptor';
+
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgePlatform } from './matterbridgePlatform.js';
+import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

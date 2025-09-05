@@ -5,15 +5,15 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR];
 
-import { jest } from '@jest/globals';
-
 import path from 'node:path';
 import { rmSync } from 'node:fs';
+
+import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.ts';
-import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

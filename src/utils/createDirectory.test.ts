@@ -1,11 +1,12 @@
 // src\utils\createDirectory.test.ts
 
-import { jest } from '@jest/globals';
 import path from 'node:path';
 import fs from 'node:fs';
+
+import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { createDirectory } from './createDirectory.ts';
+import { createDirectory } from './createDirectory.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

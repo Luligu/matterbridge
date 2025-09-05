@@ -4,9 +4,10 @@
 
 process.argv = ['node', './cli.js', '-memorycheck', '-inspect', '-snapshotinterval', '60000', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
 
-import { jest } from '@jest/globals';
 import os from 'node:os';
 import { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
+
+import { jest } from '@jest/globals';
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, YELLOW } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';

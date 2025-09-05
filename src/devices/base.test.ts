@@ -9,7 +9,6 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
-
 // matter.js
 import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
 import { MdnsService } from '@matter/main/protocol';

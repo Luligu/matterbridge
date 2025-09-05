@@ -4,26 +4,22 @@ const MATTER_PORT = 6024;
 const NAME = 'Oven';
 const HOMEDIR = path.join('jest', NAME);
 
-import { rmSync } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 // matter.js
-import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, PositionTag } from '@matter/main';
-import { MdnsService } from '@matter/main/protocol';
+import { Endpoint, ServerNode, PositionTag } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { RootEndpoint } from '@matter/main/endpoints/root';
 import { OvenCavityOperationalStateServer, OvenModeServer } from '@matter/main/behaviors';
 import { Identify, OnOff, OperationalState, OvenCavityOperationalState, OvenMode, PowerSource } from '@matter/main/clusters';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { inspectError } from '../utils/error.js';
+import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
 
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from './oven.js';
-import { addDevice, assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

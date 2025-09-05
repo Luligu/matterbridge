@@ -6,8 +6,6 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
-import { jest } from '@jest/globals';
-
 // Mock the exec function from the child_process module. We use jest.unstable_mockModule to ensure that the mock is applied correctly and can be used in the tests.
 jest.unstable_mockModule('node:child_process', async () => {
   const originalModule = jest.requireActual<typeof import('node:child_process')>('node:child_process');
@@ -24,14 +22,16 @@ jest.unstable_mockModule('node:child_process', async () => {
 import { ExecException, execSync } from 'node:child_process';
 import { promises as fs, promises, rmSync } from 'node:fs';
 import path from 'node:path';
+
+import { jest } from '@jest/globals';
 import { AnsiLogger, db, er, LogLevel, nf, nt } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.ts';
-import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.ts';
-import { PluginManager } from './pluginManager.ts';
-import { waiter, wait } from './utils/export.ts';
-import { DeviceManager } from './deviceManager.ts';
-import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.ts';
+import { Matterbridge } from './matterbridge.js';
+import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
+import { PluginManager } from './pluginManager.js';
+import { waiter, wait } from './utils/export.js';
+import { DeviceManager } from './deviceManager.js';
+import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

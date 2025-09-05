@@ -9,7 +9,6 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
-
 // matter.js clusters
 import { Endpoint, ServerNode } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
@@ -17,6 +16,7 @@ import { Identify, OnOff, PowerSource, Thermostat, ThermostatUserInterfaceConfig
 
 // Matterbridge helpers
 import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+
 import { AirConditioner } from './airConditioner.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;

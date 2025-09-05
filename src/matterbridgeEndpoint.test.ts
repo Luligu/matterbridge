@@ -8,6 +8,9 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'info', '-matterlogger', 'info'];
 
+import path from 'node:path';
+import { rmSync } from 'node:fs';
+
 import { jest } from '@jest/globals';
 import { Lifecycle, EndpointNumber, ActionContext, ServerNode, Endpoint, ServerNodeStore } from '@matter/main';
 import {
@@ -50,11 +53,9 @@ import {
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
 import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
-import path from 'node:path';
-import { rmSync } from 'node:fs';
 
-import { Matterbridge } from './matterbridge.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   airQualitySensor,
   bridgedNode,
@@ -76,7 +77,7 @@ import {
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
-import { wait } from './utils/wait.ts';
+import { wait } from './utils/wait.js';
 import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;

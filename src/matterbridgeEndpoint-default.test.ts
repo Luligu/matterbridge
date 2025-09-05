@@ -6,6 +6,9 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
 
+import path from 'node:path';
+import { rmSync } from 'node:fs';
+
 import { jest } from '@jest/globals';
 import { Lifecycle } from '@matter/main';
 import {
@@ -68,11 +71,9 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
 import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
-import path from 'node:path';
-import { rmSync } from 'node:fs';
 
-import { Matterbridge } from './matterbridge.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   airPurifier,
   airQualitySensor,
@@ -98,8 +99,8 @@ import {
   waterFreezeDetector,
   waterLeakDetector,
   waterValve,
-} from './matterbridgeDeviceTypes.ts';
-import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.ts';
+} from './matterbridgeDeviceTypes.js';
+import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.js';
 import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;

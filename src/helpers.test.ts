@@ -2,8 +2,6 @@
 
 /* eslint-disable no-console */
 
-import { jest } from '@jest/globals';
-
 // Mock the function getShellySysUpdate and getShellyMainUpdate
 jest.unstable_mockModule('./shelly.js', () => ({
   getShelly: jest.fn(),
@@ -15,18 +13,20 @@ const { getShelly, postShelly } = await import('./shelly.js');
 (getShelly as jest.MockedFunction<(api: string, timeout?: number) => Promise<void>>).mockResolvedValue();
 (postShelly as jest.MockedFunction<(api: string, data: any, timeout?: number) => Promise<void>>).mockResolvedValue();
 
+import { rmSync } from 'node:fs';
+import path from 'node:path';
+
 import { DeviceTypeId, VendorId, ServerNode, Endpoint, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Logger } from '@matter/main';
 import { AggregatorEndpoint, RootEndpoint } from '@matter/main/endpoints';
 import { BridgedDeviceBasicInformationServer, OnOffServer } from '@matter/main/behaviors';
 import { MdnsService } from '@matter/main/protocol';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-import { rmSync } from 'node:fs';
-import path from 'node:path';
+import { jest } from '@jest/globals';
 
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
-import { addVirtualDevice, addVirtualDevices } from './helpers.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { Matterbridge } from './matterbridge.ts';
+import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
+import { addVirtualDevice, addVirtualDevices } from './helpers.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { Matterbridge } from './matterbridge.js';
 
 const MATTER_PORT = 6004;
 const HOMEDIR = path.join('jest', 'Helpers');

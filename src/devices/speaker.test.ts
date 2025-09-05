@@ -6,16 +6,17 @@ const NAME = 'Speaker';
 const HOMEDIR = path.join('jest', NAME);
 
 import path from 'node:path';
+
 import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
-
 // matter.js
 import { Endpoint, ServerNode } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { Identify, OnOff, LevelControl } from '@matter/main/clusters';
+import { OnOff, LevelControl } from '@matter/main/clusters';
 
 // helpers
 import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+
 import { Speaker } from './speaker.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;

@@ -5,25 +5,23 @@ const NAME = 'LaundryWasher';
 const HOMEDIR = path.join('jest', NAME);
 
 // Import necessary modules and types
-import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
-import { rmSync } from 'node:fs';
 import path from 'node:path';
 
+import { jest } from '@jest/globals';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 // matter.js
-import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
-import { MdnsService } from '@matter/main/protocol';
+import { Endpoint, ServerNode } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { RootEndpoint } from '@matter/main/endpoints/root';
 import { Identify, LaundryWasherControls, LaundryWasherMode, OnOff, OperationalState, PowerSource, TemperatureControl } from '@matter/main/clusters';
 import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/main/behaviors';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
+import { addDevice, createTestEnvironment, deleteDevice, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+
 import { LaundryWasher, MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';
 import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
-import { addDevice, assertAllEndpointNumbersPersisted, createTestEnvironment, deleteDevice, flushAllEndpointNumberPersistence, flushAsync, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

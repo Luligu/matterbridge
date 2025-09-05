@@ -51,22 +51,22 @@ const pluginsStartSpy = jest.spyOn(PluginManager.prototype, 'start');
 const pluginsConfigureSpy = jest.spyOn(PluginManager.prototype, 'configure');
 const pluginsShutdownSpy = jest.spyOn(PluginManager.prototype, 'shutdown');
 
-import { jest } from '@jest/globals';
 import os from 'node:os';
 import path from 'node:path';
 import { rmSync, writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
 
+import { jest } from '@jest/globals';
 import { AnsiLogger, CYAN, er, LogLevel, nf, nt, pl, TimestampFormat, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
-
-import { getParameter } from './utils/commandLine.ts';
-// import { Matterbridge } from './matterbridge.ts';
+// import { Matterbridge } from './matterbridge.js';
 const { Matterbridge } = await import('./matterbridge.ts');
-import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import { VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
-import { PluginManager } from './pluginManager.ts';
+
+import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
+import { PluginManager } from './pluginManager.js';
+import { getParameter } from './utils/commandLine.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

@@ -2,11 +2,12 @@
 
 const TEST_DIR = path.join('jest', 'Utils');
 
-import { jest } from '@jest/globals';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-import { createZip } from './createZip.ts';
+import { jest } from '@jest/globals';
+
+import { createZip } from './createZip.js';
 
 describe('createZip', () => {
   beforeEach(() => {

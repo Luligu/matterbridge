@@ -1,8 +1,6 @@
 // src\utils\spawn.test.ts
 /* eslint-disable jest/no-conditional-expect */
 
-import { jest } from '@jest/globals';
-
 // Mock the spawn function from the child_process module. We use jest.unstable_mockModule to ensure that the mock is applied correctly and can be used in the tests.
 jest.unstable_mockModule('node:child_process', async () => {
   const originalModule = jest.requireActual<typeof import('node:child_process')>('node:child_process');
@@ -19,10 +17,12 @@ jest.unstable_mockModule('node:child_process', async () => {
 const { spawn } = await import('node:child_process');
 import { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
 
+import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { Matterbridge } from '../matterbridge.ts';
-import { spawnCommand } from './spawn.ts';
+import { Matterbridge } from '../matterbridge.js';
+
+import { spawnCommand } from './spawn.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

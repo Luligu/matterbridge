@@ -4,18 +4,13 @@ const MATTER_PORT = 6017;
 const NAME = 'SolarPower';
 const HOMEDIR = path.join('jest', NAME);
 
-import { rmSync } from 'node:fs';
 import path from 'node:path';
-import { inspect } from 'node:util';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
-
 // matter.js
-import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
-import { MdnsService } from '@matter/main/protocol';
+import { Endpoint, ServerNode } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { RootEndpoint } from '@matter/main/endpoints/root';
 import { Identify } from '@matter/main/clusters/identify';
 import { PowerSource } from '@matter/main/clusters/power-source';
 import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
@@ -24,8 +19,9 @@ import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-mana
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+
 import { SolarPower } from './solarPower.js';
-import { addDevice, assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

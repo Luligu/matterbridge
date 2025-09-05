@@ -29,20 +29,20 @@ process.argv = [
   '3860',
 ];
 
-import { jest } from '@jest/globals';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
+
+import { jest } from '@jest/globals';
 import { Environment } from '@matter/main';
 import { AnsiLogger, db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
-
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors';
 
-import { Matterbridge } from './matterbridge.ts';
-import { waiter } from './utils/export.ts';
-import { PluginManager } from './pluginManager.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { pressureSensor } from './matterbridgeDeviceTypes.ts';
-import { plg } from './matterbridgeTypes.ts';
+import { Matterbridge } from './matterbridge.js';
+import { waiter } from './utils/export.js';
+import { PluginManager } from './pluginManager.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { pressureSensor } from './matterbridgeDeviceTypes.js';
+import { plg } from './matterbridgeTypes.js';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   // eslint-disable-next-line no-console

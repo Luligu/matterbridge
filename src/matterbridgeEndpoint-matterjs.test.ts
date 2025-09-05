@@ -4,10 +4,10 @@ const MATTER_PORT = 6011;
 const NAME = 'EndpointMatterJs';
 const HOMEDIR = path.join('jest', NAME);
 
-import { jest } from '@jest/globals';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
+import { jest } from '@jest/globals';
 import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, NamedHandler } from '@matter/main';
 import {
   ColorControl,
@@ -91,8 +91,8 @@ import {
   MatterbridgeLiftTiltWindowCoveringServer,
   MatterbridgeDeviceEnergyManagementModeServer,
   MatterbridgeDeviceEnergyManagementServer,
-} from './matterbridgeBehaviors.ts';
-import { Matterbridge } from './matterbridge.ts';
+} from './matterbridgeBehaviors.js';
+import { Matterbridge } from './matterbridge.js';
 import {
   lightSensor,
   occupancySensor,
@@ -108,12 +108,12 @@ import {
   laundryWasher,
   extendedColorLight,
   waterHeater,
-} from './matterbridgeDeviceTypes.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
-import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.ts';
-import { WaterHeater } from './devices/waterHeater.ts';
-import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.ts';
+} from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
+import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
+import { WaterHeater } from './devices/waterHeater.js';
+import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
 import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync } from './jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;

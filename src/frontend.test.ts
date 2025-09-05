@@ -9,7 +9,8 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString(), '-debug'];
 
-import { jest } from '@jest/globals';
+import { copyFileSync, readFileSync, rmSync } from 'node:fs';
+import path from 'node:path';
 
 jest.unstable_mockModule('node:http', async () => {
   const originalModule = jest.requireActual<typeof import('node:http')>('node:http');
@@ -23,20 +24,19 @@ jest.unstable_mockModule('node:http', async () => {
 const http = await import('node:http');
 const createServerMock = http.createServer as jest.MockedFunction<typeof http.createServer>;
 
-import path from 'node:path';
-import { copyFileSync, readFileSync, rmSync } from 'node:fs';
+import { jest } from '@jest/globals';
 import { AnsiLogger, db, LogLevel, rs, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
 import { WebSocket } from 'ws';
-
 // Dynamically import after mocking
 const { Matterbridge } = await import('./matterbridge.ts');
 const { Frontend } = await import('./frontend.ts');
-import type { Matterbridge as MatterbridgeType } from './matterbridge.ts';
-import type { Frontend as FrontendType } from './frontend.ts';
-import { cliEmitter } from './cliEmitter.ts';
 import { Lifecycle } from '@matter/general';
 import { PowerSource } from '@matter/main/clusters/power-source';
-import { wait } from './utils/wait.ts';
+
+import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
+import type { Frontend as FrontendType } from './frontend.js';
+import { cliEmitter } from './cliEmitter.js';
+import { wait } from './utils/wait.js';
 
 const startSpy = jest.spyOn(Frontend.prototype, 'start');
 const stopSpy = jest.spyOn(Frontend.prototype, 'stop');

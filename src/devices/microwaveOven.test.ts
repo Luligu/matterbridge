@@ -4,27 +4,23 @@ const MATTER_PORT = 6023;
 const NAME = 'MicrowaveOven';
 const HOMEDIR = path.join('jest', NAME);
 
-import { rmSync } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 // matter.js
-import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
-import { MdnsService } from '@matter/main/protocol';
+import { Endpoint, ServerNode } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { RootEndpoint } from '@matter/main/endpoints/root';
 import { MicrowaveOvenControlServer, MicrowaveOvenModeServer } from '@matter/main/behaviors';
 import { Identify, MicrowaveOvenControl, MicrowaveOvenMode, OnOff, OperationalState, PowerSource } from '@matter/main/clusters';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { inspectError } from '../utils/error.js';
+import { wait } from '../utils/export.js';
+import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
 
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from './microwaveOven.js';
-import { wait } from '../utils/export.js';
-import { addDevice, assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

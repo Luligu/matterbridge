@@ -4,22 +4,18 @@ const MATTER_PORT = 6025;
 const NAME = 'Cooktop';
 const HOMEDIR = path.join('jest', NAME);
 
-import { rmSync } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
 // matter.js
-import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, PositionTag } from '@matter/main';
-import { MdnsService } from '@matter/main/protocol';
+import { Endpoint, ServerNode, PositionTag } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { RootEndpoint } from '@matter/main/endpoints/root';
 import { Identify, OnOff, PowerSource, TemperatureControl, TemperatureMeasurement } from '@matter/main/clusters';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { inspectError } from '../utils/error.js';
-import { addDevice, assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
 
 import { Cooktop } from './cooktop.js';
 

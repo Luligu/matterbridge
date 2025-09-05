@@ -1,8 +1,6 @@
 // src\utils\network.test.ts
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
-import { jest } from '@jest/globals';
-
 // ESM mock for https get
 let mockedGet: jest.MockedFunction<typeof get>;
 const mockedGetPayload = JSON.stringify({ 'dist-tags': { latest: '1.2.3' } });
@@ -57,6 +55,8 @@ import { get, RequestOptions } from 'node:https';
 import { exec, ChildProcess, ExecException } from 'node:child_process';
 import { PassThrough } from 'node:stream';
 import { ClientRequest, IncomingMessage } from 'node:http';
+
+import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, BLUE, nf } from 'node-ansi-logger';
 
 import { getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname, getNpmPackageVersion, getGlobalNodeModules, getGitHubUpdate } from './network.js';
