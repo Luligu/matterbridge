@@ -11,7 +11,6 @@
 import os from 'node:os';
 
 import { AnsiLogger, BLUE, db, LogLevel } from 'node-ansi-logger';
-
 import { jest } from '@jest/globals';
 
 import { Dgram } from './dgram.js';
@@ -252,7 +251,7 @@ describe('Dgram', () => {
     expect(ipv4Address).toBe('192.168.1.120');
 
     expect(dgram.getInterfacesNames()).toEqual(['eth0']);
-    expect(dgram.getIpv6ScopeIdForAllInterfacesAddress()).toEqual('');
+    expect(dgram.getIpv6ScopeId()).toEqual('');
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
@@ -267,7 +266,7 @@ describe('Dgram', () => {
     expect(() => dgram.getIpv4InterfaceAddress()).toThrow("Didn't find an external IPv4 network interface");
 
     expect(dgram.getInterfacesNames()).toEqual([]);
-    expect(dgram.getIpv6ScopeIdForAllInterfacesAddress()).toEqual('');
+    expect(dgram.getIpv6ScopeId()).toEqual('');
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
@@ -282,7 +281,7 @@ describe('Dgram', () => {
     expect(() => dgram.getIpv4InterfaceAddress()).toThrow("Didn't find an external IPv4 network interface");
 
     expect(dgram.getInterfacesNames()).toEqual([]);
-    expect(dgram.getIpv6ScopeIdForAllInterfacesAddress()).toEqual('');
+    expect(dgram.getIpv6ScopeId()).toEqual('');
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
@@ -297,7 +296,7 @@ describe('Dgram', () => {
     expect(() => dgram.getIpv4InterfaceAddress('internalonly')).toThrow('Interface internalonly does not have an external IPv4 address');
 
     expect(dgram.getInterfacesNames()).toEqual(['internalonly']);
-    expect(dgram.getIpv6ScopeIdForAllInterfacesAddress()).toEqual('');
+    expect(dgram.getIpv6ScopeId()).toEqual('');
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
@@ -326,7 +325,7 @@ describe('Dgram', () => {
     expect(() => dgram.getIpv6InterfaceAddress()).toThrow("Didn't find an external IPv6 network interface");
 
     expect(dgram.getInterfacesNames()).toEqual([]);
-    expect(dgram.getIpv6ScopeIdForAllInterfacesAddress()).toEqual('');
+    expect(dgram.getIpv6ScopeId()).toEqual('');
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);

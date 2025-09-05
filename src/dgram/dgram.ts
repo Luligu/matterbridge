@@ -289,13 +289,15 @@ export class Dgram extends EventEmitter<DgramEvents> {
   }
 
   /**
-   *  Retrieves the scope ID for all interfaces address '::'.
+   *  Retrieves the scope ID of the first found IPv6 address on the specified network interface or on any interface if none is specified.
    *
+   * @param {string} [interfaceName] - The name of the network interface. If not provided, the first found IPv6 address will be used.
    * @returns {string} The scope ID of the first found IPv6 address or an empty string.
    */
-  getIpv6ScopeIdForAllInterfacesAddress(): string {
+  getIpv6ScopeId(interfaceName?: string): string {
     const interfaces = os.networkInterfaces();
     for (const name in interfaces) {
+      if (interfaceName && name !== interfaceName) continue;
       const iface = interfaces[name];
       if (iface) {
         const ipv6Address = iface.find((addr) => addr.family === 'IPv6' && !addr.internal && addr.scopeid);

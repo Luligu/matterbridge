@@ -27,6 +27,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [AirConditioner]: Added AirConditioner() class and Jest test. It is not supported by the Home app. Improved createDefaultThermostatUserInterfaceConfigurationClusterServer().
 - [DeviceTypes]: Add Chapter 10. Media Device Types.
 - [Speaker]: Added Speaker() class and Jest test. Supported only by SmartThings.
+- [mb_mdns]: Added help screen and the ability to filter mDNS packets. Useful to see all paired and commissionable Matter devices on the network.
 
 ### Changed
 

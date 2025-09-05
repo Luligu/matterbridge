@@ -12,7 +12,7 @@ import dgram from 'node:dgram';
 
 import { jest } from '@jest/globals';
 
-import { Mdns, DnsRecordType, DnsClass, DnsClassFlag } from './mdns.ts';
+import { Mdns, DnsRecordType, DnsClass, DnsClassFlag } from './mdns.js';
 
 jest.mock('node:dgram');
 
@@ -279,6 +279,14 @@ describe('Mdns', () => {
     expect(mdns.deviceResponses.has('1.2.3.4')).toBe(true);
     const stored = mdns.deviceResponses.get('1.2.3.4');
     expect(stored?.dataPTR).toBe('test-device._shelly._tcp.local');
+
+    mdns.filters.push('test-device._shelly._tcp.local');
+    mdns.onMessage(responseMsg, mockRinfo);
+    mdns.filters = [];
+
+    mdns.filters.push('nope-device._shelly._tcp.local');
+    mdns.onMessage(responseMsg, mockRinfo);
+    mdns.filters = [];
   });
 
   it('should decode NSEC record with bitmap data', () => {

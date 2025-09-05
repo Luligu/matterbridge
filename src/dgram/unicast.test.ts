@@ -12,7 +12,6 @@ import os from 'node:os';
 import { AddressInfo } from 'node:net';
 
 import { AnsiLogger, CYAN, LogLevel, nf } from 'node-ansi-logger';
-
 import { jest } from '@jest/globals';
 
 import { Dgram } from './dgram.js';
