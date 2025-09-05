@@ -37,7 +37,7 @@ import multer from 'multer';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt } from 'node-ansi-logger';
 // @matter
-import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/main';
+import { Logger, LogLevel as MatterLogLevel, Lifecycle } from '@matter/main';
 import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
 
 // Matterbridge
@@ -1743,22 +1743,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.matterFileLogger = data.params.value;
               await this.matterbridge.nodeContext?.set('matterFileLog', data.params.value);
               if (data.params.value) {
-                try {
-                  Logger.addLogger('matterfilelogger', await this.matterbridge.createMatterFileLogger(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), true), {
-                    defaultLogLevel: this.matterbridge.matterbridgeInformation.matterLoggerLevel as MatterLogLevel,
-                    logFormat: MatterLogFormat.PLAIN,
-                  });
-                } catch (error) {
-                  /* istanbul ignore next */
-                  this.log.debug(`Error adding the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
-                }
+                this.matterbridge.matterLog.logFilePath = path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile);
               } else {
-                try {
-                  Logger.removeLogger('matterfilelogger');
-                } catch (error) {
-                  /* istanbul ignore next */
-                  this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
-                }
+                this.matterbridge.matterLog.logFilePath = undefined;
               }
               client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }

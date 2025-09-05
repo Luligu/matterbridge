@@ -603,10 +603,12 @@ describe('Matterbridge mocked', () => {
     expect(checkUpdatesMock).toHaveBeenCalledTimes(2);
   });
 
-  test('Matterbridge.initialize() registerProcessHandlers', async () => {
+  test('Matterbridge.initialize() registerProcessHandlers and matter file logger', async () => {
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger'];
-    const createMatterFileLoggerSpy = jest.spyOn(Matterbridge.prototype, 'createMatterFileLogger');
+    // const createMatterLoggerSpy = jest.spyOn(Matterbridge.prototype as any, 'createMatterLogger');
+    // const createMatterFileLoggerSpy = jest.spyOn(Matterbridge.prototype, 'createMatterFileLogger');
+    const createDestinationMatterLoggerSpy = jest.spyOn(Matterbridge.prototype as any, 'createDestinationMatterLogger');
     await matterbridge.initialize();
     if ((matterbridge as any).exceptionHandler) await (matterbridge as any).exceptionHandler(new Error('Test error for exceptionHandler'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Unhandled Exception detected:'));
@@ -621,16 +623,27 @@ describe('Matterbridge mocked', () => {
     });
     if ((matterbridge as any).sigtermHandler) await (matterbridge as any).sigtermHandler();
 
-    expect(createMatterFileLoggerSpy).toHaveBeenCalled();
-    Logger.get('Jest').debug('Test log message');
-    Logger.get('Jest').info('Test log message');
-    Logger.get('Jest').notice('Test log message');
-    Logger.get('Jest').warn('Test log message');
-    Logger.get('Jest').error('Test log message');
-    Logger.get('Jest').fatal('Test log message');
+    // expect(createMatterLoggerSpy).not.toHaveBeenCalled();
+    // expect(createMatterFileLoggerSpy).not.toHaveBeenCalled();
+    expect(createDestinationMatterLoggerSpy).toHaveBeenCalled();
+    setDebug(true);
+    Logger.get('Jest').debug('Test debug log message');
+    Logger.get('Jest').info('Test info log message');
+    Logger.get('Jest').notice('Test notice log message');
+    Logger.get('Jest').warn('Test warn log message');
+    Logger.get('Jest').error('Test error log message');
+    Logger.get('Jest').fatal('Test fatal log message');
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test debug log message'));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test info log message'));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test notice log message'));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test warn log message'));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test error log message'));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test fatal log message'));
+    setDebug(false);
   });
 
   test('Matterbridge.initialize() logNodeAndSystemInfo networkInterfaces', async () => {
+    setDebug(false);
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     await matterbridge.initialize();

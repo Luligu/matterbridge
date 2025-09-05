@@ -50,6 +50,7 @@ import {
   UINT32_MAX,
   UINT16_MAX,
   Crypto,
+  Diagnostic,
 } from '@matter/main';
 import { DeviceCertification, DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
@@ -200,6 +201,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private sigtermHandler: NodeJS.SignalsListener | undefined;
   private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
   private rejectionHandler: NodeJS.UnhandledRejectionListener | undefined;
+
+  // Matter logger
+  matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Matter environment
   environment = Environment.default;
@@ -595,23 +599,17 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       Logger.level = (await this.nodeContext.get<number>('matterLogLevel', this.matterbridgeInformation.shellyBoard ? MatterLogLevel.NOTICE : MatterLogLevel.INFO)) as MatterLogLevel;
     }
     Logger.format = MatterLogFormat.ANSI;
-    Logger.setLogger('default', this.createMatterLogger());
-    // Logger.destinations.default.write = this.createMatterLogger();
-    this.matterbridgeInformation.matterLoggerLevel = Logger.level;
 
-    // Create the file logger for matter.js (context: matterFileLog)
+    // Create the logger for matter.js with file logging (context: matterFileLog)
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
       this.matterbridgeInformation.matterFileLogger = true;
-      Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
-        defaultLogLevel: Logger.level,
-        logFormat: MatterLogFormat.PLAIN,
-      });
     }
+    Logger.destinations.default.write = this.createDestinationMatterLogger(this.matterbridgeInformation.matterFileLogger);
+    this.matterbridgeInformation.matterLoggerLevel = Logger.level;
     this.log.debug(`Matter logLevel: ${Logger.level} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
 
     // Log network interfaces
     const networkInterfaces = os.networkInterfaces();
-    // console.log(`Network interfaces:`, networkInterfaces);
     const availableAddresses = Object.entries(networkInterfaces);
     const availableInterfaces = Object.keys(networkInterfaces);
     for (const [ifaceName, ifaces] of availableAddresses) {
@@ -1229,95 +1227,39 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   /**
    * Creates a MatterLogger function to show the matter.js log messages in AnsiLogger (for the frontend).
+   * It also logs to file (matter.log) if fileLogger is true.
    *
+   * @param {boolean} fileLogger - Whether to log to file or not.
    * @returns {Function} The MatterLogger function.
    */
-  private createMatterLogger(): (level: MatterLogLevel, formattedLog: string) => void {
-    const matterLogger = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-
-    return (level: MatterLogLevel, formattedLog: string) => {
-      const logger = formattedLog.slice(44, 44 + 20).trim();
-      const message = formattedLog.slice(65);
-      matterLogger.logName = logger;
-      switch (level) {
-        case MatterLogLevel.DEBUG:
-          matterLogger.log(LogLevel.DEBUG, message);
-          break;
-        case MatterLogLevel.INFO:
-          matterLogger.log(LogLevel.INFO, message);
-          break;
-        case MatterLogLevel.NOTICE:
-          matterLogger.log(LogLevel.NOTICE, message);
-          break;
-        case MatterLogLevel.WARN:
-          matterLogger.log(LogLevel.WARN, message);
-          break;
-        case MatterLogLevel.ERROR:
-          matterLogger.log(LogLevel.ERROR, message);
-          break;
-        case MatterLogLevel.FATAL:
-          matterLogger.log(LogLevel.FATAL, message);
-          break;
-      }
-    };
-  }
-
-  /**
-   * Creates a Matter File Logger.
-   *
-   * @param {string} filePath - The path to the log file.
-   * @param {boolean} [unlink] - Whether to unlink the log file before creating a new one.
-   * @returns {Function} - A function that logs formatted messages to the log file.
-   */
-  public async createMatterFileLogger(filePath: string, unlink: boolean = false): Promise<(level: MatterLogLevel, formattedLog: string) => Promise<void>> {
-    // 2024-08-21 08:55:19.488 DEBUG InteractionMessenger Sending DataReport chunk with 28 attributes and 0 events: 1004 bytes
-    let fileSize = 0;
-    if (unlink) {
-      try {
-        await fs.unlink(filePath);
-      } catch (error) {
-        this.log.debug(`Error unlinking the log file ${CYAN}${filePath}${db}: ${error instanceof Error ? error.message : error}`);
-      }
+  private createDestinationMatterLogger(fileLogger: boolean): (text: string, message: Diagnostic.Message) => void {
+    if (fileLogger) {
+      this.matterLog.logFilePath = path.join(this.matterbridgeDirectory, this.matterLoggerFile);
     }
 
-    return async (level: MatterLogLevel, formattedLog: string) => {
-      /* istanbul ignore if */
-      if (fileSize > 100000000) {
-        return; // Stop logging if the file size is greater than 100MB
-      }
-      fileSize += formattedLog.length;
-      /* istanbul ignore if */
-      if (fileSize > 100000000) {
-        await fs.appendFile(filePath, `Logging on file has been stopped because the file size is greater than 100MB.` + os.EOL);
-        return;
-      }
-
-      const now = new Date();
-      const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
-
-      const message = formattedLog.slice(24);
-      const parts = message.split(' ');
-      const logger = parts[1];
-      const finalMessage = parts.slice(2).join(' ') + os.EOL;
-
-      switch (level) {
+    return (text: string, message: Diagnostic.Message) => {
+      // 2024-08-21 08:55:19.488 DEBUG InteractionMessenger Sending DataReport chunk with 28 attributes and 0 events: 1004 bytes
+      const logger = text.slice(44, 44 + 20).trim();
+      const msg = text.slice(65);
+      this.matterLog.logName = logger;
+      switch (message.level) {
         case MatterLogLevel.DEBUG:
-          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [debug] ${finalMessage}`);
+          this.matterLog.log(LogLevel.DEBUG, msg);
           break;
         case MatterLogLevel.INFO:
-          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [info] ${finalMessage}`);
+          this.matterLog.log(LogLevel.INFO, msg);
           break;
         case MatterLogLevel.NOTICE:
-          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [notice] ${finalMessage}`);
+          this.matterLog.log(LogLevel.NOTICE, msg);
           break;
         case MatterLogLevel.WARN:
-          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [warn] ${finalMessage}`);
+          this.matterLog.log(LogLevel.WARN, msg);
           break;
         case MatterLogLevel.ERROR:
-          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [error] ${finalMessage}`);
+          this.matterLog.log(LogLevel.ERROR, msg);
           break;
         case MatterLogLevel.FATAL:
-          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [fatal] ${finalMessage}`);
+          this.matterLog.log(LogLevel.FATAL, msg);
           break;
       }
     };

@@ -4,11 +4,10 @@ const MATTER_PORT = 6011;
 const NAME = 'EndpointMatterJs';
 const HOMEDIR = path.join('jest', NAME);
 
-import { rmSync } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, NamedHandler } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, NamedHandler, Diagnostic } from '@matter/main';
 import {
   ColorControl,
   Descriptor,
@@ -71,7 +70,7 @@ import {
   WaterHeaterModeServer,
   WindowCoveringServer,
 } from '@matter/node/behaviors';
-import { AnsiLogger, er, hk, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
 
 import {
   MatterbridgeBooleanStateConfigurationServer,
@@ -114,7 +113,7 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
-import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync } from './jest-utils/jestHelpers.js';
+import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -192,6 +191,23 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   const deviceType = extendedColorLight;
+
+  test('Matterbridge instance', async () => {
+    const write = jest.fn((text: string, message: Diagnostic.Message) => {});
+    Logger.destinations.default.write = write;
+    const log = Logger.get('default');
+    log.info('Starting test ' + NAME);
+    expect(write).toHaveBeenCalledWith(
+      expect.stringContaining('Starting test ' + NAME),
+      expect.objectContaining({
+        facility: 'default',
+        level: 1,
+        now: expect.anything(),
+        prefix: '',
+        values: ['Starting test EndpointMatterJs'],
+      }),
+    );
+  });
 
   test('create a context for server node', async () => {
     expect(matterbridge.environment.vars.get('path.root')).toBe(path.join(HOMEDIR, '.matterbridge', 'matterstorage'));

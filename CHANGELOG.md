@@ -8,7 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.2.6] - 2025-09-??
+## [3.2.6] - 2025-09-05
 
 ### Added
 
@@ -28,6 +28,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [DeviceTypes]: Add Chapter 10. Media Device Types.
 - [Speaker]: Added Speaker() class and Jest test. Supported only by SmartThings.
 - [mb_mdns]: Added help screen and the ability to filter mDNS packets. Useful to see all paired and commissionable Matter devices on the network.
+- [matter.js]: Removed legacy and deprecated calls to Logger.setLogger etc. and use Logger.destinations.
 
 ### Changed
 
