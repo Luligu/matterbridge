@@ -779,46 +779,46 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (hasParameter('help')) {
       this.log.info(`\nUsage: matterbridge [options]\n
       Options:
-      - help:                  show the help
-      - bridge:                start Matterbridge in bridge mode
-      - childbridge:           start Matterbridge in childbridge mode
-      - port [port]:           start the commissioning server on the given port (default 5540)
-      - mdnsinterface [name]:  set the interface to use for the matter server mdnsInterface (default all interfaces)
-      - ipv4address [address]: set the ipv4 interface address to use for the matter listener (default all interfaces)
-      - ipv6address [address]: set the ipv6 interface address to use for the matter listener (default all interfaces)
-      - frontend [port]:       start the frontend on the given port (default 8283)
-      - logger:                set the matterbridge logger level: debug | info | notice | warn | error | fatal (default info)
-      - filelogger             enable the matterbridge file logger (matterbridge.log)
-      - matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
-      - matterfilelogger       enable the matter.js file logger (matter.log)
-      - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
-      - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
-      - list:                  list the registered plugins
-      - loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
-      - logstorage:            log the node storage
-      - sudo:                  force the use of sudo to install or update packages if the internal logic fails
-      - nosudo:                force not to use sudo to install or update packages if the internal logic fails
-      - norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted
-      - novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
-      - ssl:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
-      - mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https)
-      - vendorId:              override the default vendorId 0xfff1
-      - vendorName:            override the default vendorName "Matterbridge"
-      - productId:             override the default productId 0x8000
-      - productName:           override the default productName "Matterbridge aggregator"
-      - service:               enable the service mode (used in the systemctl configuration file)
-      - docker:                enable the docker mode (used in the docker image)
-      - homedir:               override the home directory (default: os.homedir())
-      - add [plugin path]:     register the plugin from the given absolute or relative path
-      - add [plugin name]:     register the globally installed plugin with the given name
-      - remove [plugin path]:  remove the plugin from the given absolute or relative path
-      - remove [plugin name]:  remove the globally installed plugin with the given name
-      - enable [plugin path]:  enable the plugin from the given absolute or relative path
-      - enable [plugin name]:  enable the globally installed plugin with the given name
-      - disable [plugin path]: disable the plugin from the given absolute or relative path
-      - disable [plugin name]: disable the globally installed plugin with the given name
-      - reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
-      - reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!${rs}`);
+      --help:                  show the help
+      --bridge:                start Matterbridge in bridge mode
+      --childbridge:           start Matterbridge in childbridge mode
+      --port [port]:           start the commissioning server on the given port (default 5540)
+      --mdnsinterface [name]:  set the interface to use for the matter server mdnsInterface (default all interfaces)
+      --ipv4address [address]: set the ipv4 interface address to use for the matter listener (default all interfaces)
+      --ipv6address [address]: set the ipv6 interface address to use for the matter listener (default all interfaces)
+      --frontend [port]:       start the frontend on the given port (default 8283)
+      --logger:                set the matterbridge logger level: debug | info | notice | warn | error | fatal (default info)
+      --filelogger             enable the matterbridge file logger (matterbridge.log)
+      --matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
+      --matterfilelogger       enable the matter.js file logger (matter.log)
+      --reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
+      --factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
+      --list:                  list the registered plugins
+      --loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
+      --logstorage:            log the node storage
+      --sudo:                  force the use of sudo to install or update packages if the internal logic fails
+      --nosudo:                force not to use sudo to install or update packages if the internal logic fails
+      --norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted
+      --novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
+      --ssl:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
+      --mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https)
+      --vendorId:              override the default vendorId 0xfff1
+      --vendorName:            override the default vendorName "Matterbridge"
+      --productId:             override the default productId 0x8000
+      --productName:           override the default productName "Matterbridge aggregator"
+      --service:               enable the service mode (used in the systemctl configuration file)
+      --docker:                enable the docker mode (used in the docker image)
+      --homedir:               override the home directory (default: os.homedir())
+      --add [plugin path]:     register the plugin from the given absolute or relative path
+      --add [plugin name]:     register the globally installed plugin with the given name
+      --remove [plugin path]:  remove the plugin from the given absolute or relative path
+      --remove [plugin name]:  remove the globally installed plugin with the given name
+      --enable [plugin path]:  enable the plugin from the given absolute or relative path
+      --enable [plugin name]:  enable the globally installed plugin with the given name
+      --disable [plugin path]: disable the plugin from the given absolute or relative path
+      --disable [plugin name]: disable the globally installed plugin with the given name
+      --reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
+      --reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!${rs}`);
       this.shutdown = true;
       return;
     }
@@ -831,7 +831,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled${nf}`);
           this.log.info(`│ └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         } else {
-          this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled${nf}`);
+          this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}disabled${nf}`);
           this.log.info(`  └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         }
         index++;

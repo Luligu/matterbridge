@@ -3,7 +3,7 @@
 const NAME = 'MatterbridgeMocked';
 const HOMEDIR = path.join('jest', NAME);
 
-// Mock the spawnCommand from spawn module before importing it
+// Mock the getGlobalNodeModules logInterfaces from network module before importing it
 jest.unstable_mockModule('./utils/network.js', () => ({
   getGlobalNodeModules: jest.fn(() => {
     return Promise.resolve('usr/local/lib/node_modules'); // Mock the getGlobalNodeModules function to resolve immediately
@@ -19,7 +19,6 @@ const logInterfacesMock = networkModule.logInterfaces as jest.MockedFunction<typ
 // Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./utils/spawn.js', () => ({
   spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
-    // console.warn(`Mocked spawnCommand called with command: ${command}, args: ${args.join(' ')}`);
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
@@ -29,15 +28,12 @@ const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof 
 // Mock the wait from wait module before importing it
 jest.unstable_mockModule('./utils/wait.js', () => ({
   waiter: jest.fn((name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false) => {
-    // console.warn(`Mocked waiter called with name: ${name}, exitWithReject: ${exitWithReject}, resolveTimeout: ${resolveTimeout}, resolveInterval: ${resolveInterval}, debug: ${debug}`);
     return Promise.resolve(true); // Mock the waiter function to resolve immediately
   }),
   wait: jest.fn((timeout: number = 1000, name?: string, debug: boolean = false) => {
-    // console.warn(`Mocked wait called with timeout: ${timeout}, name: ${name}, debug: ${debug}`);
     return Promise.resolve(); // Mock the wait function to resolve immediately
   }),
   withTimeout: jest.fn((promise: Promise<any>, timeoutMillisecs: number = 10000, reThrow: boolean = true) => {
-    // console.warn(`Mocked withTimeout called with timeoutMillisecs: ${timeoutMillisecs}, reThrow: ${reThrow}`);
     return Promise.resolve(); // Mock the withTimeout function to resolve immediately
   }),
 }));
@@ -135,7 +131,7 @@ describe('Matterbridge mocked', () => {
     // Destroy the Matterbridge instance
     await matterbridge.destroyInstance(10, 10);
 
-    // Clear all mocks again
+    // Clear all mocks
     jest.clearAllMocks();
   });
 
