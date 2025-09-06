@@ -24,7 +24,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [childbridge]: Create the server node for Dynamic plugins even if they have 0 devices. This allow to pair empty plugins in huge setup.
 - [select]: Enhanced documentation for Platform setSelectDevice, setSelectDeviceEntity, and setSelectEntity methods with schema examples (see the Jsdoc of the methods).
 - [MatterbridgeEndpoint]: Improved documentation in jsdoc.
-- [AirConditioner]: Added AirConditioner() class and Jest test. It is not supported by the Home app. Improved createDefaultThermostatUserInterfaceConfigurationClusterServer().
+- [AirConditioner]: Added AirConditioner() class and Jest test. It is not supported correctly by Google. Improved createDefaultThermostatUserInterfaceConfigurationClusterServer().
 - [DeviceTypes]: Add Chapter 10. Media Device Types.
 - [Speaker]: Added Speaker() class and Jest test. Supported only by SmartThings.
 - [mb_mdns]: Added help screen and the ability to filter mDNS packets. Useful to see all paired and commissionable Matter devices on the network.
@@ -34,6 +34,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [package]: Updated dependencies.
 - [package]: Bumped Jest to v. 30.1.3. (this version finally solves the broken ESM module mock).
+- [jest]: Refactor all tests units.
 
 ### Fixed
 
