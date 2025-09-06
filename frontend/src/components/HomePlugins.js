@@ -107,6 +107,21 @@ export function HomePlugins({selectPlugin}) {
     status: true,
   });
 
+  const getQRColor = (plugin) => {
+    if (plugin === undefined) return 'red';
+    if (!plugin.fabricInformations && !plugin.qrPairingCode && !plugin.manualPairingCode) return 'red';
+    if (plugin.paired === false && plugin.qrPairingCode && plugin.manualPairingCode) return 'var(--primary-color)';
+
+    var sessions = 0;
+    var subscriptions = 0;
+    for (const session of plugin.sessionInformations ?? []) {
+      if (session.fabric && session.isPeerActive === true) sessions++;
+      if (session.numberOfActiveSubscriptions > 0) subscriptions += session.numberOfActiveSubscriptions;
+    }
+    if (plugin.paired === true && plugin.fabricInformations && plugin.sessionInformations && (sessions === 0 || subscriptions === 0)) return 'var(--secondary-color)';
+    return 'var(--div-text-color)';
+  };
+
   const pluginsColumns = [
     {
       Header: 'Name',
@@ -169,7 +184,7 @@ export function HomePlugins({selectPlugin}) {
       Cell: ({ row: plugin }) => (
         <div style={{ margin: '0px', padding: '0px', gap: '4px', display: 'flex', flexDirection: 'row' }}>
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
-            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
+            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: getQRColor(plugin.original) }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
           }
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
             <Tooltip title="Restart the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => handleRestartPlugin(plugin.original)} size="small"><RestartAltIcon/></IconButton></Tooltip>
@@ -233,7 +248,7 @@ export function HomePlugins({selectPlugin}) {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && (msg.params.changed === 'plugins' || msg.params.changed === 'pluginsRestart')) {
+        if (msg.method === 'refresh_required' && (msg.params.changed === 'plugins' || msg.params.changed === 'fabrics' || msg.params.changed === 'sessions' || msg.params.changed === 'pluginsRestart')) {
           if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }

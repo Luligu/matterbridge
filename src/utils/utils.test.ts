@@ -1,8 +1,9 @@
 // src\utils\utils.test.ts
 
-import { jest } from '@jest/globals';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+
+import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
 
 import {
@@ -31,7 +32,7 @@ import {
   isValidArray,
   isValidNull,
   isValidUndefined,
-} from './export.ts';
+} from './export.js';
 
 describe('Utils test', () => {
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
@@ -241,7 +242,7 @@ describe('Utils test', () => {
   });
 
   test('Log interfaces', () => {
-    expect(logInterfaces(false)).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
+    expect(logInterfaces()).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
   });
 
   test('Is valid ipv4 address', () => {

@@ -24,16 +24,67 @@
 // Node.js imports
 import { AddressInfo } from 'node:net';
 
+// Node.js imports
+import { LogLevel } from 'node-ansi-logger';
+
+// Matterbridge
+import { getParameter, getStringArrayParameter, hasParameter } from '../utils/commandLine.js';
+
 // Net imports
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
 import { DnsClass, DnsRecordType, Mdns } from './mdns.js';
 
 // istanbul ignore next
 {
-  const mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, undefined, '0.0.0.0');
-  const mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, undefined, '::');
+  if (hasParameter('h') || hasParameter('help')) {
+    // eslint-disable-next-line no-console
+    console.log(`Usage: mb_mdns [options]
+
+Options:
+  -h, --help                                Show this help message and exit.
+  --interfaceName <name>                    Network interface name to bind to (default all interfaces).
+  --ipv4InterfaceAddress <address>          IPv4 address of the network interface to bind to (default: 0.0.0.0).
+  --ipv6InterfaceAddress <address>          IPv6 address of the network interface to bind to (default: ::).
+  --outgoingIpv4InterfaceAddress <address>  Outgoing IPv4 address (default first external address).
+  --outgoingIpv6InterfaceAddress <address>  Outgoing IPv6 address (default first external address).
+  --advertise                               Enable mDNS advertisement (default: disabled).
+  --query                                   Enable mDNS query (default: disabled).
+  --filter <string>                         Filter string to match in the mDNS record name (can be repeated).
+  -v, --verbose                             Enable verbose logging (default: disabled).
+
+Examples:
+  # List Matter device commissioner service records only on eth0 interface
+  mb_mdns --interfaceName eth0 --filter _matterc._udp
+
+  # List Matter device service records only on eth0 interface
+  mb_mdns --interfaceName eth0 --filter _matter._tcp
+
+  # List both Matter commissioner and device service records only on eth0 interface
+  mb_mdns --interfaceName eth0 --filter _matterc._udp _matter._tcp
+
+  # Query for mDNS devices every 10s on a specific interface
+  mb_mdns --interfaceName eth0 --query
+`);
+    // eslint-disable-next-line n/no-process-exit
+    process.exit(0);
+  }
+  const mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, getParameter('interfaceName'), getParameter('ipv4InterfaceAddress') || '0.0.0.0', getParameter('outgoingIpv4InterfaceAddress'));
+  const mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, getParameter('interfaceName'), getParameter('ipv6InterfaceAddress') || '::', getParameter('outgoingIpv6InterfaceAddress'));
+  if (hasParameter('v') || hasParameter('verbose')) {
+    mdnsIpv4.log.logLevel = LogLevel.DEBUG;
+    mdnsIpv6.log.logLevel = LogLevel.DEBUG;
+  } else {
+    mdnsIpv4.log.logLevel = LogLevel.INFO;
+    mdnsIpv6.log.logLevel = LogLevel.INFO;
+  }
+
   mdnsIpv4.listNetworkInterfaces();
 
+  const filters = getStringArrayParameter('filter');
+  if (filters) {
+    mdnsIpv4.filters.push(...filters);
+    mdnsIpv6.filters.push(...filters);
+  }
   /**
    * Cleanup and log device information before exiting.
    */
@@ -57,7 +108,12 @@ import { DnsClass, DnsRecordType, Mdns } from './mdns.js';
       { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
       { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
     ]);
+  };
 
+  /**
+   * Sends an mDNS advertisement for the HTTP service over UDP IPv4.
+   */
+  const advertiseUdp4 = () => {
     const ptrRdata = mdnsIpv4.encodeDnsName('matterbridge._http._tcp.local');
     mdnsIpv4.sendResponse('_http._tcp.local', DnsRecordType.PTR, DnsClass.IN, 120, ptrRdata);
   };
@@ -73,7 +129,12 @@ import { DnsClass, DnsRecordType, Mdns } from './mdns.js';
       { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
     ]);
+  };
 
+  /**
+   * Sends an mDNS advertisement for the HTTP service over UDP IPv6.
+   */
+  const advertiseUdp6 = () => {
     const ptrRdata = mdnsIpv6.encodeDnsName('matterbridge._http._tcp.local');
     mdnsIpv6.sendResponse('_http._tcp.local', DnsRecordType.PTR, DnsClass.IN, 120, ptrRdata);
   };
@@ -86,24 +147,57 @@ import { DnsClass, DnsRecordType, Mdns } from './mdns.js';
   mdnsIpv4.start();
   mdnsIpv4.on('ready', (address: AddressInfo) => {
     mdnsIpv4.log.info(`mdnsIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
-    if (!process.argv.includes('--query')) return; // Skip querying if --query is not specified
-    queryUdp4();
-    setInterval(() => {
+    if (getParameter('advertise')) {
+      advertiseUdp4();
+      setInterval(() => {
+        advertiseUdp4();
+      }, 10000).unref();
+    }
+    if (getParameter('query')) {
       queryUdp4();
-    }, 10000).unref();
+      setInterval(() => {
+        queryUdp4();
+      }, 10000).unref();
+    }
   });
 
   mdnsIpv6.start();
   mdnsIpv6.on('ready', (address: AddressInfo) => {
     mdnsIpv6.log.info(`mdnsIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
-    if (!process.argv.includes('--query')) return; // Skip querying if --query is not specified
-    queryUdp6();
-    setInterval(() => {
+    if (getParameter('advertise')) {
+      advertiseUdp6();
+      setInterval(() => {
+        advertiseUdp6();
+      }, 10000).unref();
+    }
+    if (getParameter('query')) {
       queryUdp6();
-    }, 10000).unref();
+      setInterval(() => {
+        queryUdp6();
+      }, 10000).unref();
+    }
   });
 
   setTimeout(() => {
     cleanupAndLogAndExit();
   }, 600000); // 10 minutes timeout to exit if no activity
 }
+
+/*
+  avahi-browse -pr _matterc._udp for advertise
+  avahi-browse -pr _matter._tcp for query
+
+  avahi-browse -pr _matterc._udp | sed 's/^/[commissioner] /' &
+  avahi-browse -pr _matter._tcp  | sed 's/^/[device]       /' &
+  wait
+
+  for advertise
+  sudo tcpdump -i eth0 -nn -s0 udp port 5353 | grep _matterc._udp
+  for query
+  sudo tcpdump -i eth0 -nn -s0 udp port 5353 | grep _matter._tcp
+  for matterbridge
+  sudo tcpdump -i eth0 -nn -s0 udp port 5353 | grep matterbridge._http._tcp.local
+
+  Example (filter commissioner service on specific Wi-Fi interface):
+  mb_mdns --interfaceName "Wi-Fi" --filter _matterc._udp
+*/

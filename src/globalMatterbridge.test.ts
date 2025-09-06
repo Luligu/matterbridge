@@ -1,9 +1,10 @@
 // src\globalMatterbridge.test.ts
 
-import { setGlobalMatterbridge, getGlobalMatterbridge, getGlobalFrontend, getGlobalLog } from './globalMatterbridge.ts';
-import type { Matterbridge } from './matterbridge.ts';
-import type { Frontend } from './frontend.ts';
 import type { AnsiLogger } from 'node-ansi-logger';
+
+import { setGlobalMatterbridge, getGlobalMatterbridge, getGlobalFrontend, getGlobalLog } from './globalMatterbridge.js';
+import type { Matterbridge } from './matterbridge.js';
+import type { Frontend } from './frontend.js';
 
 describe('globalMatterbridge', () => {
   afterEach(() => {

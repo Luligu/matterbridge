@@ -176,6 +176,7 @@ type IpAddress = string;
 export class Mdns extends Multicast {
   deviceQueries = new Map<IpAddress, { rinfo: dgram.RemoteInfo; query: MdnsMessage }>();
   deviceResponses = new Map<IpAddress, { rinfo: dgram.RemoteInfo; response: MdnsMessage; dataPTR?: string }>();
+  filters: string[] = [];
 
   /**
    * Creates an instance of the Mdns class.
@@ -187,9 +188,10 @@ export class Mdns extends Multicast {
    * @param {boolean} [reuseAddr] - Whether to reuse the address. Defaults to true.
    * @param {string} [interfaceName] - The optional name of the network interface to use.
    * @param {string} [interfaceAddress] - The optional IP address of the network interface to use.
+   * @param {string} [outgoingInterfaceAddress] - The address of the outgoing network interface.
    */
-  constructor(name: string, multicastAddress: string, multicastPort: number, socketType: 'udp4' | 'udp6', reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string) {
-    super(name, multicastAddress, multicastPort, socketType, reuseAddr, interfaceName, interfaceAddress);
+  constructor(name: string, multicastAddress: string, multicastPort: number, socketType: 'udp4' | 'udp6', reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string, outgoingInterfaceAddress?: string) {
+    super(name, multicastAddress, multicastPort, socketType, reuseAddr, interfaceName, interfaceAddress, outgoingInterfaceAddress);
   }
 
   onQuery(rinfo: dgram.RemoteInfo, _query: MdnsMessage) {
@@ -201,7 +203,7 @@ export class Mdns extends Multicast {
   }
 
   override onMessage(msg: Buffer, rinfo: dgram.RemoteInfo): void {
-    this.log.info(`Dgram mDNS server received a mDNS message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
+    if (this.filters.length === 0) this.log.info(`Dgram mDNS server received a mDNS message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
     try {
       const result = this.decodeMdnsMessage(msg);
       if (result.qr === 0) {
@@ -218,6 +220,21 @@ export class Mdns extends Multicast {
             : undefined; // Fallback to the first answer if no PTR or TXT found
         this.deviceResponses.set(rinfo.address, { rinfo, response: result, dataPTR: ptr?.type === DnsRecordType.PTR ? ptr?.data : ptr?.name });
         this.onResponse(rinfo, result);
+      }
+      if (this.filters.length > 0) {
+        this.log.debug(`mDNS message filtered out by filters: ${this.filters.join(', ')}`);
+        for (const filter of this.filters) {
+          const foundInQuestions = result.questions?.some((q) => q.name.includes(filter));
+          const foundInAnswers = result.answers?.some((a) => a.name.includes(filter) || a.data.includes(filter));
+          const foundInAdditionals = result.additionals?.some((a) => a.name.includes(filter) || a.data.includes(filter));
+          if (foundInQuestions || foundInAnswers || foundInAdditionals) {
+            this.log.info(`Dgram mDNS server received a mDNS message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
+            this.logMdnsMessage(result);
+            return;
+          }
+        }
+        this.log.debug(`mDNS message does not match any filter, ignoring.`);
+        return;
       }
       this.logMdnsMessage(result);
     } catch (error) {

@@ -154,6 +154,8 @@
         "src/devices/roboticVacuumCleaner.test.ts",
         "src/devices/solarPower.test.ts",
         "src/devices/waterHeater.test.ts",
+        "src/devices/speaker.test.ts",
+        "src/devices/airConditioner.test.ts",
       ],
       "group": {
         "kind": "test",
@@ -257,7 +259,7 @@
         "--maxWorkers=100%",
         "spawn.test.ts",
         "update.test.ts",
-        "network.test.ts",
+        "network.test.ts"
       ],
       "group": {
         "kind": "test",

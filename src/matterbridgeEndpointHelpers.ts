@@ -548,18 +548,18 @@ export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string
  * @param {Behavior.Options<T>} options - The options for the behavior type.
  * @returns {Behavior.Options<T>} The options for the behavior type.
  */
-export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.Options<T>) {
+export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.Options<T>): Behavior.Options<T> {
   return options;
 }
 
 /**
- * Retrieves the cluster name by its ID.
+ * Retrieves the cluster ID.
  *
- * @param {Endpoint} endpoint - The endpoint to retrieve the cluster name from.
+ * @param {Endpoint} endpoint - The endpoint to retrieve the cluster ID from.
  * @param {ClusterId} cluster - The ID of the cluster.
- * @returns {string} The name of the cluster.
+ * @returns {number | undefined} The ID of the cluster.
  */
-export function getClusterId(endpoint: Endpoint, cluster: string) {
+export function getClusterId(endpoint: Endpoint, cluster: string): number | undefined {
   return endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.id;
 }
 
@@ -571,7 +571,7 @@ export function getClusterId(endpoint: Endpoint, cluster: string) {
  * @param {string} attribute - The name of the attribute.
  * @returns {number | undefined} The ID of the attribute, or undefined if not found.
  */
-export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: string) {
+export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: string): number | undefined {
   const clusterBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)] as ClusterBehavior.Type | undefined;
   return clusterBehavior?.cluster?.attributes[lowercaseFirstLetter(attribute)]?.id;
 }

@@ -27,23 +27,22 @@ process.argv = [
   '3860',
 ];
 
-import { jest } from '@jest/globals';
-
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
+import { jest } from '@jest/globals';
 import { AnsiLogger, CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import WebSocket from 'ws';
 import { LogLevel as MatterLogLevel } from '@matter/main';
 import { Identify } from '@matter/main/clusters';
 
-import { Matterbridge } from './matterbridge.ts';
-import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.ts';
-import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { Frontend, WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.ts';
-import { wait, waiter } from './utils/wait.ts';
-import { PluginManager } from './pluginManager.ts';
+import { Matterbridge } from './matterbridge.js';
+import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
+import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { Frontend, WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.js';
+import { wait, waiter } from './utils/wait.js';
+import { PluginManager } from './pluginManager.js';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
@@ -1541,7 +1540,7 @@ describe('Matterbridge frontend', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 1000);
+    await matterbridge.destroyInstance(10, 100);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocket server closed successfully`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);

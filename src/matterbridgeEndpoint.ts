@@ -443,6 +443,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to check.
    * @returns {boolean} True if the cluster server is supported, false otherwise.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to check if the 'OnOff' cluster server is supported by the endpoint:
+   * ```typescript
+   * if(device.hasClusterServer(OnOffBehavior)) ...
+   * if(device.hasClusterServer(OnOffServer)) ...
+   * if(device.hasClusterServer(OnOffCluster)) ...
+   * if(device.hasClusterServer(OnOff.Cluster)) ...
+   * if(device.hasClusterServer(OnOff.Cluster.id)) ...
+   * if(device.hasClusterServer('OnOff')) ...
+   * ```
+   * The last has the advantage of being able to check for clusters without imports. Just use the name found in the Matter specs.
    */
   hasClusterServer(cluster: Behavior.Type | ClusterType | ClusterId | string): boolean {
     const behavior = getBehavior(this, cluster);
@@ -456,6 +469,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to check.
    * @param {string} attribute - The attribute name to check.
    * @returns {boolean} True if the attribute server is supported, false otherwise.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to check if the 'onOff' attribute of the 'OnOff' cluster server is supported by the endpoint:
+   * ```typescript
+   * if(device.hasAttributeServer(OnOffBehavior, 'onOff')) ...
+   * if(device.hasAttributeServer(OnOffServer, 'onOff')) ...
+   * if(device.hasAttributeServer(OnOffCluster, 'onOff')) ...
+   * if(device.hasAttributeServer(OnOff.Cluster, 'onOff')) ...
+   * if(device.hasAttributeServer(OnOff.Cluster.id, 'onOff')) ...
+   * if(device.hasAttributeServer('OnOff', 'onOff')) ...
+   * ```
+   * The last has the advantage of being able to check for clusters attributes without imports. Just use the names found in the Matter specs.
    */
   hasAttributeServer(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string): boolean {
     const behavior = getBehavior(this, cluster);
@@ -484,6 +510,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} attribute - The name of the attribute to retrieve.
    * @param {AnsiLogger} [log] - Optional logger for error and info messages.
    * @returns {any} The value of the attribute, or undefined if the attribute is not found.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the 'onOff' attribute of the 'OnOff' cluster server:
+   * ```typescript
+   * device.getAttribute(OnOffBehavior, 'onOff')
+   * device.getAttribute(OnOffServer, 'onOff')
+   * device.getAttribute(OnOffCluster, 'onOff')
+   * device.getAttribute(OnOff.Cluster, 'onOff')
+   * device.getAttribute(OnOff.Cluster.id, 'onOff')
+   * device.getAttribute('OnOff', 'onOff')
+   * ```
+   * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, log?: AnsiLogger): any {
@@ -498,6 +537,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean | number | bigint | string | object | null} value - The value to set for the attribute.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to set the 'onOff' attribute of the 'OnOff' cluster server:
+   * ```typescript
+   * await device.setAttribute(OnOffBehavior, 'onOff', true)
+   * await device.setAttribute(OnOffServer, 'onOff', true)
+   * await device.setAttribute(OnOffCluster, 'onOff', true)
+   * await device.setAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.setAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.setAttribute('OnOff', 'onOff', true)
+   * ```
+   * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
    */
   async setAttribute(clusterId: Behavior.Type | ClusterType | ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean> {
     return await setAttribute(this, clusterId, attribute, value, log);
@@ -511,6 +563,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean | number | bigint | string | object | null} value - The value to set for the attribute.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the update. Errors are logged to the endpoint logger.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to update the 'onOff' attribute of the 'OnOff' cluster server:
+   * ```typescript
+   * await device.updateAttribute(OnOffBehavior, 'onOff', true)
+   * await device.updateAttribute(OnOffServer, 'onOff', true)
+   * await device.updateAttribute(OnOffCluster, 'onOff', true)
+   * await device.updateAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.updateAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.updateAttribute('OnOff', 'onOff', true)
+   * ```
+   * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
    */
   async updateAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean> {
     return await updateAttribute(this, cluster, attribute, value, log);
@@ -525,7 +590,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
    * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
    *
-   * @remarks The listener function (cannot be async) will receive three parameters:
+   * @remarks
+   * The listener function (cannot be async!) will receive three parameters:
    * - `newValue`: The new value of the attribute.
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. When context.offline === true then the change is locally generated and not from the controller.
@@ -1215,6 +1281,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a DeadFront OnOff cluster server with feature DeadFrontBehavior.
    *
+   * The "dead front" state is linked to the OnOff attribute
+   * in the On/Off cluster having the value False. Thus, the Off command of the On/Off cluster SHALL
+   * move the device into the "dead front" state, the On command of the On/Off cluster SHALL bring the
+   * device out of the "dead front" state, and the device SHALL adhere with the associated requirements
+   * on subscription handling and event reporting.
+   *
    * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
@@ -1736,18 +1808,26 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default thermostat user interface configuration cluster server.
    *
+   * @param {ThermostatUserInterfaceConfiguration.TemperatureDisplayMode} [temperatureDisplayMode] - The temperature display mode to set. Defaults to `ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius`.
+   * @param {ThermostatUserInterfaceConfiguration.KeypadLockout} [keypadLockout] - The keypad lockout mode. Defaults to `ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout`.
+   * @param {ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility} [scheduleProgrammingVisibility] - The schedule programming visibility. Defaults to `ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted`.
+   *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    * @remarks
    * The default values are:
-   * - temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius (writeble).
-   * - keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout (writeble).
-   * - scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted (writeble).
+   * - temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius (writable).
+   * - keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout (writable).
+   * - scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted (writable).
    */
-  createDefaultThermostatUserInterfaceConfigurationClusterServer(): this {
+  createDefaultThermostatUserInterfaceConfigurationClusterServer(
+    temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode = ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius,
+    keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout = ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout,
+    scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility = ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted,
+  ): this {
     this.behaviors.require(ThermostatUserInterfaceConfigurationServer, {
-      temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius,
-      keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout,
-      scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted,
+      temperatureDisplayMode,
+      keypadLockout,
+      scheduleProgrammingVisibility,
     });
     return this;
   }
@@ -2258,6 +2338,8 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Triggers a switch event on the specified endpoint.
+   * We usually use get from real devices something like 'single', 'double', 'long'.
+   * Here we convert it to the Matter sequence of events (taken from Matter specs).
    *
    * @param {string} event - The type of event to trigger. Possible values are 'Single', 'Double', 'Long' for momentarySwitch and 'Press', 'Release' for latchingSwitch.
    * @param {AnsiLogger} log - Optional logger to log the event.

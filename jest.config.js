@@ -13,8 +13,8 @@ const jestConfig = {
   ...presetConfig,
   testEnvironment: 'node', // Use Node.js environment for testing
   moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' }, // Handle ESM imports by removing the .js extension
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/vitest/', '/frontend/', '/src/crypto/', '/src/mock/'], // Ignore specific paths for test files
-  coveragePathIgnorePatterns: ['/node_modules/', '/dist/', '/vitest/', '/frontend/', '/src/crypto/', '/src/mock/'], // Ignore specific paths for test and coverage
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/vitest/', '/frontend/', '/src/crypto/', '/src/mock/', '/src/jest-utils/jestHelpers.ts'], // Ignore specific paths for test files
+  coveragePathIgnorePatterns: ['/node_modules/', '/dist/', '/vitest/', '/frontend/', '/src/crypto/', '/src/mock/', '/src/jest-utils/jestHelpers.ts'], // Ignore specific paths for test and coverage
   maxWorkers: '100%', // Use all available CPU cores for running tests
 };
 

@@ -3,7 +3,7 @@
 const NAME = 'MatterbridgeMocked';
 const HOMEDIR = path.join('jest', NAME);
 
-// Mock the spawnCommand from spawn module before importing it
+// Mock the getGlobalNodeModules logInterfaces from network module before importing it
 jest.unstable_mockModule('./utils/network.js', () => ({
   getGlobalNodeModules: jest.fn(() => {
     return Promise.resolve('usr/local/lib/node_modules'); // Mock the getGlobalNodeModules function to resolve immediately
@@ -19,7 +19,6 @@ const logInterfacesMock = networkModule.logInterfaces as jest.MockedFunction<typ
 // Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./utils/spawn.js', () => ({
   spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
-    // console.warn(`Mocked spawnCommand called with command: ${command}, args: ${args.join(' ')}`);
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
@@ -29,15 +28,12 @@ const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof 
 // Mock the wait from wait module before importing it
 jest.unstable_mockModule('./utils/wait.js', () => ({
   waiter: jest.fn((name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false) => {
-    // console.warn(`Mocked waiter called with name: ${name}, exitWithReject: ${exitWithReject}, resolveTimeout: ${resolveTimeout}, resolveInterval: ${resolveInterval}, debug: ${debug}`);
     return Promise.resolve(true); // Mock the waiter function to resolve immediately
   }),
   wait: jest.fn((timeout: number = 1000, name?: string, debug: boolean = false) => {
-    // console.warn(`Mocked wait called with timeout: ${timeout}, name: ${name}, debug: ${debug}`);
     return Promise.resolve(); // Mock the wait function to resolve immediately
   }),
   withTimeout: jest.fn((promise: Promise<any>, timeoutMillisecs: number = 10000, reThrow: boolean = true) => {
-    // console.warn(`Mocked withTimeout called with timeoutMillisecs: ${timeoutMillisecs}, reThrow: ${reThrow}`);
     return Promise.resolve(); // Mock the withTimeout function to resolve immediately
   }),
 }));
@@ -51,22 +47,22 @@ const pluginsStartSpy = jest.spyOn(PluginManager.prototype, 'start');
 const pluginsConfigureSpy = jest.spyOn(PluginManager.prototype, 'configure');
 const pluginsShutdownSpy = jest.spyOn(PluginManager.prototype, 'shutdown');
 
-import { jest } from '@jest/globals';
 import os from 'node:os';
 import path from 'node:path';
 import { rmSync, writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
 
+import { jest } from '@jest/globals';
 import { AnsiLogger, CYAN, er, LogLevel, nf, nt, pl, TimestampFormat, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
-
-import { getParameter } from './utils/commandLine.ts';
-// import { Matterbridge } from './matterbridge.ts';
+// import { Matterbridge } from './matterbridge.js';
 const { Matterbridge } = await import('./matterbridge.ts');
-import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import { VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
-import { PluginManager } from './pluginManager.ts';
+
+import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
+import { PluginManager } from './pluginManager.js';
+import { getParameter } from './utils/commandLine.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -135,7 +131,7 @@ describe('Matterbridge mocked', () => {
     // Destroy the Matterbridge instance
     await matterbridge.destroyInstance(10, 10);
 
-    // Clear all mocks again
+    // Clear all mocks
     jest.clearAllMocks();
   });
 
@@ -603,10 +599,10 @@ describe('Matterbridge mocked', () => {
     expect(checkUpdatesMock).toHaveBeenCalledTimes(2);
   });
 
-  test('Matterbridge.initialize() registerProcessHandlers', async () => {
+  test('Matterbridge.initialize() registerProcessHandlers and matter file logger', async () => {
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger'];
-    const createMatterFileLoggerSpy = jest.spyOn(Matterbridge.prototype, 'createMatterFileLogger');
+    const createDestinationMatterLoggerSpy = jest.spyOn(Matterbridge.prototype as any, 'createDestinationMatterLogger');
     await matterbridge.initialize();
     if ((matterbridge as any).exceptionHandler) await (matterbridge as any).exceptionHandler(new Error('Test error for exceptionHandler'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Unhandled Exception detected:'));
@@ -621,16 +617,27 @@ describe('Matterbridge mocked', () => {
     });
     if ((matterbridge as any).sigtermHandler) await (matterbridge as any).sigtermHandler();
 
-    expect(createMatterFileLoggerSpy).toHaveBeenCalled();
-    Logger.get('Jest').debug('Test log message');
-    Logger.get('Jest').info('Test log message');
-    Logger.get('Jest').notice('Test log message');
-    Logger.get('Jest').warn('Test log message');
-    Logger.get('Jest').error('Test log message');
-    Logger.get('Jest').fatal('Test log message');
+    expect(createDestinationMatterLoggerSpy).toHaveBeenCalled();
+    // setDebug(true);
+    Logger.get('Jest').debug('Test debug log message');
+    Logger.get('Jest').info('Test info log message');
+    Logger.get('Jest').notice('Test notice log message');
+    Logger.get('Jest').warn('Test warn log message');
+    Logger.get('Jest').error('Test error log message');
+    Logger.get('Jest').fatal('Test fatal log message');
+    /*
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test debug log message'));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test info log message'));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test notice log message'));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test warn log message'));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test error log message'));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test fatal log message'));
+    */
+    // setDebug(false);
   });
 
   test('Matterbridge.initialize() logNodeAndSystemInfo networkInterfaces', async () => {
+    // setDebug(false);
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     await matterbridge.initialize();
@@ -1143,7 +1150,7 @@ describe('Matterbridge mocked', () => {
     plugin3.serverNode = {} as any; // Mock serverNode for plugin3
     plugin4.serverNode = {} as any; // Mock serverNode for plugin4
     plugin4.storageContext = {} as any; // Mock storageContext for plugin4
-    jest.advanceTimersByTime(1000); // Simulate 1 second for the interval to execute
+    jest.advanceTimersByTime(2000); // Simulate 2 seconds for the interval to execute
     expect((matterbridge as any).startMatterInterval).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Cleared startMatterInterval interval in childbridge mode`));
     expect((matterbridge as any).configureTimeout).toBeDefined();

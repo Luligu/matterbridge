@@ -3,7 +3,7 @@
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { waiter, wait, withTimeout } from './wait.ts';
+import { waiter, wait, withTimeout } from './wait.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

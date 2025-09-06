@@ -446,6 +446,20 @@ export class MatterbridgePlatform {
    * @param {string} [icon] - The icon of the device: 'wifi', 'ble', 'hub'
    * @param {Array<{ name: string; description: string; icon?: string }>} [entities] - The entities associated with the device.
    * @returns {void}
+   *
+   * @remarks
+   * In the schema use selectFrom: 'serial' or 'name'
+   * ```json
+   * "whiteList": {
+   *   "description": "Only the devices in the list will be exposed.",
+   *   "type": "array",
+   *   "items": {
+   *     "type": "string"
+   *   },
+   *   "uniqueItems": true,
+   *   "selectFrom": "name"
+   * },
+   * ```
    */
   setSelectDevice(serial: string, name: string, configUrl?: string, icon?: string, entities?: { name: string; description: string; icon?: string }[]): void {
     const device = this.selectDevice.get(serial);
@@ -468,6 +482,26 @@ export class MatterbridgePlatform {
    * @param {string} entityDescription - The description of the entity.
    * @param {string} [entityIcon] - The icon of the entity: 'wifi', 'ble', 'hub', 'component', 'matter'
    * @returns {void}
+   *
+   * @remarks
+   * In the schema use selectDeviceEntityFrom: 'name' or 'description'
+   * ```json
+   * "deviceEntityBlackList": {
+   *   "description": "List of entities not to be exposed for a single device.",
+   *   "type": "object",
+   *   "uniqueItems": true,
+   *   "selectFrom": "name",
+   *   "additionalProperties": {
+   *     "description": "List of entities not to be exposed for this device.",
+   *     "type": "array",
+   *     "items": {
+   *       "type": "string"
+   *     },
+   *     "uniqueItems": true,
+   *     "selectDeviceEntityFrom": "name"
+   *   }
+   * },
+   * ```
    */
   setSelectDeviceEntity(serial: string, entityName: string, entityDescription: string, entityIcon?: string): void {
     const device = this.selectDevice.get(serial);
@@ -497,6 +531,20 @@ export class MatterbridgePlatform {
    * @param {string} description - The entity description.
    * @param {string} [icon] - The entity icon: 'wifi', 'ble', 'hub', 'component', 'matter'
    * @returns {void}
+   *
+   * @remarks
+   * In the schema use selectEntityFrom: 'name' or 'description'
+   * ```json
+   * "entityBlackList": {
+   *   "description": "The entities in the list that belongs to a device will not be exposed.",
+   *   "type": "array",
+   *   "items": {
+   *     "type": "string"
+   *   },
+   *   "uniqueItems": true,
+   *   "selectEntityFrom": "name"
+   * },
+   * ```
    */
   setSelectEntity(name: string, description: string, icon?: string): void {
     this.selectEntity.set(name, { name, description, icon });

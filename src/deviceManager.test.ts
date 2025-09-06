@@ -5,15 +5,16 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'deviceManager.test.js', '-logger', 'info', '-matterlogger', 'info', '-homedir', HOMEDIR];
 
-import { jest } from '@jest/globals';
-import { AnsiLogger, BLUE, er, LogLevel } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
-import { Matterbridge } from './matterbridge.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { DeviceManager } from './deviceManager.ts';
-import { dev } from './matterbridgeTypes.ts';
+import { jest } from '@jest/globals';
+import { AnsiLogger, BLUE, er, LogLevel } from 'node-ansi-logger';
+
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { DeviceManager } from './deviceManager.js';
+import { dev } from './matterbridgeTypes.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

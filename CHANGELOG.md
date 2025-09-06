@@ -8,6 +8,42 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.2.6] - 2025-09-06
+
+### Added
+
+- [frontend]: Added primary color to QR icon in childbridge mode if the plugin is not paired.
+- [frontend]: Added secondary color to QR icon in childbridge mode if the plugin server node is paired but doesn't have at least 1 session and 1 subscription.
+- [frontend]: Added color red to QR icon in childbridge mode if the plugin server node is not online.
+- [frontend]: Added primary color to QR icon of 'server' mode devices if the device is not paired.
+- [frontend]: Added secondary color to QR icon of 'server' mode devices if the device server node is paired but doesn't have at least 1 session and 1 subscription.
+- [frontend]: Added color red to QR icon of 'server' mode devices if the device server node is not online.
+- [frontend]: Added serialNumber to QR icon of 'server' mode devices.
+- [frontend]: Bumped `frontend` version to 2.7.5.
+- [childbridge]: Added restart needed when the plugin is first added in childbridge mode.
+- [childbridge]: Create the server node for Dynamic plugins even if they have 0 devices. This allow to pair empty plugins in huge setup.
+- [select]: Enhanced documentation for Platform setSelectDevice, setSelectDeviceEntity, and setSelectEntity methods with schema examples (see the Jsdoc of the methods).
+- [MatterbridgeEndpoint]: Improved documentation in jsdoc.
+- [AirConditioner]: Added AirConditioner() class and Jest test. It is not supported correctly by Google. Improved createDefaultThermostatUserInterfaceConfigurationClusterServer().
+- [DeviceTypes]: Add Chapter 10. Media Device Types.
+- [Speaker]: Added Speaker() class and Jest test. Supported only by SmartThings.
+- [mb_mdns]: Added help screen and the ability to filter mDNS packets. Useful to see all paired and commissionable Matter devices on the network.
+- [matter.js]: Removed legacy and deprecated calls to Logger.setLogger etc. and use Logger.destinations.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [package]: Bumped Jest to v. 30.1.3. (this version finally solves the broken ESM module mock).
+- [jest]: Refactor all tests units.
+
+### Fixed
+
+- [jest]: Fixed cli test failing with Jest v. 30.1.3.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.2.5] - 2025-09-02
 
 ### Added

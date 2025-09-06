@@ -8,15 +8,15 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.matterjs.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
-import { jest } from '@jest/globals';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
+
+import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
-
 import { Environment, FabricIndex, NodeLifecycle } from '@matter/main';
-
-import { Matterbridge } from './matterbridge.ts';
 import { FabricAction } from '@matter/main/protocol';
+
+import { Matterbridge } from './matterbridge.js';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   console.log('mockImplementation of process.exit() called');
@@ -53,10 +53,6 @@ rmSync(HOMEDIR, { recursive: true, force: true });
 describe('Matterbridge matterjs', () => {
   let matterbridge: Matterbridge;
 
-  beforeAll(async () => {
-    //
-  });
-
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
@@ -81,7 +77,7 @@ describe('Matterbridge matterjs', () => {
     await new Promise((resolve) => {
       matterbridge.once('online', resolve);
     });
-    await Promise.resolve();
+    // await Promise.resolve();
 
     expect((matterbridge as any).endAdvertiseTimeout).toBeDefined();
 

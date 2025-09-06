@@ -4,9 +4,10 @@
 
 process.argv = ['node', './cli.js', '-memorycheck', '-inspect', '-snapshotinterval', '60000', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
 
-import { jest } from '@jest/globals';
 import os from 'node:os';
 import { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
+
+import { jest } from '@jest/globals';
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, YELLOW } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
@@ -174,13 +175,11 @@ describe('Matterbridge', () => {
     console.log('should call Inspector interval');
     jest.clearAllMocks();
     jest.advanceTimersByTime(60 * 1000); // Fast-forward time by 60 seconds
+    jest.useRealTimers();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Run heap snapshot interval`);
     expect(matterbridge).toBeDefined();
-  }, 10000);
-
-  it('should use real timers', async () => {
-    jest.useRealTimers();
-    expect(matterbridge).toBeDefined();
+    matterbridge.emit('stopmemorycheck');
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }, 10000);
 
   it('should shutdown matterbridge', async () => {

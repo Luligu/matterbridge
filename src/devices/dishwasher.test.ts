@@ -4,23 +4,20 @@ const MATTER_PORT = 6022;
 const NAME = 'Dishwasher';
 const HOMEDIR = path.join('jest', NAME);
 
-import { rmSync } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 // matter.js
-import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
-import { MdnsService } from '@matter/main/protocol';
+import { Endpoint, ServerNode } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { RootEndpoint } from '@matter/main/endpoints/root';
 import { DishwasherModeServer, TemperatureControlServer } from '@matter/main/behaviors';
 import { DishwasherAlarm, DishwasherMode, Identify, OnOff, OperationalState, PowerSource, TemperatureControl } from '@matter/main/clusters';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { inspectError } from '../utils/error.js';
+import { addDevice, createTestEnvironment, deleteDevice, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
 
 import { Dishwasher, MatterbridgeDishwasherModeServer } from './dishwasher.js';
 import { MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
@@ -49,78 +46,32 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the matter and test environment
+createTestEnvironment(HOMEDIR);
 
 describe('Matterbridge ' + NAME, () => {
-  const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
-  beforeAll(async () => {
-    // Setup the matter environment
-    environment.vars.set('log.level', MatterLogLevel.DEBUG);
-    environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', HOMEDIR);
-    environment.vars.set('runtime.signals', false);
-    environment.vars.set('runtime.exitcode', false);
-  });
+  beforeAll(async () => {});
 
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
   });
 
+  afterEach(async () => {});
+
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create the server node', async () => {
-    // Create the server node
-    server = await ServerNode.create({
-      id: NAME + 'ServerNode',
-
-      productDescription: {
-        name: NAME + 'ServerNode',
-        deviceType: DeviceTypeId(RootEndpoint.deviceType),
-        vendorId: VendorId(0xfff1),
-        productId: 0x8000,
-      },
-
-      // Provide defaults for the BasicInformation cluster on the Root endpoint
-      basicInformation: {
-        vendorId: VendorId(0xfff1),
-        vendorName: 'Matterbridge',
-        productId: 0x8000,
-        productName: 'Matterbridge ' + NAME,
-        nodeLabel: NAME + 'ServerNode',
-        hardwareVersion: 1,
-        softwareVersion: 1,
-        reachable: true,
-      },
-
-      network: {
-        port: MATTER_PORT,
-      },
-    });
-    expect(server).toBeDefined();
-    expect(server.lifecycle.isReady).toBeTruthy();
-  });
-
-  test('create the aggregator node', async () => {
-    aggregator = new Endpoint(AggregatorEndpoint, { id: NAME + 'AggregatorNode' });
-    expect(aggregator).toBeDefined();
-  });
-
-  test('add the aggregator node to the server', async () => {
+  test('create and start the server node', async () => {
+    [server, aggregator] = await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-    await server.add(aggregator);
-    expect(server.parts.has(aggregator.id)).toBeTruthy();
-    expect(server.parts.has(aggregator)).toBeTruthy();
-    expect(aggregator.lifecycle.isReady).toBeTruthy();
   });
 
   test('create a dishwasher device', async () => {
@@ -137,39 +88,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add a dishwasher device', async () => {
-    expect(server).toBeDefined();
-    expect(device).toBeDefined();
-    try {
-      await server.add(device);
-    } catch (error) {
-      inspectError(device.log, `Error adding device ${device.deviceName}`, error);
-      return;
-    }
-    expect(server.parts.has('DishwasherTestDevice-DW123456')).toBeTruthy();
-    expect(server.parts.has(device)).toBeTruthy();
-    expect(device.lifecycle.isReady).toBeTruthy();
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDishwasherModeServer initialized: currentMode is 2`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80°`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
-  });
-
-  test('start the server node', async () => {
-    // Run the server
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeFalsy();
-
-    // Wait for the server to be online
-    await new Promise<void>((resolve) => {
-      server.lifecycle.online.on(async () => {
-        resolve();
-      });
-      server.start();
-    });
-
-    // Check if the server is online
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeTruthy();
+    expect(await addDevice(server, device)).toBeTruthy();
   });
 
   test('device forEachAttribute', async () => {
@@ -213,11 +132,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('remove the laundry washer device', async () => {
-    expect(server).toBeDefined();
-    expect(device).toBeDefined();
-    await device.delete();
-    expect(server.parts.has('DishwasherTestDevice-DW123456')).toBeFalsy();
-    expect(server.parts.has(device)).toBeFalsy();
+    expect(await deleteDevice(server, device)).toBeTruthy();
   });
 
   test('create a dishwasher device with number temperature control', async () => {
@@ -263,17 +178,6 @@ describe('Matterbridge ' + NAME, () => {
 
   test('close the server node', async () => {
     expect(server).toBeDefined();
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeTruthy();
-    await server.close();
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeFalsy();
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  });
-
-  test('stop the mDNS service', async () => {
-    expect(server).toBeDefined();
-    await server.env.get(MdnsService)[Symbol.asyncDispose]();
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await stopServerNode(server);
   });
 });

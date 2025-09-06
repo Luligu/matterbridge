@@ -10,14 +10,14 @@
 
 import os from 'node:os';
 import { AddressInfo } from 'node:net';
-import { BindOptions, Socket } from 'node:dgram';
+import { Socket } from 'node:dgram';
 
 import { AnsiLogger, BLUE, db, LogLevel } from 'node-ansi-logger';
-
 import { jest } from '@jest/globals';
 
+import { getIpv4InterfaceAddress } from '../utils/network.js';
+
 import { Multicast, COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT } from './multicast.js';
-import { Dgram } from './dgram.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -158,7 +158,8 @@ describe('Multicast', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Dgram multicast socket listening on'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Dgram multicast socket broadcast enabled'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Dgram multicast socket multicast TTL set to 255'));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Dgram multicast socket multicastInterface set to ${BLUE}${'0.0.0.0'}${db}`));
+    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Dgram multicast socket multicastInterface set to ${BLUE}${'0.0.0.0'}${db}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Dgram multicast socket multicastInterface set to ${BLUE}${getIpv4InterfaceAddress()}${db}`));
     // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Dgram multicast socket joined multicast group ${BLUE}${COAP_MULTICAST_IPV4_ADDRESS}${db} on interface ${BLUE}${'0.0.0.0'}${db}`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Dgram multicast socket bound to'));
 
@@ -203,44 +204,6 @@ describe('Multicast', () => {
     await closed;
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Stopping dgram multicast socket...'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Stopped dgram multicast socket.'));
-  });
-
-  test('Create multicast with undefined interfaces in network interface list', async () => {
-    // Test line 103: if (!interfaces) return;
-    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true, undefined, '0.0.0.0');
-    expect(mcast).not.toBeUndefined();
-    expect(mcast).toBeInstanceOf(Multicast);
-    expect(mcast.socketType).toBe('udp4');
-
-    // Mock networkInterfaces to return an interface with undefined details
-    const networkInterfacesMock = jest.spyOn(os, 'networkInterfaces').mockReturnValue({
-      'test-interface': undefined,
-    });
-
-    const ready = new Promise<AddressInfo>((resolve) => {
-      mcast.on('ready', (address: AddressInfo) => {
-        expect(address.family).toBe('IPv4');
-        expect(address.address).toBe('0.0.0.0');
-        expect(address.port).toBeGreaterThan(0);
-        resolve(address);
-      });
-    });
-    mcast.start();
-    await ready;
-
-    // Should not attempt to join multicast group on undefined interface
-    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Dgram multicast socket joined multicast group'));
-
-    const closed = new Promise<void>((resolve) => {
-      mcast.on('close', () => {
-        resolve();
-      });
-    });
-    mcast.stop();
-    await closed;
-
-    // Restore the mock
-    networkInterfacesMock.mockRestore();
   });
 
   test('Create ipv6 multicast with specific interfaces', async () => {

@@ -3,9 +3,9 @@
 import { jest } from '@jest/globals';
 import { db, nt, wr } from 'node-ansi-logger';
 
-import type { Matterbridge } from './matterbridge.ts';
-import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './update.ts';
-import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
+import type { Matterbridge } from './matterbridge.js';
+import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './update.js';
+import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
 
 // Mock the function getNpmPackageVersion
 jest.unstable_mockModule('./utils/network.js', () => ({

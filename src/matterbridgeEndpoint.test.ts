@@ -8,8 +8,11 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'info', '-matterlogger', 'info'];
 
+import path from 'node:path';
+import { rmSync } from 'node:fs';
+
 import { jest } from '@jest/globals';
-import { Lifecycle, EndpointNumber, ActionContext } from '@matter/main';
+import { Lifecycle, EndpointNumber, ActionContext, ServerNode, Endpoint, ServerNodeStore } from '@matter/main';
 import {
   BooleanState,
   BooleanStateCluster,
@@ -50,11 +53,9 @@ import {
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
 import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
-import path from 'node:path';
-import { rmSync } from 'node:fs';
 
-import { Matterbridge } from './matterbridge.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   airQualitySensor,
   bridgedNode,
@@ -76,7 +77,8 @@ import {
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
-import { wait } from './utils/wait.ts';
+import { wait } from './utils/wait.js';
+import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jest-utils/jestHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -102,8 +104,8 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the matter and test environment
+createTestEnvironment(HOMEDIR);
 
 describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
@@ -124,9 +126,7 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {
-    //
-  });
+  afterEach(async () => {});
 
   afterAll(async () => {
     // Restore all mocks
@@ -402,7 +402,6 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('serialize and deserialize', async () => {
-    MatterbridgeEndpoint.bridgeMode = 'bridge';
     const device = new MatterbridgeEndpoint([onOffLight, bridgedNode, powerSource], { uniqueStorageKey: 'OnOffLight4', endpointId: EndpointNumber(100) });
     expect(device).toBeDefined();
     device
@@ -1223,9 +1222,20 @@ describe('Matterbridge ' + NAME, () => {
     ]);
   });
 
+  test('ensure all endpoint number persistence is flushed before closing', async () => {
+    expect(matterbridge.serverNode).toBeDefined();
+    expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
+    expect(matterbridge.serverNode?.lifecycle.isOnline).toBeTruthy();
+    if (matterbridge.serverNode) {
+      // Ensure all endpoint number persistence is flushed before closing
+      await flushAllEndpointNumberPersistence(matterbridge.serverNode);
+      await assertAllEndpointNumbersPersisted(matterbridge.serverNode);
+    }
+  });
+
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 1000);
+    await matterbridge.destroyInstance(10, 250);
   });
 });

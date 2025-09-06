@@ -291,49 +291,7 @@ An Accessory platform plugin only exposes one device.
 
 This is an example of a dynamic platform plugin.
 
-It exposes 38 devices:
-
-- a switch with onOff cluster
-- a light with onOff
-- a light with onOff and levelControl (dimmer)
-- a light with onOff, levelControl and colorControl (with XY, HS and CT) clusters
-- a light with onOff, levelControl and colorControl (with HS and CT) clusters
-- a light with onOff, levelControl and colorControl (with XY and CT) clusters
-- a light with onOff, levelControl and colorControl (with CT only) clusters
-- an outlet (plug) with onOff cluster
-- a cover with windowCovering cluster
-- a lock with doorLock cluster
-- a thermo autoMode (i.e. with Auto Heat and Cool features) with thermostat cluster and 3 sub endpoints with flowMeasurement cluster, temperatureMeasurement cluster
-  and relativeHumidityMeasurement cluster (to show how to create a composed device with sub endpoints)
-- a thermo heat only with two external temperature sensors (tagged like Indoor and Outdoor)
-- a thermo cool only
-- a fan with FanControl cluster
-- a rainSensor device
-- a waterFreezeDetector device
-- a waterLeakDetector device
-- a smokeCoAlarm (with smoke and co features) sensor (supported by Apple Home)
-- a smokeCoAlarm (with smoke only feature) sensor (supported by Apple Home)
-- a smokeCoAlarm (with co only feature) sensor (supported by Apple Home)
-- an airConditioner device
-- an airPurifier device with temperature and humidity sensor (supported by Apple Home)
-- a pumpDevice device
-- a waterValve device
-- an airQuality device with all concentration measurements clusters (supported by Apple Home only without the concentration measurements)
-- a momentary switch
-- a latching switch
-- a Robot Vacuum Cleaner device (supported by SmartThings, Alexa, Home Assistant and partially by Apple Home). Read also https://github.com/Luligu/matterbridge/discussions/264.
-- a onOff Mounted Switch device (supported by SmartThings, Alexa, Home Assistant)
-- a dimmer Mounted Switch device (supported by SmartThings, Alexa, Home Assistant)
-- a laundry Washer device (supported by SmartThings, Alexa and Home Assistant)
-- a laundry Dryer device (supported by SmartThings, Alexa and Home Assistant)
-- a dishwasher device (supported by SmartThings, Alexa and Home Assistant)
-- a refrigerator device (supported by SmartThings, Alexa and Home Assistant)
-- an oven device (supported by SmartThings, Alexa and Home Assistant)
-- a microwave Oven device (supported by SmartThings, Alexa and Home Assistant)
-- an extractor Hood device (supported by SmartThings, Alexa and Home Assistant)
-- a cooktop device (supported by SmartThings, Alexa and Home Assistant)
-- a water heater device (supported by SmartThings and Home Assistant)
-- a car charger device (supported by Home Assistant)
+It exposes 57 virtual devices.
 
 All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 

@@ -5,13 +5,15 @@
 const TEST_DIR = path.join('jest', 'Shelly');
 mkdirSync(TEST_DIR, { recursive: true });
 
-import { jest } from '@jest/globals';
 import http, { IncomingMessage, ServerResponse } from 'node:http';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-import { Matterbridge } from './matterbridge.ts';
-import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.ts';
 import path from 'node:path';
 import { mkdirSync } from 'node:fs';
+
+import { jest } from '@jest/globals';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+
+import { Matterbridge } from './matterbridge.js';
+import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.js';
 
 const log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 

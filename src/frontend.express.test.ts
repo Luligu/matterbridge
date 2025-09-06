@@ -7,8 +7,6 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'frontend.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-homedir', HOMEDIR, '-profile', 'JestFrontendExpress', '-port', MATTER_PORT.toString(), '-passcode', '123456', '-discriminator', '3860'];
 
-import { jest } from '@jest/globals';
-
 // Mock the createZip from createZip module before importing it
 /*
 jest.unstable_mockModule('./utils/createZip.js', async () => {
@@ -28,10 +26,12 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { rmSync } from 'node:fs';
 import os from 'node:os';
+
+import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.ts';
-import { waiter } from './utils/export.ts';
+import { Matterbridge } from './matterbridge.js';
+import { waiter } from './utils/export.js';
 
 /*
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
@@ -503,7 +503,7 @@ describe('Matterbridge frontend express with http', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 1000);
+    await matterbridge.destroyInstance(10, 100);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Stopping the frontend...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Frontend app closed successfully`);

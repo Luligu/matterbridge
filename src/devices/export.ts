@@ -1,3 +1,6 @@
+// Chapter 10. Media Device Types - Single class device types
+export * from './speaker.js';
+
 // Chapter 12. Robotic Device Types - Single class device types
 export * from './roboticVacuumCleaner.js';
 
@@ -10,6 +13,7 @@ export * from './microwaveOven.js';
 export * from './oven.js';
 export * from './cooktop.js';
 export * from './refrigerator.js';
+export * from './airConditioner.js';
 
 // Chapter 14. Energy Device Types - Single class device types
 export * from './waterHeater.js';

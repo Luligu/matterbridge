@@ -1,6 +1,6 @@
 // src\utils\deepEqual.test.ts
 
-import { deepEqual } from './deepEqual.ts';
+import { deepEqual } from './deepEqual.js';
 
 describe('deepEqual', () => {
   // Primitives and same references

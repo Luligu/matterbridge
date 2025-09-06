@@ -9,3 +9,4 @@ export * from './createDirectory.js';
 export * from './createZip.js';
 export * from './wait.js';
 export * from './hex.js';
+export * from './error.js';

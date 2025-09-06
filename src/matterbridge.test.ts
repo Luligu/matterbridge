@@ -5,19 +5,19 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-debug'];
 
-import { jest } from '@jest/globals';
 import os from 'node:os';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
+import { jest } from '@jest/globals';
 import { FabricId, FabricIndex, NodeId, SessionsBehavior, VendorId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
 import { AnsiLogger, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
-import { getParameter, hasParameter } from './utils/export.ts';
-import { Matterbridge } from './matterbridge.ts';
-import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { getParameter, hasParameter } from './utils/export.js';
+import { Matterbridge } from './matterbridge.js';
+import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   // eslint-disable-next-line no-console

@@ -169,7 +169,12 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
       selectedAreas: selectedAreas ?? [], // Indicates the set of areas where the device SHOULD attempt to operate. If this attribute is empty, the device is not constrained to operate in any specific areas.
       currentArea: currentArea ?? 1, // If not null, the value of this attribute shall match the AreaID field of an entry on the SupportedAreas attribute’s list. A null value indicates that the device is currently unable to provide this information.
       supportedMaps: supportedMaps ?? [], // If empty, that indicates that the device is currently unable to provide this information
-      estimatedEndTime: null, // Indicates the estimated Epoch time for completing operating at the area indicated by the CurrentArea attribute, in seconds.
+      /**
+       * Indicates the estimated Epoch time for completing operating at the area indicated by the CurrentArea attribute, in seconds. A value of 0 means that the operation has completed.
+       * When this attribute is null, that represents that there is no time currently defined until operation completion.
+       * This attribute SHALL be null if the CurrentArea attribute is null.
+       */
+      estimatedEndTime: null,
     });
     return this;
   }

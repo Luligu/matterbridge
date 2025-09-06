@@ -30,20 +30,20 @@ process.argv = [
   '3860',
 ];
 
-import { jest } from '@jest/globals';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
-import { AnsiLogger, db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
+import { jest } from '@jest/globals';
+import { AnsiLogger, db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Environment } from '@matter/main';
 import { BasicInformationServer } from '@matter/main/behaviors';
 
-import { Matterbridge } from './matterbridge.ts';
-import { waiter } from './utils/export.ts';
-import { PluginManager } from './pluginManager.ts';
-import { dev, plg } from './matterbridgeTypes.ts';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
-import { pressureSensor } from './matterbridgeDeviceTypes.ts';
+import { Matterbridge } from './matterbridge.js';
+import { waiter } from './utils/export.js';
+import { PluginManager } from './pluginManager.js';
+import { dev, plg } from './matterbridgeTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { pressureSensor } from './matterbridgeDeviceTypes.js';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   console.log('mockImplementation of process.exit() called');
@@ -80,10 +80,6 @@ rmSync(HOMEDIR, { recursive: true, force: true });
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
-
-  beforeAll(async () => {
-    //
-  });
 
   beforeEach(() => {
     // Clear all mocks

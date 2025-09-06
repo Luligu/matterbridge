@@ -111,7 +111,6 @@ export default defineConfig([
       '@typescript-eslint/no-explicit-any': 'off', // Allow 'any' type in test files
       '@typescript-eslint/no-empty-function': 'off', // Allow empty functions in test files
       'jsdoc/require-jsdoc': 'off', // Disable JSDoc rule in test files
-      'import/order': 'off', // Disable import order rule in test files
 
       // Recommended Jest rules
       ...pluginJest.configs.recommended.rules,

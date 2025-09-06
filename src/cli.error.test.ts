@@ -5,7 +5,7 @@ process.argv = ['node', './cli.js', '-memorycheck', '-frontend', '0', '-profile'
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.ts';
+import { Matterbridge } from './matterbridge.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

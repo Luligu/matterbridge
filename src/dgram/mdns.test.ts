@@ -12,7 +12,7 @@ import dgram from 'node:dgram';
 
 import { jest } from '@jest/globals';
 
-import { Mdns, DnsRecordType, DnsClass, DnsClassFlag } from './mdns.ts';
+import { Mdns, DnsRecordType, DnsClass, DnsClassFlag } from './mdns.js';
 
 jest.mock('node:dgram');
 
@@ -264,21 +264,35 @@ describe('Mdns', () => {
     const header = Buffer.alloc(12);
     header.writeUInt16BE(0, 0); // id
     header.writeUInt16BE(0x8000, 2); // flags with QR=1 (response)
-    header.writeUInt16BE(0, 4); // qdcount
+    header.writeUInt16BE(1, 4); // qdcount
     header.writeUInt16BE(1, 6); // ancount
+    header.writeUInt16BE(0, 8); // nsCount
+    header.writeUInt16BE(1, 10); // arCount
+
+    // Create a question record
+    const qname = mdns.encodeDnsName('_matter._tcp.local');
+    const question = Buffer.concat([qname, Buffer.from([0, DnsRecordType.PTR, 0, DnsClass.IN])]);
 
     // Create an answer record
     const name = mdns.encodeDnsName('_shelly._tcp.local');
     const answerData = mdns.encodeDnsName('test-device._shelly._tcp.local');
     const answer = Buffer.concat([name, Buffer.from([0, DnsRecordType.PTR, 0, DnsClass.IN, 0, 0, 0, 120, 0, answerData.length]), answerData]);
 
-    const responseMsg = Buffer.concat([header, answer]);
+    const responseMsg = Buffer.concat([header, question, answer, answer]);
 
     mdns.onMessage(responseMsg, mockRinfo);
 
     expect(mdns.deviceResponses.has('1.2.3.4')).toBe(true);
     const stored = mdns.deviceResponses.get('1.2.3.4');
     expect(stored?.dataPTR).toBe('test-device._shelly._tcp.local');
+
+    mdns.filters.push('test-device._shelly._tcp.local');
+    mdns.onMessage(responseMsg, mockRinfo);
+    mdns.filters = [];
+
+    mdns.filters.push('nope-device._shelly._tcp.local');
+    mdns.onMessage(responseMsg, mockRinfo);
+    mdns.filters = [];
   });
 
   it('should decode NSEC record with bitmap data', () => {
