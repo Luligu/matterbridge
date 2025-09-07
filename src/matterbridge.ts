@@ -2442,6 +2442,12 @@ const commissioningController = new CommissioningController({
       this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) plugin ${plg}${pluginName}${er} not found`);
       return;
     }
+    if (!(device instanceof MatterbridgeEndpoint)) {
+      // @ts-expect-error cause this a guard against wrong types at runtime (should never happen unless a plugin has matterbridge in the package.json)
+      this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) plugin ${plg}${pluginName}${er} is not a MatterbridgeEndpoint`);
+      return;
+    }
+
     if (device.mode === 'server') {
       try {
         this.log.debug(`Creating server node for device ${dev}${device.deviceName}${db} of plugin ${plg}${plugin.name}${db}...`);

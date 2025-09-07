@@ -17,6 +17,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [platform]: Added check for MatterbridgeEndpoint instance to registerDevice.
+
 ### Changed
 
 - [package]: Updated dependencies.
