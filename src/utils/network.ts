@@ -219,10 +219,10 @@ export async function getNpmPackageVersion(packageName: string, tag: string = 'l
  * @returns {Promise<Record<string, boolean | string | number>>} A promise that resolves to the parsed JSON object from the file.
  * @throws {Error} If the request fails or the JSON parsing fails.
  */
-export async function getGitHubUpdate(branch: string, file: string, timeout: number = 10000): Promise<Record<string, boolean | string | number>> {
+export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, timeout: number = 10000): Promise<Record<string, boolean | string | number>> {
   const https = await import('node:https');
   return new Promise((resolve, reject) => {
-    const url = `https://raw.githubusercontent.com/Luligu/matterbridge/${branch}/public/${file}`;
+    const url = `https://matterbridge.io/${branch}_${file}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
