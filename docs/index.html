@@ -347,7 +347,7 @@
         .code-block {
             background: #1f2937;
             color: #f9fafb;
-            padding: 1.5rem;
+            padding: 1.5rem 3.5rem 1.5rem 1.5rem;
             border-radius: 0.5rem;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             font-size: 0.875rem;
@@ -355,7 +355,33 @@
             margin: 1rem 0;
             position: relative;
         }
-        
+        .code-block .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 1rem;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 0.3rem;
+            padding: 0.3rem 0.7rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            opacity: 0.85;
+            transition: background 0.2s, opacity 0.2s;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .code-block .copy-btn .copy-icon {
+            display: block;
+            width: 18px;
+            height: 18px;
+            pointer-events: none;
+        }
+        .code-block .copy-btn.copied {
+            min-width: 60px;
+        }
         .code-block::before {
             content: '$ ';
             color: #10b981;
@@ -468,9 +494,6 @@
                     <a href="https://github.com/Luligu/matterbridge/blob/main/README.md" class="btn btn-secondary">
                         📖 Documentation
                     </a>
-                    <a href="specifications.html" class="btn btn-secondary">
-                        📚 Matter Specs
-                    </a>
                     <a href="https://www.npmjs.com/package/matterbridge" class="btn btn-secondary">
                         📦 NPM Package
                     </a>
@@ -582,24 +605,35 @@
                 <p>Get Matterbridge running in minutes with these simple commands.</p>
                 
                 <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">NPM Installation</h3>
-                <div class="code-block">npm install -g matterbridge --omit=dev</div>
-                <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
-                    On Linux/macOS you may need <code>sudo npm install -g matterbridge --omit=dev</code>. After installation start it manually with <code>matterbridge</code>.
-                </p>
+                <div class="code-block" id="copy-npm" style="position:relative;">
+  npm install -g matterbridge --omit=dev
+  <button class="copy-btn" onclick="copyToClipboard('copy-npm')" aria-label="Copy">
+    <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="7" y="3" width="9" height="13" rx="2" stroke="currentColor" stroke-width="2"/><rect x="4" y="6" width="9" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+  </button>
+</div>
+<p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
+    On Linux/macOS you may need <code>sudo npm install -g matterbridge --omit=dev</code>. After installation start it manually with <code>matterbridge</code>.
+</p>
                 
                 <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Docker Installation</h3>
-                <div class="code-block">docker run -it --name matterbridge -v matterbridge:/root/.matterbridge -p 8283:8283 --network host luligu/matterbridge:latest</div>
-                <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
-                    The Docker container starts Matterbridge automatically.
-                </p>
+                <div class="code-block" id="copy-docker" style="position:relative;">
+  docker run --name matterbridge -v ~/Matterbridge:/root/Matterbridge -v ~/.matterbridge:/root/.matterbridge --network host --restart always -d luligu/matterbridge:latest
+  <button class="copy-btn" onclick="copyToClipboard('copy-docker')" aria-label="Copy">
+    <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="7" y="3" width="9" height="13" rx="2" stroke="currentColor" stroke-width="2"/><rect x="4" y="6" width="9" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+  </button>
+</div>
+<p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
+    The Docker container starts Matterbridge automatically.
+</p>
                 <h3 style="text-align: center; margin: 3rem 0 1rem; color: var(--primary-color);">Access the Frontend</h3>
                 <p style="text-align:center; font-size:1rem; color: var(--text-secondary); max-width:800px; margin:0 auto 1.25rem;">
                     After starting Matterbridge (via Node.js or Docker) the web frontend is available by default on port <code>8283</code>.
                 </p>
-                <div class="code-block" style="line-height:1.4;">
-localhost:8283<br>
-http://&lt;your-ipv4-address&gt;:8283<br>
-http://[&lt;your-ipv6-address&gt;]:8283
+                <div style="background: #f1f5f9; color: #1f2937; padding: 1.25rem; border-radius: 0.5rem; font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.98rem; line-height:1.6; margin: 1rem 0;">
+  
+  <span style="display:inline-block;margin-left:1.5em;">localhost:8283</span><br>
+  <span style="display:inline-block;margin-left:1.5em;">http://&lt;your-ipv4-address&gt;:8283</span><br>
+  <span style="display:inline-block;margin-left:1.5em;">http://[&lt;your-ipv6-address&gt;]:8283</span>
                 </div>
                 <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:800px; margin:0.75rem auto;">
                     Change the port with <code>-frontend &lt;port&gt;</code> (e.g. <code>matterbridge -frontend 8383</code>). Enable HTTPS with <code>-ssl</code>. For mutual TLS add <code>-mtls</code>. See the <a href="https://github.com/Luligu/matterbridge/blob/main/README.md#frontend" style="color: var(--primary-color); text-decoration:none;">Frontend docs</a> for certificate details.
@@ -736,7 +770,28 @@ http://[&lt;your-ipv6-address&gt;]:8283
     </footer>
 
     <script>
-        // Fetch dynamic stats for npm downloads (last week) and GitHub stars
+        // Copy to clipboard for code blocks
+function copyToClipboard(id) {
+    var block = document.getElementById(id);
+    if (!block) return;
+    var code = block.childNodes[0].textContent.trim();
+    var btn = block.querySelector('.copy-btn');
+    navigator.clipboard.writeText(code).then(function() {
+        if (btn) {
+            var old = btn.innerHTML;
+            btn.innerHTML = 'Copied!';
+            btn.classList.add('copied');
+            btn.disabled = true;
+            setTimeout(function() {
+                btn.innerHTML = old;
+                btn.classList.remove('copied');
+                btn.disabled = false;
+            }, 1200);
+        }
+    });
+}
+
+// Fetch dynamic stats for npm downloads (last week) and GitHub stars
         (async () => {
             try {
                 const npmResp = await fetch('https://api.npmjs.org/downloads/point/last-week/matterbridge');
