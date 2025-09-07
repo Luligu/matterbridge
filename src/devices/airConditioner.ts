@@ -73,7 +73,7 @@ export class AirConditioner extends MatterbridgeEndpoint {
    *
    * A Room Air Conditioner is a device which at a minimum is capable of being turned on and off and of controlling the temperature in the living space.
    * A Room Air Conditioner MAY also support additional capabilities via endpoint composition.
-   * The DF (Dead Front) feature is required for the On/Off cluster in this device type
+   * The DF (Dead Front) feature is required for the On/Off cluster in this device type.
    *
    * @param {string} name - The name of the air conditioner.
    * @param {string} serial - The serial number of the air conditioner.
@@ -98,7 +98,7 @@ export class AirConditioner extends MatterbridgeEndpoint {
    *
    * @returns {AirConditioner} The AirConditioner instance.
    *
-   * @example
+   * @remarks Not supported by Google Home.
    */
   constructor(name: string, serial: string, options: AirConditionerOptions = {}) {
     const {

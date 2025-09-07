@@ -50,6 +50,10 @@ export class Speaker extends MatterbridgeEndpoint {
    * @param {boolean} muted Initial muted state (true => unmuted, default true if omitted).
    * @param {number} volume Initial volume (1..254, coerced; default 128 ≈ 50% if omitted).
    * @returns {Speaker} New speaker instance.
+   *
+   * @remarks Supported by:
+   * - SmartThings (OnOff mute, LevelControl volume)
+   * - Google Home (OnOff mute, LevelControl volume)
    */
   constructor(name: string, serial: string, muted: boolean = false, volume: number = 128) {
     // sanitize volume
