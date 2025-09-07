@@ -42,22 +42,17 @@ import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { isValidArray, isValidObject, isValidString } from './utils/export.js';
 
 // Platform types
+
+/** Platform configuration value type. */
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
 
-export type PlatformConfig = Record<string, PlatformConfigValue>;
+/** Platform configuration type. */
+export type PlatformConfig = { name: string; type: string; version: string; debug: boolean; unregisterOnShutdown: boolean } & Record<string, PlatformConfigValue>;
 
-export interface DefaultPlatformConfig {
-  name: string;
-  type: string;
-  version: string;
-  whiteList?: string[];
-  blackList?: string[];
-  debug: boolean;
-  unregisterOnShutdown: boolean;
-}
-
+/** Platform schema value type. */
 export type PlatformSchemaValue = string | number | boolean | bigint | object | undefined | null;
 
+/** Platform schema type. */
 export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
 /**
@@ -70,7 +65,7 @@ export class MatterbridgePlatform {
   /** The logger instance for this platform. */
   log: AnsiLogger;
   /** The configuration for this platform. */
-  config: PlatformConfig = {};
+  config: PlatformConfig;
   /** The name of the platform. Will be set by the loadPlugin() method using the package.json value. */
   name = '';
   /** The type of the platform. Will be set by the extending classes. */
