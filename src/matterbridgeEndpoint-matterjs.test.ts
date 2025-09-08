@@ -222,7 +222,8 @@ describe('Matterbridge ' + NAME, () => {
 
   test('log the server node', async () => {
     expect(server).toBeDefined();
-    // Logger.get('ServerNode').info(server);
+    const logger = Logger.get('ServerNode');
+    logger.info(server);
   });
 
   test('create a onOffLight device', async () => {

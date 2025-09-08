@@ -30,7 +30,7 @@ import { jest } from '@jest/globals';
 import { DeviceTypeId, Endpoint, Environment, ServerNode, ServerNodeStore, VendorId, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Lifecycle } from '@matter/main';
 import { AggregatorEndpoint, RootEndpoint } from '@matter/main/endpoints';
 import { MdnsService } from '@matter/main/protocol';
-import { AnsiLogger } from 'matterbridge/logger';
+import { AnsiLogger } from 'node-ansi-logger';
 
 // Imports from a plugin
 /*
