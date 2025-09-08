@@ -49,9 +49,9 @@ export let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
 
 /**
  * Setup the Jest environment:
- * - it will remove any existing home directory.
- * - setup the spies for logging.
- 
+ * - it will remove any existing home directory
+ * - setup the spies for logging
+ *
  * @param {string} name The name of the test suite.
  * @param {boolean} debug If true, the logging is not mocked.
  *
@@ -118,11 +118,12 @@ export function setDebug(debug: boolean): void {
 }
 
 /**
- * Create a Matterbridge Environment for testing.
- * It will remove any existing home directory.
+ * Create a matter Environment for testing:
+ * - it will remove any existing home directory
+ * - setup the matter environment with homeDir, debug logging and ANSI format
  *
  * @param {string} homeDir Home directory for the environment.
- * @returns {Environment}  The created environment.
+ * @returns {Environment}  The default matter environment.
  */
 export function createTestEnvironment(homeDir: string): Environment {
   expect(homeDir).toBeDefined();
@@ -229,7 +230,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
 }
 
 /**
- * Start a Matterbridge ServerNode for testing.
+ * Start a matter server node for testing.
  *
  * @param {string} name Name of the server (used for logging and product description).
  * @param {number} port TCP port to listen on.
@@ -309,7 +310,7 @@ export async function startServerNode(name: string, port: number): Promise<[Serv
 }
 
 /**
- * Stop a Matterbridge ServerNode.
+ * Stop a matter server node.
  *
  * @param {ServerNode<ServerNode.RootEndpoint>} server The server to stop.
  * @returns {Promise<void>} Resolves when the server has stopped.
@@ -337,7 +338,7 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
 }
 
 /**
- * Add a device (endpoint) to a server or aggregator.
+ * Add a device (endpoint) to a matter server node or an aggregator.
  *
  * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>} owner The server or aggregator to add the device to.
  * @param {Endpoint} device The device to add.
@@ -372,12 +373,12 @@ export async function addDevice(owner: ServerNode<ServerNode.RootEndpoint> | End
 }
 
 /**
- * Add a device (endpoint) to a server or aggregator.
+ * Delete a device (endpoint) from a matter server node or an aggregator.
  *
- * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>} owner The server or aggregator to add the device to.
- * @param {Endpoint} device The device to add.
+ * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>} owner The server or aggregator to remove the device from.
+ * @param {Endpoint} device The device to remove.
  * @param {number} pause The pause time in milliseconds after deletion (default 10ms).
- * @returns {Promise<void>} Resolves when the device has been added and is ready.
+ * @returns {Promise<void>} Resolves when the device has been removed and is no longer ready.
  */
 export async function deleteDevice(owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>, device: Endpoint, pause: number = 10): Promise<boolean> {
   expect(owner).toBeDefined();

@@ -5,9 +5,11 @@ const NAME = 'EndpointMatterJs';
 const HOMEDIR = path.join('jest', NAME);
 
 import path from 'node:path';
+import { appendFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 
 import { jest } from '@jest/globals';
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, NamedHandler, Diagnostic } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, NamedHandler, Diagnostic, LogDestination } from '@matter/main';
 import {
   ColorControl,
   Descriptor,
@@ -34,7 +36,7 @@ import {
 } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { MdnsService } from '@matter/main/protocol';
-import { ContactSensorDevice, OnOffPlugInUnitDevice } from '@matter/node/devices';
+import { ContactSensorDevice, OccupancySensorDevice, OccupancySensorDeviceDefinition, OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices';
 import {
   BooleanStateConfigurationServer,
   BooleanStateServer,
@@ -113,31 +115,10 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
-import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './utils/jestHelpers.js';
+import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
+// Setup the test environment
+setupTest(NAME, false);
 
 // Setup the matter and test environment
 createTestEnvironment(HOMEDIR);
@@ -192,21 +173,23 @@ describe('Matterbridge ' + NAME, () => {
 
   const deviceType = extendedColorLight;
 
-  test('Matterbridge instance', async () => {
+  test('logger and destinations', async () => {
     const write = jest.fn((text: string, message: Diagnostic.Message) => {});
+    const originalWrite = Logger.destinations.default.write;
     Logger.destinations.default.write = write;
-    const log = Logger.get('default');
-    log.info('Starting test ' + NAME);
+    const logger = Logger.get('Matterbridge');
+    logger.info('Starting test ' + NAME, MATTER_PORT);
     expect(write).toHaveBeenCalledWith(
       expect.stringContaining('Starting test ' + NAME),
       expect.objectContaining({
-        facility: 'default',
-        level: 1,
+        facility: 'Matterbridge',
+        level: MatterLogLevel.INFO,
         now: expect.anything(),
         prefix: '',
-        values: ['Starting test EndpointMatterJs'],
+        values: ['Starting test EndpointMatterJs', MATTER_PORT],
       }),
     );
+    Logger.destinations.default.write = originalWrite;
   });
 
   test('create a context for server node', async () => {
@@ -220,10 +203,41 @@ describe('Matterbridge ' + NAME, () => {
     expect(server).toBeDefined();
   });
 
-  test('log the server node', async () => {
-    expect(server).toBeDefined();
+  test('log the server node on destination file', async () => {
+    // setDebug(true);
+
+    const fileDestination = LogDestination({ name: 'file', level: MatterLogLevel.DEBUG, format: MatterLogFormat.formats.ansi });
+    const write = jest.fn((text: string, message: Diagnostic.Message) => {});
+    write.mockImplementation(async (text: string, message: Diagnostic.Message) => {
+      await appendFile(path.join(HOMEDIR, 'diagnostic.log'), text + '\n', { encoding: 'utf8' });
+    });
+    fileDestination.write = write;
+    Logger.destinations.file = fileDestination;
+    expect(existsSync(path.join(HOMEDIR, 'diagnostic.log'))).toBe(false);
+    expect(Object.keys(Logger.destinations)).toHaveLength(2);
+    expect(Object.keys(Logger.destinations)).toContain('default');
+    expect(Object.keys(Logger.destinations)).toContain('file');
+
     const logger = Logger.get('ServerNode');
+    logger.notice('Server node:', server.maybeId, server.maybeNumber);
+    expect(write).toHaveBeenCalledWith(
+      expect.stringContaining('Server node:'),
+      expect.objectContaining({
+        facility: 'ServerNode',
+        level: MatterLogLevel.NOTICE,
+        now: expect.anything(),
+        prefix: '',
+        values: ['Server node:', server.maybeId, server.maybeNumber],
+      }),
+    );
     logger.info(server);
+
+    delete Logger.destinations.file;
+    expect(existsSync(path.join(HOMEDIR, 'diagnostic.log'))).toBe(true);
+    expect(Object.keys(Logger.destinations)).toHaveLength(1);
+    expect(Object.keys(Logger.destinations)).toContain('default');
+
+    setDebug(false);
   });
 
   test('create a onOffLight device', async () => {
@@ -503,19 +517,26 @@ describe('Matterbridge ' + NAME, () => {
       },
       descriptor: {
         deviceTypeList: [
-          { deviceType: 0x10a, revision: 3 },
-          { deviceType: occupancySensor.code, revision: occupancySensor.revision },
+          { deviceType: OnOffPlugInUnitDeviceDefinition.deviceType, revision: OnOffPlugInUnitDeviceDefinition.deviceRevision },
+          { deviceType: OccupancySensorDevice.deviceType, revision: OccupancySensorDeviceDefinition.deviceRevision },
         ],
       },
     });
     expect(endpoint).toBeDefined();
     endpoint.behaviors.require(DescriptorServer, {
       deviceTypeList: [
-        { deviceType: 0x10a, revision: 3 },
+        { deviceType: onOffOutlet.code, revision: onOffOutlet.revision },
         { deviceType: occupancySensor.code, revision: occupancySensor.revision },
       ],
     });
     expect(await server.add(endpoint)).toBeDefined();
+
+    const endpoint_copy = server.parts.get('OnOffPlugin1');
+    expect(endpoint_copy).toBeDefined();
+    if (!endpoint_copy) throw new Error('Endpoint not found');
+    Logger.get('Matterbridge').info('Occupancy state:', endpoint.state.occupancySensing.occupancy);
+    // @ts-expect-error no more typed
+    Logger.get('Matterbridge').info('Occupancy state:', endpoint_copy.state.occupancySensing.occupancy);
 
     await new Promise<void>((resolve) => {
       endpoint.events.occupancySensing.occupancy$Changed.on((newState, oldState, context) => {
@@ -681,10 +702,6 @@ describe('Matterbridge ' + NAME, () => {
     await (matterbridge as any).startServerNode(server);
     expect(server.lifecycle.isOnline).toBe(true);
     expect(server.lifecycle.isCommissioned).toBe(false);
-  });
-
-  test('log onOffLight', async () => {
-    expect(light).toBeDefined();
   });
 
   test('get MatterbridgeServer', async () => {
@@ -943,8 +960,6 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {
-    // consoleLogSpy?.mockRestore();
-    // console.log('rvc:', rvc.state, rvc.state['rvcRunMode']);
     expect(rvc.behaviors.has(RvcRunModeServer)).toBeTruthy();
     expect(rvc.behaviors.has(MatterbridgeRvcRunModeServer)).toBeTruthy();
     expect(rvc.behaviors.elementsOf(RvcRunModeServer).commands.has('changeToMode')).toBeTruthy();
@@ -983,8 +998,6 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke MatterbridgeRvcCleanModeServer commands', async () => {
-    // consoleLogSpy?.mockRestore();
-    // console.log('rvc:', rvc.state, rvc.state['rvcCleanMode']);
     expect(rvc.behaviors.has(RvcCleanModeServer)).toBeTruthy();
     expect(rvc.behaviors.has(MatterbridgeRvcCleanModeServer)).toBeTruthy();
     expect(rvc.behaviors.elementsOf(RvcCleanModeServer).commands.has('changeToMode')).toBeTruthy();
