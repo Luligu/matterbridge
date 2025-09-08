@@ -26,18 +26,19 @@ import { inspect } from 'node:util';
 import path from 'node:path';
 
 // Imports from Matterbridge
-/*
 import { jest } from '@jest/globals';
 import { DeviceTypeId, Endpoint, Environment, ServerNode, ServerNodeStore, VendorId, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Lifecycle } from '@matter/main';
 import { AggregatorEndpoint, RootEndpoint } from '@matter/main/endpoints';
 import { MdnsService } from '@matter/main/protocol';
-*/
+import { AnsiLogger } from 'matterbridge/logger';
 
 // Imports from a plugin
+/*
 import { jest } from '@jest/globals';
 import { DeviceTypeId, Endpoint, Environment, MdnsService, ServerNode, ServerNodeStore, VendorId, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Lifecycle } from 'matterbridge/matter';
 import { RootEndpoint, AggregatorEndpoint } from 'matterbridge/matter/endpoints';
 import { AnsiLogger } from 'matterbridge/logger';
+*/
 
 export let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 export let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
