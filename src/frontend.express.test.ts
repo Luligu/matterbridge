@@ -7,64 +7,20 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'frontend.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-homedir', HOMEDIR, '-profile', 'JestFrontendExpress', '-port', MATTER_PORT.toString(), '-passcode', '123456', '-discriminator', '3860'];
 
-// Mock the createZip from createZip module before importing it
-/*
-jest.unstable_mockModule('./utils/createZip.js', async () => {
-  return {
-    __esModule: true,
-    createZip: jest.fn((outputPath: string, ...sourcePaths: string[]) => {
-      return Promise.resolve(100); // Mocked return value for the zip creation
-    }),
-  };
-});
-const createZip = await import('./utils/createZip.js');
-const createZipMock = createZip.createZip as jest.MockedFunction<typeof createZip.createZip>;
-*/
-
 import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { rmSync } from 'node:fs';
 import os from 'node:os';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
+import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
 
-/*
-const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
-  return undefined as never;
-});
-*/
-
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge frontend express with http', () => {
   let matterbridge: Matterbridge;

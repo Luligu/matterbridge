@@ -1,43 +1,23 @@
 // src\cli.test.ts
 
 /* eslint-disable no-console */
+const NAME = 'CliMain';
+const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', './cli.js', '-memorycheck', '-inspect', '-snapshotinterval', '60000', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import os from 'node:os';
 import { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
+import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, YELLOW } from 'node-ansi-logger';
+import { BRIGHT, CYAN, db, LogLevel, YELLOW } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 // eslint-disable-next-line n/no-missing-import
 import { MockMatterbridge } from './mock/mockMatterbridge.js';
 import { cliEmitter } from './cliEmitter.js';
-
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
+import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
 
 const loadInstance = jest.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
   // console.log('mockImplementation of Matterbridge.loadInstance() called');
@@ -56,6 +36,9 @@ const postSpy = jest.spyOn(Session.prototype, 'post').mockImplementation((method
     callback(null, { profile: '' }); // call callback with no error
   }
 });
+
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;

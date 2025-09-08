@@ -15,7 +15,7 @@ import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { Identify, OnOff, PowerSource, Thermostat, ThermostatUserInterfaceConfiguration, FanControl, ThermostatCluster } from '@matter/main/clusters';
 
 // Matterbridge helpers
-import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { AirConditioner } from './airConditioner.js';
 

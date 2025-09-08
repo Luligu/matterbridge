@@ -1,6 +1,8 @@
 // src\utils\createZip.test.ts
 
-const TEST_DIR = path.join('jest', 'Utils');
+const NAME = 'CreateZipReal';
+
+const TEST_DIR = path.join('jest', 'CreateZipReal');
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -8,6 +10,10 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 
 import { createZip } from './createZip.js';
+import { setupTest } from './jestHelpers.js';
+
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('createZip', () => {
   beforeEach(() => {

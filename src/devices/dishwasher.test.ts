@@ -17,7 +17,7 @@ import { DishwasherAlarm, DishwasherMode, Identify, OnOff, OperationalState, Pow
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, createTestEnvironment, deleteDevice, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, deleteDevice, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { Dishwasher, MatterbridgeDishwasherModeServer } from './dishwasher.js';
 import { MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';

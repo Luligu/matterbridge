@@ -17,6 +17,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [jest]: Added Jest helpers module.
+
 ### Changed
 
 - [package]: Updated dependencies.

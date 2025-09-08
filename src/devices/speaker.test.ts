@@ -15,7 +15,7 @@ import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { OnOff, LevelControl } from '@matter/main/clusters';
 
 // helpers
-import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { Speaker } from './speaker.js';
 
