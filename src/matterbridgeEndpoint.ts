@@ -1319,6 +1319,21 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} [onLevel] - The on level (default: null).
    * @param {number | null} [startUpCurrentLevel] - The startUp on level (default: null).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks OptionMasks and OptionOverride field
+   *
+   * Each bit in the Options attribute SHALL determine the corresponding bit in the temporary Options
+   * bitmap, unless the OptionsMask field is present and has the corresponding bit set to 1, in which
+   * case the corresponding bit in the OptionsOverride field SHALL determine the corresponding bit in
+   * the temporary Options bitmap.
+   *
+   * @remarks 'With On/Off' Commands
+   *
+   * Before commencing any command that has the effect of setting the CurrentLevel attribute above
+   * the minimum level allowed by the device, the OnOff attribute of the On/Off cluster on the same endpoint, if implemented, SHALL be set to TRUE (‘On’).
+   *
+   * If any command that has the effect of setting the CurrentLevel attribute to the minimum level
+   * allowed by the device, the OnOff attribute of the On/Off cluster on the same endpoint, if implemented, SHALL be set to FALSE (‘Off’).
    */
   createDefaultLevelControlClusterServer(currentLevel: number = 254, minLevel: number = 1, maxLevel: number = 254, onLevel: number | null = null, startUpCurrentLevel: number | null = null): this {
     this.behaviors.require(MatterbridgeLevelControlServer.with(LevelControl.Feature.OnOff, LevelControl.Feature.Lighting), {
@@ -1362,9 +1377,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} currentY - The current Y value (range 0-65279).
    * @param {number} currentHue - The current hue value (range: 0-254).
    * @param {number} currentSaturation - The current saturation value (range: 0-254).
-   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
-   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
-   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (range colorTempPhysicalMinMireds-colorTempPhysicalMaxMireds).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -1373,6 +1388,21 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks colorTemperatureMireds persists across restarts.
    * @remarks startUpColorTemperatureMireds persists across restarts.
    * @remarks coupleColorTempToLevelMinMireds persists across restarts.
+   *
+   * @remarks OptionMasks and OptionOverride field
+   *
+   * Each bit in the Options attribute SHALL determine the corresponding bit in the temporary Options
+   * bitmap, unless the OptionsMask field is present and has the corresponding bit set to 1, in which
+   * case the corresponding bit in the OptionsOverride field SHALL determine the corresponding bit in
+   * the temporary Options bitmap.
+   *
+   * @remarks CoupleColorTempToLevel
+   *
+   * If the CoupleColorTempToLevel bit of the Options attribute of the Level Control cluster is equal to 1
+   * and the ColorMode or EnhancedColorMode attribute is set to 2 (ColorTemperatureMireds) then a
+   * change in the CurrentLevel attribute SHALL affect the ColorTemperatureMireds attribute.
+   * This relationship is manufacturer specific, with the qualification that the maximum value of the CurrentLevel attribute
+   * SHALL correspond to a ColorTemperatureMired attribute value equal to the CoupleColorTempToLevelMinMireds attribute.
    */
   createDefaultColorControlClusterServer(
     currentX: number = 0,
@@ -1410,9 +1440,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {number} currentX - The current X value (range 0-65279).
    * @param {number} currentY - The current Y value (range 0-65279).
-   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
-   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
-   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (range colorTempPhysicalMinMireds-colorTempPhysicalMaxMireds).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1450,9 +1480,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {number} currentHue - The current hue value (range: 0-254).
    * @param {number} currentSaturation - The current saturation value (range: 0-254).
-   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
-   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
-   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (range colorTempPhysicalMinMireds-colorTempPhysicalMaxMireds).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -1486,9 +1516,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a color temperature color control cluster server with feature ColorTemperature.
    * This cluster server is used for devices that only support color temperature control.
    *
-   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
-   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
-   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (range colorTempPhysicalMinMireds-colorTempPhysicalMaxMireds).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
