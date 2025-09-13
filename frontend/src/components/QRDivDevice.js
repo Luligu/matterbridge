@@ -1,9 +1,9 @@
 // QRCode
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 // Frontend
-// import { debug } from '../App';
+//import { debug } from '../App';
 import { WebSocketContext } from './WebSocketProvider';
 
 // @mui/material
@@ -24,7 +24,7 @@ const iconBtnSx = {
   '&:focus-visible': { outline: '2px solid var(--primary-color)', outlineOffset: '2px' }
 };
 
-const debug = true;
+const debug = true; // Set to true to enable debug logs
 
 // Format manual pairing code as 4-3-4 (0000-000-0000); non-digit characters are stripped.
 const formatManualCode = (code) => {
@@ -42,6 +42,7 @@ export const QRDivDevice = ({ id, open, onClose }) => {
   const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
   const [storeId, setStoreId] = useState(null);
   const [matter, setMatter] = useState(null);
+  const advertiseTimeoutRef = useRef(null);
 
   const handleCommissionClick = () => {
     if (debug) console.log(`QRDivDevice sent matter commission for node "${matter.id}"`);
@@ -93,7 +94,7 @@ export const QRDivDevice = ({ id, open, onClose }) => {
   // Effect to request server data when id changes
   useEffect(() => {
     if (debug) console.log(`QRDivDevice received storeId update "${id}"`);
-    if(id && id !== storeId) {
+    if(id) {
       if (debug) console.log(`QRDivDevice sending data request for storeId "${id}":`);
       setStoreId(id);
       sendMessage({ method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: id, server: true } });
@@ -108,8 +109,19 @@ export const QRDivDevice = ({ id, open, onClose }) => {
         if (msg.method === 'refresh_required' && msg.params.changed === 'matter' && msg.params.matter) {
           // if(debug) console.log(`QRDivDevice received refresh_required for storeId "${msg.params.matter.id}"`);
           if(storeId === msg.params.matter.id) {
-            if(debug) console.log(`QRDivDevice received refresh_required: setting matter data for storeId "${msg.params.matter.id}":`, msg.params.matter);
+            if(debug) console.log(`QRDivDevice received refresh_required/matter: setting matter data for storeId "${msg.params.matter.id}":`, msg.params.matter);
+            clearTimeout(advertiseTimeoutRef.current);
+            if (msg.params.matter.advertising && msg.params.matter.advertiseTime && msg.params.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.params.matter.advertising = false; // already expired
             setMatter(msg.params.matter);
+            if(msg.params.matter.advertising) {
+              if(debug) console.log(`QRDivDevice setting matter advertise timeout for storeId "${msg.params.matter.id}":`, msg.params.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
+              advertiseTimeoutRef.current = setTimeout(() => {
+                // Clear advertising state after 15 minutes
+                clearTimeout(advertiseTimeoutRef.current);
+                if(debug) console.log(`QRDivDevice clearing advertising state for storeId "${msg.params.matter.id}" after 15 minutes`);
+                setMatter((prev) => ({ ...prev, advertising: false }));
+              }, msg.params.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
+            }
           }
         }
       }
@@ -120,6 +132,7 @@ export const QRDivDevice = ({ id, open, onClose }) => {
 
     return () => {
       removeListener(handleWebSocketMessage);
+      clearTimeout(advertiseTimeoutRef.current);
       if(debug) console.log('QRDivDevice useEffect webSocket unmounted');
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

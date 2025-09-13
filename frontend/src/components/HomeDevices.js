@@ -30,8 +30,8 @@ import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { debug } from '../App';
 import { QRDivDevice } from './QRDivDevice';
-// const debug = true;
 
+// const debug = true;
 
 export function HomeDevicesTable({ data, columns, columnVisibility }) {
   // Load saved sort state from localStorage
@@ -107,19 +107,32 @@ export function HomeDevicesTable({ data, columns, columnVisibility }) {
   );
 }
 
+/**
+ * Starts with sending api/plugins to get the list of plugins.
+ * For each plugin, if enabled, loaded and started, send api/select/devices to get the list of selected devices.
+ * Then send api/devices to get the list of all devices.
+ * Mix both lists, giving priority to devices in the api/devices list.
+ * The mixed list is displayed in a table.
+ * The user can select/unselect devices using checkboxes. This sends api/command to selectdevice/unselectdevice.
+ * The user can open the configuration page of a device if configUrl is set.
+ * The user can open a QR code dialog if the device has matter information.
+ * The user can configure the columns to display in the table.
+ * The user can sort the table by clicking on the column headers. The sort state is saved in localStorage.
+ * The user can see a footer with the number of registered devices, a loading message if plugins are not fully loaded, and a restart required message if needed.
+ */
 export function HomeDevices() {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // States
-  const [restart, setRestart] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [_systemInfo, setSystemInfo] = useState(null);
-  const [_matterbridgeInfo, setMatterbridgeInfo] = useState(null);
+  const [restart, setRestart] = useState(false); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
+  const [loading, setLoading] = useState(true); // Loading state, used in the footer sx. Set to false when all plugins are loaded.
+  // const [_systemInfo, setSystemInfo] = useState(null);
+  // const [_matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [plugins, setPlugins] = useState([]);
   const [devices, setDevices] = useState([]);
   const [selectDevices, setSelectDevices] = useState([]);
-  const [mixedDevices, setMixedDevices] = useState([]);
-  const [dialogDevicesOpen, setDialogDevicesOpen] = useState(false);
+  const [mixedDevices, setMixedDevices] = useState([]); // The table show these ones, mix of devices and selectDevices
+  const [dialogDevicesOpen, setDialogDevicesOpen] = useState(false); // Configure Columns dialog
   const [devicesColumnVisibility, setDevicesColumnVisibility] = useState({
     pluginName: true,
     name: true,
@@ -128,9 +141,9 @@ export function HomeDevices() {
     powerSource: true,
     configUrl: false,
     actions: true,
-  });
-  const [qrDialogOpen, setQrDialogOpen] = useState(false);
-  const [qrDialogId, setQrDialogId] = useState(null);
+  }); // Column visibility
+  const [qrDialogOpen, setQrDialogOpen] = useState(false); // QR Code dialog
+  const [qrDialogId, setQrDialogId] = useState(null); // QR Code dialog store id
   // Refs
   const uniqueId = useRef(getUniqueId());
 
@@ -298,14 +311,14 @@ export function HomeDevices() {
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
-          setSystemInfo(msg.response.systemInformation);
-          setMatterbridgeInfo(msg.response.matterbridgeInformation);
+          // setSystemInfo(msg.response.systemInformation);
+          // setMatterbridgeInfo(msg.response.matterbridgeInformation);
           setRestart(msg.response.matterbridgeInformation.restartRequired); // Set the restart state based on the response. Used in the footer.
         }
         if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
           if(msg.response) {
-
+            // Check if all plugins are loaded and started and not in error state before continuing
             let running = true;
             for (const plugin of msg.response) {
               if(plugin.enabled!==true) continue;
@@ -313,17 +326,17 @@ export function HomeDevices() {
                 running = false;
               }
             }
-            if(!running) return;
+            if(!running) return; // Do nothing until all plugins are loaded and started and not in error state
 
             if(debug) console.log(`HomeDevices reset plugins, devices and selectDevices`);
             setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footer.
             setPlugins(msg.response);
             setDevices([]);
             setSelectDevices([]);
-
+            // Request all the devices
             sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
             if(debug) console.log(`HomeDevices sent /api/devices`);
-
+            // Request the selected devices for each plugin
             for (const plugin of msg.response) {
               if(plugin.enabled===true && plugin.loaded===true && plugin.started===true /* && plugin.configured===true */ && plugin.error!==true) {
                 sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
@@ -430,11 +443,20 @@ export function HomeDevices() {
 
   const handleCheckboxChange = (event, device) => {
     if(debug) console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
+    /*
     setMixedDevices((prevDevices) =>
       prevDevices.map((d) =>
         d.serial === device.serial ? { ...d, selected: event.target.checked } : d
       )
     );
+    */
+    setMixedDevices(prev => { 
+      const i = prev.findIndex(d => d.serial === device.serial); 
+      if(i<0) return prev; 
+      const next = [...prev]; 
+      next[i] = {...next[i], selected: event.target.checked}; 
+      return next; 
+    });
     if(event.target.checked ) {
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
     } else {
@@ -446,7 +468,6 @@ export function HomeDevices() {
   if (!online) {
     return ( <Connecting /> );
   }
-  console.log('HomeDevices rendering...');
   return (
       <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
 
@@ -492,7 +513,7 @@ export function HomeDevices() {
         </div>
         <div className="MbfWindowFooter" style={{margin: '0', padding: '0px', paddingLeft: '10px', paddingRight: '10px', borderTop: '1px solid var(--table-border-color)', display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
             {loading && <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Waiting for the plugins to fully load...</p>}  
-            {!loading && <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', fontWeight: 'normal', fontSize: '14px', color: 'var(--secondary-color)'}}>Registered devices: {devices.length.toString()}</p>}
+            {!loading && <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', fontWeight: 'normal', fontSize: '14px', color: 'var(--secondary-color)'}}>Registered devices: {devices.length.toString()}/{mixedDevices.length.toString()}</p>}
             {restart && <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Restart required</p>}  
         </div>
       </div>
