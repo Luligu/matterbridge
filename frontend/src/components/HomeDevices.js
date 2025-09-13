@@ -202,7 +202,7 @@ export function HomeDevices() {
           {row.original.matter!==undefined ?
             <Tooltip title="Show the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <IconButton
-                onClick={() => handleOpenQrDialog(row.original.matter)}
+                onClick={() => handleOpenQrDialog(row.original.matter.id)}
                 aria-label="Show the QRCode"
                 sx={{ margin: 0, padding: 0, color: getQRColor(row.original.matter) }}
               >
@@ -271,7 +271,7 @@ export function HomeDevices() {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && msg.params.changed !== 'pluginsRestart' && msg.params.changed !== 'sessions' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
+        if (msg.method === 'refresh_required' && msg.params.changed !== 'commissioning' && msg.params.changed !== 'pluginsRestart' && msg.params.changed !== 'sessions' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
           if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed}`);
           sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
@@ -449,7 +449,7 @@ export function HomeDevices() {
       <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
 
         {/* QR Code Dialog */}
-        <QRDivDevice open={qrDialogOpen} data={qrDialogData} onClose={handleCloseQrDialog} />
+        <QRDivDevice id={qrDialogData} open={qrDialogOpen} onClose={handleCloseQrDialog} />
         {/* HomeDevices Configure Columns Dialog */}
         <Dialog open={dialogDevicesOpen} onClose={handleDialogDevicesToggle}>
           <DialogTitle>Configure Devices Columns</DialogTitle>
