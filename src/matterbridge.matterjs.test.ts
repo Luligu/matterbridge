@@ -161,7 +161,7 @@ describe('Matterbridge matterjs', () => {
     jest.advanceTimersByTime(15 * 60 * 1000); // Advance time by 15 minutes
     jest.useRealTimers();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Advertising stopped. Restart to commission again.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Advertising stopped.`));
   });
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {

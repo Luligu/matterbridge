@@ -8,7 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.2.7] - 2025-09-??
+## [3.2.7] - 2025-09-12
 
 ### Breaking Changes
 
@@ -18,11 +18,15 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [jest]: Added Jest helpers module.
+- [colorControl]: Added createEnhancedColorControlClusterServer (provisional to run compatibility tests on all controllers).
+- [frontend]: Bumped `frontend` version to 2.7.6.
+- [frontend]: Added api/view-diagnostic.
+- [frontend]: Refactored the QRCode component for device with mode='server' (e.g. the Rvcs): added turn on and off pairing mode, resend mDns advertise, remove single fabrics, formatted manual paring code, copy to clipboard the manual pairing code and is fully web socket based. The main QRCode panel will have the same features (bridge mode and childbridge mode) in the next release.
 
 ### Changed
 
 - [package]: Updated dependencies.
-- [matterbridge.io]: Updated site.
+- [matterbridge.io]: Updated web site [matterbridge.io](matterbridge.io).
 
 ### Fixed
 

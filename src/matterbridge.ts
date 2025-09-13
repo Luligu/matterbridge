@@ -60,7 +60,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/brid
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
 import { withTimeout, waiter, wait } from './utils/wait.js';
-import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
+import { ApiDevicesMatter, dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -234,6 +234,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   aggregatorDeviceType = DeviceTypeId(getIntParameter('deviceType') ?? bridge.code);
   aggregatorSerialNumber = getParameter('serialNumber');
   aggregatorUniqueId = getParameter('uniqueId');
+  advertisingNodes = new Map<string, number>();
 
   protected static instance: Matterbridge | undefined;
 
@@ -2105,7 +2106,7 @@ const commissioningController = new CommissioningController({
   /**
    * Creates a server node storage context.
    *
-   * @param {string} pluginName - The name of the plugin.
+   * @param {string} storeId - The storeId.
    * @param {string} deviceName - The name of the device.
    * @param {DeviceTypeId} deviceType - The device type of the device.
    * @param {number} vendorId - The vendor ID.
@@ -2116,25 +2117,15 @@ const commissioningController = new CommissioningController({
    * @param {string} [uniqueId] - The unique ID of the device (optional).
    * @returns {Promise<StorageContext>} The storage context for the commissioning server.
    */
-  private async createServerNodeContext(
-    pluginName: string,
-    deviceName: string,
-    deviceType: DeviceTypeId,
-    vendorId: number,
-    vendorName: string,
-    productId: number,
-    productName: string,
-    serialNumber?: string,
-    uniqueId?: string,
-  ): Promise<StorageContext> {
+  private async createServerNodeContext(storeId: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string, serialNumber?: string, uniqueId?: string): Promise<StorageContext> {
     const { randomBytes } = await import('node:crypto');
     if (!this.matterStorageService) throw new Error('No storage service initialized');
 
-    this.log.info(`Creating server node storage context "${pluginName}.persist" for ${pluginName}...`);
-    const storageManager = await this.matterStorageService.open(pluginName);
+    this.log.info(`Creating server node storage context "${storeId}.persist" for ${storeId}...`);
+    const storageManager = await this.matterStorageService.open(storeId);
     const storageContext = storageManager.createContext('persist');
     const random = randomBytes(8).toString('hex');
-    await storageContext.set('storeId', pluginName);
+    await storageContext.set('storeId', storeId);
     await storageContext.set('deviceName', deviceName);
     await storageContext.set('deviceType', deviceType);
     await storageContext.set('vendorId', vendorId);
@@ -2150,10 +2141,16 @@ const commissioningController = new CommissioningController({
     await storageContext.set('hardwareVersion', isValidNumber(parseVersionString(this.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.systemInformation.osRelease) : 1);
     await storageContext.set('hardwareVersionString', isValidString(this.systemInformation.osRelease, 5, 64) ? this.systemInformation.osRelease : '1.0.0');
 
-    this.log.debug(`Created server node storage context "${pluginName}.persist" for ${pluginName}:`);
+    this.log.debug(`Created server node storage context "${storeId}.persist" for ${storeId}:`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
     this.log.debug(`- deviceName: ${await storageContext.get('deviceName')}`);
     this.log.debug(`- deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
+    this.log.debug(`- vendorId: ${await storageContext.get('vendorId')}`);
+    this.log.debug(`- vendorName: ${await storageContext.get('vendorName')}`);
+    this.log.debug(`- productId: ${await storageContext.get('productId')}`);
+    this.log.debug(`- productName: ${await storageContext.get('productName')}`);
+    this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
+    this.log.debug(`- productLabel: ${await storageContext.get('productLabel')}`);
     this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
     this.log.debug(`- uniqueId: ${await storageContext.get('uniqueId')}`);
     this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
@@ -2262,12 +2259,16 @@ const commissioningController = new CommissioningController({
         this.log.notice(`Manual pairing code: ${manualPairingCode}`);
         // Set a timeout to show that advertising stops after 15 minutes if not commissioned
         this.startEndAdvertiseTimer(serverNode);
+        this.advertisingNodes.set(storeId, Date.now());
       } else {
         // istanbul ignore next
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
+        // istanbul ignore next
+        this.advertisingNodes.delete(storeId);
       }
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is online`, 5, 'success');
       this.emit('online', storeId);
     });
@@ -2278,6 +2279,7 @@ const commissioningController = new CommissioningController({
       this.matterbridgeInformation.matterbridgeEndAdvertise = true; // Set the end advertise flag to true, so the frontend won't show the QR code anymore
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
       this.emit('offline', storeId);
     });
@@ -2290,6 +2292,10 @@ const commissioningController = new CommissioningController({
       let action = '';
       switch (fabricAction) {
         case FabricAction.Added:
+          this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
+          clearTimeout(this.endAdvertiseTimeout);
+          this.endAdvertiseTimeout = undefined;
+          this.matterbridgeInformation.matterbridgeEndAdvertise = true; // Set the end advertise flag to true, so the frontend won't show the QR code anymore
           action = 'added';
           break;
         case FabricAction.Removed:
@@ -2301,6 +2307,7 @@ const commissioningController = new CommissioningController({
       }
       this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
       this.frontend.wssSendRefreshRequired('fabrics');
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
     /**
@@ -2310,6 +2317,7 @@ const commissioningController = new CommissioningController({
     serverNode.events.sessions.opened.on((session) => {
       this.log.notice(`Session opened on server node for ${storeId}: ${debugStringify(session)}`);
       this.frontend.wssSendRefreshRequired('sessions');
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
     /**
@@ -2318,12 +2326,14 @@ const commissioningController = new CommissioningController({
     serverNode.events.sessions.closed.on((session) => {
       this.log.notice(`Session closed on server node for ${storeId}: ${debugStringify(session)}`);
       this.frontend.wssSendRefreshRequired('sessions');
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
     serverNode.events.sessions.subscriptionsChanged.on((session) => {
       this.log.notice(`Session subscriptions changed on server node for ${storeId}: ${debugStringify(session)}`);
       this.frontend.wssSendRefreshRequired('sessions');
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
     this.log.info(`Created server node for ${storeId}`);
@@ -2349,11 +2359,34 @@ const commissioningController = new CommissioningController({
         this.frontend.wssSendRefreshRequired('settings');
         this.frontend.wssSendRefreshRequired('fabrics');
         this.frontend.wssSendRefreshRequired('sessions');
-        this.frontend.wssSendSnackbarMessage(`Advertising stopped. Restart to commission again.`, 0);
-        this.log.notice(`Advertising stopped. Restart to commission again.`);
+        this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(matterServerNode) } });
+        this.frontend.wssSendSnackbarMessage(`Advertising stopped.`, 0);
+        this.log.notice(`Advertising stopped.`);
       },
       15 * 60 * 1000,
     ).unref();
+  }
+
+  /**
+   * Starts the 15 minutes timer to advice that advertising for the specified server node is ended.
+   *
+   * @param {ServerNode} [serverNode] - The server node to start.
+   * @returns {ApiDevicesMatter} The sanitized data of the server node.
+   */
+  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiDevicesMatter {
+    const advertiseTime = this.advertisingNodes.get(serverNode.id) || 0;
+    return {
+      id: serverNode.id,
+      commissioned: serverNode.state.commissioning.commissioned,
+      advertising: advertiseTime > Date.now() - 15 * 60 * 1000,
+      advertiseTime,
+      windowStatus: serverNode.state.administratorCommissioning.windowStatus,
+      qrPairingCode: serverNode.state.commissioning.pairingCodes.qrPairingCode,
+      manualPairingCode: serverNode.state.commissioning.pairingCodes.manualPairingCode,
+      fabricInformations: this.sanitizeFabricInformations(Object.values(serverNode.state.commissioning.fabrics)),
+      sessionInformations: this.sanitizeSessionInformation(Object.values(serverNode.state.sessions.sessions)),
+      serialNumber: serverNode.state.basicInformation.serialNumber,
+    };
   }
 
   /**
@@ -2397,6 +2430,7 @@ const commissioningController = new CommissioningController({
     if (matterServerNode) {
       await matterServerNode.env.get(DeviceCommissioner)?.allowBasicCommissioning();
       const { qrPairingCode, manualPairingCode } = matterServerNode.state.commissioning.pairingCodes;
+      this.advertisingNodes.set(matterServerNode.id, Date.now());
       this.log.notice(`Started advertising for ${matterServerNode.id} with the following pairing codes: qrPairingCode ${qrPairingCode}, manualPairingCode ${manualPairingCode}`);
       return { qrPairingCode, manualPairingCode };
     }
@@ -2411,6 +2445,7 @@ const commissioningController = new CommissioningController({
   async stopAdvertiseServerNode(matterServerNode?: ServerNode): Promise<void> {
     if (matterServerNode && matterServerNode.lifecycle.isOnline) {
       await matterServerNode.env.get(DeviceCommissioner)?.endCommissioning();
+      this.advertisingNodes.delete(matterServerNode.id);
       this.log.notice(`Stopped advertising for ${matterServerNode.id}`);
     }
   }

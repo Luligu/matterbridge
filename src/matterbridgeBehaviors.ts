@@ -190,6 +190,64 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
   }
 }
 
+export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.EnhancedHue, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature) {
+  override moveToHue(request: ColorControl.MoveToHueRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToHue', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
+    super.moveToHue(request);
+  }
+
+  override enhancedMoveToHue(request: ColorControl.EnhancedMoveToHueRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting enhanced hue to ${request.enhancedHue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('enhancedMoveToHue', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHue called`);
+    super.enhancedMoveToHue(request);
+  }
+
+  override moveToSaturation(request: ColorControl.MoveToSaturationRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
+    super.moveToSaturation(request);
+  }
+
+  override moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToHueAndSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
+    super.moveToHueAndSaturation(request);
+  }
+
+  override enhancedMoveToHueAndSaturation(request: ColorControl.EnhancedMoveToHueAndSaturationRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting enhanced hue to ${request.enhancedHue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('enhancedMoveToHueAndSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHueAndSaturation called`);
+    super.enhancedMoveToHueAndSaturation(request);
+  }
+
+  override moveToColor(request: ColorControl.MoveToColorRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToColor', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
+    super.moveToColor(request);
+  }
+
+  override moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToColorTemperature', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
+    super.moveToColorTemperature(request);
+  }
+}
+
 export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {
   override upOrOpen(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);

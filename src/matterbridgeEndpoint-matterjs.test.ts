@@ -9,9 +9,10 @@ import { appendFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 
 import { jest } from '@jest/globals';
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, NamedHandler, Diagnostic, LogDestination } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, NamedHandler, Diagnostic, LogDestination, FabricIndex, Time } from '@matter/main';
 import {
   ColorControl,
+  ColorControlCluster,
   Descriptor,
   DescriptorCluster,
   DeviceEnergyManagement,
@@ -22,8 +23,10 @@ import {
   GroupsCluster,
   Identify,
   IdentifyCluster,
+  LevelControlCluster,
   OccupancySensing,
   OnOffCluster,
+  OperationalCredentials,
   PowerSource,
   RvcCleanMode,
   RvcOperationalState,
@@ -35,7 +38,7 @@ import {
   WaterHeaterMode,
 } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { MdnsService } from '@matter/main/protocol';
+import { FabricManager, MdnsService } from '@matter/main/protocol';
 import { ContactSensorDevice, OccupancySensorDevice, OccupancySensorDeviceDefinition, OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices';
 import {
   BooleanStateConfigurationServer,
@@ -92,6 +95,7 @@ import {
   MatterbridgeLiftTiltWindowCoveringServer,
   MatterbridgeDeviceEnergyManagementModeServer,
   MatterbridgeDeviceEnergyManagementServer,
+  MatterbridgeEnhancedColorControlServer,
 } from './matterbridgeBehaviors.js';
 import { Matterbridge } from './matterbridge.js';
 import {
@@ -115,7 +119,7 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
-import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -129,6 +133,7 @@ describe('Matterbridge ' + NAME, () => {
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
   let light: MatterbridgeEndpoint;
+  let enhancedLight: MatterbridgeEndpoint;
   let coverLift: MatterbridgeEndpoint;
   let coverLiftTilt: MatterbridgeEndpoint;
   let lock: MatterbridgeEndpoint;
@@ -204,9 +209,9 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('log the server node on destination file', async () => {
-    // setDebug(true);
+    setDebug(true);
 
-    const fileDestination = LogDestination({ name: 'file', level: MatterLogLevel.DEBUG, format: MatterLogFormat.formats.ansi });
+    const fileDestination = LogDestination({ name: 'file', level: MatterLogLevel.DEBUG, format: MatterLogFormat.formats.plain });
     const write = jest.fn((text: string, message: Diagnostic.Message) => {});
     write.mockImplementation(async (text: string, message: Diagnostic.Message) => {
       await appendFile(path.join(HOMEDIR, 'diagnostic.log'), text + '\n', { encoding: 'utf8' });
@@ -219,6 +224,28 @@ describe('Matterbridge ' + NAME, () => {
     expect(Object.keys(Logger.destinations)).toContain('file');
 
     const logger = Logger.get('ServerNode');
+
+    /*
+    fileDestination.add({
+      facility: 'ServerNode',
+      level: MatterLogLevel.NOTICE,
+      now: Time.now(),
+      prefix: '',
+      values: ['Server node:', server.maybeId, server.maybeNumber],
+    });
+    expect(write).toHaveBeenCalledWith(
+      expect.stringContaining('Server node:'),
+      expect.objectContaining({
+        facility: 'ServerNode',
+        level: MatterLogLevel.NOTICE,
+        now: expect.anything(),
+        prefix: '',
+        values: ['Server node:', server.maybeId, server.maybeNumber],
+      }),
+    );
+    */
+
+    /*
     logger.notice('Server node:', server.maybeId, server.maybeNumber);
     expect(write).toHaveBeenCalledWith(
       expect.stringContaining('Server node:'),
@@ -230,12 +257,38 @@ describe('Matterbridge ' + NAME, () => {
         values: ['Server node:', server.maybeId, server.maybeNumber],
       }),
     );
-    logger.info(server);
+    */
+
+    if (!fileDestination.context) {
+      fileDestination.context = Diagnostic.Context();
+    }
+
+    fileDestination.context.run(() =>
+      fileDestination.add(
+        Diagnostic.message({
+          now: Time.now(),
+          facility: 'Server node',
+          level: MatterLogLevel.INFO,
+          prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',
+          values: [server],
+        }),
+      ),
+    );
+    await flushAsync();
+    expect(existsSync(path.join(HOMEDIR, 'diagnostic.log'))).toBe(true);
 
     delete Logger.destinations.file;
-    expect(existsSync(path.join(HOMEDIR, 'diagnostic.log'))).toBe(true);
     expect(Object.keys(Logger.destinations)).toHaveLength(1);
     expect(Object.keys(Logger.destinations)).toContain('default');
+
+    setDebug(false);
+  });
+
+  test('FabricManager', async () => {
+    setDebug(true);
+
+    const fabricManager = server.env.get(FabricManager);
+    expect(fabricManager).toBeDefined();
 
     setDebug(false);
   });
@@ -249,6 +302,17 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
     expect(light.type.deviceRevision).toBe(deviceType.revision);
     expect(light.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
+  });
+
+  test('create an enhanced onOffLight device', async () => {
+    enhancedLight = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'EnhancedOnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
+    expect(enhancedLight).toBeDefined();
+    expect(enhancedLight.id).toBe('EnhancedOnOffLight');
+    expect(enhancedLight.type.name).toBe(deviceType.name.replace('-', '_'));
+    expect(enhancedLight.type.deviceType).toBe(deviceType.code);
+    expect(enhancedLight.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+    expect(enhancedLight.type.deviceRevision).toBe(deviceType.revision);
+    expect(enhancedLight.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
   });
 
   test('create a cover lift device', async () => {
@@ -278,10 +342,12 @@ describe('Matterbridge ' + NAME, () => {
 
   test('create a fan device', async () => {
     fan = new MatterbridgeEndpoint(fanDevice, { uniqueStorageKey: 'Fan' });
+    fan.createDefaultActivatedCarbonFilterMonitoringClusterServer();
+    fan.createDefaultHepaFilterMonitoringClusterServer();
     fan.addRequiredClusterServers();
     expect(fan).toBeDefined();
     expect(fan.id).toBe('Fan');
-    expect(fan.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'fanControl']);
+    expect(fan.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'activatedCarbonFilterMonitoring', 'hepaFilterMonitoring', 'identify', 'groups', 'fanControl']);
   });
 
   test('create a thermostat device', async () => {
@@ -431,6 +497,65 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.hasClusterServer(OnOffCluster)).toBe(true);
   });
 
+  test('add required clusters to enhanced onOffLight', async () => {
+    expect(enhancedLight).toBeDefined();
+    enhancedLight.createDefaultOnOffClusterServer(true, false, 10, 14);
+    enhancedLight.createEnhancedColorControlClusterServer();
+    enhancedLight.addRequiredClusterServers();
+    expect(enhancedLight.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'colorControl', 'identify', 'groups', 'levelControl']);
+    expect(enhancedLight.behaviors.supported.descriptor).toBeDefined();
+    expect(enhancedLight.behaviors.has(DescriptorBehavior)).toBeTruthy();
+    expect(enhancedLight.behaviors.has(DescriptorServer)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(DescriptorBehavior)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(DescriptorServer)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(DescriptorCluster)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(Descriptor.Cluster)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(DescriptorCluster.id)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(Descriptor.Cluster.id)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(DescriptorCluster.name)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer('Descriptor')).toBeTruthy();
+    expect(enhancedLight.hasClusterServer('descriptor')).toBeTruthy();
+
+    expect(enhancedLight.behaviors.supported['identify']).toBeDefined();
+    expect(enhancedLight.behaviors.has(IdentifyBehavior)).toBeTruthy();
+    expect(enhancedLight.behaviors.has(IdentifyServer)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(IdentifyCluster)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(IdentifyCluster.id)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(IdentifyCluster.name)).toBeTruthy();
+
+    expect(enhancedLight.behaviors.supported['groups']).toBeDefined();
+    expect(enhancedLight.behaviors.has(GroupsBehavior)).toBeTruthy();
+    expect(enhancedLight.behaviors.has(GroupsServer)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(GroupsCluster)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(GroupsCluster.id)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(GroupsCluster.name)).toBeTruthy();
+
+    expect(enhancedLight.behaviors.supported['scenesManagement']).not.toBeDefined();
+    expect(enhancedLight.behaviors.has(ScenesManagementBehavior)).toBeFalsy();
+    expect(enhancedLight.behaviors.has(ScenesManagementServer)).toBeFalsy();
+    expect(enhancedLight.hasClusterServer(ScenesManagementCluster)).toBeFalsy();
+    expect(enhancedLight.hasClusterServer(ScenesManagementCluster.id)).toBeFalsy();
+    expect(enhancedLight.hasClusterServer(ScenesManagementCluster.name)).toBeFalsy();
+
+    expect(enhancedLight.behaviors.supported['onOff']).toBeDefined();
+    expect(enhancedLight.behaviors.has(OnOffBehavior)).toBeTruthy();
+    expect(enhancedLight.behaviors.has(OnOffServer)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(OnOffCluster)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(OnOffCluster.id)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(OnOffCluster.name)).toBeTruthy();
+  });
+
+  test('add enhanced onOffLight device to serverNode', async () => {
+    expect(await server.add(enhancedLight)).toBeDefined();
+    expect(enhancedLight.hasClusterServer(DescriptorCluster)).toBe(true);
+    expect(enhancedLight.hasClusterServer(IdentifyCluster)).toBe(true);
+    expect(enhancedLight.hasClusterServer(GroupsCluster)).toBe(true);
+    expect(enhancedLight.hasClusterServer(ScenesManagementCluster)).toBe(false);
+    expect(enhancedLight.hasClusterServer(OnOffCluster)).toBe(true);
+    expect(enhancedLight.hasClusterServer(LevelControlCluster)).toBe(true);
+    expect(enhancedLight.hasClusterServer(ColorControlCluster)).toBe(true);
+  });
+
   test('add lift coverDevice device to serverNode', async () => {
     expect(await server.add(coverLift)).toBeDefined();
     (matterbridge as any).frontend.getClusterTextFromDevice(coverLift);
@@ -514,6 +639,8 @@ describe('Matterbridge ' + NAME, () => {
         occupancy: { occupied: false },
         occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
         occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
+        pirOccupiedToUnoccupiedDelay: 300,
+        pirUnoccupiedToOccupiedDelay: 0,
       },
       descriptor: {
         deviceTypeList: [
@@ -534,9 +661,15 @@ describe('Matterbridge ' + NAME, () => {
     const endpoint_copy = server.parts.get('OnOffPlugin1');
     expect(endpoint_copy).toBeDefined();
     if (!endpoint_copy) throw new Error('Endpoint not found');
-    Logger.get('Matterbridge').info('Occupancy state:', endpoint.state.occupancySensing.occupancy);
+    Logger.get('Matterbridge').info('Occupancy state:', endpoint.state.occupancySensing.pirOccupiedToUnoccupiedDelay);
     // @ts-expect-error no more typed
-    Logger.get('Matterbridge').info('Occupancy state:', endpoint_copy.state.occupancySensing.occupancy);
+    Logger.get('Matterbridge').info('Occupancy state:', endpoint_copy.state.occupancySensing.pirOccupiedToUnoccupiedDelay);
+    // typed
+    Logger.get('Matterbridge').info('Occupancy state:', endpoint_copy.stateOf(OccupancySensingServer).occupancy);
+    // @ts-expect-error no more typed
+    Logger.get('Matterbridge').info('Occupancy state:', endpoint_copy.stateOf(OccupancySensingServer).pirOccupiedToUnoccupiedDelay);
+    // typed
+    Logger.get('Matterbridge').info('Occupancy state:', endpoint_copy.stateOf(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared)).pirOccupiedToUnoccupiedDelay);
 
     await new Promise<void>((resolve) => {
       endpoint.events.occupancySensing.occupancy$Changed.on((newState, oldState, context) => {
@@ -792,6 +925,38 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
   });
 
+  test('invoke MatterbridgeEnhancedColorControlServer commands', async () => {
+    expect(enhancedLight.behaviors.has(ColorControlServer)).toBeTruthy();
+    expect(enhancedLight.behaviors.has(MatterbridgeEnhancedColorControlServer)).toBeTruthy();
+    expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToHue')).toBeTruthy();
+    expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
+    expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
+    expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToColor')).toBeTruthy();
+    expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
+    expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 64, 65, 66, 67, 71]);
+    expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).generatedCommandList).toEqual([]);
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToHue', { hue: 180, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'enhancedMoveToHue', {
+      enhancedHue: 32000,
+      direction: ColorControl.Direction.Shortest,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToSaturation', { saturation: 100, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToHueAndSaturation', { hue: 180, saturation: 100, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'enhancedMoveToHueAndSaturation', { enhancedHue: 32000, saturation: 100, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToColor', { colorX: 30000, colorY: 30000, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToColorTemperature', { colorTemperatureMireds: 250, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting enhanced hue to 32000 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting enhanced hue to 32000 and saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color to 30000, 30000 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
+  });
+
   test('invoke MatterbridgeLiftWindowCoveringServer commands', async () => {
     expect(coverLift.behaviors.has(WindowCoveringServer)).toBeTruthy();
     expect(coverLift.behaviors.has(MatterbridgeLiftWindowCoveringServer)).toBeTruthy();
@@ -873,6 +1038,14 @@ describe('Matterbridge ' + NAME, () => {
     await fan.setStateOf(FanControlServer, { percentCurrent: 0 });
     await invokeBehaviorCommand(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction ${FanControl.StepDirection.Increase} (endpoint ${fan.id}.${fan.number})`);
+
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(fan, 'HepaFilterMonitoring', 'resetCondition', {});
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${fan.id}.${fan.number})`);
+
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(fan, 'ActivatedCarbonFilterMonitoring', 'resetCondition', {});
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${fan.id}.${fan.number})`);
   });
 
   test('invoke MatterbridgeThermostatServer commands', async () => {
@@ -964,8 +1137,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(rvc.behaviors.has(MatterbridgeRvcRunModeServer)).toBeTruthy();
     expect(rvc.behaviors.elementsOf(RvcRunModeServer).commands.has('changeToMode')).toBeTruthy();
     expect(rvc.behaviors.elementsOf(MatterbridgeRvcRunModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((rvc.state['rvcRunMode'] as any).acceptedCommandList).toEqual([0]);
-    expect((rvc.state['rvcRunMode'] as any).generatedCommandList).toEqual([1]);
+    expect((rvc as any).state['rvcRunMode'].acceptedCommandList).toEqual([0]);
+    expect((rvc as any).state['rvcRunMode'].generatedCommandList).toEqual([1]);
     expect((rvc.stateOf(MatterbridgeRvcRunModeServer) as any).acceptedCommandList).toEqual([0]);
     expect((rvc.stateOf(MatterbridgeRvcRunModeServer) as any).generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
@@ -1002,8 +1175,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(rvc.behaviors.has(MatterbridgeRvcCleanModeServer)).toBeTruthy();
     expect(rvc.behaviors.elementsOf(RvcCleanModeServer).commands.has('changeToMode')).toBeTruthy();
     expect(rvc.behaviors.elementsOf(MatterbridgeRvcCleanModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((rvc.state['rvcCleanMode'] as any).acceptedCommandList).toEqual([0]);
-    expect((rvc.state['rvcCleanMode'] as any).generatedCommandList).toEqual([1]);
+    expect((rvc as any).state['rvcCleanMode'].acceptedCommandList).toEqual([0]);
+    expect((rvc as any).state['rvcCleanMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'rvcCleanMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: 0`);
@@ -1078,8 +1251,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(evse.behaviors.has(MatterbridgeDeviceEnergyManagementServer)).toBeTruthy();
     expect(evse.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementServer).commands.has('powerAdjustRequest')).toBeTruthy();
     expect(evse.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementServer).commands.has('cancelPowerAdjustRequest')).toBeTruthy();
-    expect((evse.state['deviceEnergyManagement'] as any).acceptedCommandList).toEqual([0, 1]);
-    expect((evse.state['deviceEnergyManagement'] as any).generatedCommandList).toEqual([]);
+    expect((evse as any).state['deviceEnergyManagement'].acceptedCommandList).toEqual([0, 1]);
+    expect((evse as any).state['deviceEnergyManagement'].generatedCommandList).toEqual([]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(evse, 'deviceEnergyManagement', 'powerAdjustRequest', { power: 0, duration: 0, cause: 'Test' }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Adjusting power to 0 duration 0 cause Test (endpoint ${evse.id}.${evse.number})`);
@@ -1095,8 +1268,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(evse.behaviors.has(MatterbridgeDeviceEnergyManagementModeServer)).toBeTruthy();
     expect(evse.behaviors.elementsOf(DeviceEnergyManagementModeServer).commands.has('changeToMode')).toBeTruthy();
     expect(evse.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((evse.state['deviceEnergyManagementMode'] as any).acceptedCommandList).toEqual([0]);
-    expect((evse.state['deviceEnergyManagementMode'] as any).generatedCommandList).toEqual([1]);
+    expect((evse as any).state['deviceEnergyManagementMode'].acceptedCommandList).toEqual([0]);
+    expect((evse as any).state['deviceEnergyManagementMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(evse, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: 0`);
@@ -1113,10 +1286,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(evse.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('disable')).toBeTruthy();
     expect(evse.behaviors.elementsOf(EnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
     expect(evse.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
-    expect((evse.state['energyEvse'] as any).acceptedCommandList).toEqual([1, 2]);
-    expect((evse.state['energyEvse'] as any).generatedCommandList).toEqual([]);
-    expect((evse.stateOf(MatterbridgeEnergyEvseServer) as any).acceptedCommandList).toEqual([1, 2]);
-    expect((evse.stateOf(MatterbridgeEnergyEvseServer) as any).generatedCommandList).toEqual([]);
+    expect((evse as any).state['energyEvse'].acceptedCommandList).toEqual([1, 2]);
+    expect((evse as any).state['energyEvse'].generatedCommandList).toEqual([]);
+    expect((evse as any).stateOf(MatterbridgeEnergyEvseServer).acceptedCommandList).toEqual([1, 2]);
+    expect((evse as any).stateOf(MatterbridgeEnergyEvseServer).generatedCommandList).toEqual([]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(evse, 'energyEvse', 'disable');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer disable called`);

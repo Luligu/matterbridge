@@ -113,6 +113,7 @@ import {
   MatterbridgeDeviceEnergyManagementServer,
   MatterbridgeActivatedCarbonFilterMonitoringServer,
   MatterbridgeHepaFilterMonitoringServer,
+  MatterbridgeEnhancedColorControlServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -172,10 +173,14 @@ export interface MatterbridgeEndpointCommands {
   moveToHue: HandlerFunction;
   moveHue: HandlerFunction;
   stepHue: HandlerFunction;
+  enhancedMoveToHue: HandlerFunction;
+  enhancedMoveHue: HandlerFunction;
+  enhancedStepHue: HandlerFunction;
   moveToSaturation: HandlerFunction;
   moveSaturation: HandlerFunction;
   stepSaturation: HandlerFunction;
   moveToHueAndSaturation: HandlerFunction;
+  enhancedMoveToHueAndSaturation: HandlerFunction;
   moveToColorTemperature: HandlerFunction;
 
   // Window Covering
@@ -1436,6 +1441,72 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a default color control cluster server with features Xy, HueSaturation, EnhancedHueSaturation and ColorTemperature.
+   *
+   * @param {number} currentX - The current X value (range 0-65279).
+   * @param {number} currentY - The current Y value (range 0-65279).
+   * @param {number} enhancedCurrentHue - The enhanced current hue value (range: 0-65535).
+   * @param {number} currentSaturation - The current saturation value (range: 0-254).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (range colorTempPhysicalMinMireds-colorTempPhysicalMaxMireds).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default 500).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks colorMode and enhancedColorMode persist across restarts.
+   * @remarks currentHue and currentSaturation persist across restarts.
+   * @remarks currentX and currentY persist across restarts.
+   * @remarks colorTemperatureMireds persists across restarts.
+   * @remarks startUpColorTemperatureMireds persists across restarts.
+   * @remarks coupleColorTempToLevelMinMireds persists across restarts.
+   *
+   * @remarks OptionMasks and OptionOverride field
+   *
+   * Each bit in the Options attribute SHALL determine the corresponding bit in the temporary Options
+   * bitmap, unless the OptionsMask field is present and has the corresponding bit set to 1, in which
+   * case the corresponding bit in the OptionsOverride field SHALL determine the corresponding bit in
+   * the temporary Options bitmap.
+   *
+   * @remarks CoupleColorTempToLevel
+   *
+   * If the CoupleColorTempToLevel bit of the Options attribute of the Level Control cluster is equal to 1
+   * and the ColorMode or EnhancedColorMode attribute is set to 2 (ColorTemperatureMireds) then a
+   * change in the CurrentLevel attribute SHALL affect the ColorTemperatureMireds attribute.
+   * This relationship is manufacturer specific, with the qualification that the maximum value of the CurrentLevel attribute
+   * SHALL correspond to a ColorTemperatureMired attribute value equal to the CoupleColorTempToLevelMinMireds attribute.
+   */
+  createEnhancedColorControlClusterServer(
+    currentX: number = 0,
+    currentY: number = 0,
+    enhancedCurrentHue: number = 0,
+    currentSaturation: number = 0,
+    colorTemperatureMireds: number = 500,
+    colorTempPhysicalMinMireds: number = 147,
+    colorTempPhysicalMaxMireds: number = 500,
+  ): this {
+    this.behaviors.require(MatterbridgeEnhancedColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.EnhancedHue, ColorControl.Feature.ColorTemperature), {
+      colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+      enhancedColorMode: ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation,
+      colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: true, colorTemperature: true },
+      options: {
+        executeIfOff: false,
+      },
+      numberOfPrimaries: null,
+      currentX,
+      currentY,
+      currentHue: Math.round((enhancedCurrentHue / 65535) * 254), // currentHue range is 0-254 and enhancedCurrentHue range is 0-65535
+      enhancedCurrentHue,
+      currentSaturation,
+      colorTemperatureMireds,
+      colorTempPhysicalMinMireds,
+      colorTempPhysicalMaxMireds,
+      coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+      startUpColorTemperatureMireds: null,
+      remainingTime: 0,
+    });
+    return this;
+  }
+
+  /**
    * Creates a Xy color control cluster server with feature Xy and ColorTemperature.
    *
    * @param {number} currentX - The current X value (range 0-65279).
@@ -1552,9 +1623,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
    */
-  async configureColorControlMode(colorMode: ColorControl.ColorMode) {
-    if (isValidNumber(colorMode, ColorControl.ColorMode.CurrentHueAndCurrentSaturation, ColorControl.ColorMode.ColorTemperatureMireds)) {
-      await this.setAttribute(ColorControl.Cluster.id, 'colorMode', colorMode, this.log);
+  async configureColorControlMode(colorMode: ColorControl.EnhancedColorMode) {
+    if (isValidNumber(colorMode, ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation, ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation)) {
+      await this.setAttribute(ColorControl.Cluster.id, 'colorMode', colorMode === ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation ? ColorControl.ColorMode.CurrentHueAndCurrentSaturation : colorMode, this.log);
       await this.setAttribute(ColorControl.Cluster.id, 'enhancedColorMode', colorMode, this.log);
     }
   }
