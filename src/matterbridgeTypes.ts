@@ -28,6 +28,7 @@ import { LogLevel } from 'node-ansi-logger';
 // @matter
 import { FabricIndex, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
+import { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
 
 // Matterbridge
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
@@ -191,11 +192,16 @@ export interface ApiDevices {
 }
 
 export interface ApiDevicesMatter {
+  id: string;
   commissioned: boolean;
-  fabricInformations?: SanitizedExposedFabricInformation[];
-  sessionInformations?: SanitizedSession[];
-  qrPairingCode?: string;
-  manualPairingCode?: string;
+  advertising: boolean;
+  advertiseTime: number;
+  windowStatus: AdministratorCommissioning.CommissioningWindowStatus;
+  fabricInformations: SanitizedExposedFabricInformation[];
+  sessionInformations: SanitizedSession[];
+  qrPairingCode: string;
+  manualPairingCode: string;
+  serialNumber: string | undefined;
 }
 
 export interface ApiClustersResponse {
