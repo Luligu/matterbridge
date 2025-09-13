@@ -27,8 +27,9 @@ import { Server as HttpServer, createServer, IncomingMessage } from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
-import { existsSync, promises as fs } from 'node:fs';
+import { existsSync, promises as fs, unlinkSync } from 'node:fs';
 import EventEmitter from 'node:events';
+import { appendFile } from 'node:fs/promises';
 
 // Third-party modules
 import express from 'express';
@@ -37,11 +38,12 @@ import multer from 'multer';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt } from 'node-ansi-logger';
 // @matter
-import { Logger, LogLevel as MatterLogLevel, Lifecycle } from '@matter/main';
+import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle, ServerNode, LogDestination, Diagnostic, Time, FabricIndex } from '@matter/main';
 import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
+import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/main/protocol';
 
 // Matterbridge
-import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter } from './utils/export.js';
+import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
 import { ApiClusters, ApiClustersResponse, ApiDevices, ApiDevicesMatter, BaseRegisteredPlugin, FrontendRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -565,6 +567,59 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
     });
 
+    // Endpoint to view the diagnostic.log
+    this.expressApp.get('/api/view-diagnostic', async (req, res) => {
+      this.log.debug('The frontend sent /api/view-diagnostic');
+
+      const serverNodes: ServerNode<ServerNode.RootEndpoint>[] = [];
+      // istanbul ignore else
+      if (this.matterbridge.bridgeMode === 'bridge') {
+        if (this.matterbridge.serverNode) serverNodes.push(this.matterbridge.serverNode);
+      } else if (this.matterbridge.bridgeMode === 'childbridge') {
+        for (const plugin of this.matterbridge.getPlugins()) {
+          if (plugin.serverNode) serverNodes.push(plugin.serverNode);
+        }
+      }
+      // istanbul ignore next
+      for (const device of this.matterbridge.getDevices()) {
+        if (device.serverNode) serverNodes.push(device.serverNode);
+      }
+
+      if (existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'))) unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'));
+      const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
+      diagnosticDestination.write = async (text: string, _message: Diagnostic.Message) => {
+        await appendFile(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'), text + '\n', { encoding: 'utf8' });
+      };
+      Logger.destinations.diagnostic = diagnosticDestination;
+      if (!diagnosticDestination.context) {
+        diagnosticDestination.context = Diagnostic.Context();
+      }
+      diagnosticDestination.context.run(() =>
+        diagnosticDestination.add(
+          Diagnostic.message({
+            now: Time.now(),
+            facility: 'Server nodes:',
+            level: MatterLogLevel.INFO,
+            prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',
+            values: [...serverNodes],
+          }),
+        ),
+      );
+      delete Logger.destinations.diagnostic;
+      await wait(500); // Wait for the log to be written
+
+      try {
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'), 'utf8');
+        res.type('text/plain');
+        res.send(data.slice(29));
+      } catch (error) {
+        // istanbul ignore next
+        this.log.error(`Error reading diagnostic log file ${this.matterbridge.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        // istanbul ignore next
+        res.status(500).send('Error reading diagnostic log file.');
+      }
+    });
+
     // Endpoint to view the shelly log
     this.expressApp.get('/api/shellyviewsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellyviewsystemlog');
@@ -965,14 +1020,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiDevicesMatter | undefined {
     if (device.mode === 'server' && device.serverNode) {
-      return {
-        commissioned: device.serverNode.state.commissioning.commissioned,
-        qrPairingCode: device.serverNode.state.commissioning.pairingCodes.qrPairingCode,
-        manualPairingCode: device.serverNode.state.commissioning.pairingCodes.manualPairingCode,
-        fabricInformations: this.matterbridge.sanitizeFabricInformations(Object.values(device.serverNode.state.commissioning.fabrics)),
-        sessionInformations: this.matterbridge.sanitizeSessionInformation(Object.values(device.serverNode.state.sessions.sessions)),
-        serialNumber: device.serverNode.state.basicInformation.serialNumber,
-      } as ApiDevicesMatter;
+      return this.matterbridge.getServerNodeData(device.serverNode);
     }
   }
 
@@ -1573,8 +1621,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/advertise') {
         const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = true;
-        // this.matterbridge.matterbridgeQrPairingCode = pairingCodes?.qrPairingCode;
-        // this.matterbridge.matterbridgeManualPairingCode = pairingCodes?.manualPairingCode;
         this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Started fabrics share`, 0);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes, success: true }));
@@ -1583,6 +1629,46 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = false;
         this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Stopped fabrics share`, 0);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+      } else if (data.method === '/api/matter') {
+        if (!isValidString(data.params.id)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter id in /api/matter' }));
+          return;
+        }
+        let serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+        if (data.params.id === 'Matterbridge') serverNode = this.matterbridge.serverNode;
+        else serverNode = this.matterbridge.getPlugins().find((p) => p.serverNode && p.serverNode.id === data.params.id)?.serverNode || this.matterbridge.getDevices().find((d) => d.serverNode && d.serverNode.id === data.params.id)?.serverNode;
+        if (!serverNode) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Unknown server node id in /api/matter' }));
+          return;
+        }
+        this.log.debug(`*Server node ${serverNode.id}: commissioned ${serverNode.state.commissioning.commissioned} upTime ${serverNode.state.generalDiagnostics.upTime}.`);
+        if (data.params.server) {
+          this.log.debug(`*Sending data for node ${data.params.id}`);
+          this.wssSendRefreshRequired('matter', { matter: { ...this.matterbridge.getServerNodeData(serverNode) } });
+        }
+        if (data.params.commission) {
+          await serverNode.env.get(DeviceCommissioner)?.allowBasicCommissioning();
+          this.matterbridge.advertisingNodes.set(serverNode.id, Date.now());
+          this.log.debug(`*Commissioning has been sent for node ${data.params.id}`);
+          this.wssSendRefreshRequired('matter', { matter: { ...this.matterbridge.getServerNodeData(serverNode), advertising: true } });
+        }
+        if (data.params.stopCommission) {
+          await serverNode.env.get(DeviceCommissioner)?.endCommissioning();
+          this.matterbridge.advertisingNodes.delete(serverNode.id);
+          this.log.debug(`*Stop commissioning has been sent for node ${data.params.id}`);
+          this.wssSendRefreshRequired('matter', { matter: { ...this.matterbridge.getServerNodeData(serverNode), advertising: false } });
+        }
+        if (data.params.advertise) {
+          await serverNode.env.get(DeviceAdvertiser)?.advertise(true);
+          this.log.debug(`*Advertising has been sent for node ${data.params.id}`);
+          this.wssSendRefreshRequired('matter', { matter: { ...this.matterbridge.getServerNodeData(serverNode), advertising: true } });
+        }
+        if (data.params.removeFabric) {
+          if (serverNode.env.get(FabricManager).has(FabricIndex(data.params.removeFabric as number))) await serverNode.env.get(FabricManager).removeFabric(FabricIndex(data.params.removeFabric as number));
+          this.log.debug(`*Removed fabric index ${data.params.removeFabric} for node ${data.params.id}`);
+          this.wssSendRefreshRequired('matter', { matter: { ...this.matterbridge.getServerNodeData(serverNode) } });
+        }
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/settings') {
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() }));
@@ -1938,7 +2024,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid method' }));
       }
     } catch (error) {
-      this.log.error(`Error parsing message "${message}" from websocket client:`, error instanceof Error ? error.message : error);
+      inspectError(this.log, `Error processing message "${message}" from websocket client`, error);
     }
   }
 
@@ -2000,7 +2086,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * Sends a need to refresh WebSocket message to all connected clients.
    *
    * @param {string} changed - The changed value. If null, the whole page will be refreshed.
-   * possible values:
+   * @param {Record<string, unknown>} params - Additional parameters to send with the message.
+   * possible values for changed:
    * - 'matterbridgeLatestVersion'
    * - 'matterbridgeDevVersion'
    * - 'matterbridgeAdvertise'
@@ -2013,13 +2100,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * - 'devices'
    * - 'fabrics'
    * - 'sessions'
+   * - 'matter' with param 'matter' (QRDivDevice)
    */
-  wssSendRefreshRequired(changed: string | null = null) {
+  wssSendRefreshRequired(changed: string | null = null, params: Record<string, unknown> = {}) {
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: { changed: changed } }));
+        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: { changed: changed, ...params } }));
       }
     });
   }

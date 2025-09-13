@@ -291,6 +291,13 @@ describe('Matterbridge frontend express with http', () => {
     await fs.unlink(path.join(matterbridge.matterbridgeDirectory, matterbridge.matterLoggerFile));
   }, 30000);
 
+  test('GET /api/view-diagnostic', async () => {
+    const response = await makeRequest('/api/view-diagnostic', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+  }, 30000);
+
   test('GET /api/shellyviewsystemlog error', async () => {
     const response = await makeRequest('/api/shellyviewsystemlog', 'GET');
 

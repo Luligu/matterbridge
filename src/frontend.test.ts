@@ -142,50 +142,74 @@ describe('Matterbridge frontend', () => {
     expect((frontend as any).getPowerSource({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeUndefined();
 
     // Wired ac
-    let device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } };
-    device['hasClusterServer'] = jest.fn(() => true);
-    device['getAttribute'] = jest.fn((cluster: number, attribute: string) => {
+    let device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
+    device.hasClusterServer = jest.fn(() => true);
+    device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { wired: true };
       if (cluster === PowerSource.Cluster.id && attribute === 'wiredCurrentType') return PowerSource.WiredCurrentType.Ac;
     });
     expect((frontend as any).getPowerSource(device)).toBe('ac');
 
     // Battery
-    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } };
-    device['hasClusterServer'] = jest.fn(() => true);
-    device['getAttribute'] = jest.fn((cluster: number, attribute: string) => {
+    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
+    device.hasClusterServer = jest.fn(() => true);
+    device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { battery: true };
       if (cluster === PowerSource.Cluster.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
     });
     expect((frontend as any).getPowerSource(device)).toBe('ok');
 
     // Not wired nor battery
-    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } };
-    device['hasClusterServer'] = jest.fn(() => true);
-    device['getAttribute'] = jest.fn((cluster: number, attribute: string) => {
+    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
+    device.hasClusterServer = jest.fn(() => true);
+    device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return {};
     });
     expect((frontend as any).getPowerSource(device)).toBe(undefined);
 
     // Child endpoints
-    device['hasClusterServer'].mockImplementationOnce(() => false);
-    device['getChildEndpoints'] = jest.fn(() => [device]);
+    device.hasClusterServer.mockImplementationOnce(() => false);
+    device.getChildEndpoints = jest.fn(() => [device]);
     expect((frontend as any).getPowerSource(device)).toBe(undefined);
+  });
+
+  test('Frontend getPlugins', () => {
+    matterbridge.hasCleanupStarted = true;
+    expect((frontend as any).getPlugins()).toEqual([]);
+    matterbridge.hasCleanupStarted = false;
+  });
+
+  test('Frontend getDevices', async () => {
+    matterbridge.hasCleanupStarted = true;
+    expect(await (frontend as any).getDevices()).toEqual([]);
+    matterbridge.hasCleanupStarted = false;
   });
 
   test('Frontend getMatterDataFromDevice', () => {
     const device = {
       mode: 'server',
-      serverNode: { state: { basicInformation: { serialNumber: '12345' }, commissioning: { commissioned: true, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: '123' }, fabrics: {} }, sessions: { sessions: {} } } },
+      serverNode: {
+        id: 'storeId',
+        state: {
+          basicInformation: { serialNumber: '12345' },
+          commissioning: { commissioned: true, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: '123' }, fabrics: {} },
+          administratorCommissioning: { windowStatus: 0 },
+          sessions: { sessions: {} },
+        },
+      },
       serverContext: {},
     };
     expect((frontend as any).getMatterDataFromDevice(device)).toEqual({
+      advertiseTime: 0,
+      advertising: false,
       commissioned: true,
       fabricInformations: [],
+      id: 'storeId',
       manualPairingCode: '123',
       qrPairingCode: 'QR',
       sessionInformations: [],
       serialNumber: '12345',
+      windowStatus: 0,
     });
   });
 

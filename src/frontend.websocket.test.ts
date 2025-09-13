@@ -42,7 +42,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Frontend, WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.js';
 import { wait, waiter } from './utils/wait.js';
 import { PluginManager } from './pluginManager.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.ts';
+import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
@@ -274,7 +274,7 @@ describe('Matterbridge frontend', () => {
   test('Websocket API send bad json message', async () => {
     ws.send('This is not a JSON message');
     await wait(1000);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Error parsing message/), expect.stringMatching(/^Unexpected token/));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Error processing message/));
   });
 
   test('Websocket API send wrong message', async () => {
@@ -396,6 +396,24 @@ describe('Matterbridge frontend', () => {
     const msg = await waitMessageId(++WS_ID, '/api/stopadvertise', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/stopadvertise', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
     expect(stopAdvertise).toHaveBeenCalled();
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/matter', async () => {
+    let msg = await waitMessageId(++WS_ID, '/api/matter', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/matter', params: {} });
+    expect(msg.error).toBe('Wrong parameter id in /api/matter');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+
+    msg = await waitMessageId(++WS_ID, '/api/matter', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/matter', params: { id: 'unknown' } });
+    expect(msg.error).toBe('Unknown server node id in /api/matter');
+
+    msg = await waitMessageId(++WS_ID, '/api/matter', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/matter',
+      params: { id: 'Matterbridge', server: true, commission: true, stopCommission: true, advertise: true, removeFabric: 1 },
+    });
     expect(msg.success).toBe(true);
   });
 
@@ -1103,6 +1121,8 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket SendMessage', async () => {
+    matterbridge.frontend.wssSendMessage('', '', '', ``);
+
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
     const received = new Promise((resolve) => {
