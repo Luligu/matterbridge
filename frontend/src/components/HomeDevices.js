@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 // React
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
 // @mui/material
@@ -130,7 +130,7 @@ export function HomeDevices() {
     actions: true,
   });
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
-  const [qrDialogData, setQrDialogData] = useState(null);
+  const [qrDialogId, setQrDialogId] = useState(null);
   // Refs
   const uniqueId = useRef(getUniqueId());
 
@@ -271,7 +271,7 @@ export function HomeDevices() {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && msg.params.changed !== 'commissioning' && msg.params.changed !== 'pluginsRestart' && msg.params.changed !== 'sessions' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
+        if (msg.method === 'refresh_required' && msg.params.changed !== 'matter' && msg.params.changed !== 'pluginsRestart' && msg.params.changed !== 'sessions' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
           if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed}`);
           sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
@@ -391,6 +391,17 @@ export function HomeDevices() {
     }
   }, [online, sendMessage]);
 
+  // Load column visibility from localStorage
+  useEffect(() => {
+    const storedVisibility = localStorage.getItem('homeDevicesColumnVisibility');
+    if (storedVisibility) {
+      const visibility = JSON.parse(storedVisibility);
+      if(visibility.powerSource === undefined) visibility['powerSource'] = true; // Fix for old versions
+      setDevicesColumnVisibility(visibility);
+      if(debug) console.log(`HomeDevices loaded column visibility from localStorage`);
+    }
+  }, []); // run on mount/unmount
+
   const handleDialogDevicesToggle = () => {
     setDialogDevicesOpen(!dialogDevicesOpen);
   };
@@ -407,15 +418,15 @@ export function HomeDevices() {
     });
   };
 
-  const handleOpenQrDialog = (data) => {
-    setQrDialogData(data);
+  const handleOpenQrDialog = useCallback((id) => {
+    setQrDialogId(id);
     setQrDialogOpen(true);
-  };
+  }, []);
 
-  const handleCloseQrDialog = () => {
+  const handleCloseQrDialog = useCallback(() => {
     setQrDialogOpen(false);
-    setQrDialogData(null);
-  };
+    setQrDialogId(null);
+  }, []);
 
   const handleCheckboxChange = (event, device) => {
     if(debug) console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
@@ -431,25 +442,16 @@ export function HomeDevices() {
     }
   };
 
-  useEffect(() => {
-    const storedVisibility = localStorage.getItem('homeDevicesColumnVisibility');
-    if (storedVisibility) {
-      const visibility = JSON.parse(storedVisibility);
-      if(visibility.powerSource === undefined) visibility['powerSource'] = true; // Fix for old versions
-      setDevicesColumnVisibility(visibility);
-      if(debug) console.log(`HomeDevices loaded column visibility from localStorage`);
-    }
-  }, []);
-
   if(debug) console.log('HomeDevices rendering...');
   if (!online) {
     return ( <Connecting /> );
   }
+  console.log('HomeDevices rendering...');
   return (
       <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
 
         {/* QR Code Dialog */}
-        <QRDivDevice id={qrDialogData} open={qrDialogOpen} onClose={handleCloseQrDialog} />
+        <QRDivDevice id={qrDialogId} open={qrDialogOpen} onClose={handleCloseQrDialog} />
         {/* HomeDevices Configure Columns Dialog */}
         <Dialog open={dialogDevicesOpen} onClose={handleDialogDevicesToggle}>
           <DialogTitle>Configure Devices Columns</DialogTitle>
