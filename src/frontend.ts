@@ -1526,6 +1526,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.matterbridge.devices.remove(device);
           }
         }
+        if (plugin.type === 'DynamicPlatform' && !plugin.locked) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (this.matterbridge as any).createDynamicPlugin(plugin);
+        }
         await this.matterbridge.plugins.load(plugin, true, 'The plugin has been restarted', true);
         plugin.restartRequired = false; // Reset plugin restartRequired
         let needRestart = 0;

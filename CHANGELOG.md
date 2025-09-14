@@ -23,6 +23,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [childbridge]: Fixed the case when the plugin didn't restart in childbridge mode when it didn't add any device..
+
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
