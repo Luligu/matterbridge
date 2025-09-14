@@ -241,6 +241,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   // We load asyncronously so is private
   protected constructor() {
     super();
+    this.log.logNameColor = '\x1b[38;5;115m';
   }
 
   /**
@@ -361,6 +362,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A Promise that resolves when the initialization is complete.
    */
   public async initialize(): Promise<void> {
+    // for (let i = 1; i <= 255; i++) console.log(`\x1b[38;5;${i}mColor: ${i}`);
+
     // Emit the initialize_started event
     this.emit('initialize_started');
 
@@ -1231,9 +1234,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * It also logs to file (matter.log) if fileLogger is true.
    *
    * @param {boolean} fileLogger - Whether to log to file or not.
-   * @returns {Function} The MatterLogger function.
+   * @returns {Function} The MatterLogger function. \x1b[35m for violet \x1b[34m is blue
    */
   private createDestinationMatterLogger(fileLogger: boolean): (text: string, message: Diagnostic.Message) => void {
+    this.matterLog.logNameColor = '\x1b[34m'; // Blue matter.js Logger
     if (fileLogger) {
       this.matterLog.logFilePath = path.join(this.matterbridgeDirectory, this.matterLoggerFile);
     }

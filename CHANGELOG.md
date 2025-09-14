@@ -14,6 +14,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [logger]: Set different color for log names to matterbridge, frontend and matter.js.
+
 ### Changed
 
 - [package]: Updated dependencies.

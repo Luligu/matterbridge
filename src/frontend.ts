@@ -168,6 +168,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     super();
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({ logName: 'Frontend', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+    this.log.logNameColor = '\x1b[38;5;97m';
   }
 
   set logLevel(logLevel: LogLevel) {
