@@ -78,6 +78,7 @@ export interface BaseRegisteredPlugin {
   schemaJson?: PlatformSchema;
   hasWhiteList?: boolean;
   hasBlackList?: boolean;
+  matter?: ApiMatter;
 }
 
 // Simplified interface for sending the plugins data to the frontend
@@ -124,6 +125,7 @@ export interface MatterbridgeInformation {
   matterbridgeLatestVersion: string;
   matterbridgeDevVersion: string;
   matterbridgeSerialNumber: string;
+  matter?: ApiMatter;
   matterbridgeAdvertise: boolean | undefined;
   matterbridgeEndAdvertise: boolean;
   matterbridgePaired: boolean | undefined;
@@ -188,10 +190,10 @@ export interface ApiDevices {
   reachable: boolean;
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
   cluster: string;
-  matter?: ApiDevicesMatter;
+  matter?: ApiMatter;
 }
 
-export interface ApiDevicesMatter {
+export interface ApiMatter {
   id: string;
   commissioned: boolean;
   advertising: boolean;

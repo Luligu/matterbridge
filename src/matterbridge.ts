@@ -60,7 +60,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/brid
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
 import { withTimeout, waiter, wait } from './utils/wait.js';
-import { ApiDevicesMatter, dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
+import { ApiMatter, dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -2375,9 +2375,9 @@ const commissioningController = new CommissioningController({
    * Starts the 15 minutes timer to advice that advertising for the specified server node is ended.
    *
    * @param {ServerNode} [serverNode] - The server node to start.
-   * @returns {ApiDevicesMatter} The sanitized data of the server node.
+   * @returns {ApiMatter} The sanitized data of the server node.
    */
-  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiDevicesMatter {
+  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiMatter {
     const advertiseTime = this.advertisingNodes.get(serverNode.id) || 0;
     return {
       id: serverNode.id,

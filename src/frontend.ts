@@ -44,7 +44,7 @@ import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/mai
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
-import { ApiClusters, ApiClustersResponse, ApiDevices, ApiDevicesMatter, BaseRegisteredPlugin, FrontendRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
+import { ApiClusters, ApiClustersResponse, ApiDevices, ApiMatter, BaseRegisteredPlugin, FrontendRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
@@ -960,6 +960,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Update the matterbridge information in bridge mode
     if (this.matterbridge.bridgeMode === 'bridge' && this.matterbridge.serverNode && !this.matterbridge.hasCleanupStarted) {
+      this.matterbridge.matterbridgeInformation.matter = this.matterbridge.getServerNodeData(this.matterbridge.serverNode);
       this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.serverNode.state.commissioning.commissioned;
       this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : this.matterbridge.serverNode.state.commissioning.pairingCodes.qrPairingCode;
       this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : this.matterbridge.serverNode.state.commissioning.pairingCodes.manualPairingCode;
@@ -1017,9 +1018,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * Retrieves the commissioned status, matter pairing codes, fabrics and sessions from a given device in server mode.
    *
    * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint to retrieve the data from.
-   * @returns {ApiDevicesMatter | undefined} An ApiDevicesMatter object or undefined if not found.
+   * @returns {ApiMatter | undefined} An ApiDevicesMatter object or undefined if not found.
    */
-  private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiDevicesMatter | undefined {
+  private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiMatter | undefined {
     if (device.mode === 'server' && device.serverNode) {
       return this.matterbridge.getServerNodeData(device.serverNode);
     }
@@ -1159,6 +1160,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         hasWhiteList: plugin.configJson?.whiteList !== undefined,
         hasBlackList: plugin.configJson?.blackList !== undefined,
         // Childbridge mode specific data
+        matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
         paired: plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.commissioned : undefined,
         qrPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.pairingCodes.qrPairingCode : undefined,
         manualPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.pairingCodes.manualPairingCode : undefined,
