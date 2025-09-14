@@ -1325,7 +1325,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} [startUpCurrentLevel] - The startUp on level (default: null).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
-   * @remarks OptionMasks and OptionOverride field
+   * @remarks OptionMasks and OptionOverride fields of moveToLevel and moveToLevelWithOnOff commands requests
    *
    * Each bit in the Options attribute SHALL determine the corresponding bit in the temporary Options
    * bitmap, unless the OptionsMask field is present and has the corresponding bit set to 1, in which
@@ -1394,7 +1394,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks startUpColorTemperatureMireds persists across restarts.
    * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    *
-   * @remarks OptionMasks and OptionOverride field
+   * @remarks OptionMasks and OptionOverride fields of color control commands requests
    *
    * Each bit in the Options attribute SHALL determine the corresponding bit in the temporary Options
    * bitmap, unless the OptionsMask field is present and has the corresponding bit set to 1, in which
