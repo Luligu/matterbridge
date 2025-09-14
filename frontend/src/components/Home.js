@@ -28,7 +28,7 @@ function Home() {
   // States
   const [systemInfo, setSystemInfo] = useState(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
-  const [selectPlugin, setSelectPlugin] = useState(undefined);
+  const [plugins, setPlugins] = useState([]);
   const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'devices'); // default devices
   const [changelog, setChangelog] = useState('');
@@ -41,18 +41,10 @@ function Home() {
   const uniqueId = useRef(getUniqueId());
 
   const handleSelectPlugin = useCallback((plugin) => {
-    if (debug) console.log('handleSelectPlugin plugin:', plugin.name);
+    if (debug) console.log('Home: handleSelectPlugin plugin:', plugin.name);
     console.log('Home: handleSelectPlugin plugin:', plugin.name);
     setStoreId(plugin.matter?.id);
-    if (!selectPlugin) {
-      setSelectPlugin(plugin);
-    } else {
-      if(selectPlugin.name === plugin.name) setSelectPlugin(undefined);
-      else {
-        setSelectPlugin(plugin);
-      }
-    }
-  }, [selectPlugin]);
+  }, []);
 
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
@@ -65,11 +57,14 @@ function Home() {
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log('Home received settings:', msg.response);
+          console.log('Home received settings:', msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
-          setSelectPlugin(undefined);
           if (msg.response.matterbridgeInformation.bridgeMode === 'bridge') {
             setStoreId(msg.response.matterbridgeInformation.matter.id);
+          }
+          if (msg.response.matterbridgeInformation.bridgeMode === 'childbridge' && plugins.length > 0 && storeId === null) {
+            setStoreId(plugins[0].matter.id);
           }
           if(msg.response.matterbridgeInformation.matterbridgeVersion) {
             setChangelog(`https://github.com/Luligu/matterbridge/blob/${msg.response.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main' }/CHANGELOG.md`);
@@ -98,6 +93,15 @@ function Home() {
             }
           }
         }
+        // Local messages
+        if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
+          if (debug) console.log(`Home received plugins (${matterbridgeInfo?.bridgeMode}):`, msg.response);
+          console.log(`Home received plugins (${matterbridgeInfo?.bridgeMode}):`, msg.response);
+          setPlugins(msg.response);
+          if (matterbridgeInfo?.bridgeMode === 'childbridge' && msg.response.length > 0) {
+            setStoreId(msg.response[0].matter.id);
+          }
+        }
       }
     };
 
@@ -108,12 +112,13 @@ function Home() {
       removeListener(handleWebSocketMessage);
       if (debug) console.log('Home removed WebSocket listener');
     };
-  }, [addListener, removeListener, sendMessage]);
+  }, [addListener, removeListener, sendMessage, matterbridgeInfo, plugins, storeId]);
 
   useEffect(() => {
     if (online) {
       if (debug) console.log('Home received online');
       sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
