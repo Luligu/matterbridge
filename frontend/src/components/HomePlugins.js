@@ -441,9 +441,9 @@ export function HomePlugins({selectPlugin}) {
           </DialogActions>
         </Dialog>
 
-        <div className="MbfWindowHeader">
-          <div className="MbfWindowHeaderText" style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-            <p style={{margin: '0px', padding: '0px'}}>Plugins</p>
+        <div className="MbfWindowHeader" style={{ justifyContent: 'space-between' }}>
+          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Plugins</p>
+          <div className="MbfWindowHeaderFooterIcons">
             <IconButton onClick={handleDialogPluginsColumnsToggle} aria-label="Configure Columns" style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}}>
               <Tooltip title="Configure columns">
                 <SettingsIcon style={{ color: 'var(--header-text-color)', fontSize: '19px' }}/>

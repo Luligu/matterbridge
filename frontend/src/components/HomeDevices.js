@@ -498,9 +498,9 @@ export function HomeDevices() {
           </DialogActions>
         </Dialog>
 
-        <div className="MbfWindowHeader">
-          <div className="MbfWindowHeaderText" style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-            <p style={{margin: '0px', padding: '0px'}}>Devices</p>
+        <div className="MbfWindowHeader" style={{ justifyContent: 'space-between' }}>
+          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Devices</p>
+          <div className="MbfWindowHeaderFooterIcons">
             <IconButton onClick={handleDialogDevicesToggle} aria-label="Configure Columns" style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}}>
               <Tooltip title="Configure columns">
                 <SettingsIcon style={{ color: 'var(--header-text-color)', fontSize: '19px' }}/>
@@ -511,10 +511,10 @@ export function HomeDevices() {
         <div className="MbfWindowBodyColumn" style={{margin: '0px', padding: '0px', gap: '0', overflow: 'auto'}} >
           <HomeDevicesTable data={mixedDevices} columns={devicesColumns} columnVisibility={devicesColumnVisibility}/>
         </div>
-        <div className="MbfWindowFooter" style={{margin: '0', padding: '0px', paddingLeft: '10px', paddingRight: '10px', borderTop: '1px solid var(--table-border-color)', display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-            {loading && <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Waiting for the plugins to fully load...</p>}  
-            {!loading && <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', fontWeight: 'normal', fontSize: '14px', color: 'var(--secondary-color)'}}>Registered devices: {devices.length.toString()}/{mixedDevices.length.toString()}</p>}
-            {restart && <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Restart required</p>}  
+        <div className="MbfWindowFooter" style={{ borderTop: '1px solid var(--table-border-color)', justifyContent: 'space-between'}}>
+            {loading && <p className="MbfWindowFooterText" style={{ fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Waiting for the plugins to fully load...</p>}  
+            {!loading && <p className="MbfWindowFooterText" style={{ fontWeight: 'normal', fontSize: '14px', color: 'var(--secondary-color)'}}>Registered devices: {devices.length.toString()}/{mixedDevices.length.toString()}</p>}
+            {restart && <p className="MbfWindowFooterText" style={{ fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Restart required</p>}  
         </div>
       </div>
 

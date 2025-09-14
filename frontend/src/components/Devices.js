@@ -506,9 +506,9 @@ function Devices() {
       {/* Devices Table */}
       {viewMode === 'table' && 
         <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', maxHeight: `${plugin && endpoint ? '50%' : '100%'}`, width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
-          <div className="MbfWindowHeader">
-            <div className="MbfWindowHeaderText" style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-              <p style={{margin: '0px', padding: '0px'}}>Registered devices</p>
+          <div className="MbfWindowHeader" style={{ justifyContent: 'space-between' }}>
+            <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Registered devices</p>
+            <div className="MbfWindowHeaderFooterIcons">
               <IconButton onClick={handleDialogDevicesToggle} aria-label="Configure Columns" style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}}>
                 <Tooltip title="Configure columns">
                   <SettingsIcon style={{ color: 'var(--header-text-color)', fontSize: '19px' }}/>
@@ -519,8 +519,8 @@ function Devices() {
           <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
             <DevicesTable data={filteredDevices} columnVisibility={devicesColumnVisibility} setPlugin={setPlugin} setEndpoint={setEndpoint} setDeviceName={setDeviceName}/>
           </div>
-          <div className="MbfWindowFooter" style={{height: '', padding: '0', borderTop: '1px solid var(--table-border-color)'}}>
-            <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total devices: {filteredDevices.length.toString()}</p>
+          <div className="MbfWindowFooter" style={{ borderTop: '1px solid var(--table-border-color)', justifyContent: 'flex-start' }}>
+            <p className="MbfWindowFooterText" style={{fontWeight: 'normal', textAlign: 'left'}}>Total devices: {filteredDevices.length.toString()}</p>
           </div>
         </div>
       }

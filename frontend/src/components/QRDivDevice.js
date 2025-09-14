@@ -3,7 +3,7 @@ import { useContext, useEffect, useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 // Frontend
-//import { debug } from '../App';
+import { debug } from '../App';
 import { WebSocketContext } from './WebSocketProvider';
 
 // @mui/material
@@ -24,7 +24,7 @@ const iconBtnSx = {
   '&:focus-visible': { outline: '2px solid var(--primary-color)', outlineOffset: '2px' }
 };
 
-const debug = true; // Set to true to enable debug logs
+// const debug = true; // Set to true to enable debug logs
 
 // Format manual pairing code as 4-3-4 (0000-000-0000); non-digit characters are stripped.
 const formatManualCode = (code) => {
@@ -45,9 +45,9 @@ export const QRDivDevice = ({ id, open, onClose }) => {
   const advertiseTimeoutRef = useRef(null);
 
   const handleCommissionClick = () => {
-    if (debug) console.log(`QRDivDevice sent matter commission for node "${matter.id}"`);
+    if (debug) console.log(`QRDivDevice sent matter startCommission for node "${matter.id}"`);
     if (!matter) return;
-    sendMessage({ method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, commission: true } });
+    sendMessage({ method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, startCommission: true } });
   };
 
   const handleStopCommissionClick = () => {

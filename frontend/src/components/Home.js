@@ -34,6 +34,7 @@ function Home() {
   const [changelog, setChangelog] = useState('');
   const [showChangelog, setShowChangelog] = useState(false);
   const [browserRefresh, setBrowserRefresh] = useState(false);
+  const [storeId, setStoreId] = useState(null);
   // Contexts
   const { addListener, removeListener, online, sendMessage, logFilterLevel, logFilterSearch, autoScroll, getUniqueId } = useContext(WebSocketContext);
   // Refs
@@ -41,11 +42,15 @@ function Home() {
 
   const handleSelectPlugin = useCallback((plugin) => {
     if (debug) console.log('handleSelectPlugin plugin:', plugin.name);
+    console.log('Home: handleSelectPlugin plugin:', plugin.name);
+    setStoreId(plugin.matter?.id);
     if (!selectPlugin) {
       setSelectPlugin(plugin);
     } else {
       if(selectPlugin.name === plugin.name) setSelectPlugin(undefined);
-      else setSelectPlugin(plugin);
+      else {
+        setSelectPlugin(plugin);
+      }
     }
   }, [selectPlugin]);
 
@@ -63,6 +68,9 @@ function Home() {
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
           setSelectPlugin(undefined);
+          if (msg.response.matterbridgeInformation.bridgeMode === 'bridge') {
+            setStoreId(msg.response.matterbridgeInformation.matter.id);
+          }
           if(msg.response.matterbridgeInformation.matterbridgeVersion) {
             setChangelog(`https://github.com/Luligu/matterbridge/blob/${msg.response.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main' }/CHANGELOG.md`);
           }
@@ -117,7 +125,7 @@ function Home() {
     <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
       {/* Left column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
-        <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectPlugin}/>
+        <QRDiv id={storeId}/>
         <SystemInfoTable systemInfo={systemInfo} compact={true}/>
         {/* matterbridgeInfo.bridgeMode === 'childbridge' && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/> */}
       </div>
