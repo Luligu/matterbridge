@@ -1623,7 +1623,21 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
    */
-  async configureColorControlMode(colorMode: ColorControl.EnhancedColorMode) {
+  async configureColorControlMode(colorMode: ColorControl.ColorMode) {
+    if (isValidNumber(colorMode, ColorControl.ColorMode.CurrentHueAndCurrentSaturation, ColorControl.ColorMode.ColorTemperatureMireds)) {
+      await this.setAttribute(ColorControl.Cluster.id, 'colorMode', colorMode, this.log);
+      await this.setAttribute(ColorControl.Cluster.id, 'enhancedColorMode', colorMode as unknown as ColorControl.EnhancedColorMode, this.log);
+    }
+  }
+
+  /**
+   * Configures the enhanced color control mode for the device.
+   *
+   * @param {ColorControl.EnhancedColorMode} colorMode - The enhanced color mode to set.
+   *
+   * @remarks colorMode and enhancedColorMode persist across restarts.
+   */
+  async configureEnhancedColorControlMode(colorMode: ColorControl.EnhancedColorMode) {
     if (isValidNumber(colorMode, ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation, ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation)) {
       await this.setAttribute(ColorControl.Cluster.id, 'colorMode', colorMode === ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation ? ColorControl.ColorMode.CurrentHueAndCurrentSaturation : colorMode, this.log);
       await this.setAttribute(ColorControl.Cluster.id, 'enhancedColorMode', colorMode, this.log);
