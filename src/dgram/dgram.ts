@@ -164,7 +164,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    *
    * @param {string} networkInterface - The name of the network interface to retrieve the IPv4 address from. If not specified, the first external IPv4 interface will be used.
    * @returns {string | undefined} The IPv4 address of the specified network interface or the first external IPv4 interface.
-   * @throws Error if no suitable interface or address is found.
+   * @throws {Error} if no suitable interface or address is found.
    */
   getIpv4InterfaceAddress(networkInterface?: string): string | undefined {
     // Normalize the interface name: treat an empty string as undefined.

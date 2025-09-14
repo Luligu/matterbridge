@@ -184,7 +184,7 @@ export class Coap extends Multicast {
    *
    * @param {Buffer} msg - The Buffer containing the raw CoAP message.
    * @returns {CoapMessage} A parsed CoAP message object.
-   * @throws Error if the message is malformed.
+   * @throws {Error} if the message is malformed.
    */
   decodeCoapMessage(msg: Buffer): CoapMessage {
     // A valid CoAP message must have at least 4 bytes for the header.
@@ -295,7 +295,7 @@ export class Coap extends Multicast {
    *
    * @param {CoapMessage} msg - The CoAP message to encode.
    * @returns {Buffer} A Buffer representing the encoded CoAP message.
-   * @throws Error if the message is malformed.
+   * @throws {Error} if the message is malformed.
    */
   encodeCoapMessage(msg: CoapMessage): Buffer {
     const parts: Buffer[] = [];
