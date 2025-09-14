@@ -15,7 +15,7 @@ import { Identify, OnOff, PowerSource, TemperatureControl, TemperatureMeasuremen
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { Cooktop } from './cooktop.js';
 

@@ -2,11 +2,15 @@ name: Node.js CI
 
 on:
   push:
+    branches: [main, dev]
     paths-ignore:
+      - 'docs/**' # any file under docs/
       - 'screenshot/**' # any file under screenshot/
       - '**/*.md' # any .md anywhere
   pull_request:
+    branches: [main, dev]
     paths-ignore:
+      - 'docs/**' # any file under docs/
       - 'screenshot/**' # any file under screenshot/
       - '**/*.md' # any .md anywhere
   workflow_dispatch:

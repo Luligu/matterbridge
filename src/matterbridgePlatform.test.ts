@@ -8,10 +8,9 @@ const HOMEDIR = path.join('jest', NAME);
 process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR];
 
 import path from 'node:path';
-import { rmSync } from 'node:fs';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, CYAN, db, er, LogLevel, pl, wr } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, er, LogLevel, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 import { Descriptor } from '@matter/main/clusters/descriptor';
 
@@ -19,33 +18,10 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;
@@ -99,7 +75,7 @@ describe('Matterbridge platform', () => {
   }, 60000);
 
   test('should have created an instance of NodeStorageManager', async () => {
-    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
+    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     expect(platform).toBeDefined();
     expect(platform).toBeInstanceOf(MatterbridgePlatform);
     expect(platform.storage).toBeDefined();
@@ -300,18 +276,18 @@ describe('Matterbridge platform', () => {
 
   it('should not create storage manager without a name', async () => {
     expect(() => {
-      new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: undefined, type: 'type', debug: false, unregisterOnShutdown: false });
+      new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: undefined as any, type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     }).toThrow();
   });
 
   it('should not create storage manager with name empty', async () => {
     expect(() => {
-      new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: '', type: 'type', debug: false, unregisterOnShutdown: false });
+      new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: '', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     }).toThrow();
   });
 
   it('should save the select', async () => {
-    let platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    let platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
     expect(platform.context).toBeDefined();
@@ -333,7 +309,7 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Saving 100 selectEntity...`);
     loggerLogSpy.mockClear();
 
-    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
     expect(platform.context).toBeDefined();
@@ -354,7 +330,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('should clear the selects', async () => {
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
     expect(platform.context).toBeDefined();
@@ -371,7 +347,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('should clear the device selects', async () => {
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
     expect(platform.context).toBeDefined();
@@ -383,7 +359,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('should clear the entity selects', async () => {
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
     expect(platform.context).toBeDefined();
@@ -395,7 +371,7 @@ describe('Matterbridge platform', () => {
   });
 
   it('should update a not existing entity selects', async () => {
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
     expect(platform.context).toBeDefined();
@@ -414,7 +390,7 @@ describe('Matterbridge platform', () => {
   });
 
   it('should update an existing entity selects', async () => {
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
     expect(platform.context).toBeDefined();
@@ -601,12 +577,12 @@ describe('Matterbridge platform', () => {
 
   test('onAction should log a message', async () => {
     await platform.onAction('Test');
-    await platform.onAction('Test', 'value', 'id', {});
+    await platform.onAction('Test', 'value', 'id', {} as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onAction.`), undefined);
   });
 
   test('onConfigChanged should log a message', async () => {
-    await platform.onConfigChanged({});
+    await platform.onConfigChanged({} as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onConfigChanged`));
   });
 
@@ -749,7 +725,7 @@ describe('Matterbridge platform', () => {
 
   test('destroyInstance()', async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
+    await matterbridge.destroyInstance(10, 10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);

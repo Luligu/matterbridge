@@ -7,76 +7,20 @@ process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', 
 
 import os from 'node:os';
 import path from 'node:path';
-import { rmSync } from 'node:fs';
 
 import { jest } from '@jest/globals';
-import { FabricId, FabricIndex, NodeId, SessionsBehavior, VendorId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat } from '@matter/main';
+import { FabricId, FabricIndex, NodeId, SessionsBehavior, VendorId, LogLevel as MatterLogLevel } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
 import { AnsiLogger, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
 import { getParameter, hasParameter } from './utils/export.js';
 import { Matterbridge } from './matterbridge.js';
-import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
+import { plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
 
-const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
-  // eslint-disable-next-line no-console
-  console.log('mockImplementation of process.exit() called');
-  return undefined as never;
-});
-
-// const createDirectorySpy = jest.spyOn(createDirectory, 'createDirectory');
-
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logs
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-function setDebug(debug: boolean) {
-  if (debug) {
-    loggerLogSpy.mockRestore();
-    consoleLogSpy.mockRestore();
-    consoleDebugSpy.mockRestore();
-    consoleInfoSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    consoleLogSpy = jest.spyOn(console, 'log');
-    consoleDebugSpy = jest.spyOn(console, 'debug');
-    consoleInfoSpy = jest.spyOn(console, 'info');
-    consoleWarnSpy = jest.spyOn(console, 'warn');
-    consoleErrorSpy = jest.spyOn(console, 'error');
-  } else {
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-  }
-}
-
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge', () => {
   beforeEach(async () => {

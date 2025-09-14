@@ -20,11 +20,11 @@ jest.unstable_mockModule('node:child_process', async () => {
 });
 
 import { ExecException, execSync } from 'node:child_process';
-import { promises as fs, promises, rmSync } from 'node:fs';
+import { promises as fs, promises } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, db, er, LogLevel, nf, nt } from 'node-ansi-logger';
+import { db, er, LogLevel, nf, nt } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
@@ -32,57 +32,10 @@ import { PluginManager } from './pluginManager.js';
 import { waiter, wait } from './utils/export.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
+import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-function setDebug(debug: boolean) {
-  if (debug) {
-    loggerLogSpy.mockRestore();
-    consoleLogSpy.mockRestore();
-    consoleDebugSpy.mockRestore();
-    consoleInfoSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    consoleLogSpy = jest.spyOn(console, 'log');
-    consoleDebugSpy = jest.spyOn(console, 'debug');
-    consoleInfoSpy = jest.spyOn(console, 'info');
-    consoleWarnSpy = jest.spyOn(console, 'warn');
-    consoleErrorSpy = jest.spyOn(console, 'error');
-  } else {
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-  }
-}
-
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('PluginManager', () => {
   let matterbridge: Matterbridge;
@@ -214,7 +167,6 @@ describe('PluginManager', () => {
   });
 
   test('async forEach to not throw', async () => {
-    loggerLogSpy.mockClear();
     let count = 0;
     await plugins.forEach(async (plugin: RegisteredPlugin) => {
       count++;
@@ -750,7 +702,7 @@ describe('PluginManager', () => {
       throw new Error('Test write error');
     });
     let config = await plugins.loadConfig(plugin);
-    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', debug: false, unregisterOnShutdown: false });
+    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating config file ${configFileName} for plugin ${plg}${plugin.name}${er}: Test write error`));
     loggerLogSpy.mockClear();
 
@@ -760,14 +712,14 @@ describe('PluginManager', () => {
       throw new Error('Test access error');
     });
     config = await plugins.loadConfig(plugin);
-    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', debug: false, unregisterOnShutdown: false });
+    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error accessing config file ${configFileName} for plugin ${plg}${plugin.name}${er}: Test access error`));
     loggerLogSpy.mockClear();
 
     // Test create new config file
     await deleteConfig();
     config = await plugins.loadConfig(plugin);
-    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', debug: false, unregisterOnShutdown: false });
+    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Config file ${configFileName} for plugin ${plg}${plugin.name}${db} does not exist, creating new config file...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Default config file ${defaultConfigFile} for plugin ${plg}${plugin.name}${db} does not exist, creating new config file...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Created config file ${configFileName} for plugin ${plg}${plugin.name}${db}.`);
@@ -775,16 +727,16 @@ describe('PluginManager', () => {
 
     // Test load config file
     config = await plugins.loadConfig(plugin);
-    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', debug: false, unregisterOnShutdown: false });
+    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded config file ${configFileName} for plugin ${plg}${plugin.name}${db}.`);
     loggerLogSpy.mockClear();
 
     // Test default values false for debug and unregisterOnShutdown
-    config.debug = undefined;
-    config.unregisterOnShutdown = undefined;
+    (config as any).debug = undefined;
+    (config as any).unregisterOnShutdown = undefined;
     await plugins.saveConfigFromJson(plugin, config);
     config = await plugins.loadConfig(plugin);
-    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', debug: false, unregisterOnShutdown: false });
+    expect(config).toEqual({ name: 'matterbridge-example-accessory-platform', type: 'AnyPlatform', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     loggerLogSpy.mockClear();
 
     // Test default config file in plugin package path
@@ -852,7 +804,7 @@ describe('PluginManager', () => {
 
     // Test save config error from json
     let config = await plugins.loadConfig(plugin);
-    config.name = undefined;
+    (config as any).name = undefined;
     loggerLogSpy.mockClear();
     await plugins.saveConfigFromJson(plugin, config);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error saving config file for plugin ${plg}${plugin.name}${er}.`), expect.any(Object));

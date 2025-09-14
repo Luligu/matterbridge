@@ -9,7 +9,7 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString(), '-debug'];
 
-import { copyFileSync, readFileSync, rmSync } from 'node:fs';
+import { copyFileSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 jest.unstable_mockModule('node:http', async () => {
@@ -25,7 +25,7 @@ const http = await import('node:http');
 const createServerMock = http.createServer as jest.MockedFunction<typeof http.createServer>;
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, db, LogLevel, rs, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
+import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
 import { WebSocket } from 'ws';
 // Dynamically import after mocking
 const { Matterbridge } = await import('./matterbridge.ts');
@@ -37,60 +37,13 @@ import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
 import { wait } from './utils/wait.js';
+import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
 
 const startSpy = jest.spyOn(Frontend.prototype, 'start');
 const stopSpy = jest.spyOn(Frontend.prototype, 'stop');
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-function setDebug(debug: boolean) {
-  if (debug) {
-    loggerLogSpy.mockRestore();
-    consoleLogSpy.mockRestore();
-    consoleDebugSpy.mockRestore();
-    consoleInfoSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    consoleLogSpy = jest.spyOn(console, 'log');
-    consoleDebugSpy = jest.spyOn(console, 'debug');
-    consoleInfoSpy = jest.spyOn(console, 'info');
-    consoleWarnSpy = jest.spyOn(console, 'warn');
-    consoleErrorSpy = jest.spyOn(console, 'error');
-  } else {
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-  }
-}
-
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge frontend', () => {
   let matterbridge: MatterbridgeType;
@@ -189,50 +142,74 @@ describe('Matterbridge frontend', () => {
     expect((frontend as any).getPowerSource({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeUndefined();
 
     // Wired ac
-    let device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } };
-    device['hasClusterServer'] = jest.fn(() => true);
-    device['getAttribute'] = jest.fn((cluster: number, attribute: string) => {
+    let device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
+    device.hasClusterServer = jest.fn(() => true);
+    device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { wired: true };
       if (cluster === PowerSource.Cluster.id && attribute === 'wiredCurrentType') return PowerSource.WiredCurrentType.Ac;
     });
     expect((frontend as any).getPowerSource(device)).toBe('ac');
 
     // Battery
-    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } };
-    device['hasClusterServer'] = jest.fn(() => true);
-    device['getAttribute'] = jest.fn((cluster: number, attribute: string) => {
+    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
+    device.hasClusterServer = jest.fn(() => true);
+    device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { battery: true };
       if (cluster === PowerSource.Cluster.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
     });
     expect((frontend as any).getPowerSource(device)).toBe('ok');
 
     // Not wired nor battery
-    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } };
-    device['hasClusterServer'] = jest.fn(() => true);
-    device['getAttribute'] = jest.fn((cluster: number, attribute: string) => {
+    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
+    device.hasClusterServer = jest.fn(() => true);
+    device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return {};
     });
     expect((frontend as any).getPowerSource(device)).toBe(undefined);
 
     // Child endpoints
-    device['hasClusterServer'].mockImplementationOnce(() => false);
-    device['getChildEndpoints'] = jest.fn(() => [device]);
+    device.hasClusterServer.mockImplementationOnce(() => false);
+    device.getChildEndpoints = jest.fn(() => [device]);
     expect((frontend as any).getPowerSource(device)).toBe(undefined);
+  });
+
+  test('Frontend getPlugins', () => {
+    matterbridge.hasCleanupStarted = true;
+    expect((frontend as any).getPlugins()).toEqual([]);
+    matterbridge.hasCleanupStarted = false;
+  });
+
+  test('Frontend getDevices', async () => {
+    matterbridge.hasCleanupStarted = true;
+    expect(await (frontend as any).getDevices()).toEqual([]);
+    matterbridge.hasCleanupStarted = false;
   });
 
   test('Frontend getMatterDataFromDevice', () => {
     const device = {
       mode: 'server',
-      serverNode: { state: { basicInformation: { serialNumber: '12345' }, commissioning: { commissioned: true, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: '123' }, fabrics: {} }, sessions: { sessions: {} } } },
+      serverNode: {
+        id: 'storeId',
+        state: {
+          basicInformation: { serialNumber: '12345' },
+          commissioning: { commissioned: true, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: '123' }, fabrics: {} },
+          administratorCommissioning: { windowStatus: 0 },
+          sessions: { sessions: {} },
+        },
+      },
       serverContext: {},
     };
     expect((frontend as any).getMatterDataFromDevice(device)).toEqual({
+      advertiseTime: 0,
+      advertising: false,
       commissioned: true,
       fabricInformations: [],
+      id: 'storeId',
       manualPairingCode: '123',
       qrPairingCode: 'QR',
       sessionInformations: [],
       serialNumber: '12345',
+      windowStatus: 0,
     });
   });
 
@@ -479,9 +456,6 @@ describe('Matterbridge frontend', () => {
   test('Frontend.start() -ssl with p12 cert', async () => {
     process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
-    // setDebug(true);
-    // frontend.logLevel = LogLevel.DEBUG;
-
     copyFileSync(path.join('src/mock/certs/server.p12'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
     copyFileSync(path.join('src/mock/certs/server.pass'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pass'));
 
@@ -507,7 +481,7 @@ describe('Matterbridge frontend', () => {
     });
     await frontend.start(FRONTEND_PORT);
 
-    setDebug(false);
+    setDebug(false); // Restore the mocks!!!
 
     await new Promise<void>((resolve) => {
       frontend.on('server_listening', (protocol, port) => {

@@ -18,7 +18,7 @@ import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/main/
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, createTestEnvironment, deleteDevice, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, deleteDevice, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { LaundryDryer } from './laundryDryer.js';
 import { MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';

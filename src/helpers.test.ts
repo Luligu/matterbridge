@@ -1,6 +1,9 @@
 // src\helpers.test.ts
 
 /* eslint-disable no-console */
+const MATTER_PORT = 6004;
+const NAME = 'Helpers';
+const HOMEDIR = path.join('jest', NAME);
 
 // Mock the function getShellySysUpdate and getShellyMainUpdate
 jest.unstable_mockModule('./shelly.js', () => ({
@@ -13,7 +16,6 @@ const { getShelly, postShelly } = await import('./shelly.js');
 (getShelly as jest.MockedFunction<(api: string, timeout?: number) => Promise<void>>).mockResolvedValue();
 (postShelly as jest.MockedFunction<(api: string, data: any, timeout?: number) => Promise<void>>).mockResolvedValue();
 
-import { rmSync } from 'node:fs';
 import path from 'node:path';
 
 import { DeviceTypeId, VendorId, ServerNode, Endpoint, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Logger } from '@matter/main';
@@ -27,33 +29,10 @@ import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Matterbridge } from './matterbridge.js';
+import { consoleLogSpy, setupTest } from './utils/jestHelpers.js';
 
-const MATTER_PORT = 6004;
-const HOMEDIR = path.join('jest', 'Helpers');
-
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge ' + HOMEDIR, () => {
   const log = new AnsiLogger({ logName: HOMEDIR, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
@@ -82,16 +61,13 @@ describe('Matterbridge ' + HOMEDIR, () => {
   } as unknown as Matterbridge;
 
   beforeAll(async () => {
-    // Cleanup the matter environment
-    rmSync(HOMEDIR, { recursive: true, force: true });
-
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
     environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
-  }, 30000);
+  });
 
   beforeEach(async () => {
     // Clear all mocks

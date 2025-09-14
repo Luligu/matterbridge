@@ -9,10 +9,9 @@ const HOMEDIR = path.join('jest', NAME);
 process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'info', '-matterlogger', 'info'];
 
 import path from 'node:path';
-import { rmSync } from 'node:fs';
 
 import { jest } from '@jest/globals';
-import { Lifecycle, EndpointNumber, ActionContext, ServerNode, Endpoint, ServerNodeStore } from '@matter/main';
+import { Lifecycle, EndpointNumber, ActionContext } from '@matter/main';
 import {
   BooleanState,
   BooleanStateCluster,
@@ -52,7 +51,7 @@ import {
   ThermostatUserInterfaceConfigurationServer,
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
-import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
+import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -77,32 +76,10 @@ import {
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
-import { wait } from './utils/wait.js';
-import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jest-utils/jestHelpers.js';
+import { addDevice, assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, loggerLogSpy, setupTest } from './utils/jestHelpers.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logs
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
+// Setup the test environment
+setupTest(NAME, false);
 
 // Setup the matter and test environment
 createTestEnvironment(HOMEDIR);
@@ -137,15 +114,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(matterbridge).toBeDefined();
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
-    expect(matterbridge.serverNode).toBeDefined();
-    expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
-    expect(matterbridge.serverNode?.construction.status).toBe(Lifecycle.Status.Active);
-    expect(matterbridge.aggregatorNode).toBeDefined();
-    expect(matterbridge.aggregatorNode?.lifecycle.isReady).toBeTruthy();
-    expect(matterbridge.aggregatorNode?.construction.status).toBe(Lifecycle.Status.Active);
-    expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-    expect(device.lifecycle.isReady).toBeTruthy();
-    expect(device.construction.status).toBe(Lifecycle.Status.Active);
+    if (!matterbridge.aggregatorNode) throw new Error('AggregatorNode is not defined');
+    await addDevice(matterbridge.aggregatorNode, device);
     if (device.uniqueStorageKey === undefined) return;
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`\x1B[39mMatterbridge.Matterbridge.${device.uniqueStorageKey.replaceAll(' ', '')} \x1B[0mready`));
   }

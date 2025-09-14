@@ -860,7 +860,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
           else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
           else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
-          else config = { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
+          else config = { name: plugin.name, type: plugin.type, version: '1.0.0', debug: false, unregisterOnShutdown: false };
         }
         try {
           await promises.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
@@ -873,7 +873,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         }
       } else {
         logError(this.log, `Error accessing config file ${configFile} for plugin ${plg}${plugin.name}${er}`, err);
-        return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
+        return { name: plugin.name, type: plugin.type, version: '1.0.0', debug: false, unregisterOnShutdown: false };
       }
     }
   }

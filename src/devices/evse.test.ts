@@ -18,7 +18,7 @@ import { EnergyEvseServer, EnergyEvseModeServer, DeviceEnergyManagementModeServe
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeDeviceEnergyManagementModeServer } from '../matterbridgeBehaviors.js';
-import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { Evse, MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './evse.js';
 

@@ -28,10 +28,9 @@ process.argv = [
 ];
 
 import path from 'node:path';
-import { rmSync } from 'node:fs';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import WebSocket from 'ws';
 import { LogLevel as MatterLogLevel } from '@matter/main';
 import { Identify } from '@matter/main/clusters';
@@ -43,6 +42,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Frontend, WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.js';
 import { wait, waiter } from './utils/wait.js';
 import { PluginManager } from './pluginManager.js';
+import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
@@ -55,58 +55,10 @@ jest.unstable_mockModule('./shelly.ts', () => ({
 }));
 const { triggerShellySysUpdate, triggerShellyMainUpdate, createShellySystemLog, triggerShellySoftReset, triggerShellyHardReset, triggerShellyReboot, triggerShellyChangeIp } = await import('./shelly.ts');
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-function setDebug(debug: boolean) {
-  if (debug) {
-    loggerLogSpy.mockRestore();
-    consoleLogSpy.mockRestore();
-    consoleDebugSpy.mockRestore();
-    consoleInfoSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    consoleLogSpy = jest.spyOn(console, 'log');
-    consoleDebugSpy = jest.spyOn(console, 'debug');
-    consoleInfoSpy = jest.spyOn(console, 'info');
-    consoleWarnSpy = jest.spyOn(console, 'warn');
-    consoleErrorSpy = jest.spyOn(console, 'error');
-  } else {
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-  }
-}
+// Setup the test environment
+setupTest(NAME, false);
 
 let WS_ID = 10050;
-
-// Cleanup the matter environment
-rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge frontend', () => {
   let matterbridge: Matterbridge;
@@ -322,7 +274,7 @@ describe('Matterbridge frontend', () => {
   test('Websocket API send bad json message', async () => {
     ws.send('This is not a JSON message');
     await wait(1000);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Error parsing message/), expect.stringMatching(/^Unexpected token/));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Error processing message/));
   });
 
   test('Websocket API send wrong message', async () => {
@@ -444,6 +396,24 @@ describe('Matterbridge frontend', () => {
     const msg = await waitMessageId(++WS_ID, '/api/stopadvertise', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/stopadvertise', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
     expect(stopAdvertise).toHaveBeenCalled();
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/matter', async () => {
+    let msg = await waitMessageId(++WS_ID, '/api/matter', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/matter', params: {} });
+    expect(msg.error).toBe('Wrong parameter id in /api/matter');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+
+    msg = await waitMessageId(++WS_ID, '/api/matter', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/matter', params: { id: 'unknown' } });
+    expect(msg.error).toBe('Unknown server node id in /api/matter');
+
+    msg = await waitMessageId(++WS_ID, '/api/matter', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/matter',
+      params: { id: 'Matterbridge', server: true, commission: true, stopCommission: true, advertise: true, removeFabric: 1 },
+    });
     expect(msg.success).toBe(true);
   });
 
@@ -1151,6 +1121,8 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket SendMessage', async () => {
+    matterbridge.frontend.wssSendMessage('', '', '', ``);
+
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
     const received = new Promise((resolve) => {

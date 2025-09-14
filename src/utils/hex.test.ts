@@ -8,11 +8,11 @@ describe('bufferToHex()', () => {
   });
 
   it('should convert an empty buffer to an empty string', () => {
-    expect(bufferToHex(new Uint8Array())).toBe('');
+    expect(bufferToHex(new Uint8Array().buffer)).toBe('');
   });
 
   it('should convert a Uint8Array to lowercase hex', () => {
-    const arr = new Uint8Array([0, 15, 16, 255]);
+    const arr = new Uint8Array([0, 15, 16, 255]).buffer;
     expect(bufferToHex(arr)).toBe('000f10ff');
   });
 
@@ -52,7 +52,7 @@ describe('hexToBuffer()', () => {
 
   it('round-trips correctly', () => {
     const original = new Uint8Array([0, 127, 128, 255]);
-    const hex = bufferToHex(original);
+    const hex = bufferToHex(original.buffer);
     const round = hexToBuffer(hex);
     expect(round).toEqual(original);
   });
@@ -251,7 +251,7 @@ describe('extractPrivateKeyRaw()', () => {
     expect(rawKey.length).toBe(32);
 
     // Convert to hex for validation
-    const hexKey = bufferToHex(rawKey);
+    const hexKey = bufferToHex(rawKey.buffer);
     expect(hexKey).toHaveLength(64); // 32 bytes = 64 hex characters
     expect(hexKey).toMatch(/^[0-9a-f]{64}$/); // Only lowercase hex characters
   });
@@ -301,7 +301,7 @@ describe('extractPrivateKeyRaw()', () => {
 
     // We only test EC PRIVATE KEY format since that's what we have in our test data
     // PKCS#8 format would require a different test key that we don't have
-    expect(bufferToHex(rawKeyEC)).toMatch(/^[0-9a-f]{64}$/);
+    expect(bufferToHex(rawKeyEC.buffer)).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('should handle keys with extra whitespace', () => {

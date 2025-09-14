@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 // React
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 
 // Frontend
 import { debug } from '../App';

@@ -19,7 +19,7 @@ import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-mana
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../jest-utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { BatteryStorage } from './batteryStorage.js';
 

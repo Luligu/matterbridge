@@ -27,6 +27,7 @@ import { PlatformConfig } from './matterbridgePlatform.js';
 export const zigbee2mqtt_config: PlatformConfig = {
   name: 'matterbridge-zigbee2mqtt',
   type: 'DynamicPlatform',
+  version: '1.0.0',
   host: 'localhost',
   username: '',
   password: '',
@@ -46,6 +47,7 @@ export const zigbee2mqtt_config: PlatformConfig = {
 export const somfytahoma_config: PlatformConfig = {
   name: 'matterbridge-somfy-tahoma',
   type: 'DynamicPlatform',
+  version: '1.0.0',
   username: '',
   password: '',
   service: 'somfy_europe',
@@ -59,6 +61,7 @@ export const somfytahoma_config: PlatformConfig = {
 export const shelly_config: PlatformConfig = {
   name: 'matterbridge-shelly',
   type: 'DynamicPlatform',
+  version: '1.0.0',
   username: '',
   password: '',
   switchList: [],

@@ -7,6 +7,10 @@
  * @license Apache-2.0
  */
 
+const MATTER_PORT = 0;
+const NAME = 'Error';
+const HOMEDIR = path.join('jest', NAME);
+
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
@@ -14,10 +18,6 @@ import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
 
 import { logError, inspectError } from './error.js';
-
-const MATTER_PORT = 0;
-const NAME = 'Error';
-const HOMEDIR = path.join('jest', NAME);
 
 // Cleanup the matter environment
 rmSync(HOMEDIR, { recursive: true, force: true });
