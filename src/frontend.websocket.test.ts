@@ -412,7 +412,7 @@ describe('Matterbridge frontend', () => {
       dst: 'Matterbridge',
       src: 'Jest test',
       method: '/api/matter',
-      params: { id: 'Matterbridge', server: true, commission: true, stopCommission: true, advertise: true, removeFabric: 1 },
+      params: { id: 'Matterbridge', server: true, startCommission: true, stopCommission: true, advertise: true, removeFabric: 1 },
     });
     expect(msg.success).toBe(true);
   });

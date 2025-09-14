@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.2.0
+ * @version 1.3.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -1650,7 +1650,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.log.debug(`*Sending data for node ${data.params.id}`);
           this.wssSendRefreshRequired('matter', { matter: { ...this.matterbridge.getServerNodeData(serverNode) } });
         }
-        if (data.params.commission) {
+        if (data.params.startCommission) {
           await serverNode.env.get(DeviceCommissioner)?.allowBasicCommissioning();
           this.matterbridge.advertisingNodes.set(serverNode.id, Date.now());
           this.log.debug(`*Commissioning has been sent for node ${data.params.id}`);
