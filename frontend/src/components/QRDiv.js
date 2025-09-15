@@ -15,7 +15,7 @@ import { IconButton, Tooltip, Button }  from '@mui/material';
 
 // @mdi/js
 import Icon from '@mdi/react';
-import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForever } from '@mdi/js';
+import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForever  } from '@mdi/js';
 
 // const debug = true; // Debug flag for this component
 
@@ -158,12 +158,12 @@ export function QRDiv({ id }) {
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
           <div className="MbfWindowHeaderFooterIcons">
             <Tooltip title="Send again the mDNS advertisement" arrow>
-              <IconButton aria-label="send advertising" size="small" onClick={handleAdvertiseClick} sx={{ ...iconBtnSx, color: 'var(--primary-color)' }}>
+              <IconButton aria-label="send advertising" size="small" onClick={handleAdvertiseClick} sx={{ color: 'var(--header-text-color)' }}>
                 <Icon path={mdiRestart} size={1} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Turn off pairing" arrow>
-              <IconButton aria-label="stop pairing" size="small" onClick={handleStopCommissioningClick} sx={{ ...iconBtnSx, color: 'var(--primary-color)' }}>
+              <IconButton aria-label="stop pairing" size="small" onClick={handleStopCommissioningClick} sx={{ color: 'var(--header-text-color)' }}>
                 <Icon path={mdiShareOffOutline} size={1} />
               </IconButton>
             </Tooltip>
@@ -191,12 +191,12 @@ export function QRDiv({ id }) {
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Paired fabrics</p>
           <div className="MbfWindowHeaderFooterIcons">
             <Tooltip title="Send again the mDNS advertisement" arrow>
-              <IconButton aria-label="send advertising" size="small" onClick={handleAdvertiseClick} sx={{ ...iconBtnSx, color: 'var(--primary-color)' }}>
+              <IconButton aria-label="send advertising" size="small" onClick={handleAdvertiseClick} sx={{ color: 'var(--header-text-color)' }}>
                 <Icon path={mdiRestart} size={1} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Turn on pairing" arrow>
-              <IconButton aria-label="start pairing" size="small" onClick={handleStartCommissioningClick} sx={{ ...iconBtnSx, color: 'var(--primary-color)' }}>
+              <IconButton aria-label="start pairing" size="small" onClick={handleStartCommissioningClick} sx={{ color: 'var(--header-text-color)' }}>
                 <Icon path={mdiShareOutline} size={1} />
               </IconButton>
             </Tooltip>
@@ -206,8 +206,6 @@ export function QRDiv({ id }) {
           <p className="MbfWindowHeaderText thin-scroll" style={{ overflowX: 'auto', maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
           {matter.fabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
-
-
               <div style={{ marginLeft: '20px', marginBottom: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '20px', alignItems: 'center' }}>
                 <p className="status-blue" style={{ margin: '0px', padding: '3px 10px', width: '200px', fontSize: '14px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
                 <Tooltip title="Remove the fabric. You will need to remove it also from the controller." arrow>
@@ -216,8 +214,6 @@ export function QRDiv({ id }) {
                   </IconButton>
                 </Tooltip>
               </div>
-
-
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
               {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>

@@ -11,7 +11,7 @@ import { Dialog, DialogTitle, DialogContent, IconButton, Tooltip } from '@mui/ma
 
 // @mdi/js
 import Icon from '@mdi/react';
-import { mdiWindowClose, mdiShareAllOutline, mdiShareOffOutline, mdiRestart, mdiDeleteForever, mdiContentCopy } from '@mdi/js';
+import { mdiWindowClose, mdiShareOutline, mdiShareOffOutline, mdiRestart, mdiDeleteForever, mdiContentCopy } from '@mdi/js';
 
 // Reusable hover styling for all action icon buttons (mdi icons)
 const iconBtnSx = {
@@ -200,7 +200,7 @@ export const QRDivDevice = ({ id, open, onClose }) => {
             <div className="sub-header" style={{ gap: '5px' }}>
               <Tooltip title="Turn on pairing" arrow>
                 <IconButton aria-label="share" size="small" onClick={handleCommissionClick} sx={iconBtnSx}>
-                  <Icon path={mdiShareAllOutline} size={1} />
+                  <Icon path={mdiShareOutline} size={1} />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Close the window" arrow>
@@ -259,7 +259,7 @@ export const QRDivDevice = ({ id, open, onClose }) => {
             <div className="sub-header" style={{ gap: '5px' }}>
               <Tooltip title="Turn on pairing" arrow>
                 <IconButton aria-label="share" size="small" onClick={handleCommissionClick} sx={iconBtnSx}>
-                  <Icon path={mdiShareAllOutline} size={1} />
+                  <Icon path={mdiShareOutline} size={1} />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Close the window" arrow>

@@ -460,7 +460,6 @@ export function HomeDevices() {
   // Handle checkbox change to select/unselect a device
   const handleCheckboxChange = (event, device) => {
     /*if(debug)*/ console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
-    /*if(debug)*/ const start = Date.now();
     setMixedDevices(prev => { 
       const i = prev.findIndex(d => d.pluginName === device.pluginName && d.serial === device.serial); 
       if(i < 0) {
@@ -476,7 +475,6 @@ export function HomeDevices() {
     } else {
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
     }
-    /*if(debug)*/ console.log(`handleCheckboxChange: processed in ${Date.now() - start}ms`);
   };
 
   if(debug) console.log('HomeDevices rendering...');

@@ -8,20 +8,21 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "clean": "rimraf ./build",
+    "clean": "npx rimraf ./build",
     "cleanBuild": "npm run clean && npm run build",
-    "deepClean": "rimraf package-lock.json ./build ./node_modules",
+    "deepClean": "npx rimraf package-lock.json ./build ./node_modules",
     "deepCleanRebuild": "npm run deepClean && npm install && npm run build",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild",
-    "install:react": "npm install react react-dom react-router-dom react-scripts react-table",
+    "install:react": "npm install react react-dom react-router-dom react-scripts",
     "install:emotion": "npm install @emotion/react @emotion/styled",
-    "install:muimaterial": "npm install @mui/material@latest @mui/icons-material@latest",
+    "install:muimaterial": "npm install @mui/material @mui/icons-material",
     "install:mdi": "npm install @mdi/js @mdi/react",
     "install:roboto": "npm install @fontsource/roboto",
     "install:qrcode": "npm install qrcode.react",
     "install:notistack": "npm install notistack",
-    "install:rjsf": "npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8"
+    "install:rjsf": "npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8",
+    "install:react-table": "npm install react-table --force"
   },
   "eslintConfig": {
     "extends": [
@@ -61,17 +62,13 @@
     "@rjsf/core": "^5.24.8",
     "@rjsf/utils": "^5.24.8",
     "@rjsf/validator-ajv8": "^5.24.8",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
     "notistack": "^3.0.2",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router": "^7.3.0",
     "react-scripts": "^5.0.1",
-    "react-table": "^7.8.0",
-    "web-vitals": "^2.1.4"
+    "react-table": "^7.8.0"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
