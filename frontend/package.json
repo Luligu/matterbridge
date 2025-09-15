@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "2.7.7",
+  "version": "2.8.0",
   "private": true,
   "homepage": "./",
   "scripts": {
@@ -14,7 +14,7 @@
     "deepCleanRebuild": "npm run deepClean && npm install && npm run build",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild",
-    "install:react": "npm install react react-dom react-router-dom react-scripts",
+    "install:react": "npm install react@latest react-dom@latest react-router@latest react-router-dom@latest react-scripts@latest --force",
     "install:emotion": "npm install @emotion/react @emotion/styled",
     "install:muimaterial": "npm install @mui/material @mui/icons-material",
     "install:mdi": "npm install @mdi/js @mdi/react",

@@ -160,7 +160,6 @@
 
 ::-webkit-scrollbar-track {
   background: 'inherit';
-  /* var(--div-bg-color);*/
 }
 
 /* For Firefox (it uses scrollbar-color and scrollbar-width) */

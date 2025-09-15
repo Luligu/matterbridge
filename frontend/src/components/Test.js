@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 // React
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import { useContext, useEffect, useState, useRef } from 'react';
 
 // @mui/material
 import { Button } from '@mui/material';
@@ -14,6 +14,7 @@ import { Button } from '@mui/material';
 import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
+import MbfTable from './MbfTable';
 import { debug } from '../App';
 // const debug = true;
 
@@ -32,6 +33,7 @@ function Test() {
   const [_memory, setMemory] = useState(null);
   const [_uptime, setUptime] = useState(null);
   const uniqueId = useRef(null);
+  const [tableRows, setTableRows] = useState(() => demoRows);
 
   if(!uniqueId.current) {
     uniqueId.current = getUniqueId();
@@ -115,11 +117,13 @@ function Test() {
       sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      /*
       showSnackbarMessage('Test permanent message removal', 0);
       showSnackbarMessage('Test useEffect online received online (info)', 30, 'info');
       showSnackbarMessage('Test useEffect online received online (warning)', 30, 'warning');
       showSnackbarMessage('Test useEffect online received online (error)', 30, 'error');
       showSnackbarMessage('Test useEffect online received online (success)', 30, 'success');
+      */
     }
     if(debug) console.log('Test useEffect online mounted');
 
@@ -136,45 +140,32 @@ function Test() {
     <div className="MbfPageDiv" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
 
-        {/* First row: Header */}
-        {/*
-        <Paper sx={{ flex: 1, p: 2 }} elevation={3}>
-          <Typography variant="h4" align="center">
-            Matterbridge Dashboard
-          </Typography>
-        </Paper>
-        */}
-        {/* Second row: Three Papers for Memory, CPU, RSS */}
-        {/*
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Paper sx={{ flex: 1, p: 2 }} elevation={3}>
-            <Typography variant="h6" align="center">
-              Memory
-            </Typography>
-          </Paper>
-          <Paper sx={{ flex: 1, p: 2 }} elevation={3}>
-            <Typography variant="h6" align="center">
-              CPU
-            </Typography>
-          </Paper>
-          <Paper sx={{ flex: 1, p: 2 }} elevation={3}>
-            <Typography variant="h6" align="center">
-              RSS
-            </Typography>
-          </Paper>
-        </Box>
-        */}
-
         <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '256px', width: '256px', margin: '10px' }}/>
         <p>Welcome to the Test page of the Matterbridge frontend</p>
-
+        <div style={{ margin: '0', padding: '0', gap: '0', width: '1200px', maxWidth: '1200px', height: '600px', maxHeight: '600px', overflow: 'hidden', border: '1px solid #0004ffff' }}>
+          <MbfTable name="Test" columns={demoColumns} rows={tableRows} getRowKey={(row) => row.code} />
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
         <Button variant="contained" color="primary" onClick={() => {
           if(debug) console.log('Test button clicked');
           showSnackbarMessage('Test button clicked');
           closeSnackbarMessage('Refresh required');
           closeSnackbarMessage('Restart required');
           closeSnackbarMessage('Test permanent message removal');
-        }}>Test</Button>  
+        }}>Test</Button>
+        <Button variant="outlined" onClick={() => {
+          // Update a specific row (code: F123) to demonstrate selective re-render by key
+          setTableRows((prev) => {
+            const idx = prev.findIndex(r => r.code === 'F123');
+            if (idx === -1) return prev;
+            const target = prev[idx];
+            const updated = { ...target, population: (target.population || 0) + 1 };
+            const next = prev.slice();
+            next[idx] = updated;
+            return next;
+          });
+        }}>Update F123</Button>
+        </div>
 
       </div>  
     </div>
@@ -183,21 +174,24 @@ function Test() {
 
 export default Test;
 
-/*
-
-import * as React from 'react';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-
-const columns = [
-  { id: 'name', label: 'Name', minWidth: 170 },
-  { id: 'code', label: 'ISO\u00a0Code', minWidth: 100 },
+const demoColumns = [
+  { id: 'name', label: 'Name', minWidth: 50, maxWidth: 100, required: true },
+  { id: 'code', label: 'ISO\u00a0Code', minWidth: 100, render: (value, _rowKey) => (
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '2px 6px',
+        borderRadius: '8px',
+        backgroundColor: 'var(--chip-bg, #e6f4ff)',
+        color: 'var(--chip-fg, #0550ae)',
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        fontSize: '0.85em',
+      }}
+    >
+      {String(value)}
+    </span>
+  ) },
+  { id: 'isIsland', label: 'Island', minWidth: 80, align: 'center' },
   {
     id: 'population',
     label: 'Population',
@@ -217,78 +211,45 @@ const columns = [
     label: 'Density',
     minWidth: 170,
     align: 'right',
-    hidden: true,
+    hidden: false,
+    nosort: true,
     format: (value) => value.toFixed(2),
   },
 ];
 
-function createData(name, code, population, size) {
+function createData(name, code, population, size, isIsland) {
   const density = population / size;
-  return { name, code, population, size, density };
+  return { name, code, population, size, density, isIsland };
 }
 
-const rows = [
-  createData('India', 'IN', 1324171354, 3287263),
-  createData('China', 'CN', 1403500365, 9596961),
-  createData('Italy', 'IT', 60483973, 301340),
-  createData('United States', 'US', 327167434, 9833520),
-  createData('Canada', 'CA', 37602103, 9984670),
-  createData('Australia', 'AU', 25475400, 7692024),
-  createData('Germany', 'DE', 83019200, 357578),
-  createData('Ireland', 'IE', 4857000, 70273),
-  createData('Mexico', 'MX', 126577691, 1972550),
-  createData('Japan', 'JP', 126317000, 377973),
-  createData('France', 'FR', 67022000, 640679),
-  createData('United Kingdom', 'GB', 67545757, 242495),
-  createData('Russia', 'RU', 146793744, 17098246),
-  createData('Nigeria', 'NG', 200962417, 923768),
-  createData('Brazil', 'BR', 210147125, 8515767),
+const demoRows = [
+  createData('India', 'IN', 1324171354, 3287263, false),
+  createData('China', 'CN', 1403500365, 9596961, false),
+  createData('Italy', 'IT', 60483973, 301340, false),
+  createData('United States', 'US', 327167434, 9833520, false),
+  createData('Canada is a truly wonderful country', 'CA', 37602103, 9984670, false),
+  createData('Australia', 'AU', 25475400, 7692024, true),
+  createData('Germany', 'DE', 83019200, 357578, false),
+  createData('Ireland', 'IE', 4857000, 70273, true),
+  createData('Mexico', 'MX', 126577691, 1972550, false),
+  createData('Japan', 'JP', 126317000, 377973, true),
+  createData('France', 'FR', 67022000, 640679, false),
+  createData('United Kingdom', 'GB', 67545757, 242495, true),
+  createData('Russia', 'RU', 146793744, 17098246, false),
+  createData('Nigeria', 'NG', 200962417, 923768, false),
+  createData('Brazil', 'BR', 210147125, 8515767, false),
 ];
 
-export default function StickyHeadTable() {
-  return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <TableContainer sx={{ maxHeight: 440 }}>
-        <Table stickyHeader aria-label="sticky table">
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => {
-                if (column.hidden) return;
-                return (
-                  <TableCell
-                    key={column.id}
-                    align={column.align}
-                    style={{ minWidth: column.minWidth }}
-                  >
-                    {column.label}
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => {
-              return (
-                <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                  {columns.map((column) => {
-                    if(column.hidden) return;
-                    const value = row[column.id];
-                    return (
-                      <TableCell key={column.id} align={column.align}>
-                        {column.format && typeof value === 'number'
-                          ? column.format(value)
-                          : value}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Paper>
-  );
+const fantasyPrefixes = ['Zor', 'Eld', 'Myth', 'Drak', 'Lum', 'Xen', 'Thal', 'Quor', 'Vex', 'Nyx'];
+const fantasySuffixes = ['aria', 'dor', 'mere', 'land', 'wyn', 'gard', 'heim', 'quess', 'tor', 'vale'];
+
+for (let i = 0; i < 1000; i++) {
+  const name = `${fantasyPrefixes[i % fantasyPrefixes.length]}${fantasySuffixes[i % fantasySuffixes.length]} ${i}`;
+  const code = `F${i.toString().padStart(3, '0')}`;
+  const population = Math.floor(Math.random() * 1_000_000_000);
+  const size = Math.floor(Math.random() * 10_000_000);
+  const isSelected = Math.random() < 0.2;
+
+  demoRows.push(createData(name, code, population, size, isSelected));
 }
 
-*/
