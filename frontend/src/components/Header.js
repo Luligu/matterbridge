@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 // React
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import { useState, useContext, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 
 // @mui
@@ -17,8 +17,6 @@ import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
-import IosShareIcon from '@mui/icons-material/IosShare';
-import BlockIcon from '@mui/icons-material/Block';
 import ViewHeadlineIcon from '@mui/icons-material/ViewHeadline';
 import StarIcon from '@mui/icons-material/Star';
 import Favorite from '@mui/icons-material/Favorite';
@@ -519,18 +517,6 @@ function Header() {
               <ListItemText primary="Reboot..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           }
-          {settings.matterbridgeInformation.matterbridgePaired === true && settings.matterbridgeInformation.matterbridgeAdvertise === false ?
-            <MenuItem onClick={() => handleMenuCloseConfirm('startshare')}>
-              <ListItemIcon><IosShareIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
-              <ListItemText primary="Share fabrics" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
-            </MenuItem>
-            : null}
-          {settings.matterbridgeInformation.matterbridgeAdvertise === true ?
-            <MenuItem onClick={() => handleMenuCloseConfirm('stopshare')}>
-              <ListItemIcon><BlockIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
-              <ListItemText primary="Stop sharing" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
-            </MenuItem>
-            : null}
           <Divider />
 
           <MenuItem onClick={handleViewMenuOpen}>
