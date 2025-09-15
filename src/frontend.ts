@@ -888,7 +888,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             resolve();
           });
         }),
-        10000,
+        5000,
         false,
       );
       this.httpsServer.removeAllListeners();
