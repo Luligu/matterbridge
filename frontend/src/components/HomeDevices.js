@@ -33,11 +33,42 @@ import { QRDivDevice } from './QRDivDevice';
 
 // const debug = true;
 
-export function HomeDevicesTable({ data, columns, columnVisibility }) {
-  // Load saved sort state from localStorage
+/**
+ * Get the QR code color based on the matter's state.
+ * @param {*} matter 
+ * @returns 'red' if no pairing code, 'var(--primary-color)' if not commissioned but has pairing codes,
+ *          'var(--secondary-color)' if commissioned but no active sessions or subscriptions,
+ *          'var(--div-text-color)' otherwise.
+ */
+const getQRColor = (matter) => {
+  if (matter === undefined) return 'red';
+  if (!matter.qrPairingCode && !matter.manualPairingCode && !matter.fabricInformations && !matter.sessionInformations) return 'red';
+  if (matter.commissioned === false && matter.qrPairingCode && matter.manualPairingCode) return 'var(--primary-color)';
+
+  var sessions = 0;
+  var subscriptions = 0;
+  for (const session of matter.sessionInformations ?? []) {
+    if (session.fabric && session.isPeerActive === true) sessions++;
+    if (session.numberOfActiveSubscriptions > 0) subscriptions += session.numberOfActiveSubscriptions;
+  }
+  if (matter.commissioned === true && matter.fabricInformations && matter.sessionInformations && (sessions === 0 || subscriptions === 0)) return 'var(--secondary-color)';
+  return 'var(--div-text-color)';
+};
+
+/**
+ * Get the unique row ID for a device.
+ * @param {*} row 
+ * @returns A string in the format 'pluginName::serial'.
+ */
+const getRowId = (row) => {
+  return `${row.pluginName}::${row.serial}`;
+};
+
+function HomeDevicesTable({ data, columns, columnVisibility }) {
+  // Load sort state from localStorage
   const initialSortBy = React.useMemo(() => {
     const saved = localStorage.getItem('homeDevicesColumnsSortBy');
-    // if(debug) console.log(`HomeDevicesTable retrieved sortBy: ${JSON.stringify(JSON.parse(saved), null, 2)}`);
+    // if(debug) console.log(`HomeDevicesTable retrieved sortBy:`, saved, JSON.parse(saved));
     return saved ? JSON.parse(saved) : [{id: 'name', desc: false}];
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [columns]);
@@ -56,9 +87,9 @@ export function HomeDevicesTable({ data, columns, columnVisibility }) {
     rows,
     prepareRow,
     state: { sortBy },
-  } = useTable({ columns: visibleColumns, data, initialState: { sortBy: initialSortBy }, }, useSortBy);
+  } = useTable({ columns: visibleColumns, data, getRowId, initialState: { sortBy: initialSortBy }, }, useSortBy);
 
-  // Persist sort state whenever it changes
+  // Save sort state to localStorage whenever it changes
   React.useEffect(() => {
     // if(debug) console.log(`HomeDevicesTable saved sortBy: ${JSON.stringify(sortBy, null, 2)}`);
     localStorage.setItem('homeDevicesColumnsSortBy', JSON.stringify(sortBy));
@@ -92,7 +123,6 @@ export function HomeDevicesTable({ data, columns, columnVisibility }) {
           prepareRow(row);
           return (
             <tr 
-              key={index} 
               className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} 
               {...row.getRowProps()} style={{ border: 'none', borderCollapse: 'collapse' }}
             >
@@ -126,13 +156,11 @@ export function HomeDevices() {
   // States
   const [restart, setRestart] = useState(false); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
   const [loading, setLoading] = useState(true); // Loading state, used in the footer sx. Set to false when all plugins are loaded.
-  // const [_systemInfo, setSystemInfo] = useState(null);
-  // const [_matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [plugins, setPlugins] = useState([]);
   const [devices, setDevices] = useState([]);
   const [selectDevices, setSelectDevices] = useState([]);
   const [mixedDevices, setMixedDevices] = useState([]); // The table show these ones, mix of devices and selectDevices
-  const [dialogDevicesOpen, setDialogDevicesOpen] = useState(false); // Configure Columns dialog
+  const [devicesColumnVisibilityDialogOpen, setDevicesColumnVisibilityDialogOpen] = useState(false); // Configure Columns dialog
   const [devicesColumnVisibility, setDevicesColumnVisibility] = useState({
     pluginName: true,
     name: true,
@@ -146,21 +174,6 @@ export function HomeDevices() {
   const [qrDialogId, setQrDialogId] = useState(null); // QR Code dialog store id
   // Refs
   const uniqueId = useRef(getUniqueId());
-
-  const getQRColor = (matter) => {
-    if (matter === undefined) return 'red';
-    if (!matter.qrPairingCode && !matter.manualPairingCode && !matter.fabricInformations && !matter.sessionInformations) return 'red';
-    if (matter.commissioned === false && matter.qrPairingCode && matter.manualPairingCode) return 'var(--primary-color)';
-
-    var sessions = 0;
-    var subscriptions = 0;
-    for (const session of matter.sessionInformations ?? []) {
-      if (session.fabric && session.isPeerActive === true) sessions++;
-      if (session.numberOfActiveSubscriptions > 0) subscriptions += session.numberOfActiveSubscriptions;
-    }
-    if (matter.commissioned === true && matter.fabricInformations && matter.sessionInformations && (sessions === 0 || subscriptions === 0)) return 'var(--secondary-color)';
-    return 'var(--div-text-color)';
-  };
 
   const devicesColumns = [
     {
@@ -255,6 +268,7 @@ export function HomeDevices() {
     },
   ];
   
+  // Function to determine if a device is selected based on the plugin's whiteList/blackList and selectFrom configuration
   const isSelected = React.useCallback((device) => {
     // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} name ${device.name} serial ${device.serial}`);
     device.selected = undefined;
@@ -298,7 +312,7 @@ export function HomeDevices() {
         }
         if (msg.method === 'state_update') {
           if (msg.params.plugin && msg.params.serialNumber && msg.params.cluster.includes('BasicInformationServer') && msg.params.attribute === 'reachable') {
-            if(debug) console.log(`HomeDevices updating device reachability for plugin ${msg.params.plugin} serial ${msg.params.serialNumber} value ${msg.params.value}`);
+            /*if(debug)*/ console.log(`HomeDevices updating device reachability for plugin ${msg.params.plugin} serial ${msg.params.serialNumber} value ${msg.params.value}`);
             setDevices((prevDevices) =>
               prevDevices.map((d) =>
                 d.pluginName === msg.params.plugin && d.serial === msg.params.serialNumber
@@ -311,8 +325,6 @@ export function HomeDevices() {
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
-          // setSystemInfo(msg.response.systemInformation);
-          // setMatterbridgeInfo(msg.response.matterbridgeInformation);
           setRestart(msg.response.matterbridgeInformation.restartRequired); // Set the restart state based on the response. Used in the footer.
         }
         if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
@@ -380,7 +392,7 @@ export function HomeDevices() {
   
   // Mix devices and selectDevices
   useEffect(() => {
-    if(debug) console.log(`HomeDevices mixing devices (${devices.length}) and selectDevices (${selectDevices.length})`);
+    /*if(debug)*/ console.log(`HomeDevices mixing devices (${devices.length}) and selectDevices (${selectDevices.length})`);
     const mixed = [];
     for (const device of devices) {
       mixed.push(device);
@@ -391,8 +403,8 @@ export function HomeDevices() {
         mixed.push(selectDevice);
       }
     }
-    setMixedDevices(mixed);
-    if(debug) console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
+    if(mixed.length > 0) setMixedDevices(mixed);
+    /*if(debug)*/ console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
   }, [plugins, devices, selectDevices, setMixedDevices]);
   
   // Send API requests when online
@@ -415,10 +427,7 @@ export function HomeDevices() {
     }
   }, []); // run on mount/unmount
 
-  const handleDialogDevicesToggle = () => {
-    setDialogDevicesOpen(!dialogDevicesOpen);
-  };
-
+  // Persist column visibility to localStorage whenever it changes
   const handleDevicesColumnVisibilityChange = (accessor) => {
     setDevicesColumnVisibility((prev) => {
       const newVisibility = {
@@ -426,33 +435,38 @@ export function HomeDevices() {
         [accessor]: !prev[accessor],
       };
       localStorage.setItem('homeDevicesColumnVisibility', JSON.stringify(newVisibility));
-      if(debug) console.log(`HomeDevices saved column visibility to localStorage`);
+      if(debug) console.log(`HomeDevices saved column visibility to localStorage`, JSON.stringify(newVisibility), newVisibility);
       return newVisibility;
     });
   };
 
+  // Toggle columns visibility dialog
+  const handleDevicesColumnVisibilityDialogToggle = () => {
+    setDevicesColumnVisibilityDialogOpen(!devicesColumnVisibilityDialogOpen);
+  };
+
+  // Open the QR code dialog for the device with the given id
   const handleOpenQrDialog = useCallback((id) => {
     setQrDialogId(id);
     setQrDialogOpen(true);
   }, []);
 
+  // Close the QR code dialog
   const handleCloseQrDialog = useCallback(() => {
     setQrDialogOpen(false);
     setQrDialogId(null);
   }, []);
 
+  // Handle checkbox change to select/unselect a device
   const handleCheckboxChange = (event, device) => {
-    if(debug) console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
-    /*
-    setMixedDevices((prevDevices) =>
-      prevDevices.map((d) =>
-        d.serial === device.serial ? { ...d, selected: event.target.checked } : d
-      )
-    );
-    */
+    /*if(debug)*/ console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
+    /*if(debug)*/ const start = Date.now();
     setMixedDevices(prev => { 
-      const i = prev.findIndex(d => d.serial === device.serial); 
-      if(i<0) return prev; 
+      const i = prev.findIndex(d => d.pluginName === device.pluginName && d.serial === device.serial); 
+      if(i < 0) {
+        console.error(`handleCheckboxChange: device not found ${device.name} serial ${device.serial} id ${device.id}`);
+        return prev; 
+      }
       const next = [...prev]; 
       next[i] = {...next[i], selected: event.target.checked}; 
       return next; 
@@ -462,6 +476,7 @@ export function HomeDevices() {
     } else {
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
     }
+    /*if(debug)*/ console.log(`handleCheckboxChange: processed in ${Date.now() - start}ms`);
   };
 
   if(debug) console.log('HomeDevices rendering...');
@@ -473,8 +488,9 @@ export function HomeDevices() {
 
         {/* QR Code Dialog */}
         <QRDivDevice id={qrDialogId} open={qrDialogOpen} onClose={handleCloseQrDialog} />
+
         {/* HomeDevices Configure Columns Dialog */}
-        <Dialog open={dialogDevicesOpen} onClose={handleDialogDevicesToggle}>
+        <Dialog open={devicesColumnVisibilityDialogOpen} onClose={handleDevicesColumnVisibilityDialogToggle}>
           <DialogTitle>Configure Devices Columns</DialogTitle>
           <DialogContent>
             <FormGroup>
@@ -494,14 +510,15 @@ export function HomeDevices() {
             </FormGroup>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleDialogDevicesToggle}>Close</Button>
+            <Button onClick={handleDevicesColumnVisibilityDialogToggle}>Close</Button>
           </DialogActions>
         </Dialog>
 
+        {/* HomeDevices Table */}
         <div className="MbfWindowHeader" style={{ justifyContent: 'space-between' }}>
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Devices</p>
           <div className="MbfWindowHeaderFooterIcons">
-            <IconButton onClick={handleDialogDevicesToggle} aria-label="Configure Columns" style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}}>
+            <IconButton onClick={handleDevicesColumnVisibilityDialogToggle} aria-label="Configure Columns" style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}}>
               <Tooltip title="Configure columns">
                 <SettingsIcon style={{ color: 'var(--header-text-color)', fontSize: '19px' }}/>
               </Tooltip>

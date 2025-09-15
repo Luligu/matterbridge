@@ -4,7 +4,7 @@
 import { useContext, useEffect, useState, useRef } from 'react';
 
 // Frontend
-// import { debug } from '../App';
+import { debug } from '../App';
 import { WebSocketContext } from './WebSocketProvider';
 
 // QRCode
@@ -17,7 +17,7 @@ import { IconButton, Tooltip, Button }  from '@mui/material';
 import Icon from '@mdi/react';
 import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForever } from '@mdi/js';
 
-const debug = true; // Debug flag for this component
+// const debug = true; // Debug flag for this component
 
 // Reusable hover styling for all action icon buttons (mdi icons)
 const iconBtnSx = {

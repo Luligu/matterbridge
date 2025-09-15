@@ -57,7 +57,6 @@ function Home() {
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log('Home received settings:', msg.response);
-          console.log('Home received settings:', msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
           if (msg.response.matterbridgeInformation.bridgeMode === 'bridge') {
@@ -96,7 +95,6 @@ function Home() {
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if (debug) console.log(`Home received plugins (${matterbridgeInfo?.bridgeMode}):`, msg.response);
-          console.log(`Home received plugins (${matterbridgeInfo?.bridgeMode}):`, msg.response);
           setPlugins(msg.response);
           if (matterbridgeInfo?.bridgeMode === 'childbridge' && msg.response.length > 0) {
             setStoreId(msg.response[0].matter.id);

@@ -129,8 +129,16 @@ const clustersColumns = [
   },
 ];
 
+const getDeviceRowId = (row) => {
+  return `${row.pluginName}::${row.uniqueId}`;
+};
+
+const getClusterRowId = (row) => {
+  return `${row.endpoint}::${row.clusterName}::${row.attributeName}`;
+};
+
 function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDeviceName }) {
-  const [selectedDeviceIndex, setSelectedDeviceIndex] = useState(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState(null);
 
   // Filter columns based on visibility
   const visibleColumns = React.useMemo(
@@ -144,23 +152,22 @@ function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDevic
     headerGroups,
     rows,
     prepareRow,
-  } = useTable({ columns: visibleColumns, data }, useSortBy);
+  } = useTable({ columns: visibleColumns, data, getRowId: getDeviceRowId }, useSortBy);
 
-  const handleDeviceClick = (index) => {
-    const row = rows[index];
-    if(index === selectedDeviceIndex) {
-      setSelectedDeviceIndex(null);
+  const handleDeviceClick = (row) => {
+    if(row.id === selectedDeviceId) {
+      setSelectedDeviceId(null);
       setPlugin(null);
       setEndpoint(null);
       setDeviceName(null);
-      if(debug) console.log('Device unclicked:', index, 'selectedDeviceIndex:', selectedDeviceIndex);
+      if(debug) console.log('Device unclicked:', row.id, 'selectedDeviceIndex:', selectedDeviceId);
       return;
     }
-    setSelectedDeviceIndex(index);
+    setSelectedDeviceId(row.id);
     setPlugin(row.original.pluginName);
     setEndpoint(row.original.endpoint);
     setDeviceName(row.original.name);
-    if(debug) console.log('Device clicked:', index, 'selectedDeviceIndex:', selectedDeviceIndex, 'pluginName:', data[index].pluginName, 'endpoint:', data[index].endpoint);
+    if(debug) console.log('Device clicked:', row.id, 'selectedDeviceIndex:', selectedDeviceId, 'pluginName:', row.original.pluginName, 'endpoint:', row.original.endpoint);
   };
 
   return (
@@ -191,18 +198,12 @@ function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDevic
           prepareRow(row);
           return (
             <tr 
-              key={index} 
               className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} 
               {...row.getRowProps()} 
-              onClick={() => handleDeviceClick(index)}
-              style={{
-                backgroundColor: selectedDeviceIndex === index ? 'var(--table-selected-bg-color)' : '',
-                cursor: 'pointer',
-              }}
+              onClick={() => handleDeviceClick(row)}
+              style={{backgroundColor: selectedDeviceId === row.id ? 'var(--table-selected-bg-color)' : '', cursor: 'pointer'}}
             >
-              {row.cells.map(cell => (
-                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-              ))}
+              {row.cells.map(cell => (<td {...cell.getCellProps()}>{cell.render('Cell')}</td>))}
             </tr>
           );
         })}
@@ -224,18 +225,14 @@ function ClustersTable({ data, columnVisibility }) {
     headerGroups,
     rows,
     prepareRow,
-  } = useTable({ columns: visibleColumns, data }, useSortBy);
+  } = useTable({ columns: visibleColumns, data, getRowId: getClusterRowId }, useSortBy);
 
   return (
     <table {...getTableProps()} style={{ margin: '-1px' }}>
       <thead>
         {headerGroups.map(headerGroup => (
           <tr {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map(column => (
-              <th {...column.getHeaderProps()}>
-                {column.render('Header')}
-              </th>
-            ))}
+            {headerGroup.headers.map(column => (<th {...column.getHeaderProps()}>{column.render('Header')}</th>))}
           </tr>
         ))}
       </thead>
@@ -243,14 +240,8 @@ function ClustersTable({ data, columnVisibility }) {
         {rows.map((row, index) => {
           prepareRow(row);
           return (
-            <tr 
-              key={index} 
-              className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} 
-              {...row.getRowProps()}
-            >
-              {row.cells.map(cell => (
-                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-              ))}
+            <tr className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} {...row.getRowProps()}>
+              {row.cells.map(cell => (<td {...cell.getCellProps()}>{cell.render('Cell')}</td>))}
             </tr>
           );
         })}
@@ -566,8 +557,8 @@ function Devices() {
           <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
             <ClustersTable data={clusters} columnVisibility={clustersColumnVisibility} />
           </div>
-          <div className="MbfWindowFooter" style={{height: '', padding: '0', borderTop: '1px solid var(--table-border-color)'}}>
-            <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total child endpoints: {subEndpointsCount - 1}</p>
+          <div className="MbfWindowFooter" style={{borderTop: '1px solid var(--table-border-color)', justifyContent: 'flex-start'}}>
+            <p className="MbfWindowFooterText" style={{fontWeight: 'normal', textAlign: 'left'}}>Total child endpoints: {subEndpointsCount - 1}</p>
           </div>
         </div>
       )}
