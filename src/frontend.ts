@@ -1526,10 +1526,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.matterbridge.devices.remove(device);
           }
         }
-        if (plugin.type === 'DynamicPlatform' && !plugin.locked) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (this.matterbridge as any).createDynamicPlugin(plugin);
-        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (plugin.type === 'DynamicPlatform' && !plugin.locked) await (this.matterbridge as any).createDynamicPlugin(plugin);
         await this.matterbridge.plugins.load(plugin, true, 'The plugin has been restarted', true);
         plugin.restartRequired = false; // Reset plugin restartRequired
         let needRestart = 0;
@@ -1624,18 +1622,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/factoryreset') {
         this.wssSendSnackbarMessage('Factory reset of matterbridge...', 10);
         await this.matterbridge.shutdownProcessAndFactoryReset();
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
-      } else if (data.method === '/api/advertise') {
-        const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
-        this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = true;
-        this.wssSendRefreshRequired('matterbridgeAdvertise');
-        this.wssSendSnackbarMessage(`Started fabrics share`, 0);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes, success: true }));
-      } else if (data.method === '/api/stopadvertise') {
-        await this.matterbridge.stopAdvertiseServerNode(this.matterbridge.serverNode);
-        this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = false;
-        this.wssSendRefreshRequired('matterbridgeAdvertise');
-        this.wssSendSnackbarMessage(`Stopped fabrics share`, 0);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/matter') {
         if (!isValidString(data.params.id)) {

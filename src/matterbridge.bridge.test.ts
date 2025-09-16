@@ -119,17 +119,6 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval for Matterbridge`);
   }, 60000);
 
-  test('stop advertise node', async () => {
-    await matterbridge.stopAdvertiseServerNode(matterbridge.serverNode);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Stopped advertising for Matterbridge`);
-  });
-
-  test('advertise node', async () => {
-    const pairing = await matterbridge.advertiseServerNode(matterbridge.serverNode);
-    expect(pairing).toBeDefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for Matterbridge`));
-  });
-
   test('addBridgedEndpoint with invalid plugin', async () => {
     await matterbridge.addBridgedEndpoint('invalid-plugin', {} as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error adding bridged endpoint`));
@@ -257,17 +246,6 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(matterbridge.plugins.size).toBe(6);
     expect(matterbridge.devices.size).toBe(6);
   }, 60000);
-
-  test('stop advertise node 2', async () => {
-    await matterbridge.stopAdvertiseServerNode(matterbridge.serverNode);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Stopped advertising for Matterbridge`);
-  });
-
-  test('advertise node 2', async () => {
-    const pairing = await matterbridge.advertiseServerNode(matterbridge.serverNode);
-    expect(pairing).toBeDefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for Matterbridge`));
-  });
 
   test('add device -bridge mode', async () => {
     let i = 1;

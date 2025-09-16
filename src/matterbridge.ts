@@ -52,7 +52,7 @@ import {
   Crypto,
   Diagnostic,
 } from '@matter/main';
-import { DeviceCertification, DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
+import { DeviceCertification, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
@@ -2421,36 +2421,6 @@ const commissioningController = new CommissioningController({
       this.log.info(`Closed ${matterServerNode.id} server node`);
     } catch (error) {
       this.log.error(`Failed to close ${matterServerNode.id} server node: ${error instanceof Error ? error.message : error}`);
-    }
-  }
-
-  /**
-   * Advertises the specified server node.
-   *
-   * @param {ServerNode} [matterServerNode] - The server node to advertise.
-   * @returns {Promise<{ qrPairingCode: string, manualPairingCode: string } | undefined>} A promise that resolves to the pairing codes if the server node is advertised, or undefined if not.
-   */
-  async advertiseServerNode(matterServerNode?: ServerNode): Promise<{ qrPairingCode: string; manualPairingCode: string } | undefined> {
-    if (matterServerNode) {
-      await matterServerNode.env.get(DeviceCommissioner)?.allowBasicCommissioning();
-      const { qrPairingCode, manualPairingCode } = matterServerNode.state.commissioning.pairingCodes;
-      this.advertisingNodes.set(matterServerNode.id, Date.now());
-      this.log.notice(`Started advertising for ${matterServerNode.id} with the following pairing codes: qrPairingCode ${qrPairingCode}, manualPairingCode ${manualPairingCode}`);
-      return { qrPairingCode, manualPairingCode };
-    }
-  }
-
-  /**
-   * Stop advertise the specified server node.
-   *
-   * @param {ServerNode} [matterServerNode] - The server node to advertise.
-   * @returns {Promise<void>} A promise that resolves when the server node has stopped advertising.
-   */
-  async stopAdvertiseServerNode(matterServerNode?: ServerNode): Promise<void> {
-    if (matterServerNode && matterServerNode.lifecycle.isOnline) {
-      await matterServerNode.env.get(DeviceCommissioner)?.endCommissioning();
-      this.advertisingNodes.delete(matterServerNode.id);
-      this.log.notice(`Stopped advertising for ${matterServerNode.id}`);
     }
   }
 

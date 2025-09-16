@@ -364,21 +364,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(matterbridge.devices.size).toBe(4);
   }, 300000);
 
-  test('stop advertise node', async () => {
-    for (const plugin of plugins) {
-      await matterbridge.stopAdvertiseServerNode(plugin.serverNode);
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Stopped advertising for ${plugin.name}`));
-    }
-  });
-
-  test('advertise node', async () => {
-    for (const plugin of plugins) {
-      const pairing = await matterbridge.advertiseServerNode(plugin.serverNode);
-      expect(pairing).toBeDefined();
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for ${plugin.name}`));
-    }
-  });
-
   test('set reachable -bridge mode', async () => {
     for (const plugin of matterbridge.plugins.array()) {
       expect(plugin).toBeDefined();

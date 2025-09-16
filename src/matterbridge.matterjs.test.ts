@@ -139,17 +139,6 @@ describe('Matterbridge matterjs', () => {
     expect(loggerLogSpy).toHaveBeenCalledTimes(0);
   });
 
-  test('stop advertise node', async () => {
-    await matterbridge.stopAdvertiseServerNode(matterbridge.serverNode);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Stopped advertising for Matterbridge`);
-  });
-
-  test('advertise node', async () => {
-    const pairing = await matterbridge.advertiseServerNode(matterbridge.serverNode);
-    expect(pairing).toBeDefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for Matterbridge`));
-  });
-
   test('startEndAdvertiseTimer', async () => {
     expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
 
