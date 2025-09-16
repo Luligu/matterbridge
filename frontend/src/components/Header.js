@@ -132,14 +132,6 @@ function Header() {
     sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/hardreset", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
-  const handleStartAdvertiseClick = () => {
-    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/advertise", src: "Frontend", dst: "Matterbridge", params: {} });
-  };
-
-  const handleStopAdvertiseClick = () => {
-    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/stopadvertise", src: "Frontend", dst: "Matterbridge", params: {} });
-  };
-
   const handleMenuOpen = (event) => {
     setMenuAnchorEl(event.currentTarget);
   };
@@ -211,10 +203,6 @@ function Header() {
       handleShutdownClick();
     } else if (value === 'reboot') {
       handleRebootClick();
-    } else if (value === 'startshare') {
-      handleStartAdvertiseClick();
-    } else if (value === 'stopshare') {
-      handleStopAdvertiseClick();
     } else if (value === 'create-backup') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/create-backup", src: "Frontend", dst: "Matterbridge", params: {} });
     } else if (value === 'unregister') {
