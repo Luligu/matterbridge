@@ -15,7 +15,12 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [logger]: Set different color for log names to matterbridge, frontend and matter.js.
-- [frontend]: Bumped `frontend` version to 2.7.6.
+- [frontend]: Bumped `frontend` version to 2.8.0.
+- [frontend]: Bumped `react` version to 19.1.1.
+- [frontend]: Bumped `react-router` version to 7.9.1.
+- [frontend]: Bumped `@mui` version to 7.3.2.
+- [frontend]: Bumped `@rjsf` version to 5.24.13.
+- [frontend]: The QRCode component in bridge mode and childbridge mode and for the devices with mode='server' features: turn on and off pairing mode, resend mDns advertise, remove single fabrics, formatted manual paring code, copy to clipboard the manual pairing code.
 
 ### Changed
 
@@ -23,7 +28,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
-- [childbridge]: Fixed the case when the plugin didn't restart in childbridge mode when it didn't add any device..
+- [childbridge]: Fixed the case when the plugin didn't restart in childbridge mode when it didn't add any device.
+- [shutdown]: Fixed the case when shutting down the http(s) server took 10 seconds.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

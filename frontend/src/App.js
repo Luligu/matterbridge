@@ -169,6 +169,13 @@ function LoginForm() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
             <input
+              type="text"
+              name="username"
+              autocomplete="username"
+              style={{ display: 'none' }}
+              tabIndex="-1"
+            />
+            <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
