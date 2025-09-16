@@ -1467,13 +1467,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Stop the frontend
       await this.frontend.stop();
 
-      // Remove the matterfilelogger
-      try {
-        Logger.removeLogger('matterfilelogger');
-      } catch (error) {
-        this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${db}: ${error instanceof Error ? error.message : String(error)}`);
-      }
-
       // Close the matterbridge node storage and context
       if (this.nodeStorage && this.nodeContext) {
         /*
