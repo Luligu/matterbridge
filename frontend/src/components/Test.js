@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 // React
-import { useContext, useEffect, useState, useRef } from 'react';
+import { useContext, useEffect, useState, useRef, useCallback } from 'react';
 
 // @mui/material
 import { Button } from '@mui/material';
@@ -15,8 +15,8 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import MbfTable from './MbfTable';
-import { debug } from '../App';
-// const debug = true;
+// import { debug } from '../App';
+const debug = true;
 
 function Test() {
   // WebSocket context
@@ -52,9 +52,9 @@ function Test() {
         if (msg.method === 'refresh_required') {
           if(debug) console.log('Test received refresh_required');
           showSnackbarMessage('Refresh required', 0);
-          sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ id: uniqueId.current, method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, method: "/api/settings", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, method: "/api/plugins", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, method: "/api/devices", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'memory_update') {
           if(debug) console.log('Test received memory_update', msg);
@@ -87,7 +87,7 @@ function Test() {
           setDevices(msg.response);
           for(let device of msg.response) {
             if(debug) console.log('Test sending /api/clusters for device:', device.pluginName, device.name, device.endpoint);
-            sendMessage({ method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint } });
+            sendMessage({ method: "/api/clusters", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint } });
           }
         }
         if (msg.method === '/api/clusters') {
@@ -114,9 +114,9 @@ function Test() {
     if(debug) console.log('Test useEffect online mounting');
     if(online) {
       if(debug) console.log('Test useEffect online received online');
-      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ method: "/api/settings", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ method: "/api/plugins", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ method: "/api/devices", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
       /*
       showSnackbarMessage('Test permanent message removal', 0);
       showSnackbarMessage('Test useEffect online received online (info)', 30, 'info');
@@ -131,7 +131,11 @@ function Test() {
       if(debug) console.log('Test useEffect online unmounted');
     };
   }, [online, sendMessage, showSnackbarMessage]);
-  
+
+  const getRowKey = useCallback((row) => row.code, []);
+  /*
+  getRowKey={(row) => row.code}
+  */
   if(debug) console.log('Test rendering...');
   if (!online) {
     return ( <Connecting /> );
@@ -143,7 +147,7 @@ function Test() {
         <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '256px', width: '256px', margin: '10px' }}/>
         <p>Welcome to the Test page of the Matterbridge frontend</p>
         <div style={{ margin: '0', padding: '0', gap: '0', width: '1200px', maxWidth: '1200px', height: '600px', maxHeight: '600px', overflow: 'hidden', border: '1px solid #0004ffff' }}>
-          <MbfTable name="Test" columns={demoColumns} rows={tableRows} getRowKey={(row) => row.code} />
+          <MbfTable name="Test" columns={demoColumns} rows={tableRows} getRowKey={getRowKey} footerLeft="Left Footer" footerRight="Right Footer" />
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
         <Button variant="contained" color="primary" onClick={() => {
@@ -156,8 +160,10 @@ function Test() {
         <Button variant="outlined" onClick={() => {
           // Update a specific row (code: F123) to demonstrate selective re-render by key
           setTableRows((prev) => {
+            // Find the index of the row with code 'F123'
             const idx = prev.findIndex(r => r.code === 'F123');
             if (idx === -1) return prev;
+            // Update the population of that found row
             const target = prev[idx];
             const updated = { ...target, population: (target.population || 0) + 1 };
             const next = prev.slice();
@@ -211,9 +217,16 @@ const demoColumns = [
     label: 'Density',
     minWidth: 170,
     align: 'right',
-    hidden: false,
     nosort: true,
     format: (value) => value.toFixed(2),
+  },
+  {
+    id: 'virtual',
+    label: 'Virtual',
+    align: 'right',
+    required: true,
+    nosort: true,
+    render: (_value, _rowKey, row) => { return row.isIsland ? '🏝️' : '🏞️';},
   },
 ];
 
@@ -243,7 +256,7 @@ const demoRows = [
 const fantasyPrefixes = ['Zor', 'Eld', 'Myth', 'Drak', 'Lum', 'Xen', 'Thal', 'Quor', 'Vex', 'Nyx'];
 const fantasySuffixes = ['aria', 'dor', 'mere', 'land', 'wyn', 'gard', 'heim', 'quess', 'tor', 'vale'];
 
-for (let i = 0; i < 1000; i++) {
+for (let i = 0; i < 2000; i++) {
   const name = `${fantasyPrefixes[i % fantasyPrefixes.length]}${fantasySuffixes[i % fantasySuffixes.length]} ${i}`;
   const code = `F${i.toString().padStart(3, '0')}`;
   const population = Math.floor(Math.random() * 1_000_000_000);

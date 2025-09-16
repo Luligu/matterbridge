@@ -9,8 +9,8 @@ import Checkbox from '@mui/material/Checkbox';
 import Icon from '@mdi/react';
 import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
 // frontend
-import { debug } from '../App';
-// const debug = true;
+// import { debug } from '../App';
+const debug = true;
 
 // Generic comparator used by MbTable sorting.
 function comparator(rowA, rowB, key) {
@@ -91,9 +91,15 @@ function comparator(rowA, rowB, key) {
  * @param {Object[]} props.rows
  *   Data rows. Each cell is resolved as `row[column.id]`. For best React performance, provide
  *   a stable identifier per row via `getRowKey`.
- * @param {(row: Object) => (string|number)} [props.getRowKey]
- *   Optional function that returns a stable key for a row. If omitted, the first column value is
+ * @param {string | (row: Object) => (string|number)} [props.getRowKey]
+ *   Optional string or function that returns a stable key for a row. If omitted, the first column value is
  *   used when available; otherwise an internal stable key is generated for the row object.
+ *   Always use useCallback to memoize the getRowKey function:
+ *   const getRowKey = useCallback((row) => row.code, []);
+ * @param {string} props.footerLeft
+ *   Text shown in the left side of the footer bar.
+ * @param {string} props.footerRight
+ *   Text shown in the right side of the footer bar.
  * @returns {JSX.Element}
  *
  * @example
@@ -122,17 +128,21 @@ function comparator(rowA, rowB, key) {
  *   return next;               // other rows keep reference => React skips re-render for them
  * });
  */
-const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey }) {
+const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footerLeft, footerRight }) {
   // Stable key fallback for rows without a natural id
   const rowKeyMapRef = useRef(new WeakMap());
   const nextRowKeySeqRef = useRef(1);
   const getStableRowKey = (row) => {
+    if (typeof getRowKey === 'string') {
+      if (row && row[getRowKey] != null) return row[getRowKey];
+    }
     if (typeof getRowKey === 'function') {
       const k = getRowKey(row);
       if (k != null) return k;
     }
     const firstColId = columns?.[0]?.id;
     if (firstColId && row && row[firstColId] != null) return row[firstColId];
+    console.warn(`MbfTable(${name}): using fallback stable row key; consider providing getRowKey prop for better React performance`);
     let k = rowKeyMapRef.current.get(row);
     if (!k) {
       k = `rk_${nextRowKeySeqRef.current++}`;
@@ -280,8 +290,8 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey }) {
         </DialogActions>
       </Dialog>
 
-      <div className="MbfWindowHeader" style={{ height: '30px', justifyContent: 'space-between', borderBottom: 'none' }}>
-        <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>{name}</p>
+      <div className="MbfWindowHeader" style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', borderBottom: 'none' }}>
+        <p className="MbfWindowHeaderText">{name}</p>
         <div className="MbfWindowHeaderFooterIcons">
           <IconButton
             onClick={(e) => { if (e?.currentTarget?.blur) { try { e.currentTarget.blur(); } catch {} } toggleConfigureVisibilityDialog(); }}
@@ -298,7 +308,7 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey }) {
       <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, width: '100%', overflow: 'auto', margin: '0px', padding: '0px', gap: '0' }} >
         <table aria-label={`${name} table`} style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10, border: 'none', color: 'var(--header-text-color)', backgroundColor: 'var(--header-bg-color' }}>
-            <tr style={{ height: '30px' }}>
+            <tr style={{ height: '30px', minHeight: '30px' }}>
               {columns.map((column) => {
                 if (column.hidden) return null;
                 if (!column.required && visibleMap[column.id] === false) return null;
@@ -309,6 +319,8 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey }) {
                     key={column.id}
                     onClick={sortable ? () => handleRequestSort(column.id) : undefined}
                     style={{
+                      margin: '0',
+                      padding: '4px 8px',
                       position: 'sticky',
                       top: 0,
                       minWidth: column.minWidth,
@@ -325,10 +337,12 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey }) {
                     aria-sort={sortable ? (isActive ? (order === 'asc' ? 'ascending' : 'descending') : 'none') : undefined}
                   >
                     {column.label}
-                    <span style={{ marginLeft: 6 }}>
-                      {isActive && order === 'asc' && (<Icon path={mdiSortAscending} size='15px' />)}
-                      {isActive && order === 'desc' && (<Icon path={mdiSortDescending} size='15px' />)}
-                    </span>
+                    {isActive && 
+                      <span style={{ marginLeft: 6 }}>
+                        {order === 'asc' && (<Icon path={mdiSortAscending} size='15px' />)}
+                        {order === 'desc' && (<Icon path={mdiSortDescending} size='15px' />)}
+                      </span>
+                    }
                   </th>
                 );
               })}
@@ -338,7 +352,7 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey }) {
             {sortedRows.map((row, index) => {
               const rowKey = getStableRowKey(row);
               return (
-              <tr key={rowKey} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ height: '30px', border: 'none', borderCollapse: 'collapse' }}>
+              <tr key={rowKey} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ height: '30px', minHeight: '30px', border: 'none', borderCollapse: 'collapse' }}>
                 {columns.map((column) => {
                   if (column.hidden) return null;
                   if (!column.required && visibleMap[column.id] === false) return null;
@@ -361,7 +375,20 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey }) {
                       {typeof column.render === 'function'
                         ? column.render(value, rowKey, row, column)
                         : (typeof value === 'boolean'
-                            ? <Checkbox checked={value} disabled size="small" sx={{ p: 0 }} />
+                            ? <Checkbox
+                                checked={value}
+                                disabled
+                                size="small"
+                                sx={{
+                                  m: 0,
+                                  p: 0,
+                                  color: 'var(--table-text-color)',
+                                  '&.Mui-disabled': {
+                                    color: 'var(--table-text-color)',
+                                    opacity: 0.7,
+                                  },
+                                }}
+                              />
                             : (column.format && typeof value === 'number'
                                 ? column.format(value)
                                 : (value ?? '')))
@@ -374,6 +401,12 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey }) {
           </tbody>
         </table>
       </div>
+
+      <div className="MbfWindowFooter" style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', border: 'none' }}>
+        <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerLeft}</p>
+        <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerRight}</p>
+      </div>
+
     </div>
   );
 });
