@@ -851,6 +851,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Close the http server
     if (this.httpServer) {
       this.log.debug('Closing http server...');
+      /*
       await withTimeout(
         new Promise<void>((resolve) => {
           this.httpServer?.close((error) => {
@@ -867,6 +868,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         5000,
         false,
       );
+      */
+      this.httpServer.close();
+      this.log.debug('Http server closed successfully');
+      this.emit('server_stopped');
+
       this.httpServer.removeAllListeners();
       this.httpServer = undefined;
       this.log.debug('Frontend http server closed successfully');
@@ -875,6 +881,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Close the https server
     if (this.httpsServer) {
       this.log.debug('Closing https server...');
+      /*
       await withTimeout(
         new Promise<void>((resolve) => {
           this.httpsServer?.close((error) => {
@@ -891,6 +898,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         5000,
         false,
       );
+      */
+      this.httpsServer.close();
+      this.log.debug('Https server closed successfully');
+      this.emit('server_stopped');
       this.httpsServer.removeAllListeners();
       this.httpsServer = undefined;
       this.log.debug('Frontend https server closed successfully');
