@@ -1,5 +1,9 @@
 /* App.css */
 
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
 /* Define the style for the body element */
 
 /* Classic Mode */
@@ -173,8 +177,16 @@ html {
   scrollbar-width: thin;
   scrollbar-color: var(--primary-color) var(--div-bg-color);
 }
-.thin-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-.thin-scroll::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 5px; }
+
+.thin-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 5px;
+}
 
 /* Tooltip styles */
 .tooltip-container {
