@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 // React
-import React, { useContext, useEffect, useState, useRef, useCallback } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
 // @mui/material
@@ -29,8 +29,6 @@ import { mdiSortAscending, mdiSortDescending } from '@mdi/js';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { debug } from '../App';
-import { QRDivDevice } from './QRDivDevice';
-
 // const debug = true;
 
 /**
@@ -150,12 +148,14 @@ function HomeDevicesTable({ data, columns, columnVisibility }) {
  * The user can sort the table by clicking on the column headers. The sort state is saved in localStorage.
  * The user can see a footer with the number of registered devices, a loading message if plugins are not fully loaded, and a restart required message if needed.
  */
-export function HomeDevices() {
+export function HomeDevices({storeId, setStoreId}) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
+
   // States
   const [restart, setRestart] = useState(false); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
   const [loading, setLoading] = useState(true); // Loading state, used in the footer sx. Set to false when all plugins are loaded.
+  const [settings, setSettings] = useState(null); // Settings from /api/settings response
   const [plugins, setPlugins] = useState([]);
   const [devices, setDevices] = useState([]);
   const [selectDevices, setSelectDevices] = useState([]);
@@ -170,8 +170,7 @@ export function HomeDevices() {
     configUrl: false,
     actions: true,
   }); // Column visibility
-  const [qrDialogOpen, setQrDialogOpen] = useState(false); // QR Code dialog
-  const [qrDialogId, setQrDialogId] = useState(null); // QR Code dialog store id
+
   // Refs
   const uniqueId = useRef(getUniqueId());
 
@@ -228,7 +227,7 @@ export function HomeDevices() {
           {row.original.matter!==undefined ?
             <Tooltip title="Show the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <IconButton
-                onClick={() => handleOpenQrDialog(row.original.matter.id)}
+                onClick={() => setStoreId(storeId === row.original.matter.id ? settings.matterbridgeInformation.bridgeMode === 'bridge' ? 'Matterbridge' : null : row.original.matter.id)}
                 aria-label="Show the QRCode"
                 sx={{ margin: 0, padding: 0, color: getQRColor(row.original.matter) }}
               >
@@ -325,6 +324,7 @@ export function HomeDevices() {
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
+          setSettings(msg.response); // Store the settings response
           setRestart(msg.response.matterbridgeInformation.restartRequired); // Set the restart state based on the response. Used in the footer.
         }
         if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
@@ -445,18 +445,6 @@ export function HomeDevices() {
     setDevicesColumnVisibilityDialogOpen(!devicesColumnVisibilityDialogOpen);
   };
 
-  // Open the QR code dialog for the device with the given id
-  const handleOpenQrDialog = useCallback((id) => {
-    setQrDialogId(id);
-    setQrDialogOpen(true);
-  }, []);
-
-  // Close the QR code dialog
-  const handleCloseQrDialog = useCallback(() => {
-    setQrDialogOpen(false);
-    setQrDialogId(null);
-  }, []);
-
   // Handle checkbox change to select/unselect a device
   const handleCheckboxChange = (event, device) => {
     /*if(debug)*/ console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
@@ -483,9 +471,6 @@ export function HomeDevices() {
   }
   return (
       <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
-
-        {/* QR Code Dialog */}
-        <QRDivDevice id={qrDialogId} open={qrDialogOpen} onClose={handleCloseQrDialog} />
 
         {/* HomeDevices Configure Columns Dialog */}
         <Dialog open={devicesColumnVisibilityDialogOpen} onClose={handleDevicesColumnVisibilityDialogToggle}>

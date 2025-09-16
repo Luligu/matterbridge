@@ -3,10 +3,6 @@
 // React
 import { useContext, useEffect, useState, useRef } from 'react';
 
-// Frontend
-import { debug } from '../App';
-import { WebSocketContext } from './WebSocketProvider';
-
 // QRCode
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -17,6 +13,9 @@ import { IconButton, Tooltip, Button }  from '@mui/material';
 import Icon from '@mdi/react';
 import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForever  } from '@mdi/js';
 
+// Frontend
+import { WebSocketContext } from './WebSocketProvider';
+import { debug } from '../App';
 // const debug = true; // Debug flag for this component
 
 // Reusable hover styling for all action icon buttons (mdi icons)
@@ -154,19 +153,15 @@ export function QRDiv({ id }) {
     if(debug) console.log('QRDiv rendering advertising state');
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>
-        <div className="MbfWindowHeader" style={{ justifyContent: 'space-between' }}>
+        <div className="MbfWindowHeader" style={{ height: '30px', justifyContent: 'space-between' }}>
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
           <div className="MbfWindowHeaderFooterIcons">
-            <Tooltip title="Send again the mDNS advertisement" arrow>
-              <IconButton aria-label="send advertising" size="small" onClick={handleAdvertiseClick} sx={{ color: 'var(--header-text-color)' }}>
-                <Icon path={mdiRestart} size={1} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Turn off pairing" arrow>
-              <IconButton aria-label="stop pairing" size="small" onClick={handleStopCommissioningClick} sx={{ color: 'var(--header-text-color)' }}>
-                <Icon path={mdiShareOffOutline} size={1} />
-              </IconButton>
-            </Tooltip>
+            <IconButton aria-label="send advertising" size='small' onClick={handleAdvertiseClick} sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }}>
+              <Tooltip title="Send again the mDNS advertisement" arrow><Icon path={mdiRestart} size='22px'/></Tooltip>
+            </IconButton>
+            <IconButton aria-label="stop pairing" size='small' onClick={handleStopCommissioningClick} sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }}>
+              <Tooltip title="Turn off pairing" arrow><Icon path={mdiShareOffOutline} size='22px'/></Tooltip>
+            </IconButton>
           </div>
         </div>
         <p className="MbfWindowHeaderText thin-scroll" style={{ overflowX: 'auto', maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
@@ -187,19 +182,15 @@ export function QRDiv({ id }) {
     if(debug) console.log('QRDiv rendering commissioned state');
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px', overflow: 'hidden' }} >
-        <div className="MbfWindowHeader" style={{ justifyContent: 'space-between' }}>
+        <div className="MbfWindowHeader" style={{ height: '30px', justifyContent: 'space-between' }}>
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Paired fabrics</p>
           <div className="MbfWindowHeaderFooterIcons">
-            <Tooltip title="Send again the mDNS advertisement" arrow>
-              <IconButton aria-label="send advertising" size="small" onClick={handleAdvertiseClick} sx={{ color: 'var(--header-text-color)' }}>
-                <Icon path={mdiRestart} size={1} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Turn on pairing" arrow>
-              <IconButton aria-label="start pairing" size="small" onClick={handleStartCommissioningClick} sx={{ color: 'var(--header-text-color)' }}>
-                <Icon path={mdiShareOutline} size={1} />
-              </IconButton>
-            </Tooltip>
+            <IconButton aria-label="send advertising" size="small" onClick={handleAdvertiseClick} sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }}>
+              <Tooltip title="Send again the mDNS advertisement" arrow><Icon path={mdiRestart} size='22px' /></Tooltip>
+            </IconButton>
+            <IconButton aria-label="start pairing" size="small" onClick={handleStartCommissioningClick} sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }}>
+              <Tooltip title="Turn on pairing" arrow><Icon path={mdiShareOutline} size='22px' /></Tooltip>
+            </IconButton>
           </div>
         </div>
         <div className="MbfWindowBodyColumn" style={{ paddingTop: '0px' }}>
@@ -237,7 +228,7 @@ export function QRDiv({ id }) {
     if(debug) console.log('QRDiv rendering not commissioned and not advertising state');
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>
-        <div className="MbfWindowHeader">
+        <div className="MbfWindowHeader" style={{ height: '30px' }}>
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
         </div>
         <p className="MbfWindowHeaderText thin-scroll" style={{ overflowX: 'auto', maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>

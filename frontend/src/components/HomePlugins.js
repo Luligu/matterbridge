@@ -85,7 +85,7 @@ function HomePluginsTable({ data, columns, columnVisibility }) {
   );
 }
 
-export function HomePlugins({selectPlugin}) {
+export function HomePlugins({_storeId, setStoreId}) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   const { showConfirmCancelDialog } = useContext(UiContext);
@@ -102,23 +102,23 @@ export function HomePlugins({selectPlugin}) {
     version: true,
     author: true,
     type: true,
-    addedDevices: true,
+    registeredDevices: true,
     actions: true,
     status: true,
   });
 
   const getQRColor = (plugin) => {
-    if (plugin === undefined) return 'red';
-    if (!plugin.fabricInformations && !plugin.qrPairingCode && !plugin.manualPairingCode) return 'red';
-    if (plugin.paired === false && plugin.qrPairingCode && plugin.manualPairingCode) return 'var(--primary-color)';
+    if (plugin === undefined || plugin.matter === undefined) return 'red';
+    if (!plugin.matter.fabricInformations && !plugin.matter.qrPairingCode && !plugin.matter.manualPairingCode) return 'red';
+    if (plugin.matter.commissioned === false && plugin.matter.qrPairingCode && plugin.matter.manualPairingCode) return 'var(--primary-color)';
 
     var sessions = 0;
     var subscriptions = 0;
-    for (const session of plugin.sessionInformations ?? []) {
+    for (const session of plugin.matter.sessionInformations ?? []) {
       if (session.fabric && session.isPeerActive === true) sessions++;
       if (session.numberOfActiveSubscriptions > 0) subscriptions += session.numberOfActiveSubscriptions;
     }
-    if (plugin.paired === true && plugin.fabricInformations && plugin.sessionInformations && (sessions === 0 || subscriptions === 0)) return 'var(--secondary-color)';
+    if (plugin.matter.commissioned === true && plugin.matter.fabricInformations && plugin.matter.sessionInformations && (sessions === 0 || subscriptions === 0)) return 'var(--secondary-color)';
     return 'var(--div-text-color)';
   };
 
@@ -176,7 +176,7 @@ export function HomePlugins({selectPlugin}) {
     },
     {
       Header: 'Devices',
-      accessor: 'addedDevices',
+      accessor: 'registeredDevices',
     },
     {
       Header: 'Actions',
@@ -184,7 +184,7 @@ export function HomePlugins({selectPlugin}) {
       Cell: ({ row: plugin }) => (
         <div style={{ margin: '0px', padding: '0px', gap: '4px', display: 'flex', flexDirection: 'row' }}>
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
-            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: getQRColor(plugin.original) }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
+            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: getQRColor(plugin.original) }} onClick={() => setStoreId(plugin.original?.matter?.id)} size="small"><QrCode2/></IconButton></Tooltip>
           }
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
             <Tooltip title="Restart the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => handleRestartPlugin(plugin.original)} size="small"><RestartAltIcon/></IconButton></Tooltip>
@@ -217,21 +217,13 @@ export function HomePlugins({selectPlugin}) {
                 <>
                   <StatusIndicator status={plugin.original.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled' /></> :
                 <>
-                  {plugin.original.loaded && plugin.original.started && plugin.original.configured && plugin.original.paired ?
+                  {plugin.original.loaded && plugin.original.started && plugin.original.configured ?
                     <>
                       <StatusIndicator status={plugin.original.loaded} enabledText='Running' tooltipText='Whether the plugin is running' /></> :
                     <>
-                      {plugin.original.loaded && plugin.original.started && plugin.original.configured ?
-                        <>
-                          <StatusIndicator status={plugin.original.loaded} enabledText='Running' tooltipText='Whether the plugin is running' /></> :
-                        <>
-                          <StatusIndicator status={plugin.original.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled' />
-                          <StatusIndicator status={plugin.original.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded' />
-                          <StatusIndicator status={plugin.original.started} enabledText='Started' tooltipText='Whether the plugin started' />
-                          <StatusIndicator status={plugin.original.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured' />
-                          {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <StatusIndicator status={plugin.original.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired' /> : <></>}
-                        </>
-                      }
+                      <StatusIndicator status={plugin.original.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded' />
+                      <StatusIndicator status={plugin.original.started} enabledText='Started' tooltipText='Whether the plugin started' />
+                      <StatusIndicator status={plugin.original.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured' />
                     </>
                   }
                 </>

@@ -1041,7 +1041,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.started = false;
       plugin.configured = false;
       plugin.registeredDevices = undefined;
-      plugin.addedDevices = undefined;
       this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
     }
     this.frontend.wssSendRefreshRequired('plugins');
@@ -1318,10 +1317,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     for (const plugin of this.plugins.array()) {
       if (plugin.error || !plugin.enabled) continue;
       const registeredDevices = plugin.registeredDevices;
-      const addedDevices = plugin.addedDevices;
       await this.plugins.shutdown(plugin, 'unregistering all devices and shutting down...', false, true);
       plugin.registeredDevices = registeredDevices;
-      plugin.addedDevices = addedDevices;
       await this.removeAllBridgedEndpoints(plugin.name, 100);
     }
     this.log.debug('Waiting for the MessageExchange to finish...');
@@ -1603,7 +1600,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.device = device;
       plugin.storageContext = await this.createServerNodeContext(plugin.name, device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
       plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
-      plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node`);
       await plugin.serverNode.add(device);
     }
@@ -1621,7 +1617,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', this.aggregatorDeviceType, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
       plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
       plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
-      plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
       await plugin.serverNode.add(plugin.aggregatorNode);
     }
   }
@@ -1782,8 +1777,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       for (const plugin of this.plugins.array()) {
         if (!plugin.enabled || plugin.error) continue;
-        if (plugin.type !== 'DynamicPlatform' && (!plugin.addedDevices || plugin.addedDevices === 0)) {
-          this.log.error(`Plugin ${plg}${plugin.name}${er} didn't add any devices to Matterbridge. Verify the plugin configuration.`);
+        if (plugin.type !== 'DynamicPlatform' && (!plugin.registeredDevices || plugin.registeredDevices === 0)) {
+          this.log.error(`Plugin ${plg}${plugin.name}${er} didn't register any devices to Matterbridge. Verify the plugin configuration.`);
           continue;
         }
         if (!plugin.serverNode) {
@@ -2537,12 +2532,11 @@ const commissioningController = new CommissioningController({
       }
     }
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-    if (plugin.addedDevices !== undefined) plugin.addedDevices++;
     // Add the device to the DeviceManager
     this.devices.set(device);
     // Subscribe to the reachable$Changed event
     await this.subscribeAttributeChanged(plugin, device);
-    this.log.info(`Added and registered bridged endpoint (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
+    this.log.info(`Added and registered bridged endpoint (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
 
   /**
@@ -2568,9 +2562,8 @@ const commissioningController = new CommissioningController({
         return;
       }
       await device.delete();
-      this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
-      if (plugin.addedDevices !== undefined) plugin.addedDevices--;
     } else if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
         // Nothing to do here since the server node has no aggregator node but only the device itself
@@ -2581,9 +2574,8 @@ const commissioningController = new CommissioningController({
         }
         await device.delete();
       }
-      this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
-      if (plugin.addedDevices !== undefined) plugin.addedDevices--;
     }
     // Remove the device from the DeviceManager
     this.devices.remove(device);

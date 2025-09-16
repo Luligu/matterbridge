@@ -60,7 +60,6 @@ export interface BaseRegisteredPlugin {
   type: string;
   latestVersion?: string;
   devVersion?: string;
-  serialNumber?: string;
   homepage?: string;
   help?: string;
   changelog?: string;
@@ -71,23 +70,14 @@ export interface BaseRegisteredPlugin {
   loaded?: boolean;
   started?: boolean;
   configured?: boolean;
+  /** Signal that the config has changed and a restart is required */
   restartRequired?: boolean;
   registeredDevices?: number;
-  addedDevices?: number;
   configJson?: PlatformConfig;
   schemaJson?: PlatformSchema;
   hasWhiteList?: boolean;
   hasBlackList?: boolean;
   matter?: ApiMatter;
-}
-
-// Simplified interface for sending the plugins data to the frontend
-export interface FrontendRegisteredPlugin extends BaseRegisteredPlugin {
-  paired?: boolean;
-  qrPairingCode?: string;
-  manualPairingCode?: string;
-  fabricInformations?: SanitizedExposedFabricInformation[];
-  sessionInformations?: SanitizedSession[];
 }
 
 // Define an interface for storing the system information

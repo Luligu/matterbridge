@@ -111,7 +111,7 @@ export function createPluginsColumns({ matterbridgeInfo, selectPlugin, handlers,
       render: (_value, _rowKey, row) => <>{row?.type ? String(row.type).replace('Platform', '') : 'Unknown'}</>,
     },
     {
-      id: 'addedDevices',
+      id: 'registeredDevices',
       label: 'Devices',
       align: 'right',
     },

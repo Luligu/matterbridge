@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 // React
-import { useMemo, useRef, useState, memo } from 'react';
+import { useMemo, useRef, useState, useContext, memo } from 'react';
 // @mui/material
 import { Button, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, FormGroup, FormControlLabel, DialogActions } from '@mui/material';
 import Checkbox from '@mui/material/Checkbox';
@@ -9,6 +9,7 @@ import Checkbox from '@mui/material/Checkbox';
 import Icon from '@mdi/react';
 import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
 // frontend
+import { UiContext } from './UiProvider';
 // import { debug } from '../App';
 const debug = true;
 
@@ -151,6 +152,8 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
     return k;
   };
 
+  // Contexts
+  const { _showConfirmCancelDialog } = useContext(UiContext);
   // Local states
   const [orderBy, setOrderBy] = useState(localStorage.getItem(`${name}_table_order_by`) || null);
   const [order, setOrder] = useState(localStorage.getItem(`${name}_table_order`) || null);
@@ -252,7 +255,12 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
         disableEscapeKeyDown
         disableRestoreFocus
       >
-        <DialogTitle>{`Configure ${name} columns`}</DialogTitle>
+        <DialogTitle gap={'20px'}>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
+            <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
+            <h4 style={{ margin: 0 }}>{`Configure ${name} columns`}</h4>
+          </div>
+        </DialogTitle>
         <DialogContent>
           <FormGroup>
             {columns.filter((c) => !c.hidden).map((column) => (

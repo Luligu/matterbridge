@@ -273,12 +273,10 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     let i = 1;
     for (const plugin of plugins) {
       expect(plugin.type).toBe(i < 4 ? 'DynamicPlatform' : 'AccessoryPlatform');
-      expect(plugin.addedDevices).toBe(i < 4 ? 2 : 1);
       expect(plugin.registeredDevices).toBe(i < 4 ? 2 : 1);
       await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Removing all bridged endpoints for plugin ${plg}${'matterbridge-mock' + i}${db}`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Removing bridged endpoint ${plg}${'matterbridge-mock' + i++}${db}`));
-      expect(plugin.addedDevices).toBe(0);
       expect(plugin.registeredDevices).toBe(0);
     }
     expect(plugins.length).toBe(6);

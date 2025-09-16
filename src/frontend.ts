@@ -44,7 +44,7 @@ import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/mai
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
-import { ApiClusters, ApiClustersResponse, ApiDevices, ApiMatter, BaseRegisteredPlugin, FrontendRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
+import { ApiClusters, ApiClustersResponse, ApiDevices, ApiMatter, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
@@ -1130,7 +1130,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   private getPlugins(): BaseRegisteredPlugin[] {
     if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
-    const baseRegisteredPlugins: FrontendRegisteredPlugin[] = [];
+    const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
     for (const plugin of this.matterbridge.plugins) {
       baseRegisteredPlugins.push({
         path: plugin.path,
@@ -1145,7 +1145,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         funding: plugin.funding,
         latestVersion: plugin.latestVersion,
         devVersion: plugin.devVersion,
-        serialNumber: plugin.serialNumber,
         locked: plugin.locked,
         error: plugin.error,
         enabled: plugin.enabled,
@@ -1154,18 +1153,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         configured: plugin.configured,
         restartRequired: plugin.restartRequired,
         registeredDevices: plugin.registeredDevices,
-        addedDevices: plugin.addedDevices,
         configJson: plugin.configJson,
         schemaJson: plugin.schemaJson,
         hasWhiteList: plugin.configJson?.whiteList !== undefined,
         hasBlackList: plugin.configJson?.blackList !== undefined,
         // Childbridge mode specific data
         matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
-        paired: plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.commissioned : undefined,
-        qrPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.pairingCodes.qrPairingCode : undefined,
-        manualPairingCode: this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? plugin.serverNode.state.commissioning.pairingCodes.manualPairingCode : undefined,
-        fabricInformations: plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? this.matterbridge.sanitizeFabricInformations(Object.values(plugin.serverNode.state.commissioning.fabrics)) : undefined,
-        sessionInformations: plugin.serverNode && plugin.serverNode.lifecycle.isOnline ? this.matterbridge.sanitizeSessionInformation(Object.values(plugin.serverNode.state.sessions.sessions)) : undefined,
       });
     }
     return baseRegisteredPlugins;
@@ -1480,7 +1473,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           plugin.configured = undefined;
           plugin.platform = undefined;
           plugin.registeredDevices = undefined;
-          plugin.addedDevices = undefined;
+          plugin.matter = undefined;
           await this.matterbridge.plugins.enable(data.params.pluginName);
           this.wssSendSnackbarMessage(`Enabled plugin ${data.params.pluginName}`, 5, 'success');
           this.matterbridge.plugins

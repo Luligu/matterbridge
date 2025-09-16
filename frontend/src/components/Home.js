@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 // React
-import { useEffect, useState, useContext, useCallback, useRef } from 'react';
+import { useEffect, useState, useContext, useRef } from 'react';
 
 // @mui/material
 import Button from '@mui/material/Button';
@@ -40,12 +40,6 @@ function Home() {
   // Refs
   const uniqueId = useRef(getUniqueId());
 
-  const handleSelectPlugin = useCallback((plugin) => {
-    if (debug) console.log('Home: handleSelectPlugin plugin:', plugin.name);
-    console.log('Home: handleSelectPlugin plugin:', plugin.name);
-    setStoreId(plugin.matter?.id);
-  }, []);
-
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
@@ -60,10 +54,10 @@ function Home() {
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
           if (msg.response.matterbridgeInformation.bridgeMode === 'bridge') {
-            setStoreId(msg.response.matterbridgeInformation.matter.id);
+            if(!storeId) setStoreId(msg.response.matterbridgeInformation.matter.id);
           }
           if (msg.response.matterbridgeInformation.bridgeMode === 'childbridge' && plugins.length > 0 && storeId === null) {
-            setStoreId(plugins[0].matter.id);
+            if(!storeId) setStoreId(plugins[0].matter.id);
           }
           if(msg.response.matterbridgeInformation.matterbridgeVersion) {
             setChangelog(`https://github.com/Luligu/matterbridge/blob/${msg.response.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main' }/CHANGELOG.md`);
@@ -92,12 +86,11 @@ function Home() {
             }
           }
         }
-        // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if (debug) console.log(`Home received plugins (${matterbridgeInfo?.bridgeMode}):`, msg.response);
           setPlugins(msg.response);
           if (matterbridgeInfo?.bridgeMode === 'childbridge' && msg.response.length > 0) {
-            setStoreId(msg.response[0].matter.id);
+            if(!storeId) setStoreId(msg.response[0].matter.id);
           }
         }
       }
@@ -178,12 +171,12 @@ function Home() {
 
         {/* Plugins */}
         {homePagePlugins &&
-          <HomePlugins selectPlugin={handleSelectPlugin}/>
+          <HomePlugins storeId={storeId} setStoreId={setStoreId}/>
         }
 
         {/* Devices (can grow) */}
         {homePageMode === 'devices' &&
-          <HomeDevices/>
+          <HomeDevices storeId={storeId} setStoreId={setStoreId}/>
         }
         {/* Logs (can grow) */}
         {homePageMode === 'logs' &&
