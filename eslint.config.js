@@ -13,10 +13,14 @@ import pluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import pluginJest from 'eslint-plugin-jest';
 import pluginVitest from '@vitest/eslint-plugin';
 
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig([
   {
     name: 'Global Ignores',
-    ignores: ['dist', 'node_modules', 'coverage', 'build', 'frontend', 'bin'],
+    ignores: ['dist', 'node_modules', 'coverage', 'build', 'frontend', 'bin', '*.config.js'],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,
@@ -69,13 +73,14 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.json',
+        tsconfigRootDir: resolve(__dirname),
         sourceType: 'module',
         ecmaVersion: 'latest',
       },
     },
     rules: {
       // Override/add rules specific to typescript files here
-      'no-unused-vars': 'off', // Disable base rule for unused variables in test files
+      'no-unused-vars': 'off', // Disable base rule for unused variables
       '@typescript-eslint/no-unused-vars': [
         'error',
         {

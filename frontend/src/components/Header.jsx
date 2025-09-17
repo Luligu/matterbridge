@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 // React
 import { useState, useContext, useEffect, useRef } from 'react';
 import { Link } from 'react-router';

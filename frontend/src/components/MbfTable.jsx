@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 // React
 import { useMemo, useRef, useState, useContext, memo } from 'react';
 // @mui/material
@@ -163,7 +161,7 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
     try {
       const stored = localStorage.getItem(`${name}_column_visibility`);
       if (stored) return JSON.parse(stored);
-    } catch {}
+    } catch { /**/ }
     return {};
   });
 
@@ -225,11 +223,12 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
       if (currentlyVisible) {
         next[id] = false; // hide
       } else {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete next[id]; // restore default (visible)
       }
       try {
         localStorage.setItem(`${name}_column_visibility`, JSON.stringify(next));
-      } catch {}
+      } catch { /**/ }
       return next;
     });
   };
@@ -239,7 +238,7 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
     setColumnVisibility(next);
     try {
       localStorage.setItem(`${name}_column_visibility`, JSON.stringify(next));
-    } catch {}
+    } catch { /**/ }
   };
 
   if(debug) console.log(`Rendering table ${name}${orderBy && order ? ` ordered by ${orderBy}:${order}` : ''}`);
@@ -284,11 +283,11 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
             variant="contained"
             onClick={(e) => {
               if (e?.currentTarget && typeof e.currentTarget.blur === 'function') {
-                try { e.currentTarget.blur(); } catch {}
+                try { e.currentTarget.blur(); } catch { /**/ }
               }
               const active = document.activeElement;
               if (active && active instanceof HTMLElement && typeof active.blur === 'function') {
-                try { active.blur(); } catch {}
+                try { active.blur(); } catch { /**/ }
               }
               toggleConfigureVisibilityDialog();
             }}
@@ -302,7 +301,7 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
         <p className="MbfWindowHeaderText">{name}</p>
         <div className="MbfWindowHeaderFooterIcons">
           <IconButton
-            onClick={(e) => { if (e?.currentTarget?.blur) { try { e.currentTarget.blur(); } catch {} } toggleConfigureVisibilityDialog(); }}
+            onClick={(e) => { if (e?.currentTarget?.blur) { try { e.currentTarget.blur(); } catch { /**/ } } toggleConfigureVisibilityDialog(); }}
             aria-label="Configure Columns"
             style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }}
           >

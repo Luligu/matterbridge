@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 
 // React
 import { useContext, useEffect, useState, useRef } from 'react';

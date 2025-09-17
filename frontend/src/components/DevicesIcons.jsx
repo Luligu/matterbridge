@@ -1,6 +1,6 @@
-/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-console */
+ 
 // React
 import React, { useContext, useEffect, useState, useRef } from 'react';
 
@@ -38,7 +38,6 @@ import AcUnitIcon from '@mui/icons-material/AcUnit'; // Freeze detector
 import ThunderstormIcon from '@mui/icons-material/Thunderstorm'; // Rain sensor
 import WaterIcon from '@mui/icons-material/Water'; // Water leak detector
 import OpacityIcon from '@mui/icons-material/Opacity'; // WaterValve
-import MasksIcon from '@mui/icons-material/Masks'; // AirQualitySensor
 import ChecklistIcon from '@mui/icons-material/Checklist'; // ModeSelect
 import MicrowaveIcon from '@mui/icons-material/Microwave';
 import KitchenIcon from '@mui/icons-material/Kitchen';
@@ -70,7 +69,6 @@ const lightDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d];
 const outletDeviceTypes = [0x010a, 0x010b];
 const switchDeviceTypes = [0x0103, 0x0104, 0x0105, 0x010f, 0x0110];
 const onOffDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105];
-const laundryDeviceTypes = [0x73, 0x75, 0x7c];
 
 function Render({ icon, iconColor, cluster, value, unit, prefix }) {
   if(debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof(value)}-${isNaN(value)}) "${value}" unit "${unit}"`);
@@ -323,8 +321,8 @@ export function DevicesIcons({filter}) {
 
   // Local states
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [settings, setSettings] = useState({});
-  const [plugins, setPlugins] = useState([]);
+  const [_settings, setSettings] = useState({});
+  const [_plugins, setPlugins] = useState([]);
   const [devices, setDevices] = useState([]);
   const [endpoints, setEndpoints] = useState({}); // { serial: [ { endpoint, id, deviceTypes[] } ] }
   const [deviceTypes, setdDeviceTypes] = useState({}); // { serial: [ deviceTypes array ] }

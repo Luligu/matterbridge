@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import './App.css';
 
 // React

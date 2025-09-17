@@ -1,6 +1,6 @@
  
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-console */
+ 
 // React
 import React, { useState, useCallback, useMemo, createContext, useRef } from 'react';
 

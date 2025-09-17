@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 // React
 import React, { useState, useContext, useRef } from 'react';
 
@@ -26,7 +26,7 @@ export function InstallAddPlugins() {
 
   // States
   const [pluginName, setPluginName] = useState('matterbridge-');
-  const [dragging, setDragging] = useState(false);
+  const [_dragging, setDragging] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   // Refs

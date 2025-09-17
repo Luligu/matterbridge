@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 // React
 import React, { useContext, useEffect, useState, useRef } from 'react';
 import { useTable, useSortBy } from 'react-table';

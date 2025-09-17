@@ -1,11 +1,8 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-console */
-
 // React
 import React, { useContext, useEffect, useState, useRef } from 'react';
 
 // @mui/material
-import { Box, Button, Paper, Typography, Dialog, DialogContent, DialogTitle, Tooltip, Checkbox, MenuItem, IconButton, List, ListItem, ListItemText, ListItemIcon, TextField, ListItemButton, DialogActions } from '@mui/material';
+import { Box, Button, Typography, Dialog, DialogContent, DialogTitle, Tooltip, Checkbox, MenuItem, IconButton, List, ListItem, ListItemText, ListItemIcon, TextField, ListItemButton, DialogActions } from '@mui/material';
 
 // @mui/icons-material
 import DeleteForever from '@mui/icons-material/DeleteForever'; // For RemoveButton
@@ -23,7 +20,7 @@ import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=
 // @rjsf
 import Form from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
-import { getSubmitButtonOptions, getUiOptions, getTemplate, enumOptionsValueForIndex, ariaDescribedByIds, enumOptionsIndexForValue, labelValue, ADDITIONAL_PROPERTY_FLAG } from '@rjsf/utils';
+import { getSubmitButtonOptions, getUiOptions, getTemplate, enumOptionsValueForIndex, ariaDescribedByIds, enumOptionsIndexForValue, ADDITIONAL_PROPERTY_FLAG } from '@rjsf/utils';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -174,7 +171,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   }
 
   function FieldTemplate(props) {
-    const { children, description, displayLabel, errors, help, hidden, id, label,
+    const { children, description, displayLabel, errors, help, hidden, _id, _label,
       registry, uiSchema } = props;
     const uiOptions = getUiOptions(uiSchema);
     const WrapIfAdditionalTemplate = getTemplate('WrapIfAdditionalTemplate', registry, uiOptions);
@@ -217,7 +214,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   }
 
   function FieldHelpTemplate(props) {
-    const { help, idSchema } = props;
+    const { help, _idSchema } = props;
     if (rjsfDebug) console.log('FieldHelpTemplate:', props);
     if (!help) return null;
     return (
@@ -266,8 +263,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   };
 
   function BaseInputTemplate(props) {
-    const { id, name, schema, uiSchema, value, options, label, type, placeholder, required, disabled, readonly, autofocus,
-      onChange, onChangeOverride, onBlur, onFocus, rawErrors, hideError, registry, formContext } = props;
+    const { id, name, _schema, _uiSchema, value, options, label, type, placeholder, required, disabled, readonly, autofocus,
+      onChange, onChangeOverride, onBlur, onFocus, _rawErrors, _hideError, _registry, _formContext } = props;
     if (rjsfDebug) console.log('BaseInputTemplate:', props);
     const _onChange = ({ target: { value } }) => onChange(value === '' ? options.emptyValue : value);
     const _onBlur = ({ target }) => onBlur(id, target && target.value);
@@ -297,7 +294,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   }
 
   function ArrayFieldTemplate(props) {
-    const { canAdd, className, disabled, formContext, formData, idSchema, items, onAddClick, rawErrors, readonly, registry, required, schema, title, uiSchema } = props;
+    const { canAdd, _className, _disabled, _formContext, _formData, _idSchema, _items, onAddClick, _rawErrors, _readonly, _registry, _required, schema, title, _uiSchema } = props;
     if (rjsfDebug) console.log(`ArrayFieldTemplate for ${title}:`, props);
 
     const [dialogDeviceOpen, setDialogDeviceOpen] = useState(false);
