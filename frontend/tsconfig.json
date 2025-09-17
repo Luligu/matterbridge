@@ -9,8 +9,9 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*",
-    "vitest/StatusIndicator.test.tsx",
-    "vitest/TruncatedText.test.tsx"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "vitest/**/*.ts",
+    "vitest/**/*.tsx"
   ]
 }
