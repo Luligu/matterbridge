@@ -15,12 +15,14 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [logger]: Set different color for log names to matterbridge, frontend and matter.js.
-- [frontend]: Bumped `frontend` version to 2.8.0.
+- [frontend]: Bumped `frontend` version to 3.0.0.
 - [frontend]: Bumped `react` version to 19.1.1.
 - [frontend]: Bumped `react-router` version to 7.9.1.
 - [frontend]: Bumped `@mui` version to 7.3.2.
 - [frontend]: Bumped `@rjsf` version to 5.24.13.
-- [frontend]: The QRCode component in bridge mode and childbridge mode and for the devices with mode='server' features: turn on and off pairing mode, resend mDns advertise, remove single fabrics, formatted manual paring code, copy to clipboard the manual pairing code.
+- [frontend]: Dropped `Create React App (CRA)` and moved to `Vite`.
+- [frontend]: Added `eslint` and `vitest`.
+- [frontend]: Updated the QRCode component to be used in bridge mode and childbridge mode and for the devices with mode='server'. Features: turn on and off pairing mode, resend mDns advertise, remove single fabrics, formatted manual paring code, copy to clipboard the manual pairing code.
 
 ### Changed
 

@@ -1,9 +1,10 @@
 // eslint.config.js
 
 // This ESLint configuration is designed for a TypeScript project.
+// @ts-check
 
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { dirname } from 'node:path';
 
 import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
@@ -16,12 +17,11 @@ import pluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import pluginJest from 'eslint-plugin-jest';
 import pluginVitest from '@vitest/eslint-plugin';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
+/** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
   {
     name: 'Global Ignores',
-    ignores: ['dist', 'node_modules', 'coverage', 'build', 'frontend', 'bin', '*.config.js'],
+    ignores: ['dist', 'node_modules', 'coverage', 'build', 'frontend', 'bin'],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,
@@ -29,6 +29,7 @@ export default defineConfig([
   // ...tseslint.configs.strictTypeChecked,
   pluginImport.flatConfigs.recommended,
   pluginN.configs['flat/recommended-script'],
+  // @ts-expect-error: Missing types for pluginPromise
   pluginPromise.configs['flat/recommended'],
   pluginJsdoc.configs['flat/recommended'],
   pluginPrettierRecommended, // Prettier plugin must be the last plugin in the list
@@ -74,7 +75,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.json',
-        tsconfigRootDir: resolve(__dirname),
+        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
         sourceType: 'module',
         ecmaVersion: 'latest',
       },
@@ -103,7 +104,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.jest.json', // Use a separate tsconfig for Jest tests with "isolatedModules": true
-        tsconfigRootDir: resolve(__dirname),
+        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
         sourceType: 'module',
         ecmaVersion: 'latest',
       },
@@ -130,7 +131,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.jest.json',
-        tsconfigRootDir: resolve(__dirname),
+        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
         sourceType: 'module',
         ecmaVersion: 'latest',
       },

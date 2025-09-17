@@ -1,10 +1,12 @@
 // eslint.config.js
 
 // This ESLint configuration is designed for a mixed JavaScript and TypeScript project with React.
+// @ts-check
 
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { dirname } from 'node:path';
 
+import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
@@ -12,12 +14,11 @@ import tsParser from '@typescript-eslint/parser';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-export default [
+/** @type {import('eslint').Linter.Config[]} */
+export default defineConfig([
   {
     name: 'Global Ignores',
-    ignores: ['dist', 'node_modules', 'coverage', 'build', '*.config.js'],
+    ignores: ['dist', 'node_modules', 'coverage', 'build'],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,
@@ -33,26 +34,18 @@ export default [
       parser: tsParser,
       parserOptions: {
         project: './tsconfig.json',
-        tsconfigRootDir: resolve(__dirname),
-        sourceType: 'module',
-        ecmaVersion: 'latest',
-        ecmaFeatures: {
-          jsx: true,
-        },
+        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
+        ecmaFeatures: { jsx: true },
       },
     },
     linterOptions: {
       reportUnusedDisableDirectives: 'error', // Report unused eslint-disable directives
       reportUnusedInlineConfigs: 'error', // Report unused eslint-disable-line directives
     },
-    settings: {
-      react: {
-        version: '19.1.1'
-      }
-    }
+    settings: { react: { version: 'detect' } },
   },
   {
-    name: 'All JavaScript and TypeScript with React',
+    // All JavaScript and TypeScript with React
     files: ['**/*.{js,jsx,ts,tsx}'],
     ...reactPlugin.configs.flat.recommended,
     ...reactPlugin.configs.flat['jsx-runtime'], // Add this if you are using React 17+
@@ -61,7 +54,7 @@ export default [
   {
     name: 'JavaScript',
     files: ['**/*.{js,jsx}'],
-    ...tseslint.configs.disableTypeChecked,
+    ...tseslint.configs.disableTypeChecked, // It includes its own language options, plugins and rules, designed to disable type-aware linting for the files it matches.
     rules: {
       'no-unused-vars': 'off', // Disable base rule for unused variables
       '@typescript-eslint/no-unused-vars': [
@@ -95,4 +88,4 @@ export default [
       ],
     },
   },
-];
+]);
