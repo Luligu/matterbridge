@@ -61,6 +61,7 @@ export default defineConfig([
     files: ['**/*.{js,jsx}'],
     ...tseslint.configs.disableTypeChecked, // It includes its own language options, plugins and rules, designed to disable type-aware linting for the files it matches.
     rules: {
+      'no-console': 'off',
       'no-unused-vars': 'off', // Disable base rule for unused variables
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -79,6 +80,7 @@ export default defineConfig([
     name: 'TypeScript',
     files: ['**/*.{ts,tsx}'],
     rules: {
+      'no-console': 'off',
       'no-unused-vars': 'off', // Disable base rule for unused variables
       '@typescript-eslint/no-unused-vars': [
         'error',

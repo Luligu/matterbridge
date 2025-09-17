@@ -164,7 +164,7 @@ export function QRDiv({ id }) {
             </IconButton>
           </div>
         </div>
-        <p className="MbfWindowHeaderText thin-scroll" style={{ overflowX: 'auto', maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
+        <p className="MbfWindowHeaderText" style={{ overflow: 'hidden', maxWidth: '280px', textOverflow: 'ellipsis', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
         <QRCodeSVG value={matter.qrPairingCode} size={256} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
         <div className="MbfWindowFooter" style={{ justifyContent: 'space-between' }}>
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {formatManualCode(matter.manualPairingCode)}</p>

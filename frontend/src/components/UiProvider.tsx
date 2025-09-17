@@ -1,60 +1,75 @@
- 
-/* eslint-disable react-hooks/exhaustive-deps */
- 
 // React
-import { useState, useCallback, useMemo, createContext, useRef } from 'react';
+import React, { useState, useCallback, useMemo, createContext, useRef, ReactNode } from 'react';
 
 // @mui
 import { Alert, Box, IconButton } from '@mui/material';
-import { useSnackbar } from 'notistack';
 import CloseIcon from '@mui/icons-material/Close';
 
-// Local modules
+// Notistack
+import { SnackbarKey, useSnackbar } from 'notistack';
+
+// Frontend
 import { ConfirmCancelForm } from './ConfirmCancelForm';
 import { debug } from '../App';
 // const debug = true;
 
-// { message, key }[]
-const persistMessages = [];
+interface PersistMessage {
+  message: string;
+  key: string | number;
+}
+const persistMessages: PersistMessage[] = [];
 
-export const UiContext = createContext();
+export interface UiContextType {
+  showSnackbarMessage: (message: string, timeout?: number, severity?: 'info' | 'warning' | 'error' | 'success') => void;
+  closeSnackbarMessage: (message: string) => void;
+  closeSnackbar: (key?: SnackbarKey | undefined) => void;
+  showConfirmCancelDialog: (
+    title: string,
+    message: string,
+    command: string,
+    handleConfirm: (command: string) => void,
+    handleCancel: (command: string) => void
+  ) => void;
+}
 
-export function UiProvider({ children }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const UiContext = createContext<UiContextType>(null as any);
+
+interface UiProviderProps {
+  children: ReactNode;
+}
+
+export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   // Snackbar
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
-  const closeSnackbarMessage = useCallback((message) => {
+  const closeSnackbarMessage = useCallback((message: string) => {
     if(debug) console.log(`UiProvider closeSnackbarMessage: message ${message}`);
-    // Find the message in the persistMessages array
     const messageIndex = persistMessages.findIndex((msg) => msg.message === message);
     if (messageIndex !== -1) {
-      // Close the snackbar
       closeSnackbar(persistMessages[messageIndex].key);
-      // Remove the message from the array
       persistMessages.splice(messageIndex, 1);
       if(debug) console.log(`UiProvider closeSnackbarMessage: message ${message} removed from persistMessages`);
     }
-  }, []);
+  }, [closeSnackbar]);
 
-  const showSnackbarMessage = useCallback((message, timeout, severity) => {
-    // default | error | success | warning | info
+  const showSnackbarMessage = useCallback((message: string, timeout?: number, severity?: 'info' | 'warning' | 'error' | 'success') => {
     if(debug) console.log(`UiProvider showSnackbarMessage: message ${message} timeout ${timeout}`);
-    const key = enqueueSnackbar(message, { 
-      variant: 'default', 
-      autoHideDuration: timeout === null || timeout === undefined || timeout > 0 ? (timeout ?? 5) * 1000 : null, 
+    const key = enqueueSnackbar(message, {
+      variant: 'default',
+      autoHideDuration: timeout === null || timeout === undefined || timeout > 0 ? (timeout ?? 5) * 1000 : null,
       persist: timeout === 0,
-      dense: true,
       content: (key) => (
-        <Box key={key} sx={{ margin: '0', padding: '0', width: '300px', marginRight: '30px' }}> 
+        <Box key={key} sx={{ margin: '0', padding: '0', width: '300px', marginRight: '30px' }}>
           <Alert
             key={key}
-            severity={severity ?? "info"}
+            severity={severity ?? 'info'}
             variant="filled"
             sx={{
               color: '#fff',
               fontWeight: 'normal',
               width: '100%',
-              cursor: 'pointer', 
+              cursor: 'pointer',
               padding: '0px 10px',
             }}
             onClick={() => closeSnackbar(key)}
@@ -69,20 +84,19 @@ export function UiProvider({ children }) {
         </Box>
       ),
     });
-    // Save the persist message
     if(timeout === 0) {
       if(debug) console.log(`UiProvider showSnackbarMessage: message ${message} timeout ${timeout} - persist key ${key}`);
       persistMessages.push({message, key});
     }
-  }, []);
+  }, [enqueueSnackbar, closeSnackbar]);
 
   // ConfirmCancelForm
   const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(false);
   const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('');
   const [confirmCancelFormMessage, setConfirmCancelFormMessage] = useState('');
   const [confirmCancelFormCommand, setConfirmCancelFormCommand] = useState('');
-  const confirmCancelFormHandleConfirmRef = useRef(null);
-  const confirmCancelFormHandleCancelRef = useRef(null);
+  const confirmCancelFormHandleConfirmRef = useRef<((command: string) => void) | null>(null);
+  const confirmCancelFormHandleCancelRef = useRef<((command: string) => void) | null>(null);
 
   const handleConfirm = () => {
     if(debug) console.log(`UiProvider handle confirm action ${confirmCancelFormCommand}`);
@@ -100,7 +114,7 @@ export function UiProvider({ children }) {
     }
   };
 
-  const showConfirmCancelDialog = useCallback((title, message, command, handleConfirm, handleCancel) => {
+  const showConfirmCancelDialog = useCallback((title: string, message: string, command: string, handleConfirm: (command: string) => void, handleCancel: (command: string) => void) => {
     if(debug) console.log(`UiProvider showConfirmCancelDialog for command ${command}`);
     setConfirmCancelFormTitle(title);
     setConfirmCancelFormMessage(message);
@@ -110,14 +124,12 @@ export function UiProvider({ children }) {
     setShowConfirmCancelForm(true);
   }, []);
 
-
-  // Create the context value for the provider
   const contextValue = useMemo(() => ({
     showSnackbarMessage,
     closeSnackbarMessage,
     closeSnackbar,
     showConfirmCancelDialog,
-  }), [showSnackbarMessage]);
+  }), [showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showConfirmCancelDialog]);
 
   return (
     <UiContext.Provider value={contextValue}>

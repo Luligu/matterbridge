@@ -1,10 +1,13 @@
- 
 // @mui
-import { createTheme } from '@mui/material';
+import { createTheme, Theme } from '@mui/material';
+
+// Frontend
+import { debug } from '../App';
+// const debug = true;
 
 // Function to get CSS variable value
-export function getCssVariable(variableName, defaultValue) {
-  // console.log('getCssVariable:', variableName, 'defaultValue', defaultValue);
+export function getCssVariable(variableName: string, defaultValue: string): string {
+  if (debug) console.log('getCssVariable:', variableName, 'defaultValue', defaultValue);
   const value = getComputedStyle(document.body).getPropertyValue(variableName).trim();
   // if(value) console.log('getCssVariable:', value);
   if(!value) console.error('getCssVariable: undefined', value);
@@ -12,7 +15,7 @@ export function getCssVariable(variableName, defaultValue) {
 }
 
 // Create the frontend theme based on the CSS variables
-export function createMuiTheme(primaryColor) {
+export function createMuiTheme(primaryColor: string): Theme {
   const theme = createTheme({
     palette: {
       primary: {
@@ -25,10 +28,10 @@ export function createMuiTheme(primaryColor) {
         disabled: 'var(--main-label-color)',
       },
     },
+    typography: {
+      fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+    },
     components: {
-      MuiTypography: {
-        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
-      },
       MuiDialog: {
         styleOverrides: {
           paper: {
@@ -42,7 +45,7 @@ export function createMuiTheme(primaryColor) {
       },
       MuiTooltip: {
         defaultProps: {
-          placement: 'top-start', 
+          placement: 'top-start',
           arrow: true,
         },
       },
@@ -50,7 +53,7 @@ export function createMuiTheme(primaryColor) {
         styleOverrides: {
           root: {
             color: 'var(--main-button-color)',
-            backgroundColor: 'var(--main-button-bg-color)', 
+            backgroundColor: 'var(--main-button-bg-color)',
             '&:hover': {
               backgroundColor: 'var(--main-button-bg-color)',
             },
@@ -81,7 +84,7 @@ export function createMuiTheme(primaryColor) {
           root: {
             color: 'var(--main-icon-color)',
             '&:hover .MuiSvgIcon-root': {
-              color: 'var(--primary-color)', 
+              color: 'var(--primary-color)',
             },
           },
         },
@@ -106,7 +109,7 @@ export function createMuiTheme(primaryColor) {
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            backgroundColor: 'var(--div-bg-color)', 
+            backgroundColor: 'var(--div-bg-color)',
             '& .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--main-label-color)',
             },
@@ -116,21 +119,21 @@ export function createMuiTheme(primaryColor) {
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--primary-color)',
             },
-            // padding: '4px 8px', 
-            padding: '0px', 
+            // padding: '4px 8px',
+            padding: '0px',
           },
           input: {
             color: 'var(--div-text-color)',
-            padding: '4px 8px', 
+            padding: '4px 8px',
           },
         },
       },
       MuiInputLabel: {
         styleOverrides: {
           root: {
-            color: 'var(--main-label-color)', 
+            color: 'var(--main-label-color)',
             '&.Mui-focused': {
-              color: 'var(--primary-color)', 
+              color: 'var(--primary-color)',
             },
           },
         },
@@ -140,7 +143,7 @@ export function createMuiTheme(primaryColor) {
           root: {
             color: 'var(--main-label-color)',
             '&.Mui-focused': {
-              color: 'var(--main-label-color)', 
+              color: 'var(--main-label-color)',
             },
           },
         },
@@ -155,7 +158,7 @@ export function createMuiTheme(primaryColor) {
       MuiRadio: {
         styleOverrides: {
           root: {
-            color: 'var(--main-label-color)', 
+            color: 'var(--main-label-color)',
             '&.Mui-checked': {
               color: 'var(--primary-color)',
             },
@@ -167,7 +170,7 @@ export function createMuiTheme(primaryColor) {
           root: {
             backgroundColor: 'var(--div-bg-color)',
             color: 'var(--div-text-color)',
-            height: '30px', 
+            height: '30px',
             '&:hover': {
               borderColor: 'var(--main-text-color)',
             },
@@ -241,4 +244,4 @@ export function createMuiTheme(primaryColor) {
     },
   });
   return theme;
-};
+}

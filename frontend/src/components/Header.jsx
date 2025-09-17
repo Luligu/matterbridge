@@ -19,12 +19,15 @@ import ViewHeadlineIcon from '@mui/icons-material/ViewHeadline';
 import StarIcon from '@mui/icons-material/Star';
 import Favorite from '@mui/icons-material/Favorite';
 
+// Backend WebSocket message types
+import { WS_ID_SHELLY_SYS_UPDATE, WS_ID_SHELLY_MAIN_UPDATE } from './frontendTypes';
+
 // Frontend
-// import { sendCommandToMatterbridge } from './sendApiCommand';
 import { UiContext } from './UiProvider';
-import { WebSocketContext, WS_ID_SHELLY_SYS_UPDATE, WS_ID_SHELLY_MAIN_UPDATE } from './WebSocketProvider';
+import { WebSocketContext } from './WebSocketProvider';
 import { debug, toggleDebug } from '../App';
 // const debug = true;
+
 
 function Header() {
   // Contexts

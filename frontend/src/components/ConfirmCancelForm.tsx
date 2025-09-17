@@ -7,16 +7,23 @@ import Button from '@mui/material/Button';
 // Frontend
 import { debug } from '../App';
 
-// Create a component for confirming or canceling an action
-export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel }) {
+export interface ConfirmCancelFormProps {
+  open: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
 
-  const handleConfirm = event => {
+// Create a component for confirming or canceling an action
+export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel }: ConfirmCancelFormProps): React.JSX.Element {
+  const handleConfirm = (event: React.MouseEvent<HTMLButtonElement>) => {
     if(debug) console.log('Confirmed');
     event.preventDefault();
     onConfirm();
   };
 
-  const handleCancel = event => {
+  const handleCancel = (event: React.MouseEvent<HTMLButtonElement>) => {
     if(debug) console.log('Canceled');
     event.preventDefault();
     onCancel();
@@ -24,7 +31,7 @@ export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel })
 
   return (
     <Dialog open={open}>
-      <DialogTitle gap={'20px'}>
+      <DialogTitle gap={"20px"}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
           <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h4 style={{ margin: 0 }}>{title}</h4>
@@ -40,5 +47,5 @@ export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel })
         </div>
       </DialogContent>
     </Dialog>
-  )
-}  
+  );
+}

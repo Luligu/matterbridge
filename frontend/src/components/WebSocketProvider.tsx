@@ -1,38 +1,75 @@
 /* eslint-disable react-hooks/exhaustive-deps */
  
 // React
-import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext, ReactNode } from 'react';
 
-// Local modules
+// Frontend modules
 import { UiContext } from './UiProvider';
 import { debug } from '../App';
 // const debug = true;
 
-/**
- * Websocket message IDs taken from frontend.ts
- */
-export const WS_ID_LOG = 0;
-export const WS_ID_REFRESH_NEEDED = 1;
-export const WS_ID_RESTART_NEEDED = 2;
-export const WS_ID_CPU_UPDATE = 3;
-export const WS_ID_MEMORY_UPDATE = 4;
-export const WS_ID_UPTIME_UPDATE = 5;
-export const WS_ID_SNACKBAR = 6;
-export const WS_ID_UPDATE_NEEDED = 7;
-export const WS_ID_STATEUPDATE = 8;
-export const WS_ID_CLOSE_SNACKBAR = 9;
+// Backend WebSocket message types
+import {
+  WS_ID_LOG,
+  WS_ID_REFRESH_NEEDED,
+  WS_ID_RESTART_NEEDED,
+  WS_ID_CPU_UPDATE,
+  WS_ID_MEMORY_UPDATE,
+  WS_ID_SNACKBAR,
+  WS_ID_CLOSE_SNACKBAR,
+  WS_ID_SHELLY_SYS_UPDATE,
+  WS_ID_SHELLY_MAIN_UPDATE,
+} from './frontendTypes';
 
-export const WS_ID_SHELLY_SYS_UPDATE = 100;
-export const WS_ID_SHELLY_MAIN_UPDATE = 101;
+// Type for WebSocket messages sent to the backend
+export interface WebSocketSendMessage {
+  id: number;
+  src: string;
+  dst: string;
+  method: string;
+  params?: Record<string, unknown>;
+  error?: string;
+  success?: boolean;
+  response?: unknown;
+}
 
-export const WebSocketMessagesContext = createContext(); // messages
-export const WebSocketContext = createContext(); // , setMessages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener
+// TypeScript interfaces for context values
+export interface WebSocketMessagesContextType {
+  messages: string[];
+  maxMessages: number;
+  autoScroll: boolean;
+  setMessages: React.Dispatch<React.SetStateAction<string[]>>;
+  setLogFilters: (level: string, search: string) => void;
+  setMaxMessages: React.Dispatch<React.SetStateAction<number>>;
+  setAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-export function WebSocketProvider({ children }) {
+export interface WebSocketContextType {
+  maxMessages: number;
+  autoScroll: boolean;
+  logFilterLevel: string;
+  logFilterSearch: string;
+  setMessages: React.Dispatch<React.SetStateAction<string[]>>;
+  setLogFilters: (level: string, search: string) => void;
+  setMaxMessages: React.Dispatch<React.SetStateAction<number>>;
+  setAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
+  online: boolean;
+  retry: number;
+  getUniqueId: () => number;
+  addListener: (listener: (msg: WebSocketSendMessage) => void) => void;
+  removeListener: (listener: (msg: WebSocketSendMessage) => void) => void;
+  sendMessage: (message: WebSocketSendMessage) => void;
+  logMessage: (badge: string, message: string) => void;
+}
+
+export const WebSocketMessagesContext = createContext<WebSocketMessagesContextType | undefined>(undefined); // messages
+export const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined); // setMessages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener
+
+export function WebSocketProvider({ children }: { children: ReactNode }) {
   // States
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<string[]>([]);
   const [maxMessages, setMaxMessages] = useState(1000);
   const [autoScroll, setAutoScroll] = useState(true);
   const [online, setOnline] = useState(false);
@@ -41,13 +78,13 @@ export function WebSocketProvider({ children }) {
   const { showSnackbarMessage, closeSnackbarMessage, closeSnackbar } = useContext(UiContext);
 
   // Refs
-  const listenersRef = useRef([]);
-  const wsRef = useRef(null);
+  const listenersRef = useRef<Array<(msg: WebSocketSendMessage) => void>>([]);
+  const wsRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef(1);
   const uniqueIdRef = useRef(Math.floor(Math.random() * (999999 - 1000 + 1)) + 1000);
-  const pingIntervalRef = useRef(null);
-  const offlineTimeoutRef = useRef(null);
-  const startTimeoutRef = useRef(null);
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const offlineTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const logFilterLevelRef = useRef(logFilterLevel);
   const logFilterSearchRef = useRef(logFilterSearch);
 
@@ -75,7 +112,7 @@ export function WebSocketProvider({ children }) {
     return Math.floor(Math.random() * (999999 - 1000 + 1)) + 1000;
   }, []);
 
-  const sendMessage = useCallback((message) => {
+  const sendMessage = useCallback((message: WebSocketSendMessage) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       try {
         if (message.id === undefined) message.id = uniqueIdRef.current;
@@ -90,24 +127,24 @@ export function WebSocketProvider({ children }) {
     }
   }, []);
 
-  const logMessage = useCallback((badge, message) => {
+  const logMessage = useCallback((badge: string, message: string) => {
     const badgeSpan = `<span style="background-color: #5c0e91; color: white; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${badge}</span>`;
     setMessages(prevMessages => [...prevMessages, badgeSpan + ' <span style="color: var(--main-log-color);">' + message + '</span>']);
   }, []);
 
-  const setLogFilters = useCallback((level, search) => {
+  const setLogFilters = useCallback((level: string, search: string) => {
     setLogFilterLevel(level);
     setLogFilterSearch(search);
     logMessage('WebSocket', `Filtering by log level "${level}" and log search "${search}"`);
   }, [logMessage]);
 
-  const addListener = useCallback((listener) => {
+  const addListener = useCallback((listener: (msg: WebSocketSendMessage) => void) => {
     if (debug) console.log(`WebSocket addListener:`, listener);
     listenersRef.current = [...listenersRef.current, listener];
     if (debug) console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
   }, []);
 
-  const removeListener = useCallback((listener) => {
+  const removeListener = useCallback((listener: (msg: WebSocketSendMessage) => void) => {
     if (debug) console.log(`WebSocket removeListener:`, listener);
     listenersRef.current = listenersRef.current.filter(l => l !== listener);
     if (debug) console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
@@ -167,7 +204,7 @@ export function WebSocketProvider({ children }) {
           return;
         } else if (msg.id === uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && msg.response === 'pong') {
           if (debug) console.log(`WebSocket pong response message:`, msg, 'listeners:', listenersRef.current.length);
-          clearTimeout(offlineTimeoutRef.current);
+          if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
           listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
           return;
         } else if (msg.id !== WS_ID_LOG) {
@@ -196,7 +233,7 @@ export function WebSocketProvider({ children }) {
         setMessages(prevMessages => {
           // Create new array with new message
           const timeString = `<span style="color: #505050;">[${msg.time}]</span>`;
-          const getsubTypeMessageBgColor = (level) => {
+          const getsubTypeMessageBgColor = (level: string) => {
             switch (level.toLowerCase()) {
               case 'debug':
                 return 'gray';
@@ -216,7 +253,7 @@ export function WebSocketProvider({ children }) {
                 return 'lightblue';
             }
           };
-          const getsubTypeMessageColor = (level) => {
+          const getsubTypeMessageColor = (level: string) => {
             switch (level.toLowerCase()) {
               case 'warn':
                 return 'black';
@@ -250,7 +287,7 @@ export function WebSocketProvider({ children }) {
 
         pingIntervalRef.current = setInterval(() => {
           sendMessage({ id: uniqueIdRef.current, method: "ping", src: "Frontend", dst: "Matterbridge", params: {} });
-          clearTimeout(offlineTimeoutRef.current);
+          if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
           offlineTimeoutRef.current = setTimeout(() => {
             if (debug) console.error(`WebSocketUse: No pong response received from WebSocket: ${wssHost}`);
             logMessage('WebSocket', `No pong response received from WebSocket: ${wssHost}`);
@@ -267,9 +304,9 @@ export function WebSocketProvider({ children }) {
       logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
       setOnline(false);
       closeSnackbar();
-      clearTimeout(startTimeoutRef.current);
-      clearTimeout(offlineTimeoutRef.current);
-      clearInterval(pingIntervalRef.current);
+      if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
+      if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
+      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
       logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket${isIngress ? ' (Ingress)' : ''}: ${wssHost}`);
       if(isIngress) {
         setTimeout(attemptReconnect, 5000);

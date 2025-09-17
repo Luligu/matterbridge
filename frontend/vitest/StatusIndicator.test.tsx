@@ -1,6 +1,16 @@
+// Silence all console output during tests (must be before all imports)
+globalThis.console = {
+  ...console,
+  log: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+  trace: vi.fn(),
+};
+import { vi, describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { describe, it, expect, vi } from 'vitest';
 import { StatusIndicator } from '../src/components/StatusIndicator';
 
 // Helper to get element by text
