@@ -22,6 +22,11 @@ export default defineConfig([
   },
   js.configs.recommended,
   ...tseslint.configs.strict,
+  // Spread strict type-aware configs directly
+  // ...tseslint.configs.strictTypeChecked.map((config) => ({
+  //   ...config,
+  //   files: ['src/**/*.{ts,tsx}'],
+  // })),
   {
     name: 'Global Configuration Options',
     languageOptions: {

@@ -25,8 +25,11 @@ export default defineConfig([
   },
   js.configs.recommended,
   ...tseslint.configs.strict,
-  // Comment the previous line and uncomment the following line if you want to use strict with type checking
-  // ...tseslint.configs.strictTypeChecked,
+  // Spread strict type-aware configs directly
+  // ...tseslint.configs.strictTypeChecked.map((config) => ({
+  //   ...config,
+  //   files: ['src/**/*.{ts,tsx}'],
+  // })),
   pluginImport.flatConfigs.recommended,
   pluginN.configs['flat/recommended-script'],
   // @ts-expect-error: Missing types for pluginPromise
