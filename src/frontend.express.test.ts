@@ -461,7 +461,7 @@ describe('Matterbridge frontend express with http', () => {
 
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
-    expect(response.body).toMatch(/^<!doctype html>/);
+    expect(response.body).toMatch(/^<!DOCTYPE html>/);
   });
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {

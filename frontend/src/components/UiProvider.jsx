@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
  
 // React
-import React, { useState, useCallback, useMemo, createContext, useRef } from 'react';
+import { useState, useCallback, useMemo, createContext, useRef } from 'react';
 
 // @mui
 import { Alert, Box, IconButton } from '@mui/material';

@@ -1,6 +1,6 @@
  
 // React
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 
 // Frontend
 import { TruncatedText } from './TruncatedText';

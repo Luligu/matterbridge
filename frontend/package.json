@@ -10,7 +10,8 @@
     "watch": "vite build --watch",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "lint": "npx eslint .",
+    "lint": "eslint --max-warnings=0 .",
+    "lint:fix": "eslint --fix --max-warnings=0 .",
     "test": "vitest run",
     "test:watch": "vitest --reporter verbose",
     "test:verbose": "vitest run --reporter verbose",
@@ -35,7 +36,7 @@
     "install:typescript": "npm install --save-dev typescript @types/node",
     "install:vite": "npm install --save-dev vite @vitejs/plugin-react",
     "install:vitest": "npm install --save-dev vitest jsdom @testing-library/react @testing-library/jest-dom",
-    "install:eslint": "npm install --save-dev eslint eslint-plugin-react eslint-plugin-react-hooks @typescript-eslint/eslint-plugin @typescript-eslint/parser"
+    "install:eslint": "npm install --save-dev eslint eslint-plugin-react eslint-plugin-react-hooks typescript-eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser"
   },
   "overrides": {
     "react-table": {
@@ -73,6 +74,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "jsdom": "^27.0.0",
     "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.0",
     "vite": "^7.1.5",
     "vitest": "^3.2.4"
   }

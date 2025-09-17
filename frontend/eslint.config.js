@@ -1,3 +1,7 @@
+// eslint.config.js
+
+// This ESLint configuration is designed for a mixed JavaScript and TypeScript project with React.
+
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -31,32 +35,15 @@ export default [
         project: './tsconfig.json',
         tsconfigRootDir: resolve(__dirname),
         sourceType: 'module',
-        ecmaVersion: 'latest'
+        ecmaVersion: 'latest',
+        ecmaFeatures: {
+          jsx: true,
+        },
       },
     },
     linterOptions: {
       reportUnusedDisableDirectives: 'error', // Report unused eslint-disable directives
       reportUnusedInlineConfigs: 'error', // Report unused eslint-disable-line directives
-    },
-  },
-  {
-    name: 'All JavaScript and TypeScript with React',
-    files: ['**/*.{js,jsx,ts,tsx}'],
-    ...reactPlugin.configs.flat.recommended,
-    ...reactPlugin.configs.flat['jsx-runtime'], // Add this if you are using React 17+
-    ...reactHooks.configs['recommended-latest'],
-    languageOptions: {
-      sourceType: 'module',
-      ecmaVersion: 'latest',
-      globals: {
-        ...globals.serviceworker,
-        ...globals.browser,
-      },
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
     },
     settings: {
       react: {
@@ -65,11 +52,17 @@ export default [
     }
   },
   {
+    name: 'All JavaScript and TypeScript with React',
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    ...reactPlugin.configs.flat.recommended,
+    ...reactPlugin.configs.flat['jsx-runtime'], // Add this if you are using React 17+
+    ...reactHooks.configs['recommended-latest'],
+  },
+  {
     name: 'JavaScript',
     files: ['**/*.{js,jsx}'],
     ...tseslint.configs.disableTypeChecked,
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
       'no-unused-vars': 'off', // Disable base rule for unused variables
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -88,7 +81,6 @@ export default [
     name: 'TypeScript',
     files: ['**/*.{ts,tsx}'],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
       'no-unused-vars': 'off', // Disable base rule for unused variables
       '@typescript-eslint/no-unused-vars': [
         'error',

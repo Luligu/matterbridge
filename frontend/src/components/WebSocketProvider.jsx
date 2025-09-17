@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
  
 // React
-import React, { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext } from 'react';
 
 // Local modules
 import { UiContext } from './UiProvider';

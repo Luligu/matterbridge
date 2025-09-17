@@ -1,7 +1,7 @@
 /* global DocumentTouch */
 
 // React
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 
 // Frontend
 import { WebSocketMessagesContext } from './WebSocketProvider';

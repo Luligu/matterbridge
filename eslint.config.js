@@ -2,6 +2,9 @@
 
 // This ESLint configuration is designed for a TypeScript project.
 
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
 import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
@@ -13,8 +16,6 @@ import pluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import pluginJest from 'eslint-plugin-jest';
 import pluginVitest from '@vitest/eslint-plugin';
 
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([
@@ -102,6 +103,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.jest.json', // Use a separate tsconfig for Jest tests with "isolatedModules": true
+        tsconfigRootDir: resolve(__dirname),
         sourceType: 'module',
         ecmaVersion: 'latest',
       },
@@ -128,6 +130,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.jest.json',
+        tsconfigRootDir: resolve(__dirname),
         sourceType: 'module',
         ecmaVersion: 'latest',
       },

@@ -1,7 +1,7 @@
  
 
 // React
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 
 // @mui/material
 import Radio from '@mui/material/Radio';
