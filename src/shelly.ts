@@ -29,7 +29,7 @@ import type { RequestOptions } from 'node:http';
 import { debugStringify } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
-import { WS_ID_SHELLY_MAIN_UPDATE, WS_ID_SHELLY_SYS_UPDATE } from './frontend.js';
+import { WS_ID_SHELLY_MAIN_UPDATE, WS_ID_SHELLY_SYS_UPDATE } from './frontendTypes.js';
 
 let verifyIntervalSecs = 15;
 let verifyTimeoutSecs = 600;

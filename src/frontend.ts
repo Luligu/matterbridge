@@ -50,98 +50,21 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
-
-/**
- * Websocket message ID for logging.
- *
- * @constant {number}
- */
-export const WS_ID_LOG = 0;
-
-/**
- * Websocket message ID indicating a refresh is needed.
- *
- * @constant {number}
- */
-export const WS_ID_REFRESH_NEEDED = 1;
-
-/**
- * Websocket message ID indicating a restart is needed.
- *
- * @constant {number}
- */
-export const WS_ID_RESTART_NEEDED = 2;
-
-/**
- * Websocket message ID indicating a cpu update.
- *
- * @constant {number}
- */
-export const WS_ID_CPU_UPDATE = 3;
-
-/**
- * Websocket message ID indicating a memory update.
- *
- * @constant {number}
- */
-export const WS_ID_MEMORY_UPDATE = 4;
-
-/**
- * Websocket message ID indicating an uptime update.
- *
- * @constant {number}
- */
-export const WS_ID_UPTIME_UPDATE = 5;
-
-/**
- * Websocket message ID indicating a snackbar message.
- *
- * @constant {number}
- */
-export const WS_ID_SNACKBAR = 6;
-
-/**
- * Websocket message ID indicating matterbridge has un update available.
- *
- * @constant {number}
- */
-export const WS_ID_UPDATE_NEEDED = 7;
-
-/**
- * Websocket message ID indicating a state update.
- *
- * @constant {number}
- */
-export const WS_ID_STATEUPDATE = 8;
-
-/**
- * Websocket message ID indicating to close a permanent snackbar message.
- *
- * @constant {number}
- */
-export const WS_ID_CLOSE_SNACKBAR = 9;
-
-/**
- * Websocket message ID indicating a shelly system update.
- * check:
- * curl -k http://127.0.0.1:8101/api/updates/sys/check
- * perform:
- * curl -k http://127.0.0.1:8101/api/updates/sys/perform
- *
- * @constant {number}
- */
-export const WS_ID_SHELLY_SYS_UPDATE = 100;
-
-/**
- * Websocket message ID indicating a shelly main update.
- * check:
- * curl -k http://127.0.0.1:8101/api/updates/main/check
- * perform:
- * curl -k http://127.0.0.1:8101/api/updates/main/perform
- *
- * @constant {number}
- */
-export const WS_ID_SHELLY_MAIN_UPDATE = 101;
+import {
+  WS_ID_CLOSE_SNACKBAR,
+  WS_ID_CPU_UPDATE,
+  WS_ID_LOG,
+  WS_ID_MEMORY_UPDATE,
+  WS_ID_REFRESH_NEEDED,
+  WS_ID_RESTART_NEEDED,
+  WS_ID_SNACKBAR,
+  WS_ID_STATEUPDATE,
+  WS_ID_UPDATE_NEEDED,
+  WS_ID_UPTIME_UPDATE,
+  WsMessageLog,
+  WsMessageRequest,
+  WsMessageResponse,
+} from './frontendTypes.js';
 
 /**
  * Represents the Matterbridge events.
@@ -1300,45 +1223,45 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {Promise<void>} A promise that resolves when the message has been handled.
    */
   private async wsMessageHandler(client: WebSocket, message: WebSocket.RawData): Promise<void> {
-    let data: { id: number; dst: string; src: string; method: string; params: Record<string, string | number | boolean> };
+    let data: WsMessageRequest;
     try {
       data = JSON.parse(message.toString());
       if (!isValidNumber(data.id) || !isValidString(data.dst) || !isValidString(data.src) || !isValidString(data.method) || !isValidObject(data.params) || data.dst !== 'Matterbridge') {
         this.log.error(`Invalid message from websocket client: ${debugStringify(data)}`);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid message' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid message' } as WsMessageResponse));
         return;
       }
       this.log.debug(`Received message from websocket client: ${debugStringify(data)}`);
 
       if (data.method === 'ping') {
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: 'pong' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: 'pong' } as WsMessageResponse));
         return;
       } else if (data.method === '/api/login') {
         if (!this.matterbridge.nodeContext) {
           this.log.error('Login nodeContext not found');
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Internal error: nodeContext not found' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Internal error: nodeContext not found' } as WsMessageResponse));
           return;
         }
         const storedPassword = await this.matterbridge.nodeContext.get('password', '');
         if (storedPassword === '' || storedPassword === data.params.password) {
           this.log.debug('Login password valid');
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: { valid: true } }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: { valid: true } } as WsMessageResponse));
           return;
         } else {
           this.log.debug('Error wrong password');
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong password' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong password' } as WsMessageResponse));
           return;
         }
       } else if (data.method === '/api/install') {
         if (!isValidString(data.params.packageName, 10) || !isValidBoolean(data.params.restart)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/install' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/install' } as WsMessageResponse));
           return;
         }
         this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
         const { spawnCommand } = await import('./utils/spawn.js');
         spawnCommand(this.matterbridge, 'npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
           .then((response) => {
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response } as WsMessageResponse));
             this.wssSendCloseSnackbarMessage(`Installing package ${data.params.packageName}...`);
             this.wssSendSnackbarMessage(`Installed package ${data.params.packageName}`, 5, 'success');
             const packageName = (data.params.packageName as string).replace(/@.*$/, '');
@@ -1393,13 +1316,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             return;
           })
           .catch((error) => {
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error } as WsMessageResponse));
             this.wssSendCloseSnackbarMessage(`Installing package ${data.params.packageName}...`);
             this.wssSendSnackbarMessage(`Package ${data.params.packageName} not installed`, 10, 'error');
           });
       } else if (data.method === '/api/uninstall') {
         if (!isValidString(data.params.packageName, 10)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' } as WsMessageResponse));
           return;
         }
         // The package is a plugin
@@ -1430,18 +1353,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           });
       } else if (data.method === '/api/addplugin') {
         if (!isValidString(data.params.pluginNameOrPath, 10)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginNameOrPath in /api/addplugin' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginNameOrPath in /api/addplugin' } as WsMessageResponse));
           return;
         }
         data.params.pluginNameOrPath = (data.params.pluginNameOrPath as string).replace(/@.*$/, '');
         if (this.matterbridge.plugins.has(data.params.pluginNameOrPath)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} already added` }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} already added` } as WsMessageResponse));
           this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} already added`, 10, 'warning');
           return;
         }
         const plugin = await this.matterbridge.plugins.add(data.params.pluginNameOrPath);
         if (plugin) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: plugin.name }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: plugin.name } as WsMessageResponse));
           this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
           this.matterbridge.plugins
             .load(plugin, true, 'The plugin has been added', true)
@@ -1455,12 +1378,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               //
             });
         } else {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} not added` }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} not added` } as WsMessageResponse));
           this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
         }
       } else if (data.method === '/api/removeplugin') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/removeplugin' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/removeplugin' } as WsMessageResponse));
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
@@ -1469,10 +1392,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendSnackbarMessage(`Removed plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/enableplugin') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/enableplugin' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/enableplugin' } as WsMessageResponse));
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
@@ -1499,10 +1422,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               //
             });
         }
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/disableplugin') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/disableplugin' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/disableplugin' } as WsMessageResponse));
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
@@ -1511,10 +1434,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendSnackbarMessage(`Disabled plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/restartplugin') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/restartplugin' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/restartplugin' } as WsMessageResponse));
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
@@ -1546,14 +1469,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendSnackbarMessage(`Restarted plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/savepluginconfig') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/savepluginconfig' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/savepluginconfig' } as WsMessageResponse));
           return;
         }
         if (!isValidObject(data.params.formData, 5)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter formData in /api/savepluginconfig' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter formData in /api/savepluginconfig' } as WsMessageResponse));
           return;
         }
         this.log.info(`Saving config for plugin ${plg}${data.params.pluginName}${nf}...`);
@@ -1563,49 +1486,49 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
           this.wssSendRefreshRequired('pluginsRestart');
           this.wssSendRestartRequired();
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
         }
       } else if (data.method === '/api/checkupdates') {
         const { checkUpdates } = await import('./update.js');
         checkUpdates(this.matterbridge);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/shellysysupdate') {
         const { triggerShellySysUpdate } = await import('./shelly.js');
         triggerShellySysUpdate(this.matterbridge);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/shellymainupdate') {
         const { triggerShellyMainUpdate } = await import('./shelly.js');
         triggerShellyMainUpdate(this.matterbridge);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/shellycreatesystemlog') {
         const { createShellySystemLog } = await import('./shelly.js');
         createShellySystemLog(this.matterbridge);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/shellynetconfig') {
         this.log.debug('/api/shellynetconfig:', data.params);
         const { triggerShellyChangeIp: triggerShellyChangeNet } = await import('./shelly.js');
         triggerShellyChangeNet(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/softreset') {
         const { triggerShellySoftReset } = await import('./shelly.js');
         triggerShellySoftReset(this.matterbridge);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/hardreset') {
         const { triggerShellyHardReset } = await import('./shelly.js');
         triggerShellyHardReset(this.matterbridge);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/reboot') {
         const { triggerShellyReboot } = await import('./shelly.js');
         triggerShellyReboot(this.matterbridge);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/restart') {
         this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
         await this.matterbridge.restartProcess();
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/shutdown') {
         this.wssSendSnackbarMessage(`Shutting down matterbridge...`, 0);
         await this.matterbridge.shutdownProcess();
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/create-backup') {
         this.wssSendSnackbarMessage('Creating backup...', 0);
         this.log.notice(`Creating the backup...`);
@@ -1613,30 +1536,30 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.notice(`Backup ready to be downloaded.`);
         this.wssSendCloseSnackbarMessage('Creating backup...');
         this.wssSendSnackbarMessage('Backup ready to be downloaded', 10);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/unregister') {
         this.wssSendSnackbarMessage('Unregistering all bridged devices...', 0);
         await this.matterbridge.unregisterAndShutdownProcess();
         this.wssSendCloseSnackbarMessage('Unregistering all bridged devices...');
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/reset') {
         this.wssSendSnackbarMessage('Resetting matterbridge commissioning...', 10);
         await this.matterbridge.shutdownProcessAndReset();
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/factoryreset') {
         this.wssSendSnackbarMessage('Factory reset of matterbridge...', 10);
         await this.matterbridge.shutdownProcessAndFactoryReset();
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/matter') {
         if (!isValidString(data.params.id)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter id in /api/matter' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter id in /api/matter' } as WsMessageResponse));
           return;
         }
         let serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
         if (data.params.id === 'Matterbridge') serverNode = this.matterbridge.serverNode;
         else serverNode = this.matterbridge.getPlugins().find((p) => p.serverNode && p.serverNode.id === data.params.id)?.serverNode || this.matterbridge.getDevices().find((d) => d.serverNode && d.serverNode.id === data.params.id)?.serverNode;
         if (!serverNode) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Unknown server node id in /api/matter' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Unknown server node id in /api/matter' } as WsMessageResponse));
           return;
         }
         this.log.debug(`*Server node ${serverNode.id}: commissioned ${serverNode.state.commissioning.commissioned} upTime ${serverNode.state.generalDiagnostics.upTime}.`);
@@ -1666,22 +1589,22 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.log.debug(`*Removed fabric index ${data.params.removeFabric} for node ${data.params.id}`);
           this.wssSendRefreshRequired('matter', { matter: { ...this.matterbridge.getServerNodeData(serverNode) } });
         }
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
       } else if (data.method === '/api/settings') {
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() } as WsMessageResponse));
       } else if (data.method === '/api/plugins') {
         const response = this.getPlugins();
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response } as WsMessageResponse));
       } else if (data.method === '/api/devices') {
         const devices = await this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: devices }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: devices } as WsMessageResponse));
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.plugin, 10)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' } as WsMessageResponse));
           return;
         }
         if (!isValidNumber(data.params.endpoint, 1)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' } as WsMessageResponse));
           return;
         }
         const response = this.getClusters(data.params.plugin, data.params.endpoint);
@@ -1701,56 +1624,56 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             }),
           );
         } else {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Endpoint not found in /api/clusters' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Endpoint not found in /api/clusters' } as WsMessageResponse));
         }
       } else if (data.method === '/api/select' || data.method === '/api/select/devices') {
         if (!isValidString(data.params.plugin, 10)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select' } as WsMessageResponse));
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.plugin);
         if (!plugin) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select' } as WsMessageResponse));
           return;
         }
         const selectDeviceValues = plugin.platform?.getSelectDevices().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectDeviceValues }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectDeviceValues } as WsMessageResponse));
       } else if (data.method === '/api/select/entities') {
         if (!isValidString(data.params.plugin, 10)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select/entities' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select/entities' } as WsMessageResponse));
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.plugin);
         if (!plugin) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' } as WsMessageResponse));
           return;
         }
         const selectEntityValues = plugin.platform?.getSelectEntities().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectEntityValues }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectEntityValues } as WsMessageResponse));
       } else if (data.method === '/api/action') {
         if (!isValidString(data.params.plugin, 5) || !isValidString(data.params.action, 1)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/action' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/action' } as WsMessageResponse));
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.plugin);
         if (!plugin) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/action' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/action' } as WsMessageResponse));
           return;
         }
         this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
         plugin.platform
           ?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined, data.params.formData as unknown as PlatformConfig)
           .then(() => {
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             return;
           })
           .catch((error) => {
             this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Error in plugin ${plugin.name} action ${data.params.action}: ${error}` }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Error in plugin ${plugin.name} action ${data.params.action}: ${error}` } as WsMessageResponse));
           });
       } else if (data.method === '/api/config') {
         if (!isValidString(data.params.name, 5) || data.params.value === undefined) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/config' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/config' } as WsMessageResponse));
           return;
         }
         this.log.debug(`Received /api/config name ${CYAN}${data.params.name}${db} value ${CYAN}${data.params.value}${db}`);
@@ -1758,14 +1681,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           case 'setpassword':
             if (isValidString(data.params.value)) {
               await this.matterbridge.nodeContext?.set('password', data.params.value);
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             }
             break;
           case 'setbridgemode':
             if (isValidString(data.params.value) && ['bridge', 'childbridge'].includes(data.params.value)) {
               await this.matterbridge.nodeContext?.set('bridgeMode', data.params.value);
               this.wssSendRestartRequired();
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             }
             break;
           case 'setmbloglevel':
@@ -1785,7 +1708,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                 await this.matterbridge.setLogLevel(LogLevel.FATAL);
               }
               await this.matterbridge.nodeContext?.set('matterbridgeLogLevel', this.log.logLevel);
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             }
             break;
           case 'setmblogfile':
@@ -1796,7 +1719,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               // Create the file logger for matterbridge
               if (data.params.value) AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), this.matterbridge.matterbridgeInformation.loggerLevel, true);
               else AnsiLogger.setGlobalLogfile(undefined);
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             }
             break;
           case 'setmjloglevel':
@@ -1817,7 +1740,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               }
               this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.level as MatterLogLevel;
               await this.matterbridge.nodeContext?.set('matterLogLevel', Logger.level);
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             }
             break;
           case 'setmjlogfile':
@@ -1830,7 +1753,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               } else {
                 this.matterbridge.matterLog.logFilePath = undefined;
               }
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             }
             break;
           case 'setmdnsinterface':
@@ -1840,7 +1763,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.mattermdnsinterface = this.matterbridge.mdnsInterface;
               await this.matterbridge.nodeContext?.set('mattermdnsinterface', data.params.value);
               this.wssSendRestartRequired();
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             }
             break;
           case 'setipv4address':
@@ -1850,7 +1773,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.matteripv4address = this.matterbridge.ipv4address;
               await this.matterbridge.nodeContext?.set('matteripv4address', data.params.value);
               this.wssSendRestartRequired();
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             }
             break;
           case 'setipv6address':
@@ -1860,7 +1783,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.matteripv6address = this.matterbridge.ipv6address;
               await this.matterbridge.nodeContext?.set('matteripv6address', data.params.value);
               this.wssSendRestartRequired();
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             }
             break;
           case 'setmatterport':
@@ -1876,7 +1799,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               await this.matterbridge.nodeContext?.set<number>('matterport', 5540);
               this.wssSendRestartRequired();
             }
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             break;
           case 'setmatterdiscriminator':
             data.params.value = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
@@ -1885,13 +1808,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.matterDiscriminator = data.params.value;
               await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', data.params.value);
               this.wssSendRestartRequired();
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             } else {
               this.log.debug(`Reset matter commissioning discriminator to ${CYAN}undefined${db}`);
               this.matterbridge.matterbridgeInformation.matterDiscriminator = undefined;
               await this.matterbridge.nodeContext?.remove('matterdiscriminator');
               this.wssSendRestartRequired();
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: false }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: false } as WsMessageResponse));
             }
             break;
           case 'setmatterpasscode':
@@ -1901,13 +1824,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Set matter commissioning passcode to ${CYAN}${data.params.value}${db}`);
               await this.matterbridge.nodeContext?.set<number>('matterpasscode', data.params.value);
               this.wssSendRestartRequired();
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             } else {
               this.log.debug(`Reset matter commissioning passcode to ${CYAN}undefined${db}`);
               this.matterbridge.matterbridgeInformation.matterPasscode = undefined;
               await this.matterbridge.nodeContext?.remove('matterpasscode');
               this.wssSendRestartRequired();
-              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: false }));
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: false } as WsMessageResponse));
             }
             break;
           case 'setvirtualmode':
@@ -1917,21 +1840,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               await this.matterbridge.nodeContext?.set<string>('virtualmode', data.params.value);
               this.wssSendRestartRequired();
             }
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
             break;
           default:
             this.log.warn(`Unknown parameter ${data.params.name} in /api/config`);
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown parameter ${data.params.name} in /api/config` }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown parameter ${data.params.name} in /api/config` } as WsMessageResponse));
         }
       } else if (data.method === '/api/command') {
         if (!isValidString(data.params.command, 5)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/command' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/command' } as WsMessageResponse));
           return;
         }
         if (data.params.command === 'selectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1) && isValidString(data.params.name, 1)) {
           const plugin = this.matterbridge.plugins.get(data.params.plugin);
           if (!plugin) {
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' } as WsMessageResponse));
             return;
           }
           const config = plugin.configJson;
@@ -1970,12 +1893,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` } as WsMessageResponse));
           }
         } else if (data.params.command === 'unselectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1) && isValidString(data.params.name, 1)) {
           const plugin = this.matterbridge.plugins.get(data.params.plugin);
           if (!plugin) {
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' } as WsMessageResponse));
             return;
           }
           const config = plugin.configJson;
@@ -2010,15 +1933,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             if (!restartRequired) this.wssSendRefreshRequired('pluginsRestart');
             this.wssSendRestartRequired(false);
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true } as WsMessageResponse));
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
-            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` }));
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` } as WsMessageResponse));
           }
         }
       } else {
         this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid method' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid method' } as WsMessageResponse));
       }
     } catch (error) {
       inspectError(this.log, `Error processing message "${message}" from websocket client`, error);
@@ -2074,7 +1997,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_LOG, src: 'Matterbridge', level, time, name, message }));
+        client.send(JSON.stringify({ id: WS_ID_LOG, src: 'Matterbridge', dst: 'Frontend', method: 'log', level, time, name, message } as WsMessageLog));
       }
     });
   }
@@ -2232,6 +2155,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   /**
    * Sends a close snackbar message to all connected clients.
+   * It will close the snackbar message with the same message and timeout = 0.
    *
    * @param {string} message - The message to send.
    */
