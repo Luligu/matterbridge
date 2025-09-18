@@ -362,13 +362,13 @@ export function DevicesIcons({filter}) {
           }
         }
         if (msg.method === '/api/clusters' && msg.response) {
-          if(debug) console.log(`DevicesIcons received for device "${msg.deviceName}" serial "${msg.serialNumber}" deviceType ${msg.deviceTypes.join(' ')} clusters (${msg.response.length}):`, msg.response);
+          /*if(debug)*/ console.log(`DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceType ${msg.response.deviceTypes.join(' ')} clusters (${msg.response.length}):`, msg.response);
           if(msg.response.length === 0) return;
-          const serial = msg.serialNumber;
+          const serial = msg.response.serialNumber;
           endpoints[serial] = [];
-          deviceTypes[serial] = msg.deviceTypes;
+          deviceTypes[serial] = msg.response.deviceTypes;
           clusters[serial] = [];
-          for(let cluster of msg.response) {
+          for(let cluster of msg.response.clusters) {
             if(!endpoints[serial].find((e) => e.endpoint === cluster.endpoint)) {
               endpoints[serial].push({ endpoint: cluster.endpoint, id: cluster.id, deviceTypes: cluster.deviceTypes });
             }

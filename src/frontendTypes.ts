@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-import { ApiMatter } from './matterbridgeTypes.js';
+import { ApiClustersResponse, ApiDevices, ApiMatter, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
 /**
  * Base interface for WebSocket messages.
@@ -59,6 +59,436 @@ export interface WsMessageApiResponse {
   response?: unknown;
 }
 
+export interface WsMessagePingRequest extends WsMessageApiRequest {
+  method: 'ping';
+  params: {
+    password: string;
+  };
+}
+export interface WsMessagePingResponse extends WsMessageApiResponse {
+  method: 'ping';
+  response: 'pong';
+  success: true;
+}
+
+export interface WsMessageApiLoginRequest extends WsMessageApiRequest {
+  method: '/api/login';
+  params: {
+    password: string;
+  };
+}
+export interface WsMessageApiLoginResponse extends WsMessageApiResponse {
+  method: '/api/login';
+  success: true;
+}
+
+export interface WsMessageApiInstallRequest extends WsMessageApiRequest {
+  method: '/api/install';
+  params: {
+    packageName: string;
+    restart?: boolean;
+  };
+}
+export interface WsMessageApiInstallResponse extends WsMessageApiResponse {
+  method: '/api/install';
+  success: true;
+}
+
+export interface WsMessageApiUninstallRequest extends WsMessageApiRequest {
+  method: '/api/uninstall';
+  params: {
+    packageName: string;
+  };
+}
+export interface WsMessageApiUninstallResponse extends WsMessageApiResponse {
+  method: '/api/uninstall';
+  success: true;
+}
+
+export interface WsMessageApiAddPluginRequest extends WsMessageApiRequest {
+  method: '/api/addplugin';
+  params: {
+    pluginNameOrPath: string;
+  };
+}
+export interface WsMessageApiAddPluginResponse extends WsMessageApiResponse {
+  method: '/api/addplugin';
+  success: true;
+}
+
+export interface WsMessageApiRemovePluginRequest extends WsMessageApiRequest {
+  method: '/api/removeplugin';
+  params: {
+    pluginName: string;
+  };
+}
+export interface WsMessageApiRemovePluginResponse extends WsMessageApiResponse {
+  method: '/api/removeplugin';
+  success: true;
+}
+
+export interface WsMessageApiEnablePluginRequest extends WsMessageApiRequest {
+  method: '/api/enableplugin';
+  params: {
+    pluginName: string;
+  };
+}
+export interface WsMessageApiEnablePluginResponse extends WsMessageApiResponse {
+  method: '/api/enableplugin';
+  success: true;
+}
+
+export interface WsMessageApiDisablePluginRequest extends WsMessageApiRequest {
+  method: '/api/disableplugin';
+  params: {
+    pluginName: string;
+  };
+}
+export interface WsMessageApiDisablePluginResponse extends WsMessageApiResponse {
+  method: '/api/disableplugin';
+  success: true;
+}
+
+export interface WsMessageApiRestartPluginRequest extends WsMessageApiRequest {
+  method: '/api/restartplugin';
+  params: {
+    pluginName: string;
+  };
+}
+export interface WsMessageApiRestartPluginResponse extends WsMessageApiResponse {
+  method: '/api/restartplugin';
+  success: true;
+}
+
+export interface WsMessageApiSavePluginConfigRequest extends WsMessageApiRequest {
+  method: '/api/savepluginconfig';
+  params: {
+    pluginName: string;
+  };
+}
+export interface WsMessageApiSavePluginConfigResponse extends WsMessageApiResponse {
+  method: '/api/savepluginconfig';
+  success: true;
+}
+
+export interface WsMessageApiCheckUpdatesRequest extends WsMessageApiRequest {
+  method: '/api/checkupdates';
+}
+export interface WsMessageApiCheckUpdatesResponse extends WsMessageApiResponse {
+  method: '/api/checkupdates';
+  success: true;
+}
+
+export interface WsMessageApiShellySysUpdateRequest extends WsMessageApiRequest {
+  method: '/api/shellysysupdate';
+}
+export interface WsMessageApiShellySysUpdateResponse extends WsMessageApiResponse {
+  method: '/api/shellysysupdate';
+  success: true;
+}
+
+export interface WsMessageApiShellyMainUpdateRequest extends WsMessageApiRequest {
+  method: '/api/shellymainupdate';
+}
+export interface WsMessageApiShellyMainUpdateResponse extends WsMessageApiResponse {
+  method: '/api/shellymainupdate';
+  success: true;
+}
+
+export interface WsMessageApiShellyCreateSystemLogRequest extends WsMessageApiRequest {
+  method: '/api/shellycreatesystemlog';
+}
+export interface WsMessageApiShellyCreateSystemLogResponse extends WsMessageApiResponse {
+  method: '/api/shellycreatesystemlog';
+  success: true;
+}
+
+export interface WsMessageApiShellyNetConfigRequest extends WsMessageApiRequest {
+  method: '/api/shellynetconfig';
+  params: {
+    type: 'static' | 'dhcp';
+    ip: string;
+    subnet: string;
+    gateway: string;
+    dns: string;
+  };
+}
+export interface WsMessageApiShellyNetConfigResponse extends WsMessageApiResponse {
+  method: '/api/shellynetconfig';
+  success: true;
+}
+
+export interface WsMessageApiSoftResetRequest extends WsMessageApiRequest {
+  method: '/api/softreset';
+}
+export interface WsMessageApiSoftResetResponse extends WsMessageApiResponse {
+  method: '/api/softreset';
+  success: true;
+}
+
+export interface WsMessageApiHardResetRequest extends WsMessageApiRequest {
+  method: '/api/hardreset';
+}
+export interface WsMessageApiHardResetResponse extends WsMessageApiResponse {
+  method: '/api/hardreset';
+  success: true;
+}
+
+export interface WsMessageApiRebootRequest extends WsMessageApiRequest {
+  method: '/api/reboot';
+}
+export interface WsMessageApiRebootResponse extends WsMessageApiResponse {
+  method: '/api/reboot';
+  success: true;
+}
+
+export interface WsMessageApiRestartRequest extends WsMessageApiRequest {
+  method: '/api/restart';
+}
+export interface WsMessageApiRestartResponse extends WsMessageApiResponse {
+  method: '/api/restart';
+  success: true;
+}
+
+export interface WsMessageApiShutdownRequest extends WsMessageApiRequest {
+  method: '/api/shutdown';
+}
+export interface WsMessageApiShutdownResponse extends WsMessageApiResponse {
+  method: '/api/shutdown';
+  success: true;
+}
+
+export interface WsMessageApiCreateBackupRequest extends WsMessageApiRequest {
+  method: '/api/create-backup';
+}
+export interface WsMessageApiCreateBackupResponse extends WsMessageApiResponse {
+  method: '/api/create-backup';
+  success: true;
+}
+
+export interface WsMessageApiUnregisterRequest extends WsMessageApiRequest {
+  method: '/api/unregister';
+}
+export interface WsMessageApiUnregisterResponse extends WsMessageApiResponse {
+  method: '/api/unregister';
+  success: true;
+}
+
+export interface WsMessageApiResetRequest extends WsMessageApiRequest {
+  method: '/api/reset';
+}
+export interface WsMessageApiResetResponse extends WsMessageApiResponse {
+  method: '/api/reset';
+  success: true;
+}
+
+export interface WsMessageApiFactoryResetRequest extends WsMessageApiRequest {
+  method: '/api/factoryreset';
+}
+export interface WsMessageApiFactoryResetResponse extends WsMessageApiResponse {
+  method: '/api/factoryreset';
+  success: true;
+}
+
+export interface WsMessageApiMatterRequest extends WsMessageApiRequest {
+  method: '/api/matter';
+  params: {
+    id: string;
+    server?: boolean;
+    startCommission?: boolean;
+    stopCommission?: boolean;
+    advertise?: boolean;
+    removeFabric?: number;
+  };
+}
+export interface WsMessageApiMatterResponse extends WsMessageApiResponse {
+  method: '/api/matter';
+  success: true;
+}
+
+export interface WsMessageApiSettingsRequest extends WsMessageApiRequest {
+  method: '/api/settings';
+}
+export interface WsMessageApiSettingsResponse extends WsMessageApiResponse {
+  method: '/api/settings';
+  response: {
+    matterbridgeInformation: MatterbridgeInformation;
+    systemInformation: SystemInformation;
+  };
+}
+
+export interface WsMessageApiPluginsRequest extends WsMessageApiRequest {
+  method: '/api/plugins';
+}
+export interface WsMessageApiPluginsResponse extends WsMessageApiResponse {
+  method: '/api/plugins';
+  response: BaseRegisteredPlugin[];
+}
+
+export interface WsMessageApiDevicesRequest extends WsMessageApiRequest {
+  method: '/api/devices';
+  params: {
+    pluginName?: string;
+  };
+}
+export interface WsMessageApiDevicesResponse extends WsMessageApiResponse {
+  method: '/api/devices';
+  response: ApiDevices[];
+}
+
+export interface WsMessageApiClustersRequest extends WsMessageApiRequest {
+  method: '/api/clusters';
+  params: {
+    plugin: string;
+    endpoint: number;
+  };
+}
+export interface WsMessageApiClustersResponse extends WsMessageApiResponse {
+  method: '/api/clusters';
+  response: ApiClustersResponse;
+}
+
+export interface WsMessageApiSelectDevicesRequest extends WsMessageApiRequest {
+  method: '/api/select/devices';
+  params: {
+    plugin: string;
+  };
+}
+export interface WsMessageApiSelectDevicesResponse extends WsMessageApiResponse {
+  method: '/api/select/devices';
+  response: unknown[];
+}
+
+export interface WsMessageApiSelectEntitiesRequest extends WsMessageApiRequest {
+  method: '/api/select/entities';
+  params: {
+    plugin: string;
+  };
+}
+export interface WsMessageApiSelectEntitiesResponse extends WsMessageApiResponse {
+  method: '/api/select/entities';
+  response: unknown[];
+}
+
+export interface WsMessageApiActionRequest extends WsMessageApiRequest {
+  method: '/api/action';
+  params: {
+    plugin: string;
+    action: string;
+    value?: string;
+    id?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formData?: any;
+  };
+}
+export interface WsMessageApiActionResponse extends WsMessageApiResponse {
+  method: '/api/action';
+  success?: boolean;
+  error?: string;
+}
+
+export interface WsMessageApiConfigRequest extends WsMessageApiRequest {
+  method: '/api/config';
+  params: {
+    name: string;
+    value: string | boolean;
+  };
+}
+export interface WsMessageApiConfigResponse extends WsMessageApiResponse {
+  method: '/api/config';
+  success?: boolean;
+  error?: string;
+}
+
+export interface WsMessageApiCommandRequest extends WsMessageApiRequest {
+  method: '/api/command';
+  params: {
+    command: string;
+    plugin?: string;
+    serial?: string;
+    name?: string;
+  };
+}
+export interface WsMessageApiCommandResponse extends WsMessageApiResponse {
+  method: '/api/command';
+  success?: boolean;
+  error?: string;
+}
+
+// Union type for all specific WebSocket API request message types
+type _WsMessageApiRequestUnion =
+  | WsMessagePingRequest
+  | WsMessageApiLoginRequest
+  | WsMessageApiInstallRequest
+  | WsMessageApiUninstallRequest
+  | WsMessageApiAddPluginRequest
+  | WsMessageApiRemovePluginRequest
+  | WsMessageApiEnablePluginRequest
+  | WsMessageApiDisablePluginRequest
+  | WsMessageApiRestartPluginRequest
+  | WsMessageApiSavePluginConfigRequest
+  | WsMessageApiCheckUpdatesRequest
+  | WsMessageApiShellySysUpdateRequest
+  | WsMessageApiShellyMainUpdateRequest
+  | WsMessageApiShellyCreateSystemLogRequest
+  | WsMessageApiShellyNetConfigRequest
+  | WsMessageApiSoftResetRequest
+  | WsMessageApiHardResetRequest
+  | WsMessageApiRebootRequest
+  | WsMessageApiRestartRequest
+  | WsMessageApiShutdownRequest
+  | WsMessageApiCreateBackupRequest
+  | WsMessageApiUnregisterRequest
+  | WsMessageApiResetRequest
+  | WsMessageApiFactoryResetRequest
+  | WsMessageApiMatterRequest
+  | WsMessageApiSettingsRequest
+  | WsMessageApiPluginsRequest
+  | WsMessageApiDevicesRequest
+  | WsMessageApiClustersRequest
+  | WsMessageApiSelectDevicesRequest
+  | WsMessageApiSelectEntitiesRequest
+  | WsMessageApiActionRequest
+  | WsMessageApiConfigRequest
+  | WsMessageApiCommandRequest;
+
+// Union type for all specific WebSocket API response message types
+type _WsMessageApiResponseUnion =
+  | WsMessagePingResponse
+  | WsMessageApiLoginResponse
+  | WsMessageApiInstallResponse
+  | WsMessageApiUninstallResponse
+  | WsMessageApiAddPluginResponse
+  | WsMessageApiRemovePluginResponse
+  | WsMessageApiEnablePluginResponse
+  | WsMessageApiDisablePluginResponse
+  | WsMessageApiRestartPluginResponse
+  | WsMessageApiSavePluginConfigResponse
+  | WsMessageApiCheckUpdatesResponse
+  | WsMessageApiShellySysUpdateResponse
+  | WsMessageApiShellyMainUpdateResponse
+  | WsMessageApiShellyCreateSystemLogResponse
+  | WsMessageApiShellyNetConfigResponse
+  | WsMessageApiSoftResetResponse
+  | WsMessageApiHardResetResponse
+  | WsMessageApiRebootResponse
+  | WsMessageApiRestartResponse
+  | WsMessageApiShutdownResponse
+  | WsMessageApiCreateBackupResponse
+  | WsMessageApiUnregisterResponse
+  | WsMessageApiResetResponse
+  | WsMessageApiFactoryResetResponse
+  | WsMessageApiMatterResponse
+  | WsMessageApiSettingsResponse
+  | WsMessageApiPluginsResponse
+  | WsMessageApiDevicesResponse
+  | WsMessageApiClustersResponse
+  | WsMessageApiSelectDevicesResponse
+  | WsMessageApiSelectEntitiesResponse
+  | WsMessageApiActionResponse
+  | WsMessageApiConfigResponse
+  | WsMessageApiCommandResponse;
+
 /**
  * Enumeration of WebSocket broadcast message IDs.
  */
@@ -79,7 +509,7 @@ export const enum WsBroadcastMessageId {
 }
 
 /**
- * Enumeration of WebSocket broadcast message methods.
+ * Type of WebSocket broadcast message methods.
  */
 export type WsBroadcastMessageMethod =
   | 'log'
@@ -265,7 +695,7 @@ export type WsMessageBroadcastMap = {
  * Type helper to get the specific WebSocket message type by its ID.
  *
  * @example
- * function handleMessage<T extends keyof WsMessageMap>(msg: WsMessageById<T>) {
+ * function handleMessage<T extends keyof WsMessageBroadcastMap>(msg: WsMessageById<T>) {
  *   // msg is strongly typed based on its id
  * }
  *

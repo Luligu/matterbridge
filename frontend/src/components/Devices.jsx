@@ -308,11 +308,11 @@ function Devices() {
           setDevices(msg.response);
         }
         if (msg.method === '/api/clusters') {
-          if(debug) console.log(`Devices received ${msg.response.length} clusters:`, msg.response);
-          setClusters(msg.response);
+          /*if(debug)*/ console.log(`Devices received ${msg.response.length} clusters:`, msg.response);
+          setClusters(msg.response.clusters);
   
           const endpointCounts = {};
-          for (const cluster of msg.response) {
+          for (const cluster of msg.response.clusters) {
             if(debug) console.log('Cluster:', cluster.endpoint);
             if (endpointCounts[cluster.endpoint]) {
               endpointCounts[cluster.endpoint]++;
