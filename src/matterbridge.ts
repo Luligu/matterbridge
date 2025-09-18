@@ -283,7 +283,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     let callbackLogLevel = LogLevel.NOTICE;
     if (this.matterbridgeInformation.loggerLevel === LogLevel.INFO || this.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
     if (this.matterbridgeInformation.loggerLevel === LogLevel.DEBUG || this.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
-    AnsiLogger.setGlobalCallback(this.frontend.wssSendMessage.bind(this.frontend), callbackLogLevel);
+    AnsiLogger.setGlobalCallback(this.frontend.wssSendLogMessage.bind(this.frontend), callbackLogLevel);
     this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
   }
 
@@ -2605,17 +2605,20 @@ const commissioningController = new CommissioningController({
    * @returns {Promise<void>} A promise that resolves when the subscription is set up.
    */
   private async subscribeAttributeChanged(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
+    if (!plugin || !device || !device.plugin || !device.serialNumber || !device.uniqueId) return;
     this.log.info(`Subscribing attributes for endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) plugin ${plg}${plugin.name}${nf}`);
     if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform' && plugin.serverNode) {
       plugin.serverNode.eventsOf(BasicInformationServer).reachable$Changed?.on((reachable: boolean) => {
         this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
-        this.frontend.wssSendAttributeChangedMessage(device.plugin, device.serialNumber, device.uniqueId, 'BasicInformationServer', 'reachable', reachable);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, 'BasicInformationServer', 'reachable', reachable);
       });
     }
     if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) {
       device.eventsOf(BridgedDeviceBasicInformationServer).reachable$Changed.on((reachable: boolean) => {
         this.log.info(`Bridged endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
-        this.frontend.wssSendAttributeChangedMessage(device.plugin, device.serialNumber, device.uniqueId, 'BridgedDeviceBasicInformationServer', 'reachable', reachable);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, 'BridgedDeviceBasicInformationServer', 'reachable', reachable);
       });
     }
   }

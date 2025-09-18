@@ -22,98 +22,11 @@
  * limitations under the License.
  */
 
-/**
- * Websocket message ID for logging.
- *
- * @constant {number}
- */
-export const WS_ID_LOG = 0;
+import { ApiMatter } from './matterbridgeTypes.js';
 
 /**
- * Websocket message ID indicating a refresh is needed.
- *
- * @constant {number}
+ * Base interface for WebSocket messages.
  */
-export const WS_ID_REFRESH_NEEDED = 1;
-
-/**
- * Websocket message ID indicating a restart is needed.
- *
- * @constant {number}
- */
-export const WS_ID_RESTART_NEEDED = 2;
-
-/**
- * Websocket message ID indicating a cpu update.
- *
- * @constant {number}
- */
-export const WS_ID_CPU_UPDATE = 3;
-
-/**
- * Websocket message ID indicating a memory update.
- *
- * @constant {number}
- */
-export const WS_ID_MEMORY_UPDATE = 4;
-
-/**
- * Websocket message ID indicating an uptime update.
- *
- * @constant {number}
- */
-export const WS_ID_UPTIME_UPDATE = 5;
-
-/**
- * Websocket message ID indicating a snackbar message.
- *
- * @constant {number}
- */
-export const WS_ID_SNACKBAR = 6;
-
-/**
- * Websocket message ID indicating matterbridge has un update available.
- *
- * @constant {number}
- */
-export const WS_ID_UPDATE_NEEDED = 7;
-
-/**
- * Websocket message ID indicating a state update.
- *
- * @constant {number}
- */
-export const WS_ID_STATEUPDATE = 8;
-
-/**
- * Websocket message ID indicating to close a permanent snackbar message.
- *
- * @constant {number}
- */
-export const WS_ID_CLOSE_SNACKBAR = 9;
-
-/**
- * Websocket message ID indicating a shelly system update.
- * check:
- * curl -k http://127.0.0.1:8101/api/updates/sys/check
- * perform:
- * curl -k http://127.0.0.1:8101/api/updates/sys/perform
- *
- * @constant {number}
- */
-export const WS_ID_SHELLY_SYS_UPDATE = 100;
-
-/**
- * Websocket message ID indicating a shelly main update.
- * check:
- * curl -k http://127.0.0.1:8101/api/updates/main/check
- * perform:
- * curl -k http://127.0.0.1:8101/api/updates/main/perform
- *
- * @constant {number}
- */
-export const WS_ID_SHELLY_MAIN_UPDATE = 101;
-
 export interface WsMessage {
   id: number;
   dst: string;
@@ -121,20 +34,266 @@ export interface WsMessage {
   method: string;
 }
 
-export interface WsMessageRequest extends WsMessage {
+/**
+ * Interface for WebSocket request api messages.
+ */
+export interface WsMessageApiRequest extends WsMessage {
   sender?: string;
-  params: Record<string, string | number | boolean>;
+  params: Record<string, string | number | boolean | null | undefined>;
 }
 
-export interface WsMessageResponse extends WsMessage {
+/**
+ * Interface for WebSocket response api messages.
+ */
+export interface WsMessageApiResponse extends WsMessage {
   error?: string;
   success?: boolean;
-  response: unknown;
+  response?: unknown;
 }
 
-export interface WsMessageLog extends WsMessage {
-  level: string;
-  time: string;
-  name: string;
-  message: string;
+/**
+ * Enumeration of WebSocket broadcast message IDs.
+ */
+export const enum WsBroadcastMessageId {
+  Log = 0,
+  RefreshRequired = 1,
+  RestartRequired = 2,
+  RestartNotRequired = 3,
+  CpuUpdate = 4,
+  MemoryUpdate = 5,
+  UptimeUpdate = 6,
+  Snackbar = 7,
+  UpdateRequired = 8,
+  StateUpdate = 9,
+  CloseSnackbar = 10,
+  ShellySysUpdate = 100,
+  ShellyMainUpdate = 101,
+}
+
+/**
+ * Enumeration of WebSocket broadcast message methods.
+ */
+export type WsBroadcastMessageMethod =
+  | 'log'
+  | 'refresh_required'
+  | 'restart_required'
+  | 'restart_not_required'
+  | 'update_required'
+  | 'update_required_dev'
+  | 'snackbar'
+  | 'close_snackbar'
+  | 'cpu_update'
+  | 'memory_update'
+  | 'uptime_update'
+  | 'state_update'
+  | 'shelly_sys_update'
+  | 'shelly_main_update';
+
+export interface WsMessageLog {
+  id: WsBroadcastMessageId.Log;
+  dst: string;
+  src: string;
+  method: 'log';
+  params: {
+    level: string;
+    time: string;
+    name: string;
+    message: string;
+  };
+}
+
+export interface WsMessageRefreshRequired {
+  id: WsBroadcastMessageId.RefreshRequired;
+  dst: string;
+  src: string;
+  method: 'refresh_required';
+  params: {
+    changed: string | null;
+    matter?: ApiMatter;
+  };
+}
+
+export interface WsMessageRestartRequired {
+  id: WsBroadcastMessageId.RestartRequired;
+  dst: string;
+  src: string;
+  method: 'restart_required';
+  params: {
+    fixed: boolean;
+  };
+}
+
+export interface WsMessageRestartNotRequired {
+  id: WsBroadcastMessageId.RestartNotRequired;
+  dst: string;
+  src: string;
+  method: 'restart_not_required';
+}
+
+export interface WsMessageCpuUpdate {
+  id: WsBroadcastMessageId.CpuUpdate;
+  dst: string;
+  src: string;
+  method: 'cpu_update';
+  params: {
+    cpuUsage: number;
+  };
+}
+
+export interface WsMessageMemoryUpdate {
+  id: WsBroadcastMessageId.MemoryUpdate;
+  dst: string;
+  src: string;
+  method: 'memory_update';
+  params: {
+    totalMemory: string;
+    freeMemory: string;
+    heapTotal: string;
+    heapUsed: string;
+    external: string;
+    arrayBuffers: string;
+    rss: string;
+  };
+}
+
+export interface WsMessageUptimeUpdate {
+  id: WsBroadcastMessageId.UptimeUpdate;
+  dst: string;
+  src: string;
+  method: 'uptime_update';
+  params: {
+    systemUptime: string;
+    processUptime: string;
+  };
+}
+
+export interface WsMessageSnackbar {
+  id: WsBroadcastMessageId.Snackbar;
+  dst: string;
+  src: string;
+  method: 'snackbar';
+  params: {
+    message: string;
+    timeout?: number;
+    severity?: 'info' | 'warning' | 'error' | 'success';
+  };
+}
+
+export interface WsMessageCloseSnackbar {
+  id: WsBroadcastMessageId.CloseSnackbar;
+  dst: string;
+  src: string;
+  method: 'close_snackbar';
+  params: {
+    message: string;
+  };
+}
+
+export interface WsMessageUpdateRequired {
+  id: WsBroadcastMessageId.UpdateRequired;
+  dst: string;
+  src: string;
+  method: 'update_required' | 'update_required_dev';
+}
+
+export interface WsMessageStateUpdate {
+  id: WsBroadcastMessageId.StateUpdate;
+  dst: string;
+  src: string;
+  method: 'state_update';
+  params: Record<string, string | number | boolean | null | undefined>;
+}
+
+export interface WsMessageShellySysUpdate {
+  id: WsBroadcastMessageId.ShellySysUpdate;
+  dst: string;
+  src: string;
+  method: 'shelly_sys_update';
+  params: Record<string, string | number | boolean | null | undefined>;
+}
+
+export interface WsMessageShellyMainUpdate {
+  id: WsBroadcastMessageId.ShellyMainUpdate;
+  dst: string;
+  src: string;
+  method: 'shelly_main_update';
+  params: Record<string, string | number | boolean | null | undefined>;
+}
+
+// Union type for all specific WebSocket broadcast message types
+export type WsMessageBroadcast =
+  | WsMessageLog
+  | WsMessageRefreshRequired
+  | WsMessageRestartRequired
+  | WsMessageRestartNotRequired
+  | WsMessageUpdateRequired
+  | WsMessageCpuUpdate
+  | WsMessageMemoryUpdate
+  | WsMessageUptimeUpdate
+  | WsMessageStateUpdate
+  | WsMessageSnackbar
+  | WsMessageCloseSnackbar
+  | WsMessageShellySysUpdate
+  | WsMessageShellyMainUpdate;
+
+// Mapping of WebSocket broadcast message IDs to their corresponding types
+export type WsMessageBroadcastMap = {
+  [WsBroadcastMessageId.Log]: WsMessageLog;
+  [WsBroadcastMessageId.RefreshRequired]: WsMessageRefreshRequired;
+  [WsBroadcastMessageId.RestartRequired]: WsMessageRestartRequired;
+  [WsBroadcastMessageId.RestartNotRequired]: WsMessageRestartNotRequired;
+  [WsBroadcastMessageId.UpdateRequired]: WsMessageUpdateRequired;
+  [WsBroadcastMessageId.CpuUpdate]: WsMessageCpuUpdate;
+  [WsBroadcastMessageId.MemoryUpdate]: WsMessageMemoryUpdate;
+  [WsBroadcastMessageId.UptimeUpdate]: WsMessageUptimeUpdate;
+  [WsBroadcastMessageId.StateUpdate]: WsMessageStateUpdate;
+  [WsBroadcastMessageId.Snackbar]: WsMessageSnackbar;
+  [WsBroadcastMessageId.CloseSnackbar]: WsMessageCloseSnackbar;
+  [WsBroadcastMessageId.ShellySysUpdate]: WsMessageShellySysUpdate;
+  [WsBroadcastMessageId.ShellyMainUpdate]: WsMessageShellyMainUpdate;
+};
+
+/**
+ * Type helper to get the specific WebSocket message type by its ID.
+ *
+ * @example
+ * function handleMessage<T extends keyof WsMessageMap>(msg: WsMessageById<T>) {
+ *   // msg is strongly typed based on its id
+ * }
+ *
+ * @template T - The WebSocket message ID.
+ */
+export type WsMessageById<T extends keyof WsMessageBroadcastMap> = WsMessageBroadcastMap[T];
+
+/**
+ * Type guard to check if a message is a WsMessageBroadcast.
+ *
+ * @param {WsMessage} msg - The message to check.
+ *
+ * @returns {msg is WsMessageBroadcast} True if the message is a WsMessageBroadcast, false otherwise.
+ */
+export function isBroadcast(msg: WsMessage): msg is WsMessageBroadcast {
+  return msg.id >= WsBroadcastMessageId.Log && msg.id <= WsBroadcastMessageId.ShellyMainUpdate;
+}
+
+/**
+ * Type guard to check if a message is a WsMessageApiRequest.
+ *
+ * @param {WsMessage} msg - The message to check.
+ *
+ * @returns {msg is WsMessageApiRequest} True if the message is a WsMessageApiRequest, false otherwise.
+ */
+export function isApiRequest(msg: WsMessage): msg is WsMessageApiRequest {
+  return msg.id > WsBroadcastMessageId.ShellyMainUpdate && !('success' in msg) && !('error' in msg);
+}
+
+/**
+ * Type guard to check if a message is a WsMessageApiResponse.
+ *
+ * @param {WsMessage} msg - The message to check.
+ *
+ * @returns {msg is WsMessageApiResponse} True if the message is a WsMessageApiResponse, false otherwise.
+ */
+export function isApiResponse(msg: WsMessage): msg is WsMessageApiResponse {
+  return msg.id > WsBroadcastMessageId.ShellyMainUpdate && ('success' in msg || 'error' in msg);
 }

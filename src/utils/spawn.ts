@@ -67,7 +67,7 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
     });
 
     childProcess.on('close', (code, signal) => {
-      matterbridge.frontend.wssSendMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
+      matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
       if (code === 0) {
         if (cmdLine.startsWith('npm install -g')) matterbridge.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '').replace('--omit=dev', '')} installed correctly`);
         matterbridge.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
@@ -79,7 +79,7 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
     });
 
     childProcess.on('exit', (code, signal) => {
-      matterbridge.frontend.wssSendMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', `child process exited with code ${code} and signal ${signal}`);
+      matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', `child process exited with code ${code} and signal ${signal}`);
       if (code === 0) {
         matterbridge.log.debug(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
         resolve(true);
@@ -98,7 +98,7 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
       childProcess.stdout.on('data', (data: Buffer) => {
         const message = data.toString().trim();
         matterbridge.log.debug(`Spawn output (stdout): ${message}`);
-        matterbridge.frontend.wssSendMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', message);
+        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', message);
       });
     }
 
@@ -106,7 +106,7 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
       childProcess.stderr.on('data', (data: Buffer) => {
         const message = data.toString().trim();
         matterbridge.log.debug(`Spawn verbose (stderr): ${message}`);
-        matterbridge.frontend.wssSendMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', message);
+        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', message);
       });
     }
   });

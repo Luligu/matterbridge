@@ -4,25 +4,12 @@
 import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext, ReactNode } from 'react';
 
 // Backend
-import { WS_ID_LOG, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_CPU_UPDATE, WS_ID_MEMORY_UPDATE, WS_ID_SNACKBAR, WS_ID_CLOSE_SNACKBAR, WS_ID_SHELLY_SYS_UPDATE, WS_ID_SHELLY_MAIN_UPDATE } from '../../../src/frontendTypes';
+import { WsBroadcastMessageId, WsMessageBroadcast, WsMessageApiRequest, WsMessageApiResponse } from '../../../src/frontendTypes';
 
 // Frontend modules
 import { UiContext } from './UiProvider';
 import { debug } from '../App';
 // const debug = true;
-
-// Type for WebSocket messages sent to the backend
-export interface WebSocketSendMessage {
-  id: number;
-  sender?: string;
-  src: string;
-  dst: string;
-  method: string;
-  params?: { totalMemory?: string, freeMemory?: string, heapTotal?: string, heapUsed?: string, rss?: string, cpuUsage?: number, systemUptime?: string, processUptime?: string } & Record<string, unknown>;
-  error?: string;
-  success?: boolean;
-  response?: unknown;
-}
 
 // TypeScript interfaces for context values
 export interface WebSocketMessagesContextType {
@@ -47,9 +34,11 @@ export interface WebSocketContextType {
   online: boolean;
   retry: number;
   getUniqueId: () => number;
-  addListener: (listener: (msg: WebSocketSendMessage) => void) => void;
-  removeListener: (listener: (msg: WebSocketSendMessage) => void) => void;
-  sendMessage: (message: WebSocketSendMessage) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  addListener: (listener: (msg: any) => void) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  removeListener: (listener: (msg: any) => void) => void;
+  sendMessage: (message: WsMessageApiRequest) => void;
   logMessage: (badge: string, message: string) => void;
 }
 
@@ -71,7 +60,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const { showSnackbarMessage, closeSnackbarMessage, closeSnackbar } = useContext(UiContext);
 
   // Refs
-  const listenersRef = useRef<Array<(msg: WebSocketSendMessage) => void>>([]);
+  const listenersRef = useRef<Array<(msg: WsMessageApiResponse | WsMessageBroadcast) => void>>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef(1);
   const uniqueIdRef = useRef(Math.floor(Math.random() * (999999 - 1000 + 1)) + 1000);
@@ -105,7 +94,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     return Math.floor(Math.random() * (999999 - 1000 + 1)) + 1000;
   }, []);
 
-  const sendMessage = useCallback((message: WebSocketSendMessage) => {
+  const sendMessage = useCallback((message: WsMessageApiRequest) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       try {
         if (message.id === undefined) message.id = uniqueIdRef.current;
@@ -131,13 +120,13 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     logMessage('WebSocket', `Filtering by log level "${level}" and log search "${search}"`);
   }, [logMessage]);
 
-  const addListener = useCallback((listener: (msg: WebSocketSendMessage) => void) => {
+  const addListener = useCallback((listener: (msg: WsMessageApiResponse | WsMessageBroadcast) => void) => {
     if (debug) console.log(`WebSocket addListener:`, listener);
     listenersRef.current = [...listenersRef.current, listener];
     if (debug) console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
   }, []);
 
-  const removeListener = useCallback((listener: (msg: WebSocketSendMessage) => void) => {
+  const removeListener = useCallback((listener: (msg: WsMessageApiResponse | WsMessageBroadcast) => void) => {
     if (debug) console.log(`WebSocket removeListener:`, listener);
     listenersRef.current = listenersRef.current.filter(l => l !== listener);
     if (debug) console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
@@ -157,77 +146,87 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     wsRef.current.onmessage = (event) => {
       if (!online) setOnline(true);
       try {
-        const msg = JSON.parse(event.data);
-        if (msg.error) {
+        const msg: WsMessageBroadcast = JSON.parse(event.data);
+        if (msg.id === undefined) return; // Ignore messages without an ID
+        if ((msg as WsMessageApiResponse).error) {
           if (debug) console.error(`WebSocket error message:`, msg);
         }
-        if (msg.id === undefined) {
-          return; // Ignore messages without an ID
-        } else if (msg.id === WS_ID_REFRESH_NEEDED) {
-          if (debug) console.log(`WebSocket WS_ID_REFRESH_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
-          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
-          return;
-        } else if (msg.id === WS_ID_RESTART_NEEDED) {
-          if (debug) console.log(`WebSocket WS_ID_RESTART_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
-          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
-          return;
-        } else if (msg.id === WS_ID_CPU_UPDATE) {
-          if (debug) console.log(`WebSocket WS_ID_CPU_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
-          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
-          return;
-        } else if (msg.id === WS_ID_MEMORY_UPDATE) {
-          if (debug) console.log(`WebSocket WS_ID_MEMORY_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
-          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
-          return;
-        } else if (msg.id === WS_ID_SNACKBAR) {
-          if (debug) console.log(`WebSocket WS_ID_SNACKBAR message:`, msg, 'listeners:', listenersRef.current.length);
-          showSnackbarMessage(msg.params.message, msg.params.timeout, msg.params.severity);
-          return;
-        } else if (msg.id === WS_ID_CLOSE_SNACKBAR) {
-          if (debug) console.log(`WebSocket WS_ID_CLOSE_SNACKBAR message:`, msg, 'listeners:', listenersRef.current.length);
-          closeSnackbarMessage(msg.params.message);
-          return;
-        } else if (msg.id === WS_ID_SHELLY_SYS_UPDATE) {
-          if (debug) console.log(`WebSocket WS_ID_SHELLY_SYS_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
-          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
-          return;
-        } else if (msg.id === WS_ID_SHELLY_MAIN_UPDATE) {
-          if (debug) console.log(`WebSocket WS_ID_SHELLY_MAIN_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
-          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
-          return;
-        } else if (msg.id === uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && msg.response === 'pong') {
+        if (msg.id === uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && (msg as WsMessageApiResponse).response === 'pong') {
           if (debug) console.log(`WebSocket pong response message:`, msg, 'listeners:', listenersRef.current.length);
           if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
           listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
           return;
-        } else if (msg.id !== WS_ID_LOG) {
+        }
+        if (msg.id === WsBroadcastMessageId.RefreshRequired) {
+          if (debug) console.log(`WebSocket WS_ID_REFRESH_REQUIRED message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WsBroadcastMessageId.RestartRequired) {
+          if (debug) console.log(`WebSocket WS_ID_RESTART_REQUIRED message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WsBroadcastMessageId.RestartNotRequired) {
+          if (debug) console.log(`WebSocket WS_ID_RESTART_NOT_REQUIRED message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WsBroadcastMessageId.CpuUpdate) {
+          if (debug) console.log(`WebSocket WS_ID_CPU_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WsBroadcastMessageId.MemoryUpdate) {
+          if (debug) console.log(`WebSocket WS_ID_MEMORY_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WsBroadcastMessageId.UptimeUpdate) {
+          if (debug) console.log(`WebSocket WS_ID_UPTIME_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WsBroadcastMessageId.Snackbar && msg.params && msg.params.message) {
+          if (debug) console.log(`WebSocket WS_ID_SNACKBAR message:`, msg, 'listeners:', listenersRef.current.length);
+          showSnackbarMessage(msg.params.message, msg.params.timeout, msg.params.severity);
+          return;
+        } else if (msg.id === WsBroadcastMessageId.CloseSnackbar && msg.params && msg.params.message) {
+          if (debug) console.log(`WebSocket WS_ID_CLOSE_SNACKBAR message:`, msg, 'listeners:', listenersRef.current.length);
+          closeSnackbarMessage(msg.params.message);
+          return;
+        } else if (msg.id === WsBroadcastMessageId.ShellySysUpdate) {
+          if (debug) console.log(`WebSocket WS_ID_SHELLY_SYS_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WsBroadcastMessageId.ShellyMainUpdate) {
+          if (debug) console.log(`WebSocket WS_ID_SHELLY_MAIN_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id !== WsBroadcastMessageId.Log) {
           if (debug) console.log(`WebSocket message:`, msg, 'listeners:', listenersRef.current.length);
           listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
           return;
         }
-        if (msg.id !== WS_ID_LOG || !msg.level || !msg.time || !msg.name || !msg.message) return;
 
-        // console.log(`WebSocketUse message: ${msg.level} - ${msg.time} - ${msg.name}: ${msg.message}`);
-        // console.log(`WebSocketUse logFilterLevel: "${logFilterLevelRef.current}" logFilterSearch: "${logFilterSearchRef.current}"`);
+        // Process log messages
+        if (!msg.params || !msg.params.level || !msg.params.time || !msg.params.name || !msg.params.message) return;
+
+        // Process log filtering by level
         const normalLevels = ['debug', 'info', 'notice', 'warn', 'error', 'fatal'];
-        if (normalLevels.includes(msg.level)) {
-          if (logFilterLevelRef.current === 'info' && msg.level === 'debug') return;
-          if (logFilterLevelRef.current === 'notice' && (msg.level === 'debug' || msg.level === 'info')) return;
-          if (logFilterLevelRef.current === 'warn' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice')) return;
-          if (logFilterLevelRef.current === 'error' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn')) return;
-          if (logFilterLevelRef.current === 'fatal' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn' || msg.level === 'error')) return;
+        if (normalLevels.includes(msg.params.level)) {
+          if (logFilterLevelRef.current === 'info' && msg.params.level === 'debug') return;
+          if (logFilterLevelRef.current === 'notice' && (msg.params.level === 'debug' || msg.params.level === 'info')) return;
+          if (logFilterLevelRef.current === 'warn' && (msg.params.level === 'debug' || msg.params.level === 'info' || msg.params.level === 'notice')) return;
+          if (logFilterLevelRef.current === 'error' && (msg.params.level === 'debug' || msg.params.level === 'info' || msg.params.level === 'notice' || msg.params.level === 'warn')) return;
+          if (logFilterLevelRef.current === 'fatal' && (msg.params.level === 'debug' || msg.params.level === 'info' || msg.params.level === 'notice' || msg.params.level === 'warn' || msg.params.level === 'error')) return;
         }
-        if (logFilterSearchRef.current !== '*' && logFilterSearchRef.current !== '' && !msg.message.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) && !msg.name.toLowerCase().includes(logFilterSearchRef.current.toLowerCase())) return;
-        // console.log(`useWebSocket afterfilter: debugLevel: '${debugLevel}'-'${msg.subType}' searchCriteria: '${searchCriteria}'`);
+
+        // Process log filtering by search
+        if (logFilterSearchRef.current !== '*' && logFilterSearchRef.current !== '' && !msg.params.message.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) && !msg.params.name.toLowerCase().includes(logFilterSearchRef.current.toLowerCase())) return;
 
         // Ignore uncommissioned messages
-        if(msg.name === 'Commissioning' && msg.message.includes('is uncommissioned')) return;
+        if(msg.params.name === 'Commissioning' && msg.params.message.includes('is uncommissioned')) return;
 
         setMessages(prevMessages => {
           // Create new array with new message
-          const timeString = `<span style="color: #505050;">[${msg.time}]</span>`;
-          const getsubTypeMessageBgColor = (level: string) => {
-            switch (level.toLowerCase()) {
+          const timeString = `<span style="color: #505050;">[${msg.params?.time}]</span>`;
+          const getsubTypeMessageBgColor = (level?: string) => {
+            switch (level?.toLowerCase()) {
               case 'debug':
                 return 'gray';
               case 'info':
@@ -246,16 +245,16 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
                 return 'lightblue';
             }
           };
-          const getsubTypeMessageColor = (level: string) => {
-            switch (level.toLowerCase()) {
+          const getsubTypeMessageColor = (level?: string) => {
+            switch (level?.toLowerCase()) {
               case 'warn':
                 return 'black';
               default:
                 return 'white';
             }
           };
-          const coloredSubType = `<span style="background-color: ${getsubTypeMessageBgColor(msg.level)}; color: ${getsubTypeMessageColor(msg.level)}; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${msg.level}</span>`;
-          const newMessage = `${coloredSubType} ${timeString} <span style="color: #09516d;">[${msg.name}]</span> <span style="color: var(--main-log-color);">${msg.message}</span>`;
+          const coloredSubType = `<span style="background-color: ${getsubTypeMessageBgColor(msg.params?.level)}; color: ${getsubTypeMessageColor(msg.params?.level)}; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${msg.params?.level}</span>`;
+          const newMessage = `${coloredSubType} ${timeString} <span style="color: #09516d;">[${msg.params?.name}]</span> <span style="color: var(--main-log-color);">${msg.params?.message}</span>`;
           const newMessages = [...prevMessages, newMessage];
           // Check if the new array length exceeds the maximum allowed
           if (newMessages.length > maxMessages) {

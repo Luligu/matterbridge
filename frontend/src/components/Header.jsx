@@ -20,7 +20,7 @@ import StarIcon from '@mui/icons-material/Star';
 import Favorite from '@mui/icons-material/Favorite';
 
 // Backend
-import { WS_ID_SHELLY_SYS_UPDATE, WS_ID_SHELLY_MAIN_UPDATE } from '../../../src/frontendTypes';
+import { WsBroadcastMessageId } from '../../../src/frontendTypes';
 
 // Frontend
 import { UiContext } from './UiProvider';
@@ -293,12 +293,12 @@ function Header() {
           if (debug) console.log('Header received update_required_dev');
           setUpdateDev(true);
         }
-        if (msg.id === WS_ID_SHELLY_SYS_UPDATE) {
+        if (msg.id === WsBroadcastMessageId.ShellySysUpdate) {
           if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
           setSettings(prevSettings => ({ ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellySysUpdate: msg.params.available } }));
 
         }
-        if (msg.id === WS_ID_SHELLY_MAIN_UPDATE) {
+        if (msg.id === WsBroadcastMessageId.ShellyMainUpdate) {
           if (debug) console.log('Header received WS_ID_SHELLY_MAIN_UPDATE:');
           setSettings(prevSettings => ({ ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellyMainUpdate: msg.params.available } }));
         }
