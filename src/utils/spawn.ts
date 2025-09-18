@@ -100,6 +100,20 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
         matterbridge.log.debug(`Spawn output (stdout): ${message}`);
         matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', message);
       });
+      /*
+      childProcess.stdout.on('close', () => {
+        matterbridge.log.debug(`Spawn output (stdout): closed`);
+        resolve(true);
+      });
+      childProcess.stdout.on('end', () => {
+        matterbridge.log.debug(`Spawn output (stdout): ended`);
+        resolve(true);
+      });
+      childProcess.stdout.on('error', () => {
+        matterbridge.log.debug(`Spawn output (stdout): error`);
+        resolve(true);
+      });
+      */
     }
 
     if (childProcess.stderr) {
@@ -108,6 +122,20 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
         matterbridge.log.debug(`Spawn verbose (stderr): ${message}`);
         matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', message);
       });
+      /*
+      childProcess.stderr.on('close', () => {
+        matterbridge.log.debug(`Spawn verbose (stderr): closed`);
+        resolve(true);
+      });
+      childProcess.stderr.on('end', () => {
+        matterbridge.log.debug(`Spawn verbose (stderr): ended`);
+        resolve(true);
+      });
+      childProcess.stderr.on('error', () => {
+        matterbridge.log.debug(`Spawn verbose (stderr): error`);
+        resolve(true);
+      });
+      */
     }
   });
 }

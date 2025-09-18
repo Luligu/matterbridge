@@ -23,36 +23,15 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { Matterbridge } from '../matterbridge.js';
 
 import { spawnCommand } from './spawn.js';
+import { setupTest } from './jestHelpers.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = true; // Set to true to see console output during tests
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
+setupTest('SpawnCommand');
 
 describe('Spawn', () => {
   const matterbridge = {
     log: new AnsiLogger({ logName: 'SpawnCommand', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG }),
     frontend: {
-      wssSendMessage: jest.fn(),
+      wssSendLogMessage: jest.fn(),
     },
   } as unknown as Matterbridge;
 
@@ -70,6 +49,7 @@ describe('Spawn', () => {
     const args = ['list', '--depth=0'];
 
     const result = await spawnCommand(matterbridge, command, args);
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for async logs
 
     expect(spawn).toHaveBeenCalled();
     expect(result).toBe(true);
@@ -78,10 +58,8 @@ describe('Spawn', () => {
     } else {
       expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn command ${command} with`));
     }
-  }, 10000);
+  });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
   it('should mock a spawn command with sudo', async () => {
     process.argv = ['node', 'spawn.test.js', '-sudo'];
     const command = 'npm';
@@ -336,5 +314,4 @@ describe('Spawn', () => {
       writable: true,
     });
   });
-  */
 });
