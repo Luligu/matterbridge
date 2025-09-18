@@ -29,15 +29,19 @@ import { ApiMatter } from './matterbridgeTypes.js';
  */
 export interface WsMessage {
   id: number;
-  dst: string;
   src: string;
+  dst: string;
   method: string;
 }
 
 /**
  * Interface for WebSocket request api messages.
  */
-export interface WsMessageApiRequest extends WsMessage {
+export interface WsMessageApiRequest {
+  id: number;
+  src: 'Frontend';
+  dst: 'Matterbridge';
+  method: string;
   sender?: string;
   params: Record<string, string | number | boolean | null | undefined>;
 }
@@ -45,7 +49,11 @@ export interface WsMessageApiRequest extends WsMessage {
 /**
  * Interface for WebSocket response api messages.
  */
-export interface WsMessageApiResponse extends WsMessage {
+export interface WsMessageApiResponse {
+  id: number;
+  src: 'Matterbridge';
+  dst: 'Frontend';
+  method: string;
   error?: string;
   success?: boolean;
   response?: unknown;
@@ -284,7 +292,7 @@ export function isBroadcast(msg: WsMessage): msg is WsMessageBroadcast {
  * @returns {msg is WsMessageApiRequest} True if the message is a WsMessageApiRequest, false otherwise.
  */
 export function isApiRequest(msg: WsMessage): msg is WsMessageApiRequest {
-  return msg.id > WsBroadcastMessageId.ShellyMainUpdate && !('success' in msg) && !('error' in msg);
+  return msg.id > WsBroadcastMessageId.ShellyMainUpdate && msg.src === 'Frontend' && msg.dst === 'Matterbridge' && !('success' in msg) && !('error' in msg);
 }
 
 /**
@@ -295,5 +303,5 @@ export function isApiRequest(msg: WsMessage): msg is WsMessageApiRequest {
  * @returns {msg is WsMessageApiResponse} True if the message is a WsMessageApiResponse, false otherwise.
  */
 export function isApiResponse(msg: WsMessage): msg is WsMessageApiResponse {
-  return msg.id > WsBroadcastMessageId.ShellyMainUpdate && ('success' in msg || 'error' in msg);
+  return msg.id > WsBroadcastMessageId.ShellyMainUpdate && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && ('success' in msg || 'error' in msg);
 }

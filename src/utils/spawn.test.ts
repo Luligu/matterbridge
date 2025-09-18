@@ -49,7 +49,6 @@ describe('Spawn', () => {
     const args = ['list', '--depth=0'];
 
     const result = await spawnCommand(matterbridge, command, args);
-    await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for async logs
 
     expect(spawn).toHaveBeenCalled();
     expect(result).toBe(true);
