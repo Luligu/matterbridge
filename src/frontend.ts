@@ -2032,7 +2032,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Sends a no need to restart WebSocket message to all connected clients.
    *
-   * @param {boolean} snackbar - If true, the snackbar message will be cleared from all connected clients.
+   * @param {boolean} snackbar - If true, the snackbar message will be cleared from all connected clients. Default is true.
    */
   wssSendRestartNotRequired(snackbar: boolean = true) {
     this.log.debug('Sending a restart not required message to all connected clients');
@@ -2045,7 +2045,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Sends a need to update WebSocket message to all connected clients.
    *
-   * @param {boolean} devVersion - If true, the update is for a development version.
+   * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
    */
   wssSendUpdateRequired(devVersion: boolean = false) {
     this.log.debug('Sending an update required message to all connected clients');
