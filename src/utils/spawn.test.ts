@@ -80,6 +80,7 @@ describe('Spawn', () => {
     }
   }, 10000);
 
+  // eslint-disable-next-line jest/no-commented-out-tests
   /*
   it('should mock a spawn command with sudo', async () => {
     process.argv = ['node', 'spawn.test.js', '-sudo'];
