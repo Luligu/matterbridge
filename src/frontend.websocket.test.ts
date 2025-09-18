@@ -302,7 +302,7 @@ describe('Matterbridge frontend', () => {
   test('Websocket API send /api/login with empty password', async () => {
     await (matterbridge as any).nodeContext.set('password', '');
     const msg = await waitMessageId(++WS_ID, '/api/login', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/login', params: { password: '' } });
-    expect(msg.response).toEqual({ valid: true });
+    expect(msg.success).toBe(true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Login password valid/));
   });
 
@@ -310,7 +310,7 @@ describe('Matterbridge frontend', () => {
     await (matterbridge as any).nodeContext.set('password', '');
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/login', params: { password: 'test' } }));
     const msg = await waitMessageId(WS_ID);
-    expect(msg.response).toEqual({ valid: true });
+    expect(msg.success).toBe(true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Login password valid/));
   });
 
@@ -499,22 +499,22 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('Websocket API send /api/select without plugin param', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/select', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/select', params: {} });
-    expect(msg.error).toBe('Wrong parameter plugin in /api/select');
+  test('Websocket API send /api/select/devices without plugin param', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/select/devices', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/devices', params: {} });
+    expect(msg.error).toBe('Wrong parameter plugin in /api/select/devices');
     expect(msg.response).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('Websocket API send /api/select with wrong plugin', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/select', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/select', params: { plugin: 'matterbridge_unknown' } });
-    expect(msg.error).toBe('Plugin not found in /api/select');
+  test('Websocket API send /api/select/devices with wrong plugin', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/select/devices', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/devices', params: { plugin: 'matterbridge_unknown' } });
+    expect(msg.error).toBe('Plugin not found in /api/select/devices');
     expect(msg.response).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('Websocket API send /api/select', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/select', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/select', params: { plugin: 'matterbridge-mock1' } });
+  test('Websocket API send /api/select/devices', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/select/devices', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/devices', params: { plugin: 'matterbridge-mock1' } });
     expect(msg.error).toBeUndefined();
     expect(msg.response.length).toBe(1);
     expect(msg.response).toEqual([
@@ -572,7 +572,7 @@ describe('Matterbridge frontend', () => {
   test('Websocket API /api/install', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test', restart: false } });
     await wait(500); // Wait for the installation to complete
-    expect(msg.response).toBe(true);
+    expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/installed correctly$/));
@@ -586,7 +586,7 @@ describe('Matterbridge frontend', () => {
   test('Websocket API /api/install second time', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test', restart: false } });
     await wait(500); // Wait for the installation to complete
-    expect(msg.response).toBe(true);
+    expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/installed correctly$/));
@@ -612,7 +612,7 @@ describe('Matterbridge frontend', () => {
 
   test('Websocket API /api/uninstall', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/uninstall', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-test' } });
-    expect(msg.response).toBe(true);
+    expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
     // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Shutting down plugin/));
     // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Removed plugin/));
@@ -622,7 +622,7 @@ describe('Matterbridge frontend', () => {
 
   test('Websocket API /api/uninstall with wrong package name', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/uninstall', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
-    expect(msg.response).toBeDefined();
+    expect(msg.success).toBeDefined();
     expect(msg.error).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
   }, 60000);

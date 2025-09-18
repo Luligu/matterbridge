@@ -23,7 +23,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Dropped `Create React App (CRA)` and moved to `Vite`.
 - [frontend]: Added `eslint` and `vitest`.
 - [frontend]: Typed broadcast messages.
-- [frontend]: Typed api reequest and response messages.
+- [frontend]: Typed api request and api response messages.
 - [frontend]: Updated the QRCode component to be used in bridge mode and childbridge mode and for the devices with mode='server'. Features: turn on and off pairing mode, resend mDns advertise, remove single fabrics, formatted manual paring code, copy to clipboard the manual pairing code.
 
 ### Changed
