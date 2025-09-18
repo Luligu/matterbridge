@@ -1,6 +1,6 @@
  
 // React
-import React, { useState, useContext, useRef } from 'react';
+import { useState, useContext, useRef } from 'react';
 
 // @mui/material
 import TextField from '@mui/material/TextField';
@@ -27,13 +27,13 @@ export function InstallAddPlugins() {
   // States
   const [pluginName, setPluginName] = useState('matterbridge-');
   const [_dragging, setDragging] = useState(false);
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
   // Refs
   const uniqueId = useRef(getUniqueId());
 
   // Handle drag events
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragging(true);
   };
@@ -42,7 +42,7 @@ export function InstallAddPlugins() {
     setDragging(false);
   };
 
-  const handleFileDrop = (event) => {
+  const handleFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragging(false);
     const file = event.dataTransfer.files[0];
@@ -69,8 +69,8 @@ export function InstallAddPlugins() {
     }
   };
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files && event.target.files[0];
     if (file) {
       logMessage('Plugins', `Uploading package ${file.name}`);
 
@@ -99,18 +99,18 @@ export function InstallAddPlugins() {
   };
 
   const handleUploadClick = () => {
-    document.getElementById('file-upload').click();
+    document.getElementById('file-upload')?.click();
   };
 
   const handleAddPluginClick = () => {
     sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: "/api/addplugin", src: "Frontend", dst: "Matterbridge", params: { pluginNameOrPath: pluginName } });
   };
 
-  const handleClickVertical = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleClickVertical = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget as HTMLElement);
   };
 
-  const handleCloseMenu = (value) => {
+  const handleCloseMenu = (value: string) => {
     if (value !== '') setPluginName(value);
     setAnchorEl(null);
   };

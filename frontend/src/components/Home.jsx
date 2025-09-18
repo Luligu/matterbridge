@@ -10,11 +10,11 @@ import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import CancelIcon from '@mui/icons-material/Cancel';
 
 // Frontend
-import { WebSocketLogs } from './WebSocketLogs';
+import WebSocketLogs from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-import { SystemInfoTable } from './SystemInfoTable';
-import { QRDiv } from './QRDiv';
+import SystemInfoTable from './SystemInfoTable';
+import QRDiv from './QRDiv';
 import { InstallAddPlugins } from './InstallAddPlugins';
 import { HomePlugins } from './HomePlugins';
  
@@ -179,9 +179,9 @@ function Home() {
         {/* Logs (can grow) */}
         {homePageMode === 'logs' &&
           <div className="MbfWindowDiv" style={{ flex: '1 1 auto', width: '100%', overflow: 'hidden' }}>
-            <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
+            <div className="MbfWindowHeader" style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between' }}>
+              <p className="MbfWindowHeaderText">Logs</p>
               <div className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                Logs
                 <span style={{ fontWeight: 'normal', fontSize: '12px', marginTop: '2px' }}>
                   Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}" Scroll: {autoScroll ? 'auto' : 'manual'} 
                 </span>

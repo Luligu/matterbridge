@@ -6,7 +6,7 @@ import { useState, useContext } from 'react';
 import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import Checkbox from '@mui/material/Checkbox';
@@ -16,7 +16,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import DeleteForever from '@mui/icons-material/DeleteForever';
 
 // Frontend
-import { WebSocketLogs } from './WebSocketLogs';
+import WebSocketLogs from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { debug } from '../App';
@@ -28,21 +28,21 @@ function Logs() {
   const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll')==='false' ? false : true);
   const { setMessages, setLogFilters, online, setAutoScroll } = useContext(WebSocketContext);
 
-  const handleChangeLevel = (event) => {
+  const handleChangeLevel = (event: SelectChangeEvent) => {
     setLogFilterLevel(event.target.value);
     setLogFilters(event.target.value, logFilterSearch);
     localStorage.setItem('logFilterLevel', event.target.value);
     if(debug) console.log('handleChangeLevel called with value:', event.target.value);
   };
 
-  const handleChangeSearch = (event) => {
+  const handleChangeSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLogFilterSearch(event.target.value);
     setLogFilters(logFilterLevel, event.target.value);
     localStorage.setItem('logFilterSearch', event.target.value);
     if(debug) console.log('handleChangeSearch called with value:', event.target.value);
   };
 
-  const handleAutoScrollChange = (event) => {
+  const handleAutoScrollChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLogAutoScroll(event.target.checked);
     setAutoScroll(event.target.checked);
     localStorage.setItem('logAutoScroll', event.target.value ? 'true' : 'false');

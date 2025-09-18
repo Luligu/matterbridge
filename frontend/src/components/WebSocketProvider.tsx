@@ -3,31 +3,22 @@
 // React
 import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext, ReactNode } from 'react';
 
+// Backend
+import { WS_ID_LOG, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_CPU_UPDATE, WS_ID_MEMORY_UPDATE, WS_ID_SNACKBAR, WS_ID_CLOSE_SNACKBAR, WS_ID_SHELLY_SYS_UPDATE, WS_ID_SHELLY_MAIN_UPDATE } from '../../../src/frontendTypes';
+
 // Frontend modules
 import { UiContext } from './UiProvider';
 import { debug } from '../App';
 // const debug = true;
 
-// Backend WebSocket message types
-import {
-  WS_ID_LOG,
-  WS_ID_REFRESH_NEEDED,
-  WS_ID_RESTART_NEEDED,
-  WS_ID_CPU_UPDATE,
-  WS_ID_MEMORY_UPDATE,
-  WS_ID_SNACKBAR,
-  WS_ID_CLOSE_SNACKBAR,
-  WS_ID_SHELLY_SYS_UPDATE,
-  WS_ID_SHELLY_MAIN_UPDATE,
-} from './frontendTypes';
-
 // Type for WebSocket messages sent to the backend
 export interface WebSocketSendMessage {
   id: number;
+  sender?: string;
   src: string;
   dst: string;
   method: string;
-  params?: Record<string, unknown>;
+  params?: { totalMemory?: string, freeMemory?: string, heapTotal?: string, heapUsed?: string, rss?: string, cpuUsage?: number, systemUptime?: string, processUptime?: string } & Record<string, unknown>;
   error?: string;
   success?: boolean;
   response?: unknown;
@@ -62,8 +53,10 @@ export interface WebSocketContextType {
   logMessage: (badge: string, message: string) => void;
 }
 
-export const WebSocketMessagesContext = createContext<WebSocketMessagesContextType | undefined>(undefined); // messages
-export const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined); // setMessages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const WebSocketMessagesContext = createContext<WebSocketMessagesContextType>(null as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const WebSocketContext = createContext<WebSocketContextType>(null as any);
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   // States

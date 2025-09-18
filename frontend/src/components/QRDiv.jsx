@@ -1,7 +1,7 @@
  
 
 // React
-import { useContext, useEffect, useState, useRef } from 'react';
+import { useContext, useEffect, useState, useRef, memo } from 'react';
 
 // QRCode
 import { QRCodeSVG } from 'qrcode.react';
@@ -42,7 +42,7 @@ const formatManualCode = (code) => {
   return [part1, part2, part3].filter(Boolean).join('-');
 };
 
-export function QRDiv({ id }) {
+function QRDiv({ id }) {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
   // States
@@ -243,3 +243,5 @@ export function QRDiv({ id }) {
     return null;
   }
 }
+
+export default memo(QRDiv);

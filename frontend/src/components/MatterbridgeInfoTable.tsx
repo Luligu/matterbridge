@@ -1,11 +1,17 @@
- 
+
+// React
+import { memo } from 'react';
+
+// Backend
+import { MatterbridgeInformation } from '../../../src/matterbridgeTypes';
+
 // Frontend
 import { TruncatedText } from './TruncatedText';
 import { debug } from '../App';
 // const debug = true;
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
-export function MatterbridgeInfoTable({ matterbridgeInfo }) {
+function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeInformation }) {
   if(debug) console.log('MatterbridgeInfoTable:', matterbridgeInfo);
 
   const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterFileLogger', 'fileLogger', 'matterLoggerLevel', 'loggerLevel',
@@ -38,3 +44,5 @@ export function MatterbridgeInfoTable({ matterbridgeInfo }) {
     </div>
   );
 }
+
+export default memo(MatterbridgeInfoTable);

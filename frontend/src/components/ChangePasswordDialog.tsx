@@ -1,4 +1,7 @@
+// React
 import { useState } from 'react';
+
+// @mui
 import {
   Dialog,
   DialogTitle,
@@ -10,15 +13,21 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 
-export const ChangePasswordDialog = ({ open, onClose, onSave }) => {
+interface ChangePasswordDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: (password: string) => void;
+}
+
+export const ChangePasswordDialog = ({ open, onClose, onSave }: ChangePasswordDialogProps) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleNewPasswordChange = (e) => {
+  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewPassword(e.target.value);
   };
 
-  const handleConfirmPasswordChange = (e) => {
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfirmPassword(e.target.value);
   };
 
@@ -64,7 +73,7 @@ export const ChangePasswordDialog = ({ open, onClose, onSave }) => {
       <DialogContent dividers>
         <FormControl component="fieldset" fullWidth sx={{ margin: 0, padding: 0, gap: '20px' }}>
           <Grid container spacing={2} sx={{ mt: 2 }}>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 type="password"
                 autoComplete='new-password'
@@ -76,7 +85,7 @@ export const ChangePasswordDialog = ({ open, onClose, onSave }) => {
                 onChange={handleNewPasswordChange}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 type="password"
                 autoComplete='new-password'

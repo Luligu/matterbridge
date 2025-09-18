@@ -122,6 +122,7 @@ export interface WsMessage {
 }
 
 export interface WsMessageRequest extends WsMessage {
+  sender?: string;
   params: Record<string, string | number | boolean>;
 }
 

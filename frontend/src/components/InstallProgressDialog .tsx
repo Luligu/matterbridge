@@ -8,9 +8,16 @@ import {
   TextField,
 } from '@mui/material';
 
-export const InstallProgressDialog = ({ open, output, onInstall, onClose }) => {
+interface InstallProgressDialogProps {
+  open: boolean;
+  output: string;
+  onInstall: () => void;
+  onClose: () => void;
+}
+
+export const InstallProgressDialog = ({ open, output, onInstall, onClose }: InstallProgressDialogProps) => {
   // Ref to access the underlying textarea element for auto-scrolling.
-  const logRef = useRef(null);
+  const logRef = useRef<HTMLTextAreaElement>(null);
 
   // Scroll to the bottom whenever the output updates.
   useEffect(() => {
@@ -50,21 +57,18 @@ export const InstallProgressDialog = ({ open, output, onInstall, onClose }) => {
           rows={10}
           variant="outlined"
           value={output}
-          InputProps={{
-            readOnly: true,
-            // Attach the ref to the underlying textarea element for scrolling.
-            inputRef: logRef,
-          }}
-          inputProps={{
-            style: { fontFamily: 'monospace', whiteSpace: 'pre-wrap' },
+          slotProps={{
+            input: {
+              readOnly: true,
+              ref: logRef,
+              style: { fontFamily: 'monospace', whiteSpace: 'pre-wrap' },
+            }
           }}
         />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onInstall}>
-          Install
-        </Button>
+        <Button variant="contained" onClick={onInstall}>Install</Button>
       </DialogActions>
     </Dialog>
   );

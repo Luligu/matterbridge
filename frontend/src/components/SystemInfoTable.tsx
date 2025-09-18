@@ -1,15 +1,18 @@
  
 // React
-import { useContext, useEffect, useState } from 'react';
+import { memo, useContext, useEffect, useState } from 'react';
+
+// Backend
+import { SystemInformation } from '../../../src/matterbridgeTypes';
 
 // Frontend
 import { TruncatedText } from './TruncatedText';
-import { WebSocketContext } from './WebSocketProvider';
+import { WebSocketContext, WebSocketSendMessage } from './WebSocketProvider';
 import { debug } from '../App';
 // const debug = true;
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
-export function SystemInfoTable({ systemInfo, compact }) {
+function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformation, compact: boolean }) {
 
   // Local states
   const [localSystemInfo, setLocalSystemInfo] = useState(systemInfo);
@@ -19,67 +22,75 @@ export function SystemInfoTable({ systemInfo, compact }) {
 
   if(debug) console.log('SystemInfoTable:', localSystemInfo, 'compact:', compact);
 
-  if (compact && localSystemInfo.totalMemory) {
+  // Compact some fields if compact is true
+  if (systemInfo && compact && localSystemInfo.totalMemory && localSystemInfo.freeMemory) {
     const totalMemory = localSystemInfo.totalMemory;
     const freeMemory = localSystemInfo.freeMemory;
     localSystemInfo.freeMemory = `${freeMemory} / ${totalMemory}`;
-    delete localSystemInfo.totalMemory;
+    localSystemInfo.totalMemory = ''; 
   }
-  if (compact && localSystemInfo.heapTotal) {
+  if (systemInfo && compact && localSystemInfo.heapTotal && localSystemInfo.heapUsed) {
     const heapTotal = localSystemInfo.heapTotal;
     const heapUsed = localSystemInfo.heapUsed;
     localSystemInfo.heapUsed = `${heapUsed} / ${heapTotal}`;
-    delete localSystemInfo.heapTotal;
+    localSystemInfo.heapTotal = '';
   }
-  if (compact && localSystemInfo.osRelease) {
+  if (systemInfo && compact && localSystemInfo.osRelease && localSystemInfo.osType) {
     const osType = localSystemInfo.osType;
     const osRelease	= localSystemInfo.osRelease;
     localSystemInfo.osType = `${osType} (${osRelease})`;
-    delete localSystemInfo.osRelease;
+    localSystemInfo.osRelease = '';
   }
-  if(compact && localSystemInfo.osArch) {
+  if(systemInfo && compact && localSystemInfo.osArch && localSystemInfo.osPlatform) {
     const osPlatform = localSystemInfo.osPlatform;
     const osArch = localSystemInfo.osArch;
     localSystemInfo.osPlatform = `${osPlatform} (${osArch})`;
-    delete localSystemInfo.osArch;
+    localSystemInfo.osArch = '';
   }
 
   useEffect(() => {
-    if(debug) console.log('SystemInfoTable useEffect WebSocketMessage mounting');
-    const handleWebSocketMessage = (msg) => {
-      /* SystemInfoTable page WebSocketMessage listener */
+    const handleWebSocketMessage = (msg: WebSocketSendMessage) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'memory_update' && msg.params && msg.params.totalMemory && msg.params.freeMemory) {
+        if (msg.method === 'memory_update' && msg.params && msg.params.totalMemory && msg.params.freeMemory && msg.params.heapTotal && msg.params.heapUsed && msg.params.rss) {
           if(debug) console.log('SystemInfoTable received memory_update', msg);
-          setLocalSystemInfo((prev) => ({
-            ...prev,
-            totalMemory: msg.params.totalMemory,
-            freeMemory: msg.params.freeMemory,
-            heapTotal: msg.params.heapTotal,
-            heapUsed: msg.params.heapUsed,
-            rss: msg.params.rss,
-          }))
+          if(localSystemInfo.totalMemory !== msg.params?.totalMemory || localSystemInfo.freeMemory !== msg.params?.freeMemory ||
+            localSystemInfo.heapTotal !== msg.params?.heapTotal || localSystemInfo.heapUsed !== msg.params?.heapUsed ||
+            localSystemInfo.rss !== msg.params?.rss) {
+            setLocalSystemInfo((prev) => ({
+              ...prev,
+              totalMemory: msg.params?.totalMemory ? msg.params.totalMemory : '',
+              freeMemory: msg.params?.freeMemory ? msg.params.freeMemory : '',
+              heapTotal: msg.params?.heapTotal ? msg.params.heapTotal : '',
+              heapUsed: msg.params?.heapUsed ? msg.params.heapUsed : '',
+              rss: msg.params?.rss ? msg.params.rss : '',
+            }))
+          }
         }
         if (msg.method === 'cpu_update' && msg.params && msg.params.cpuUsage) {
           if(debug) console.log('SystemInfoTable received cpu_update', msg);
-          setLocalSystemInfo((prev) => ({
-            ...prev,
-            cpuUsage: msg.params.cpuUsage.toFixed(2) + ' %',
-          }))
+          if(localSystemInfo.cpuUsage !== (msg.params?.cpuUsage ? msg.params.cpuUsage.toFixed(2) + ' %' : '')) {
+            setLocalSystemInfo((prev) => ({
+              ...prev,
+              cpuUsage: msg.params?.cpuUsage ? msg.params.cpuUsage.toFixed(2) + ' %' : '',
+            }))
+          }
         }
         if (msg.method === 'uptime_update' && msg.params && msg.params.systemUptime && msg.params.processUptime) {
           if(debug) console.log('SystemInfoTable received uptime_update', msg);
-          setLocalSystemInfo((prev) => ({
-            ...prev,
-            systemUptime: msg.params.systemUptime,
-            processUptime: msg.params.processUptime,
-          }))
+          if(localSystemInfo.systemUptime !== msg.params?.systemUptime || localSystemInfo.processUptime !== msg.params?.processUptime) {
+            setLocalSystemInfo((prev) => ({
+              ...prev,
+              systemUptime: msg.params?.systemUptime ? msg.params.systemUptime : '',
+              processUptime: msg.params?.processUptime ? msg.params.processUptime : '',
+            }))
+          }
         }
       } else {
         if(debug) console.log('Test received WebSocketMessage:', msg.method, msg.src, msg.dst, msg.response);
       }
     };
 
+    if(debug) console.log('SystemInfoTable useEffect WebSocketMessage mounting');
     addListener(handleWebSocketMessage);
     if(debug) console.log('SystemInfoTable useEffect WebSocketMessage mounted');
 
@@ -88,7 +99,7 @@ export function SystemInfoTable({ systemInfo, compact }) {
       removeListener(handleWebSocketMessage);
       if(debug) console.log('SystemInfoTable useEffect WebSocketMessage unmounted');
     };
-  }, [addListener, removeListener, sendMessage]);
+  }, [addListener, localSystemInfo.cpuUsage, localSystemInfo.freeMemory, localSystemInfo.heapTotal, localSystemInfo.heapUsed, localSystemInfo.processUptime, localSystemInfo.rss, localSystemInfo.systemUptime, localSystemInfo.totalMemory, removeListener, sendMessage]);
 
   if (!localSystemInfo) return null;
 
@@ -102,7 +113,7 @@ export function SystemInfoTable({ systemInfo, compact }) {
       <div className="MbfWindowDivTable">
         <table style={{ border: 'none', borderCollapse: 'collapse' }}>
           <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>
-            {Object.entries(localSystemInfo).map(([key, value], index) => (
+            {Object.entries(localSystemInfo).filter(([_key, value]) => value !== undefined && value !== '').map(([key, value], index) => (
               <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
                 <td style={{ border: 'none', borderCollapse: 'collapse' }}>{key}</td>
                 <td style={{ border: 'none', borderCollapse: 'collapse' }}>
@@ -117,3 +128,4 @@ export function SystemInfoTable({ systemInfo, compact }) {
   );
 }
   
+export default memo(SystemInfoTable);

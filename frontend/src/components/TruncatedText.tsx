@@ -18,15 +18,17 @@ export function TruncatedText({ value, maxChars }: TruncatedTextProps) {
       <Tooltip
         title={value}
         placement="top"
-        PopperProps={{
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [0, 12],
+        slotProps={{
+          popper: {
+            modifiers: [
+              {
+                name: 'offset',
+                options: {
+                  offset: [0, 12],
+                },
               },
-            },
-          ],
+            ],
+          },
         }}
       >
         <span>{displayText}</span>

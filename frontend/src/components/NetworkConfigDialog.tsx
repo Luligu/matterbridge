@@ -1,4 +1,7 @@
+// React
 import { useState } from 'react';
+
+// @mui
 import {
   Dialog,
   DialogTitle,
@@ -12,9 +15,16 @@ import {
   FormControl,
   FormLabel,
 } from '@mui/material';
-import Grid from '@mui/material/Grid'; // Using standard Grid import
+import Grid from '@mui/material/Grid'; // Using standard Grid component
 
-export const NetworkConfigDialog = ({ open, ip, onClose, onSave }) => {
+interface NetworkConfigDialogProps {
+  open: boolean;
+  ip?: string;
+  onClose: () => void;
+  onSave: (config: { type: string; ip?: string; subnet?: string; gateway?: string; dns?: string }) => void;
+}
+
+export const NetworkConfigDialog = ({ open, ip, onClose, onSave }: NetworkConfigDialogProps) => {
   const defaultGateway = ip ? ip.split('.').slice(0, 3).join('.') + '.1' : '';
   const [networkType, setNetworkType] = useState('dhcp');
   const [staticConfig, setStaticConfig] = useState({
@@ -24,7 +34,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }) => {
     dns: defaultGateway,
   });
 
-  const handleFieldChange = (field) => (e) => {
+  const handleFieldChange = (field: keyof typeof staticConfig) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setStaticConfig({
       ...staticConfig,
       [field]: e.target.value,
@@ -73,7 +83,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }) => {
 
         {networkType === 'static' && (
           <Grid container spacing={2} sx={{ mt: 2 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={6}>
               <TextField
                 label="IP Address"
                 fullWidth
@@ -81,7 +91,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }) => {
                 onChange={handleFieldChange('ip')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={6}>
               <TextField
                 label="Subnet Mask"
                 fullWidth
@@ -89,7 +99,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }) => {
                 onChange={handleFieldChange('subnet')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={6}>
               <TextField
                 label="Gateway"
                 fullWidth
@@ -97,7 +107,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }) => {
                 onChange={handleFieldChange('gateway')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={6}>
               <TextField
                 label="DNS Server"
                 fullWidth
