@@ -1927,7 +1927,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
       // Thermostat.Feature.Occupancy
   	  unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint * 100,
-  	  occupied?: boolean | undefined ?? occupied,
+  	  occupancy: occupied,
     });
     return this;
   }
