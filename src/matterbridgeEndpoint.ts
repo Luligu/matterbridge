@@ -1897,6 +1897,42 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a default heating thermostat cluster server with Heating and Occupancy features.
+   *
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [unoccupiedHeatingSetpoint] - The unoccupied heating setpoint value in degrees Celsius. Defaults to 18°.
+   * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [occupied] - A boolean indicating whether the occupancy is occupied or not. Default is false.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultHeatingOccupancyThermostatClusterServer(
+      localTemperature: number = 23,
+      occupiedHeatingSetpoint: number = 21,
+      unoccupiedHeatingSetpoint: number = 18,
+      minHeatSetpointLimit: number = 0,
+      maxHeatSetpointLimit: number = 50,
+      occupied: boolean = false,
+    ): this {
+    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Occupancy), {
+      localTemperature: localTemperature * 100,
+      systemMode: Thermostat.SystemMode.Heat,
+      controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
+      // Thermostat.Feature.Heating
+      occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
+      minHeatSetpointLimit: minHeatSetpointLimit * 100,
+      maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+      absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
+      absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+      // Thermostat.Feature.Occupancy
+  	  unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint * 100,
+  	  occupancy: occupied,
+    });
+    return this;
+  }
+
+  /**
    * Creates a default cooling thermostat cluster server with feature Cooling.
    *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
