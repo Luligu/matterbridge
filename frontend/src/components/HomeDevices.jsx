@@ -298,7 +298,7 @@ export function HomeDevices({storeId, setStoreId}) {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
         if (msg.method === 'refresh_required' && msg.params.changed !== 'matter' && msg.params.changed !== 'pluginsRestart' && msg.params.changed !== 'sessions' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
-          if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed}`);
+          /*if (debug)*/ console.log(`HomeDevices received refresh_required: changed=${msg.params.changed} > requesting /api/plugins`);
           sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'restart_required') {
@@ -367,11 +367,11 @@ export function HomeDevices({storeId, setStoreId}) {
           }
         }
         if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
-          if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.plugin}:`, msg.response);
-          if(msg.response) {
+          if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'no select devices'}:`, msg.response);
+          if(msg.response && msg.response.length > 0) {
             setSelectDevices((prevSelectDevices) => {
               // Filter out devices not from the current plugin
-              const filteredDevices = prevSelectDevices.filter(device => device.pluginName !== msg.plugin);
+              const filteredDevices = prevSelectDevices.filter(device => device.pluginName !== msg.response[0].pluginName);
               // Add the new devices from the current plugin
               const updatedDevices = msg.response.map(device => ({ ...device, selected: isSelected(device) }));
               return [...filteredDevices, ...updatedDevices];
@@ -392,6 +392,7 @@ export function HomeDevices({storeId, setStoreId}) {
   
   // Mix devices and selectDevices
   useEffect(() => {
+    if(devices.length === 0 && selectDevices.length === 0) return;
     /*if(debug)*/ console.log(`HomeDevices mixing devices (${devices.length}) and selectDevices (${selectDevices.length})`);
     const mixed = [];
     for (const device of devices) {
@@ -403,8 +404,10 @@ export function HomeDevices({storeId, setStoreId}) {
         mixed.push(selectDevice);
       }
     }
-    if(mixed.length > 0) setMixedDevices(mixed);
-    /*if(debug)*/ console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
+    if(mixed.length > 0) {
+      setMixedDevices(mixed);
+      /*if(debug)*/ console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
+    }
   }, [plugins, devices, selectDevices, setMixedDevices]);
   
   // Send API requests when online
