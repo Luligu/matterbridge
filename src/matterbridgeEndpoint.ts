@@ -1913,7 +1913,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       unoccupiedHeatingSetpoint: number = 18,
       minHeatSetpointLimit: number = 0,
       maxHeatSetpointLimit: number = 50,
-      occupied: boolean = false,
+      occupied?: boolean | undefined = false,
     ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Occupancy), {
       localTemperature: localTemperature * 100,
