@@ -1908,13 +1908,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultHeatingOccupancyThermostatClusterServer(
-      localTemperature: number = 23,
-      occupiedHeatingSetpoint: number = 21,
-      unoccupiedHeatingSetpoint: number = 18,
-      minHeatSetpointLimit: number = 0,
-      maxHeatSetpointLimit: number = 50,
-      occupied: boolean | undefined = false,
-    ): this {
+    localTemperature: number = 23,
+    occupiedHeatingSetpoint: number = 21,
+    unoccupiedHeatingSetpoint: number = 18,
+    minHeatSetpointLimit: number = 0,
+    maxHeatSetpointLimit: number = 50,
+    occupied: boolean | undefined = false,
+  ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Occupancy), {
       localTemperature: localTemperature * 100,
       systemMode: Thermostat.SystemMode.Heat,
@@ -1926,8 +1926,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
       absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
       // Thermostat.Feature.Occupancy
-  	  unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint * 100,
-  	  occupancy: occupied,
+      unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint * 100,
+      occupancy: occupied,
     });
     return this;
   }
