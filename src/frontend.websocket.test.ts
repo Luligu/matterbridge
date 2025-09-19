@@ -1181,7 +1181,7 @@ describe('Matterbridge frontend', () => {
       };
       ws.addEventListener('message', onMessage);
     });
-    matterbridge.frontend.wssSendRefreshRequired();
+    matterbridge.frontend.wssSendRefreshRequired('matter');
     const response = await received;
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
@@ -1190,7 +1190,7 @@ describe('Matterbridge frontend', () => {
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('refresh_required');
-    expect(data.params).toEqual({ changed: null });
+    expect(data.params).toEqual({ changed: 'matter' });
     expect(data.response).toBeUndefined();
     expect(data.error).toBeUndefined();
   });

@@ -270,11 +270,9 @@ function Header() {
           setUpdate(msg.response.matterbridgeInformation.updateRequired);
         }
         // Broadcast messages
-        if (msg.method === 'refresh_required') {
-          if (msg.params.changed === null || msg.params.changed === 'matterbridgeLatestVersion' || msg.params.changed === 'fabrics') {
-            if (debug) console.log(`Header received refresh_required: changed=${msg.params.changed}`);
-            sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-          }
+        if (msg.method === 'refresh_required' && msg.params.changed === 'settings') {
+          if (debug) console.log(`Header received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
+          sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'restart_required') {
           if (debug) console.log(`Header received restart_required with fixed: ${msg.params.fixed}`);

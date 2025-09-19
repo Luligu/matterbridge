@@ -240,12 +240,12 @@ export function HomePlugins({_storeId, setStoreId}) {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && (msg.params.changed === 'plugins' || msg.params.changed === 'fabrics' || msg.params.changed === 'sessions' || msg.params.changed === 'pluginsRestart')) {
-          if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
+        if (msg.method === 'refresh_required' && msg.params.changed === 'plugins') {
+          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and sending /api/plugins request`);
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'refresh_required' && msg.params.changed === 'settings') {
-          if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
+          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages

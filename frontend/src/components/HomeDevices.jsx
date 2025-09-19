@@ -297,8 +297,8 @@ export function HomeDevices({storeId, setStoreId}) {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && msg.params.changed !== 'matter' && msg.params.changed !== 'pluginsRestart' && msg.params.changed !== 'sessions' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
-          /*if (debug)*/ console.log(`HomeDevices received refresh_required: changed=${msg.params.changed} > requesting /api/plugins`);
+        if (msg.method === 'refresh_required') {
+          /*if (debug)*/ console.log(`HomeDevices received refresh_required: changed=${msg.params.changed} and sending /api/plugins request`);
           sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'restart_required') {

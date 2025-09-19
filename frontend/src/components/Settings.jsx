@@ -37,8 +37,8 @@ function Settings() {
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'refresh_required') {
-          if(debug) console.log('Settings received refresh_required');
+        if (msg.method === 'refresh_required' && msg.params.changed === 'settings') {
+          if(debug) console.log(`Settings received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
           sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === '/api/settings') {

@@ -42,8 +42,8 @@ function Home() {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
-          if (debug) console.log(`Home received refresh_required: changed=${msg.params.changed}`);
+        if (msg.method === 'refresh_required' && msg.params.changed === 'settings') {
+          if (debug) console.log(`Home received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
           sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages

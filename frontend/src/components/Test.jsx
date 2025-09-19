@@ -50,7 +50,7 @@ function Test() {
           showSnackbarMessage('Restart required', 0);
         }
         if (msg.method === 'refresh_required') {
-          if(debug) console.log('Test received refresh_required');
+          if(debug) console.log(`Test received refresh_required: changed=${msg.params.changed} and sending api requests`);
           showSnackbarMessage('Refresh required', 0);
           sendMessage({ id: uniqueId.current, method: "/api/settings", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ id: uniqueId.current, method: "/api/plugins", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });

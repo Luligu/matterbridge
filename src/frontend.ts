@@ -1480,7 +1480,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (plugin) {
           this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true);
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
-          this.wssSendRefreshRequired('pluginsRestart');
           this.wssSendRestartRequired();
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         }
@@ -1885,9 +1884,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             }
             if (plugin.platform) plugin.platform.config = config;
             plugin.configJson = config;
-            const restartRequired = plugin.restartRequired;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
-            if (!restartRequired) this.wssSendRefreshRequired('pluginsRestart');
             this.wssSendRestartRequired(false);
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
           } else {
@@ -1928,9 +1925,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             }
             if (plugin.platform) plugin.platform.config = config;
             plugin.configJson = config;
-            const restartRequired = plugin.restartRequired;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
-            if (!restartRequired) this.wssSendRefreshRequired('pluginsRestart');
             this.wssSendRestartRequired(false);
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
           } else {
@@ -2002,24 +1997,16 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Sends a need to refresh WebSocket message to all connected clients.
    *
-   * @param {string} changed - The changed value. If null, the whole page will be refreshed.
+   * @param {string} changed - The changed value.
    * @param {Record<string, unknown>} params - Additional parameters to send with the message.
    * possible values for changed:
-   * - 'matterbridgeLatestVersion'
-   * - 'matterbridgeDevVersion'
-   * - 'online'
-   * - 'offline'
-   * - 'reachability'
    * - 'settings'
    * - 'plugins'
-   * - 'pluginsRestart'
    * - 'devices'
-   * - 'fabrics'
-   * - 'sessions'
-   * - 'matter' with param 'matter' (QRDivDevice)
+   * - 'matter' with param 'matter' (QRDiv component)
    * @param {ApiMatter} params.matter - The matter device that has changed. Required if changed is 'matter'.
    */
-  wssSendRefreshRequired(changed: RefreshRequiredChanged | null = null, params?: { matter: ApiMatter }) {
+  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter: ApiMatter }) {
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: WsBroadcastMessageId.RefreshRequired, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: { changed, ...params } });
@@ -2073,7 +2060,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendCpuUpdate(cpuUsage: number) {
     if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.CpuUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', params: { cpuUsage } });
+    this.wssBroadcastMessage({ id: WsBroadcastMessageId.CpuUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', params: { cpuUsage: Math.round(cpuUsage * 100) / 100 } });
   }
 
   /**

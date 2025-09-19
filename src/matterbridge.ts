@@ -188,7 +188,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
-  private endAdvertiseTimeout: NodeJS.Timeout | undefined;
   private sigintHandler: NodeJS.SignalsListener | undefined;
   private sigtermHandler: NodeJS.SignalsListener | undefined;
   private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
@@ -226,6 +225,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   aggregatorDeviceType = DeviceTypeId(getIntParameter('deviceType') ?? bridge.code);
   aggregatorSerialNumber = getParameter('serialNumber');
   aggregatorUniqueId = getParameter('uniqueId');
+  /** Advertising nodes map: time advertising started keyed by storeId */
   advertisingNodes = new Map<string, number>();
 
   protected static instance: Matterbridge | undefined;
@@ -1685,7 +1685,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.reachabilityTimeout = setTimeout(() => {
         this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
         if (this.aggregatorNode) this.setAggregatorReachability(this.aggregatorNode, true);
-        this.frontend.wssSendRefreshRequired('reachability');
       }, 60 * 1000).unref();
 
       // Logger.get('LogServerNode').info(this.serverNode);
@@ -1784,7 +1783,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         plugin.reachabilityTimeout = setTimeout(() => {
           this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf} type ${plugin.type} server node ${plugin.serverNode !== undefined} aggregator node ${plugin.aggregatorNode !== undefined} device ${plugin.device !== undefined}`);
           if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
-          this.frontend.wssSendRefreshRequired('reachability');
         }, 60 * 1000).unref();
       }
 
@@ -2222,13 +2220,22 @@ const commissioningController = new CommissioningController({
      */
     serverNode.lifecycle.commissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`);
-      clearTimeout(this.endAdvertiseTimeout);
+      this.advertisingNodes.delete(storeId);
+      this.frontend.wssSendRefreshRequired('settings');
+      this.frontend.wssSendRefreshRequired('plugins');
+      this.frontend.wssSendRefreshRequired('devices');
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
     serverNode.lifecycle.decommissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`);
-      clearTimeout(this.endAdvertiseTimeout);
+      this.advertisingNodes.delete(storeId);
+      this.frontend.wssSendRefreshRequired('settings');
+      this.frontend.wssSendRefreshRequired('plugins');
+      this.frontend.wssSendRefreshRequired('devices');
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
     });
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
@@ -2236,12 +2243,10 @@ const commissioningController = new CommissioningController({
       this.log.notice(`Server node for ${storeId} is online`);
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
+        this.advertisingNodes.set(storeId, Date.now());
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
         this.log.notice(`Manual pairing code: ${manualPairingCode}`);
-        // Set a timeout to show that advertising stops after 15 minutes if not commissioned
-        this.startEndAdvertiseTimer(serverNode);
-        this.advertisingNodes.set(storeId, Date.now());
       } else {
         // istanbul ignore next
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
@@ -2274,8 +2279,6 @@ const commissioningController = new CommissioningController({
       switch (fabricAction) {
         case FabricAction.Added:
           this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
-          clearTimeout(this.endAdvertiseTimeout);
-          this.endAdvertiseTimeout = undefined;
           action = 'added';
           break;
         case FabricAction.Removed:
@@ -2286,7 +2289,6 @@ const commissioningController = new CommissioningController({
           break;
       }
       this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
-      this.frontend.wssSendRefreshRequired('fabrics');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
@@ -2296,7 +2298,6 @@ const commissioningController = new CommissioningController({
      */
     serverNode.events.sessions.opened.on((session) => {
       this.log.notice(`Session opened on server node for ${storeId}: ${debugStringify(session)}`);
-      this.frontend.wssSendRefreshRequired('sessions');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
@@ -2305,14 +2306,12 @@ const commissioningController = new CommissioningController({
      */
     serverNode.events.sessions.closed.on((session) => {
       this.log.notice(`Session closed on server node for ${storeId}: ${debugStringify(session)}`);
-      this.frontend.wssSendRefreshRequired('sessions');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
     serverNode.events.sessions.subscriptionsChanged.on((session) => {
       this.log.notice(`Session subscriptions changed on server node for ${storeId}: ${debugStringify(session)}`);
-      this.frontend.wssSendRefreshRequired('sessions');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
@@ -2321,33 +2320,7 @@ const commissioningController = new CommissioningController({
   }
 
   /**
-   * Starts the 15 minutes timer to advice that advertising for the specified server node is ended.
-   *
-   * @param {ServerNode} [matterServerNode] - The server node to start.
-   */
-  private startEndAdvertiseTimer(matterServerNode: ServerNode) {
-    if (this.endAdvertiseTimeout) {
-      this.log.debug(`Clear ${matterServerNode.id} server node end advertise timer`);
-      clearTimeout(this.endAdvertiseTimeout);
-    }
-    this.log.debug(`Starting ${matterServerNode.id} server node end advertise timer`);
-    this.endAdvertiseTimeout = setTimeout(
-      () => {
-        if (matterServerNode.lifecycle.isCommissioned) return;
-        this.frontend.wssSendRefreshRequired('plugins');
-        this.frontend.wssSendRefreshRequired('settings');
-        this.frontend.wssSendRefreshRequired('fabrics');
-        this.frontend.wssSendRefreshRequired('sessions');
-        this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(matterServerNode) } });
-        this.frontend.wssSendSnackbarMessage(`Advertising stopped.`, 0);
-        this.log.notice(`Advertising stopped.`);
-      },
-      15 * 60 * 1000,
-    ).unref();
-  }
-
-  /**
-   * Starts the 15 minutes timer to advice that advertising for the specified server node is ended.
+   * Gets the matter sanitized data of the specified server node.
    *
    * @param {ServerNode} [serverNode] - The server node to start.
    * @returns {ApiMatter} The sanitized data of the server node.

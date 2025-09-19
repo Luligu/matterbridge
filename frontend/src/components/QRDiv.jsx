@@ -67,7 +67,7 @@ function QRDiv({ id }) {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required' && msg.params.changed === 'matter' && msg.params.matter) {
-          if(debug) console.log(`QRDiv received refresh_required/matter for storeId "${msg.params.matter.id}":`, msg.params.matter);
+          if(debug) console.log(`QRDiv received refresh_required: changed=${msg.params.changed} for storeId "${msg.params.matter.id}":`, msg.params.matter);
           if(storeId === msg.params.matter.id) {
             if(debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.params.matter.id}":`, msg.params.matter);
             clearTimeout(advertiseTimeoutRef.current);
