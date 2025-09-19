@@ -736,6 +736,6 @@ export function isApiRequest(msg: WsMessage): msg is WsMessageBaseApiRequest {
  *
  * @returns {msg is WsMessageSuccessApiResponse} True if the message is a WsMessageApiResponse, false otherwise.
  */
-export function isApiResponse(msg: WsMessage): msg is WsMessageSuccessApiResponse {
+export function isApiResponse(msg: WsMessage): msg is WsMessageApiResponse {
   return msg.id > WsBroadcastMessageId.ShellyMainUpdate && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && ('success' in msg || 'error' in msg);
 }

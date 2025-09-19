@@ -46,7 +46,7 @@ const formatManualCode = (code: string) => {
 };
 
 interface QRDivProps {
-  id: string; // storeId
+  id: string | null; // storeId
 }
 
 function QRDiv({ id }: QRDivProps) {

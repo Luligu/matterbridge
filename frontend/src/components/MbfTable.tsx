@@ -430,4 +430,4 @@ const MbfTable = memo(function MuiTable<T extends Record<string, unknown>>({ nam
   );
 });
 
-export default MbfTable;
+export default memo(MbfTable);
