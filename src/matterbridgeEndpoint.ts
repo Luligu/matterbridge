@@ -1904,7 +1904,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [unoccupiedHeatingSetpoint] - The unoccupied heating setpoint value in degrees Celsius. Defaults to 18°.
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
    * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
-   * @param {boolean} [occupancy] - A boolean indicating whether the occupancy is occupied or not. Default is false.
+   * @param {occupancy} [occupancy] - A boolean indicating whether the occupancy is occupied or not. Default is false.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultHeatingOccupancyThermostatClusterServer(
@@ -1927,7 +1927,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
       // Thermostat.Feature.Occupancy
       unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint * 100,
-      occupancy: occupancy,
+      occupancy: { occupied: occupancy },
     });
     return this;
   }
