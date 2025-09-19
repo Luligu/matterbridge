@@ -15,12 +15,12 @@ import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import SystemInfoTable from './SystemInfoTable';
 import QRDiv from './QRDiv';
-import { InstallAddPlugins } from './InstallAddPlugins';
-import { HomePlugins } from './HomePlugins';
-import { HomeDevices } from './HomeDevices';
-import { debug } from '../App';
+import InstallAddPlugins  from './InstallAddPlugins';
+import HomePlugins from './HomePlugins';
+import HomeDevices from './HomeDevices';
 import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
 import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
+import { debug } from '../App';
 // const debug = true;
 
 function Home() {

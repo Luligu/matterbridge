@@ -1,5 +1,5 @@
 // React
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import { useContext, useEffect, useState, useRef, useMemo, memo } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
 // @mui/material
@@ -140,7 +140,7 @@ function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDevic
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
 
   // Filter columns based on visibility
-  const visibleColumns = React.useMemo(
+  const visibleColumns = useMemo(
     () => devicesColumns.filter(column => columnVisibility[column.accessor]),
     [columnVisibility]
   );
@@ -213,7 +213,7 @@ function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDevic
 
 function ClustersTable({ data, columnVisibility }) {
   // Filter columns based on visibility
-  const visibleColumns = React.useMemo(
+  const visibleColumns = useMemo(
     () => clustersColumns.filter(column => columnVisibility[column.accessor]),
     [columnVisibility]
   );
@@ -571,4 +571,4 @@ function Devices() {
   );
 }
 
-export default Devices;
+export default memo(Devices);

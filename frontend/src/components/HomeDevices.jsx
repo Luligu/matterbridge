@@ -1,6 +1,6 @@
  
 // React
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import { useContext, useEffect, useState, useRef, useMemo, useCallback, memo } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
 // @mui/material
@@ -64,7 +64,7 @@ const getRowId = (row) => {
 
 function HomeDevicesTable({ data, columns, columnVisibility }) {
   // Load sort state from localStorage
-  const initialSortBy = React.useMemo(() => {
+  const initialSortBy = useMemo(() => {
     const saved = localStorage.getItem('homeDevicesColumnsSortBy');
     // if(debug) console.log(`HomeDevicesTable retrieved sortBy:`, saved, JSON.parse(saved));
     return saved ? JSON.parse(saved) : [{id: 'name', desc: false}];
@@ -72,7 +72,7 @@ function HomeDevicesTable({ data, columns, columnVisibility }) {
   }, [columns]);
 
   // Filter columns based on visibility
-  const visibleColumns = React.useMemo(
+  const visibleColumns = useMemo(
     () => columns.filter(column => columnVisibility[column.accessor]),
     [columnVisibility, columns]
   );
@@ -88,7 +88,7 @@ function HomeDevicesTable({ data, columns, columnVisibility }) {
   } = useTable({ columns: visibleColumns, data, getRowId, initialState: { sortBy: initialSortBy }, }, useSortBy);
 
   // Save sort state to localStorage whenever it changes
-  React.useEffect(() => {
+  useEffect(() => {
     // if(debug) console.log(`HomeDevicesTable saved sortBy: ${JSON.stringify(sortBy, null, 2)}`);
     localStorage.setItem('homeDevicesColumnsSortBy', JSON.stringify(sortBy));
   }, [sortBy]);
@@ -148,7 +148,7 @@ function HomeDevicesTable({ data, columns, columnVisibility }) {
  * The user can sort the table by clicking on the column headers. The sort state is saved in localStorage.
  * The user can see a footer with the number of registered devices, a loading message if plugins are not fully loaded, and a restart required message if needed.
  */
-export function HomeDevices({storeId, setStoreId}) {
+function HomeDevices({storeId, setStoreId}) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
@@ -268,7 +268,7 @@ export function HomeDevices({storeId, setStoreId}) {
   ];
   
   // Function to determine if a device is selected based on the plugin's whiteList/blackList and selectFrom configuration
-  const isSelected = React.useCallback((device) => {
+  const isSelected = useCallback((device) => {
     // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} name ${device.name} serial ${device.serial}`);
     device.selected = undefined;
     const plugin = plugins.find((p) => p.name === device.pluginName);
@@ -523,3 +523,5 @@ export function HomeDevices({storeId, setStoreId}) {
 
   );
 }
+
+export default memo(HomeDevices);

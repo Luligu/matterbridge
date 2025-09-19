@@ -1,6 +1,6 @@
  
 // React
-import { useState, useContext, useRef } from 'react';
+import { useState, useContext, useRef, memo } from 'react';
 
 // @mui/material
 import TextField from '@mui/material/TextField';
@@ -20,7 +20,7 @@ import MoreVert from '@mui/icons-material/MoreVert';
 import { WebSocketContext } from './WebSocketProvider';
 import { debug } from '../App';
 
-export function InstallAddPlugins() {
+function InstallAddPlugins() {
   // Contexts
   const { logMessage, sendMessage, getUniqueId } = useContext(WebSocketContext);
 
@@ -162,3 +162,4 @@ export function InstallAddPlugins() {
   );
 }
 
+export default memo(InstallAddPlugins);

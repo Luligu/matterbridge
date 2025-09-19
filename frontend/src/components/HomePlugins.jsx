@@ -1,6 +1,6 @@
  
 // React
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useState, useRef, memo } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
 // @mui/material
@@ -85,7 +85,7 @@ function HomePluginsTable({ data, columns, columnVisibility }) {
   );
 }
 
-export function HomePlugins({_storeId, setStoreId}) {
+function HomePlugins({_storeId, setStoreId}) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   const { showConfirmCancelDialog } = useContext(UiContext);
@@ -450,3 +450,5 @@ export function HomePlugins({_storeId, setStoreId}) {
 
   );
 }
+
+export default memo(HomePlugins);
