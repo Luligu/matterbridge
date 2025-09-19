@@ -1,5 +1,5 @@
 // React
-import { useMemo, useRef, useState, useContext, memo } from 'react';
+import { useMemo, useRef, useState, memo } from 'react';
 // @mui/material
 import { Button, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, FormGroup, FormControlLabel, DialogActions } from '@mui/material';
 import Checkbox from '@mui/material/Checkbox';
@@ -7,12 +7,11 @@ import Checkbox from '@mui/material/Checkbox';
 import Icon from '@mdi/react';
 import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
 // frontend
-import { UiContext } from './UiProvider';
 // import { debug } from '../App';
 const debug = true;
 
 // Generic comparator used by MbTable sorting.
-function comparator(rowA, rowB, key) {
+function comparator<T extends Record<string, unknown>>(rowA: T, rowB: T, key: keyof T): number {
   const v1 = rowA?.[key];
   const v2 = rowB?.[key];
   if (v1 == null && v2 == null) return 0;
@@ -127,20 +126,46 @@ function comparator(rowA, rowB, key) {
  *   return next;               // other rows keep reference => React skips re-render for them
  * });
  */
-const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footerLeft, footerRight }) {
+interface MbfTableColumn<T extends Record<string, unknown> = Record<string, unknown>> {
+  id: string;
+  label: string;
+  minWidth?: number;
+  maxWidth?: number;
+  align?: 'left' | 'center' | 'right';
+  format?: (value: number) => string;
+  nosort?: boolean;
+  render?: (value: unknown, rowKey: string | number, row: T, column: MbfTableColumn<T>) => React.ReactNode;
+  hidden?: boolean;
+  required?: boolean;
+}
+
+interface ColumnVisibility {
+  [colId: string]: boolean;
+}
+
+interface MbfTableProps<T extends Record<string, unknown> = Record<string, unknown>> {
+  name: string;
+  columns: MbfTableColumn<T>[];
+  rows: T[];
+  getRowKey?: string | ((row: T) => string | number);
+  footerLeft: string;
+  footerRight: string;
+}
+
+const MbfTable = memo(function MuiTable<T extends Record<string, unknown>>({ name, columns, rows, getRowKey, footerLeft, footerRight }: MbfTableProps<T>) {
   // Stable key fallback for rows without a natural id
-  const rowKeyMapRef = useRef(new WeakMap());
+  const rowKeyMapRef = useRef<WeakMap<T, string>>(new WeakMap());
   const nextRowKeySeqRef = useRef(1);
-  const getStableRowKey = (row) => {
+  const getStableRowKey = (row: T): string | number => {
     if (typeof getRowKey === 'string') {
-      if (row && row[getRowKey] != null) return row[getRowKey];
+      if (row && row[getRowKey] != null) return row[getRowKey] as string | number;
     }
     if (typeof getRowKey === 'function') {
       const k = getRowKey(row);
       if (k != null) return k;
     }
     const firstColId = columns?.[0]?.id;
-    if (firstColId && row && row[firstColId] != null) return row[firstColId];
+    if (firstColId && row && row[firstColId] != null) return row[firstColId] as string | number;
     console.warn(`MbfTable(${name}): using fallback stable row key; consider providing getRowKey prop for better React performance`);
     let k = rowKeyMapRef.current.get(row);
     if (!k) {
@@ -150,24 +175,22 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
     return k;
   };
 
-  // Contexts
-  const { _showConfirmCancelDialog } = useContext(UiContext);
   // Local states
-  const [orderBy, setOrderBy] = useState(localStorage.getItem(`${name}_table_order_by`) || null);
-  const [order, setOrder] = useState(localStorage.getItem(`${name}_table_order`) || null);
+  const [orderBy, setOrderBy] = useState<string | null>(localStorage.getItem(`${name}_table_order_by`) || null);
+  const [order, setOrder] = useState<'asc' | 'desc' | null>((localStorage.getItem(`${name}_table_order`) as 'asc' | 'desc' | null) || null);
   const [configureVisibilityDialogOpen, setConfigureVisibilityDialogOpen] = useState(false);
   // Visibility overrides stored in localStorage: { [colId]: false } hides a column.
-  const [columnVisibility, setColumnVisibility] = useState(() => {
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>(() => {
     try {
       const stored = localStorage.getItem(`${name}_column_visibility`);
-      if (stored) return JSON.parse(stored);
+      if (stored) return JSON.parse(stored) as ColumnVisibility;
     } catch { /**/ }
     return {};
   });
 
   // Derived effective visibility map from columns + overrides
-  const visibleMap = useMemo(() => {
-    const next = {};
+  const visibleMap = useMemo<Record<string, boolean>>(() => {
+    const next: Record<string, boolean> = {};
     for (const col of columns) {
       if (!col.hidden) {
         next[col.id] = col.required ? true : columnVisibility[col.id] !== false;
@@ -177,13 +200,13 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
   }, [columns, columnVisibility]);
 
   // Memoized sorted rows
-  const sortedRows = useMemo(() => {
+  const sortedRows = useMemo<T[]>(() => {
     if (!orderBy || !order) return rows;
     const sortCol = columns.find((c) => c.id === orderBy);
     if (!sortCol || sortCol.nosort) return rows;
     const wrapped = rows.map((el, index) => ({ el, index }));
     wrapped.sort((a, b) => {
-      const cmp = comparator(a.el, b.el, orderBy);
+      const cmp = comparator<T>(a.el, b.el, orderBy as keyof T);
       if (cmp !== 0) return order === 'asc' ? cmp : -cmp;
       return a.index - b.index; // stable
     });
@@ -191,7 +214,7 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
   }, [rows, orderBy, order, columns]);
 
   // Handle sort request
-  const handleRequestSort = (property) => {
+  const handleRequestSort = (property: string) => {
     if (orderBy !== property || !orderBy) {
       setOrderBy(property);
       setOrder('asc');
@@ -214,12 +237,12 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
     setConfigureVisibilityDialogOpen(!configureVisibilityDialogOpen);
   };
 
-  const handleConfigureVisibilityChange = (id) => {
-    setColumnVisibility((prev) => {
+  const handleConfigureVisibilityChange = (id: string) => {
+    setColumnVisibility((prev: ColumnVisibility) => {
       const col = columns.find((c) => c.id === id);
       if (col && col.required) return prev;
       const currentlyVisible = visibleMap[id] !== false; // based on derived map
-      const next = { ...prev };
+      const next: ColumnVisibility = { ...prev };
       if (currentlyVisible) {
         next[id] = false; // hide
       } else {
@@ -234,7 +257,7 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
   };
 
   const handleResetVisibility = () => {
-    const next = {};
+    const next: ColumnVisibility = {};
     setColumnVisibility(next);
     try {
       localStorage.setItem(`${name}_column_visibility`, JSON.stringify(next));
@@ -363,7 +386,7 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
                 {columns.map((column) => {
                   if (column.hidden) return null;
                   if (!column.required && visibleMap[column.id] === false) return null;
-                  const value = row[column.id];
+                  const value = row[column.id as keyof T];
                   return (
                     <td
                       key={column.id}
@@ -382,23 +405,12 @@ const MbfTable = memo(function MuiTable({ name, columns, rows, getRowKey, footer
                       {typeof column.render === 'function'
                         ? column.render(value, rowKey, row, column)
                         : (typeof value === 'boolean'
-                            ? <Checkbox
-                                checked={value}
-                                disabled
-                                size="small"
-                                sx={{
-                                  m: 0,
-                                  p: 0,
-                                  color: 'var(--table-text-color)',
-                                  '&.Mui-disabled': {
-                                    color: 'var(--table-text-color)',
-                                    opacity: 0.7,
-                                  },
-                                }}
-                              />
+                            ? <Checkbox checked={value} disabled size="small" sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }} />
                             : (column.format && typeof value === 'number'
                                 ? column.format(value)
-                                : (value ?? '')))
+                                : (value !== undefined && value !== null
+                                    ? String(value)
+                                    : null)))
                       }
                     </td>
                   );

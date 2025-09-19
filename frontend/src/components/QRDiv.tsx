@@ -15,6 +15,7 @@ import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDel
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
+import { UiContext } from './UiProvider';
 import { ApiMatter } from '../../../src/matterbridgeTypes';
 import { isBroadcast, WsBroadcastMessageId, WsMessage } from '../../../src/frontendTypes';
 // import { debug } from '../App';
@@ -57,6 +58,8 @@ function QRDiv({ id }: QRDivProps) {
   // Refs
   const advertiseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const uniqueId = useRef(getUniqueId());
+  // Ui context
+  const { showConfirmCancelDialog } = useContext(UiContext);
   
   // Effect to request server data when id changes
   useEffect(() => {
@@ -206,8 +209,8 @@ function QRDiv({ id }: QRDivProps) {
             <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
               <div style={{ marginLeft: '20px', marginBottom: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '20px', alignItems: 'center' }}>
                 <p className="status-blue" style={{ margin: '0px', padding: '3px 10px', width: '200px', fontSize: '14px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
-                <Tooltip title="Remove the fabric. You will need to remove it also from the controller." arrow>
-                  <IconButton aria-label="remove the fabric" size="small" onClick={() => handleRemoveFabric(fabric.fabricIndex)} sx={{ ...iconBtnSx, padding: '2px' }}>
+                <Tooltip title="Remove the fabric. You will also need to remove it from the controller." arrow>
+                  <IconButton aria-label="remove the fabric" size="small" onClick={() => showConfirmCancelDialog('Remove fabric','Are you sure you want to remove this fabric? You will also need to remove it from the controller.', 'RemoveFabric', () => handleRemoveFabric(fabric.fabricIndex), () => { })} sx={{ ...iconBtnSx, padding: '2px' }}>
                     <Icon path={mdiDeleteForever} size={1} />
                   </IconButton>
                 </Tooltip>
