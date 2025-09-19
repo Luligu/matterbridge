@@ -22,6 +22,7 @@
  * limitations under the License.
  */
 
+import { PlatformConfig } from './matterbridgePlatform.js';
 import { ApiClustersResponse, ApiDevices, ApiMatter, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
 /**
@@ -35,175 +36,170 @@ export interface WsMessage {
 }
 
 /**
- * Interface for WebSocket request api messages.
+ * Base interface for WebSocket request api messages.
  */
-export interface WsMessageApiRequest {
+export interface WsMessageBaseApiRequest {
   id: number;
   src: 'Frontend';
   dst: 'Matterbridge';
   method: string;
   sender?: string;
-  params: Record<string, string | number | boolean | null | undefined>;
+  params: Record<string, string | number | boolean | null | undefined | unknown>;
 }
 
 /**
- * Interface for WebSocket response api messages.
+ * Base interface for WebSocket success response api messages.
  */
-export interface WsMessageApiResponse {
+export interface WsMessageSuccessApiResponse {
   id: number;
   src: 'Matterbridge';
   dst: 'Frontend';
   method: string;
-  error?: string;
-  success?: boolean;
+  success: true;
   response?: unknown;
 }
 
-export interface WsMessagePingRequest extends WsMessageApiRequest {
-  method: 'ping';
-  params: {
-    password: string;
-  };
+/**
+ * Base interface for WebSocket error response api messages.
+ */
+export interface WsMessageErrorApiResponse {
+  id: number;
+  src: 'Matterbridge';
+  dst: 'Frontend';
+  method: string;
+  error: string;
 }
-export interface WsMessagePingResponse extends WsMessageApiResponse {
+
+export interface WsMessagePingRequest extends WsMessageBaseApiRequest {
+  method: 'ping';
+}
+export interface WsMessagePingResponse extends WsMessageSuccessApiResponse {
   method: 'ping';
   response: 'pong';
   success: true;
 }
 
-export interface WsMessageApiLoginRequest extends WsMessageApiRequest {
+export interface WsMessageApiLoginRequest extends WsMessageBaseApiRequest {
   method: '/api/login';
   params: {
     password: string;
   };
 }
-export interface WsMessageApiLoginResponse extends WsMessageApiResponse {
+export interface WsMessageApiLoginResponse extends WsMessageSuccessApiResponse {
   method: '/api/login';
-  success: true;
 }
 
-export interface WsMessageApiInstallRequest extends WsMessageApiRequest {
+export interface WsMessageApiInstallRequest extends WsMessageBaseApiRequest {
   method: '/api/install';
   params: {
     packageName: string;
     restart?: boolean;
   };
 }
-export interface WsMessageApiInstallResponse extends WsMessageApiResponse {
+export interface WsMessageApiInstallResponse extends WsMessageSuccessApiResponse {
   method: '/api/install';
-  success: true;
 }
 
-export interface WsMessageApiUninstallRequest extends WsMessageApiRequest {
+export interface WsMessageApiUninstallRequest extends WsMessageBaseApiRequest {
   method: '/api/uninstall';
   params: {
     packageName: string;
   };
 }
-export interface WsMessageApiUninstallResponse extends WsMessageApiResponse {
+export interface WsMessageApiUninstallResponse extends WsMessageSuccessApiResponse {
   method: '/api/uninstall';
-  success: true;
 }
 
-export interface WsMessageApiAddPluginRequest extends WsMessageApiRequest {
+export interface WsMessageApiAddPluginRequest extends WsMessageBaseApiRequest {
   method: '/api/addplugin';
   params: {
     pluginNameOrPath: string;
   };
 }
-export interface WsMessageApiAddPluginResponse extends WsMessageApiResponse {
+export interface WsMessageApiAddPluginResponse extends WsMessageSuccessApiResponse {
   method: '/api/addplugin';
-  success: true;
 }
 
-export interface WsMessageApiRemovePluginRequest extends WsMessageApiRequest {
+export interface WsMessageApiRemovePluginRequest extends WsMessageBaseApiRequest {
   method: '/api/removeplugin';
   params: {
     pluginName: string;
   };
 }
-export interface WsMessageApiRemovePluginResponse extends WsMessageApiResponse {
+export interface WsMessageApiRemovePluginResponse extends WsMessageSuccessApiResponse {
   method: '/api/removeplugin';
-  success: true;
 }
 
-export interface WsMessageApiEnablePluginRequest extends WsMessageApiRequest {
+export interface WsMessageApiEnablePluginRequest extends WsMessageBaseApiRequest {
   method: '/api/enableplugin';
   params: {
     pluginName: string;
   };
 }
-export interface WsMessageApiEnablePluginResponse extends WsMessageApiResponse {
+export interface WsMessageApiEnablePluginResponse extends WsMessageSuccessApiResponse {
   method: '/api/enableplugin';
-  success: true;
 }
 
-export interface WsMessageApiDisablePluginRequest extends WsMessageApiRequest {
+export interface WsMessageApiDisablePluginRequest extends WsMessageBaseApiRequest {
   method: '/api/disableplugin';
   params: {
     pluginName: string;
   };
 }
-export interface WsMessageApiDisablePluginResponse extends WsMessageApiResponse {
+export interface WsMessageApiDisablePluginResponse extends WsMessageSuccessApiResponse {
   method: '/api/disableplugin';
-  success: true;
 }
 
-export interface WsMessageApiRestartPluginRequest extends WsMessageApiRequest {
+export interface WsMessageApiRestartPluginRequest extends WsMessageBaseApiRequest {
   method: '/api/restartplugin';
   params: {
     pluginName: string;
   };
 }
-export interface WsMessageApiRestartPluginResponse extends WsMessageApiResponse {
+export interface WsMessageApiRestartPluginResponse extends WsMessageSuccessApiResponse {
   method: '/api/restartplugin';
-  success: true;
 }
 
-export interface WsMessageApiSavePluginConfigRequest extends WsMessageApiRequest {
+export interface WsMessageApiSavePluginConfigRequest extends WsMessageBaseApiRequest {
   method: '/api/savepluginconfig';
   params: {
     pluginName: string;
+    formData: PlatformConfig;
   };
 }
-export interface WsMessageApiSavePluginConfigResponse extends WsMessageApiResponse {
+export interface WsMessageApiSavePluginConfigResponse extends WsMessageSuccessApiResponse {
   method: '/api/savepluginconfig';
-  success: true;
 }
 
-export interface WsMessageApiCheckUpdatesRequest extends WsMessageApiRequest {
+export interface WsMessageApiCheckUpdatesRequest extends WsMessageBaseApiRequest {
   method: '/api/checkupdates';
 }
-export interface WsMessageApiCheckUpdatesResponse extends WsMessageApiResponse {
+export interface WsMessageApiCheckUpdatesResponse extends WsMessageSuccessApiResponse {
   method: '/api/checkupdates';
-  success: true;
 }
 
-export interface WsMessageApiShellySysUpdateRequest extends WsMessageApiRequest {
+export interface WsMessageApiShellySysUpdateRequest extends WsMessageBaseApiRequest {
   method: '/api/shellysysupdate';
 }
-export interface WsMessageApiShellySysUpdateResponse extends WsMessageApiResponse {
+export interface WsMessageApiShellySysUpdateResponse extends WsMessageSuccessApiResponse {
   method: '/api/shellysysupdate';
-  success: true;
 }
 
-export interface WsMessageApiShellyMainUpdateRequest extends WsMessageApiRequest {
+export interface WsMessageApiShellyMainUpdateRequest extends WsMessageBaseApiRequest {
   method: '/api/shellymainupdate';
 }
-export interface WsMessageApiShellyMainUpdateResponse extends WsMessageApiResponse {
+export interface WsMessageApiShellyMainUpdateResponse extends WsMessageSuccessApiResponse {
   method: '/api/shellymainupdate';
-  success: true;
 }
 
-export interface WsMessageApiShellyCreateSystemLogRequest extends WsMessageApiRequest {
+export interface WsMessageApiShellyCreateSystemLogRequest extends WsMessageBaseApiRequest {
   method: '/api/shellycreatesystemlog';
 }
-export interface WsMessageApiShellyCreateSystemLogResponse extends WsMessageApiResponse {
+export interface WsMessageApiShellyCreateSystemLogResponse extends WsMessageSuccessApiResponse {
   method: '/api/shellycreatesystemlog';
-  success: true;
 }
 
-export interface WsMessageApiShellyNetConfigRequest extends WsMessageApiRequest {
+export interface WsMessageApiShellyNetConfigRequest extends WsMessageBaseApiRequest {
   method: '/api/shellynetconfig';
   params: {
     type: 'static' | 'dhcp';
@@ -213,84 +209,74 @@ export interface WsMessageApiShellyNetConfigRequest extends WsMessageApiRequest 
     dns: string;
   };
 }
-export interface WsMessageApiShellyNetConfigResponse extends WsMessageApiResponse {
+export interface WsMessageApiShellyNetConfigResponse extends WsMessageSuccessApiResponse {
   method: '/api/shellynetconfig';
-  success: true;
 }
 
-export interface WsMessageApiSoftResetRequest extends WsMessageApiRequest {
+export interface WsMessageApiSoftResetRequest extends WsMessageBaseApiRequest {
   method: '/api/softreset';
 }
-export interface WsMessageApiSoftResetResponse extends WsMessageApiResponse {
+export interface WsMessageApiSoftResetResponse extends WsMessageSuccessApiResponse {
   method: '/api/softreset';
-  success: true;
 }
 
-export interface WsMessageApiHardResetRequest extends WsMessageApiRequest {
+export interface WsMessageApiHardResetRequest extends WsMessageBaseApiRequest {
   method: '/api/hardreset';
 }
-export interface WsMessageApiHardResetResponse extends WsMessageApiResponse {
+export interface WsMessageApiHardResetResponse extends WsMessageSuccessApiResponse {
   method: '/api/hardreset';
-  success: true;
 }
 
-export interface WsMessageApiRebootRequest extends WsMessageApiRequest {
+export interface WsMessageApiRebootRequest extends WsMessageBaseApiRequest {
   method: '/api/reboot';
 }
-export interface WsMessageApiRebootResponse extends WsMessageApiResponse {
+export interface WsMessageApiRebootResponse extends WsMessageSuccessApiResponse {
   method: '/api/reboot';
-  success: true;
 }
 
-export interface WsMessageApiRestartRequest extends WsMessageApiRequest {
+export interface WsMessageApiRestartRequest extends WsMessageBaseApiRequest {
   method: '/api/restart';
 }
-export interface WsMessageApiRestartResponse extends WsMessageApiResponse {
+export interface WsMessageApiRestartResponse extends WsMessageSuccessApiResponse {
   method: '/api/restart';
-  success: true;
 }
 
-export interface WsMessageApiShutdownRequest extends WsMessageApiRequest {
+export interface WsMessageApiShutdownRequest extends WsMessageBaseApiRequest {
   method: '/api/shutdown';
 }
-export interface WsMessageApiShutdownResponse extends WsMessageApiResponse {
+export interface WsMessageApiShutdownResponse extends WsMessageSuccessApiResponse {
   method: '/api/shutdown';
-  success: true;
 }
 
-export interface WsMessageApiCreateBackupRequest extends WsMessageApiRequest {
+export interface WsMessageApiCreateBackupRequest extends WsMessageBaseApiRequest {
   method: '/api/create-backup';
 }
-export interface WsMessageApiCreateBackupResponse extends WsMessageApiResponse {
+export interface WsMessageApiCreateBackupResponse extends WsMessageSuccessApiResponse {
   method: '/api/create-backup';
-  success: true;
 }
 
-export interface WsMessageApiUnregisterRequest extends WsMessageApiRequest {
+export interface WsMessageApiUnregisterRequest extends WsMessageBaseApiRequest {
   method: '/api/unregister';
 }
-export interface WsMessageApiUnregisterResponse extends WsMessageApiResponse {
+export interface WsMessageApiUnregisterResponse extends WsMessageSuccessApiResponse {
   method: '/api/unregister';
-  success: true;
 }
 
-export interface WsMessageApiResetRequest extends WsMessageApiRequest {
+export interface WsMessageApiResetRequest extends WsMessageBaseApiRequest {
   method: '/api/reset';
 }
-export interface WsMessageApiResetResponse extends WsMessageApiResponse {
+export interface WsMessageApiResetResponse extends WsMessageSuccessApiResponse {
   method: '/api/reset';
-  success: true;
 }
 
-export interface WsMessageApiFactoryResetRequest extends WsMessageApiRequest {
+export interface WsMessageApiFactoryResetRequest extends WsMessageBaseApiRequest {
   method: '/api/factoryreset';
 }
-export interface WsMessageApiFactoryResetResponse extends WsMessageApiResponse {
+export interface WsMessageApiFactoryResetResponse extends WsMessageSuccessApiResponse {
   method: '/api/factoryreset';
-  success: true;
 }
 
-export interface WsMessageApiMatterRequest extends WsMessageApiRequest {
+export interface WsMessageApiMatterRequest extends WsMessageBaseApiRequest {
   method: '/api/matter';
   params: {
     id: string;
@@ -301,15 +287,15 @@ export interface WsMessageApiMatterRequest extends WsMessageApiRequest {
     removeFabric?: number;
   };
 }
-export interface WsMessageApiMatterResponse extends WsMessageApiResponse {
+export interface WsMessageApiMatterResponse extends WsMessageSuccessApiResponse {
   method: '/api/matter';
-  success: true;
+  response: ApiMatter;
 }
 
-export interface WsMessageApiSettingsRequest extends WsMessageApiRequest {
+export interface WsMessageApiSettingsRequest extends WsMessageBaseApiRequest {
   method: '/api/settings';
 }
-export interface WsMessageApiSettingsResponse extends WsMessageApiResponse {
+export interface WsMessageApiSettingsResponse extends WsMessageSuccessApiResponse {
   method: '/api/settings';
   response: {
     matterbridgeInformation: MatterbridgeInformation;
@@ -317,60 +303,82 @@ export interface WsMessageApiSettingsResponse extends WsMessageApiResponse {
   };
 }
 
-export interface WsMessageApiPluginsRequest extends WsMessageApiRequest {
+export interface WsMessageApiPluginsRequest extends WsMessageBaseApiRequest {
   method: '/api/plugins';
 }
-export interface WsMessageApiPluginsResponse extends WsMessageApiResponse {
+export interface WsMessageApiPluginsResponse extends WsMessageSuccessApiResponse {
   method: '/api/plugins';
   response: BaseRegisteredPlugin[];
 }
 
-export interface WsMessageApiDevicesRequest extends WsMessageApiRequest {
+export interface WsMessageApiDevicesRequest extends WsMessageBaseApiRequest {
   method: '/api/devices';
   params: {
     pluginName?: string;
   };
 }
-export interface WsMessageApiDevicesResponse extends WsMessageApiResponse {
+export interface WsMessageApiDevicesResponse extends WsMessageSuccessApiResponse {
   method: '/api/devices';
   response: ApiDevices[];
 }
 
-export interface WsMessageApiClustersRequest extends WsMessageApiRequest {
+export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
   method: '/api/clusters';
   params: {
     plugin: string;
     endpoint: number;
   };
 }
-export interface WsMessageApiClustersResponse extends WsMessageApiResponse {
+export interface WsMessageApiClustersResponse extends WsMessageSuccessApiResponse {
   method: '/api/clusters';
   response: ApiClustersResponse;
 }
 
-export interface WsMessageApiSelectDevicesRequest extends WsMessageApiRequest {
+export interface WsMessageApiSelectDevicesRequest extends WsMessageBaseApiRequest {
   method: '/api/select/devices';
   params: {
     plugin: string;
   };
 }
-export interface WsMessageApiSelectDevicesResponse extends WsMessageApiResponse {
+export interface WsMessageApiSelectDevicesResponse extends WsMessageSuccessApiResponse {
   method: '/api/select/devices';
-  response: unknown[];
+  response:
+    | {
+        pluginName: string;
+        serial: string;
+        name: string;
+        configUrl?: string | undefined;
+        icon?: string | undefined;
+        entities?:
+          | {
+              name: string;
+              description: string;
+              icon?: string | undefined;
+            }[]
+          | undefined;
+      }[]
+    | undefined;
 }
 
-export interface WsMessageApiSelectEntitiesRequest extends WsMessageApiRequest {
+export interface WsMessageApiSelectEntitiesRequest extends WsMessageBaseApiRequest {
   method: '/api/select/entities';
   params: {
     plugin: string;
   };
 }
-export interface WsMessageApiSelectEntitiesResponse extends WsMessageApiResponse {
+export interface WsMessageApiSelectEntitiesResponse extends WsMessageSuccessApiResponse {
   method: '/api/select/entities';
-  response: unknown[];
+  response:
+    | {
+        pluginName: string;
+        name: string;
+        description: string;
+        icon?: string | undefined;
+      }[]
+    | undefined;
 }
 
-export interface WsMessageApiActionRequest extends WsMessageApiRequest {
+export interface WsMessageApiActionRequest extends WsMessageBaseApiRequest {
   method: '/api/action';
   params: {
     plugin: string;
@@ -381,26 +389,22 @@ export interface WsMessageApiActionRequest extends WsMessageApiRequest {
     formData?: any;
   };
 }
-export interface WsMessageApiActionResponse extends WsMessageApiResponse {
+export interface WsMessageApiActionResponse extends WsMessageSuccessApiResponse {
   method: '/api/action';
-  success?: boolean;
-  error?: string;
 }
 
-export interface WsMessageApiConfigRequest extends WsMessageApiRequest {
+export interface WsMessageApiConfigRequest extends WsMessageBaseApiRequest {
   method: '/api/config';
   params: {
     name: string;
     value: string | boolean;
   };
 }
-export interface WsMessageApiConfigResponse extends WsMessageApiResponse {
+export interface WsMessageApiConfigResponse extends WsMessageSuccessApiResponse {
   method: '/api/config';
-  success?: boolean;
-  error?: string;
 }
 
-export interface WsMessageApiCommandRequest extends WsMessageApiRequest {
+export interface WsMessageApiCommandRequest extends WsMessageBaseApiRequest {
   method: '/api/command';
   params: {
     command: string;
@@ -409,14 +413,12 @@ export interface WsMessageApiCommandRequest extends WsMessageApiRequest {
     name?: string;
   };
 }
-export interface WsMessageApiCommandResponse extends WsMessageApiResponse {
+export interface WsMessageApiCommandResponse extends WsMessageSuccessApiResponse {
   method: '/api/command';
-  success?: boolean;
-  error?: string;
 }
 
 // Union type for all specific WebSocket API request message types
-type _WsMessageApiRequestUnion =
+export type WsMessageApiRequest =
   | WsMessagePingRequest
   | WsMessageApiLoginRequest
   | WsMessageApiInstallRequest
@@ -453,7 +455,7 @@ type _WsMessageApiRequestUnion =
   | WsMessageApiCommandRequest;
 
 // Union type for all specific WebSocket API response message types
-type _WsMessageApiResponseUnion =
+export type WsMessageApiResponse =
   | WsMessagePingResponse
   | WsMessageApiLoginResponse
   | WsMessageApiInstallResponse
@@ -719,9 +721,9 @@ export function isBroadcast(msg: WsMessage): msg is WsMessageBroadcast {
  *
  * @param {WsMessage} msg - The message to check.
  *
- * @returns {msg is WsMessageApiRequest} True if the message is a WsMessageApiRequest, false otherwise.
+ * @returns {msg is WsMessageBaseApiRequest} True if the message is a WsMessageApiRequest, false otherwise.
  */
-export function isApiRequest(msg: WsMessage): msg is WsMessageApiRequest {
+export function isApiRequest(msg: WsMessage): msg is WsMessageBaseApiRequest {
   return msg.id > WsBroadcastMessageId.ShellyMainUpdate && msg.src === 'Frontend' && msg.dst === 'Matterbridge' && !('success' in msg) && !('error' in msg);
 }
 
@@ -730,8 +732,8 @@ export function isApiRequest(msg: WsMessage): msg is WsMessageApiRequest {
  *
  * @param {WsMessage} msg - The message to check.
  *
- * @returns {msg is WsMessageApiResponse} True if the message is a WsMessageApiResponse, false otherwise.
+ * @returns {msg is WsMessageSuccessApiResponse} True if the message is a WsMessageApiResponse, false otherwise.
  */
-export function isApiResponse(msg: WsMessage): msg is WsMessageApiResponse {
+export function isApiResponse(msg: WsMessage): msg is WsMessageSuccessApiResponse {
   return msg.id > WsBroadcastMessageId.ShellyMainUpdate && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && ('success' in msg || 'error' in msg);
 }
