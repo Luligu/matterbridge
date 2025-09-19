@@ -77,7 +77,7 @@ export interface BaseRegisteredPlugin {
   schemaJson?: PlatformSchema;
   hasWhiteList?: boolean;
   hasBlackList?: boolean;
-  matter?: ApiMatter;
+  matter?: ApiMatterResponse;
 }
 
 // Define an interface for storing the system information
@@ -171,11 +171,12 @@ export interface ApiDevices {
   reachable: boolean;
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
   cluster: string;
-  matter?: ApiMatter;
+  matter?: ApiMatterResponse;
 }
 
-export interface ApiMatter {
+export interface ApiMatterResponse {
   id: string;
+  online: boolean;
   commissioned: boolean;
   advertising: boolean;
   advertiseTime: number;

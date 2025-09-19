@@ -29,7 +29,7 @@ import { mdiSortAscending, mdiSortDescending } from '@mdi/js';
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-import { DevicesIcons } from './DevicesIcons';
+import DevicesIcons from './DevicesIcons';
 import { debug } from '../App';
 
 const devicesColumns = [

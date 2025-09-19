@@ -9,7 +9,7 @@ import { SystemInformation } from '../../../src/matterbridgeTypes';
 import { TruncatedText } from './TruncatedText';
 import { WebSocketContext } from './WebSocketProvider';
 import { debug } from '../App';
-import { WsMessageBroadcast } from '../../../src/frontendTypes';
+import { isBroadcast, WsMessage } from '../../../src/frontendTypes';
 // const debug = true;
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
@@ -50,9 +50,9 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   }
 
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessageBroadcast) => {
+    const handleWebSocketMessage = (msg: WsMessage) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'memory_update' && msg.params && msg.params.totalMemory && msg.params.freeMemory && msg.params.heapTotal && msg.params.heapUsed && msg.params.rss) {
+        if (isBroadcast(msg) && msg.method === 'memory_update' && msg.params && msg.params.totalMemory && msg.params.freeMemory && msg.params.heapTotal && msg.params.heapUsed && msg.params.rss) {
           if(debug) console.log('SystemInfoTable received memory_update', msg);
           if(localSystemInfo.totalMemory !== msg.params?.totalMemory || localSystemInfo.freeMemory !== msg.params?.freeMemory ||
             localSystemInfo.heapTotal !== msg.params?.heapTotal || localSystemInfo.heapUsed !== msg.params?.heapUsed ||
@@ -67,7 +67,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
             }))
           }
         }
-        if (msg.method === 'cpu_update' && msg.params && msg.params.cpuUsage) {
+        if (isBroadcast(msg) && msg.method === 'cpu_update' && msg.params && msg.params.cpuUsage) {
           if(debug) console.log('SystemInfoTable received cpu_update', msg);
           if(localSystemInfo.cpuUsage !== (msg.params?.cpuUsage ? msg.params.cpuUsage.toFixed(2) + ' %' : '')) {
             setLocalSystemInfo((prev) => ({
@@ -76,7 +76,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
             }))
           }
         }
-        if (msg.method === 'uptime_update' && msg.params && msg.params.systemUptime && msg.params.processUptime) {
+        if (isBroadcast(msg) && msg.method === 'uptime_update' && msg.params && msg.params.systemUptime && msg.params.processUptime) {
           if(debug) console.log('SystemInfoTable received uptime_update', msg);
           if(localSystemInfo.systemUptime !== msg.params?.systemUptime || localSystemInfo.processUptime !== msg.params?.processUptime) {
             setLocalSystemInfo((prev) => ({

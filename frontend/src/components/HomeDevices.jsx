@@ -392,7 +392,10 @@ function HomeDevices({storeId, setStoreId}) {
   
   // Mix devices and selectDevices
   useEffect(() => {
-    if(devices.length === 0 && selectDevices.length === 0) return;
+    if(devices.length === 0 && selectDevices.length === 0) { 
+      setMixedDevices([]);
+      return;
+    }
     /*if(debug)*/ console.log(`HomeDevices mixing devices (${devices.length}) and selectDevices (${selectDevices.length})`);
     const mixed = [];
     for (const device of devices) {

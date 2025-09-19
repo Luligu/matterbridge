@@ -44,7 +44,7 @@ import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/mai
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
-import { ApiClusters, ApiClustersResponse, ApiDevices, ApiMatter, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
+import { ApiClusters, ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
@@ -929,9 +929,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * Retrieves the commissioned status, matter pairing codes, fabrics and sessions from a given device in server mode.
    *
    * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint to retrieve the data from.
-   * @returns {ApiMatter | undefined} An ApiDevicesMatter object or undefined if not found.
+   * @returns {ApiMatterResponse | undefined} An ApiDevicesMatter object or undefined if not found.
    */
-  private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiMatter | undefined {
+  private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiMatterResponse | undefined {
     if (device.mode === 'server' && device.serverNode) {
       return this.matterbridge.getServerNodeData(device.serverNode);
     }
@@ -2004,9 +2004,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * - 'plugins'
    * - 'devices'
    * - 'matter' with param 'matter' (QRDiv component)
-   * @param {ApiMatter} params.matter - The matter device that has changed. Required if changed is 'matter'.
+   * @param {ApiMatterResponse} params.matter - The matter device that has changed. Required if changed is 'matter'.
    */
-  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter: ApiMatter }) {
+  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter: ApiMatterResponse }) {
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: WsBroadcastMessageId.RefreshRequired, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: { changed, ...params } });

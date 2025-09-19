@@ -200,6 +200,7 @@ describe('Matterbridge frontend', () => {
       mode: 'server',
       serverNode: {
         id: 'storeId',
+        lifecycle: { isOnline: true },
         state: {
           basicInformation: { serialNumber: '12345' },
           commissioning: { commissioned: true, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: '123' }, fabrics: {} },
@@ -216,6 +217,7 @@ describe('Matterbridge frontend', () => {
       fabricInformations: [],
       id: 'storeId',
       manualPairingCode: '123',
+      online: true,
       qrPairingCode: 'QR',
       sessionInformations: [],
       serialNumber: '12345',

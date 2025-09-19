@@ -23,9 +23,14 @@
  */
 
 import { PlatformConfig } from './matterbridgePlatform.js';
-import { ApiClustersResponse, ApiDevices, ApiMatter, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
+import { ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
 export type RefreshRequiredChanged = 'settings' | 'plugins' | 'devices' | 'matter';
+
+export interface ApiSettingResponse {
+  matterbridgeInformation: MatterbridgeInformation;
+  systemInformation: SystemInformation;
+}
 
 /**
  * Base interface for WebSocket messages.
@@ -291,7 +296,7 @@ export interface WsMessageApiMatterRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiMatterResponse extends WsMessageSuccessApiResponse {
   method: '/api/matter';
-  response: ApiMatter;
+  response: ApiMatterResponse;
 }
 
 export interface WsMessageApiSettingsRequest extends WsMessageBaseApiRequest {
@@ -299,10 +304,7 @@ export interface WsMessageApiSettingsRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiSettingsResponse extends WsMessageSuccessApiResponse {
   method: '/api/settings';
-  response: {
-    matterbridgeInformation: MatterbridgeInformation;
-    systemInformation: SystemInformation;
-  };
+  response: ApiSettingResponse;
 }
 
 export interface WsMessageApiPluginsRequest extends WsMessageBaseApiRequest {
@@ -551,7 +553,7 @@ export interface WsMessageRefreshRequired {
   method: 'refresh_required';
   params: {
     changed: RefreshRequiredChanged;
-    matter?: ApiMatter;
+    matter?: ApiMatterResponse;
   };
 }
 

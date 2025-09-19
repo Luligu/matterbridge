@@ -20,13 +20,12 @@ import StarIcon from '@mui/icons-material/Star';
 import Favorite from '@mui/icons-material/Favorite';
 
 // Backend
-import { isApiResponse, isBroadcast, WsBroadcastMessageId, WsMessage } from '../../../src/frontendTypes';
+import { ApiSettingResponse, isApiResponse, isBroadcast, WsBroadcastMessageId, WsMessage } from '../../../src/frontendTypes';
 
 // Frontend
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
 import { debug, toggleDebug } from '../App';
-import { MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 // const debug = true;
 
 function Header() {
@@ -38,7 +37,7 @@ function Header() {
   const [fixedRestart, setFixedRestart] = useState(false);
   const [update, setUpdate] = useState(false);
   const [updateDev, setUpdateDev] = useState(false);
-  const [settings, setSettings] = useState<{ matterbridgeInformation: MatterbridgeInformation; systemInformation: SystemInformation; } | null>(null);
+  const [settings, setSettings] = useState<ApiSettingResponse | null>(null);
   // Refs
   const uniqueId = useRef(getUniqueId());
   // Menu states

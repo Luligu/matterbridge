@@ -16,7 +16,7 @@ import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDel
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
-import { ApiMatter } from '../../../src/matterbridgeTypes';
+import { ApiMatterResponse } from '../../../src/matterbridgeTypes';
 import { isBroadcast, WsBroadcastMessageId, WsMessage } from '../../../src/frontendTypes';
 import { debug } from '../App';
 // const debug = true; // Debug flag for this component
@@ -54,7 +54,7 @@ function QRDiv({ id }: QRDivProps) {
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // States
   const [storeId, setStoreId] = useState<string | null>(null);
-  const [matter, setMatter] = useState<ApiMatter | null>(null);
+  const [matter, setMatter] = useState<ApiMatterResponse | null>(null);
   // Refs
   const advertiseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const uniqueId = useRef(getUniqueId());

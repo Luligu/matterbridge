@@ -15,8 +15,8 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import MbfTable from './MbfTable';
-import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
-import { ApiClustersResponse, ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
+import { ApiSettingResponse, isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { ApiClustersResponse, ApiDevices, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
 // import { debug } from '../App';
 const debug = true;
 
@@ -27,7 +27,7 @@ function Test() {
   const { showSnackbarMessage, closeSnackbarMessage } = useContext(UiContext);
 
   // Local states
-  const [_settings, setSettings] = useState<{ matterbridgeInformation: MatterbridgeInformation; systemInformation: SystemInformation; } | null>(null);
+  const [_settings, setSettings] = useState<ApiSettingResponse | null>(null);
   const [_plugins, setPlugins] = useState<BaseRegisteredPlugin[] | null>(null);
   const [_devices, setDevices] = useState<ApiDevices[] | null>(null);
   const [_clusters, setClusters] = useState<ApiClustersResponse | null>(null);

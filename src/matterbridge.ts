@@ -60,7 +60,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/brid
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
 import { withTimeout, waiter, wait } from './utils/wait.js';
-import { ApiMatter, dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
+import { ApiMatterResponse, dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -2325,10 +2325,11 @@ const commissioningController = new CommissioningController({
    * @param {ServerNode} [serverNode] - The server node to start.
    * @returns {ApiMatter} The sanitized data of the server node.
    */
-  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiMatter {
+  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiMatterResponse {
     const advertiseTime = this.advertisingNodes.get(serverNode.id) || 0;
     return {
       id: serverNode.id,
+      online: serverNode.lifecycle.isOnline,
       commissioned: serverNode.state.commissioning.commissioned,
       advertising: advertiseTime > Date.now() - 15 * 60 * 1000,
       advertiseTime,

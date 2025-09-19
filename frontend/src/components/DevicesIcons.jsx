@@ -2,14 +2,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
  
 // React
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import { useContext, useEffect, useState, useRef, memo, cloneElement } from 'react';
 
 // @mui/material
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
@@ -75,7 +70,7 @@ function Render({ icon, iconColor, cluster, value, unit, prefix }) {
   prefix = prefix ?? false;
   return (
     <Box key={`${cluster.clusterId}-${cluster.attributeId}-box`} sx={valueBoxSx}>
-      {icon && React.cloneElement(icon, { key: `${cluster.clusterId}-${cluster.attributeId}-icon`, sx: {...iconSx, color: iconColor ?? 'var(--primary-color)'} })}
+      {icon && cloneElement(icon, { key: `${cluster.clusterId}-${cluster.attributeId}-icon`, sx: {...iconSx, color: iconColor ?? 'var(--primary-color)'} })}
       <Box key={`${cluster.clusterId}-${cluster.attributeId}-valueunitbox`} sx={{...valueBoxSx, gap: '4px', alignContent: 'center', alignItems: 'end', justifyContent: 'center'}}>
         {unit && prefix===true &&
           <Typography key={`${cluster.clusterId}-${cluster.attributeId}-unit`} sx={unitSx}>
@@ -309,18 +304,12 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
       </div>
   );
 }
-/*
-      {deviceType===0x0076 && clusters.filter(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'smokeState').map(cluster => (
-        <Render icon={<Icon path={mdiSmokeDetectorVariant} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===0 ?'No smoke':'Smoke'}/>
-      ))}
 
-*/
-export function DevicesIcons({filter}) {
+function DevicesIcons({filter}) {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
   // Local states
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [_settings, setSettings] = useState({});
   const [_plugins, setPlugins] = useState([]);
   const [devices, setDevices] = useState([]);
@@ -332,10 +321,6 @@ export function DevicesIcons({filter}) {
   // Refs
   const uniqueId = useRef(getUniqueId());
   
-  const handleDialogToggle = () => {
-    setDialogOpen(!dialogOpen);
-  };
-
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
@@ -420,43 +405,22 @@ export function DevicesIcons({filter}) {
   
   if(debug) console.log('DevicesIcons rendering...');
   return (
-    <>
-      <Dialog open={dialogOpen} onClose={handleDialogToggle}
-        PaperProps={{
-            style: {
-                color: 'var(--div-text-color)',
-                backgroundColor: 'var(--div-bg-color)',
-                border: "2px solid var(--primary-color)",
-                borderRadius: 'var(--div-border-radius)',
-                boxShadow: '2px 2px 5px var(--div-shadow-color)'
-            }
-        }}>
-        <DialogTitle>Configure accessories</DialogTitle>
-        <DialogContent>
-
-        </DialogContent>
-        <DialogActions>
-            <Button onClick={handleDialogToggle}>Close</Button>
-        </DialogActions>
-      </Dialog>
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', paddingBottom: '5px', gap: '20px', width: '100%', overflow: 'auto' }}>
-        {/* <Typography>Loading... {devices.length} devices, {Object.keys(endpoints).length} endpoints, {Object.keys(deviceTypes).length} deviceTypes</Typography> */}
-        {filteredDevices.map((device) => (
-          endpoints[device.serial] && endpoints[device.serial].map((endpoint) => (
-            endpoint.deviceTypes.map((deviceType) => (
-              <Device
-                device={device}
-                endpoint={endpoint.endpoint}
-                id={endpoint.id}
-                deviceType={deviceType}
-                clusters={clusters[device.serial].filter((c) => c.endpoint === endpoint.endpoint)} />
-            ))
+    <div style={{ display: 'flex', flexWrap: 'wrap', paddingBottom: '5px', gap: '20px', width: '100%', overflow: 'auto' }}>
+      {/* <Typography>Loading... {devices.length} devices, {Object.keys(endpoints).length} endpoints, {Object.keys(deviceTypes).length} deviceTypes</Typography> */}
+      {filteredDevices.map((device) => (
+        endpoints[device.serial] && endpoints[device.serial].map((endpoint) => (
+          endpoint.deviceTypes.map((deviceType) => (
+            <Device
+              device={device}
+              endpoint={endpoint.endpoint}
+              id={endpoint.id}
+              deviceType={deviceType}
+              clusters={clusters[device.serial].filter((c) => c.endpoint === endpoint.endpoint)} />
           ))
-        ))}
-      </div>
-    </>  
-
+        ))
+      ))}
+    </div>
   );
 }
 
+export default memo(DevicesIcons);

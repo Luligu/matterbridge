@@ -11,8 +11,6 @@ export function Connecting() {
   // Contexts
   const { retry } = useContext(WebSocketContext);
 
-
-
   const handleRefresh = () => {
     window.location.reload(); // Refresh the page
   };
