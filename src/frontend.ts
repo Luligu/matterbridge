@@ -1568,13 +1568,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (data.params.startCommission) {
           await serverNode.env.get(DeviceCommissioner)?.allowBasicCommissioning();
           this.matterbridge.advertisingNodes.set(serverNode.id, Date.now());
-          this.log.debug(`*Commissioning has been sent for node ${data.params.id}`);
-          this.wssSendRefreshRequired('matter', { matter: { ...matter, advertising: true } });
+          this.log.debug(`*Allow commissioning has been sent for node ${data.params.id}`);
+          this.wssSendRefreshRequired('matter', { matter: { ...matter, advertiseTime: Date.now(), advertising: true } });
         }
         if (data.params.stopCommission) {
           await serverNode.env.get(DeviceCommissioner)?.endCommissioning();
           this.matterbridge.advertisingNodes.delete(serverNode.id);
-          this.log.debug(`*Stop commissioning has been sent for node ${data.params.id}`);
+          this.log.debug(`*End commissioning has been sent for node ${data.params.id}`);
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertising: false } });
         }
         if (data.params.advertise) {

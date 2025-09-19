@@ -15,8 +15,10 @@ import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDel
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-import { debug } from '../App';
-// const debug = true; // Debug flag for this component
+import { ApiMatter } from '../../../src/matterbridgeTypes';
+import { isBroadcast, WsBroadcastMessageId, WsMessage } from '../../../src/frontendTypes';
+// import { debug } from '../App';
+const debug = true; // Debug flag for this component
 
 // Reusable hover styling for all action icon buttons (mdi icons)
 const iconBtnSx = {
@@ -31,8 +33,8 @@ const iconBtnSx = {
   '&:focus-visible': { outline: '2px solid var(--primary-color)', outlineOffset: '2px' }
 };
 
-// Format manual pairing code as 4-3-4 (0000-000-0000); non-digit characters are stripped.
-const formatManualCode = (code) => {
+// Format manual pairing code as 0000-000-0000; non-digit characters are stripped.
+const formatManualCode = (code: string) => {
   if (!code) return '';
   const digits = code.toString().replace(/[^0-9]/g, '');
   if (digits.length < 5) return digits; // too short to format fully
@@ -42,14 +44,19 @@ const formatManualCode = (code) => {
   return [part1, part2, part3].filter(Boolean).join('-');
 };
 
-function QRDiv({ id }) {
+interface QRDivProps {
+  id: string; // storeId
+}
+
+function QRDiv({ id }: QRDivProps) {
   // WebSocket context
-  const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
+  const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // States
-  const [storeId, setStoreId] = useState(null);
-  const [matter, setMatter] = useState(null);
+  const [storeId, setStoreId] = useState<string | null>(null);
+  const [matter, setMatter] = useState<ApiMatter | null>(null);
   // Refs
-  const advertiseTimeoutRef = useRef(null);
+  const advertiseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const uniqueId = useRef(getUniqueId());
   
   // Effect to request server data when id changes
   useEffect(() => {
@@ -57,29 +64,29 @@ function QRDiv({ id }) {
     if(id) {
       if (debug) console.log(`QRDiv sending data request for storeId "${id}"`);
       setStoreId(id);
-      sendMessage({ method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: id, server: true } });
+      sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: id, server: true } });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]); // run on mount/unmount and id change
 
   // WebSocket message handler effect
   useEffect(() => {
-    const handleWebSocketMessage = (msg) => {
+    const handleWebSocketMessage = (msg: WsMessage) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'refresh_required' && msg.params.changed === 'matter' && msg.params.matter) {
+        if (isBroadcast(msg) && msg.id === WsBroadcastMessageId.RefreshRequired && msg.params.changed === 'matter' && msg.params.matter) {
           if(debug) console.log(`QRDiv received refresh_required: changed=${msg.params.changed} for storeId "${msg.params.matter.id}":`, msg.params.matter);
           if(storeId === msg.params.matter.id) {
             if(debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.params.matter.id}":`, msg.params.matter);
-            clearTimeout(advertiseTimeoutRef.current);
+            if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
             if (msg.params.matter.advertising && msg.params.matter.advertiseTime && msg.params.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.params.matter.advertising = false; // already expired
             setMatter(msg.params.matter);
             if(msg.params.matter.advertising) {
               if(debug) console.log(`QRDiv setting matter advertise timeout for storeId "${msg.params.matter.id}":`, msg.params.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
               advertiseTimeoutRef.current = setTimeout(() => {
                 // Clear advertising state after 15 minutes
-                clearTimeout(advertiseTimeoutRef.current);
-                if(debug) console.log(`QRDiv clearing advertising state for storeId "${msg.params.matter.id}" after 15 minutes`);
-                setMatter((prev) => ({ ...prev, advertising: false }));
+                if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+                if(debug) console.log(`QRDiv clearing advertising state for storeId "${storeId}" after 15 minutes`);
+                setMatter((prev) => prev ? { ...prev, advertising: false } : prev);
               }, msg.params.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
             }
           }
@@ -92,34 +99,34 @@ function QRDiv({ id }) {
 
     return () => {
       removeListener(handleWebSocketMessage);
-      clearTimeout(advertiseTimeoutRef.current);
+      if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
       if(debug) console.log('QRDiv webSocket effect unmounted');
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]); // run on mount/unmount and storeId change
   
   const handleStartCommissioningClick = () => {
-    if (debug) console.log(`QRDiv sent matter startCommission for node "${matter.id}"`);
+    if (debug) console.log(`QRDiv sent matter startCommission for node "${matter?.id}"`);
     if (!matter) return;
-    sendMessage({ method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, startCommission: true } });
+    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, startCommission: true } });
   };
 
   const handleStopCommissioningClick = () => {
-    if (debug) console.log(`QRDiv sent matter stopCommission for node "${matter.id}"`);
+    if (debug) console.log(`QRDiv sent matter stopCommission for node "${matter?.id}"`);
     if (!matter) return;
-    sendMessage({ method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, stopCommission: true } });
+    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, stopCommission: true } });
   };
 
   const handleAdvertiseClick = () => {
-    if (debug) console.log(`QRDiv sent matter advertise for node "${matter.id}"`);
+    if (debug) console.log(`QRDiv sent matter advertise for node "${matter?.id}"`);
     if (!matter) return;
-    sendMessage({ method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, advertise: true } });
+    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, advertise: true } });
   };
 
-  const handleRemoveFabric = (fabricIndex) => {
-    if (debug) console.log(`QRDiv sent matter removeFabric for node "${matter.id}" and fabricIndex ${fabricIndex}`);
+  const handleRemoveFabric = (fabricIndex: number) => {
+    if (debug) console.log(`QRDiv sent matter removeFabric for node "${matter?.id}" and fabricIndex ${fabricIndex}`);
     if (!matter) return;
-    sendMessage({ method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, removeFabric: fabricIndex } });
+    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, removeFabric: fabricIndex } });
   };
   
   const handleCopyManualCode = async () => {
@@ -209,11 +216,11 @@ function QRDiv({ id }) {
               {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>
                 Sessions: {matter.sessionInformations ? 
-                  matter.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex && session.isPeerActive === true).length :
+                  matter.sessionInformations.filter(session => session.fabric?.fabricIndex === fabric.fabricIndex && session.isPeerActive === true).length :
                   '0'}
                 {' '}
                 subscriptions: {matter.sessionInformations ? 
-                  matter.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex && session.isPeerActive === true && session.numberOfActiveSubscriptions > 0).length :
+                  matter.sessionInformations.filter(session => session.fabric?.fabricIndex === fabric.fabricIndex && session.isPeerActive === true && session.numberOfActiveSubscriptions > 0).length :
                   '0'}
               </p>
             </div>

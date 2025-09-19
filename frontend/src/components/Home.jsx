@@ -17,7 +17,6 @@ import SystemInfoTable from './SystemInfoTable';
 import QRDiv from './QRDiv';
 import { InstallAddPlugins } from './InstallAddPlugins';
 import { HomePlugins } from './HomePlugins';
- 
 import { HomeDevices } from './HomeDevices';
 import { debug } from '../App';
 // const debug = true;

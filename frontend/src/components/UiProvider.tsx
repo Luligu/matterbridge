@@ -32,8 +32,7 @@ export interface UiContextType {
   ) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const UiContext = createContext<UiContextType>(null as any);
+export const UiContext = createContext<UiContextType>(null as unknown as UiContextType);
 
 interface UiProviderProps {
   children: ReactNode;

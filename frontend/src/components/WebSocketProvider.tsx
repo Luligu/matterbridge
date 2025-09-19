@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext, ReactNode } from 'react';
 
 // Backend
-import { WsBroadcastMessageId, WsMessageBroadcast, WsMessageApiRequest, WsMessageApiResponse } from '../../../src/frontendTypes';
+import { WsBroadcastMessageId, WsMessageBroadcast, WsMessageApiRequest, WsMessageApiResponse, WsMessage, WsMessageErrorApiResponse } from '../../../src/frontendTypes';
 
 // Frontend modules
 import { UiContext } from './UiProvider';
@@ -34,18 +34,15 @@ export interface WebSocketContextType {
   online: boolean;
   retry: number;
   getUniqueId: () => number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  addListener: (listener: (msg: any) => void) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  removeListener: (listener: (msg: any) => void) => void;
+  addListener: (listener: (msg: WsMessage) => void) => void;
+  removeListener: (listener: (msg: WsMessage) => void) => void;
   sendMessage: (message: WsMessageApiRequest) => void;
   logMessage: (badge: string, message: string) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const WebSocketMessagesContext = createContext<WebSocketMessagesContextType>(null as any);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const WebSocketContext = createContext<WebSocketContextType>(null as any);
+export const WebSocketMessagesContext = createContext<WebSocketMessagesContextType>(null as unknown as WebSocketMessagesContextType);
+ 
+export const WebSocketContext = createContext<WebSocketContextType>(null as unknown as WebSocketContextType);
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   // States
@@ -148,10 +145,10 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       try {
         const msg: WsMessageBroadcast = JSON.parse(event.data);
         if (msg.id === undefined) return; // Ignore messages without an ID
-        if ((msg as WsMessageApiResponse).error) {
+        if ((msg as WsMessageErrorApiResponse).error) {
           if (debug) console.error(`WebSocket error message:`, msg);
         }
-        if (msg.id === uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && (msg as WsMessageApiResponse).response === 'pong') {
+        if (msg.id === uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && (msg as unknown as WsMessageApiResponse).response === 'pong') {
           if (debug) console.log(`WebSocket pong response message:`, msg, 'listeners:', listenersRef.current.length);
           if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
           listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
