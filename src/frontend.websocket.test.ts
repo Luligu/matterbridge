@@ -647,7 +647,7 @@ describe('Matterbridge frontend', () => {
     const pluginNameOrPath = path.join('.', 'src', 'mock', 'plugin4');
     const data = await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath } });
     expect(data.error).toBeUndefined();
-    expect(data.response).toBe('matterbridge-mock4');
+    expect(data.success).toBe(true);
     await waiter('matterbridge-mock4 loaded', () => {
       return matterbridge.plugins.get('matterbridge-mock4')?.loaded === true;
     });
@@ -922,7 +922,8 @@ describe('Matterbridge frontend', () => {
     expect(await matterbridge.nodeContext?.get('matterport')).toBe(5550);
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterport', value: '5000' } }));
     data = await waitMessageId(WS_ID);
-    expect(data.success).toBe(true);
+    expect(data.success).toBeUndefined();
+    expect(data.error).toBe('Invalid value: reset matter commissioning port to default 5540');
     expect(await matterbridge.nodeContext?.get('matterport')).toBe(5540);
 
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterdiscriminator', value: '3040' } }));
@@ -932,7 +933,8 @@ describe('Matterbridge frontend', () => {
 
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterdiscriminator', value: '900' } }));
     data = await waitMessageId(WS_ID);
-    expect(data.success).toBe(false);
+    expect(data.success).toBeUndefined();
+    expect(data.error).toBe('Invalid value: reset matter commissioning discriminator to default undefined');
     expect(await matterbridge.nodeContext?.get('matterdiscriminator')).toBe(undefined);
 
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterpasscode', value: '20202026' } }));
@@ -942,7 +944,8 @@ describe('Matterbridge frontend', () => {
 
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterpasscode', value: '2000' } }));
     data = await waitMessageId(WS_ID);
-    expect(data.success).toBe(false);
+    expect(data.success).toBeUndefined();
+    expect(data.error).toBe('Invalid value: reset matter commissioning passcode to default undefined');
     expect(await matterbridge.nodeContext?.get('matterpasscode')).toBe(undefined);
 
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setvirtualmode', value: 'disabled' } }));

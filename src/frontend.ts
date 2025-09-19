@@ -1803,7 +1803,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.matterPort = 5540;
               await this.matterbridge.nodeContext?.set<number>('matterport', 5540);
               this.wssSendRestartRequired();
-              sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Reset matter commissioning port' });
+              sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning port to default 5540' });
             }
             break;
           case 'setmatterdiscriminator':
@@ -1820,7 +1820,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.matterDiscriminator = undefined;
               await this.matterbridge.nodeContext?.remove('matterdiscriminator');
               this.wssSendRestartRequired();
-              sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Reset matter commissioning discriminator' });
+              sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning discriminator to default undefined' });
             }
             break;
           case 'setmatterpasscode':
@@ -1837,7 +1837,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.matterPasscode = undefined;
               await this.matterbridge.nodeContext?.remove('matterpasscode');
               this.wssSendRestartRequired();
-              sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Reset matter commissioning passcode' });
+              sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning passcode to default undefined' });
             }
             break;
           case 'setvirtualmode':
