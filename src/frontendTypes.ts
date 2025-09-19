@@ -25,6 +25,8 @@
 import { PlatformConfig } from './matterbridgePlatform.js';
 import { ApiClustersResponse, ApiDevices, ApiMatter, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
+export type RefreshRequiredChanged = 'matterbridgeLatestVersion' | 'matterbridgeDevVersion' | 'online' | 'offline' | 'reachability' | 'settings' | 'plugins' | 'pluginsRestart' | 'devices' | 'fabrics' | 'sessions' | 'matter';
+
 /**
  * Base interface for WebSocket messages.
  */
@@ -548,7 +550,7 @@ export interface WsMessageRefreshRequired {
   src: string;
   method: 'refresh_required';
   params: {
-    changed: string | null;
+    changed: RefreshRequiredChanged | null;
     matter?: ApiMatter;
   };
 }

@@ -127,14 +127,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     matterbridgeVersion: '',
     matterbridgeLatestVersion: '',
     matterbridgeDevVersion: '',
-    matterbridgeSerialNumber: '',
-    matterbridgeQrPairingCode: undefined,
-    matterbridgeManualPairingCode: undefined,
-    matterbridgeFabricInformations: [],
-    matterbridgeSessionInformations: [],
-    matterbridgePaired: false,
-    matterbridgeAdvertise: false,
-    matterbridgeEndAdvertise: false,
     bridgeMode: '',
     restartMode: '',
     virtualMode: 'outlet',
@@ -147,9 +139,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     fileLogger: false,
     matterLoggerLevel: MatterLogLevel.INFO,
     matterFileLogger: false,
-    mattermdnsinterface: undefined,
-    matteripv4address: undefined,
-    matteripv6address: undefined,
+    matterMdnsInterface: undefined,
+    matterIpv4Address: undefined,
+    matterIpv6Address: undefined,
     matterPort: 5540,
     matterDiscriminator: undefined,
     matterPasscode: undefined,
@@ -915,7 +907,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         const storageContext = storageManager?.createContext('persist');
         if (this.aggregatorSerialNumber) await storageContext?.set('serialNumber', this.aggregatorSerialNumber);
         if (this.aggregatorUniqueId) await storageContext?.set('uniqueId', this.aggregatorUniqueId);
-        this.matterbridgeInformation.matterbridgeSerialNumber = this.aggregatorSerialNumber;
       }
     } catch (error) {
       this.log.fatal(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
@@ -2055,7 +2046,6 @@ const commissioningController = new CommissioningController({
       this.aggregatorSerialNumber,
       this.aggregatorUniqueId,
     );
-    this.matterbridgeInformation.matterbridgeSerialNumber = await this.matterbridgeContext.get('serialNumber', '');
 
     this.log.info('Matter node storage started');
 
@@ -2268,7 +2258,6 @@ const commissioningController = new CommissioningController({
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
     serverNode.lifecycle.offline.on(() => {
       this.log.notice(`Server node for ${storeId} is offline`);
-      this.matterbridgeInformation.matterbridgeEndAdvertise = true; // Set the end advertise flag to true, so the frontend won't show the QR code anymore
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
@@ -2287,7 +2276,6 @@ const commissioningController = new CommissioningController({
           this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
           clearTimeout(this.endAdvertiseTimeout);
           this.endAdvertiseTimeout = undefined;
-          this.matterbridgeInformation.matterbridgeEndAdvertise = true; // Set the end advertise flag to true, so the frontend won't show the QR code anymore
           action = 'added';
           break;
         case FabricAction.Removed:
@@ -2346,7 +2334,6 @@ const commissioningController = new CommissioningController({
     this.endAdvertiseTimeout = setTimeout(
       () => {
         if (matterServerNode.lifecycle.isCommissioned) return;
-        this.matterbridgeInformation.matterbridgeEndAdvertise = true;
         this.frontend.wssSendRefreshRequired('plugins');
         this.frontend.wssSendRefreshRequired('settings');
         this.frontend.wssSendRefreshRequired('fabrics');

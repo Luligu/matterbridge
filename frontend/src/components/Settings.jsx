@@ -281,9 +281,9 @@ function MatterSettings({ matterbridgeInfo }) {
     if (matterbridgeInfo.bridgeMode === undefined) return;
     setSelectedMjLoggerLevel(['Debug', 'Info', 'Notice', 'Warn', 'Error', 'Fatal'][matterbridgeInfo.matterLoggerLevel]);
     setLogOnFileMj(matterbridgeInfo.matterFileLogger);
-    setmdnsInterface(matterbridgeInfo.mattermdnsinterface);
-    setIpv4Address(matterbridgeInfo.matteripv4address);
-    setIpv6Address(matterbridgeInfo.matteripv6address);
+    setmdnsInterface(matterbridgeInfo.matterMdnsInterface);
+    setIpv4Address(matterbridgeInfo.matterIpv4Address);
+    setIpv6Address(matterbridgeInfo.matterIpv6Address);
     setMatterPort(matterbridgeInfo.matterPort);
     setMatterDiscriminator(matterbridgeInfo.matterDiscriminator);
     setMatterPasscode(matterbridgeInfo.matterPasscode);

@@ -50,7 +50,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
-import { WsBroadcastMessageId, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
+import { RefreshRequiredChanged, WsBroadcastMessageId, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
 
 /**
  * Represents the Matterbridge events.
@@ -871,22 +871,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
     this.matterbridge.matterbridgeInformation.loggerLevel = this.matterbridge.log.logLevel;
     this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
-    this.matterbridge.matterbridgeInformation.mattermdnsinterface = this.matterbridge.mdnsInterface;
-    this.matterbridge.matterbridgeInformation.matteripv4address = this.matterbridge.ipv4address;
-    this.matterbridge.matterbridgeInformation.matteripv6address = this.matterbridge.ipv6address;
+    this.matterbridge.matterbridgeInformation.matterMdnsInterface = this.matterbridge.mdnsInterface;
+    this.matterbridge.matterbridgeInformation.matterIpv4Address = this.matterbridge.ipv4address;
+    this.matterbridge.matterbridgeInformation.matterIpv6Address = this.matterbridge.ipv6address;
     this.matterbridge.matterbridgeInformation.matterPort = (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
     this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
     this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
 
-    // Update the matterbridge information in bridge mode
-    if (this.matterbridge.bridgeMode === 'bridge' && this.matterbridge.serverNode && !this.matterbridge.hasCleanupStarted) {
-      this.matterbridge.matterbridgeInformation.matter = this.matterbridge.getServerNodeData(this.matterbridge.serverNode);
-      this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.serverNode.state.commissioning.commissioned;
-      this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : this.matterbridge.serverNode.state.commissioning.pairingCodes.qrPairingCode;
-      this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeInformation.matterbridgeEndAdvertise ? undefined : this.matterbridge.serverNode.state.commissioning.pairingCodes.manualPairingCode;
-      this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.sanitizeFabricInformations(Object.values(this.matterbridge.serverNode.state.commissioning.fabrics));
-      this.matterbridge.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridge.sanitizeSessionInformation(Object.values(this.matterbridge.serverNode.state.sessions.sessions));
-    }
     return { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: this.matterbridge.matterbridgeInformation };
   }
 
@@ -1763,7 +1754,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             if (isValidString(data.params.value)) {
               this.log.debug(`Matter.js mdns interface: ${data.params.value === '' ? 'all interfaces' : data.params.value}`);
               this.matterbridge.mdnsInterface = data.params.value === '' ? undefined : data.params.value;
-              this.matterbridge.matterbridgeInformation.mattermdnsinterface = this.matterbridge.mdnsInterface;
+              this.matterbridge.matterbridgeInformation.matterMdnsInterface = this.matterbridge.mdnsInterface;
               await this.matterbridge.nodeContext?.set('mattermdnsinterface', data.params.value);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
@@ -1773,7 +1764,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             if (isValidString(data.params.value)) {
               this.log.debug(`Matter.js ipv4 address: ${data.params.value === '' ? 'all ipv4 addresses' : data.params.value}`);
               this.matterbridge.ipv4address = data.params.value === '' ? undefined : data.params.value;
-              this.matterbridge.matterbridgeInformation.matteripv4address = this.matterbridge.ipv4address;
+              this.matterbridge.matterbridgeInformation.matterIpv4Address = this.matterbridge.ipv4address;
               await this.matterbridge.nodeContext?.set('matteripv4address', data.params.value);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
@@ -1783,7 +1774,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             if (isValidString(data.params.value)) {
               this.log.debug(`Matter.js ipv6 address: ${data.params.value === '' ? 'all ipv6 addresses' : data.params.value}`);
               this.matterbridge.ipv6address = data.params.value === '' ? undefined : data.params.value;
-              this.matterbridge.matterbridgeInformation.matteripv6address = this.matterbridge.ipv6address;
+              this.matterbridge.matterbridgeInformation.matterIpv6Address = this.matterbridge.ipv6address;
               await this.matterbridge.nodeContext?.set('matteripv6address', data.params.value);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
@@ -2016,7 +2007,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * possible values for changed:
    * - 'matterbridgeLatestVersion'
    * - 'matterbridgeDevVersion'
-   * - 'matterbridgeAdvertise'
    * - 'online'
    * - 'offline'
    * - 'reachability'
@@ -2029,10 +2019,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * - 'matter' with param 'matter' (QRDivDevice)
    * @param {ApiMatter} params.matter - The matter device that has changed. Required if changed is 'matter'.
    */
-  wssSendRefreshRequired(
-    changed: 'matterbridgeLatestVersion' | 'matterbridgeDevVersion' | 'matterbridgeAdvertise' | 'online' | 'offline' | 'reachability' | 'settings' | 'plugins' | 'pluginsRestart' | 'devices' | 'fabrics' | 'sessions' | 'matter' | null = null,
-    params?: { matter: ApiMatter },
-  ) {
+  wssSendRefreshRequired(changed: RefreshRequiredChanged | null = null, params?: { matter: ApiMatter }) {
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: WsBroadcastMessageId.RefreshRequired, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: { changed, ...params } });

@@ -114,15 +114,6 @@ export interface MatterbridgeInformation {
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
   matterbridgeDevVersion: string;
-  matterbridgeSerialNumber: string;
-  matter?: ApiMatter;
-  matterbridgeAdvertise: boolean | undefined;
-  matterbridgeEndAdvertise: boolean;
-  matterbridgePaired: boolean | undefined;
-  matterbridgeQrPairingCode: string | undefined;
-  matterbridgeManualPairingCode: string | undefined;
-  matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
-  matterbridgeSessionInformations: SanitizedSession[] | undefined;
   frontendVersion?: string;
   bridgeMode: string;
   restartMode: string;
@@ -136,9 +127,9 @@ export interface MatterbridgeInformation {
   fileLogger: boolean;
   matterLoggerLevel: number;
   matterFileLogger: boolean;
-  mattermdnsinterface: string | undefined;
-  matteripv4address: string | undefined;
-  matteripv6address: string | undefined;
+  matterMdnsInterface: string | undefined;
+  matterIpv4Address: string | undefined;
+  matterIpv6Address: string | undefined;
   matterPort: number;
   matterDiscriminator: number | undefined;
   matterPasscode: number | undefined;

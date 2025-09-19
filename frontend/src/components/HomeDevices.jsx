@@ -325,7 +325,7 @@ export function HomeDevices({storeId, setStoreId}) {
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
           setSettings(msg.response); // Store the settings response
-          setRestart(msg.response.matterbridgeInformation.restartRequired); // Set the restart state based on the response. Used in the footer.
+          setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired); // Set the restart state based on the response. Used in the footer.
         }
         if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
