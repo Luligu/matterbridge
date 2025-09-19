@@ -168,9 +168,8 @@ body {
 
 /* For Firefox (it uses scrollbar-color and scrollbar-width) */
 html {
-  scrollbar-color: var(--primary-color) var(--div-bg-color);
-  /* thumb color, track color */
   scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--div-bg-color);
 }
 
 .thin-scroll {

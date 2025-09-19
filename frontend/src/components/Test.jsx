@@ -146,7 +146,7 @@ function Test() {
 
         <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '256px', width: '256px', margin: '10px' }}/>
         <p>Welcome to the Test page of the Matterbridge frontend</p>
-        <div style={{ margin: '0', padding: '0', gap: '0', width: '1200px', maxWidth: '1200px', height: '600px', maxHeight: '600px', overflow: 'hidden', border: '1px solid #0004ffff' }}>
+        <div style={{ margin: '0', padding: '0', gap: '0', width: '1200px', maxWidth: '1200px', height: '600px', maxHeight: '600px', overflow: 'hidden', backgroundColor: 'var(--div-bg-color)', border: '1px solid #0004ffff' }}>
           <MbfTable name="Test" columns={demoColumns} rows={tableRows} getRowKey={getRowKey} footerLeft="Left Footer" footerRight="Right Footer" />
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>

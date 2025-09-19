@@ -1575,7 +1575,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           await serverNode.env.get(DeviceCommissioner)?.endCommissioning();
           this.matterbridge.advertisingNodes.delete(serverNode.id);
           this.log.debug(`*End commissioning has been sent for node ${data.params.id}`);
-          this.wssSendRefreshRequired('matter', { matter: { ...matter, advertising: false } });
+          this.wssSendRefreshRequired('matter', { matter: { ...matter, advertiseTime: 0, advertising: false } });
         }
         if (data.params.advertise) {
           await serverNode.env.get(DeviceAdvertiser)?.advertise(true);
