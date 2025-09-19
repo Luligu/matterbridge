@@ -1,7 +1,7 @@
  
 
 // React
-import { useContext, useEffect, useState, useRef, useCallback } from 'react';
+import { useContext, useEffect, useState, useRef, useCallback, memo } from 'react';
 
 // @mui/material
 import { Button } from '@mui/material';
@@ -15,6 +15,8 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import MbfTable from './MbfTable';
+import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { ApiClustersResponse, ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 // import { debug } from '../App';
 const debug = true;
 
@@ -25,14 +27,14 @@ function Test() {
   const { showSnackbarMessage, closeSnackbarMessage } = useContext(UiContext);
 
   // Local states
-  const [_settings, setSettings] = useState(null);
-  const [_plugins, setPlugins] = useState([]);
-  const [_devices, setDevices] = useState([]);
-  const [_clusters, setClusters] = useState([]);
-  const [_cpu, setCpu] = useState(null);
-  const [_memory, setMemory] = useState(null);
-  const [_uptime, setUptime] = useState(null);
-  const uniqueId = useRef(null);
+  const [_settings, setSettings] = useState<{ matterbridgeInformation: MatterbridgeInformation; systemInformation: SystemInformation; } | null>(null);
+  const [_plugins, setPlugins] = useState<BaseRegisteredPlugin[] | null>(null);
+  const [_devices, setDevices] = useState<ApiDevices[] | null>(null);
+  const [_clusters, setClusters] = useState<ApiClustersResponse | null>(null);
+  const [_cpu, setCpu] = useState<{ cpuUsage: number; }>({ cpuUsage: 0 });
+  const [_memory, setMemory] = useState<{ totalMemory: string; freeMemory: string; heapTotal: string; heapUsed: string; external: string; arrayBuffers: string; rss: string; }>({ totalMemory: '', freeMemory: '', heapTotal: '', heapUsed: '', external: '', arrayBuffers: '', rss: '' });
+  const [_uptime, setUptime] = useState<{ systemUptime: string; processUptime: string; }>({ systemUptime: '', processUptime: '' });
+  const uniqueId = useRef<number>(-1);
   const [tableRows, setTableRows] = useState(() => demoRows);
 
   if(!uniqueId.current) {
@@ -42,61 +44,60 @@ function Test() {
 
   useEffect(() => {
     if(debug) console.log('Test useEffect WebSocketMessage mounting');
-    const handleWebSocketMessage = (msg) => {
+    const handleWebSocketMessage = (msg: WsMessage) => {
       /* Test page WebSocketMessage listener */
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'restart_required') {
+        // Broadcast messages
+        if (isBroadcast(msg) && msg.method === 'restart_required') {
           if(debug) console.log('Test received restart_required');
           showSnackbarMessage('Restart required', 0);
         }
-        if (msg.method === 'refresh_required') {
+        if (isBroadcast(msg) && msg.method === 'refresh_required') {
           if(debug) console.log(`Test received refresh_required: changed=${msg.params.changed} and sending api requests`);
           showSnackbarMessage('Refresh required', 0);
           sendMessage({ id: uniqueId.current, method: "/api/settings", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ id: uniqueId.current, method: "/api/plugins", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ id: uniqueId.current, method: "/api/devices", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (msg.method === 'memory_update') {
+        if (isBroadcast(msg) && msg.method === 'memory_update') {
           if(debug) console.log('Test received memory_update', msg);
           // showSnackbarMessage('Test received memory_update');
           setMemory(msg.params);
         }
-        if (msg.method === 'cpu_update') {
+        if (isBroadcast(msg) && msg.method === 'cpu_update') {
           if(debug) console.log('Test received cpu_update', msg);
           // showSnackbarMessage('Test received cpu_update');
           setCpu(msg.params);
         }
-        if (msg.method === 'uptime_update') {
+        if (isBroadcast(msg) && msg.method === 'uptime_update') {
           if(debug) console.log('Test received uptime_update', msg);
           // showSnackbarMessage('Test received uptime_update');
           setUptime(msg.params);
         }
-        if (msg.method === '/api/settings' && msg.response) {
+        if (isApiResponse(msg) && msg.method === '/api/settings' && msg.response) {
           if(debug) console.log('Test received /api/settings:', msg.response);
           showSnackbarMessage('Test received /api/settings');
           setSettings(msg.response);
         }
-        if (msg.method === '/api/plugins' && msg.response) {
+        if (isApiResponse(msg) && msg.method === '/api/plugins' && msg.response) {
           if(debug) console.log(`Test received ${msg.response.length} plugins:`, msg.response);
           showSnackbarMessage('Test received /api/plugins');
           setPlugins(msg.response);
         }
-        if (msg.method === '/api/devices' && msg.response) {
+        if (isApiResponse(msg) && msg.method === '/api/devices' && msg.response) {
           if(debug) console.log(`Test received ${msg.response.length} devices:`, msg.response);
           showSnackbarMessage('Test received /api/devices');
           setDevices(msg.response);
-          for(let device of msg.response) {
+          for(const device of msg.response) {
             if(debug) console.log('Test sending /api/clusters for device:', device.pluginName, device.name, device.endpoint);
-            sendMessage({ method: "/api/clusters", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint } });
+            sendMessage({ id: uniqueId.current, method: "/api/clusters", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint } });
           }
         }
-        if (msg.method === '/api/clusters') {
-          if(debug) console.log(`Test received ${msg.response.length} clusters for device ${msg.deviceName} endpoint ${msg.endpoint}:`, msg);
+        if (isApiResponse(msg) && msg.method === '/api/clusters' && msg.response) {
+          if(debug) console.log(`Test received ${msg.response.clusters.length} clusters for device ${msg.response.deviceName} endpoint ${msg.response.endpoint}:`, msg);
           showSnackbarMessage('Test received /api/clusters');
           setClusters(msg.response);
         }
-      } else {
-        if(debug) console.log('Test received WebSocketMessage:', msg.method, msg.src, msg.dst, msg.response);
       }
     };
 
@@ -114,9 +115,9 @@ function Test() {
     if(debug) console.log('Test useEffect online mounting');
     if(online) {
       if(debug) console.log('Test useEffect online received online');
-      sendMessage({ method: "/api/settings", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/plugins", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/devices", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, method: "/api/settings", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, method: "/api/plugins", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, method: "/api/devices", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
       /*
       showSnackbarMessage('Test permanent message removal', 0);
       showSnackbarMessage('Test useEffect online received online (info)', 30, 'info');
@@ -132,10 +133,8 @@ function Test() {
     };
   }, [online, sendMessage, showSnackbarMessage]);
 
-  const getRowKey = useCallback((row) => row.code, []);
-  /*
-  getRowKey={(row) => row.code}
-  */
+  const getRowKey = useCallback((row: Record<string, unknown>) => String(row.code), []);
+
   if(debug) console.log('Test rendering...');
   if (!online) {
     return ( <Connecting /> );
@@ -178,11 +177,13 @@ function Test() {
   );
 }
 
-export default Test;
+export default memo(Test);
 
-const demoColumns = [
+import type { MbfTableColumn } from './MbfTable';
+
+const demoColumns: MbfTableColumn<Record<string, unknown>>[] = [
   { id: 'name', label: 'Name', minWidth: 50, maxWidth: 100, required: true },
-  { id: 'code', label: 'ISO\u00a0Code', minWidth: 100, render: (value, _rowKey) => (
+  { id: 'code', label: 'ISO\u00a0Code', minWidth: 100, render: (value: unknown, _rowKey: string | number, _row: Record<string, unknown>, _column: MbfTableColumn<Record<string, unknown>>) => (
     <span
       style={{
         display: 'inline-block',
@@ -197,40 +198,40 @@ const demoColumns = [
       {String(value)}
     </span>
   ) },
-  { id: 'isIsland', label: 'Island', minWidth: 80, align: 'center' },
+  { id: 'isIsland', label: 'Island', minWidth: 80, align: "center" },
   {
     id: 'population',
     label: 'Population',
     minWidth: 170,
-    align: 'right',
-    format: (value) => value.toLocaleString('en-US'),
+    align: "right",
+    format: (value: number) => value.toLocaleString('en-US'),
   },
   {
     id: 'size',
     label: 'Size\u00a0(km\u00b2)',
     minWidth: 170,
-    align: 'right',
-    format: (value) => value.toLocaleString('en-US'),
+    align: "right",
+    format: (value: number) => value.toLocaleString('en-US'),
   },
   {
     id: 'density',
     label: 'Density',
     minWidth: 170,
-    align: 'right',
+    align: "right",
     nosort: true,
-    format: (value) => value.toFixed(2),
+    format: (value: number) => value.toFixed(2),
   },
   {
     id: 'virtual',
     label: 'Virtual',
-    align: 'right',
+    align: "right",
     required: true,
     nosort: true,
-    render: (_value, _rowKey, row) => { return row.isIsland ? '🏝️' : '🏞️';},
+    render: (_value: unknown, _rowKey: string | number, row: Record<string, unknown>, _column: MbfTableColumn<Record<string, unknown>>) => { return row.isIsland ? '🏝️' : '🏞️';},
   },
 ];
 
-function createData(name, code, population, size, isIsland) {
+function createData(name: string, code: string, population: number, size: number, isIsland: boolean) {
   const density = population / size;
   return { name, code, population, size, density, isIsland };
 }

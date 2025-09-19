@@ -651,7 +651,7 @@ export interface WsMessageShellySysUpdate {
   dst: string;
   src: string;
   method: 'shelly_sys_update';
-  params: Record<string, string | number | boolean | null | undefined>;
+  params: { available: boolean };
 }
 
 export interface WsMessageShellyMainUpdate {
@@ -659,7 +659,7 @@ export interface WsMessageShellyMainUpdate {
   dst: string;
   src: string;
   method: 'shelly_main_update';
-  params: Record<string, string | number | boolean | null | undefined>;
+  params: { available: boolean };
 }
 
 // Union type for all specific WebSocket broadcast message types

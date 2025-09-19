@@ -1,5 +1,5 @@
 // React
-import { useEffect, useState, useContext, useRef } from 'react';
+import { useEffect, useState, useContext, useRef, memo } from 'react';
 
 // @mui/material
 import Button from '@mui/material/Button';
@@ -199,4 +199,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default memo(Home);

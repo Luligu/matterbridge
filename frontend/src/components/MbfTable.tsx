@@ -126,7 +126,7 @@ function comparator<T extends Record<string, unknown>>(rowA: T, rowB: T, key: ke
  *   return next;               // other rows keep reference => React skips re-render for them
  * });
  */
-interface MbfTableColumn<T extends Record<string, unknown> = Record<string, unknown>> {
+export interface MbfTableColumn<T extends Record<string, unknown> = Record<string, unknown>> {
   id: string;
   label: string;
   minWidth?: number;
@@ -152,7 +152,7 @@ interface MbfTableProps<T extends Record<string, unknown> = Record<string, unkno
   footerRight: string;
 }
 
-const MbfTable = memo(function MuiTable<T extends Record<string, unknown>>({ name, columns, rows, getRowKey, footerLeft, footerRight }: MbfTableProps<T>) {
+function MbfTable<T extends Record<string, unknown>>({ name, columns, rows, getRowKey, footerLeft, footerRight }: MbfTableProps<T>) {
   // Stable key fallback for rows without a natural id
   const rowKeyMapRef = useRef<WeakMap<T, string>>(new WeakMap());
   const nextRowKeySeqRef = useRef(1);
@@ -428,6 +428,6 @@ const MbfTable = memo(function MuiTable<T extends Record<string, unknown>>({ nam
 
     </div>
   );
-});
+}
 
 export default memo(MbfTable);

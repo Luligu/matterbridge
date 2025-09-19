@@ -1,5 +1,5 @@
 // React
-import { useState, useContext, useEffect, useRef } from 'react';
+import { useState, useContext, useEffect, useRef, memo } from 'react';
 import { Link } from 'react-router';
 
 // @mui
@@ -20,12 +20,13 @@ import StarIcon from '@mui/icons-material/Star';
 import Favorite from '@mui/icons-material/Favorite';
 
 // Backend
-import { WsBroadcastMessageId } from '../../../src/frontendTypes';
+import { isApiResponse, isBroadcast, WsBroadcastMessageId, WsMessage } from '../../../src/frontendTypes';
 
 // Frontend
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
 import { debug, toggleDebug } from '../App';
+import { MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 // const debug = true;
 
 function Header() {
@@ -37,15 +38,15 @@ function Header() {
   const [fixedRestart, setFixedRestart] = useState(false);
   const [update, setUpdate] = useState(false);
   const [updateDev, setUpdateDev] = useState(false);
-  const [settings, setSettings] = useState(null);
+  const [settings, setSettings] = useState<{ matterbridgeInformation: MatterbridgeInformation; systemInformation: SystemInformation; } | null>(null);
   // Refs
   const uniqueId = useRef(getUniqueId());
   // Menu states
-  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
-  const [backupMenuAnchorEl, setBackupMenuAnchorEl] = useState(null);
-  const [viewMenuAnchorEl, setViewMenuAnchorEl] = useState(null);
-  const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState(null);
-  const [resetMenuAnchorEl, setResetMenuAnchorEl] = useState(null);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [backupMenuAnchorEl, setBackupMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [viewMenuAnchorEl, setViewMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [resetMenuAnchorEl, setResetMenuAnchorEl] = useState<HTMLElement | null>(null);
 
   const handleSponsorClick = () => {
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
@@ -56,7 +57,7 @@ function Header() {
   };
 
   const handleChangelogClick = () => {
-    if(settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-')) {
+    if(settings?.matterbridgeInformation.matterbridgeVersion.includes('-dev-')) {
       window.open(`https://github.com/Luligu/matterbridge/blob/dev/CHANGELOG.md`, '_blank');
     } else {
       window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
@@ -108,7 +109,7 @@ function Header() {
   };
 
   const handleRestartClick = () => {
-    if (settings.matterbridgeInformation.restartMode === '') {
+    if (settings?.matterbridgeInformation.restartMode === '') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/restart", src: "Frontend", dst: "Matterbridge", params: {} });
     }
     else {
@@ -132,11 +133,11 @@ function Header() {
     sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/hardreset", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
-  const handleMenuOpen = (event) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchorEl(event.currentTarget);
   };
 
-  const handleMenuCloseConfirm = (value) => {
+  const handleMenuCloseConfirm = (value: string) => {
     if(debug) console.log('Header: handleMenuClose', value);
     setMenuAnchorEl(null);
     if (value === 'download-mblog') {
@@ -214,12 +215,13 @@ function Header() {
     }
   };
 
-  const handleMenuCloseCancel = (value) => {
+  const handleMenuCloseCancel = (value: string) => {
     if(debug) console.log('Header: handleMenuCloseCancel:', value);
     setMenuAnchorEl(null);
   };
 
-  const handleBackupMenuOpen = (event) => {
+
+  const handleBackupMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setBackupMenuAnchorEl(event.currentTarget);
   };
 
@@ -227,7 +229,8 @@ function Header() {
     setBackupMenuAnchorEl(null);
   };
 
-  const handleViewMenuOpen = (event) => {
+
+  const handleViewMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setViewMenuAnchorEl(event.currentTarget);
   };
 
@@ -235,7 +238,8 @@ function Header() {
     setViewMenuAnchorEl(null);
   };
 
-  const handleDownloadMenuOpen = (event) => {
+
+  const handleDownloadMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setDownloadMenuAnchorEl(event.currentTarget);
   };
 
@@ -243,7 +247,7 @@ function Header() {
     setDownloadMenuAnchorEl(null);
   };
 
-  const handleResetMenuOpen = (event) => {
+  const handleResetMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setResetMenuAnchorEl(event.currentTarget);
   };
 
@@ -257,12 +261,12 @@ function Header() {
   };
 
   useEffect(() => {
-    const handleWebSocketMessage = (msg) => {
+    const handleWebSocketMessage = (msg: WsMessage) => {
       /* Header listener */
       // if (debug) console.log(`Header received WebSocket Message id ${msg.id}:`, msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Local messages
-        if (msg.id === uniqueId.current && msg.method === '/api/settings') {
+        if (isApiResponse(msg) && msg.method === '/api/settings' && msg.id === uniqueId.current ) {
           if (debug) console.log('Header received settings:', msg.response);
           setSettings(msg.response);
           setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
@@ -270,35 +274,48 @@ function Header() {
           setUpdate(msg.response.matterbridgeInformation.updateRequired);
         }
         // Broadcast messages
-        if (msg.method === 'refresh_required' && msg.params.changed === 'settings') {
+        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'settings') {
           if (debug) console.log(`Header received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
           sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (msg.method === 'restart_required') {
+        if (isBroadcast(msg) && msg.method === 'restart_required') {
           if (debug) console.log(`Header received restart_required with fixed: ${msg.params.fixed}`);
           setRestart(true);
           if(msg.params.fixed === true) setFixedRestart(true);
         }
-        if (msg.method === 'restart_not_required') {
+        if (isBroadcast(msg) && msg.method === 'restart_not_required') {
           if (debug) console.log(`Header received restart_not_required`);
           setRestart(false);
         }
-        if (msg.method === 'update_required') {
+        if (isBroadcast(msg) && msg.method === 'update_required') {
           if (debug) console.log('Header received update_required');
           setUpdate(true);
         }
-        if (msg.method === 'update_required_dev') {
+        if (isBroadcast(msg) && msg.method === 'update_required_dev') {
           if (debug) console.log('Header received update_required_dev');
           setUpdateDev(true);
         }
-        if (msg.id === WsBroadcastMessageId.ShellySysUpdate) {
+        if (isBroadcast(msg) && msg.id === WsBroadcastMessageId.ShellySysUpdate) {
           if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
-          setSettings(prevSettings => ({ ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellySysUpdate: msg.params.available } }));
-
+          setSettings(prevSettings =>
+            prevSettings
+              ? {
+                  matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellySysUpdate: msg.params.available },
+                  systemInformation: prevSettings.systemInformation,
+                }
+              : null
+          );
         }
-        if (msg.id === WsBroadcastMessageId.ShellyMainUpdate) {
+        if (isBroadcast(msg) && msg.id === WsBroadcastMessageId.ShellyMainUpdate) {
           if (debug) console.log('Header received WS_ID_SHELLY_MAIN_UPDATE:');
-          setSettings(prevSettings => ({ ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellyMainUpdate: msg.params.available } }));
+          setSettings(prevSettings =>
+            prevSettings
+              ? {
+                  matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellyMainUpdate: msg.params.available },
+                  systemInformation: prevSettings.systemInformation,
+                }
+              : null
+          );
         }
       }
     };
@@ -336,11 +353,6 @@ function Header() {
         </nav>
       </div>
       <div className="sub-header">
-        {/*settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
-          <Tooltip title="Sponsor Matterbridge and its plugins">
-            <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span>
-          </Tooltip>
-        */}
         {!settings.matterbridgeInformation.readOnly && update &&
           <Tooltip title="New Matterbridge version available, click to install">
             <span className="status-warning" onClick={handleUpdateClick}>
@@ -365,13 +377,13 @@ function Header() {
         {settings.matterbridgeInformation.shellyBoard &&
           <img src="Shelly.svg" alt="Shelly Icon" style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '30px' }}/>
         }
-        {settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.xxxmatterbridgeVersion &&
+        {/*settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.xxxmatterbridgeVersion &&
           <Tooltip title="Matterbridge version">
             <span style={{ fontSize: '12px', color: 'var(--main-icon-color)' }} onClick={handleChangelogClick}>
               v.{settings.matterbridgeInformation.matterbridgeVersion}
             </span>
           </Tooltip>
-        }
+        */}
         {settings.matterbridgeInformation.bridgeMode !== '' && settings.matterbridgeInformation.readOnly === false ? (
           <Tooltip title="Bridge mode">
             <span className="status-information" style={{ cursor: 'default' }}>{settings.matterbridgeInformation.bridgeMode}</span>
@@ -628,4 +640,4 @@ function Header() {
   );
 }
 
-export default Header;
+export default memo(Header);

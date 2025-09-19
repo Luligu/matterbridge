@@ -18,8 +18,8 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { ApiMatter } from '../../../src/matterbridgeTypes';
 import { isBroadcast, WsBroadcastMessageId, WsMessage } from '../../../src/frontendTypes';
-// import { debug } from '../App';
-const debug = true; // Debug flag for this component
+import { debug } from '../App';
+// const debug = true; // Debug flag for this component
 
 // Reusable hover styling for all action icon buttons (mdi icons)
 const iconBtnSx = {
