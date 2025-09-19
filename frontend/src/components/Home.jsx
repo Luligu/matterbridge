@@ -52,7 +52,7 @@ function Home() {
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
           if (msg.response.matterbridgeInformation.bridgeMode === 'bridge') {
-            if(!storeId) setStoreId(msg.response.matterbridgeInformation.matter.id);
+            if(!storeId) setStoreId('Matterbridge');
           }
           if (msg.response.matterbridgeInformation.bridgeMode === 'childbridge' && plugins.length > 0 && storeId === null) {
             if(!storeId) setStoreId(plugins[0].matter.id);
