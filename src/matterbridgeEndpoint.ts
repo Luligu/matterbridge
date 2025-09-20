@@ -1876,14 +1876,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default heating thermostat cluster server with feature Heating.
    *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to 12°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
    * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultHeatingThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, minHeatSetpointLimit: number = 0, maxHeatSetpointLimit: number = 50): this {
+  createDefaultHeatingThermostatClusterServer(localTemperature: number = 23, outdoorTemperature: number = 12, occupiedHeatingSetpoint: number = 21, minHeatSetpointLimit: number = 0, maxHeatSetpointLimit: number = 50): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating), {
       localTemperature: localTemperature * 100,
+      outdoorTemperature: number * 100,
       systemMode: Thermostat.SystemMode.Heat,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
       // Thermostat.Feature.Heating
