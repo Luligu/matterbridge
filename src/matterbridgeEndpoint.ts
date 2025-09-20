@@ -1885,7 +1885,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   createDefaultHeatingThermostatClusterServer(localTemperature: number = 23, outdoorTemperature: number = 12, occupiedHeatingSetpoint: number = 21, minHeatSetpointLimit: number = 0, maxHeatSetpointLimit: number = 50): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating), {
       localTemperature: localTemperature * 100,
-      outdoorTemperature: number * 100,
+      outdoorTemperature: outdoorTemperature * 100,
       systemMode: Thermostat.SystemMode.Heat,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
       // Thermostat.Feature.Heating
