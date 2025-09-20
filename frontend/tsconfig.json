@@ -4,14 +4,15 @@
     "module": "ESNext",
     "jsx": "react-jsx",
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
     "vitest/**/*.ts",
-    "vitest/**/*.tsx"
+    "vitest/**/*.tsx",
+    "vite.config.ts"
   ],
 }
