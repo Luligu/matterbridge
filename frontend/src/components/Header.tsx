@@ -295,10 +295,12 @@ function Header() {
         if (isBroadcast(msg) && msg.method === 'update_required') {
           if (debug) console.log('Header received update_required');
           setUpdate(true);
+          sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (isBroadcast(msg) && msg.method === 'update_required_dev') {
           if (debug) console.log('Header received update_required_dev');
           setUpdateDev(true);
+          sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (isBroadcast(msg) && msg.id === WsBroadcastMessageId.ShellySysUpdate) {
           if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
