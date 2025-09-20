@@ -390,7 +390,7 @@ function HomeDevices({storeId, setStoreId}) {
       setMixedDevices([]);
       return;
     }
-    /*if(debug)*/ console.log(`HomeDevices mixing devices (${devices.length}) and selectDevices (${selectDevices.length})`);
+    if(debug) console.log(`HomeDevices mixing devices (${devices.length}) and selectDevices (${selectDevices.length})`);
     const mixed = [];
     for (const device of devices) {
       mixed.push(device);
@@ -403,7 +403,7 @@ function HomeDevices({storeId, setStoreId}) {
     }
     if(mixed.length > 0) {
       setMixedDevices(mixed);
-      /*if(debug)*/ console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
+      if(debug) console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
     }
   }, [plugins, devices, selectDevices, setMixedDevices]);
   
