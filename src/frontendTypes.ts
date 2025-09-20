@@ -22,8 +22,8 @@
  * limitations under the License.
  */
 
-import { PlatformConfig } from './matterbridgePlatform.js';
-import { ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
+import type { PlatformConfig } from './matterbridgePlatform.js';
+import type { ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
 export type RefreshRequiredChanged = 'settings' | 'plugins' | 'devices' | 'matter';
 
@@ -736,7 +736,7 @@ export function isApiRequest(msg: WsMessage): msg is WsMessageBaseApiRequest {
  *
  * @param {WsMessage} msg - The message to check.
  *
- * @returns {msg is WsMessageSuccessApiResponse} True if the message is a WsMessageApiResponse, false otherwise.
+ * @returns {msg is WsMessageApiResponse} True if the message is a WsMessageApiResponse, false otherwise.
  */
 export function isApiResponse(msg: WsMessage): msg is WsMessageApiResponse {
   return msg.id > WsBroadcastMessageId.ShellyMainUpdate && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && ('success' in msg || 'error' in msg);

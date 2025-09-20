@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
   },
+  base: './', // or '' for relative paths
   build: {
     outDir: 'build',
     emptyOutDir: true,

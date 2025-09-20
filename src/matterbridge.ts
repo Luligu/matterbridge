@@ -1690,6 +1690,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('bridge_started');
       this.log.notice('Matterbridge bridge started successfully');
+      this.frontend.wssSendRefreshRequired('settings');
       this.frontend.wssSendRefreshRequired('plugins');
     }, this.startMatterIntervalMs);
   }
@@ -1798,6 +1799,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('childbridge_started');
       this.log.notice('Matterbridge childbridge started successfully');
+      this.frontend.wssSendRefreshRequired('settings');
       this.frontend.wssSendRefreshRequired('plugins');
     }, this.startMatterIntervalMs);
   }
@@ -2223,9 +2225,6 @@ const commissioningController = new CommissioningController({
     serverNode.lifecycle.commissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`);
       this.advertisingNodes.delete(storeId);
-      // this.frontend.wssSendRefreshRequired('settings');
-      // this.frontend.wssSendRefreshRequired('plugins');
-      // this.frontend.wssSendRefreshRequired('devices');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
@@ -2233,9 +2232,6 @@ const commissioningController = new CommissioningController({
     serverNode.lifecycle.decommissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`);
       this.advertisingNodes.delete(storeId);
-      // this.frontend.wssSendRefreshRequired('settings');
-      // this.frontend.wssSendRefreshRequired('plugins');
-      // this.frontend.wssSendRefreshRequired('devices');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
     });
@@ -2255,8 +2251,6 @@ const commissioningController = new CommissioningController({
         // istanbul ignore next
         this.advertisingNodes.delete(storeId);
       }
-      // this.frontend.wssSendRefreshRequired('settings');
-      // this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is online`, 5, 'success');
       this.emit('online', storeId);
@@ -2266,8 +2260,6 @@ const commissioningController = new CommissioningController({
     serverNode.lifecycle.offline.on(() => {
       this.log.notice(`Server node for ${storeId} is offline`);
       this.advertisingNodes.delete(storeId);
-      // this.frontend.wssSendRefreshRequired('settings');
-      // this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
       this.emit('offline', storeId);

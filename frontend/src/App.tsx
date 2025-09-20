@@ -130,6 +130,19 @@ export function LoginForm() {
     setPrimaryColor(primaryColorFromCSS);
   }, []);
 
+  /*
+    Normal:
+    href="https://lucalaptop7/"
+    pathname="/" 
+    >>>
+    baseName="/"
+
+    Ingress:
+    href="https://homeassistant.local:8123/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
+    pathname="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/" 
+    >>>
+    baseName="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
+  */
   const baseName = window.location.pathname.includes('/matterbridge/')
     ? '/matterbridge'
     : window.location.href.includes('/api/hassio_ingress/')

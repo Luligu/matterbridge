@@ -169,7 +169,7 @@ function QRDiv({ id }: QRDivProps) {
           </div>
         </div>
         <p className="MbfWindowHeaderText" style={{ overflow: 'hidden', maxWidth: '280px', textOverflow: 'ellipsis', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
-        <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'red' }}>Server offline: restart to commission</p>
+        <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Server offline: restart to commission</p>
         <div className="MbfWindowFooter">
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Serial number: {matter.serialNumber}</p>
         </div>

@@ -45,7 +45,10 @@ function Home() {
         // Broadcast messages
         if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'settings') {
           if (debug) console.log(`Home received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
+          setStoreId(null);
+          setPlugins([]);
           sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages
         if (isApiResponse(msg) && msg.method === '/api/settings' && msg.id === uniqueId.current ) {
