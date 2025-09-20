@@ -364,21 +364,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(matterbridge.devices.size).toBe(4);
   }, 300000);
 
-  test('stop advertise node', async () => {
-    for (const plugin of plugins) {
-      await matterbridge.stopAdvertiseServerNode(plugin.serverNode);
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Stopped advertising for ${plugin.name}`));
-    }
-  });
-
-  test('advertise node', async () => {
-    for (const plugin of plugins) {
-      const pairing = await matterbridge.advertiseServerNode(plugin.serverNode);
-      expect(pairing).toBeDefined();
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for ${plugin.name}`));
-    }
-  });
-
   test('set reachable -bridge mode', async () => {
     for (const plugin of matterbridge.plugins.array()) {
       expect(plugin).toBeDefined();
@@ -386,31 +371,16 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     }
   }, 60000);
 
-  test('startEndAdvertiseTimer', async () => {
-    expect((matterbridge as any).endAdvertiseTimeout).toBeDefined();
-
-    jest.useFakeTimers();
-    (matterbridge as any).startEndAdvertiseTimer(plugins.array()[0].serverNode);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Clear ${plugins.array()[0].serverNode?.id} server node end advertise timer`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Starting ${plugins.array()[0].serverNode?.id} server node end advertise timer`));
-    jest.advanceTimersByTime(15 * 60 * 1000); // Advance time by 15 minutes
-    jest.useRealTimers();
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Advertising stopped.`));
-  });
-
   test('remove all devices', async () => {
     expect(matterbridge.plugins.size).toBe(4);
     expect(matterbridge.devices.size).toBe(4);
     let i = 1;
     for (const plugin of plugins) {
       expect(plugin.type).toBe(i < 4 ? 'DynamicPlatform' : 'AccessoryPlatform');
-      expect(plugin.addedDevices).toBe(1);
       expect(plugin.registeredDevices).toBe(1);
       await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Removing all bridged endpoints for plugin ${plg}${'matterbridge-mock' + i}${db}`);
       if (plugin.type === 'DynamicPlatform') expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Removing bridged endpoint ${plg}${'matterbridge-mock' + i++}${db}`));
-      expect(plugin.addedDevices).toBe(0);
       expect(plugin.registeredDevices).toBe(0);
     }
     expect(plugins.length).toBe(4);

@@ -287,9 +287,11 @@ describe('Matterbridge ' + NAME, () => {
     device.createDefaultLevelControlClusterServer();
     device.createDefaultColorControlClusterServer(400);
     expect(device.hasAttributeServer(ColorControl.Cluster, 'colorMode')).toBe(true);
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'enhancedColorMode')).toBe(true);
     expect(device.hasAttributeServer(ColorControl.Cluster, 'currentX')).toBe(true);
     expect(device.hasAttributeServer(ColorControl.Cluster, 'currentY')).toBe(true);
     expect(device.hasAttributeServer(ColorControl.Cluster, 'currentHue')).toBe(true);
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'enhancedCurrentHue')).toBe(false);
     expect(device.hasAttributeServer(ColorControl.Cluster, 'currentSaturation')).toBe(true);
     expect(device.hasAttributeServer(ColorControl.Cluster, 'colorTemperatureMireds')).toBe(true);
     expect(device.hasAttributeServer(ColorControl.Cluster, 'startUpColorTemperatureMireds')).toBe(true);
@@ -355,6 +357,37 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(ColorControl.Cluster, 'startUpColorTemperatureMireds')).toBe(true);
     expect(device.getAttribute(ColorControl.Cluster.id, 'currentX')).toBe(500);
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createEnhancedColorControlClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'EnhancedLight' });
+    expect(device).toBeDefined();
+    device.createEnhancedColorControlClusterServer();
+    device.addRequiredClusterServers();
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'colorMode')).toBe(true);
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'enhancedColorMode')).toBe(true);
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'currentX')).toBe(true);
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'currentY')).toBe(true);
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'currentHue')).toBe(true);
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'enhancedCurrentHue')).toBe(true);
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'currentSaturation')).toBe(true);
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'colorTemperatureMireds')).toBe(true);
+    expect(device.hasAttributeServer(ColorControl.Cluster, 'startUpColorTemperatureMireds')).toBe(true);
+
+    await add(device);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
+
+    await device.configureEnhancedColorControlMode(ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
+
+    await device.configureEnhancedColorControlMode(ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
+
+    await device.configureEnhancedColorControlMode(ColorControl.EnhancedColorMode.CurrentXAndCurrentY);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
+
+    await device.configureEnhancedColorControlMode(ColorControl.EnhancedColorMode.ColorTemperatureMireds);
+    (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
 
   test('createXyColorControlClusterServer', async () => {

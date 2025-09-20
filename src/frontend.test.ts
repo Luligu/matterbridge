@@ -38,6 +38,7 @@ import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
 import { wait } from './utils/wait.js';
 import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
+import { WsBroadcastMessageId, WsMessageBroadcastMap, WsMessageById, WsMessageRestartRequired } from './frontendTypes.ts';
 
 const startSpy = jest.spyOn(Frontend.prototype, 'start');
 const stopSpy = jest.spyOn(Frontend.prototype, 'stop');
@@ -57,6 +58,15 @@ describe('Matterbridge frontend', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
+  });
+
+  test('Check typed broadcast messages', () => {
+    function handleMessage<T extends keyof WsMessageBroadcastMap>(msg: WsMessageById<T>) {
+      expect(msg.id).toBeDefined();
+      // msg is strongly typed based on its id
+    }
+    const msg1: WsMessageRestartRequired = { id: WsBroadcastMessageId.RestartRequired, method: 'restart_required', src: 'Matterbridge', dst: 'Frontend', params: { fixed: true } };
+    handleMessage(msg1);
   });
 
   test('Verify mock of createServer', () => {
@@ -183,34 +193,6 @@ describe('Matterbridge frontend', () => {
     matterbridge.hasCleanupStarted = true;
     expect(await (frontend as any).getDevices()).toEqual([]);
     matterbridge.hasCleanupStarted = false;
-  });
-
-  test('Frontend getMatterDataFromDevice', () => {
-    const device = {
-      mode: 'server',
-      serverNode: {
-        id: 'storeId',
-        state: {
-          basicInformation: { serialNumber: '12345' },
-          commissioning: { commissioned: true, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: '123' }, fabrics: {} },
-          administratorCommissioning: { windowStatus: 0 },
-          sessions: { sessions: {} },
-        },
-      },
-      serverContext: {},
-    };
-    expect((frontend as any).getMatterDataFromDevice(device)).toEqual({
-      advertiseTime: 0,
-      advertising: false,
-      commissioned: true,
-      fabricInformations: [],
-      id: 'storeId',
-      manualPairingCode: '123',
-      qrPairingCode: 'QR',
-      sessionInformations: [],
-      serialNumber: '12345',
-      windowStatus: 0,
-    });
   });
 
   test('Frontend getClusterTextFromDevice', () => {

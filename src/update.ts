@@ -111,7 +111,6 @@ export async function getMatterbridgeLatestVersion(matterbridge: Matterbridge): 
     if (matterbridge.matterbridgeVersion !== matterbridge.matterbridgeLatestVersion) {
       matterbridge.log.notice(`Matterbridge is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeLatestVersion}.`);
       matterbridge.frontend.wssSendSnackbarMessage('Matterbridge latest update available', 0, 'info');
-      matterbridge.frontend.wssSendRefreshRequired('matterbridgeLatestVersion');
       matterbridge.frontend.wssSendUpdateRequired();
     } else {
       matterbridge.log.debug(`Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeLatestVersion}.`);
@@ -141,7 +140,6 @@ export async function getMatterbridgeDevVersion(matterbridge: Matterbridge): Pro
     if (matterbridge.matterbridgeVersion.includes('-dev-') && matterbridge.matterbridgeVersion !== version) {
       matterbridge.log.notice(`Matterbridge@dev is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${matterbridge.matterbridgeDevVersion}.`);
       matterbridge.frontend.wssSendSnackbarMessage('Matterbridge dev update available', 0, 'info');
-      matterbridge.frontend.wssSendRefreshRequired('matterbridgeDevVersion');
       matterbridge.frontend.wssSendUpdateRequired(true);
     } else if (matterbridge.matterbridgeVersion.includes('-dev-') && matterbridge.matterbridgeVersion === version) {
       matterbridge.log.debug(`Matterbridge@dev is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${matterbridge.matterbridgeDevVersion}.`);

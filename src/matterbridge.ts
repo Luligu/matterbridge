@@ -52,7 +52,7 @@ import {
   Crypto,
   Diagnostic,
 } from '@matter/main';
-import { DeviceCertification, DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
+import { DeviceCertification, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
@@ -60,7 +60,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/brid
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
 import { withTimeout, waiter, wait } from './utils/wait.js';
-import { ApiDevicesMatter, dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
+import { ApiMatterResponse, dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -127,14 +127,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     matterbridgeVersion: '',
     matterbridgeLatestVersion: '',
     matterbridgeDevVersion: '',
-    matterbridgeSerialNumber: '',
-    matterbridgeQrPairingCode: undefined,
-    matterbridgeManualPairingCode: undefined,
-    matterbridgeFabricInformations: [],
-    matterbridgeSessionInformations: [],
-    matterbridgePaired: false,
-    matterbridgeAdvertise: false,
-    matterbridgeEndAdvertise: false,
     bridgeMode: '',
     restartMode: '',
     virtualMode: 'outlet',
@@ -147,9 +139,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     fileLogger: false,
     matterLoggerLevel: MatterLogLevel.INFO,
     matterFileLogger: false,
-    mattermdnsinterface: undefined,
-    matteripv4address: undefined,
-    matteripv6address: undefined,
+    matterMdnsInterface: undefined,
+    matterIpv4Address: undefined,
+    matterIpv6Address: undefined,
     matterPort: 5540,
     matterDiscriminator: undefined,
     matterPasscode: undefined,
@@ -173,9 +165,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public shutdown = false;
   private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
 
-  // Matterbridge log files
+  // Matterbridge logger
   public log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
   public matterbridgeLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+
+  // Matter logger
+  public matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   public matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
 
   public plugins = new PluginManager(this);
@@ -196,14 +191,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
-  private endAdvertiseTimeout: NodeJS.Timeout | undefined;
   private sigintHandler: NodeJS.SignalsListener | undefined;
   private sigtermHandler: NodeJS.SignalsListener | undefined;
   private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
   private rejectionHandler: NodeJS.UnhandledRejectionListener | undefined;
-
-  // Matter logger
-  matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Matter environment
   environment = Environment.default;
@@ -234,6 +225,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   aggregatorDeviceType = DeviceTypeId(getIntParameter('deviceType') ?? bridge.code);
   aggregatorSerialNumber = getParameter('serialNumber');
   aggregatorUniqueId = getParameter('uniqueId');
+  /** Advertising nodes map: time advertising started keyed by storeId */
   advertisingNodes = new Map<string, number>();
 
   protected static instance: Matterbridge | undefined;
@@ -241,6 +233,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   // We load asyncronously so is private
   protected constructor() {
     super();
+    this.log.logNameColor = '\x1b[38;5;115m';
   }
 
   /**
@@ -282,7 +275,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     let callbackLogLevel = LogLevel.NOTICE;
     if (this.matterbridgeInformation.loggerLevel === LogLevel.INFO || this.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
     if (this.matterbridgeInformation.loggerLevel === LogLevel.DEBUG || this.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
-    AnsiLogger.setGlobalCallback(this.frontend.wssSendMessage.bind(this.frontend), callbackLogLevel);
+    AnsiLogger.setGlobalCallback(this.frontend.wssSendLogMessage.bind(this.frontend), callbackLogLevel);
     this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
   }
 
@@ -361,6 +354,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A Promise that resolves when the initialization is complete.
    */
   public async initialize(): Promise<void> {
+    // for (let i = 1; i <= 255; i++) console.log(`\x1b[38;5;${i}mColor: ${i}`);
+
     // Emit the initialize_started event
     this.emit('initialize_started');
 
@@ -912,7 +907,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         const storageContext = storageManager?.createContext('persist');
         if (this.aggregatorSerialNumber) await storageContext?.set('serialNumber', this.aggregatorSerialNumber);
         if (this.aggregatorUniqueId) await storageContext?.set('uniqueId', this.aggregatorUniqueId);
-        this.matterbridgeInformation.matterbridgeSerialNumber = this.aggregatorSerialNumber;
       }
     } catch (error) {
       this.log.fatal(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
@@ -1038,7 +1032,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.started = false;
       plugin.configured = false;
       plugin.registeredDevices = undefined;
-      plugin.addedDevices = undefined;
       this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
     }
     this.frontend.wssSendRefreshRequired('plugins');
@@ -1231,9 +1224,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * It also logs to file (matter.log) if fileLogger is true.
    *
    * @param {boolean} fileLogger - Whether to log to file or not.
-   * @returns {Function} The MatterLogger function.
+   * @returns {Function} The MatterLogger function. \x1b[35m for violet \x1b[34m is blue
    */
   private createDestinationMatterLogger(fileLogger: boolean): (text: string, message: Diagnostic.Message) => void {
+    this.matterLog.logNameColor = '\x1b[34m'; // Blue matter.js Logger
     if (fileLogger) {
       this.matterLog.logFilePath = path.join(this.matterbridgeDirectory, this.matterLoggerFile);
     }
@@ -1314,10 +1308,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     for (const plugin of this.plugins.array()) {
       if (plugin.error || !plugin.enabled) continue;
       const registeredDevices = plugin.registeredDevices;
-      const addedDevices = plugin.addedDevices;
       await this.plugins.shutdown(plugin, 'unregistering all devices and shutting down...', false, true);
       plugin.registeredDevices = registeredDevices;
-      plugin.addedDevices = addedDevices;
       await this.removeAllBridgedEndpoints(plugin.name, 100);
     }
     this.log.debug('Waiting for the MessageExchange to finish...');
@@ -1466,13 +1458,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Stop the frontend
       await this.frontend.stop();
 
-      // Remove the matterfilelogger
-      try {
-        Logger.removeLogger('matterfilelogger');
-      } catch (error) {
-        this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${db}: ${error instanceof Error ? error.message : String(error)}`);
-      }
-
       // Close the matterbridge node storage and context
       if (this.nodeStorage && this.nodeContext) {
         /*
@@ -1599,7 +1584,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.device = device;
       plugin.storageContext = await this.createServerNodeContext(plugin.name, device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
       plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
-      plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node`);
       await plugin.serverNode.add(device);
     }
@@ -1617,7 +1601,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', this.aggregatorDeviceType, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
       plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
       plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
-      plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
       await plugin.serverNode.add(plugin.aggregatorNode);
     }
   }
@@ -1702,12 +1685,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.reachabilityTimeout = setTimeout(() => {
         this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
         if (this.aggregatorNode) this.setAggregatorReachability(this.aggregatorNode, true);
-        this.frontend.wssSendRefreshRequired('reachability');
       }, 60 * 1000).unref();
 
       // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('bridge_started');
       this.log.notice('Matterbridge bridge started successfully');
+      this.frontend.wssSendRefreshRequired('settings');
+      this.frontend.wssSendRefreshRequired('plugins');
     }, this.startMatterIntervalMs);
   }
 
@@ -1778,8 +1762,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       for (const plugin of this.plugins.array()) {
         if (!plugin.enabled || plugin.error) continue;
-        if (plugin.type !== 'DynamicPlatform' && (!plugin.addedDevices || plugin.addedDevices === 0)) {
-          this.log.error(`Plugin ${plg}${plugin.name}${er} didn't add any devices to Matterbridge. Verify the plugin configuration.`);
+        if (plugin.type !== 'DynamicPlatform' && (!plugin.registeredDevices || plugin.registeredDevices === 0)) {
+          this.log.error(`Plugin ${plg}${plugin.name}${er} didn't register any devices to Matterbridge. Verify the plugin configuration.`);
           continue;
         }
         if (!plugin.serverNode) {
@@ -1801,7 +1785,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         plugin.reachabilityTimeout = setTimeout(() => {
           this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf} type ${plugin.type} server node ${plugin.serverNode !== undefined} aggregator node ${plugin.aggregatorNode !== undefined} device ${plugin.device !== undefined}`);
           if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
-          this.frontend.wssSendRefreshRequired('reachability');
         }, 60 * 1000).unref();
       }
 
@@ -1816,6 +1799,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('childbridge_started');
       this.log.notice('Matterbridge childbridge started successfully');
+      this.frontend.wssSendRefreshRequired('settings');
+      this.frontend.wssSendRefreshRequired('plugins');
     }, this.startMatterIntervalMs);
   }
 
@@ -2063,7 +2048,6 @@ const commissioningController = new CommissioningController({
       this.aggregatorSerialNumber,
       this.aggregatorUniqueId,
     );
-    this.matterbridgeInformation.matterbridgeSerialNumber = await this.matterbridgeContext.get('serialNumber', '');
 
     this.log.info('Matter node storage started');
 
@@ -2240,13 +2224,16 @@ const commissioningController = new CommissioningController({
      */
     serverNode.lifecycle.commissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`);
-      clearTimeout(this.endAdvertiseTimeout);
+      this.advertisingNodes.delete(storeId);
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
     serverNode.lifecycle.decommissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`);
-      clearTimeout(this.endAdvertiseTimeout);
+      this.advertisingNodes.delete(storeId);
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
     });
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
@@ -2254,20 +2241,16 @@ const commissioningController = new CommissioningController({
       this.log.notice(`Server node for ${storeId} is online`);
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
+        this.advertisingNodes.set(storeId, Date.now());
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
         this.log.notice(`Manual pairing code: ${manualPairingCode}`);
-        // Set a timeout to show that advertising stops after 15 minutes if not commissioned
-        this.startEndAdvertiseTimer(serverNode);
-        this.advertisingNodes.set(storeId, Date.now());
       } else {
         // istanbul ignore next
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
         // istanbul ignore next
         this.advertisingNodes.delete(storeId);
       }
-      this.frontend.wssSendRefreshRequired('plugins');
-      this.frontend.wssSendRefreshRequired('settings');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is online`, 5, 'success');
       this.emit('online', storeId);
@@ -2276,9 +2259,7 @@ const commissioningController = new CommissioningController({
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
     serverNode.lifecycle.offline.on(() => {
       this.log.notice(`Server node for ${storeId} is offline`);
-      this.matterbridgeInformation.matterbridgeEndAdvertise = true; // Set the end advertise flag to true, so the frontend won't show the QR code anymore
-      this.frontend.wssSendRefreshRequired('plugins');
-      this.frontend.wssSendRefreshRequired('settings');
+      this.advertisingNodes.delete(storeId);
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
       this.emit('offline', storeId);
@@ -2293,9 +2274,6 @@ const commissioningController = new CommissioningController({
       switch (fabricAction) {
         case FabricAction.Added:
           this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
-          clearTimeout(this.endAdvertiseTimeout);
-          this.endAdvertiseTimeout = undefined;
-          this.matterbridgeInformation.matterbridgeEndAdvertise = true; // Set the end advertise flag to true, so the frontend won't show the QR code anymore
           action = 'added';
           break;
         case FabricAction.Removed:
@@ -2306,7 +2284,6 @@ const commissioningController = new CommissioningController({
           break;
       }
       this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
-      this.frontend.wssSendRefreshRequired('fabrics');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
@@ -2316,7 +2293,6 @@ const commissioningController = new CommissioningController({
      */
     serverNode.events.sessions.opened.on((session) => {
       this.log.notice(`Session opened on server node for ${storeId}: ${debugStringify(session)}`);
-      this.frontend.wssSendRefreshRequired('sessions');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
@@ -2325,14 +2301,12 @@ const commissioningController = new CommissioningController({
      */
     serverNode.events.sessions.closed.on((session) => {
       this.log.notice(`Session closed on server node for ${storeId}: ${debugStringify(session)}`);
-      this.frontend.wssSendRefreshRequired('sessions');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
     serverNode.events.sessions.subscriptionsChanged.on((session) => {
       this.log.notice(`Session subscriptions changed on server node for ${storeId}: ${debugStringify(session)}`);
-      this.frontend.wssSendRefreshRequired('sessions');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
@@ -2341,42 +2315,16 @@ const commissioningController = new CommissioningController({
   }
 
   /**
-   * Starts the 15 minutes timer to advice that advertising for the specified server node is ended.
-   *
-   * @param {ServerNode} [matterServerNode] - The server node to start.
-   */
-  private startEndAdvertiseTimer(matterServerNode: ServerNode) {
-    if (this.endAdvertiseTimeout) {
-      this.log.debug(`Clear ${matterServerNode.id} server node end advertise timer`);
-      clearTimeout(this.endAdvertiseTimeout);
-    }
-    this.log.debug(`Starting ${matterServerNode.id} server node end advertise timer`);
-    this.endAdvertiseTimeout = setTimeout(
-      () => {
-        if (matterServerNode.lifecycle.isCommissioned) return;
-        this.matterbridgeInformation.matterbridgeEndAdvertise = true;
-        this.frontend.wssSendRefreshRequired('plugins');
-        this.frontend.wssSendRefreshRequired('settings');
-        this.frontend.wssSendRefreshRequired('fabrics');
-        this.frontend.wssSendRefreshRequired('sessions');
-        this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(matterServerNode) } });
-        this.frontend.wssSendSnackbarMessage(`Advertising stopped.`, 0);
-        this.log.notice(`Advertising stopped.`);
-      },
-      15 * 60 * 1000,
-    ).unref();
-  }
-
-  /**
-   * Starts the 15 minutes timer to advice that advertising for the specified server node is ended.
+   * Gets the matter sanitized data of the specified server node.
    *
    * @param {ServerNode} [serverNode] - The server node to start.
-   * @returns {ApiDevicesMatter} The sanitized data of the server node.
+   * @returns {ApiMatter} The sanitized data of the server node.
    */
-  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiDevicesMatter {
+  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiMatterResponse {
     const advertiseTime = this.advertisingNodes.get(serverNode.id) || 0;
     return {
       id: serverNode.id,
+      online: serverNode.lifecycle.isOnline,
       commissioned: serverNode.state.commissioning.commissioned,
       advertising: advertiseTime > Date.now() - 15 * 60 * 1000,
       advertiseTime,
@@ -2417,36 +2365,6 @@ const commissioningController = new CommissioningController({
       this.log.info(`Closed ${matterServerNode.id} server node`);
     } catch (error) {
       this.log.error(`Failed to close ${matterServerNode.id} server node: ${error instanceof Error ? error.message : error}`);
-    }
-  }
-
-  /**
-   * Advertises the specified server node.
-   *
-   * @param {ServerNode} [matterServerNode] - The server node to advertise.
-   * @returns {Promise<{ qrPairingCode: string, manualPairingCode: string } | undefined>} A promise that resolves to the pairing codes if the server node is advertised, or undefined if not.
-   */
-  async advertiseServerNode(matterServerNode?: ServerNode): Promise<{ qrPairingCode: string; manualPairingCode: string } | undefined> {
-    if (matterServerNode) {
-      await matterServerNode.env.get(DeviceCommissioner)?.allowBasicCommissioning();
-      const { qrPairingCode, manualPairingCode } = matterServerNode.state.commissioning.pairingCodes;
-      this.advertisingNodes.set(matterServerNode.id, Date.now());
-      this.log.notice(`Started advertising for ${matterServerNode.id} with the following pairing codes: qrPairingCode ${qrPairingCode}, manualPairingCode ${manualPairingCode}`);
-      return { qrPairingCode, manualPairingCode };
-    }
-  }
-
-  /**
-   * Stop advertise the specified server node.
-   *
-   * @param {ServerNode} [matterServerNode] - The server node to advertise.
-   * @returns {Promise<void>} A promise that resolves when the server node has stopped advertising.
-   */
-  async stopAdvertiseServerNode(matterServerNode?: ServerNode): Promise<void> {
-    if (matterServerNode && matterServerNode.lifecycle.isOnline) {
-      await matterServerNode.env.get(DeviceCommissioner)?.endCommissioning();
-      this.advertisingNodes.delete(matterServerNode.id);
-      this.log.notice(`Stopped advertising for ${matterServerNode.id}`);
     }
   }
 
@@ -2563,12 +2481,11 @@ const commissioningController = new CommissioningController({
       }
     }
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-    if (plugin.addedDevices !== undefined) plugin.addedDevices++;
     // Add the device to the DeviceManager
     this.devices.set(device);
     // Subscribe to the reachable$Changed event
     await this.subscribeAttributeChanged(plugin, device);
-    this.log.info(`Added and registered bridged endpoint (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
+    this.log.info(`Added and registered bridged endpoint (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
 
   /**
@@ -2594,9 +2511,8 @@ const commissioningController = new CommissioningController({
         return;
       }
       await device.delete();
-      this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
-      if (plugin.addedDevices !== undefined) plugin.addedDevices--;
     } else if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
         // Nothing to do here since the server node has no aggregator node but only the device itself
@@ -2607,9 +2523,8 @@ const commissioningController = new CommissioningController({
         }
         await device.delete();
       }
-      this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
-      if (plugin.addedDevices !== undefined) plugin.addedDevices--;
     }
     // Remove the device from the DeviceManager
     this.devices.remove(device);
@@ -2646,17 +2561,20 @@ const commissioningController = new CommissioningController({
    * @returns {Promise<void>} A promise that resolves when the subscription is set up.
    */
   private async subscribeAttributeChanged(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
+    if (!plugin || !device || !device.plugin || !device.serialNumber || !device.uniqueId) return;
     this.log.info(`Subscribing attributes for endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) plugin ${plg}${plugin.name}${nf}`);
     if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform' && plugin.serverNode) {
       plugin.serverNode.eventsOf(BasicInformationServer).reachable$Changed?.on((reachable: boolean) => {
         this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
-        this.frontend.wssSendAttributeChangedMessage(device.plugin, device.serialNumber, device.uniqueId, 'BasicInformationServer', 'reachable', reachable);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, 'BasicInformationServer', 'reachable', reachable);
       });
     }
     if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) {
       device.eventsOf(BridgedDeviceBasicInformationServer).reachable$Changed.on((reachable: boolean) => {
         this.log.info(`Bridged endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
-        this.frontend.wssSendAttributeChangedMessage(device.plugin, device.serialNumber, device.uniqueId, 'BridgedDeviceBasicInformationServer', 'reachable', reachable);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, 'BridgedDeviceBasicInformationServer', 'reachable', reachable);
       });
     }
   }

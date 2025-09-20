@@ -92,7 +92,6 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(matterbridgeMock.matterbridgeInformation.matterbridgeLatestVersion).toBe('1.1.0');
     expect(matterbridgeMock.log.notice).toHaveBeenCalledWith('Matterbridge is out of date. Current version: 1.0.0. Latest version: 1.1.0.');
     expect(matterbridgeMock.frontend.wssSendSnackbarMessage).toHaveBeenCalledWith('Matterbridge latest update available', 0, 'info');
-    expect(matterbridgeMock.frontend.wssSendRefreshRequired).toHaveBeenCalledWith('matterbridgeLatestVersion');
     expect(matterbridgeMock.frontend.wssSendUpdateRequired).toHaveBeenCalled();
   });
 
@@ -142,7 +141,6 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(matterbridgeMock.matterbridgeInformation.matterbridgeDevVersion).toBe('1.1.0-dev-1');
     expect(matterbridgeMock.log.notice).toHaveBeenCalledWith('Matterbridge@dev is out of date. Current version: 1.0.0-dev-1. Latest dev version: 1.1.0-dev-1.');
     expect(matterbridgeMock.frontend.wssSendSnackbarMessage).toHaveBeenCalledWith('Matterbridge dev update available', 0, 'info');
-    expect(matterbridgeMock.frontend.wssSendRefreshRequired).toHaveBeenCalledWith('matterbridgeDevVersion');
     expect(matterbridgeMock.frontend.wssSendUpdateRequired).toHaveBeenCalled();
   });
 

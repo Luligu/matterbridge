@@ -248,7 +248,7 @@ export class Mdns extends Multicast {
    *
    * @param {Buffer} msg - The raw mDNS message buffer.
    * @returns {MdnsMessage} An object representing the decoded mDNS message.
-   * @throws Error if the message is too short.
+   * @throws {Error} if the message is too short.
    */
   decodeMdnsMessage(msg: Buffer): MdnsMessage {
     if (msg.length < 12) {
@@ -336,7 +336,7 @@ export class Mdns extends Multicast {
    * @param {Buffer} msg - The full mDNS message buffer.
    * @param {number} offset - The offset at which the DNS name starts.
    * @returns {{ name: string; newOffset: number }} An object with the decoded name and the new offset.
-   * @throws Error if the offset exceeds the buffer length or too many iterations are performed.
+   * @throws {Error} if the offset exceeds the buffer length or too many iterations are performed.
    */
   decodeDnsName(msg: Buffer, offset: number): { name: string; newOffset: number } {
     const labels: string[] = [];

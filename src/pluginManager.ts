@@ -664,7 +664,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         plugin.platform = platform;
         plugin.loaded = true;
         plugin.registeredDevices = 0;
-        plugin.addedDevices = 0;
 
         await this.saveToStorage(); // Save the plugin to storage
 
@@ -805,7 +804,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         await this.matterbridge.removeAllBridgedEndpoints(plugin.name);
       }
       plugin.registeredDevices = undefined;
-      plugin.addedDevices = undefined;
       this.log.notice(`Shutdown of plugin ${plg}${plugin.name}${nt} completed`);
       this.emit('shutdown', plugin.name);
       return plugin;

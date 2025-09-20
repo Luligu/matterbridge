@@ -48,8 +48,6 @@ describe('Matterbridge matterjs', () => {
     });
     // await Promise.resolve();
 
-    expect((matterbridge as any).endAdvertiseTimeout).toBeDefined();
-
     // Check the starts the matter storage
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Starting matter node storage...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Matter node storage started`);
@@ -101,10 +99,6 @@ describe('Matterbridge matterjs', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge was fully decommissioned successfully!`);
   });
 
-  test('serverNode endAdvertiseTimeout', async () => {
-    expect((matterbridge as any).endAdvertiseTimeout).toBeDefined();
-  });
-
   test('serverNode fabricsChanged', async () => {
     matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), FabricAction.Added);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} added on server node`));
@@ -137,29 +131,6 @@ describe('Matterbridge matterjs', () => {
   test('stopServerNode undefined', async () => {
     await (matterbridge as any).stopServerNode();
     expect(loggerLogSpy).toHaveBeenCalledTimes(0);
-  });
-
-  test('stop advertise node', async () => {
-    await matterbridge.stopAdvertiseServerNode(matterbridge.serverNode);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Stopped advertising for Matterbridge`);
-  });
-
-  test('advertise node', async () => {
-    const pairing = await matterbridge.advertiseServerNode(matterbridge.serverNode);
-    expect(pairing).toBeDefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for Matterbridge`));
-  });
-
-  test('startEndAdvertiseTimer', async () => {
-    expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
-
-    jest.useFakeTimers();
-    (matterbridge as any).startEndAdvertiseTimer(matterbridge.serverNode);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Starting ${matterbridge.serverNode?.id} server node end advertise timer`));
-    jest.advanceTimersByTime(15 * 60 * 1000); // Advance time by 15 minutes
-    jest.useRealTimers();
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Advertising stopped.`));
   });
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {

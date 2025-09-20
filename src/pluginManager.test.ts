@@ -953,7 +953,6 @@ describe('PluginManager', () => {
     expect(plugin.platform).toBeDefined();
     expect(plugin.loaded).toBe(true);
     expect(plugin.registeredDevices).toBe(0);
-    expect(plugin.addedDevices).toBe(0);
     expect(plugin.configJson).toBeDefined();
     expect(plugin.schemaJson).toBeDefined();
   });

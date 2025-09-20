@@ -60,7 +60,6 @@ export interface BaseRegisteredPlugin {
   type: string;
   latestVersion?: string;
   devVersion?: string;
-  serialNumber?: string;
   homepage?: string;
   help?: string;
   changelog?: string;
@@ -71,22 +70,14 @@ export interface BaseRegisteredPlugin {
   loaded?: boolean;
   started?: boolean;
   configured?: boolean;
+  /** Signal that the config has changed and a restart is required */
   restartRequired?: boolean;
   registeredDevices?: number;
-  addedDevices?: number;
   configJson?: PlatformConfig;
   schemaJson?: PlatformSchema;
   hasWhiteList?: boolean;
   hasBlackList?: boolean;
-}
-
-// Simplified interface for sending the plugins data to the frontend
-export interface FrontendRegisteredPlugin extends BaseRegisteredPlugin {
-  paired?: boolean;
-  qrPairingCode?: string;
-  manualPairingCode?: string;
-  fabricInformations?: SanitizedExposedFabricInformation[];
-  sessionInformations?: SanitizedSession[];
+  matter?: ApiMatterResponse;
 }
 
 // Define an interface for storing the system information
@@ -123,14 +114,6 @@ export interface MatterbridgeInformation {
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
   matterbridgeDevVersion: string;
-  matterbridgeSerialNumber: string;
-  matterbridgeAdvertise: boolean | undefined;
-  matterbridgeEndAdvertise: boolean;
-  matterbridgePaired: boolean | undefined;
-  matterbridgeQrPairingCode: string | undefined;
-  matterbridgeManualPairingCode: string | undefined;
-  matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
-  matterbridgeSessionInformations: SanitizedSession[] | undefined;
   frontendVersion?: string;
   bridgeMode: string;
   restartMode: string;
@@ -144,9 +127,9 @@ export interface MatterbridgeInformation {
   fileLogger: boolean;
   matterLoggerLevel: number;
   matterFileLogger: boolean;
-  mattermdnsinterface: string | undefined;
-  matteripv4address: string | undefined;
-  matteripv6address: string | undefined;
+  matterMdnsInterface: string | undefined;
+  matterIpv4Address: string | undefined;
+  matterIpv6Address: string | undefined;
   matterPort: number;
   matterDiscriminator: number | undefined;
   matterPasscode: number | undefined;
@@ -188,11 +171,12 @@ export interface ApiDevices {
   reachable: boolean;
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
   cluster: string;
-  matter?: ApiDevicesMatter;
+  matter?: ApiMatterResponse;
 }
 
-export interface ApiDevicesMatter {
+export interface ApiMatterResponse {
   id: string;
+  online: boolean;
   commissioned: boolean;
   advertising: boolean;
   advertiseTime: number;

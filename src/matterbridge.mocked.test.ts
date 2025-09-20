@@ -1033,12 +1033,12 @@ describe('Matterbridge mocked', () => {
     await matterbridge.initialize();
     matterbridge.plugins.clear();
     // prettier-ignore-start
-    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'AccessoryPlatform', version: '1.0.0', addedDevices: 0, description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'AccessoryPlatform', version: '1.0.0', addedDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'AccessoryPlatform', version: '1.0.0', addedDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock4', path: './src/mock/plugin4/package.json', type: 'DynamicPlatform', version: '1.0.0', addedDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock5', path: './src/mock/plugin5/package.json', type: 'DynamicPlatform', version: '1.0.0', addedDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock6', path: './src/mock/plugin6/package.json', type: 'DynamicPlatform', version: '1.0.0', addedDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'AccessoryPlatform', version: '1.0.0', registeredDevices: 0, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'AccessoryPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'AccessoryPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock4', path: './src/mock/plugin4/package.json', type: 'DynamicPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock5', path: './src/mock/plugin5/package.json', type: 'DynamicPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock6', path: './src/mock/plugin6/package.json', type: 'DynamicPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
     // prettier-ignore-end
     const plugin1 = matterbridge.plugins.get('matterbridge-mock1') as RegisteredPlugin;
     plugin1.enabled = true;

@@ -9,10 +9,8 @@
   "eslint.useFlatConfig": true,
   "eslint.trace.server": "off",
   "eslint.workingDirectories": [
-    {
-      "directory": ".",
-      "changeProcessCWD": true
-    }
+    { "directory": "./", "changeProcessCWD": true },
+    { "directory": "./frontend", "changeProcessCWD": true },
   ],
   "editor.tabSize": 2
 }

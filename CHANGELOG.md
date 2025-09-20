@@ -8,6 +8,37 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.2.8] - 2025-09-20
+
+### Breaking Changes
+
+### Added
+
+- [logger]: Set different color for log names to matterbridge, frontend and matter.js.
+- [frontend]: Bumped `frontend` version to 3.0.0.
+- [frontend]: Bumped `react` version to 19.1.1.
+- [frontend]: Bumped `react-router` version to 7.9.1.
+- [frontend]: Bumped `@mui` version to 7.3.2.
+- [frontend]: Bumped `@rjsf` version to 5.24.13.
+- [frontend]: Dropped `Create React App (CRA)` and moved to `Vite`.
+- [frontend]: Added `eslint` and `vitest`.
+- [frontend]: Typed broadcast messages.
+- [frontend]: Typed api request and api response messages.
+- [frontend]: Updated the QRCode component to be used in bridge mode and childbridge mode and for the devices with mode='server'. Features: turn on and off pairing mode, resend mDns advertise, remove single fabrics, formatted manual paring code, copy to clipboard the manual pairing code.
+
+### Changed
+
+- [package]: Updated dependencies.
+
+### Fixed
+
+- [childbridge]: Fixed the case when the plugin didn't restart in childbridge mode when it didn't add any device.
+- [shutdown]: Fixed the case when shutting down the http(s) server took 10 seconds.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.2.7] - 2025-09-14
 
 ### Breaking Changes
@@ -27,8 +58,6 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [package]: Updated dependencies.
 - [matterbridge.io]: Updated web site [matterbridge.io](matterbridge.io).
-
-### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

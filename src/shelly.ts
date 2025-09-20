@@ -29,7 +29,7 @@ import type { RequestOptions } from 'node:http';
 import { debugStringify } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
-import { WS_ID_SHELLY_MAIN_UPDATE, WS_ID_SHELLY_SYS_UPDATE } from './frontend.js';
+import { WsBroadcastMessageId } from './frontendTypes.js';
 
 let verifyIntervalSecs = 15;
 let verifyTimeoutSecs = 600;
@@ -66,7 +66,7 @@ export async function getShellySysUpdate(matterbridge: Matterbridge): Promise<vo
     if (updates.length === 0) return;
 
     matterbridge.matterbridgeInformation.shellySysUpdate = true;
-    matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_SYS_UPDATE, 'shelly-sys-update', { available: true });
+    matterbridge.frontend.wssBroadcastMessage({ id: WsBroadcastMessageId.ShellySysUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', params: { available: true } });
     for (const { name } of updates) {
       if (!name) continue;
       matterbridge.log.notice(`Shelly system update available: ${name}`);
@@ -90,7 +90,7 @@ export async function triggerShellySysUpdate(matterbridge: Matterbridge): Promis
     matterbridge.log.notice('Installing Shelly system update...');
     matterbridge.matterbridgeInformation.shellySysUpdate = false;
     matterbridge.frontend.wssSendSnackbarMessage('Installing Shelly system update...', 15);
-    matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_SYS_UPDATE, 'shelly-sys-update', { available: false });
+    matterbridge.frontend.wssBroadcastMessage({ id: WsBroadcastMessageId.ShellySysUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', params: { available: false } });
 
     // Begin polling update status
     await verifyShellyUpdate(matterbridge, '/api/updates/sys/status', 'Shelly system update');
@@ -111,7 +111,7 @@ export async function getShellyMainUpdate(matterbridge: Matterbridge): Promise<v
     if (updates.length === 0) return;
 
     matterbridge.matterbridgeInformation.shellyMainUpdate = true;
-    matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_MAIN_UPDATE, 'shelly-main-update', { available: true });
+    matterbridge.frontend.wssBroadcastMessage({ id: WsBroadcastMessageId.ShellyMainUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_main_update', params: { available: true } });
     for (const { name } of updates) {
       if (!name) continue;
       matterbridge.log.notice(`Shelly software update available: ${name}`);
@@ -135,7 +135,7 @@ export async function triggerShellyMainUpdate(matterbridge: Matterbridge): Promi
     matterbridge.log.notice('Installing Shelly software update...');
     matterbridge.matterbridgeInformation.shellyMainUpdate = false;
     matterbridge.frontend.wssSendSnackbarMessage('Installing Shelly software update...', 15);
-    matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_MAIN_UPDATE, 'shelly-main-update', { available: false });
+    matterbridge.frontend.wssBroadcastMessage({ id: WsBroadcastMessageId.ShellyMainUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_main_update', params: { available: false } });
 
     // Begin polling the update status
     await verifyShellyUpdate(matterbridge, '/api/updates/main/status', 'Shelly software update');

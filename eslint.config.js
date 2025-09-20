@@ -1,6 +1,10 @@
 // eslint.config.js
 
 // This ESLint configuration is designed for a TypeScript project.
+// @ts-check
+
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
 
 import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
@@ -13,6 +17,7 @@ import pluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import pluginJest from 'eslint-plugin-jest';
 import pluginVitest from '@vitest/eslint-plugin';
 
+/** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
   {
     name: 'Global Ignores',
@@ -20,10 +25,14 @@ export default defineConfig([
   },
   js.configs.recommended,
   ...tseslint.configs.strict,
-  // Comment the previous line and uncomment the following line if you want to use strict with type checking
-  // ...tseslint.configs.strictTypeChecked,
+  // Spread strict type-aware configs directly
+  // ...tseslint.configs.strictTypeChecked.map((config) => ({
+  //   ...config,
+  //   files: ['src/**/*.{ts,tsx}'],
+  // })),
   pluginImport.flatConfigs.recommended,
   pluginN.configs['flat/recommended-script'],
+  // @ts-expect-error: Missing types for pluginPromise
   pluginPromise.configs['flat/recommended'],
   pluginJsdoc.configs['flat/recommended'],
   pluginPrettierRecommended, // Prettier plugin must be the last plugin in the list
@@ -69,13 +78,14 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.json',
+        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
         sourceType: 'module',
         ecmaVersion: 'latest',
       },
     },
     rules: {
       // Override/add rules specific to typescript files here
-      'no-unused-vars': 'off', // Disable base rule for unused variables in test files
+      'no-unused-vars': 'off', // Disable base rule for unused variables
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -97,6 +107,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.jest.json', // Use a separate tsconfig for Jest tests with "isolatedModules": true
+        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
         sourceType: 'module',
         ecmaVersion: 'latest',
       },
@@ -123,6 +134,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.jest.json',
+        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
         sourceType: 'module',
         ecmaVersion: 'latest',
       },
