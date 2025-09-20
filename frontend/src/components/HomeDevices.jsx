@@ -28,30 +28,9 @@ import { mdiSortAscending, mdiSortDescending } from '@mdi/js';
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
+import { getQRColor } from './getQRColor';
 import { debug } from '../App';
 // const debug = true;
-
-/**
- * Get the QR code color based on the matter's state.
- * @param {*} matter 
- * @returns 'red' if no pairing code, 'var(--primary-color)' if not commissioned but has pairing codes,
- *          'var(--secondary-color)' if commissioned but no active sessions or subscriptions,
- *          'var(--div-text-color)' otherwise.
- */
-const getQRColor = (matter) => {
-  if (matter === undefined) return 'red';
-  if (!matter.qrPairingCode && !matter.manualPairingCode && !matter.fabricInformations && !matter.sessionInformations) return 'red';
-  if (matter.commissioned === false && matter.qrPairingCode && matter.manualPairingCode) return 'var(--primary-color)';
-
-  var sessions = 0;
-  var subscriptions = 0;
-  for (const session of matter.sessionInformations ?? []) {
-    if (session.fabric && session.isPeerActive === true) sessions++;
-    if (session.numberOfActiveSubscriptions > 0) subscriptions += session.numberOfActiveSubscriptions;
-  }
-  if (matter.commissioned === true && matter.fabricInformations && matter.sessionInformations && (sessions === 0 || subscriptions === 0)) return 'var(--secondary-color)';
-  return 'var(--div-text-color)';
-};
 
 /**
  * Get the unique row ID for a device.
@@ -297,16 +276,31 @@ function HomeDevices({storeId, setStoreId}) {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required') {
-          /*if (debug)*/ console.log(`HomeDevices received refresh_required: changed=${msg.params.changed} and sending /api/plugins request`);
+        // 'settings' | 'plugins' | 'devices' | 'matter';
+        if (msg.method === 'refresh_required' && msg.params.changed !== 'matter') {
+          if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed} and sending /api/plugins request`);
           sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
+        if (msg.method === 'refresh_required' && msg.params.changed === 'matter') {
+          if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed} and setting matter id ${msg.params.matter?.id}`);
+          setMixedDevices(prev => {
+            const i = prev.findIndex(d => d.name.replaceAll(' ', '') === msg.params.matter?.id);
+            if (i < 0) {
+              if (debug) console.debug(`HomeDevices: matter id ${msg.params.matter?.id} not found`);
+              return prev;
+            }
+            const next = [...prev];
+            next[i] = { ...next[i], matter: msg.params.matter };
+            if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed} and set matter id ${msg.params.matter?.id}`);
+            return next;
+          });
+        }
         if (msg.method === 'restart_required') {
-          if(debug) console.log('HomeDevices received restart_required');
+          if (debug) console.log('HomeDevices received restart_required');
           setRestart(true);
         }
         if (msg.method === 'restart_not_required') {
-          if(debug) console.log('HomeDevices received restart_not_required');
+          if (debug) console.log('HomeDevices received restart_not_required');
           setRestart(false);
         }
         if (msg.method === 'state_update') {
@@ -367,7 +361,7 @@ function HomeDevices({storeId, setStoreId}) {
           }
         }
         if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
-          if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'no select devices'}:`, msg.response);
+          if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'without select devices'}:`, msg.response);
           if(msg.response && msg.response.length > 0) {
             setSelectDevices((prevSelectDevices) => {
               // Filter out devices not from the current plugin
@@ -386,7 +380,7 @@ function HomeDevices({storeId, setStoreId}) {
 
     return () => {
       removeListener(handleWebSocketMessage);
-      if(debug) console.log('HomeDevices removed WebSocket listener');
+      if(debug) console.log(`HomeDevices removed WebSocket listener`);
     };
   }, [plugins, addListener, removeListener, sendMessage, isSelected]);
   
@@ -413,7 +407,7 @@ function HomeDevices({storeId, setStoreId}) {
     }
   }, [plugins, devices, selectDevices, setMixedDevices]);
   
-  // Send API requests when online
+  // Send API requests when online or mounting
   useEffect(() => {
     if (online) {
       if(debug) console.log('HomeDevices sending /api/settings and /api/plugins requests');

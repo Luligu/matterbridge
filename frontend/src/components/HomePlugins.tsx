@@ -33,9 +33,10 @@ import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import { StatusIndicator } from './StatusIndicator';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
-import { debug } from '../App';
 import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { getQRColor } from './getQRColor';
+import { debug } from '../App';
 // const debug = true;
 
 interface HomePluginsTableProps {
@@ -120,21 +121,6 @@ function HomePlugins({_storeId, setStoreId}: HomePluginsProps) {
     status: true,
   });
 
-  const getQRColor = (plugin: BaseRegisteredPlugin) => {
-    if (plugin === undefined || plugin.matter === undefined) return 'red';
-    if (!plugin.matter.fabricInformations && !plugin.matter.qrPairingCode && !plugin.matter.manualPairingCode) return 'red';
-    if (plugin.matter.commissioned === false && plugin.matter.qrPairingCode && plugin.matter.manualPairingCode) return 'var(--primary-color)';
-
-    let sessions = 0;
-    let subscriptions = 0;
-    for (const session of plugin.matter.sessionInformations ?? []) {
-      if (session.fabric && session.isPeerActive === true) sessions++;
-      if (session.numberOfActiveSubscriptions > 0) subscriptions += session.numberOfActiveSubscriptions;
-    }
-    if (plugin.matter.commissioned === true && plugin.matter.fabricInformations && plugin.matter.sessionInformations && (sessions === 0 || subscriptions === 0)) return 'var(--secondary-color)';
-    return 'var(--div-text-color)';
-  };
-
   const pluginsColumns = [
     {
       Header: 'Name',
@@ -197,7 +183,7 @@ function HomePlugins({_storeId, setStoreId}: HomePluginsProps) {
       Cell: ({ row: plugin }: { row: { original: BaseRegisteredPlugin } }) => (
         <div style={{ margin: '0px', padding: '0px', gap: '4px', display: 'flex', flexDirection: 'row' }}>
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
-            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: getQRColor(plugin.original) }} onClick={() => { if(plugin.original?.matter?.id) setStoreId(plugin.original?.matter?.id) }} size="small"><QrCode2/></IconButton></Tooltip>
+            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: getQRColor(plugin.original.matter) }} onClick={() => { if(plugin.original?.matter?.id) setStoreId(plugin.original?.matter?.id) }} size="small"><QrCode2/></IconButton></Tooltip>
           }
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
             <Tooltip title="Restart the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => handleRestartPlugin(plugin.original)} size="small"><RestartAltIcon/></IconButton></Tooltip>
@@ -253,9 +239,23 @@ function HomePlugins({_storeId, setStoreId}: HomePluginsProps) {
     const handleWebSocketMessage = (msg: WsMessage) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && (msg.params.changed === 'plugins' || msg.params.changed === 'matter')) {
+        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'plugins') {
           if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and sending /api/plugins request`);
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+        }
+        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'matter') {
+          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and setting matter id ${msg.params.matter?.id}`);
+          setPlugins((prevPlugins) => {
+            const i = prevPlugins.findIndex(p => p.matter?.id === msg.params.matter?.id);
+            if (i < 0) {
+              if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and matter id ${msg.params.matter?.id} not found`);
+              return prevPlugins;
+            }
+            if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} set matter id ${msg.params.matter?.id}`);
+            const next = [...prevPlugins];
+            next[i] = { ...next[i], matter: msg.params.matter };
+            return next;
+          });
         }
         if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'settings') {
           if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
@@ -283,7 +283,7 @@ function HomePlugins({_storeId, setStoreId}: HomePluginsProps) {
     };
   }, [addListener, removeListener, sendMessage]);
   
-  // Send API requests when online
+  // Send API requests when online or mounting
   useEffect(() => {
     if (online) {
       if(debug) console.log('HomePlugins sending api requests');

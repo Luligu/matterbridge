@@ -195,36 +195,6 @@ describe('Matterbridge frontend', () => {
     matterbridge.hasCleanupStarted = false;
   });
 
-  test('Frontend getMatterDataFromDevice', () => {
-    const device = {
-      mode: 'server',
-      serverNode: {
-        id: 'storeId',
-        lifecycle: { isOnline: true },
-        state: {
-          basicInformation: { serialNumber: '12345' },
-          commissioning: { commissioned: true, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: '123' }, fabrics: {} },
-          administratorCommissioning: { windowStatus: 0 },
-          sessions: { sessions: {} },
-        },
-      },
-      serverContext: {},
-    };
-    expect((frontend as any).getMatterDataFromDevice(device)).toEqual({
-      advertiseTime: 0,
-      advertising: false,
-      commissioned: true,
-      fabricInformations: [],
-      id: 'storeId',
-      manualPairingCode: '123',
-      online: true,
-      qrPairingCode: 'QR',
-      sessionInformations: [],
-      serialNumber: '12345',
-      windowStatus: 0,
-    });
-  });
-
   test('Frontend getClusterTextFromDevice', () => {
     // Undefined if not active
     expect((frontend as any).getClusterTextFromDevice({ lifecycle: { isReady: false } })).toBe('');

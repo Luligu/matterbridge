@@ -159,6 +159,22 @@ function QRDiv({ id }: QRDivProps) {
   if (!matter || !online) {
     if(debug) console.log('QRDiv rendering undefined state');
     return null;
+  } else if (!matter.online) {
+    if(debug) console.log('QRDiv rendering offline state');
+    return (
+      <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>
+        <div className="MbfWindowHeader" style={{ height: '30px', justifyContent: 'space-between' }}>
+          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Server node</p>
+          <div className="MbfWindowHeaderFooterIcons">
+          </div>
+        </div>
+        <p className="MbfWindowHeaderText" style={{ overflow: 'hidden', maxWidth: '280px', textOverflow: 'ellipsis', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
+        <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'red' }}>Server offline: restart to commission</p>
+        <div className="MbfWindowFooter">
+          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Serial number: {matter.serialNumber}</p>
+        </div>
+      </div>
+    );
   } else if (matter.advertising && matter.qrPairingCode && matter.manualPairingCode) {
     if(debug) console.log('QRDiv rendering advertising state');
     return (

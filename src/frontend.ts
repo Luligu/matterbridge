@@ -926,18 +926,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Retrieves the commissioned status, matter pairing codes, fabrics and sessions from a given device in server mode.
-   *
-   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint to retrieve the data from.
-   * @returns {ApiMatterResponse | undefined} An ApiDevicesMatter object or undefined if not found.
-   */
-  private getMatterDataFromDevice(device: MatterbridgeEndpoint): ApiMatterResponse | undefined {
-    if (device.mode === 'server' && device.serverNode) {
-      return this.matterbridge.getServerNodeData(device.serverNode);
-    }
-  }
-
-  /**
    * Retrieves the cluster text description from a given device.
    * The output is a string with the attributes description of the cluster servers in the device to show in the frontend.
    *
@@ -1100,7 +1088,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         uniqueId: device.uniqueId,
         reachable: this.getReachability(device),
         powerSource: this.getPowerSource(device),
-        matter: this.getMatterDataFromDevice(device),
+        matter: device.mode === 'server' && device.serverNode ? this.matterbridge.getServerNodeData(device.serverNode) : undefined,
         cluster: this.getClusterTextFromDevice(device),
       });
     }
@@ -1349,6 +1337,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const localData = data;
         if (!isValidString(data.params.pluginNameOrPath, 10)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginNameOrPath in /api/addplugin' });
+          this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
           return;
         }
         data.params.pluginNameOrPath = (data.params.pluginNameOrPath as string).replace(/@.*$/, '');

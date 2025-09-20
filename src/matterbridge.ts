@@ -165,9 +165,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public shutdown = false;
   private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
 
-  // Matterbridge log files
+  // Matterbridge logger
   public log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
   public matterbridgeLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+
+  // Matter logger
+  public matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   public matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
 
   public plugins = new PluginManager(this);
@@ -192,9 +195,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private sigtermHandler: NodeJS.SignalsListener | undefined;
   private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
   private rejectionHandler: NodeJS.UnhandledRejectionListener | undefined;
-
-  // Matter logger
-  matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Matter environment
   environment = Environment.default;
@@ -1690,6 +1690,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('bridge_started');
       this.log.notice('Matterbridge bridge started successfully');
+      this.frontend.wssSendRefreshRequired('plugins');
     }, this.startMatterIntervalMs);
   }
 
@@ -1797,6 +1798,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Logger.get('LogServerNode').info(this.serverNode);
       this.emit('childbridge_started');
       this.log.notice('Matterbridge childbridge started successfully');
+      this.frontend.wssSendRefreshRequired('plugins');
     }, this.startMatterIntervalMs);
   }
 
@@ -2221,9 +2223,9 @@ const commissioningController = new CommissioningController({
     serverNode.lifecycle.commissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`);
       this.advertisingNodes.delete(storeId);
-      this.frontend.wssSendRefreshRequired('settings');
-      this.frontend.wssSendRefreshRequired('plugins');
-      this.frontend.wssSendRefreshRequired('devices');
+      // this.frontend.wssSendRefreshRequired('settings');
+      // this.frontend.wssSendRefreshRequired('plugins');
+      // this.frontend.wssSendRefreshRequired('devices');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
     });
 
@@ -2231,9 +2233,9 @@ const commissioningController = new CommissioningController({
     serverNode.lifecycle.decommissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`);
       this.advertisingNodes.delete(storeId);
-      this.frontend.wssSendRefreshRequired('settings');
-      this.frontend.wssSendRefreshRequired('plugins');
-      this.frontend.wssSendRefreshRequired('devices');
+      // this.frontend.wssSendRefreshRequired('settings');
+      // this.frontend.wssSendRefreshRequired('plugins');
+      // this.frontend.wssSendRefreshRequired('devices');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
     });
@@ -2253,8 +2255,8 @@ const commissioningController = new CommissioningController({
         // istanbul ignore next
         this.advertisingNodes.delete(storeId);
       }
-      this.frontend.wssSendRefreshRequired('plugins');
-      this.frontend.wssSendRefreshRequired('settings');
+      // this.frontend.wssSendRefreshRequired('settings');
+      // this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is online`, 5, 'success');
       this.emit('online', storeId);
@@ -2263,8 +2265,9 @@ const commissioningController = new CommissioningController({
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
     serverNode.lifecycle.offline.on(() => {
       this.log.notice(`Server node for ${storeId} is offline`);
-      this.frontend.wssSendRefreshRequired('plugins');
-      this.frontend.wssSendRefreshRequired('settings');
+      this.advertisingNodes.delete(storeId);
+      // this.frontend.wssSendRefreshRequired('settings');
+      // this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
       this.emit('offline', storeId);
