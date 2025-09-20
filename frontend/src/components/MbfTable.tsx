@@ -1,14 +1,25 @@
 // React
 import { useMemo, useRef, useState, memo } from 'react';
+
 // @mui/material
-import { Button, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, FormGroup, FormControlLabel, DialogActions } from '@mui/material';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import DialogActions from '@mui/material/DialogActions';
 import Checkbox from '@mui/material/Checkbox';
+
 // @mdi
 import Icon from '@mdi/react';
 import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
+
 // frontend
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 // Generic comparator used by MbTable sorting.
 function comparator<T extends Record<string, unknown>>(rowA: T, rowB: T, key: keyof T): number {
@@ -26,107 +37,7 @@ function comparator<T extends Record<string, unknown>>(rowA: T, rowB: T, key: ke
   return String(v1).localeCompare(String(v2));
 }
 
-/**
- * MbfTable — data table with sorting, sticky header, and column visibility controls.
- *
- * Summary
- * - Sticky header: Table header cells (`th`) are position: sticky; the parent container
- *   should control scrolling (set a fixed height and `overflow: auto`).
- * - Sorting: Click a header to cycle asc → desc → none. Sort is stable; ties keep input order.
- * - Visibility: Users can show/hide non-required columns via the gear icon dialog.
- * - Persistence: Sort and visibility preferences are stored in `localStorage` using the `name` prop
- *   to form keys: `${name}_table_order_by`, `${name}_table_order`, `${name}_column_visibility`.
- *
- * Row and cell rendering
- * - A cell value is read with `row[column.id]`.
- * - Boolean values render as a disabled checkbox for quick visual status.
- * - If `column.format` is provided and the value is a number, the formatted string is rendered.
- *
- * Sorting details
- * - Comparator rules: null/undefined < numbers (numeric sort) < booleans (false < true) < strings (localeCompare).
- * - Clicking a header toggles: ascending → descending → unsorted (restores original order).
- * - When values are equal, original row order is preserved (stable sort).
- *
- * Layout and scrolling guidance
- * - This component does not enforce its own scrollbars. Place it inside a container that defines
- *   height and `overflow: auto` to enable scrolling while keeping the header sticky.
- *
- * Column definition
- * @typedef {Object} Column
- * @property {string} id
- *   Unique key for the column. Used to read `row[id]`, identify the sort column, and persist
- *   user preferences. Must be stable and unique across the table.
- * @property {string} label
- *   Header text shown in the sticky header for this column.
- * @property {number} [minWidth]
- *   Minimum width in pixels applied to the header and cells. Helps keep columns readable.
- * @property {number} [maxWidth]
- *   Maximum width in pixels. When provided, cells clamp with `white-space: nowrap`,
- *   `overflow: hidden`, and `text-overflow: ellipsis` for graceful truncation.
- * @property {'left'|'center'|'right'} [align='left']
- *   Horizontal alignment for header and body cells.
- * @property {(value: number) => string} [format]
- *   Optional formatter used when the cell value is numeric. Non-numeric values are rendered as-is.
- * @property {boolean} [nosort=false]
- *   If true, disables sorting on this column: header click is ignored, cursor remains default,
- *   and any previously persisted sort on this column is ignored at render time.
- * @property {(value: any, rowKey: string|number, row: Object, column: Column) => import('react').ReactNode} [render]
- *   Optional cell renderer. When provided, it takes precedence over default rendering and
- *   returns JSX for the cell. The `rowKey` is the stable key used for the row, derived from
- *   `getRowKey(row)` or an internal fallback. Note: sorting still uses the raw `row[column.id]`
- *   value, not the rendered output.
- * @property {boolean} [hidden=false]
- *   If true, the column is not rendered initially. Users can still enable it unless `required`.
- * @property {boolean} [required=false]
- *   If true, the column is always visible and cannot be hidden via the dialog.
- *
- * Props
- * @param {Object} props
- * @param {string} props.name
- *   Unique table name used in the UI and to namespace persisted preferences in `localStorage`.
- * @param {Column[]} props.columns
- *   Column configuration array. See Column typedef for all options.
- * @param {Object[]} props.rows
- *   Data rows. Each cell is resolved as `row[column.id]`. For best React performance, provide
- *   a stable identifier per row via `getRowKey`.
- * @param {string | (row: Object) => (string|number)} [props.getRowKey]
- *   Optional string or function that returns a stable key for a row. If omitted, the first column value is
- *   used when available; otherwise an internal stable key is generated for the row object.
- *   Always use useCallback to memoize the getRowKey function:
- *   const getRowKey = useCallback((row) => row.code, []);
- * @param {string} props.footerLeft
- *   Text shown in the left side of the footer bar.
- * @param {string} props.footerRight
- *   Text shown in the right side of the footer bar.
- * @returns {JSX.Element}
- *
- * @example
- * // Using stable keys and selectively updating a single row so only that row re-renders
- * function DevicesTable() {
- *   const [rows, setRows] = useState(initialRows);
- *
- *   return (
- *     <MbTable
- *       name="Devices"
- *       columns={columns}
- *       rows={rows}
- *       getRowKey={(row) => row.code} // stable per-row key
- *     />
- *   );
- * }
- *
- * // Update a specific row (code: F123) to demonstrate selective re-render by key
- * setRows((prev) => {
- *   const idx = prev.findIndex(r => r.code === 'F123');
- *   if (idx === -1) return prev;
- *   const target = prev[idx];
- *   const updated = { ...target, population: (target.population || 0) + 1 };
- *   const next = prev.slice(); // shallow copy of the array container
- *   next[idx] = updated;       // replace only the changed row object
- *   return next;               // other rows keep reference => React skips re-render for them
- * });
- */
-export interface MbfTableColumn<T extends Record<string, unknown> = Record<string, unknown>> {
+export interface MbfTableColumn<T extends object> {
   id: string;
   label: string;
   minWidth?: number;
@@ -143,29 +54,32 @@ interface ColumnVisibility {
   [colId: string]: boolean;
 }
 
-interface MbfTableProps<T extends Record<string, unknown> = Record<string, unknown>> {
+interface MbfTableProps<T extends object> {
   name: string;
   columns: MbfTableColumn<T>[];
   rows: T[];
   getRowKey?: string | ((row: T) => string | number);
-  footerLeft: string;
-  footerRight: string;
+  footerLeft?: string;
+  footerRight?: string;
 }
 
-function MbfTable<T extends Record<string, unknown>>({ name, columns, rows, getRowKey, footerLeft, footerRight }: MbfTableProps<T>) {
+function MbfTable<T extends object>({ name, columns, rows, getRowKey, footerLeft, footerRight }: MbfTableProps<T>) {
   // Stable key fallback for rows without a natural id
   const rowKeyMapRef = useRef<WeakMap<T, string>>(new WeakMap());
   const nextRowKeySeqRef = useRef(1);
+
   const getStableRowKey = (row: T): string | number => {
     if (typeof getRowKey === 'string') {
-      if (row && row[getRowKey] != null) return row[getRowKey] as string | number;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (row && (row as any)[getRowKey] != null) return (row as any)[getRowKey] as string | number;
     }
     if (typeof getRowKey === 'function') {
       const k = getRowKey(row);
       if (k != null) return k;
     }
     const firstColId = columns?.[0]?.id;
-    if (firstColId && row && row[firstColId] != null) return row[firstColId] as string | number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (firstColId && row && (row as any)[firstColId] != null) return (row as any)[firstColId] as string | number;
     console.warn(`MbfTable(${name}): using fallback stable row key; consider providing getRowKey prop for better React performance`);
     let k = rowKeyMapRef.current.get(row);
     if (!k) {
@@ -206,7 +120,8 @@ function MbfTable<T extends Record<string, unknown>>({ name, columns, rows, getR
     if (!sortCol || sortCol.nosort) return rows;
     const wrapped = rows.map((el, index) => ({ el, index }));
     wrapped.sort((a, b) => {
-      const cmp = comparator<T>(a.el, b.el, orderBy as keyof T);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const cmp = comparator<any>(a.el as any, b.el as any, orderBy as string);
       if (cmp !== 0) return order === 'asc' ? cmp : -cmp;
       return a.index - b.index; // stable
     });
@@ -260,8 +175,9 @@ function MbfTable<T extends Record<string, unknown>>({ name, columns, rows, getR
     const next: ColumnVisibility = {};
     setColumnVisibility(next);
     try {
-      localStorage.setItem(`${name}_column_visibility`, JSON.stringify(next));
+      localStorage.removeItem(`${name}_column_visibility`);
     } catch { /**/ }
+    setConfigureVisibilityDialogOpen(false);
   };
 
   if(debug) console.log(`Rendering table ${name}${orderBy && order ? ` ordered by ${orderBy}:${order}` : ''}`);
@@ -350,7 +266,7 @@ function MbfTable<T extends Record<string, unknown>>({ name, columns, rows, getR
                     onClick={sortable ? () => handleRequestSort(column.id) : undefined}
                     style={{
                       margin: '0',
-                      padding: '4px 8px',
+                      padding: '5px 10px',
                       position: 'sticky',
                       top: 0,
                       minWidth: column.minWidth,
@@ -386,7 +302,8 @@ function MbfTable<T extends Record<string, unknown>>({ name, columns, rows, getR
                 {columns.map((column) => {
                   if (column.hidden) return null;
                   if (!column.required && visibleMap[column.id] === false) return null;
-                  const value = row[column.id as keyof T];
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const value = (row as any)[column.id];
                   return (
                     <td
                       key={column.id}
@@ -394,7 +311,7 @@ function MbfTable<T extends Record<string, unknown>>({ name, columns, rows, getR
                         border: 'none',
                         borderCollapse: 'collapse',
                         textAlign: column.align || 'left',
-                        padding: '4px 8px',
+                        padding: '5px 10px',
                         margin: '0',
                         maxWidth: column.maxWidth,
                         whiteSpace: column.maxWidth ? 'nowrap' : undefined,
@@ -421,13 +338,119 @@ function MbfTable<T extends Record<string, unknown>>({ name, columns, rows, getR
         </table>
       </div>
 
-      <div className="MbfWindowFooter" style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', border: 'none' }}>
-        <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerLeft}</p>
-        <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerRight}</p>
-      </div>
+      {(footerLeft || footerRight) && (
+        <div className="MbfWindowFooter" style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', border: 'none' }}>
+          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerLeft}</p>
+          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerRight}</p>
+        </div>
+      )}
 
     </div>
   );
 }
 
-export default memo(MbfTable);
+// Helper to preserve generics with React.memo
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function typedMemo<T>(c: T): T { return memo(c as any) as T; }
+
+/**
+ * MbfTable — data table with sorting, sticky header, and column visibility controls.
+ *
+ * Summary
+ * - Sticky header: Table header cells (`th`) are position: sticky; the parent container
+ *   should control scrolling (set a fixed height and `overflow: auto`).
+ * - Sorting: Click a header to cycle asc → desc → none. Sort is stable; ties keep input order.
+ * - Visibility: Users can show/hide non-required columns via the gear icon dialog.
+ * - Persistence: Sort and visibility preferences are stored in `localStorage` using the `name` prop
+ *   to form keys: `${name}_table_order_by`, `${name}_table_order`, `${name}_column_visibility`.
+ *
+ * Row and cell rendering
+ * - A cell value is read with `row[column.id]`.
+ * - Boolean values render as a disabled checkbox for quick visual status.
+ * - If `column.format` is provided and the value is a number, the formatted string is rendered.
+ *
+ * Sorting details
+ * - Comparator rules: null/undefined < numbers (numeric sort) < booleans (false < true) < strings (localeCompare).
+ * - Clicking a header toggles: ascending → descending → unsorted (restores original order).
+ * - When values are equal, original row order is preserved (stable sort).
+ *
+ * Layout and scrolling guidance
+ * - This component does not enforce its own scrollbars. Place it inside a container that defines
+ *   height and `overflow: auto` to enable scrolling while keeping the header sticky.
+ *
+ * Column definition
+ * @typedef {Object} Column
+ * @property {string} id
+ *   Unique key for the column. Used to read `row[id]`, identify the sort column, and persist
+ *   user preferences. Must be stable and unique across the table.
+ * @property {string} label
+ *   Header text shown in the sticky header for this column.
+ * @property {number} [minWidth]
+ *   Minimum width in pixels applied to the header and cells. Helps keep columns readable.
+ * @property {number} [maxWidth]
+ *   Maximum width in pixels. When provided, cells clamp with `white-space: nowrap`,
+ *   `overflow: hidden`, and `text-overflow: ellipsis` for graceful truncation.
+ * @property {'left'|'center'|'right'} [align='left']
+ *   Horizontal alignment for header and body cells.
+ * @property {(value: number) => string} [format]
+ *   Optional formatter used when the cell value is numeric. Non-numeric values are rendered as-is.
+ * @property {boolean} [nosort=false]
+ *   If true, disables sorting on this column: header click is ignored, cursor remains default,
+ *   and any previously persisted sort on this column is ignored at render time.
+ * @property {(value: any, rowKey: string|number, row: Object, column: Column) => import('react').ReactNode} [render]
+ *   Optional cell renderer. When provided, it takes precedence over default rendering and
+ *   returns JSX for the cell. The `rowKey` is the stable key used for the row, derived from
+ *   `getRowKey(row)` or an internal fallback. Note: sorting still uses the raw `row[column.id]`
+ *   value, not the rendered output.
+ * @property {boolean} [hidden=false]
+ *   If true, the column is not rendered initially. Users can still enable it unless `required`.
+ * @property {boolean} [required=false]
+ *   If true, the column is always visible and cannot be hidden via the dialog.
+ *
+ * Props
+ * @param {Object} props
+ * @param {string} props.name
+ *   Unique table name used in the UI and to namespace persisted preferences in `localStorage`.
+ * @param {MbfTableColumn[]} props.columns
+ *   Column configuration array. See Column typedef for all options.
+ * @param {Object[]} props.rows
+ *   Data rows. Each cell is resolved as `row[column.id]`. For best React performance, provide
+ *   a stable identifier per row via `getRowKey`.
+ * @param {string | (row: Object) => (string|number)} [props.getRowKey]
+ *   Optional string or function that returns a stable key for a row. If omitted, the first column value is
+ *   used when available; otherwise an internal stable key is generated for the row object.
+ *   Always use useCallback to memoize the getRowKey function:
+ *   const getRowKey = useCallback((row) => row.code, []);
+ * @param {string} props.footerLeft
+ *   Text shown in the left side of the footer bar.
+ * @param {string} props.footerRight
+ *   Text shown in the right side of the footer bar.
+ * @returns {JSX.Element}
+ *
+ * @example
+ * // Using stable keys and selectively updating a single row so only that row re-renders
+ * function DevicesTable() {
+ *   const [rows, setRows] = useState(initialRows);
+ *
+ *   return (
+ *     <MbTable
+ *       name="Devices"
+ *       columns={columns}
+ *       rows={rows}
+ *       getRowKey={(row) => row.code} // stable per-row key
+ *     />
+ *   );
+ * }
+ *
+ * // Update a specific row (code: F123) to demonstrate selective re-render by key
+ * setRows((prev) => {
+ *   const idx = prev.findIndex(r => r.code === 'F123');
+ *   if (idx === -1) return prev;
+ *   const target = prev[idx];
+ *   const updated = { ...target, population: (target.population || 0) + 1 };
+ *   const next = prev.slice(); // shallow copy of the array container
+ *   next[idx] = updated;       // replace only the changed row object
+ *   return next;               // other rows keep reference => React skips re-render for them
+ * });
+ */
+export default typedMemo(MbfTable);

@@ -1,8 +1,10 @@
 // React
 import { useContext } from 'react';
 
-// @mui
-import { CircularProgress, Box, Button } from '@mui/material';
+// @mui/material
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';

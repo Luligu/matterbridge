@@ -1,4 +1,3 @@
- 
 // React
 import { memo, useContext, useEffect, useState } from 'react';
 
@@ -8,8 +7,8 @@ import { SystemInformation } from '../../../src/matterbridgeTypes';
 // Frontend
 import { TruncatedText } from './TruncatedText';
 import { WebSocketContext } from './WebSocketProvider';
-import { debug } from '../App';
 import { isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { debug } from '../App';
 // const debug = true;
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo

@@ -1,13 +1,13 @@
- 
-
 // React
 import { useContext, useEffect, useState, useRef, memo } from 'react';
 
 // QRCode
 import { QRCodeSVG } from 'qrcode.react';
 
-// @mui
-import { IconButton, Tooltip, Button }  from '@mui/material';
+// @mui/material
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Button from '@mui/material/Button';
 
 // @mdi/js
 import Icon from '@mdi/react';

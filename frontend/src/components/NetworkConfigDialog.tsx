@@ -1,21 +1,19 @@
 // React
 import { useState } from 'react';
 
-// @mui
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  TextField,
-  FormControl,
-  FormLabel,
-} from '@mui/material';
-import Grid from '@mui/material/Grid'; // Using standard Grid component
+// @mui/material
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Radio from '@mui/material/Radio';
+import TextField from '@mui/material/TextField';
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
+import Grid from '@mui/material/Grid';
 
 interface NetworkConfigDialogProps {
   open: boolean;

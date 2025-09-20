@@ -2,8 +2,14 @@
 import { useState, useContext, useEffect, useRef, memo } from 'react';
 import { Link } from 'react-router';
 
-// @mui
-import { Tooltip, IconButton, Menu, MenuItem, Divider, ListItemIcon, ListItemText } from '@mui/material';
+// @mui/material
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Divider from '@mui/material/Divider';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 
 // @mui/icons-material
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';

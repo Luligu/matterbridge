@@ -1,8 +1,10 @@
 // React
 import React, { useState, useCallback, useMemo, createContext, useRef, ReactNode } from 'react';
 
-// @mui
-import { Alert, Box, IconButton } from '@mui/material';
+// @mui/material
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 
 // Notistack
