@@ -62,6 +62,8 @@ export default defineConfig([
       'jsdoc/tag-lines': ['error', 'any', { startLines: 1, endLines: 0 }], // Require a blank line before JSDoc comments
       'jsdoc/check-tag-names': ['warn', { definedTags: ['created', 'contributor', 'remarks'] }], // Allow custom tags
       'jsdoc/no-undefined-types': 'off',
+      'jsdoc/reject-any-type': 'off', // Allow 'any' type in JSDoc
+      'jsdoc/reject-function-type': 'off', // Allow function types in JSDoc
       'prettier/prettier': 'warn', // Use Prettier for formatting
     },
   },

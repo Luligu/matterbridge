@@ -8,9 +8,24 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.2.8] - 2025-09-20
+## [3.2.9] - 2025-09-??
 
 ### Breaking Changes
+
+### Added
+
+### Changed
+
+- [matter]: Bumped `matter.js` version to 0.15.4.
+- [package]: Updated dependencies.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
+## [3.2.8] - 2025-09-20
 
 ### Added
 
