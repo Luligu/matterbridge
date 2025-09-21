@@ -2608,6 +2608,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {DeviceEnergyManagement.EsaState} [esaState] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
    * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {DeviceEnergyManagement.OptOutStateEnum} [optOutState] - Indicate the current Opt-Out state of the ESA. The ESA may have a local user interface to allow the user to control this OptOutState. Defaults to `NoOptOut` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -2624,9 +2625,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     esaState: DeviceEnergyManagement.EsaState = DeviceEnergyManagement.EsaState.Online,
     absMinPower: number = 0,
     absMaxPower: number = 0,
+    optOutState: DeviceEnergyManagement.OptOutStateEnum = DeviceEnergyManagement.OptOutStateEnum.NoOptOut,
   ): this {
     this.behaviors.require(MatterbridgeDeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
       forecast: null, // A null value indicates that there is no forecast currently available
+      optOutState, // Indicate the current Opt-Out state of the ESA. The ESA may have a local user interface to allow the user to control this OptOutState
       powerAdjustmentCapability: null, // A null value indicates that no power adjustment is currently possible, and nor is any adjustment currently active
       esaType, // Fixed attribute
       esaCanGenerate, // Fixed attribute
