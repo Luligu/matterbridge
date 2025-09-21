@@ -1,6 +1,6 @@
  
 // React
-import { useState, useContext } from 'react';
+import { useState, useContext, memo } from 'react';
 
 // @mui/material
 import TextField from '@mui/material/TextField';
@@ -100,4 +100,4 @@ function Logs() {
   );
 }
 
-export default Logs;
+export default memo(Logs);
