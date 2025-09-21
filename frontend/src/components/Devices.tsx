@@ -318,7 +318,7 @@ function Devices() {
 
       {/* Icon View mode*/}
       {viewMode === 'icon' && (
-        <DevicesIcons filter={filter} devices={filteredDevices} />
+        <DevicesIcons filter={filter} />
       )}
 
     </div>

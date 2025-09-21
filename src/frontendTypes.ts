@@ -38,7 +38,13 @@ export interface ApiSelectDevice {
   name: string;
   configUrl?: string;
   icon?: string;
-  entities?: { name: string; description: string; icon?: string }[];
+  entities?: ApiSelectDeviceEntity[];
+}
+
+export interface ApiSelectDeviceEntity {
+  name: string;
+  description: string;
+  icon?: string;
 }
 
 export interface ApiSelectEntity {
@@ -224,13 +230,7 @@ export interface WsMessageApiShellyCreateSystemLogResponse extends WsMessageSucc
 
 export interface WsMessageApiShellyNetConfigRequest extends WsMessageBaseApiRequest {
   method: '/api/shellynetconfig';
-  params: {
-    type: 'static' | 'dhcp';
-    ip: string;
-    subnet: string;
-    gateway: string;
-    dns: string;
-  };
+  params: { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string };
 }
 export interface WsMessageApiShellyNetConfigResponse extends WsMessageSuccessApiResponse {
   method: '/api/shellynetconfig';

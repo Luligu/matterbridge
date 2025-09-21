@@ -1,5 +1,5 @@
 // React
-import { useState, useEffect, useContext, useRef } from 'react';
+import { useState, useEffect, useContext, useRef, memo } from 'react';
 
 // @mui/material
 import Radio from '@mui/material/Radio';
@@ -7,7 +7,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import TextField from '@mui/material/TextField';
-import Select from '@mui/material/Select';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
@@ -19,6 +19,8 @@ import { WebSocketContext } from './WebSocketProvider';
 import { NetworkConfigDialog } from './NetworkConfigDialog';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { debug } from '../App';
+import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 // const debug = true;
 
 function Settings() {
@@ -26,20 +28,20 @@ function Settings() {
   const { online, addListener, removeListener, sendMessage, getUniqueId } = useContext(WebSocketContext);
 
   // State variables
-  const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
-  const [systemInfo, setSystemInfo] = useState(null);
+  const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
+  const [systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
 
   // Refs
   const uniqueId = useRef(getUniqueId());
 
   useEffect(() => {
-    const handleWebSocketMessage = (msg) => {
+    const handleWebSocketMessage = (msg: WsMessage) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'refresh_required' && msg.params.changed === 'settings') {
+        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'settings') {
           if(debug) console.log(`Settings received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
           sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (msg.method === '/api/settings') {
+        if (isApiResponse(msg) && msg.method === '/api/settings') {
           if(debug) console.log('Settings received /api/settings:', msg.response);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
           setSystemInfo(msg.response.systemInformation);
@@ -79,7 +81,7 @@ function Settings() {
   );
 }
 
-function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
+function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeInfo: MatterbridgeInformation | null; systemInfo: SystemInformation | null }) {
   // WebSocket context
   const { sendMessage, getUniqueId } = useContext(WebSocketContext);
 
@@ -98,7 +100,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   // Network config dialog
   const [openNetConfig, setOpenNetConfig] = useState(false);
   const handleCloseNetConfig = () => setOpenNetConfig(false);
-  const handleSaveNetConfig = (config) => {
+  const handleSaveNetConfig = (config: { type: "static" | "dhcp"; ip: string; subnet: string; gateway: string; dns: string; }) => {
     if(debug) console.log('handleSaveNetConfig called with config:', config);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/shellynetconfig", src: "Frontend", dst: "Matterbridge", params: config });
   };
@@ -106,13 +108,13 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   // Change password dialog
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const handleCloseChangePassword = () => setOpenChangePassword(false);
-  const handleSaveChangePassword = (password) => {
+  const handleSaveChangePassword = (password: string) => {
     if(debug) console.log('handleSaveChangePassword called with password:', password);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setpassword', value: password } });
   };
 
   useEffect(() => {
-    if (matterbridgeInfo.bridgeMode === undefined) return;
+    if (!matterbridgeInfo) return;
     setSelectedBridgeMode(matterbridgeInfo.bridgeMode==='bridge'?'bridge':'childbridge'); 
     setSelectedMbLoggerLevel(matterbridgeInfo.loggerLevel.charAt(0).toUpperCase() + matterbridgeInfo.loggerLevel.slice(1));
     setLogOnFileMb(matterbridgeInfo.fileLogger);
@@ -128,28 +130,28 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   }, []);
 
   // Define a function to handle change bridge mode 
-  const handleChangeBridgeMode = (event) => {
+  const handleChangeBridgeMode = (event: React.ChangeEvent<HTMLInputElement>) => {
     if(debug) console.log('handleChangeBridgeMode called with value:', event.target.value);
     setSelectedBridgeMode(event.target.value);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setbridgemode', value: event.target.value } });
   };
 
   // Define a function to handle change debug level
-  const handleChangeMbLoggerLevel = (event) => {
+  const handleChangeMbLoggerLevel = (event: SelectChangeEvent) => {
     if(debug) console.log('handleChangeMbLoggerLevel called with value:', event.target.value);
     setSelectedMbLoggerLevel(event.target.value);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setmbloglevel', value: event.target.value } });
   };
 
   // Define a function to handle change matterbridge log file
-  const handleLogOnFileMbChange = (event) => {
+  const handleLogOnFileMbChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if(debug) console.log('handleLogOnFileMbChange called with value:', event.target.checked);
     setLogOnFileMb(event.target.checked);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setmblogfile', value: event.target.checked } });
   };
 
   // Define a function to handle change theme
-  const handleChangeTheme = (event) => {
+  const handleChangeTheme = (event: SelectChangeEvent) => {
     const newTheme = event.target.value;
     if(debug) console.log('handleChangeTheme called with value:', newTheme);
     setFrontendTheme(newTheme);
@@ -158,7 +160,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   };
 
   // Define a function to handle change home page setup
-  const handleChangeHomePagePlugins = (event) => {
+  const handleChangeHomePagePlugins = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.checked;
     if(debug) console.log('handleChangeHomePagePlugins called with value:', newValue);
     setHomePagePlugins(newValue);
@@ -166,7 +168,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   };
 
   // Define a function to handle change home page setup
-  const handleChangeHomePageMode = (event) => {
+  const handleChangeHomePageMode = (event: SelectChangeEvent) => {
     const newValue = event.target.value;
     if(debug) console.log('handleChangeHomePageMode called with value:', newValue);
     setHomePageMode(newValue);
@@ -174,7 +176,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   };
 
   // Define a function to handle change virtual mode
-  const handleChangeVirtualMode = (event) => {
+  const handleChangeVirtualMode = (event: SelectChangeEvent) => {
     const newValue = event.target.value;
     if(debug) console.log('handleChangeVirtualMode called with value:', newValue);
     setVirtualMode(newValue);
@@ -182,6 +184,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setvirtualmode', value: newValue } });
   };
 
+  if(!matterbridgeInfo || !systemInfo) return null;
   return (
     <div className="MbfWindowDiv" style={{ flex: '0 0 auto' }}>
       <div className="MbfWindowHeader">
@@ -258,7 +261,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   );
 }
 
-function MatterSettings({ matterbridgeInfo }) {
+function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeInformation | null }) {
   // WebSocket context
   const { sendMessage, getUniqueId } = useContext(WebSocketContext);
 
@@ -268,81 +271,82 @@ function MatterSettings({ matterbridgeInfo }) {
   const [mdnsInterface, setmdnsInterface] = useState('');  
   const [ipv4Address, setIpv4Address] = useState('');  
   const [ipv6Address, setIpv6Address] = useState('');  
-  const [matterPort, setMatterPort] = useState();  
-  const [matterDiscriminator, setMatterDiscriminator] = useState();  
-  const [matterPasscode, setMatterPasscode] = useState();  
+  const [matterPort, setMatterPort] = useState('');  
+  const [matterDiscriminator, setMatterDiscriminator] = useState('');  
+  const [matterPasscode, setMatterPasscode] = useState('');  
 
   // Refs
   const uniqueId = useRef(getUniqueId());
 
   useEffect(() => {
-    if (matterbridgeInfo.bridgeMode === undefined) return;
+    if (!matterbridgeInfo) return;
     setSelectedMjLoggerLevel(['Debug', 'Info', 'Notice', 'Warn', 'Error', 'Fatal'][matterbridgeInfo.matterLoggerLevel]);
     setLogOnFileMj(matterbridgeInfo.matterFileLogger);
-    setmdnsInterface(matterbridgeInfo.matterMdnsInterface);
-    setIpv4Address(matterbridgeInfo.matterIpv4Address);
-    setIpv6Address(matterbridgeInfo.matterIpv6Address);
-    setMatterPort(matterbridgeInfo.matterPort);
-    setMatterDiscriminator(matterbridgeInfo.matterDiscriminator);
-    setMatterPasscode(matterbridgeInfo.matterPasscode);
+    setmdnsInterface(matterbridgeInfo.matterMdnsInterface || '');
+    setIpv4Address(matterbridgeInfo.matterIpv4Address || '');
+    setIpv6Address(matterbridgeInfo.matterIpv6Address || '');
+    setMatterPort(matterbridgeInfo.matterPort ? matterbridgeInfo.matterPort.toString() : '');
+    setMatterDiscriminator(matterbridgeInfo.matterDiscriminator ? matterbridgeInfo.matterDiscriminator.toString() : '');
+    setMatterPasscode(matterbridgeInfo.matterPasscode ? matterbridgeInfo.matterPasscode.toString() : '');
   }, [matterbridgeInfo]);
 
   // Define a function to handle change debug level
-  const handleChangeMjLoggerLevel = (event) => {
+  const handleChangeMjLoggerLevel = (event: SelectChangeEvent) => {
     if(debug) console.log('handleChangeMjLoggerLevel called with value:', event.target.value);
     setSelectedMjLoggerLevel(event.target.value);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setmjloglevel', value: event.target.value } });
   };
 
   // Define a function to handle change matter log file
-  const handleLogOnFileMjChange = (event) => {
+  const handleLogOnFileMjChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if(debug) console.log('handleLogOnFileMjChange called with value:', event.target.checked);
     setLogOnFileMj(event.target.checked);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setmjlogfile', value: event.target.checked } });
   };
 
   // Define a function to handle change mdnsInterface
-  const handleChangeMdnsInterface = (event) => {
+  const handleChangeMdnsInterface = (event: React.ChangeEvent<HTMLInputElement>) => {
     if(debug) console.log('handleChangeMdnsInterface called with value:', event.target.value);
     setmdnsInterface(event.target.value);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setmdnsinterface', value: event.target.value } });
   };
 
   // Define a function to handle change mdnsInterface
-  const handleChangeIpv4Address = (event) => {
+  const handleChangeIpv4Address = (event: React.ChangeEvent<HTMLInputElement>) => {
     if(debug) console.log('handleChangeIpv4Address called with value:', event.target.value);
     setIpv4Address(event.target.value);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setipv4address', value: event.target.value } });
   };
 
   // Define a function to handle change mdnsInterface
-  const handleChangeIpv6Address = (event) => {
+  const handleChangeIpv6Address = (event: React.ChangeEvent<HTMLInputElement>) => {
     if(debug) console.log('handleChangeIpv6Address called with value:', event.target.value);
     setIpv6Address(event.target.value);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setipv6address', value: event.target.value } });
   };
 
   // Define a function to handle change matterPort
-  const handleChangeMatterPort = (event) => {
+  const handleChangeMatterPort = (event: React.ChangeEvent<HTMLInputElement>) => {
     if(debug) console.log('handleChangeMatterPort called with value:', event.target.value);
     setMatterPort(event.target.value);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setmatterport', value: event.target.value } });
   };
 
   // Define a function to handle change matterDiscriminator
-  const handleChangeMatterDiscriminator = (event) => {
+  const handleChangeMatterDiscriminator = (event: React.ChangeEvent<HTMLInputElement>) => {
     if(debug) console.log('handleChangeMatterDiscriminator called with value:', event.target.value);
     setMatterDiscriminator(event.target.value);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setmatterdiscriminator', value: event.target.value } });
   };
 
   // Define a function to handle change matterPasscode
-  const handleChangemMatterPasscode = (event) => {
+  const handleChangemMatterPasscode = (event: React.ChangeEvent<HTMLInputElement>) => {
     if(debug) console.log('handleChangemMatterPasscode called with value:', event.target.value);
     setMatterPasscode(event.target.value);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setmatterpasscode', value: event.target.value } });
   };
 
+  if(!matterbridgeInfo) return null;
   return (
     <div className="MbfWindowDiv" style={{ flex: '0 0 auto' }}>
       <div className="MbfWindowHeader">
@@ -435,7 +439,8 @@ function MatterSettings({ matterbridgeInfo }) {
 }
 
 // Define the MatterbridgeInfo component
-function MatterbridgeInfo({ matterbridgeInfo }) {
+function MatterbridgeInfo({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeInformation | null }) {
+  if(!matterbridgeInfo) return null;
   return (
     <div className="MbfWindowDiv" style={{ flex: '0 0 auto' }}>
       <div className="MbfWindowHeader">
@@ -456,7 +461,7 @@ function MatterbridgeInfo({ matterbridgeInfo }) {
 };
 
 // Define the ReadOnlyTextField component
-function ReadOnlyTextField({ value, label }) {
+function ReadOnlyTextField({ value, label }: { value: string; label: string }) {
   return (
     <TextField
       focused
@@ -486,4 +491,4 @@ function ReadOnlyTextField({ value, label }) {
   );
 };
 
-export default Settings;
+export default memo(Settings);

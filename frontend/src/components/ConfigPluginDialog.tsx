@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // React
 import { useContext, useEffect, useState, useRef } from 'react';
 
@@ -16,7 +17,7 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
-import TextField from '@mui/material/TextField';
+import TextField, { TextFieldProps } from '@mui/material/TextField';
 import ListItemButton from '@mui/material/ListItemButton';
 import DialogActions from '@mui/material/DialogActions';
 
@@ -34,14 +35,19 @@ import ViewInArIcon from '@mui/icons-material/ViewInAr'; // For entities icon=co
 import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=matter
 
 // @rjsf
-import Form from '@rjsf/core';
+import Form, { IChangeEvent } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
-import { getSubmitButtonOptions, getUiOptions, getTemplate, enumOptionsValueForIndex, ariaDescribedByIds, enumOptionsIndexForValue, ADDITIONAL_PROPERTY_FLAG } from '@rjsf/utils';
+import { getSubmitButtonOptions, getUiOptions, getTemplate, enumOptionsValueForIndex, ariaDescribedByIds, enumOptionsIndexForValue, 
+  ADDITIONAL_PROPERTY_FLAG, WidgetProps, SubmitButtonProps, IconButtonProps, FieldTemplateProps, DescriptionFieldProps, TitleFieldProps, 
+  FieldHelpProps, ErrorListProps, FieldErrorProps, BaseInputTemplateProps, ArrayFieldTitleProps, ArrayFieldDescriptionProps, 
+  ArrayFieldTemplateProps, ArrayFieldTemplateItemType, ObjectFieldTemplateProps, WrapIfAdditionalTemplateProps, UiSchema} from '@rjsf/utils';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-// import { debug } from '../App';
-const debug = false;
+import { ApiSelectDevice, ApiSelectDeviceEntity, ApiSelectEntity, isApiResponse, WsMessage } from '../../../src/frontendTypes';
+import { debug } from '../App';
+import { BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
+// const debug = false;
 const rjsfDebug = false;
 
 const titleSx = { fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
@@ -50,14 +56,19 @@ const helpSx = { fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary
 const errorTitleSx = { fontSize: '16px', fontWeight: 'bold', backgroundColor: 'var(--div-bg-color)' };
 const iconButtonSx = { padding: '0px', margin: '0px' };
 const boxPadding = '5px 10px 5px 10px';
-const listItemButtonSx = { /* padding: '0px', margin: '0px', backgroundColor: 'var(--div-bg-color)', '&:hover': { backgroundColor: 'var(--div-bg-color)' }*/ };
-const listItemIconStyle = { /* color: 'var(--div-text-color)'*/ };
-const listItemTextPrimaryStyle = { /* fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' */ };
-const listItemTextSecondaryStyle = { /* fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' */ };
-let selectDevices = [];
-let selectEntities = [];
+const listItemButtonSx = {};
+const listItemIconStyle = {};
+const listItemTextPrimaryStyle = {};
+const listItemTextSecondaryStyle = {};
+let selectDevices: ApiSelectDevice[] = [];
+let selectEntities: ApiSelectEntity[] = [];
 
-export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
+export interface ConfigPluginDialogProps {
+  open: boolean;
+  onClose: () => void;
+  plugin: BaseRegisteredPlugin;
+}
+export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialogProps) => {
   // Contexts
   const { sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
@@ -66,8 +77,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
 
   // States
   const [formData, setFormData] = useState(plugin.configJson);
-  const [schema, setSchema] = useState(plugin.schemaJson);
-  const [uiSchema, setUiSchema] = useState(
+  const [schema, setSchema] = useState<any>(null as any);
+  const [uiSchema, setUiSchema] = useState<UiSchema>(
     {
       "ui:submitButtonOptions": {
         "submitText": "Confirm",
@@ -76,32 +87,24 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     }
   );
 
-  // const [selectDevices, setSelectDevices] = useState([]);
-  // const [selectEntities, setSelectEntities] = useState([]);
   const [newkey, setNewkey] = useState(''); // For ObjectFieldTemplate select from device list 
   let currentFormData = {}
 
   // WebSocket message handler effect
   useEffect(() => {
-    const handleWebSocketMessage = (msg) => {
+    const handleWebSocketMessage = (msg: WsMessage) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Local messages
-        if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
+        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/select/devices') {
           if (msg.response) {
             if (debug) console.log(`ConfigPluginDialog (id: ${msg.id}) received ${msg.response.length} /api/select/devices:`, msg.response);
             selectDevices = msg.response;
           }
-          if (msg.error) {
-            console.error('ConfigPluginDialog received /api/select/devices error:', msg.error);
-          }
         }
-        if (msg.id === uniqueId.current && msg.method === '/api/select/entities') {
+        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/select/entities') {
           if (msg.response) {
             if (debug) console.log(`ConfigPluginDialog (id: ${msg.id}) received ${msg.response.length} /api/select/entities:`, msg.response);
             selectEntities = msg.response;
-          }
-          if (msg.error) {
-            console.error('ConfigPluginDialog received /api/select/entities error:', msg.error);
           }
         }
       }
@@ -111,7 +114,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     if (debug) console.log('ConfigPluginDialog added WebSocket listener id:', uniqueId.current);
 
     // Move the ui: properties from the schema to the uiSchema
-    if (formData !== undefined && schema !== undefined) {
+    if (formData !== undefined && schema !== undefined && schema.properties !== undefined) {
       if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
       Object.keys(schema.properties).forEach((key) => {
         Object.keys(schema.properties[key]).forEach((subkey) => {
@@ -143,23 +146,23 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     };
   }, [addListener, formData, plugin, removeListener, schema, sendMessage, uiSchema]);
 
-  const handleFormChange = ({ formData }) => {
+  const handleFormChange = (formData: IChangeEvent<any, Record<string, any>, any>, id?: string) => {
     currentFormData = formData;
-    if (rjsfDebug) console.log('handleFormChange formData:', formData);
+    if (rjsfDebug) console.log(`handleFormChange id ${id} formData:`, formData);
   };
 
-  const handleSaveChanges = ({ formData }) => {
+  const handleSaveChanges = (formData: any) => {
     if (debug) console.log('ConfigPluginDialog handleSaveChanges:', formData);
     // Save the configuration
-    setFormData(formData);
-    plugin.configJson = formData;
+    setFormData(formData as any);
+    plugin.configJson = formData as any;
     plugin.restartRequired = true;
     sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/savepluginconfig", src: "Frontend", dst: "Matterbridge", params: { pluginName: formData.name, formData } });
     // Close the dialog
     onClose();
   };
 
-  function WrapIfAdditionalTemplate(props) {
+  function WrapIfAdditionalTemplate(props: WrapIfAdditionalTemplateProps) {
     const { id, label, onKeyChange, onDropPropertyClick, disabled, schema, children, registry, readonly, required } = props;
     const { templates } = registry;
     const { RemoveButton } = templates.ButtonTemplates;
@@ -173,7 +176,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
         </Box>
       );
     }
-    const handleBlur = ({ target }) => onKeyChange(target && target.value);
+    const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onKeyChange(target && target.value);
     return (
       <Box sx={{ display: 'flex', flexDirection: 'row', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>
         <TextField id={`${id}-key`} name={`${id}-key`} required={required} disabled={disabled || readonly} defaultValue={label}
@@ -181,13 +184,13 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
         <Box sx={{ flex: 1 }}>
           {children}
         </Box>
-        <RemoveButton disabled={disabled || readonly} onClick={onDropPropertyClick(label)} />
+        <RemoveButton disabled={disabled || readonly} onClick={onDropPropertyClick(label)} registry={registry} />
       </Box>
     );
   }
 
-  function FieldTemplate(props) {
-    const { children, description, displayLabel, errors, help, hidden, _id, _label,
+  function FieldTemplate(props: FieldTemplateProps) {
+    const { children, description, displayLabel, errors, help, hidden,
       registry, uiSchema } = props;
     const uiOptions = getUiOptions(uiSchema);
     const WrapIfAdditionalTemplate = getTemplate('WrapIfAdditionalTemplate', registry, uiOptions);
@@ -209,7 +212,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   }
 
-  function DescriptionFieldTemplate(props) {
+  function DescriptionFieldTemplate(props: DescriptionFieldProps) {
     const { description } = props;
     if (rjsfDebug) console.log('DescriptionFieldTemplate:', props);
     if (!description) return null;
@@ -218,7 +221,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   }
 
-  function TitleFieldTemplate(props) {
+  function TitleFieldTemplate(props: TitleFieldProps) {
     const { required, title } = props;
     if (rjsfDebug) console.log('TitleFieldTemplate:', props);
     if (!title) return null;
@@ -229,8 +232,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   }
 
-  function FieldHelpTemplate(props) {
-    const { help, _idSchema } = props;
+  function FieldHelpTemplate(props: FieldHelpProps) {
+    const { help } = props;
     if (rjsfDebug) console.log('FieldHelpTemplate:', props);
     if (!help) return null;
     return (
@@ -241,7 +244,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   }
 
   // Shows a list of errors at the top of the form
-  function ErrorListTemplate(props) {
+  function ErrorListTemplate(props: ErrorListProps) {
     const { errors } = props;
     if (rjsfDebug) console.log('ErrorListTemplate:', props);
     if (!errors) return null;
@@ -263,7 +266,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   };
 
   // Shows the field error at the bottom of the field
-  function FieldErrorTemplate(props) {
+  function FieldErrorTemplate(props: FieldErrorProps) {
     const { errors } = props;
     if (rjsfDebug) console.log('FieldErrorTemplate:', props);
     if (!errors) return null;
@@ -278,13 +281,13 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   };
 
-  function BaseInputTemplate(props) {
+  function BaseInputTemplate(props: BaseInputTemplateProps) {
     const { id, name, _schema, _uiSchema, value, options, label, type, placeholder, required, disabled, readonly, autofocus,
       onChange, onChangeOverride, onBlur, onFocus, _rawErrors, _hideError, _registry, _formContext } = props;
     if (rjsfDebug) console.log('BaseInputTemplate:', props);
-    const _onChange = ({ target: { value } }) => onChange(value === '' ? options.emptyValue : value);
-    const _onBlur = ({ target }) => onBlur(id, target && target.value);
-    const _onFocus = ({ target }) => onFocus(id, target && target.value);
+    const _onChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(value === '' ? options.emptyValue : value);
+    const _onBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, target && target.value);
+    const _onFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, target && target.value);
     return (
       <Box sx={{ padding: '0px', margin: '0px' }}>
         <TextField id={id} name={id} label={placeholder && placeholder !== '' ? label : undefined} variant="outlined" placeholder={placeholder && placeholder !== '' ? placeholder : label}
@@ -294,23 +297,23 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   }
 
-  function ArrayFieldTitleTemplate(props) {
+  function ArrayFieldTitleTemplate(props: ArrayFieldTitleProps) {
     console.log('ArrayFieldTitleTemplate:', props);
     return null;
   }
 
-  function ArrayFieldDescriptionTemplate(props) {
+  function ArrayFieldDescriptionTemplate(props: ArrayFieldDescriptionProps) {
     console.log('ArrayFieldDescriptionTemplate:', props);
     return null;
   }
 
-  function ArrayFieldItemTemplate(props) {
+  function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
     console.log('ArrayFieldItemTemplate:', props);
     return null;
   }
 
-  function ArrayFieldTemplate(props) {
-    const { canAdd, _className, _disabled, _formContext, _formData, _idSchema, _items, onAddClick, _rawErrors, _readonly, _registry, _required, schema, title, _uiSchema } = props;
+  function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
+    const { canAdd, onAddClick, schema, title } = props;
     if (rjsfDebug) console.log(`ArrayFieldTemplate for ${title}:`, props);
 
     const [dialogDeviceOpen, setDialogDeviceOpen] = useState(false);
@@ -318,7 +321,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     const [dialogDeviceEntityOpen, setDialogDeviceEntityOpen] = useState(false);
     const [filter, setFilter] = useState('');
 
-    const handleFilterChange = (event) => {
+    const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       setFilter(event.target.value);
     };
 
@@ -337,36 +340,36 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
       setDialogDeviceEntityOpen(!dialogDeviceEntityOpen);
     };
 
-    const handleSelectDeviceValue = (value) => {
+    const handleSelectDeviceValue = (value: ApiSelectDevice) => {
       // console.log('ArrayFieldTemplate: handleSelectValue', value);
       setDialogDeviceOpen(false);
       // Trigger onAddClick to add the selected new item
       if (schema.selectFrom === 'serial')
-        schema.items.default = value.serial;
+        (schema as any).items.default = value.serial;
       else if (schema.selectFrom === 'name')
-        schema.items.default = value.name;
+        (schema as any).items.default = value.name;
       onAddClick();
     };
 
-    const handleSelectEntityValue = (value) => {
+    const handleSelectEntityValue = (value: ApiSelectEntity) => {
       // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
       setDialogEntityOpen(false);
       // Trigger onAddClick to add the selected new item
       if (schema.selectEntityFrom === 'name')
-        schema.items.default = value.name;
+        (schema as any).items.default = value.name;
       else if (schema.selectEntityFrom === 'description')
-        schema.items.default = value.description;
+        (schema as any).items.default = value.description;
       onAddClick();
     }
 
-    const handleSelectDeviceEntityValue = (value) => {
+    const handleSelectDeviceEntityValue = (value: ApiSelectDeviceEntity) => {
       // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
       setDialogDeviceEntityOpen(false);
       // Trigger onAddClick to add the selected new item
       if (schema.selectDeviceEntityFrom === 'name')
-        schema.items.default = value.name;
+        (schema as any).items.default = value.name;
       else if (schema.selectDeviceEntityFrom === 'description')
-        schema.items.default = value.description;
+        (schema as any).items.default = value.description;
       onAddClick();
     }
 
@@ -541,13 +544,13 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   }
 
-  function ObjectFieldTemplate(props) {
+  function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
     const { onAddClick, schema, properties, title, description } = props;
 
     const [dialogDeviceOpen, setDialogDeviceOpen] = useState(false);
     const [filter, setFilter] = useState('');
 
-    const handleFilterChange = (event) => {
+    const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       setFilter(event.target.value);
     };
 
@@ -555,7 +558,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
       setDialogDeviceOpen(!dialogDeviceOpen);
     };
 
-    const handleSelectDeviceValue = (value) => {
+    const handleSelectDeviceValue = (value: ApiSelectDevice) => {
       if (debug) console.log(`ObjectFieldTemplate: handleSelectValue value "${value.serial}" for schema "${schema.selectFrom}"`);
       setDialogDeviceOpen(false);
       let newkey = '';
@@ -587,7 +590,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     if (debug) console.log(`ObjectFieldTemplate: isRoot ${isRoot} newkey "${newkey}"`);
     if (!isRoot && newkey !== '') {
       if (debug) console.log('ObjectFieldTemplate: newkey', newkey, 'properties', properties);
-      properties.forEach((p) => {
+      properties.forEach((p: any) => {
         if (p.name === 'newKey' && p.content.key === 'newKey' && p.content.props.name === 'newKey' && p.content.props.onKeyChange && newkey !== '') {
           if (debug) console.log('ObjectFieldTemplate: newkey onKeyChange', newkey);
           const newName = newkey;
@@ -639,10 +642,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
               sx={{
                 margin: '0px',
                 marginBottom: '10px',
-                padding: ['object', 'array', 'boolean'].includes(schema.properties[name].type) ? '0px' : boxPadding,
-                border: ['object', 'array', 'boolean'].includes(schema.properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
+                padding: ['object', 'array', 'boolean'].includes((schema as any).properties[name].type) ? '0px' : boxPadding,
+                border: ['object', 'array', 'boolean'].includes((schema as any).properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
               }}>
-              {!['object', 'array', 'boolean'].includes(schema.properties[name].type) && (
+              {!['object', 'array', 'boolean'].includes((schema as any).properties[name].type) && (
                 <Typography sx={titleSx}>{name}</Typography>
               )}
               <Box sx={{ flexGrow: 1, padding: '0px', margin: '0px' }}>
@@ -692,7 +695,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   }
 
-  function SubmitButton(props) {
+  function SubmitButton(props: SubmitButtonProps) {
     const { uiSchema } = props;
     if (rjsfDebug) console.log('SubmitButton:', props);
     const { submitText, norender } = getSubmitButtonOptions(uiSchema);
@@ -711,10 +714,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   };
 
-  function RemoveButton(props) {
+  function RemoveButton(props: IconButtonProps) {
     const { className, disabled, onClick, registry, style, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('RemoveButton:', otherProps);
-    // <IconButton size='small' color='primary' {...otherProps}>
     return (
       <Tooltip title="Remove the item">
         <IconButton disabled={disabled} size='small' color='primary' onClick={onClick}>
@@ -724,10 +726,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   }
 
-  function AddButton(props) {
+  function AddButton(props: IconButtonProps) {
     const { className, disabled, onClick, registry, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('AddButton:', otherProps);
-    // <IconButton size='small' color='primary' {...otherProps}>
     return (
       <Tooltip title="Add an item">
         <IconButton size='small' color='primary' onClick={onClick}>
@@ -737,10 +738,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   }
 
-  function MoveUpButton(props) {
+  function MoveUpButton(props: IconButtonProps) {
     const { disabled, onClick, registry, style, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('MoveUpButton:', otherProps);
-    // <IconButton size='small' color='primary' {...otherProps}>
     return (
       <Tooltip title="Move up the item">
         <IconButton size='small' color='primary' onClick={onClick}>
@@ -750,10 +750,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   }
 
-  function MoveDownButton(props) {
+  function MoveDownButton(props: IconButtonProps) {
     const { disabled, onClick, registry, style, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('MoveDownButton:', otherProps);
-    // <IconButton size='small' color='primary' {...otherProps}>
     return (
       <Tooltip title="Move down the item">
         <IconButton size='small' color='primary' onClick={onClick}>
@@ -763,14 +762,14 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     );
   }
 
-  function CheckboxWidget(props) {
+  function CheckboxWidget(props: WidgetProps) {
     const { id, name, value, schema, readonly, onChange } = props;
     if (rjsfDebug) console.log(`CheckboxWidget ${name}:`, props);
     if (rjsfDebug) console.log(`CheckboxWidget formData:`, currentFormData);
 
-    const [fieldValue, setFieldValue] = useState(undefined);
+    const [fieldValue, setFieldValue] = useState<string>();
 
-    const onChangeField = (value) => {
+    const onChangeField = (value: string) => {
       if (debug) console.log(`CheckboxWidget ${name} onChangeField:`, value);
       setFieldValue(value && value !== '' ? value : undefined);
     };
@@ -837,7 +836,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     hideError,
     formContext,
     ...textFieldProps
-  }) {
+  }: WidgetProps) {
     const { enumOptions, enumDisabled, emptyValue: optEmptyVal } = options;
 
     multiple = typeof multiple === 'undefined' ? false : !!multiple;
@@ -845,11 +844,11 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     const emptyValue = multiple ? [] : '';
     const isEmpty = typeof value === 'undefined' || (multiple && value.length < 1) || (!multiple && value === emptyValue);
 
-    const _onChange = ({ target: { value } }) =>
+    const _onChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) =>
       onChange(enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
-    const _onBlur = ({ target }) =>
+    const _onBlur = ({ target }: React.FocusEvent<HTMLInputElement>) =>
       onBlur(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
-    const _onFocus = ({ target }) =>
+    const _onFocus = ({ target }: React.FocusEvent<HTMLInputElement>) =>
       onFocus(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
     const selectedIndexes = enumOptionsIndexForValue(value, enumOptions, multiple);
     const { InputLabelProps, SelectProps, autocomplete, ...textFieldRemainingProps } = textFieldProps;
@@ -870,7 +869,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
         onChange={_onChange}
         onBlur={_onBlur}
         onFocus={_onFocus}
-        {...(textFieldRemainingProps)}
+        {...(textFieldRemainingProps as TextFieldProps)}
         select // Apply this and the following props after the potential overrides defined in textFieldProps
         InputLabelProps={{
           ...InputLabelProps,
@@ -899,7 +898,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   if (debug) console.log('ConfigPluginDialog rendering...');
   if (!open || !schema || !formData) return null;
   return (
-    <Dialog open={open} onClose={onClose} maxWidth='800px'>
+    <Dialog open={open} onClose={onClose} slotProps={{ paper: { sx: { maxWidth: '800px' } } }}>
       <DialogTitle gap={'20px'}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
           <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
@@ -913,8 +912,20 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
           uiSchema={uiSchema}
           validator={validator}
           templates={{
-            FieldTemplate, BaseInputTemplate, TitleFieldTemplate, DescriptionFieldTemplate, FieldHelpTemplate, FieldErrorTemplate, ErrorListTemplate, WrapIfAdditionalTemplate,
-            ArrayFieldTitleTemplate, ArrayFieldDescriptionTemplate, ArrayFieldItemTemplate, ArrayFieldTemplate, ObjectFieldTemplate, ButtonTemplates: { SubmitButton, RemoveButton, AddButton, MoveUpButton, MoveDownButton }
+            FieldTemplate, 
+            BaseInputTemplate, 
+            TitleFieldTemplate, 
+            DescriptionFieldTemplate, 
+            FieldHelpTemplate, 
+            FieldErrorTemplate, 
+            ErrorListTemplate, 
+            WrapIfAdditionalTemplate,
+            ArrayFieldTitleTemplate, 
+            ArrayFieldDescriptionTemplate, 
+            ArrayFieldItemTemplate, 
+            ArrayFieldTemplate, 
+            ObjectFieldTemplate, 
+            ButtonTemplates: { SubmitButton, RemoveButton, AddButton, MoveUpButton, MoveDownButton }
           }}
           widgets={{ CheckboxWidget, SelectWidget }}
           onChange={handleFormChange}

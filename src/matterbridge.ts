@@ -167,18 +167,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   // Matterbridge logger
   public log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
-  public matterbridgeLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+  public matterbridgeLoggerFile = 'matterbridge.log';
 
   // Matter logger
   public matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-  public matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+  public matterLoggerFile = 'matter.log';
 
   public plugins = new PluginManager(this);
   public devices = new DeviceManager(this);
   public frontend = new Frontend(this);
 
   // Matterbridge storage
-  public nodeStorageName = 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
+  public nodeStorageName = 'storage';
   public nodeStorage: NodeStorageManager | undefined;
   public nodeContext: NodeStorage | undefined;
 
@@ -200,7 +200,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   environment = Environment.default;
 
   // Matter storage
-  matterStorageName = 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
+  matterStorageName = 'matterstorage';
   matterStorageService: StorageService | undefined;
   matterStorageManager: StorageManager | undefined;
   matterbridgeContext: StorageContext | undefined;
@@ -369,19 +369,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await createDirectory(this.homeDirectory, 'Matterbridge Home Directory', this.log);
 
     // Set the matterbridge directory
-    this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
+    this.matterbridgeDirectory = this.profile ? path.join(this.homeDirectory, '.matterbridge', 'profiles', this.profile) : path.join(this.homeDirectory, '.matterbridge');
     this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
     await createDirectory(this.matterbridgeDirectory, 'Matterbridge Directory', this.log);
     await createDirectory(path.join(this.matterbridgeDirectory, 'certs'), 'Matterbridge Frontend Certificate Directory', this.log);
     await createDirectory(path.join(this.matterbridgeDirectory, 'uploads'), 'Matterbridge Frontend Uploads Directory', this.log);
 
     // Set the matterbridge plugin directory
-    this.matterbridgePluginDirectory = path.join(this.homeDirectory, 'Matterbridge');
+    this.matterbridgePluginDirectory = this.profile ? path.join(this.homeDirectory, 'Matterbridge', 'profiles', this.profile) : path.join(this.homeDirectory, 'Matterbridge');
     this.matterbridgeInformation.matterbridgePluginDirectory = this.matterbridgePluginDirectory;
     await createDirectory(this.matterbridgePluginDirectory, 'Matterbridge Plugin Directory', this.log);
 
     // Set the matterbridge cert directory
-    this.matterbridgeCertDirectory = path.join(this.homeDirectory, '.mattercert');
+    this.matterbridgeCertDirectory = this.profile ? path.join(this.homeDirectory, '.mattercert', 'profiles', this.profile) : path.join(this.homeDirectory, '.mattercert');
     this.matterbridgeInformation.matterbridgeCertDirectory = this.matterbridgeCertDirectory;
     await createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory', this.log);
 

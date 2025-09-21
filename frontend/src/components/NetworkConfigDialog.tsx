@@ -19,12 +19,12 @@ interface NetworkConfigDialogProps {
   open: boolean;
   ip?: string;
   onClose: () => void;
-  onSave: (config: { type: string; ip?: string; subnet?: string; gateway?: string; dns?: string }) => void;
+  onSave: (config: { type: "dhcp" | "static"; ip: string; subnet: string; gateway: string; dns: string }) => void;
 }
 
 export const NetworkConfigDialog = ({ open, ip, onClose, onSave }: NetworkConfigDialogProps) => {
   const defaultGateway = ip ? ip.split('.').slice(0, 3).join('.') + '.1' : '';
-  const [networkType, setNetworkType] = useState('dhcp');
+  const [networkType, setNetworkType] = useState<"dhcp" | "static">('dhcp');
   const [staticConfig, setStaticConfig] = useState({
     ip: ip ?? '',
     subnet: '255.255.255.0',
@@ -44,11 +44,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }: NetworkConfig
   };
 
   const handleSave = () => {
-    const config =
-      networkType === 'static'
-        ? { type: networkType, ...staticConfig }
-        : { type: networkType };
-    onSave(config);
+    onSave({ type: networkType, ...staticConfig });
     onClose();
   };
 
@@ -72,7 +68,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }: NetworkConfig
           <RadioGroup
             row
             value={networkType}
-            onChange={(e) => setNetworkType(e.target.value)}
+            onChange={(e) => setNetworkType(e.target.value as "dhcp" | "static")}
           >
             <FormControlLabel value="dhcp" control={<Radio />} label="DHCP" />
             <FormControlLabel value="static" control={<Radio />} label="Static" />

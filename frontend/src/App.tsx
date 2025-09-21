@@ -28,7 +28,7 @@ export const toggleDebug = () => {
   debug = !debug;
 };
 
-function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
+export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -201,6 +201,5 @@ function App(): React.JSX.Element {
     );
   }
 }
-
 
 export default App;

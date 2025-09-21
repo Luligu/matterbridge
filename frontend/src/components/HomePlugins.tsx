@@ -308,7 +308,7 @@ function HomePlugins({storeId, setStoreId}: HomePluginsProps) {
   };
   
   // ConfigPluginDialog
-  const [selectedPlugin, setSelectedPlugin] = useState({});
+  const [selectedPlugin, setSelectedPlugin] = useState<BaseRegisteredPlugin>();
   const [openConfigPluginDialog, setOpenConfigPluginDialog] = useState(false);
 
   const handleConfigPlugin = (plugin: BaseRegisteredPlugin) => {
@@ -334,7 +334,7 @@ function HomePlugins({storeId, setStoreId}: HomePluginsProps) {
   return (
       <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '0 0 auto', overflow: 'hidden' }}>
         {/* Config plugin dialog */}
-        <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin}/>
+        {selectedPlugin && <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin}/>} 
 
         <MbfTable<BaseRegisteredPlugin>
           name="Plugins"

@@ -15,7 +15,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [frontend]: Bumped `frontend` version to 3.1.0. Fully typed with the backend.
-- [frontend]: Created an autonomous component `MbfTable` to remove `react-table`. Features: unique UI for all tables with integrated column sorting and column selection.
+- [frontend]: Removed legacy `react-table` and created an autonomous component `MbfTable`. Features: unique UI for all tables with integrated column sorting and column selection.
 - [frontend]: Use MbfTable for Plugins, Devices, Registered devices and Clusters tables.
 
 ### Changed

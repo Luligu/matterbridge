@@ -41,6 +41,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN,
 import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle, ServerNode, LogDestination, Diagnostic, Time, FabricIndex } from '@matter/main';
 import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/main/protocol';
+import { CommissioningOptions } from '@matter/main/types';
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
@@ -1490,8 +1491,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellynetconfig') {
         this.log.debug('/api/shellynetconfig:', data.params);
-        const { triggerShellyChangeIp: triggerShellyChangeNet } = await import('./shelly.js');
-        triggerShellyChangeNet(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
+        const { triggerShellyChangeIp } = await import('./shelly.js');
+        triggerShellyChangeIp(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/softreset') {
         const { triggerShellySoftReset } = await import('./shelly.js');
@@ -1788,7 +1789,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           case 'setmatterdiscriminator':
             // eslint-disable-next-line no-case-declarations
             const discriminator = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
-            if (isValidNumber(discriminator, 1000, 4095)) {
+            if (isValidNumber(discriminator, 0, 4095)) {
               this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
               this.matterbridge.matterbridgeInformation.matterDiscriminator = discriminator;
               await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', discriminator);
@@ -1805,7 +1806,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           case 'setmatterpasscode':
             // eslint-disable-next-line no-case-declarations
             const passcode = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
-            if (isValidNumber(passcode, 10000000, 90000000)) {
+            if (isValidNumber(passcode, 1, 99999998) && CommissioningOptions.FORBIDDEN_PASSCODES.includes(passcode) === false) {
               this.matterbridge.matterbridgeInformation.matterPasscode = passcode;
               this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
               await this.matterbridge.nodeContext?.set<number>('matterpasscode', passcode);

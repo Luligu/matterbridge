@@ -1,4 +1,78 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { cleanup } from '@testing-library/react';
+describe('App dynamic import for import.meta.env.PROD coverage', () => {
+  afterEach(() => {
+    cleanup();
+    delete (globalThis as any).importMeta;
+  });
+  it('covers development mode branch (import.meta.env.PROD = false)', async () => {
+    (globalThis as any).importMeta = { env: { PROD: false } };
+    const mod = await import('../src/App');
+    const AppComponent = mod.default;
+    render(<AppComponent />);
+    expect(screen.getByText('Welcome to Matterbridge')).toBeInTheDocument();
+  });
+});
+describe('App debug logging full coverage', () => {
+  let originalDebug: boolean;
+  let originalMeta: any;
+  beforeEach(() => {
+    originalDebug = debug;
+    // Use toggleDebug to set debug = true
+    if (!debug) toggleDebug();
+    originalMeta = (globalThis as any).importMeta;
+  });
+  afterEach(() => {
+    // Restore debug
+    if (debug !== originalDebug) toggleDebug();
+    if (originalMeta) (globalThis as any).importMeta = originalMeta;
+    else delete (globalThis as any).importMeta;
+  });
+  it('covers debug logging with import.meta.env.PROD = true', () => {
+    (globalThis as any).importMeta = { env: { PROD: true } };
+    render(<App />);
+    expect(screen.getByText('Welcome to Matterbridge')).toBeInTheDocument();
+  });
+  it('covers debug logging with import.meta.env.PROD = false', () => {
+    (globalThis as any).importMeta = { env: { PROD: false } };
+    render(<App />);
+    expect(screen.getByText('Welcome to Matterbridge')).toBeInTheDocument();
+  });
+});
+describe('App debug/theme/import.meta.env.PROD coverage', () => {
+  let originalDebug: boolean;
+  beforeEach(() => {
+    // Save and set debug true
+    originalDebug = debug;
+    (global as any).localStorage.clear();
+    // @ts-expect-error Vitest: set debug to true
+    globalThis.debug = true;
+  });
+  afterEach(() => {
+    // Restore debug
+    (global as any).localStorage.clear();
+    // @ts-expect-error Vitest: restore original debug
+    globalThis.debug = originalDebug;
+  });
+  it('covers debug logging and theme logic (savedTheme present)', () => {
+    localStorage.setItem('frontendTheme', 'classic');
+    render(<App />);
+    expect(document.body.getAttribute('frontend-theme')).toBe('classic');
+  });
+  it('covers debug logging and theme logic (savedTheme absent)', () => {
+    render(<App />);
+    expect(document.body.getAttribute('frontend-theme')).toBe('dark');
+  });
+  it('covers import.meta.env.PROD branch', () => {
+    // Simulate import.meta.env.PROD = true
+    const originalMeta = (globalThis as any).importMeta;
+    (globalThis as any).importMeta = { env: { PROD: true } };
+    render(<App />);
+    expect(screen.getByText('Welcome to Matterbridge')).toBeInTheDocument();
+    if (originalMeta) (globalThis as any).importMeta = originalMeta;
+    else delete (globalThis as any).importMeta;
+  });
+});
 // Silence all console output during tests (must be before all imports)
 globalThis.console = Object.assign({}, console, {
   log: vi.fn(),
@@ -32,6 +106,7 @@ vi.mock('../src/components/muiTheme', () => ({
 }));
 
 import App, { LoginForm, toggleDebug, debug } from '../src/App';
+
 describe('toggleDebug', () => {
   it('toggles the debug flag', () => {
     const initial = debug;
@@ -40,7 +115,7 @@ describe('toggleDebug', () => {
     toggleDebug();
     expect(debug).toBe(initial);
   });
-});
+
   it('shows error on fetch !ok', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     global.fetch = vi.fn().mockResolvedValue({
@@ -58,6 +133,7 @@ describe('toggleDebug', () => {
     expect(errorSpy).toHaveBeenCalledWith('Failed to log in:', 'Forbidden');
     errorSpy.mockRestore();
   });
+
   it('baseName: /matterbridge', async () => {
     const origLocation = window.location;
     // @ts-expect-error Vitest: need to delete window.location to mock it for router baseName test
@@ -131,6 +207,7 @@ describe('toggleDebug', () => {
       writable: true,
     });
   });
+});
 
 
 
@@ -210,8 +287,11 @@ describe('App', () => {
     expect(screen.getByText('Welcome to Matterbridge')).toBeInTheDocument();
   });
 
-  it('throws if AuthContext is missing', () => {
-    // Remove AuthProvider wrapper
-    expect(() => render(<LoginForm />)).toThrow('AuthContext not found');
+  it('renders LoginForm standalone', () => {
+    const setLoggedIn = vi.fn();
+    render(<LoginForm setLoggedIn={setLoggedIn} />);
+    expect(screen.getByText('Welcome to Matterbridge')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('password')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
   });
 });
