@@ -411,14 +411,17 @@ function DevicesIcons({filter}: DevicesIconsProps) {
     const filteredDevices = devices.filter((device) => device.name.toLowerCase().includes(filter) || device.serial.toLowerCase().includes(filter) );
     setFilteredDevices(filteredDevices);
   }, [devices, filter]);
-  
+
+  const MemoizedDevice = memo(Device);
+
   if(debug) console.log('DevicesIcons rendering...');
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', paddingBottom: '5px', gap: '20px', width: '100%', overflow: 'auto' }}>
       {filteredDevices.map((device) => (
         endpoints[device.serial] && endpoints[device.serial].map((endpoint) => (
           endpoint.deviceTypes.map((deviceType) => (
-            <Device
+            <MemoizedDevice
+              key={`${device.pluginName}-${device.uniqueId}-${deviceType}`}
               device={device}
               endpoint={endpoint.endpoint}
               id={endpoint.id}
