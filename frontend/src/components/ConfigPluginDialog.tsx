@@ -40,13 +40,14 @@ import validator from '@rjsf/validator-ajv8';
 import { getSubmitButtonOptions, getUiOptions, getTemplate, enumOptionsValueForIndex, ariaDescribedByIds, enumOptionsIndexForValue, 
   ADDITIONAL_PROPERTY_FLAG, WidgetProps, SubmitButtonProps, IconButtonProps, FieldTemplateProps, DescriptionFieldProps, TitleFieldProps, 
   FieldHelpProps, ErrorListProps, FieldErrorProps, BaseInputTemplateProps, ArrayFieldTitleProps, ArrayFieldDescriptionProps, 
-  ArrayFieldTemplateProps, ArrayFieldTemplateItemType, ObjectFieldTemplateProps, WrapIfAdditionalTemplateProps, UiSchema} from '@rjsf/utils';
+  ArrayFieldTemplateProps, ArrayFieldTemplateItemType, ObjectFieldTemplateProps, WrapIfAdditionalTemplateProps, UiSchema,
+  RJSFSchema} from '@rjsf/utils';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { ApiSelectDevice, ApiSelectDeviceEntity, ApiSelectEntity, isApiResponse, WsMessage } from '../../../src/frontendTypes';
-import { debug } from '../App';
 import { BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
+import { debug } from '../App';
 // const debug = false;
 const rjsfDebug = false;
 
@@ -68,6 +69,7 @@ export interface ConfigPluginDialogProps {
   onClose: () => void;
   plugin: BaseRegisteredPlugin;
 }
+
 export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialogProps) => {
   // Contexts
   const { sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
@@ -114,7 +116,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     if (debug) console.log('ConfigPluginDialog added WebSocket listener id:', uniqueId.current);
 
     // Move the ui: properties from the schema to the uiSchema
-    if (formData !== undefined && schema !== undefined && schema.properties !== undefined) {
+    if (formData && schema && schema.properties) {
       if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
       Object.keys(schema.properties).forEach((key) => {
         Object.keys(schema.properties[key]).forEach((subkey) => {
@@ -132,7 +134,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     }
 
     // Send the select devices and entities messages
-    if (plugin.name !== undefined && plugin.configJson !== undefined && plugin.schemaJson !== undefined) {
+    if (plugin.name && plugin.configJson && plugin.schemaJson) {
       setFormData(plugin.configJson);
       setSchema(plugin.schemaJson);
       sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
@@ -146,18 +148,18 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     };
   }, [addListener, formData, plugin, removeListener, schema, sendMessage, uiSchema]);
 
-  const handleFormChange = (formData: IChangeEvent<any, Record<string, any>, any>, id?: string) => {
-    currentFormData = formData;
-    if (rjsfDebug) console.log(`handleFormChange id ${id} formData:`, formData);
+  const handleFormChange = (data: IChangeEvent<any, RJSFSchema, any>, id?: string) => {
+    currentFormData = data.formData;
+    if (rjsfDebug) console.log(`handleFormChange id ${id} formData:`, data.formData);
   };
 
-  const handleSaveChanges = (formData: any) => {
-    if (debug) console.log('ConfigPluginDialog handleSaveChanges:', formData);
+  const handleSaveChanges = (data: IChangeEvent<any, RJSFSchema, any>) => {
+    if (debug) console.log('ConfigPluginDialog handleSaveChanges:', data.formData);
     // Save the configuration
-    setFormData(formData as any);
-    plugin.configJson = formData as any;
+    setFormData(data.formData);
+    plugin.configJson = data.formData;
     plugin.restartRequired = true;
-    sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/savepluginconfig", src: "Frontend", dst: "Matterbridge", params: { pluginName: formData.name, formData } });
+    sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/savepluginconfig", src: "Frontend", dst: "Matterbridge", params: { pluginName: data.formData.name, formData: data.formData } });
     // Close the dialog
     onClose();
   };
