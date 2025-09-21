@@ -57,14 +57,16 @@ interface ColumnVisibility {
 
 interface MbfTableProps<T extends object> {
   name: string;
+  title?: string;
   columns: MbfTableColumn<T>[];
   rows: T[];
   getRowKey?: string | ((row: T) => string | number);
   footerLeft?: string;
   footerRight?: string;
+  onRowClick?: (row: T, rowKey: string | number, event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => void;
 }
 
-function MbfTable<T extends object>({ name, columns, rows, getRowKey, footerLeft, footerRight }: MbfTableProps<T>) {
+function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, footerLeft, footerRight, onRowClick }: MbfTableProps<T>) {
   // Stable key fallback for rows without a natural id
   const rowKeyMapRef = useRef<WeakMap<T, string>>(new WeakMap());
   const nextRowKeySeqRef = useRef(1);
@@ -246,6 +248,7 @@ function MbfTable<T extends object>({ name, columns, rows, getRowKey, footerLeft
 
       <div className="MbfWindowHeader" style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', borderBottom: 'none' }}>
         <p className="MbfWindowHeaderText">{name}</p>
+        {title && <p className="MbfWindowHeaderText">{title}</p>}
         <div className="MbfWindowHeaderFooterIcons">
           <IconButton
             onClick={(e) => { if (e?.currentTarget?.blur) { try { e.currentTarget.blur(); } catch { /**/ } } toggleConfigureVisibilityDialog(); }}
@@ -306,42 +309,54 @@ function MbfTable<T extends object>({ name, columns, rows, getRowKey, footerLeft
             {sortedRows.map((row, index) => {
               const rowKey = getStableRowKey(row);
               return (
-              <tr key={rowKey} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ height: '30px', minHeight: '30px', border: 'none', borderCollapse: 'collapse' }}>
-                {columns.map((column) => {
-                  if (column.hidden) return null;
-                  if (!column.required && visibleMap[column.id] === false) return null;
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const value = (row as any)[column.id];
-                  return (
-                    <td
-                      key={column.id}
-                      style={{
-                        border: 'none',
-                        borderCollapse: 'collapse',
-                        textAlign: column.align || 'left',
-                        padding: '5px 10px',
-                        margin: '0',
-                        maxWidth: column.maxWidth,
-                        whiteSpace: column.maxWidth ? 'nowrap' : undefined,
-                        overflow: column.maxWidth ? 'hidden' : undefined,
-                        textOverflow: column.maxWidth ? 'ellipsis' : undefined,
-                      }}
-                    >
-                      {typeof column.render === 'function'
-                        ? column.render(value, rowKey, row, column)
-                        : (typeof value === 'boolean'
-                            ? <Checkbox checked={value} disabled size="small" sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }} />
-                            : (column.format && typeof value === 'number'
-                                ? column.format(value)
-                                : (value !== undefined && value !== null
-                                    ? String(value)
-                                    : null)))
-                      }
-                    </td>
-                  );
-                })}
-              </tr>
-            );})}
+                <tr
+                  key={rowKey}
+                  className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}
+                  onClick={onRowClick ? (e) => onRowClick(row, rowKey, e) : undefined}
+                  style={{
+                    height: '30px',
+                    minHeight: '30px',
+                    border: 'none',
+                    borderCollapse: 'collapse',
+                    cursor: onRowClick ? 'pointer' : undefined,
+                  }}
+                >
+                  {columns.map((column) => {
+                    if (column.hidden) return null;
+                    if (!column.required && visibleMap[column.id] === false) return null;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const value = (row as any)[column.id];
+                    return (
+                      <td
+                        key={column.id}
+                        style={{
+                          border: 'none',
+                          borderCollapse: 'collapse',
+                          textAlign: column.align || 'left',
+                          padding: '5px 10px',
+                          margin: '0',
+                          maxWidth: column.maxWidth,
+                          whiteSpace: column.maxWidth ? 'nowrap' : undefined,
+                          overflow: column.maxWidth ? 'hidden' : undefined,
+                          textOverflow: column.maxWidth ? 'ellipsis' : undefined,
+                        }}
+                      >
+                        {typeof column.render === 'function'
+                          ? column.render(value, rowKey, row, column)
+                          : (typeof value === 'boolean'
+                              ? <Checkbox checked={value} disabled size="small" sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }} />
+                              : (column.format && typeof value === 'number'
+                                  ? column.format(value)
+                                  : (value !== undefined && value !== null
+                                      ? String(value)
+                                      : null)))
+                        }
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -37,9 +37,6 @@ export default defineConfig({
           if (id.includes('qrcode.react')) {
             return 'vendor_qrcode';
           }
-          if (id.includes('react-table')) {
-            return 'vendor_react_table';
-          }
           if (id.includes('lodash')) {
             return 'vendor_lodash';
           }
