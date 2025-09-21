@@ -1,0 +1,61 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - 'frontend/**' # any file under frontend
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - 'frontend/**' # any file under frontend
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Clean cache
+        run: npm cache clean --force
+
+      - name: Verify Node.js version
+        run: node -v
+
+      - name: Verify Npm version
+        run: npm -v
+
+      - name: Cd frontend
+        run: cd frontend
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint the project
+        run: npm run lint
+
+      - name: Build the project
+        run: npm run build
+
+      - name: Test the project
+        run: npm run test
+
+      - name: List, audit, fix outdated dependencies and build again
+        run: |
+          npm outdated || true
+          npm audit || true
+          npm audit fix || true
+          npm update || true
+          npx npm-check-updates -u || true
+          npm install || true
+          npm outdated || true
+          npm run lint:fix || true
+          npm run build

@@ -41,6 +41,13 @@ export interface ApiSelectDevice {
   entities?: { name: string; description: string; icon?: string }[];
 }
 
+export interface ApiSelectEntity {
+  pluginName: string;
+  name: string;
+  description: string;
+  icon?: string;
+}
+
 /**
  * Base interface for WebSocket messages.
  */
@@ -366,14 +373,7 @@ export interface WsMessageApiSelectEntitiesRequest extends WsMessageBaseApiReque
 }
 export interface WsMessageApiSelectEntitiesResponse extends WsMessageSuccessApiResponse {
   method: '/api/select/entities';
-  response:
-    | {
-        pluginName: string;
-        name: string;
-        description: string;
-        icon?: string | undefined;
-      }[]
-    | undefined;
+  response: ApiSelectEntity[];
 }
 
 export interface WsMessageApiActionRequest extends WsMessageBaseApiRequest {

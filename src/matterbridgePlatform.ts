@@ -40,7 +40,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { isValidArray, isValidObject, isValidString } from './utils/export.js';
-import { ApiSelectDevice } from './frontendTypes.js';
+import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
 
 // Platform types
 
@@ -90,9 +90,9 @@ export class MatterbridgePlatform {
   /** The ready promise for the platform, which resolves when the platform is fully initialized. */
   ready: Promise<void>;
 
-  /** Registered MatterbridgeEndpoint Map by uniqueId */
+  /** Registered MatterbridgeEndpoint Map keyed by uniqueId */
   private readonly _registeredEndpoints = new Map<string, MatterbridgeEndpoint>();
-  /** Registered MatterbridgeEndpoint Map by deviceName */
+  /** Registered MatterbridgeEndpoint Map keyed by deviceName */
   private readonly _registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>();
 
   /**
@@ -154,7 +154,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * This method must be overridden in the extended class.
+   * This method shall be overridden in the extended class.
    * It is called when the platform is started.
    * Use this method to create the MatterbridgeEndpoints and call this.registerDevice().
    *
@@ -549,10 +549,10 @@ export class MatterbridgePlatform {
   /**
    * Retrieve the select entities.
    *
-   * @returns {{ pluginName: string; name: string; description: string; icon?: string }[]} The select entities array.
+   * @returns {ApiSelectEntity[]} The select entities array.
    */
-  getSelectEntities(): { pluginName: string; name: string; description: string; icon?: string }[] {
-    const selectEntities: { pluginName: string; name: string; description: string; icon?: string }[] = [];
+  getSelectEntities(): ApiSelectEntity[] {
+    const selectEntities: ApiSelectEntity[] = [];
     for (const entity of this.selectEntity.values()) {
       selectEntities.push({ pluginName: this.name, ...entity });
     }

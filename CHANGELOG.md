@@ -20,7 +20,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
-- [matter]: Bumped `matter.js` version to 0.15.4.
+- [matter]: Bumped `matter.js` version to 0.15.4. Thanks matter.js!
 - [package]: Updated dependencies.
 
 ### Fixed
