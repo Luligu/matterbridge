@@ -112,6 +112,7 @@ function HomePlugins({storeId, setStoreId}: HomePluginsProps) {
       label: 'Actions',
       id: 'actions',
       required: true,
+      noSort: true,
       render: (value, rowKey, plugin, _column) => (
         <div style={{ margin: '0px', padding: '0px', gap: '4px', display: 'flex', flexDirection: 'row' }}>
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled &&
@@ -138,6 +139,7 @@ function HomePlugins({storeId, setStoreId}: HomePluginsProps) {
       label: 'Status',
       id: 'status',
       required: true,
+      noSort: true,
       render: (value, rowKey, plugin, _column) => (
         <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', margin: '0', padding: '0', gap: '5px', width: 'auto', maxWidth: 'max-content' }}>
           {plugin.error ?
