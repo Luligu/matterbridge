@@ -19,9 +19,8 @@ const getByText = (text: string) => screen.getByText(text);
 describe('StatusIndicator', () => {
   it('renders nothing if status is undefined', () => {
     const { container } = render(<StatusIndicator status={undefined} />);
-    // Should render an empty div
-    expect(container.querySelector('div')).toBeInTheDocument();
-    expect(container.querySelector('div')?.textContent).toBe('');
+    // Should render nothing (null)
+    expect(container.firstChild).toBeNull();
   });
 
   it('renders enabled text when status is true', () => {

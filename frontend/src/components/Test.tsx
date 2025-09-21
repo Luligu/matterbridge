@@ -26,8 +26,8 @@ function Test() {
 
   // Local states
   const [_settings, setSettings] = useState<ApiSettingResponse | null>(null);
-  const [_plugins, setPlugins] = useState<BaseRegisteredPlugin[] | null>(null);
-  const [_devices, setDevices] = useState<ApiDevices[] | null>(null);
+  const [_plugins, setPlugins] = useState<BaseRegisteredPlugin[]>([]);
+  const [_devices, setDevices] = useState<ApiDevices[]>([]);
   const [_clusters, setClusters] = useState<ApiClustersResponse | null>(null);
   const [_cpu, setCpu] = useState<{ cpuUsage: number; }>({ cpuUsage: 0 });
   const [_memory, setMemory] = useState<{ totalMemory: string; freeMemory: string; heapTotal: string; heapUsed: string; external: string; arrayBuffers: string; rss: string; }>({ totalMemory: '', freeMemory: '', heapTotal: '', heapUsed: '', external: '', arrayBuffers: '', rss: '' });
@@ -88,7 +88,7 @@ function Test() {
           setDevices(msg.response);
           for(const device of msg.response) {
             if(debug) console.log('Test sending /api/clusters for device:', device.pluginName, device.name, device.endpoint);
-            sendMessage({ id: uniqueId.current, method: "/api/clusters", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint } });
+            sendMessage({ id: uniqueId.current, method: "/api/clusters", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint || 0 } });
           }
         }
         if (isApiResponse(msg) && msg.method === '/api/clusters' && msg.response) {
@@ -216,7 +216,7 @@ const demoColumns: MbfTableColumn<Record<string, unknown>>[] = [
     label: 'Density',
     minWidth: 170,
     align: "right",
-    nosort: true,
+    noSort: true,
     format: (value: number) => value.toFixed(2),
   },
   {
@@ -224,7 +224,7 @@ const demoColumns: MbfTableColumn<Record<string, unknown>>[] = [
     label: 'Virtual',
     align: "right",
     required: true,
-    nosort: true,
+    noSort: true,
     render: (_value: unknown, _rowKey: string | number, row: Record<string, unknown>, _column: MbfTableColumn<Record<string, unknown>>) => { return row.isIsland ? '🏝️' : '🏞️';},
   },
 ];

@@ -1,16 +1,8 @@
  
 // React
-import { useContext, useEffect, useState, useRef, useMemo, useCallback, memo } from 'react';
-import { useTable, useSortBy } from 'react-table';
+import { useContext, useEffect, useState, useRef, useCallback, memo } from 'react';
 
 // @mui/material
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -22,14 +14,15 @@ import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 import QrCode2 from '@mui/icons-material/QrCode2';
 
 // @mdi/js
-import Icon from '@mdi/react';
-import { mdiSortAscending, mdiSortDescending } from '@mdi/js';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { getQRColor } from './getQRColor';
 import { debug } from '../App';
+import MbfTable, { MbfTableColumn } from './MbfTable';
+import { ApiDevices, ApiMatterResponse, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
+import { ApiSelectDevice, ApiSettingResponse, isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
 // const debug = true;
 
 /**
@@ -37,81 +30,43 @@ import { debug } from '../App';
  * @param {*} row 
  * @returns A string in the format 'pluginName::serial'.
  */
-const getRowId = (row) => {
+const getRowKey = (row: MixedApiDevices) => {
   return `${row.pluginName}::${row.serial}`;
 };
 
-function HomeDevicesTable({ data, columns, columnVisibility }) {
-  // Load sort state from localStorage
-  const initialSortBy = useMemo(() => {
-    const saved = localStorage.getItem('homeDevicesColumnsSortBy');
-    // if(debug) console.log(`HomeDevicesTable retrieved sortBy:`, saved, JSON.parse(saved));
-    return saved ? JSON.parse(saved) : [{id: 'name', desc: false}];
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columns]);
+interface ExtendedBaseRegisteredPlugin extends Omit<BaseRegisteredPlugin, 'schemaJson' | 'configJson'> {
+  schemaJson: { properties: { whiteList?: { selectFrom?: string } } };
+  configJson: { whiteList: string[]; blackList: string[]; postfix?: string };
+}
 
-  // Filter columns based on visibility
-  const visibleColumns = useMemo(
-    () => columns.filter(column => columnVisibility[column.accessor]),
-    [columnVisibility, columns]
-  );
-  
-  // React-Table
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    state: { sortBy },
-  } = useTable({ columns: visibleColumns, data, getRowId, initialState: { sortBy: initialSortBy }, }, useSortBy);
+interface ApiDevicesWithSelected extends ApiDevices {
+  selected?: boolean;
+}
 
-  // Save sort state to localStorage whenever it changes
-  useEffect(() => {
-    // if(debug) console.log(`HomeDevicesTable saved sortBy: ${JSON.stringify(sortBy, null, 2)}`);
-    localStorage.setItem('homeDevicesColumnsSortBy', JSON.stringify(sortBy));
-  }, [sortBy]);
+interface ApiSelectDevicesWithSelected extends ApiSelectDevice {
+  selected?: boolean;
+}
 
-  return (
-    <table {...getTableProps()} style={{ border: 'none', borderCollapse: 'collapse' }}>
-      <thead style={{ border: 'none', borderCollapse: 'collapse' }}>
-        {headerGroups.map(headerGroup => (
-          <tr {...headerGroup.getHeaderGroupProps()} style={{ border: 'none', borderCollapse: 'collapse' }}>
-            {headerGroup.headers.map(column => (
-              <th {...column.getHeaderProps(column.noSort ? undefined : column.getSortByToggleProps())} style={{ border: 'none', borderCollapse: 'collapse', cursor: column.noSort ? 'default' : 'pointer', }}>
-                {column.render('Header')}
-                {/* Add a sort direction indicator */}
-                {!column.noSort && (
-                  <span style={{ margin: '0px', marginLeft: '5px', padding: '0px' }}>
-                    {column.isSorted
-                      ? column.isSortedDesc
-                        ? <Icon path={mdiSortDescending} size='15px'/>
-                        : <Icon path={mdiSortAscending} size='15px'/>
-                    : null}
-                  </span>
-                )}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody {...getTableBodyProps()} style={{ border: 'none', borderCollapse: 'collapse' }}>
-        {rows.map((row, index) => {
-          prepareRow(row);
-          return (
-            <tr 
-              className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} 
-              {...row.getRowProps()} style={{ border: 'none', borderCollapse: 'collapse' }}
-            >
-              {row.cells.map(cell => (
-                <td {...cell.getCellProps()} style={{ border: 'none', borderCollapse: 'collapse' }}>{cell.render('Cell')}</td>
-              ))}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  );
+interface MixedApiDevices {
+  pluginName: string;
+  type?: string;
+  endpoint?: number | undefined;
+  name: string;
+  serial: string;
+  productUrl?: string;
+  configUrl?: string;
+  uniqueId?: string;
+  reachable?: boolean;
+  powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
+  cluster?: string;
+  matter?: ApiMatterResponse;
+  selected?: boolean;
+}
+
+
+interface HomeDevicesProps {
+  storeId: string | null;
+  setStoreId: (id: string | null) => void;
 }
 
 /**
@@ -127,88 +82,80 @@ function HomeDevicesTable({ data, columns, columnVisibility }) {
  * The user can sort the table by clicking on the column headers. The sort state is saved in localStorage.
  * The user can see a footer with the number of registered devices, a loading message if plugins are not fully loaded, and a restart required message if needed.
  */
-function HomeDevices({storeId, setStoreId}) {
+function HomeDevices({storeId, setStoreId}: HomeDevicesProps) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
   // States
   const [restart, setRestart] = useState(false); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
   const [loading, setLoading] = useState(true); // Loading state, used in the footer sx. Set to false when all plugins are loaded.
-  const [settings, setSettings] = useState(null); // Settings from /api/settings response
-  const [plugins, setPlugins] = useState([]);
-  const [devices, setDevices] = useState([]);
-  const [selectDevices, setSelectDevices] = useState([]);
-  const [mixedDevices, setMixedDevices] = useState([]); // The table show these ones, mix of devices and selectDevices
-  const [devicesColumnVisibilityDialogOpen, setDevicesColumnVisibilityDialogOpen] = useState(false); // Configure Columns dialog
-  const [devicesColumnVisibility, setDevicesColumnVisibility] = useState({
-    pluginName: true,
-    name: true,
-    serial: true,
-    reachable: true,
-    powerSource: true,
-    configUrl: false,
-    actions: true,
-  }); // Column visibility
+  const [settings, setSettings] = useState<ApiSettingResponse | null>(null); // Settings from /api/settings response
+  const [plugins, setPlugins] = useState<ExtendedBaseRegisteredPlugin[]>([]);
+  const [devices, setDevices] = useState<ApiDevicesWithSelected[]>([]);
+  const [selectDevices, setSelectDevices] = useState<ApiSelectDevicesWithSelected[]>([]);
+  const [mixedDevices, setMixedDevices] = useState<MixedApiDevices[]>([]); // The table show these ones, mix of devices and selectDevices
 
   // Refs
   const uniqueId = useRef(getUniqueId());
 
-  const devicesColumns = [
+  const devicesColumns: MbfTableColumn<MixedApiDevices>[] = [
     {
-      Header: 'Plugin',
-      accessor: 'pluginName',
+      label:'Plugin',
+      id:'pluginName',
     },
     {
-      Header: 'Name',
-      accessor: 'name',
+      label:'Name',
+      id:'name',
+      required: true,
     },
     {
-      Header: 'Serial',
-      accessor: 'serial',
+      label:'Serial',
+      id:'serial',
     },
     {
-      Header: 'Availability',
-      accessor: 'reachable',
-      Cell: ({ row }) => (
-        row.original.reachable===true ? 'Online' : row.original.reachable===false ? <span style={{ color: 'red' }}>Offline</span> : ''
+      label:'Availability',
+      id:'availability',
+      render: (value, rowKey, mixedDevice, _column) => (
+        mixedDevice.reachable===true ? 'Online' : mixedDevice.reachable===false ? <span style={{ color: 'red' }}>Offline</span> : ''
       ),
-      sortType: (rowA, rowB) => {
-        const a = rowA.original.reachable===true ? 1 : rowA.original.reachable===false ? 0 : -1;
-        const b = rowB.original.reachable===true ? 1 : rowB.original.reachable===false ? 0 : -1;
+      comparator: (rowA, rowB) => {
+        const a = rowA.reachable===true ? 1 : rowA.reachable===false ? 0 : -1;
+        const b = rowB.reachable===true ? 1 : rowB.reachable===false ? 0 : -1;
         return a - b;
       },
     },
     {
-      Header: 'Power',
-      accessor: 'powerSource',
-      Cell: ({ row }) => {
-        if (row.original.powerSource === 'ac' || row.original.powerSource === 'dc') {
+      label:'Power',
+      id:'powerSource',
+      render:(value, rowKey, mixedDevice, _column) => {
+        if (mixedDevice.powerSource === 'ac' || mixedDevice.powerSource === 'dc') {
           return <ElectricalServicesIcon fontSize="small" sx={{ color: 'var(--primary-color)' }} />;
-        } else if (row.original.powerSource === 'ok') {
+        } else if (mixedDevice.powerSource === 'ok') {
           return <Battery4BarIcon fontSize="small" sx={{ color: 'green' }} />;
-        } else if (row.original.powerSource === 'warning') {
+        } else if (mixedDevice.powerSource === 'warning') {
           return <Battery4BarIcon fontSize="small" sx={{ color: 'yellow' }} />;
-        } else if (row.original.powerSource === 'critical') {
+        } else if (mixedDevice.powerSource === 'critical') {
           return <Battery4BarIcon fontSize="small" sx={{ color: 'red' }} />;
         } else return <span></span>;
       },
     },
     {
-      Header: 'Url',
-      accessor: 'configUrl',
+      label:'Url',
+      id:'configUrl',
     },
     {
-      Header: 'Actions',
-      accessor: 'actions',
-      noSort: true,
-      Cell: ({ row }) => (
+      label:'Actions',
+      id:'selected',
+      required: true,
+      // noSort: true,
+      render:(value, rowKey, mixedDevice, _column) => (
         <div style={{ display: 'flex', flexDirection: 'row' }}>
-          {row.original.matter!==undefined ?
+          {mixedDevice.matter!==undefined ?
             <Tooltip title="Show the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <IconButton
-                onClick={() => setStoreId(storeId === row.original.matter.id ? settings.matterbridgeInformation.bridgeMode === 'bridge' ? 'Matterbridge' : null : row.original.matter.id)}
+                onClick={() => setStoreId(storeId === mixedDevice.matter?.id ? settings?.matterbridgeInformation.bridgeMode === 'bridge' ? 'Matterbridge' : null : mixedDevice.matter?.id || null)}
                 aria-label="Show the QRCode"
-                sx={{ margin: 0, padding: 0, color: getQRColor(row.original.matter) }}
+                sx={{ margin: 0, padding: 0, color: getQRColor(mixedDevice.matter) }}
               >
                 <QrCode2 fontSize="small"/>
               </IconButton>
@@ -216,10 +163,10 @@ function HomeDevices({storeId, setStoreId}) {
           :
             <div style={{ width: '20px', height: '20px' }}></div>
           }
-          {row.original.configUrl ?
+          {mixedDevice.configUrl ?
             <Tooltip title="Open the configuration page" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <IconButton
-                onClick={() => window.open(row.original.configUrl, '_blank')}
+                onClick={() => window.open(mixedDevice.configUrl, '_blank')}
                 aria-label="Open config url"
                 sx={{ margin: 0, padding: 0 }}
               >
@@ -229,11 +176,11 @@ function HomeDevices({storeId, setStoreId}) {
           :
             <div style={{ width: '20px', height: '20px' }}></div>
           }
-          {row.original.selected!==undefined ?
+          {mixedDevice.selected!==undefined ?
             <Tooltip title="Select/unselect the device" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <Checkbox
-                checked={row.original.selected} 
-                onChange={(event) => handleCheckboxChange(event, row.original)} 
+                checked={mixedDevice.selected} 
+                onChange={(event) => handleCheckboxChange(event, mixedDevice)} 
                 sx={{ margin: '0', marginLeft: '8px', padding: '0', }}
                 size="small"
               />
@@ -247,16 +194,16 @@ function HomeDevices({storeId, setStoreId}) {
   ];
   
   // Function to determine if a device is selected based on the plugin's whiteList/blackList and selectFrom configuration
-  const isSelected = useCallback((device) => {
+  const isSelected = useCallback((device: ApiSelectDevicesWithSelected) => {
     // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} name ${device.name} serial ${device.serial}`);
     device.selected = undefined;
     const plugin = plugins.find((p) => p.name === device.pluginName);
     if(!plugin) {
-      console.error(`HomeDevices isSelected: plugin ${device.pluginName} not found for device ${device.deviceName} `);
+      console.error(`HomeDevices isSelected: plugin ${device.pluginName} not found for device ${device.name} `);
       return device.selected;
     }
     const selectMode = plugin.schemaJson?.properties?.whiteList?.selectFrom;
-    let postfix = plugin.configJson?.postfix;
+    let postfix = plugin.configJson.postfix;
     if(postfix === '') postfix = undefined;
     if(plugin.hasWhiteList===true && plugin.hasBlackList===true && selectMode) {
       device.selected = true;
@@ -273,15 +220,15 @@ function HomeDevices({storeId, setStoreId}) {
 
   // WebSocket message handler effect
   useEffect(() => {
-    const handleWebSocketMessage = (msg) => {
+    const handleWebSocketMessage = (msg: WsMessage) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
         // 'settings' | 'plugins' | 'devices' | 'matter';
-        if (msg.method === 'refresh_required' && msg.params.changed !== 'matter') {
+        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed !== 'matter') {
           if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed} and sending /api/plugins request`);
           sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (msg.method === 'refresh_required' && msg.params.changed === 'matter') {
+        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'matter') {
           if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed} and setting matter id ${msg.params.matter?.id}`);
           setMixedDevices(prev => {
             const i = prev.findIndex(d => d.name.replaceAll(' ', '') === msg.params.matter?.id);
@@ -295,33 +242,33 @@ function HomeDevices({storeId, setStoreId}) {
             return next;
           });
         }
-        if (msg.method === 'restart_required') {
+        if (isBroadcast(msg) && msg.method === 'restart_required') {
           if (debug) console.log('HomeDevices received restart_required');
           setRestart(true);
         }
-        if (msg.method === 'restart_not_required') {
+        if (isBroadcast(msg) && msg.method === 'restart_not_required') {
           if (debug) console.log('HomeDevices received restart_not_required');
           setRestart(false);
         }
-        if (msg.method === 'state_update') {
+        if (isBroadcast(msg) && msg.method === 'state_update') {
           if (msg.params.plugin && msg.params.serialNumber && msg.params.cluster.includes('BasicInformationServer') && msg.params.attribute === 'reachable') {
             /*if(debug)*/ console.log(`HomeDevices updating device reachability for plugin ${msg.params.plugin} serial ${msg.params.serialNumber} value ${msg.params.value}`);
             setDevices((prevDevices) =>
               prevDevices.map((d) =>
                 d.pluginName === msg.params.plugin && d.serial === msg.params.serialNumber
-                  ? { ...d, reachable: msg.params.value }
+                  ? { ...d, reachable: msg.params.value as boolean }
                   : d
               )
             );
           }
         }
         // Local messages
-        if (msg.id === uniqueId.current && msg.method === '/api/settings') {
+        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
           setSettings(msg.response); // Store the settings response
           setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired); // Set the restart state based on the response. Used in the footer.
         }
-        if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
+        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
           if(msg.response) {
             // Check if all plugins are loaded and started and not in error state before continuing
@@ -336,7 +283,7 @@ function HomeDevices({storeId, setStoreId}) {
 
             if(debug) console.log(`HomeDevices reset plugins, devices and selectDevices`);
             setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footer.
-            setPlugins(msg.response);
+            setPlugins(msg.response as unknown as ExtendedBaseRegisteredPlugin[]); // Store the plugins response
             setDevices([]);
             setSelectDevices([]);
             // Request all the devices
@@ -351,16 +298,16 @@ function HomeDevices({storeId, setStoreId}) {
             }
           }
         }
-        if (msg.id === uniqueId.current && msg.method === '/api/devices') {
+        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/devices') {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} devices:`, msg.response);
           if(msg.response) {
-            for (const device of msg.response) {
+            for (const device of msg.response as ApiDevicesWithSelected[]) {
               device.selected = isSelected(device);
             }
             setDevices(msg.response);
           }
         }
-        if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
+        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/select/devices') {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'without select devices'}:`, msg.response);
           if(msg.response && msg.response.length > 0) {
             setSelectDevices((prevSelectDevices) => {
@@ -391,7 +338,7 @@ function HomeDevices({storeId, setStoreId}) {
       return;
     }
     if(debug) console.log(`HomeDevices mixing devices (${devices.length}) and selectDevices (${selectDevices.length})`);
-    const mixed = [];
+    const mixed: MixedApiDevices[] = [];
     for (const device of devices) {
       mixed.push(device);
     }
@@ -416,42 +363,13 @@ function HomeDevices({storeId, setStoreId}) {
     }
   }, [online, sendMessage]);
 
-  // Load column visibility from localStorage
-  useEffect(() => {
-    const storedVisibility = localStorage.getItem('homeDevicesColumnVisibility');
-    if (storedVisibility) {
-      const visibility = JSON.parse(storedVisibility);
-      if(visibility.powerSource === undefined) visibility['powerSource'] = true; // Fix for old versions
-      setDevicesColumnVisibility(visibility);
-      if(debug) console.log(`HomeDevices loaded column visibility from localStorage`);
-    }
-  }, []); // run on mount/unmount
-
-  // Persist column visibility to localStorage whenever it changes
-  const handleDevicesColumnVisibilityChange = (accessor) => {
-    setDevicesColumnVisibility((prev) => {
-      const newVisibility = {
-        ...prev,
-        [accessor]: !prev[accessor],
-      };
-      localStorage.setItem('homeDevicesColumnVisibility', JSON.stringify(newVisibility));
-      if(debug) console.log(`HomeDevices saved column visibility to localStorage`, JSON.stringify(newVisibility), newVisibility);
-      return newVisibility;
-    });
-  };
-
-  // Toggle columns visibility dialog
-  const handleDevicesColumnVisibilityDialogToggle = () => {
-    setDevicesColumnVisibilityDialogOpen(!devicesColumnVisibilityDialogOpen);
-  };
-
   // Handle checkbox change to select/unselect a device
-  const handleCheckboxChange = (event, device) => {
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, device: MixedApiDevices) => {
     /*if(debug)*/ console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
     setMixedDevices(prev => { 
       const i = prev.findIndex(d => d.pluginName === device.pluginName && d.serial === device.serial); 
       if(i < 0) {
-        console.error(`handleCheckboxChange: device not found ${device.name} serial ${device.serial} id ${device.id}`);
+        console.error(`handleCheckboxChange: device not found ${device.name} serial ${device.serial}`);
         return prev; 
       }
       const next = [...prev]; 
@@ -470,54 +388,9 @@ function HomeDevices({storeId, setStoreId}) {
     return ( <Connecting /> );
   }
   return (
-      <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
-
-        {/* HomeDevices Configure Columns Dialog */}
-        <Dialog open={devicesColumnVisibilityDialogOpen} onClose={handleDevicesColumnVisibilityDialogToggle}>
-          <DialogTitle>Configure Devices Columns</DialogTitle>
-          <DialogContent>
-            <FormGroup>
-              {devicesColumns.map((column) => (
-                <FormControlLabel
-                  key={column.accessor}
-                  control={
-                    <Checkbox
-                      disabled={['name', 'actions'].includes(column.accessor)}
-                      checked={devicesColumnVisibility[column.accessor]}
-                      onChange={() => handleDevicesColumnVisibilityChange(column.accessor)}
-                    />
-                  }
-                  label={column.Header}
-                />
-              ))}
-            </FormGroup>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDevicesColumnVisibilityDialogToggle}>Close</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* HomeDevices Table */}
-        <div className="MbfWindowHeader" style={{ justifyContent: 'space-between' }}>
-          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Devices</p>
-          <div className="MbfWindowHeaderFooterIcons">
-            <IconButton onClick={handleDevicesColumnVisibilityDialogToggle} aria-label="Configure Columns" style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}}>
-              <Tooltip title="Configure columns">
-                <SettingsIcon style={{ color: 'var(--header-text-color)', fontSize: '19px' }}/>
-              </Tooltip>
-            </IconButton>
-          </div>
-        </div>
-        <div className="MbfWindowBodyColumn" style={{margin: '0px', padding: '0px', gap: '0', overflow: 'auto'}} >
-          <HomeDevicesTable data={mixedDevices} columns={devicesColumns} columnVisibility={devicesColumnVisibility}/>
-        </div>
-        <div className="MbfWindowFooter" style={{ borderTop: '1px solid var(--table-border-color)', justifyContent: 'space-between'}}>
-            {loading && <p className="MbfWindowFooterText" style={{ fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Waiting for the plugins to fully load...</p>}  
-            {!loading && <p className="MbfWindowFooterText" style={{ fontWeight: 'normal', fontSize: '14px', color: 'var(--secondary-color)'}}>Registered devices: {devices.length.toString()}/{mixedDevices.length.toString()}</p>}
-            {restart && <p className="MbfWindowFooterText" style={{ fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Restart required</p>}  
-        </div>
-      </div>
-
+    <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+      <MbfTable name="Devices" getRowKey={getRowKey} rows={mixedDevices} columns={devicesColumns} footerLeft={loading ? 'Waiting for the plugins to fully load...' : `Registered devices: ${devices.length.toString()}/${mixedDevices.length.toString()}`} footerRight={restart ? 'Restart required' : ''}/>
+    </div>
   );
 }
 

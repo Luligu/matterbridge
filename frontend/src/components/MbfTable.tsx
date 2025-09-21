@@ -21,8 +21,8 @@ import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
 import { debug } from '../App';
 // const debug = true;
 
-// Generic comparator used by MbTable sorting.
-function comparator<T extends Record<string, unknown>>(rowA: T, rowB: T, key: keyof T): number {
+// Generic comparator used by MbfTable sorting.
+export function comparator<T extends Record<string, unknown>>(rowA: T, rowB: T, key: keyof T): number {
   const v1 = rowA?.[key];
   const v2 = rowB?.[key];
   if (v1 == null && v2 == null) return 0;
@@ -44,10 +44,11 @@ export interface MbfTableColumn<T extends object> {
   maxWidth?: number;
   align?: 'left' | 'center' | 'right';
   format?: (value: number) => string;
-  nosort?: boolean;
+  noSort?: boolean;
   render?: (value: unknown, rowKey: string | number, row: T, column: MbfTableColumn<T>) => React.ReactNode;
   hidden?: boolean;
   required?: boolean;
+  comparator?: (a: T, b: T) => number;
 }
 
 interface ColumnVisibility {
@@ -117,11 +118,18 @@ function MbfTable<T extends object>({ name, columns, rows, getRowKey, footerLeft
   const sortedRows = useMemo<T[]>(() => {
     if (!orderBy || !order) return rows;
     const sortCol = columns.find((c) => c.id === orderBy);
-    if (!sortCol || sortCol.nosort) return rows;
+    // Only skip sorting if the selected column is not found or is explicitly noSort
+    if (!sortCol) return rows;
+    if (sortCol.noSort) return rows;
     const wrapped = rows.map((el, index) => ({ el, index }));
     wrapped.sort((a, b) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const cmp = comparator<any>(a.el as any, b.el as any, orderBy as string);
+      let cmp: number;
+      if (typeof sortCol.comparator === 'function') {
+        cmp = sortCol.comparator(a.el, b.el);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        cmp = comparator<any>(a.el as any, b.el as any, orderBy as string);
+      }
       if (cmp !== 0) return order === 'asc' ? cmp : -cmp;
       return a.index - b.index; // stable
     });
@@ -245,7 +253,7 @@ function MbfTable<T extends object>({ name, columns, rows, getRowKey, footerLeft
             style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }}
           >
             <Tooltip title={`Configure ${name} columns`}>
-              <Icon path={mdiCog} size='20px' style={{ color: 'var(--header-text-color)' }} />
+              <Icon path={mdiCog} size="20px" color={'var(--header-text-color)'} />
             </Tooltip>
           </IconButton>
         </div>
@@ -258,7 +266,7 @@ function MbfTable<T extends object>({ name, columns, rows, getRowKey, footerLeft
               {columns.map((column) => {
                 if (column.hidden) return null;
                 if (!column.required && visibleMap[column.id] === false) return null;
-                const sortable = !column.nosort;
+                const sortable = !column.noSort;
                 const isActive = sortable && orderBy === column.id && !!order;
                 return (
                   <th

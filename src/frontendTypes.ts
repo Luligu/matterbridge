@@ -32,6 +32,15 @@ export interface ApiSettingResponse {
   systemInformation: SystemInformation;
 }
 
+export interface ApiSelectDevice {
+  pluginName: string;
+  serial: string;
+  name: string;
+  configUrl?: string;
+  icon?: string;
+  entities?: { name: string; description: string; icon?: string }[];
+}
+
 /**
  * Base interface for WebSocket messages.
  */
@@ -346,22 +355,7 @@ export interface WsMessageApiSelectDevicesRequest extends WsMessageBaseApiReques
 }
 export interface WsMessageApiSelectDevicesResponse extends WsMessageSuccessApiResponse {
   method: '/api/select/devices';
-  response:
-    | {
-        pluginName: string;
-        serial: string;
-        name: string;
-        configUrl?: string | undefined;
-        icon?: string | undefined;
-        entities?:
-          | {
-              name: string;
-              description: string;
-              icon?: string | undefined;
-            }[]
-          | undefined;
-      }[]
-    | undefined;
+  response: ApiSelectDevice[];
 }
 
 export interface WsMessageApiSelectEntitiesRequest extends WsMessageBaseApiRequest {
@@ -645,7 +639,14 @@ export interface WsMessageStateUpdate {
   dst: string;
   src: string;
   method: 'state_update';
-  params: Record<string, string | number | boolean | null | undefined>;
+  params: {
+    plugin: string;
+    serialNumber: string;
+    uniqueId: string;
+    cluster: string;
+    attribute: string;
+    value: number | string | boolean | null | undefined;
+  };
 }
 
 export interface WsMessageShellySysUpdate {

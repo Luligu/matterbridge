@@ -40,6 +40,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { isValidArray, isValidObject, isValidString } from './utils/export.js';
+import { ApiSelectDevice } from './frontendTypes.js';
 
 // Platform types
 
@@ -509,10 +510,10 @@ export class MatterbridgePlatform {
   /**
    * Retrieves the select devices from the platform map.
    *
-   * @returns {{ pluginName: string; serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]} The selected devices array.
+   * @returns {ApiSelectDevice[]} The selected devices array.
    */
-  getSelectDevices(): { pluginName: string; serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[] {
-    const selectDevices: { pluginName: string; serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[] = [];
+  getSelectDevices(): ApiSelectDevice[] {
+    const selectDevices: ApiSelectDevice[] = [];
     for (const device of this.selectDevice.values()) {
       selectDevices.push({ pluginName: this.name, ...device });
     }
