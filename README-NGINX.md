@@ -18,9 +18,18 @@
 
 ## Run matterbridge with nginx
 
-### Create a basic nginx configuration file that redirect to http://yourhost:8283
+### Install nginx if it is not installed
 
+```bash
+sudo apt update
+sudo apt install nginx
 ```
+
+### Create a basic nginx configuration file that redirect from http://yourhost to http://yourhost:8283
+
+Create or edit the matterbridge configuration file
+
+```bash
 sudo nano /etc/nginx/sites-available/matterbridge
 ```
 
@@ -33,7 +42,7 @@ server {
     server_name _;
 
     location / {
-        # Redirect to Matterbridge frontend from http:/server_name:80
+        # Redirect to Matterbridge frontend from http:/yourhost:80
         proxy_pass http://localhost:8283/;
         proxy_set_header Host                 $host;
         proxy_set_header X-Real-IP            $remote_addr;
@@ -54,7 +63,16 @@ Add matterbridge to enabled sites
 sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
 ```
 
-### Create a basic nginx configuration file that redirect to http://yourhost:8283/matterbridge
+Restart nginx and test the configuration
+
+```bash
+sudo systemctl restart nginx
+sudo nginx -t
+```
+
+### Create a basic nginx configuration file that redirect from http://yourhost/matterbridge to http://yourhost:8283/matterbridge
+
+Create or edit the matterbridge configuration file
 
 ```bash
 sudo nano /etc/nginx/sites-available/matterbridge
@@ -69,7 +87,7 @@ server {
     server_name _;
 
     location /matterbridge/ {
-        # Redirect to Matterbridge frontend from http:/server_name/matterbridge:80
+        # Redirect to Matterbridge frontend from http:/yourhost/matterbridge:80
         proxy_pass http://localhost:8283/;
         proxy_set_header Host                     $host;
         proxy_set_header X-Real-IP                $remote_addr;
@@ -97,17 +115,19 @@ sudo systemctl restart nginx
 sudo nginx -t
 ```
 
-### Create an advanced nginx configuration file that redirect to http://yourhost:8283 with ssl
+### Create an advanced nginx configuration file that redirect from http://yourhost or https://yourhost to http://yourhost:8283 with ssl
+
+Add your certificates in /etc/nginx/certs: `cert.pem` and `key.pem`
+
+Create or edit the matterbridge configuration file
 
 ```bash
 sudo nano /etc/nginx/sites-available/matterbridge
 ```
 
-paste this configuration adding your certificates:
+paste this configuration:
 
 ```
-# Default server configuration
-
 # Redirect all HTTP requests to HTTPS
 server {
     listen 80 default_server;
@@ -134,7 +154,7 @@ server {
     ssl_prefer_server_ciphers on;
 
     location / {
-      # Redirect to Matterbridge frontend from https:/server_name:443
+      # Redirect to Matterbridge frontend from https:/yourhost:443
       proxy_pass http://localhost:8283/;
       proxy_set_header Host                 $host;
       proxy_set_header X-Real-IP            $remote_addr;
@@ -162,13 +182,17 @@ sudo systemctl restart nginx
 sudo nginx -t
 ```
 
-### Create an advanced nginx configuration file that redirect to http://yourhost/matterbridge with ssl
+### Create an advanced nginx configuration file that redirect from http://yourhost/matterbridge or https://yourhost/matterbridge to http://yourhost/matterbridge with ssl
+
+Add your certificates in /etc/nginx/certs: `cert.pem` and `key.pem`
+
+Create or edit the matterbridge configuration file
 
 ```bash
 sudo nano /etc/nginx/sites-available/matterbridge
 ```
 
-paste this configuration adding your certificates:
+paste this configuration:
 
 ```
 # Redirect all HTTP requests to HTTPS
@@ -205,19 +229,19 @@ server {
 		try_files $uri $uri/ =404;
 	}
 
-    location /matterbridge/ {
-	    # Redirect to Matterbridge frontend from https:/server_name/matterbridge:443
-        proxy_pass http://localhost:8283/;
-        proxy_set_header Host                       $host;
-        proxy_set_header X-Real-IP                  $remote_addr;
-        proxy_set_header X-Forwarded-For            $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto          $scheme;
+  location /matterbridge/ {
+    # Redirect to Matterbridge frontend from https:/yourhost/matterbridge:443
+      proxy_pass http://localhost:8283/;
+      proxy_set_header Host                       $host;
+      proxy_set_header X-Real-IP                  $remote_addr;
+      proxy_set_header X-Forwarded-For            $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto          $scheme;
 
-	    # WebSocket support
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade                    $http_upgrade;
-        proxy_set_header Connection                 $http_connection;
-    }
+    # WebSocket support
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade                    $http_upgrade;
+      proxy_set_header Connection                 $http_connection;
+  }
 }
 ```
 
