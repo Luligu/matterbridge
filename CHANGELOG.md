@@ -12,7 +12,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Breaking Changes
 
-- [profiles]: Profile management has changed. Now, each profile has its own independent directory with storage, matterstorage, plugin config, and plugin directory. This means that if you are using profiles, Matterbridge will not find the old profile data.
+- [profiles]: Profile management has changed. Now, each profile has its own independent directories under `profiles` with storage, matterstorage, plugin config, and plugin directory. This means that if you are using profiles, Matterbridge will not find the old profile data. This allows to run multiple instances of matterbridge (change the frontend port and the matter port for each profile) or to simply make a test of a new plugin without modifing your production setup.
 
 ### Added
 
