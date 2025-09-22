@@ -931,7 +931,7 @@ describe('Matterbridge frontend', () => {
     expect(data.success).toBe(true);
     expect(await matterbridge.nodeContext?.get('matterdiscriminator')).toBe(3040);
 
-    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterdiscriminator', value: '900' } }));
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterdiscriminator', value: '5000' } }));
     data = await waitMessageId(WS_ID);
     expect(data.success).toBeUndefined();
     expect(data.error).toBe('Invalid value: reset matter commissioning discriminator to default undefined');
@@ -942,7 +942,7 @@ describe('Matterbridge frontend', () => {
     expect(data.success).toBe(true);
     expect(await matterbridge.nodeContext?.get('matterpasscode')).toBe(20202026);
 
-    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterpasscode', value: '2000' } }));
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setmatterpasscode', value: '-11' } }));
     data = await waitMessageId(WS_ID);
     expect(data.success).toBeUndefined();
     expect(data.error).toBe('Invalid value: reset matter commissioning passcode to default undefined');

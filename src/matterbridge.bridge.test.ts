@@ -67,7 +67,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('JestBridge');
     expect(matterbridge.bridgeMode).toBe('bridge');
-    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, 'matterstorage.JestBridge'));
+    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, 'matterstorage'));
 
     // Clear all plugins
     plugins = matterbridge.plugins;
@@ -90,13 +90,13 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
-    expect((matterbridge as any).nodeStorageName).toBe('storage.JestBridge');
+    expect((matterbridge as any).nodeStorageName).toBe('storage');
 
     expect((matterbridge as any).matterStorageService).toBeDefined();
     expect((matterbridge as any).matterStorageManager).toBeDefined();
     expect((matterbridge as any).matterbridgeContext).toBeDefined();
     expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
-    expect((matterbridge as any).matterStorageName).toBe('matterstorage.JestBridge');
+    expect((matterbridge as any).matterStorageName).toBe('matterstorage');
 
     expect((matterbridge as any).serverNode).toBeDefined();
     expect((matterbridge as any).aggregatorNode).toBeDefined();
