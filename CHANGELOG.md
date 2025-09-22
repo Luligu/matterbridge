@@ -12,6 +12,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Breaking Changes
 
+- [profiles]: Profile management has changed. Now, each profile has its own independent directory with storage, matterstorage, plugin config, and plugin directory. This means that if you are using profiles, Matterbridge will not find the old profile data.
+
 ### Added
 
 - [frontend]: Bumped `frontend` version to 3.1.0. Fully typed with the backend.
