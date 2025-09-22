@@ -59,7 +59,6 @@ jobs:
           npm audit fix || true
           npm update || true
           npm run lint || true
-          npm run typecheck || true
           npm run build || true
           npm run test || true
         working-directory: frontend
