@@ -90,9 +90,9 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
   const [logOnFileMb, setLogOnFileMb] = useState(false);
   const [frontendTheme, setFrontendTheme] = useState('dark');
-  const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true);
-  const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'logs');
-  const [virtualMode, setVirtualMode] = useState(localStorage.getItem('virtualMode')??'outlet');
+  const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true); // default true
+  const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'devices'); // default devices
+  const [virtualMode, setVirtualMode] = useState(localStorage.getItem('virtualMode')??'outlet'); // default outlet
 
   // Refs
   const uniqueId = useRef(getUniqueId());
