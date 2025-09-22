@@ -780,7 +780,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       if (debug) console.log(`CheckboxWidget onClick plugin="${plugin.name}" action="${name}" value="${fieldValue}"`);
       sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/action", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id } });
       if (schema.buttonClose === true) onClose();
-      else if (schema.buttonSave === true) handleSaveChanges({ formData });
+      else if (schema.buttonSave === true) handleSaveChanges({ formData } as any); // Save changes and we don't close (no need for other props).
     };
 
     if (schema.buttonText && schema.description) {
