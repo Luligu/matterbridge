@@ -46,7 +46,7 @@ import { mdiPowerSocketEu, mdiTransmissionTower, mdiEvStation, mdiWaterBoiler, m
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-import { ApiSettingResponse, isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { ApiSettingResponse, WsMessageApiResponse } from '../../../src/frontendTypes';
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
 
@@ -331,23 +331,23 @@ function DevicesIcons({filter}: DevicesIconsProps) {
   const uniqueId = useRef(getUniqueId());
   
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (isBroadcast(msg) && msg.method === 'refresh_required') {
-          if(debug) console.log(`DevicesIcons received refresh_required: changed=${msg.params.changed} and sending api requests`);
+        if (msg.method === 'refresh_required') {
+          if(debug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
           sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (isApiResponse(msg) && msg.method === '/api/settings' && msg.response) {
+        if (msg.method === '/api/settings' && msg.response) {
           if(debug) console.log('DevicesIcons received settings:', msg.response);
           setSettings(msg.response);
         }
-        if (isApiResponse(msg) && msg.method === '/api/plugins' && msg.response) {
+        if (msg.method === '/api/plugins' && msg.response) {
           if(debug) console.log('DevicesIcons received plugins:', msg.response);
           setPlugins(msg.response);
         }
-        if (isApiResponse(msg) && msg.method === '/api/devices' && msg.response) {
+        if (msg.method === '/api/devices' && msg.response) {
           if(debug) console.log(`DevicesIcons received ${msg.response.length} devices:`, msg.response);
           setDevices(msg.response);
           for(const device of msg.response) {
@@ -355,7 +355,7 @@ function DevicesIcons({filter}: DevicesIconsProps) {
             sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint || 0} });
           }
         }
-        if (isApiResponse(msg) && msg.method === '/api/clusters' && msg.response) {
+        if (msg.method === '/api/clusters' && msg.response) {
           if(debug) console.log(`DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceType ${msg.response.deviceTypes.join(' ')} clusters (${msg.response.clusters.length}):`, msg.response);
           if(msg.response.clusters.length === 0) return;
           const serial = msg.response.serialNumber;
@@ -379,7 +379,7 @@ function DevicesIcons({filter}: DevicesIconsProps) {
       }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if(debug) console.log('DevicesIcons useEffect webSocket mounted');
 
     return () => {
@@ -392,9 +392,9 @@ function DevicesIcons({filter}: DevicesIconsProps) {
     if(debug) console.log('DevicesIcons useEffect online mounting');
     if(online) {
       if(debug) console.log('DevicesIcons useEffect online sending api requests');
-      sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
     }
     if(debug) console.log('DevicesIcons useEffect online mounted');
 

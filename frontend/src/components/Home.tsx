@@ -18,7 +18,7 @@ import QRDiv from './QRDiv';
 import InstallAddPlugins  from './InstallAddPlugins';
 import HomePlugins from './HomePlugins';
 import HomeDevices from './HomeDevices';
-import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
 // const debug = true;
@@ -40,18 +40,18 @@ function Home() {
   const uniqueId = useRef(getUniqueId());
 
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'settings') {
-          if (debug) console.log(`Home received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
+        if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
+          if (debug) console.log(`Home received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
           setStoreId(null);
           setPlugins([]);
           sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages
-        if (isApiResponse(msg) && msg.method === '/api/settings' && msg.id === uniqueId.current ) {
+        if (msg.method === '/api/settings' && msg.id === uniqueId.current ) {
           if (debug) console.log('Home received settings:', msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
@@ -88,7 +88,7 @@ function Home() {
             }
           }
         }
-        if (isApiResponse(msg) && msg.method === '/api/plugins' && msg.id === uniqueId.current ) {
+        if (msg.method === '/api/plugins' && msg.id === uniqueId.current ) {
           if (debug) console.log(`Home received plugins (${matterbridgeInfo?.bridgeMode}):`, msg.response);
           setPlugins(msg.response);
           if (matterbridgeInfo?.bridgeMode === 'childbridge' && msg.response.length > 0) {
@@ -98,7 +98,7 @@ function Home() {
       }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if (debug) console.log(`Home added WebSocket listener id ${uniqueId.current}`);
 
     return () => {
@@ -192,7 +192,7 @@ function Home() {
               </div>
             </div>
             <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto' }}>
-              <WebSocketLogs />
+              <WebSocketLogs/>
             </div>
           </div>
         }

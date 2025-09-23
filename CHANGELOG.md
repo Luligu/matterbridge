@@ -16,9 +16,11 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [frontend]: Bumped `frontend` version to 3.1.0. Fully typed with the backend.
+- [frontend]: Bumped `frontend` version to 3.1.0. Now, 100% on typescript and fully typed with the backend.
 - [frontend]: Removed legacy `react-table` and created an autonomous component `MbfTable`. Features: unique UI for all tables with integrated column sorting and column selection.
 - [frontend]: Use MbfTable for Plugins, Devices, Registered devices and Clusters tables.
+- [frontend]: Optimized WebSocker message handlers. Now, the handler targets the component.
+- [frontend]: Removed dangerouslySetInnerHTML from log rendering.
 
 ### Changed
 
@@ -27,7 +29,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
-- [frontend]: Fix default values for homePageMode in MatterbridgeSettings
+- [frontend]: Fix default values (devices) for homePageMode (logs/devices) in MatterbridgeSettings.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

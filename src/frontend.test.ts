@@ -38,7 +38,7 @@ import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
 import { wait } from './utils/wait.js';
 import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
-import { WsBroadcastMessageId, WsMessageBroadcastMap, WsMessageById, WsMessageRestartRequired } from './frontendTypes.ts';
+import {} from './frontendTypes.ts';
 
 const startSpy = jest.spyOn(Frontend.prototype, 'start');
 const stopSpy = jest.spyOn(Frontend.prototype, 'stop');
@@ -58,15 +58,6 @@ describe('Matterbridge frontend', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
-  });
-
-  test('Check typed broadcast messages', () => {
-    function handleMessage<T extends keyof WsMessageBroadcastMap>(msg: WsMessageById<T>) {
-      expect(msg.id).toBeDefined();
-      // msg is strongly typed based on its id
-    }
-    const msg1: WsMessageRestartRequired = { id: WsBroadcastMessageId.RestartRequired, method: 'restart_required', src: 'Matterbridge', dst: 'Frontend', params: { fixed: true } };
-    handleMessage(msg1);
   });
 
   test('Verify mock of createServer', () => {

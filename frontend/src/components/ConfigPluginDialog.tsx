@@ -112,7 +112,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if (debug) console.log('ConfigPluginDialog added WebSocket listener id:', uniqueId.current);
 
     // Move the ui: properties from the schema to the uiSchema

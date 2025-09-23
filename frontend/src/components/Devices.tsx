@@ -19,7 +19,7 @@ import { Connecting } from './Connecting';
 import DevicesIcons from './DevicesIcons';
 import { debug } from '../App';
 import { ApiClusters, ApiDevices } from '../../../src/matterbridgeTypes';
-import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import MbfTable, { MbfTableColumn } from './MbfTable';
 
 const devicesColumns: MbfTableColumn<ApiDevices>[] = [
@@ -158,38 +158,32 @@ function Devices() {
 
   // WebSocket message handler effect
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if(debug) console.log('Devices received WebSocket Message:', msg);
-      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        // Handle broadcast messages
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'devices') {
-          if(debug) console.log(`Devices received refresh_required: changed=${msg.params.changed} and sending /api/devices request`);
-          sendMessage({ id: uniqueId.current, sender: 'Devices', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
-        }
-        // Handle responses to our requests
-        if (isApiResponse(msg) && msg.method === '/api/devices') {
-          if(debug) console.log(`Devices received ${msg.response.length} devices:`, msg.response);
-          setDevices(msg.response);
-        }
-        if (isApiResponse(msg) && msg.method === '/api/clusters') {
-          if(debug) console.log(`Clusters received ${msg.response.clusters.length} clusters for plugin ${msg.response.plugin}:`, msg.response);
-          setClusters(msg.response.clusters);
-  
-          const endpointCounts: Record<string, number> = {};
-          for (const cluster of msg.response.clusters) {
-            if(debug) console.log('Cluster:', cluster.endpoint);
-            if (endpointCounts[cluster.endpoint]) {
-              endpointCounts[cluster.endpoint]++;
-            } else {
-              endpointCounts[cluster.endpoint] = 1;
-            }
+      if (msg.method === 'refresh_required' && msg.response.changed === 'devices') {
+        if(debug) console.log(`Devices received refresh_required: changed=${msg.response.changed} and sending /api/devices request`);
+        sendMessage({ id: uniqueId.current, sender: 'Devices', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      } else if (msg.method === '/api/devices') {
+        if(debug) console.log(`Devices received ${msg.response.length} devices:`, msg.response);
+        setDevices(msg.response);
+      } else if (msg.method === '/api/clusters') {
+        if(debug) console.log(`Clusters received ${msg.response.clusters.length} clusters for plugin ${msg.response.plugin}:`, msg.response);
+        setClusters(msg.response.clusters);
+
+        const endpointCounts: Record<string, number> = {};
+        for (const cluster of msg.response.clusters) {
+          if(debug) console.log('Cluster:', cluster.endpoint);
+          if (endpointCounts[cluster.endpoint]) {
+            endpointCounts[cluster.endpoint]++;
+          } else {
+            endpointCounts[cluster.endpoint] = 1;
           }
-          setSubEndpointsCount(Object.keys(endpointCounts).length);
         }
+        setSubEndpointsCount(Object.keys(endpointCounts).length);
       }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if(debug) console.log('Devices added WebSocket listener');
 
     return () => {
@@ -201,7 +195,7 @@ function Devices() {
   // Send API requests when online
   useEffect(() => {
     if (online) {
-      if(debug) console.log('Devices sending api requests');
+      if(debug) console.log('Devices sending api requests with id ', uniqueId.current);
       sendMessage({ id: uniqueId.current, sender: 'Devices', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ id: uniqueId.current, sender: 'Devices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ id: uniqueId.current, sender: 'Devices', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });

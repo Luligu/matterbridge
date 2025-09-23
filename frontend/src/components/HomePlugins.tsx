@@ -24,7 +24,7 @@ import { Connecting } from './Connecting';
 import { StatusIndicator } from './StatusIndicator';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
 import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
-import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { getQRColor } from './getQRColor';
 import { debug } from '../App';
 import MbfTable, { MbfTableColumn } from './MbfTable';
@@ -176,45 +176,45 @@ function HomePlugins({storeId, setStoreId}: HomePluginsProps) {
   
   // WebSocket message handler effect
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'plugins') {
-          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and sending /api/plugins request`);
+        if (msg.method === 'refresh_required' && msg.response.changed === 'plugins') {
+          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and sending /api/plugins request`);
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'matter') {
-          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and setting matter id ${msg.params.matter?.id}`);
+        if (msg.method === 'refresh_required' && msg.response.changed === 'matter') {
+          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and setting matter id ${msg.response.matter?.id}`);
           setPlugins((prevPlugins) => {
-            const i = prevPlugins.findIndex(p => p.matter?.id === msg.params.matter?.id);
+            const i = prevPlugins.findIndex(p => p.matter?.id === msg.response.matter?.id);
             if (i < 0) {
-              if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and matter id ${msg.params.matter?.id} not found`);
+              if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and matter id ${msg.response.matter?.id} not found`);
               return prevPlugins;
             }
-            if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} set matter id ${msg.params.matter?.id}`);
+            if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} set matter id ${msg.response.matter?.id}`);
             const next = [...prevPlugins];
-            next[i] = { ...next[i], matter: msg.params.matter };
+            next[i] = { ...next[i], matter: msg.response.matter };
             return next;
           });
         }
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'settings') {
-          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
+        if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
+          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages
-        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/settings') {
+        if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log(`HomePlugins (id: ${msg.id}) received settings:`, msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
         }
-        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/plugins') {
+        if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if(debug) console.log(`HomePlugins (id: ${msg.id}) received ${msg.response.length} plugins:`, msg.response);
           setPlugins(msg.response);
         }
       }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if(debug) console.log('HomePlugins added WebSocket listener id:', uniqueId.current);
 
     return () => {

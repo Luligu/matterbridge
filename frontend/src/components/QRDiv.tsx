@@ -17,7 +17,7 @@ import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDel
 import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { ApiMatterResponse } from '../../../src/matterbridgeTypes';
-import { isBroadcast, WsBroadcastMessageId, WsMessage } from '../../../src/frontendTypes';
+import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { debug } from '../App';
 // const debug = true; // Debug flag for this component
 
@@ -74,35 +74,36 @@ function QRDiv({ id }: QRDivProps) {
 
   // WebSocket message handler effect
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (isBroadcast(msg) && msg.id === WsBroadcastMessageId.RefreshRequired && msg.params.changed === 'matter' && msg.params.matter) {
-          if(debug) console.log(`QRDiv received refresh_required: changed=${msg.params.changed} for storeId "${msg.params.matter.id}":`, msg.params.matter);
-          if(storeId === msg.params.matter.id) {
-            if(debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.params.matter.id}":`, msg.params.matter);
+        if (msg.method === 'refresh_required' && msg.response.changed === 'matter' && msg.response.matter) {
+          if(debug) console.log(`QRDiv received refresh_required: changed=${msg.response.changed} for storeId "${msg.response.matter.id}":`, msg.response.matter);
+          if(storeId === msg.response.matter.id) {
+            if(debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.response.matter.id}":`, msg.response.matter);
             if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
-            if (msg.params.matter.advertising && msg.params.matter.advertiseTime && msg.params.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.params.matter.advertising = false; // already expired
-            setMatter(msg.params.matter);
-            if(msg.params.matter.advertising) {
-              if(debug) console.log(`QRDiv setting matter advertise timeout for storeId "${msg.params.matter.id}":`, msg.params.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
+            if (msg.response.matter.advertising && msg.response.matter.advertiseTime && msg.response.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.response.matter.advertising = false; // already expired
+            setMatter(msg.response.matter);
+            if(msg.response.matter.advertising) {
+              if(debug) console.log(`QRDiv setting matter advertise timeout for storeId "${msg.response.matter.id}":`, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
               advertiseTimeoutRef.current = setTimeout(() => {
                 // Clear advertising state after 15 minutes
                 if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
                 if(debug) console.log(`QRDiv clearing advertising state for storeId "${storeId}" after 15 minutes`);
                 setMatter((prev) => prev ? { ...prev, advertising: false } : prev);
-              }, msg.params.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
+              }, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
             }
           }
         }
       }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if(debug) console.log('QRDiv webSocket effect mounted');
 
     return () => {
       removeListener(handleWebSocketMessage);
       if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+      advertiseTimeoutRef.current = null;
       if(debug) console.log('QRDiv webSocket effect unmounted');
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

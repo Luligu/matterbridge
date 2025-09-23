@@ -21,13 +21,8 @@ const detectTouchscreen = (): boolean => {
   return false;
 };
 
-interface WebSocketMessagesContextType {
-  messages: string[];
-  autoScroll: boolean;
-}
-
-function WebSocketLogsComponent() {
-  const { messages, autoScroll } = useContext(WebSocketMessagesContext) as WebSocketMessagesContextType;
+function WebSocketLogs() {
+  const { messages, autoScroll } = useContext(WebSocketMessagesContext);
   const [isHovering, setIsHovering] = useState(false);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -45,6 +40,36 @@ function WebSocketLogsComponent() {
     }
   }, [messages, isHovering, autoScroll, isTouchscreen]);
 
+  const getLevelMessageBgColor = (level: string) => {
+    switch (level.toLowerCase()) {
+      case 'debug':
+        return 'gray';
+      case 'info':
+        return '#267fb7';
+      case 'notice':
+        return 'green';
+      case 'warn':
+        return '#e9db18';
+      case 'error':
+        return 'red';
+      case 'fatal':
+        return '#ff0000';
+      case 'spawn':
+        return '#ff00d0';
+      default:
+        return '#5c0e91';
+    }
+  };
+
+  const getLevelMessageColor = (level: string) => {
+    switch (level.toLowerCase()) {
+      case 'warn':
+        return 'black';
+      default:
+        return 'white';
+    }
+  };
+
   return (
     <div style={{ margin: '0px', padding: '0px' }}>
       <ul
@@ -53,11 +78,12 @@ function WebSocketLogsComponent() {
           onMouseLeave={handleMouseLeave}
       >
         {messages.map((msg, index) => (
-            <li
-                key={index}
-                style={{ wordWrap: 'break-word', maxHeight: '200px', overflow: 'hidden' }}
-                dangerouslySetInnerHTML={{ __html: msg }}
-            />
+            <li key={index} style={{ wordWrap: 'break-word', maxHeight: '200px', overflow: 'hidden' }}>
+              <span style={{ marginRight: '5px', padding: '1px 5px', backgroundColor: getLevelMessageBgColor(msg.level), color: getLevelMessageColor(msg.level), fontSize: '12px', borderRadius: '3px', textAlign: 'center' }}>{msg.level}</span>
+              {msg.time && <span style={{ marginRight: '3px', color: '#505050' }}>{'['+msg.time+']'}</span>}
+              {msg.name && <span style={{ marginRight: '3px', color: '#09516d' }}>{'['+msg.name+']'}</span>}
+              <span style={{ color: 'var(--main-log-color)' }}>{msg.message}</span>
+            </li>
         ))}
         <div ref={endOfMessagesRef} />
       </ul>
@@ -65,5 +91,4 @@ function WebSocketLogsComponent() {
   );
 }
 
-export default memo(WebSocketLogsComponent);
-
+export default memo(WebSocketLogs);

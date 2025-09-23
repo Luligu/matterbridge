@@ -19,7 +19,7 @@ import { WebSocketContext } from './WebSocketProvider';
 import { NetworkConfigDialog } from './NetworkConfigDialog';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { debug } from '../App';
-import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 // const debug = true;
 
@@ -35,13 +35,13 @@ function Settings() {
   const uniqueId = useRef(getUniqueId());
 
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'settings') {
-          if(debug) console.log(`Settings received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
+        if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
+          if(debug) console.log(`Settings received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
           sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (isApiResponse(msg) && msg.method === '/api/settings') {
+        if (msg.method === '/api/settings') {
           if(debug) console.log('Settings received /api/settings:', msg.response);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
           setSystemInfo(msg.response.systemInformation);
@@ -49,7 +49,7 @@ function Settings() {
       }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if(debug) console.log('Settings added WebSocket listener');
     return () => {
       removeListener(handleWebSocketMessage);

@@ -26,7 +26,7 @@ import StarIcon from '@mui/icons-material/Star';
 import Favorite from '@mui/icons-material/Favorite';
 
 // Backend
-import { ApiSettingResponse, isApiResponse, isBroadcast, WsBroadcastMessageId, WsMessage } from '../../../src/frontendTypes';
+import { ApiSettingResponse, WsMessageApiResponse } from '../../../src/frontendTypes';
 
 // Frontend
 import { UiContext } from './UiProvider';
@@ -266,68 +266,56 @@ function Header() {
   };
 
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
-      /* Header listener */
-      // if (debug) console.log(`Header received WebSocket Message id ${msg.id}:`, msg);
-      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        // Local messages
-        if (isApiResponse(msg) && msg.method === '/api/settings' && msg.id === uniqueId.current ) {
-          if (debug) console.log('Header received settings:', msg.response);
-          setSettings(msg.response);
-          setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
-          setFixedRestart(msg.response.matterbridgeInformation.fixedRestartRequired);
-          setUpdate(msg.response.matterbridgeInformation.updateRequired);
-        }
-        // Broadcast messages
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'settings') {
-          if (debug) console.log(`Header received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
-          sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-        }
-        if (isBroadcast(msg) && msg.method === 'restart_required') {
-          if (debug) console.log(`Header received restart_required with fixed: ${msg.params.fixed}`);
-          setRestart(true);
-          if(msg.params.fixed === true) setFixedRestart(true);
-        }
-        if (isBroadcast(msg) && msg.method === 'restart_not_required') {
-          if (debug) console.log(`Header received restart_not_required`);
-          setRestart(false);
-        }
-        if (isBroadcast(msg) && msg.method === 'update_required') {
-          if (debug) console.log('Header received update_required');
-          setUpdate(true);
-          sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-        }
-        if (isBroadcast(msg) && msg.method === 'update_required_dev') {
-          if (debug) console.log('Header received update_required_dev');
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
+      if(debug) console.log('Header received WebSocket Message:', msg);
+      if (msg.method === '/api/settings' && msg.id === uniqueId.current ) {
+        if (debug) console.log('Header received settings:', msg.response);
+        setSettings(msg.response);
+        setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
+        setFixedRestart(msg.response.matterbridgeInformation.fixedRestartRequired);
+        setUpdate(msg.response.matterbridgeInformation.updateRequired);
+      } else if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
+        if (debug) console.log(`Header received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
+        sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      } else if (msg.method === 'restart_required') {
+        if (debug) console.log(`Header received restart_required with fixed: ${msg.response.fixed}`);
+        setRestart(true);
+        if(msg.response.fixed === true) setFixedRestart(true);
+      } else if (msg.method === 'restart_not_required') {
+        if (debug) console.log(`Header received restart_not_required`);
+        setRestart(false);
+      } else if (msg.method === 'update_required') {
+        if (debug) console.log('Header received update_required');
+        if(msg.response.devVersion === true) {
           setUpdateDev(true);
-          sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+        } else {
+          setUpdate(true);  
         }
-        if (isBroadcast(msg) && msg.id === WsBroadcastMessageId.ShellySysUpdate) {
-          if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
-          setSettings(prevSettings =>
-            prevSettings
-              ? {
-                  matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellySysUpdate: msg.params.available },
-                  systemInformation: prevSettings.systemInformation,
-                }
-              : null
-          );
-        }
-        if (isBroadcast(msg) && msg.id === WsBroadcastMessageId.ShellyMainUpdate) {
-          if (debug) console.log('Header received WS_ID_SHELLY_MAIN_UPDATE:');
-          setSettings(prevSettings =>
-            prevSettings
-              ? {
-                  matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellyMainUpdate: msg.params.available },
-                  systemInformation: prevSettings.systemInformation,
-                }
-              : null
-          );
-        }
+        sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      } else if (msg.method === 'shelly_sys_update') {
+        if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
+        setSettings(prevSettings =>
+          prevSettings
+            ? {
+                matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellySysUpdate: msg.response.available },
+                systemInformation: prevSettings.systemInformation,
+              }
+            : null
+        );
+      } else if (msg.method === 'shelly_main_update') {
+        if (debug) console.log('Header received WS_ID_SHELLY_MAIN_UPDATE:');
+        setSettings(prevSettings =>
+          prevSettings
+            ? {
+                matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellyMainUpdate: msg.response.available },
+                systemInformation: prevSettings.systemInformation,
+              }
+            : null
+        );
       }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if (debug) console.log(`Header added WebSocket listener id ${uniqueId.current}`);
 
     return () => {

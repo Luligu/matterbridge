@@ -1,5 +1,5 @@
 // React
-import { memo, useContext, useEffect, useState } from 'react';
+import { memo, useContext, useEffect, useRef, useState } from 'react';
 
 // Backend
 import { SystemInformation } from '../../../src/matterbridgeTypes';
@@ -7,18 +7,20 @@ import { SystemInformation } from '../../../src/matterbridgeTypes';
 // Frontend
 import { TruncatedText } from './TruncatedText';
 import { WebSocketContext } from './WebSocketProvider';
-import { isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { debug } from '../App';
 // const debug = true;
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformation, compact: boolean }) {
+  // WebSocket context
+  const { sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
   // Local states
   const [localSystemInfo, setLocalSystemInfo] = useState(systemInfo);
 
-  // WebSocket context
-  const { sendMessage, addListener, removeListener } = useContext(WebSocketContext);
+  // Refs
+  const uniqueId = useRef(getUniqueId());
 
   if(debug) console.log('SystemInfoTable:', localSystemInfo, 'compact:', compact);
 
@@ -49,39 +51,39 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   }
 
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (isBroadcast(msg) && msg.method === 'memory_update' && msg.params && msg.params.totalMemory && msg.params.freeMemory && msg.params.heapTotal && msg.params.heapUsed && msg.params.rss) {
+        if (msg.method === 'memory_update' && msg.response && msg.response.totalMemory && msg.response.freeMemory && msg.response.heapTotal && msg.response.heapUsed && msg.response.rss) {
           if(debug) console.log('SystemInfoTable received memory_update', msg);
-          if(localSystemInfo.totalMemory !== msg.params?.totalMemory || localSystemInfo.freeMemory !== msg.params?.freeMemory ||
-            localSystemInfo.heapTotal !== msg.params?.heapTotal || localSystemInfo.heapUsed !== msg.params?.heapUsed ||
-            localSystemInfo.rss !== msg.params?.rss) {
+          if(localSystemInfo.totalMemory !== msg.response.totalMemory || localSystemInfo.freeMemory !== msg.response.freeMemory ||
+            localSystemInfo.heapTotal !== msg.response.heapTotal || localSystemInfo.heapUsed !== msg.response.heapUsed ||
+            localSystemInfo.rss !== msg.response.rss) {
             setLocalSystemInfo((prev) => ({
               ...prev,
-              totalMemory: msg.params?.totalMemory ? msg.params.totalMemory : '',
-              freeMemory: msg.params?.freeMemory ? msg.params.freeMemory : '',
-              heapTotal: msg.params?.heapTotal ? msg.params.heapTotal : '',
-              heapUsed: msg.params?.heapUsed ? msg.params.heapUsed : '',
-              rss: msg.params?.rss ? msg.params.rss : '',
+              totalMemory: msg.response.totalMemory,
+              freeMemory: msg.response.freeMemory,
+              heapTotal: msg.response.heapTotal,
+              heapUsed: msg.response.heapUsed,
+              rss: msg.response.rss,
             }))
           }
         }
-        if (isBroadcast(msg) && msg.method === 'cpu_update' && msg.params && msg.params.cpuUsage) {
+        if (msg.method === 'cpu_update' && msg.response && msg.response.cpuUsage) {
           if(debug) console.log('SystemInfoTable received cpu_update', msg);
-          if(localSystemInfo.cpuUsage !== (msg.params?.cpuUsage ? msg.params.cpuUsage.toFixed(2) + ' %' : '')) {
+          if(localSystemInfo.cpuUsage !== (msg.response.cpuUsage ? msg.response.cpuUsage.toFixed(2) + ' %' : '')) {
             setLocalSystemInfo((prev) => ({
               ...prev,
-              cpuUsage: msg.params?.cpuUsage ? msg.params.cpuUsage.toFixed(2) + ' %' : '',
+              cpuUsage: msg.response.cpuUsage.toFixed(2) + ' %',
             }))
           }
         }
-        if (isBroadcast(msg) && msg.method === 'uptime_update' && msg.params && msg.params.systemUptime && msg.params.processUptime) {
+        if (msg.method === 'uptime_update' && msg.response && msg.response.systemUptime && msg.response.processUptime) {
           if(debug) console.log('SystemInfoTable received uptime_update', msg);
-          if(localSystemInfo.systemUptime !== msg.params?.systemUptime || localSystemInfo.processUptime !== msg.params?.processUptime) {
+          if(localSystemInfo.systemUptime !== msg.response.systemUptime || localSystemInfo.processUptime !== msg.response.processUptime) {
             setLocalSystemInfo((prev) => ({
               ...prev,
-              systemUptime: msg.params?.systemUptime ? msg.params.systemUptime : '',
-              processUptime: msg.params?.processUptime ? msg.params.processUptime : '',
+              systemUptime: msg.response.systemUptime,
+              processUptime: msg.response.processUptime,
             }))
           }
         }
@@ -89,7 +91,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
     };
 
     if(debug) console.log('SystemInfoTable useEffect WebSocketMessage mounting');
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if(debug) console.log('SystemInfoTable useEffect WebSocketMessage mounted');
 
     return () => {

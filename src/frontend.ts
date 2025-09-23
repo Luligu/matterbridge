@@ -51,7 +51,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
-import { RefreshRequiredChanged, WsBroadcastMessageId, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
+import { RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
 
 /**
  * Represents the Matterbridge events.
@@ -1215,7 +1215,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.debug(`Received message from websocket client: ${debugStringify(data)}`);
 
       if (data.method === 'ping') {
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: 'pong' });
+        sendResponse({ id: data.id, method: 'pong', src: 'Matterbridge', dst: data.src, success: true, response: 'pong' });
         return;
       } else if (data.method === '/api/login') {
         if (!this.matterbridge.nodeContext) {
@@ -1546,7 +1546,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         else
           serverNode = this.matterbridge.getPlugins().find((p) => p.serverNode && p.serverNode.id === localData.params.id)?.serverNode || this.matterbridge.getDevices().find((d) => d.serverNode && d.serverNode.id === localData.params.id)?.serverNode;
         if (!serverNode) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Unknown server node id in /api/matter' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown server node id ${localData.params.id} in /api/matter` });
           return;
         }
         const matter = this.matterbridge.getServerNodeData(serverNode);
@@ -1961,8 +1961,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     message = message.replace(/[\x00-\x1F\x7F]/g, '');
     // Replace all occurrences of \" with "
     message = message.replace(/\\"/g, '"');
-    // Replace all occurrences of angle-brackets with &lt; and &gt;"
-    message = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     // Define the maximum allowed length for continuous characters without a space
     const maxContinuousLength = 100;
@@ -1981,7 +1979,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       .join(' ');
 
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.Log, src: 'Matterbridge', dst: 'Frontend', method: 'log', params: { level, time, name, message } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'log', success: true, response: { level, time, name, message } });
   }
 
   /**
@@ -1999,7 +1997,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter: ApiMatterResponse }) {
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.RefreshRequired, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: { changed, ...params } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, ...params } });
   }
 
   /**
@@ -2014,7 +2012,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.matterbridgeInformation.fixedRestartRequired = fixed;
     if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.RestartRequired, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', params: { fixed } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', success: true, response: { fixed } });
   }
 
   /**
@@ -2027,7 +2025,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.matterbridgeInformation.restartRequired = false;
     if (snackbar === true) this.wssSendCloseSnackbarMessage(`Restart required`);
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.RestartNotRequired, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required' });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', success: true });
   }
 
   /**
@@ -2039,7 +2037,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.debug('Sending an update required message to all connected clients');
     this.matterbridge.matterbridgeInformation.updateRequired = true;
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.UpdateRequired, src: 'Matterbridge', dst: 'Frontend', method: devVersion ? 'update_required_dev' : 'update_required' });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { devVersion } });
   }
 
   /**
@@ -2050,7 +2048,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendCpuUpdate(cpuUsage: number) {
     if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.CpuUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', params: { cpuUsage: Math.round(cpuUsage * 100) / 100 } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', success: true, response: { cpuUsage: Math.round(cpuUsage * 100) / 100 } });
   }
 
   /**
@@ -2067,7 +2065,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
     if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.MemoryUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', success: true, response: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers } });
   }
 
   /**
@@ -2079,7 +2077,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
     if (hasParameter('debug')) this.log.debug('Sending a uptime update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.UptimeUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', params: { systemUptime, processUptime } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
   }
 
   /**
@@ -2096,7 +2094,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendSnackbarMessage(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info') {
     this.log.debug('Sending a snackbar message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.Snackbar, src: 'Matterbridge', dst: 'Frontend', method: 'snackbar', params: { message, timeout, severity } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'snackbar', success: true, response: { message, timeout, severity } });
   }
 
   /**
@@ -2108,7 +2106,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendCloseSnackbarMessage(message: string) {
     this.log.debug('Sending a close snackbar message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.CloseSnackbar, src: 'Matterbridge', dst: 'Frontend', method: 'close_snackbar', params: { message } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'close_snackbar', success: true, response: { message } });
   }
 
   /**
@@ -2128,7 +2126,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendAttributeChangedMessage(plugin: string, serialNumber: string, uniqueId: string, cluster: string, attribute: string, value: number | string | boolean) {
     this.log.debug('Sending an attribute update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.StateUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'state_update', params: { plugin, serialNumber, uniqueId, cluster, attribute, value } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'state_update', success: true, response: { plugin, serialNumber, uniqueId, cluster, attribute, value } });
   }
 
   /**
@@ -2140,7 +2138,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssBroadcastMessage(msg: WsMessageBroadcast) {
     // Send the message to all connected clients
     const stringifiedMsg = JSON.stringify(msg);
-    if (msg.id !== WsBroadcastMessageId.Log) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
+    if (msg.method !== 'log') this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(stringifiedMsg);

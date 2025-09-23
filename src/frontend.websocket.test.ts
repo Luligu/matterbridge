@@ -40,7 +40,7 @@ import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matte
 import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Frontend } from './frontend.js';
-import { isApiRequest, isApiResponse, isBroadcast, WsBroadcastMessageId, WsMessageBroadcast, WsMessageLog } from './frontendTypes.ts';
+import { isApiRequest, isApiResponse, isBroadcast, WsMessageApiLog, WsMessageApiMemoryUpdate } from './frontendTypes.ts';
 import { wait, waiter } from './utils/wait.js';
 import { PluginManager } from './pluginManager.js';
 import { loggerLogSpy, setupTest } from './utils/jestHelpers.ts';
@@ -323,7 +323,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API send ping', async () => {
-    const msg = await waitMessageId(++WS_ID, 'ping', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: 'ping', params: {} });
+    const msg = await waitMessageId(++WS_ID, 'pong', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: 'ping', params: {} });
     expect(msg.response).toBe('pong');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
@@ -386,7 +386,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
 
     msg = await waitMessageId(++WS_ID, '/api/matter', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/matter', params: { id: 'unknown' } });
-    expect(msg.error).toBe('Unknown server node id in /api/matter');
+    expect(msg.error).toBe('Unknown server node id unknown in /api/matter');
 
     msg = await waitMessageId(++WS_ID, '/api/matter', {
       id: WS_ID,
@@ -1140,7 +1140,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.Log) {
+        if (data.method === 'log') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1150,21 +1150,20 @@ describe('Matterbridge frontend', () => {
     matterbridge.frontend.wssSendLogMessage('info', '12:45', 'Frontend', `***${CYAN}Test message${rs}`);
     const response = await received;
     expect(response).toBeDefined();
-    const data = JSON.parse(response as string) as WsMessageLog;
+    const data = JSON.parse(response as string) as WsMessageApiLog;
     expect(data).toBeDefined();
     expect(isBroadcast(data)).toBe(true);
     expect(isApiRequest(data)).toBe(false);
     expect(isApiResponse(data)).toBe(false);
-    expect(data.id).toBe(WsBroadcastMessageId.Log);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
-    expect(data.params.level).toBe('info');
-    expect(data.params.time).toBe('12:45');
-    expect(data.params.name).toBe('Frontend');
-    expect(data.params.message).toBe('Test message');
+    expect(data.response.level).toBe('info');
+    expect(data.response.time).toBe('12:45');
+    expect(data.response.name).toBe('Frontend');
+    expect(data.response.message).toBe('Test message');
     expect(data.method).toBe('log');
-    expect(data.params).toEqual({ level: 'info', time: '12:45', name: 'Frontend', message: 'Test message' });
-    expect((data as any).response).toBeUndefined();
+    expect(data.response).toEqual({ level: 'info', time: '12:45', name: 'Frontend', message: 'Test message' });
     expect((data as any).error).toBeUndefined();
   });
 
@@ -1174,7 +1173,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.RefreshRequired) {
+        if (data.method === 'refresh_required') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1186,12 +1185,11 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.RefreshRequired);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('refresh_required');
-    expect(data.params).toEqual({ changed: 'matter' });
-    expect(data.response).toBeUndefined();
+    expect(data.response).toEqual({ changed: 'matter' });
     expect(data.error).toBeUndefined();
   });
 
@@ -1201,7 +1199,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.RestartRequired) {
+        if (data.method === 'restart_required') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1213,12 +1211,11 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.RestartRequired);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('restart_required');
-    expect(data.params).toEqual({ 'fixed': false });
-    expect(data.response).toBeUndefined();
+    expect(data.response).toEqual({ 'fixed': false });
     expect(data.error).toBeUndefined();
     expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith('Restart required', 0);
   });
@@ -1229,7 +1226,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.RestartNotRequired) {
+        if (data.method === 'restart_not_required') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1241,7 +1238,7 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.RestartNotRequired);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('restart_not_required');
@@ -1257,7 +1254,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.UpdateRequired) {
+        if (data.method === 'update_required') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1269,12 +1266,11 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.UpdateRequired);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('update_required');
-    expect(data.params).toBeUndefined();
-    expect(data.response).toBeUndefined();
+    expect(data.response).toEqual({ devVersion: false });
     expect(data.error).toBeUndefined();
   });
 
@@ -1284,7 +1280,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.CpuUpdate) {
+        if (data.method === 'cpu_update') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1296,12 +1292,11 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.CpuUpdate);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('cpu_update');
-    expect(data.params).toEqual({ cpuUsage: 50 });
-    expect(data.response).toBeUndefined();
+    expect(data.response).toEqual({ cpuUsage: 50 });
     expect(data.error).toBeUndefined();
   });
 
@@ -1311,7 +1306,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.MemoryUpdate) {
+        if (data.method === 'memory_update') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1323,12 +1318,11 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.MemoryUpdate);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('memory_update');
-    expect(data.params).toEqual({ totalMemory: 'totalMemory', freeMemory: 'freeMemory', rss: 'rss', heapTotal: 'heapTotal', heapUsed: 'heapUsed', external: 'external', arrayBuffers: 'arrayBuffers' });
-    expect(data.response).toBeUndefined();
+    expect(data.response).toEqual({ totalMemory: 'totalMemory', freeMemory: 'freeMemory', rss: 'rss', heapTotal: 'heapTotal', heapUsed: 'heapUsed', external: 'external', arrayBuffers: 'arrayBuffers' });
     expect(data.error).toBeUndefined();
   });
 
@@ -1338,7 +1332,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.UptimeUpdate) {
+        if (data.method === 'uptime_update') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1350,12 +1344,11 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.UptimeUpdate);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('uptime_update');
-    expect(data.params).toEqual({ systemUptime: '1 hour', processUptime: '2 minutes' });
-    expect(data.response).toBeUndefined();
+    expect(data.response).toEqual({ systemUptime: '1 hour', processUptime: '2 minutes' });
     expect(data.error).toBeUndefined();
   });
 
@@ -1365,7 +1358,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.Snackbar) {
+        if (data.method === 'snackbar') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1377,12 +1370,11 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.Snackbar);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('snackbar');
-    expect(data.params).toEqual({ message: 'Message', timeout: 5, severity: 'info' });
-    expect(data.response).toBeUndefined();
+    expect(data.response).toEqual({ message: 'Message', timeout: 5, severity: 'info' });
     expect(data.error).toBeUndefined();
   });
 
@@ -1392,7 +1384,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.CloseSnackbar) {
+        if (data.method === 'close_snackbar') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1404,12 +1396,11 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.CloseSnackbar);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('close_snackbar');
-    expect(data.params).toEqual({ message: 'Message' });
-    expect(data.response).toBeUndefined();
+    expect(data.response).toEqual({ message: 'Message' });
     expect(data.error).toBeUndefined();
   });
 
@@ -1419,7 +1410,7 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.StateUpdate) {
+        if (data.method === 'state_update') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
@@ -1431,11 +1422,11 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.StateUpdate);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('state_update');
-    expect(data.params).toEqual({
+    expect(data.response).toEqual({
       'attribute': 'attribute',
       'cluster': 'cluster',
       'plugin': 'matterbridge-mock1',
@@ -1443,7 +1434,6 @@ describe('Matterbridge frontend', () => {
       'uniqueId': 'unique',
       'value': 'value',
     });
-    expect(data.response).toBeUndefined();
     expect(data.error).toBeUndefined();
   });
 
@@ -1453,19 +1443,20 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.id === WsBroadcastMessageId.MemoryUpdate) {
+        if (data.method === 'memory_update') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
       };
       ws.addEventListener('message', onMessage);
     });
-    const msg: WsMessageBroadcast = {
-      id: WsBroadcastMessageId.MemoryUpdate,
+    const msg: WsMessageApiMemoryUpdate = {
+      id: 0,
+      method: 'memory_update',
       src: 'Matterbridge',
       dst: 'Frontend',
-      method: 'memory_update',
-      params: { totalMemory: 'tm', freeMemory: 'fm', heapTotal: 'ht', heapUsed: 'hu', external: 'ext', arrayBuffers: 'ab', rss: 'rss' },
+      success: true,
+      response: { totalMemory: 'tm', freeMemory: 'fm', heapTotal: 'ht', heapUsed: 'hu', external: 'ext', arrayBuffers: 'ab', rss: 'rss' },
     };
     expect(isBroadcast(msg as any)).toBeTruthy();
     expect(isApiRequest(msg as any)).toBeFalsy();
@@ -1475,12 +1466,11 @@ describe('Matterbridge frontend', () => {
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
     expect(data).toBeDefined();
-    expect(data.id).toBe(WsBroadcastMessageId.MemoryUpdate);
+    expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('memory_update');
-    expect(data.params).toEqual(msg.params);
-    expect(data.response).toBeUndefined();
+    expect(data.response).toEqual(msg.response);
     expect(data.error).toBeUndefined();
   });
 
