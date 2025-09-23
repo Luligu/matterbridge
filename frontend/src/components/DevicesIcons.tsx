@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
- 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable react-hooks/exhaustive-deps */
  
 // React
-import { useContext, useEffect, useState, useRef, memo, cloneElement } from 'react';
+import { useContext, useEffect, useState, useRef, memo, cloneElement, useCallback } from 'react';
 
 // @mui/material
 import Box from '@mui/material/Box';
@@ -46,7 +44,7 @@ import { mdiPowerSocketEu, mdiTransmissionTower, mdiEvStation, mdiWaterBoiler, m
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-import { ApiSettingResponse, WsMessageApiResponse } from '../../../src/frontendTypes';
+import { ApiSettingResponse, WsMessageApiResponse, WsMessageApiStateUpdate } from '../../../src/frontendTypes';
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
 
@@ -310,11 +308,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDev
   );
 }
 
-interface DevicesIconsProps {
-  filter: string;
-}
-
-function DevicesIcons({filter}: DevicesIconsProps) {
+function DevicesIcons({filter}: { filter: string }) {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
@@ -329,53 +323,64 @@ function DevicesIcons({filter}: DevicesIconsProps) {
 
   // Refs
   const uniqueId = useRef(getUniqueId());
-  
+  const filteredDevicesRef = useRef(filteredDevices);
+
+  const updateDevices = useCallback((msg: WsMessageApiStateUpdate) => {
+    /*if(debug)*/ console.log('DevicesIcons received state_update:', msg.response);
+    const updateDevice = filteredDevicesRef.current.find((device) => device.pluginName === msg.response.plugin && device.uniqueId === msg.response.uniqueId);
+    if(!updateDevice) return;
+    /*if(debug)*/ console.log(`DevicesIcons found device "${updateDevice.name}" serial "${updateDevice.serial}"`);
+    const updatedCluster = clusters[updateDevice.serial].find((c) => c.clusterName+'Server' === msg.response.cluster && c.attributeName === msg.response.attribute);
+    /*if(debug)*/ console.log(`DevicesIcons found device "${updateDevice.name}" serial "${updateDevice.serial}" with cluster:`, updatedCluster);
+    if(!updatedCluster) return;
+    updatedCluster.attributeValue = String(msg.response.value);
+    updatedCluster.attributeLocalValue = msg.response.value;
+    setClusters({ ...clusters });
+    /*if(debug)*/ console.log(`DevicesIcons updated attribute ${updatedCluster.clusterName}:${updatedCluster.attributeName} for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
+  }, [clusters]);
+
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'refresh_required') {
-          if(debug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
-          sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      if (msg.method === 'refresh_required') {
+        if(debug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
+        sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+        sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+        sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      } else if (msg.method === 'state_update' && msg.response) {
+        updateDevices(msg);
+      } else if (msg.method === '/api/settings' && msg.response) {
+        if(debug) console.log('DevicesIcons received settings:', msg.response);
+        setSettings(msg.response);
+      } else if (msg.method === '/api/plugins' && msg.response) {
+        if(debug) console.log('DevicesIcons received plugins:', msg.response);
+        setPlugins(msg.response);
+      } else if (msg.method === '/api/devices' && msg.response) {
+        if(debug) console.log(`DevicesIcons received ${msg.response.length} devices:`, msg.response);
+        setDevices(msg.response);
+        for(const device of msg.response) {
+          if(debug) console.log('DevicesIcons sending /api/clusters');
+          sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint || 0} });
         }
-        if (msg.method === '/api/settings' && msg.response) {
-          if(debug) console.log('DevicesIcons received settings:', msg.response);
-          setSettings(msg.response);
-        }
-        if (msg.method === '/api/plugins' && msg.response) {
-          if(debug) console.log('DevicesIcons received plugins:', msg.response);
-          setPlugins(msg.response);
-        }
-        if (msg.method === '/api/devices' && msg.response) {
-          if(debug) console.log(`DevicesIcons received ${msg.response.length} devices:`, msg.response);
-          setDevices(msg.response);
-          for(const device of msg.response) {
-            if(debug) console.log('DevicesIcons sending /api/clusters');
-            sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint || 0} });
+      } else if (msg.method === '/api/clusters' && msg.response) {
+        if(debug) console.log(`DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceType ${msg.response.deviceTypes.join(' ')} clusters (${msg.response.clusters.length}):`, msg.response);
+        if(msg.response.clusters.length === 0) return;
+        const serial = msg.response.serialNumber;
+        endpoints[serial] = [];
+        deviceTypes[serial] = msg.response.deviceTypes;
+        clusters[serial] = [];
+        for(const cluster of msg.response.clusters) {
+          if(!endpoints[serial].find((e) => e.endpoint === cluster.endpoint)) {
+            endpoints[serial].push({ endpoint: cluster.endpoint, id: cluster.id, deviceTypes: cluster.deviceTypes });
           }
+          if(['FixedLabel', 'Descriptor', 'Identify', 'Groups', 'PowerTopology'].includes(cluster.clusterName)) continue;
+          clusters[serial].push(cluster);
         }
-        if (msg.method === '/api/clusters' && msg.response) {
-          if(debug) console.log(`DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceType ${msg.response.deviceTypes.join(' ')} clusters (${msg.response.clusters.length}):`, msg.response);
-          if(msg.response.clusters.length === 0) return;
-          const serial = msg.response.serialNumber;
-          endpoints[serial] = [];
-          deviceTypes[serial] = msg.response.deviceTypes;
-          clusters[serial] = [];
-          for(const cluster of msg.response.clusters) {
-            if(!endpoints[serial].find((e) => e.endpoint === cluster.endpoint)) {
-              endpoints[serial].push({ endpoint: cluster.endpoint, id: cluster.id, deviceTypes: cluster.deviceTypes });
-            }
-            if(['FixedLabel', 'Descriptor', 'Identify', 'Groups', 'PowerTopology'].includes(cluster.clusterName)) continue;
-            clusters[serial].push(cluster);
-          }
-          setEndpoints({ ...endpoints });
-          setDeviceTypes({ ...deviceTypes });
-          setClusters({ ...clusters });
-          if(debug) console.log(`DevicesIcons endpoints for "${serial}":`, endpoints[serial]);
-          if(debug) console.log(`DevicesIcons deviceTypes for "${serial}":`, deviceTypes[serial]);
-          if(debug) console.log(`DevicesIcons clusters for "${serial}":`, clusters[serial]);
-        }
+        setEndpoints({ ...endpoints });
+        setDeviceTypes({ ...deviceTypes });
+        setClusters({ ...clusters });
+        if(debug) console.log(`DevicesIcons endpoints for "${serial}":`, endpoints[serial]);
+        if(debug) console.log(`DevicesIcons deviceTypes for "${serial}":`, deviceTypes[serial]);
+        if(debug) console.log(`DevicesIcons clusters for "${serial}":`, clusters[serial]);
       }
     };
 
@@ -386,7 +391,8 @@ function DevicesIcons({filter}: DevicesIconsProps) {
       removeListener(handleWebSocketMessage);
       if(debug) console.log('DevicesIcons useEffect webSocket unmounted');
     };
-  }, [addListener, removeListener, sendMessage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   useEffect(() => {
     if(debug) console.log('DevicesIcons useEffect online mounting');
@@ -406,10 +412,12 @@ function DevicesIcons({filter}: DevicesIconsProps) {
   useEffect(() => {
     if(filter === '') {
       setFilteredDevices(devices);
+      filteredDevicesRef.current = devices;
       return;
     }
     const filteredDevices = devices.filter((device) => device.name.toLowerCase().includes(filter) || device.serial.toLowerCase().includes(filter) );
     setFilteredDevices(filteredDevices);
+    filteredDevicesRef.current = filteredDevices;
   }, [devices, filter]);
 
   const MemoizedDevice = memo(Device);
@@ -421,7 +429,7 @@ function DevicesIcons({filter}: DevicesIconsProps) {
         endpoints[device.serial] && endpoints[device.serial].map((endpoint) => (
           endpoint.deviceTypes.map((deviceType) => (
             <MemoizedDevice
-              key={`${device.pluginName}-${device.uniqueId}-${deviceType}`}
+              key={`${device.pluginName}-${device.uniqueId}-${endpoint.id}-${deviceType.toString()}`}
               device={device}
               endpoint={endpoint.endpoint}
               id={endpoint.id}

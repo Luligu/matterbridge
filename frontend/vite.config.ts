@@ -11,6 +11,10 @@ export default defineConfig({
   },
   base: './', // or '' for relative paths
   build: {
+    // Uncomment the following line to enable source maps for debugging
+    // sourcemap: true,
+    // Uncomment the following line to disable minification for easier debugging
+    // minify: false,
     outDir: 'build',
     emptyOutDir: true,
     rollupOptions: {

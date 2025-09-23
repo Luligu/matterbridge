@@ -643,7 +643,7 @@ export type WsMessageBroadcast =
  * @returns {msg is WsMessageApiRequest} True if the message is a WsMessageApiRequest, false otherwise.
  */
 export function isApiRequest(msg: WsMessage): msg is WsMessageApiRequest {
-  return msg.id !== 0 && msg.src === 'Frontend' && msg.dst === 'Matterbridge' && !('success' in msg) && !('error' in msg);
+  return msg.id !== 0 && msg.src === 'Frontend' && msg.dst === 'Matterbridge';
 }
 
 /**
@@ -654,7 +654,7 @@ export function isApiRequest(msg: WsMessage): msg is WsMessageApiRequest {
  * @returns {msg is WsMessageApiResponse} True if the message is a WsMessageApiResponse, false otherwise.
  */
 export function isApiResponse(msg: WsMessage): msg is WsMessageApiResponse {
-  return msg.id !== 0 && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && ('success' in msg || 'error' in msg);
+  return msg.id !== 0 && msg.src === 'Matterbridge' && msg.dst === 'Frontend';
 }
 
 /**

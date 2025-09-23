@@ -74,18 +74,35 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const startTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const logFilterLevelRef = useRef(logFilterLevel);
   const logFilterSearchRef = useRef(logFilterSearch);
+  const messagesCounterRef = useRef(0);
+  const messagesCounterIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Memos
   const wssHost = useMemo(() => window.location.href.replace(/^http/, 'ws'), []); // Replace "http" or "https" with "ws" or "wss"
   const isIngress = useMemo(() => window.location.href.includes('api/hassio_ingress'), []);
 
   // Constants
-  // const maxMessages = 1000;
   const maxRetries = 100;
-
   const pingIntervalSeconds = 60;
   const offlineTimeoutSeconds = 50;
   const startTimeoutSeconds = 300;
+  const messagesCounterSeconds = 10;
+
+  useEffect(() => {
+    if (debug) console.log(`WebSocket messages started counter interval`);
+    messagesCounterIntervalRef.current = setInterval(() => {
+      if (messagesCounterRef.current > 0) {
+        if (debug) console.log(`WebSocket messages received in the last ${messagesCounterSeconds} seconds: ${messagesCounterRef.current * (60 / messagesCounterSeconds)} messages/minute`);
+        messagesCounterRef.current = 0;
+      }
+    }, messagesCounterSeconds * 1000);
+
+    return () => {
+      if (debug) console.log(`WebSocket messages stopped counter interval`);
+      if (messagesCounterIntervalRef.current) clearInterval(messagesCounterIntervalRef.current);
+      messagesCounterIntervalRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     logFilterLevelRef.current = logFilterLevel;
@@ -147,18 +164,19 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
     wsRef.current.onmessage = (event) => {
       if (!online) setOnline(true);
+      messagesCounterRef.current += 1;
       try {
         const msg: WsMessageApiResponse = JSON.parse(event.data);
         if (msg.id === undefined || msg.src === undefined || msg.dst === undefined) {
-          console.error(`WebSocket undefined message id/src/dst:`, msg);
+          if (debug) console.error(`WebSocket undefined message id/src/dst:`, msg);
           return;
         }
         if (msg.src !== 'Matterbridge' || msg.dst !== 'Frontend') {
-          console.error(`WebSocket invalid message src/dst:`, msg);
+          if (debug) console.error(`WebSocket invalid message src/dst:`, msg);
           return;
         }
         if ((msg as unknown as WsMessageErrorApiResponse).error) {
-          console.error(`WebSocket error message response:`, msg);
+          if (debug) console.error(`WebSocket error message response:`, msg);
           return;
         }
         if (msg.id === uniqueIdRef.current && msg.method === 'pong' && msg.response === 'pong') {
@@ -175,7 +193,6 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           closeSnackbarMessage(msg.response.message);
           return;
         } else if (msg.method === 'log') {
-          // if (debug) console.log(`WebSocket message id ${msg.id} method ${msg.method}:`, msg);
           // Process only valid log messages
           if (!msg.response || !msg.response.level || !msg.response.time || !msg.response.name || !msg.response.message) return;
           // Process log filtering by level
@@ -197,9 +214,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           setMessages(prevMessagesNew => {
             const newMessagesNew = [...prevMessagesNew, { level: msg.response.level, time: msg.response.time, name: msg.response.name, message: msg.response.message }];
             // Check if the new array length exceeds the maximum allowed
-            if (newMessagesNew.length > maxMessages) {
-              // Remove 10% of the oldest messages to maintain maxMessages count
-              return newMessagesNew.slice(maxMessages / 10);
+            if (newMessagesNew.length > maxMessages * 2) {
+              return newMessagesNew.slice(maxMessages);
             }
             return newMessagesNew;
           });
