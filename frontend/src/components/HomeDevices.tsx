@@ -221,103 +221,94 @@ function HomeDevices({storeId, setStoreId}: HomeDevicesProps) {
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        // Broadcast messages
-        // 'settings' | 'plugins' | 'devices' | 'matter';
-        if (msg.method === 'refresh_required' && msg.response.changed !== 'matter') {
-          if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} and sending /api/plugins request`);
-          sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-        }
-        if (msg.method === 'refresh_required' && msg.response.changed === 'matter') {
-          if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} and setting matter id ${msg.response.matter?.id}`);
-          setMixedDevices(prev => {
-            const i = prev.findIndex(d => d.name.replaceAll(' ', '') === msg.response.matter?.id);
-            if (i < 0) {
-              if (debug) console.debug(`HomeDevices: matter id ${msg.response.matter?.id} not found`);
-              return prev;
-            }
-            const next = [...prev];
-            next[i] = { ...next[i], matter: msg.response.matter };
-            if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} and set matter id ${msg.response.matter?.id}`);
-            return next;
-          });
-        }
-        if (msg.method === 'restart_required') {
-          if (debug) console.log('HomeDevices received restart_required');
-          setRestart(true);
-        }
-        if (msg.method === 'restart_not_required') {
-          if (debug) console.log('HomeDevices received restart_not_required');
-          setRestart(false);
-        }
-        if (msg.method === 'state_update') {
-          if (msg.response.plugin && msg.response.serialNumber && msg.response.cluster.includes('BasicInformationServer') && msg.response.attribute === 'reachable') {
-            /*if(debug)*/ console.log(`HomeDevices updating device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}`);
-            setDevices((prevDevices) =>
-              prevDevices.map((d) =>
-                d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber
-                  ? { ...d, reachable: msg.response.value as boolean }
-                  : d
-              )
-            );
+      // Broadcast messages
+      // 'settings' | 'plugins' | 'devices' | 'matter';
+      if (msg.method === 'refresh_required' && msg.response.changed !== 'matter') {
+        if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} and sending /api/plugins request`);
+        sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      } else if (msg.method === 'refresh_required' && msg.response.changed === 'matter') {
+        if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} and setting matter id ${msg.response.matter?.id}`);
+        setMixedDevices(prev => {
+          const i = prev.findIndex(d => d.name.replaceAll(' ', '') === msg.response.matter?.id);
+          if (i < 0) {
+            if (debug) console.debug(`HomeDevices: matter id ${msg.response.matter?.id} not found`);
+            return prev;
           }
+          const next = [...prev];
+          next[i] = { ...next[i], matter: msg.response.matter };
+          if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} and set matter id ${msg.response.matter?.id}`);
+          return next;
+        });
+      } else if (msg.method === 'restart_required') {
+        if (debug) console.log('HomeDevices received restart_required');
+        setRestart(true);
+      } else if (msg.method === 'restart_not_required') {
+        if (debug) console.log('HomeDevices received restart_not_required');
+        setRestart(false);
+      } else if (msg.method === 'state_update') {
+        if (msg.response.plugin && msg.response.serialNumber && msg.response.cluster.includes('BasicInformationServer') && msg.response.attribute === 'reachable') {
+          /*if(debug)*/ console.log(`HomeDevices updating device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}`);
+          setDevices((prevDevices) =>
+            prevDevices.map((d) =>
+              d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber
+                ? { ...d, reachable: msg.response.value as boolean }
+                : d
+            )
+          );
         }
-        // Local messages
-        if (msg.id === uniqueId.current && msg.method === '/api/settings') {
-          if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
-          setSettings(msg.response); // Store the settings response
-          setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired); // Set the restart state based on the response. Used in the footer.
-        }
-        if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
-          if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
-          if(msg.response) {
-            // Check if all plugins are loaded and started and not in error state before continuing
-            let running = true;
-            for (const plugin of msg.response) {
-              if(plugin.enabled!==true) continue;
-              if(plugin.loaded!==true || plugin.started!==true /* || plugin.configured!==true */ || plugin.error===true) {
-                running = false;
-              }
+      }
+      // Local messages
+      if (msg.id === uniqueId.current && msg.method === '/api/settings') {
+        if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
+        setSettings(msg.response); // Store the settings response
+        setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired); // Set the restart state based on the response. Used in the footer.
+      } else if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
+        if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
+        if(msg.response) {
+          // Check if all plugins are loaded and started and not in error state before continuing
+          let running = true;
+          for (const plugin of msg.response) {
+            if(plugin.enabled!==true) continue;
+            if(plugin.loaded!==true || plugin.started!==true /* || plugin.configured!==true */ || plugin.error===true) {
+              running = false;
             }
-            if(!running) return; // Do nothing until all plugins are loaded and started and not in error state
+          }
+          if(!running) return; // Do nothing until all plugins are loaded and started and not in error state
 
-            if(debug) console.log(`HomeDevices reset plugins, devices and selectDevices`);
-            setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footer.
-            setPlugins(msg.response as unknown as ExtendedBaseRegisteredPlugin[]); // Store the plugins response
-            setDevices([]);
-            setSelectDevices([]);
-            // Request all the devices
-            sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
-            if(debug) console.log(`HomeDevices sent /api/devices`);
-            // Request the selected devices for each plugin
-            for (const plugin of msg.response) {
-              if(plugin.enabled===true && plugin.loaded===true && plugin.started===true /* && plugin.configured===true */ && plugin.error!==true) {
-                sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
-                if(debug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
-              } 
-            }
+          if(debug) console.log(`HomeDevices reset plugins, devices and selectDevices`);
+          setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footer.
+          setPlugins(msg.response as unknown as ExtendedBaseRegisteredPlugin[]); // Store the plugins response
+          setDevices([]);
+          setSelectDevices([]);
+          // Request all the devices
+          sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+          if(debug) console.log(`HomeDevices sent /api/devices`);
+          // Request the selected devices for each plugin
+          for (const plugin of msg.response) {
+            if(plugin.enabled===true && plugin.loaded===true && plugin.started===true /* && plugin.configured===true */ && plugin.error!==true) {
+              sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
+              if(debug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
+            } 
           }
         }
-        if (msg.id === uniqueId.current && msg.method === '/api/devices') {
-          if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} devices:`, msg.response);
-          if(msg.response) {
-            for (const device of msg.response as ApiDevicesWithSelected[]) {
-              device.selected = isSelected(device);
-            }
-            setDevices(msg.response);
+      } else if (msg.id === uniqueId.current && msg.method === '/api/devices') {
+        if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} devices:`, msg.response);
+        if(msg.response) {
+          for (const device of msg.response as ApiDevicesWithSelected[]) {
+            device.selected = isSelected(device);
           }
+          setDevices(msg.response);
         }
-        if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
-          if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'without select devices'}:`, msg.response);
-          if(msg.response && msg.response.length > 0) {
-            setSelectDevices((prevSelectDevices) => {
-              // Filter out devices not from the current plugin
-              const filteredDevices = prevSelectDevices.filter(device => device.pluginName !== msg.response[0].pluginName);
-              // Add the new devices from the current plugin
-              const updatedDevices = msg.response.map(device => ({ ...device, selected: isSelected(device) }));
-              return [...filteredDevices, ...updatedDevices];
-            });
-          }
+      } else if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
+        if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'without select devices'}:`, msg.response);
+        if(msg.response && msg.response.length > 0) {
+          setSelectDevices((prevSelectDevices) => {
+            // Filter out devices not from the current plugin
+            const filteredDevices = prevSelectDevices.filter(device => device.pluginName !== msg.response[0].pluginName);
+            // Add the new devices from the current plugin
+            const updatedDevices = msg.response.map(device => ({ ...device, selected: isSelected(device) }));
+            return [...filteredDevices, ...updatedDevices];
+          });
         }
       }
     };
@@ -350,7 +341,7 @@ function HomeDevices({storeId, setStoreId}: HomeDevicesProps) {
     }
     if(mixed.length > 0) {
       setMixedDevices(mixed);
-      if(debug) console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
+      /*if(debug)*/ console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
     }
   }, [plugins, devices, selectDevices, setMixedDevices]);
   
@@ -366,7 +357,7 @@ function HomeDevices({storeId, setStoreId}: HomeDevicesProps) {
   // Handle checkbox change to select/unselect a device
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, device: MixedApiDevices) => {
     /*if(debug)*/ console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
-    setMixedDevices(prev => { 
+    setDevices(prev => { 
       const i = prev.findIndex(d => d.pluginName === device.pluginName && d.serial === device.serial); 
       if(i < 0) {
         console.error(`handleCheckboxChange: device not found ${device.name} serial ${device.serial}`);
