@@ -32,7 +32,7 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import WebSocket from 'ws';
-import { LogLevel as MatterLogLevel } from '@matter/main';
+import { EndpointNumber, LogLevel as MatterLogLevel } from '@matter/main';
 import { Identify } from '@matter/main/clusters';
 
 import { Matterbridge } from './matterbridge.js';
@@ -1417,7 +1417,7 @@ describe('Matterbridge frontend', () => {
       };
       ws.addEventListener('message', onMessage);
     });
-    matterbridge.frontend.wssSendAttributeChangedMessage('matterbridge-mock1', 'serial', 'unique', 'cluster', 'attribute', 'value');
+    matterbridge.frontend.wssSendAttributeChangedMessage('matterbridge-mock1', 'serial', 'unique', EndpointNumber(123), '123', 'cluster', 'attribute', 'value');
     const response = await received;
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
@@ -1429,6 +1429,8 @@ describe('Matterbridge frontend', () => {
     expect(data.response).toEqual({
       'attribute': 'attribute',
       'cluster': 'cluster',
+      'id': '123',
+      'number': 123,
       'plugin': 'matterbridge-mock1',
       'serialNumber': 'serial',
       'uniqueId': 'unique',
