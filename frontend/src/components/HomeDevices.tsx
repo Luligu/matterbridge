@@ -246,7 +246,7 @@ function HomeDevices({storeId, setStoreId}: HomeDevicesProps) {
         if (debug) console.log('HomeDevices received restart_not_required');
         setRestart(false);
       } else if (msg.method === 'state_update') {
-        if (msg.response.plugin && msg.response.serialNumber && msg.response.cluster.includes('BasicInformationServer') && msg.response.attribute === 'reachable') {
+        if (msg.response.plugin && msg.response.serialNumber && msg.response.cluster.includes('BasicInformation') && msg.response.attribute === 'reachable') {
           /*if(debug)*/ console.log(`HomeDevices updating device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}`);
           setDevices((prev) => {
             const index = prev.findIndex((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
