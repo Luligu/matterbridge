@@ -62,7 +62,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const [online, setOnline] = useState(false);
 
   // Contexts
-  const { showSnackbarMessage, closeSnackbarMessage, closeSnackbar } = useContext(UiContext);
+  const { showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showInstallProgress, addInstallProgress } = useContext(UiContext);
 
   // Refs
   const listenersRef = useRef<{ listener: (msg: WsMessageApiResponse) => void; id: number }[]>([]);
@@ -195,6 +195,14 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         } else if (msg.method === 'log') {
           // Process only valid log messages
           if (!msg.response || !msg.response.level || !msg.response.time || !msg.response.name || !msg.response.message) return;
+
+          // Send to InstallProgressDialog if it's an install log
+          if (msg.response.level === 'spawn') {
+            if (msg.response.name === 'Matterbridge:spawn-init') showInstallProgress(msg.response.message);
+            else if (msg.response.name === 'Matterbridge:spawn-exit') { /*Do nothing on exit for now*/ }
+            else addInstallProgress(msg.response.message + '\n');
+          }
+
           // Process log filtering by level
           const normalLevels = ['debug', 'info', 'notice', 'warn', 'error', 'fatal'];
           if (normalLevels.includes(msg.response.level)) {

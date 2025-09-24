@@ -7,24 +7,30 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
+
+// Frontend
+import { debug } from '../App';
+// const debug = true;
 
 interface InstallProgressDialogProps {
   open: boolean;
+  packageName: string;
   output: string;
-  onInstall: () => void;
+  onInstall?: () => void;
   onClose: () => void;
 }
 
-export const InstallProgressDialog = ({ open, output, onInstall, onClose }: InstallProgressDialogProps) => {
-  // Ref to access the underlying textarea element for auto-scrolling.
-  const logRef = useRef<HTMLTextAreaElement>(null);
+export const InstallProgressDialog = ({ open, output, packageName, onInstall, onClose }: InstallProgressDialogProps) => {
+  // Ref to access the log <ul> element for auto-scrolling.
+  const endOfMessagesRef = useRef<HTMLLIElement>(null);
 
   // Scroll to the bottom whenever the output updates.
   useEffect(() => {
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
+    if (debug) console.log(`InstallProgressDialog output effect mounted, scrolling to bottom: ${endOfMessagesRef.current}`);
+    setTimeout(() => {
+      if (debug) console.log('Scrolling to bottom:', endOfMessagesRef.current);
+      endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 0);
   }, [output]);
 
   return (
@@ -37,8 +43,9 @@ export const InstallProgressDialog = ({ open, output, onInstall, onClose }: Inst
         }
         onClose();
       }}
-      maxWidth="sm"
-      style={{ maxWidth: '550px', margin: 'auto' }}
+      slotProps={{
+        paper: { sx: { width: '800px', maxWidth: '50vw', height: '600px', maxHeight: '50vh', overflow: 'hidden' } }
+      }}
     >
       <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
@@ -47,29 +54,49 @@ export const InstallProgressDialog = ({ open, output, onInstall, onClose }: Inst
             alt="Matterbridge Logo"
             style={{ height: '32px', width: '32px' }}
           />
-          <h4 style={{ margin: 0 }}>Installation Progress</h4>
+          <h4 style={{ margin: 0 }}>Install{onInstall ? '' : 'ing'} package {packageName}</h4>
         </div>
       </DialogTitle>
-      <DialogContent dividers>
-        <TextField
-          label="Installation Log"
-          multiline
-          fullWidth
-          rows={10}
-          variant="outlined"
-          value={output}
-          slotProps={{
-            input: {
-              readOnly: true,
-              ref: logRef,
-              style: { fontFamily: 'monospace', whiteSpace: 'pre-wrap' },
-            }
-          }}
-        />
+      <DialogContent
+        dividers
+        style={{
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          height: 400,
+          paddingBottom: 0
+        }}
+      >
+        <label style={{ display: 'block', marginBottom: '10px', fontSize: '16px', color: 'var(--primary-color)' }}>Install log</label>
+          <ul
+            style={{
+              width: '100%',
+              height: '100%',
+              fontFamily: 'monospace',
+              fontSize: '14px',
+              padding: 8,
+              margin: 0,
+              marginBottom: '10px',
+              color: 'var(--div-text-color)',
+              background: 'var(--div-bg-color)',
+              overflow: 'auto',
+              listStyle: 'none',
+              boxSizing: 'border-box',
+              borderRadius: 4,
+              border: '1px solid var(--primary-color)',
+              whiteSpace: 'pre-wrap',
+              display: 'block',
+            }}
+          >
+            {output.split('\n').map((line, idx) => (
+              <li key={idx} style={{ padding: 0, margin: 0 }}>{line}</li>
+            ))}
+            <li ref={endOfMessagesRef} style={{ padding: 0, margin: 0 }} />
+          </ul>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onInstall}>Install</Button>
+        {onInstall && <Button variant="contained" onClick={onInstall}>Install</Button>}
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

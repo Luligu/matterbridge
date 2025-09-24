@@ -717,7 +717,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
           const { spawnCommand } = await import('./utils/spawn.js');
-          await spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose']);
+          await spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose'], plugin.name);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } catch (error) {
@@ -1286,7 +1286,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.info('Updating matterbridge...');
     try {
       const { spawnCommand } = await import('./utils/spawn.js');
-      await spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
+      await spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'matterbridge');
       this.log.info('Matterbridge has been updated. Full restart required.');
     } catch (error) {
       this.log.error(`Error updating matterbridge: ${error instanceof Error ? error.message : error}`);

@@ -695,7 +695,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // Install the plugin package
         if (filename.endsWith('.tgz')) {
           const { spawnCommand } = await import('./utils/spawn.js');
-          await spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
+          await spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose'], filename);
           this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
           this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
           this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
@@ -1243,7 +1243,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
         const { spawnCommand } = await import('./utils/spawn.js');
-        spawnCommand(this.matterbridge, 'npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
+        spawnCommand(this.matterbridge, 'npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'], data.params.packageName)
           .then((_response) => {
             sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: data.src, success: true });
             this.wssSendCloseSnackbarMessage(`Installing package ${localData.params.packageName}...`);
@@ -1323,7 +1323,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // Uninstall the package
         this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
         const { spawnCommand } = await import('./utils/spawn.js');
-        spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
+        spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', data.params.packageName, '--verbose'], data.params.packageName)
           .then((_response) => {
             sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: data.src, success: true });
             this.wssSendCloseSnackbarMessage(`Uninstalling package ${localData.params.packageName}...`);

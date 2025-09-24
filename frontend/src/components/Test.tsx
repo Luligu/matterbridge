@@ -13,6 +13,7 @@ import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import { ApiSettingResponse, WsMessageApiResponse } from '../../../src/frontendTypes';
 import { ApiClustersResponse, ApiDevices, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
+import { Button } from '@mui/material';
 // import { debug } from '../App';
 const debug = true;
 
@@ -20,7 +21,7 @@ function Test() {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // Ui context
-  const { showSnackbarMessage } = useContext(UiContext);
+  const { showSnackbarMessage, showInstallProgress, addInstallProgress } = useContext(UiContext);
 
   // Local states
   const [_settings, setSettings] = useState<ApiSettingResponse | null>(null);
@@ -95,9 +96,11 @@ function Test() {
     if(debug) console.log('Test useEffect online mounting');
     if(online) {
       if(debug) console.log('Test useEffect online received online');
+      /*
       sendMessage({ id: uniqueId.current, method: "/api/settings", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ id: uniqueId.current, method: "/api/plugins", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ id: uniqueId.current, method: "/api/devices", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: {} });
+      */
     }
     if(debug) console.log('Test useEffect online mounted');
 
@@ -105,7 +108,6 @@ function Test() {
       if(debug) console.log('Test useEffect online unmounted');
     };
   }, [online, sendMessage, showSnackbarMessage]);
-
 
   if(debug) console.log('Test rendering...');
   if (!online) {
@@ -117,7 +119,19 @@ function Test() {
 
         <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '256px', width: '256px', margin: '10px' }}/>
         <p>Welcome to the Test page of the Matterbridge frontend</p>
-
+        <Button variant="contained" onClick={() => {
+          showInstallProgress('example-package');
+          addInstallProgress('Starting installation...');
+          for(const line of ['Downloading package...', 'Extracting files...', 'Installing dependencies...']) {
+            addInstallProgress(line);
+          }
+          for(let i = 0; i <= 500; i += 1) {
+            // Simulate progress
+            addInstallProgress(`Installing dependency package-dep${i}...`);
+          }
+          addInstallProgress('Finalizing installation...');
+          addInstallProgress('Installation completed successfully.');
+        }}>Install</Button>
       </div>  
     </div>
   );
