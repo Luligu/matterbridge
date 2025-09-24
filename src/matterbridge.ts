@@ -30,7 +30,7 @@ import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt, BLUE } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt, BLUE, or } from 'node-ansi-logger';
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
@@ -55,7 +55,6 @@ import {
 import { DeviceCertification, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
-import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
 
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
@@ -2561,22 +2560,97 @@ const commissioningController = new CommissioningController({
    * @returns {Promise<void>} A promise that resolves when the subscription is set up.
    */
   private async subscribeAttributeChanged(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
-    if (!plugin || !device || !device.plugin || !device.serialNumber || !device.uniqueId) return;
+    if (!plugin || !device || !device.plugin || !device.serialNumber || !device.uniqueId || !device.maybeNumber) return;
     this.log.info(`Subscribing attributes for endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) plugin ${plg}${plugin.name}${nf}`);
+    // Subscribe to the reachable$Changed event of the BasicInformationServer cluster server of the server node in childbridge mode
     if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform' && plugin.serverNode) {
       plugin.serverNode.eventsOf(BasicInformationServer).reachable$Changed?.on((reachable: boolean) => {
         this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, 'BasicInformationServer', 'reachable', reachable);
+        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, device.id, 'BasicInformation', 'reachable', reachable);
       });
     }
+
+    const subscriptions: { cluster: string; attribute: string }[] = [
+      { cluster: 'BridgedDeviceBasicInformation', attribute: 'reachable' },
+      { cluster: 'OnOff', attribute: 'onOff' },
+      { cluster: 'LevelControl', attribute: 'currentLevel' },
+      { cluster: 'ColorControl', attribute: 'colorMode' },
+      { cluster: 'ColorControl', attribute: 'currentHue' },
+      { cluster: 'ColorControl', attribute: 'currentSaturation' },
+      { cluster: 'ColorControl', attribute: 'currentX' },
+      { cluster: 'ColorControl', attribute: 'currentY' },
+      { cluster: 'ColorControl', attribute: 'colorTemperatureMireds' },
+      { cluster: 'Thermostat', attribute: 'localTemperature' },
+      { cluster: 'Thermostat', attribute: 'occupiedCoolingSetpoint' },
+      { cluster: 'Thermostat', attribute: 'occupiedHeatingSetpoint' },
+      { cluster: 'Thermostat', attribute: 'systemMode' },
+      { cluster: 'WindowCovering', attribute: 'operationalStatus' },
+      { cluster: 'WindowCovering', attribute: 'currentPositionLiftPercent100ths' },
+      { cluster: 'DoorLock', attribute: 'lockState' },
+      { cluster: 'PumpConfigurationAndControl', attribute: 'pumpStatus' },
+      { cluster: 'FanControl', attribute: 'fanMode' },
+      { cluster: 'FanControl', attribute: 'fanModeSequence' },
+      { cluster: 'FanControl', attribute: 'percentSetting' },
+      { cluster: 'AirQuality', attribute: 'airQuality' },
+      { cluster: 'TotalVolatileOrganicCompoundsConcentrationMeasurement', attribute: 'measuredValue' },
+      { cluster: 'BooleanState', attribute: 'stateValue' },
+      { cluster: 'OccupancySensing', attribute: 'occupancy' },
+      { cluster: 'IlluminanceMeasurement', attribute: 'measuredValue' },
+      { cluster: 'TemperatureMeasurement', attribute: 'measuredValue' },
+      { cluster: 'RelativeHumidityMeasurement', attribute: 'measuredValue' },
+      { cluster: 'PressureMeasurement', attribute: 'measuredValue' },
+      { cluster: 'FlowMeasurement', attribute: 'measuredValue' },
+    ];
+    for (const sub of subscriptions) {
+      if (device.hasAttributeServer(sub.cluster, sub.attribute)) {
+        this.log.debug(`Subscribing to endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
+        await device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+          this.log.debug(`Bridged endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, device.id, sub.cluster, sub.attribute, value);
+        });
+      }
+      for (const child of device.getChildEndpoints()) {
+        for (const sub of subscriptions) {
+          if (child.hasAttributeServer(sub.cluster, sub.attribute)) {
+            this.log.debug(`Subscribing to child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
+            await child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+              this.log.debug(`Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`);
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, child.number, child.id, sub.cluster, sub.attribute, value);
+            });
+          }
+        }
+      }
+    }
+    /*
+
+    // Subscribe to the reachable$Changed event of the BridgedDeviceBasicInformationServer cluster server of the bridged device
     if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) {
       device.eventsOf(BridgedDeviceBasicInformationServer).reachable$Changed.on((reachable: boolean) => {
         this.log.info(`Bridged endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, 'BridgedDeviceBasicInformationServer', 'reachable', reachable);
+        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, 'BridgedDeviceBasicInformation', 'reachable', reachable);
       });
     }
+    // Subscribe to the onOff$Changed event of the OnOffServer cluster server of the bridged device
+    if (device.hasClusterServer('OnOff')) {
+      device.eventsOf(OnOffServer).onOff$Changed.on((onOff: boolean) => {
+        this.log.info(`Bridged endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${onOff ? 'on' : 'off'}`);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, 'OnOff', 'onOff', onOff);
+      });
+    }
+    // Subscribe to the onOff$currentLevel event of the LevelControl cluster server of the bridged device
+    if (device.hasClusterServer('LevelControl')) {
+      device.eventsOf(LevelControlServer).currentLevel$Changed.on((level: number | null) => {
+        this.log.info(`Bridged endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) level is ${level}`);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, 'LevelControl', 'level', level);
+      });
+    }
+    */
   }
 
   /**

@@ -38,7 +38,7 @@ import multer from 'multer';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt } from 'node-ansi-logger';
 // @matter
-import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle, ServerNode, LogDestination, Diagnostic, Time, FabricIndex } from '@matter/main';
+import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle, ServerNode, LogDestination, Diagnostic, Time, FabricIndex, EndpointNumber } from '@matter/main';
 import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/main/protocol';
 import { CommissioningOptions } from '@matter/main/types';
@@ -1107,7 +1107,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   private getClusters(pluginName: string, endpointNumber: number): ApiClustersResponse | undefined {
     const endpoint = this.matterbridge.devices.array().find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber);
-    if (!endpoint || !endpoint.plugin || !endpoint.maybeNumber || !endpoint.deviceName || !endpoint.serialNumber) {
+    if (!endpoint || !endpoint.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
       this.log.error(`getClusters: no device found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
       return;
     }
@@ -1129,6 +1129,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       // );
       clusters.push({
         endpoint: endpoint.number.toString(),
+        number: endpoint.number,
         id: 'main',
         deviceTypes,
         clusterName: capitalizeFirstLetter(clusterName),
@@ -1167,7 +1168,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // );
         clusters.push({
           endpoint: childEndpoint.number.toString(),
-          id: childEndpoint.maybeId ?? 'null', // Never happens
+          number: childEndpoint.number,
+          id: childEndpoint.id,
           deviceTypes,
           clusterName: capitalizeFirstLetter(clusterName),
           clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
@@ -1178,7 +1180,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         });
       });
     });
-    return { plugin: endpoint.plugin, deviceName: endpoint.deviceName, serialNumber: endpoint.serialNumber, endpoint: endpoint.maybeNumber, deviceTypes, clusters };
+    return { plugin: endpoint.plugin, deviceName: endpoint.deviceName, serialNumber: endpoint.serialNumber, number: endpoint.number, id: endpoint.id, deviceTypes, clusters };
   }
 
   /**
@@ -2115,6 +2117,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string | undefined} plugin - The name of the plugin.
    * @param {string | undefined} serialNumber - The serial number of the device.
    * @param {string | undefined} uniqueId - The unique identifier of the device.
+   * @param {EndpointNumber} number - The endpoint number where the attribute belongs.
+   * @param {string} id - The endpoint id where the attribute belongs.
    * @param {string} cluster - The cluster name where the attribute belongs.
    * @param {string} attribute - The name of the attribute that changed.
    * @param {number | string | boolean} value - The new value of the attribute.
@@ -2123,10 +2127,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * This method logs a debug message and sends a JSON-formatted message to all connected WebSocket clients
    * with the updated attribute information.
    */
-  wssSendAttributeChangedMessage(plugin: string, serialNumber: string, uniqueId: string, cluster: string, attribute: string, value: number | string | boolean) {
+  wssSendAttributeChangedMessage(plugin: string, serialNumber: string, uniqueId: string, number: EndpointNumber, id: string, cluster: string, attribute: string, value: number | string | boolean | null) {
     this.log.debug('Sending an attribute update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'state_update', success: true, response: { plugin, serialNumber, uniqueId, cluster, attribute, value } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'state_update', success: true, response: { plugin, serialNumber, uniqueId, number, id, cluster, attribute, value } });
   }
 
   /**

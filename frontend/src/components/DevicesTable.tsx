@@ -148,20 +148,25 @@ function DevicesTable({filter}: { filter: string; }) {
   const filteredDevicesRef = useRef(filteredDevices);
 
   const updateDevices = useCallback((msg: WsMessageApiStateUpdate) => {
-    /*if(debug)*/ console.log('DevicesTable received state_update:', msg.response);
+    /*if(debug)*/ console.log(`DevicesTable received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`, msg.response);
     const updateDevice = filteredDevicesRef.current.find((device) => device.pluginName === msg.response.plugin && device.uniqueId === msg.response.uniqueId);
-    if(!updateDevice) return;
-    /*if(debug)*/ console.log(`DevicesTable found device "${updateDevice.name}" serial "${updateDevice.serial}"`);
-    if (pluginName && endpoint) {
-      const updatedCluster = clusters.find((c) => c.clusterName+'Server' === msg.response.cluster && c.attributeName === msg.response.attribute);
-      /*if(debug)*/ console.log(`DevicesTable found device "${updateDevice.name}" serial "${updateDevice.serial}" with cluster:`, updatedCluster);
-      if(!updatedCluster) return;
+    if(!updateDevice) {
+      /*if(debug)*/ console.warn(`DevicesTable updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" not found in filteredDevicesRef.current`);
+      return;
+    }
+    if (pluginName && endpoint && updateDevice.pluginName === pluginName && updateDevice.uniqueId === selectedDeviceUniqueId && msg.response.number.toString() === endpoint) {
+      const updatedCluster = clusters.find((c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute);
+      if(!updatedCluster) {
+        /*if(debug)*/ console.warn(`DevicesTable updater cluster ${msg.response.cluster}.${msg.response.attribute} for device "${updateDevice.name}" serial "${updateDevice.serial}" not found in clusters`);
+        return;
+      }
       updatedCluster.attributeValue = String(msg.response.value);
       updatedCluster.attributeLocalValue = msg.response.value;
       setClusters([...clusters]);
-      /*if(debug)*/ console.log(`DevicesTable updated attribute ${updatedCluster.clusterName}:${updatedCluster.attributeName} for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
+      /*if(debug)*/ console.log(`DevicesTable updated attribute ${updatedCluster.clusterName}.${updatedCluster.attributeName} for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
     }
-  }, [clusters, endpoint, pluginName]);
+  }, [clusters, endpoint, pluginName, selectedDeviceUniqueId]);
+  // }, [clusters, endpoint, pluginName]);
 
   // WebSocket message handler effect
   useEffect(() => {

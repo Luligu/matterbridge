@@ -75,7 +75,7 @@ function Test() {
           sendMessage({ id: uniqueId.current, method: "/api/clusters", sender: 'Test', src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint || 0 } });
         }
       } else if (msg.method === '/api/clusters' && msg.response) {
-        if(debug) console.log(`Test received ${msg.response.clusters.length} clusters for device ${msg.response.deviceName} endpoint ${msg.response.endpoint}:`, msg);
+        if(debug) console.log(`Test received ${msg.response.clusters.length} clusters for device ${msg.response.deviceName} endpoint ${msg.response.id}:${msg.response.number}:`, msg);
         showSnackbarMessage(`Test received /api/clusters for ${msg.response.plugin}::${msg.response.deviceName}`, 0);
         setClusters(msg.response);
       }

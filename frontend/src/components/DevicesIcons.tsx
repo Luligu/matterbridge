@@ -66,7 +66,7 @@ const endpointSx = { margin: '0', padding: '0px 4px', borderRadius: '5px', textA
 const lightDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d];
 const outletDeviceTypes = [0x010a, 0x010b];
 const switchDeviceTypes = [0x0103, 0x0104, 0x0105, 0x010f, 0x0110];
-const onOffDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105];
+const currentLevelDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105, 0x0110];
 
 function Render({ icon, iconColor, cluster, value, unit, prefix }: { icon?: React.JSX.Element; iconColor?: string; cluster: ApiClusters; value: string | number | boolean | null | undefined; unit?: string; prefix?: boolean }) {
   if(debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof(value)}-${isNaN(value as any)}) "${value}" unit "${unit}"`);
@@ -105,7 +105,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDev
   deviceType===0x0011 && clusters.filter(cluster => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'batVoltage').map(cluster => details = `${cluster.attributeLocalValue} mV`);
   
   // LevelControl
-  onOffDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'LevelControl' && cluster.attributeName === 'currentLevel').map(cluster => details = `Level ${cluster.attributeValue}`);
+  currentLevelDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'LevelControl' && cluster.attributeName === 'currentLevel').map(cluster => details = `Level ${cluster.attributeValue}`);
 
   // WindowCovering
   deviceType===0x0202 && clusters.filter(cluster => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map(cluster => details = `Position ${cluster.attributeLocalValue as number/100}%`);
@@ -319,24 +319,28 @@ function DevicesIcons({filter}: { filter: string }) {
   const [filteredDevices, setFilteredDevices] = useState<ApiDevices[]>(devices);
   const [endpoints, setEndpoints] = useState<{ [serial: string]: { endpoint: string; id: string; deviceTypes: number[] }[] }>({});
   const [deviceTypes, setDeviceTypes] = useState<{ [serial: string]: number[] }>({});
-  const [clusters, setClusters] = useState<{ [serial: string]: { endpoint: string; id: string; deviceTypes: number[]; clusterName: string; clusterId: string; attributeName: string; attributeId: string; attributeValue: string; attributeLocalValue: unknown }[] }>({});
+  const [clusters, setClusters] = useState<{ [serial: string]: ApiClusters[] }>({});
 
   // Refs
   const uniqueId = useRef(getUniqueId());
   const filteredDevicesRef = useRef(filteredDevices);
 
   const updateDevices = useCallback((msg: WsMessageApiStateUpdate) => {
-    /*if(debug)*/ console.log('DevicesIcons received state_update:', msg.response);
+    /*if(debug)*/ console.log(`DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`, msg.response);
     const updateDevice = filteredDevicesRef.current.find((device) => device.pluginName === msg.response.plugin && device.uniqueId === msg.response.uniqueId);
-    if(!updateDevice) return;
-    /*if(debug)*/ console.log(`DevicesIcons found device "${updateDevice.name}" serial "${updateDevice.serial}"`);
-    const updatedCluster = clusters[updateDevice.serial].find((c) => c.clusterName+'Server' === msg.response.cluster && c.attributeName === msg.response.attribute);
-    /*if(debug)*/ console.log(`DevicesIcons found device "${updateDevice.name}" serial "${updateDevice.serial}" with cluster:`, updatedCluster);
-    if(!updatedCluster) return;
+    if(!updateDevice) {
+      /*if(debug)*/ console.warn(`DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" not found in filteredDevicesRef.current`);
+      return;
+    }
+    const updatedCluster = clusters[updateDevice.serial].find((c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute);
+    if(!updatedCluster) {
+      /*if(debug)*/ console.warn(`DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters`);
+      return;
+    }
     updatedCluster.attributeValue = String(msg.response.value);
     updatedCluster.attributeLocalValue = msg.response.value;
     setClusters({ ...clusters });
-    /*if(debug)*/ console.log(`DevicesIcons updated attribute ${updatedCluster.clusterName}:${updatedCluster.attributeName} for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
+    /*if(debug)*/ console.log(`DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
   }, [clusters]);
 
   useEffect(() => {
@@ -362,7 +366,7 @@ function DevicesIcons({filter}: { filter: string }) {
           sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint || 0} });
         }
       } else if (msg.method === '/api/clusters' && msg.response) {
-        if(debug) console.log(`DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceType ${msg.response.deviceTypes.join(' ')} clusters (${msg.response.clusters.length}):`, msg.response);
+        if(debug) console.log(`DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceTypes (${msg.response.deviceTypes.length}) "${msg.response.deviceTypes.join(',')}" clusters (${msg.response.clusters.length}):`, msg.response);
         if(msg.response.clusters.length === 0) return;
         const serial = msg.response.serialNumber;
         endpoints[serial] = [];

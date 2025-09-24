@@ -248,13 +248,15 @@ function HomeDevices({storeId, setStoreId}: HomeDevicesProps) {
       } else if (msg.method === 'state_update') {
         if (msg.response.plugin && msg.response.serialNumber && msg.response.cluster.includes('BasicInformationServer') && msg.response.attribute === 'reachable') {
           /*if(debug)*/ console.log(`HomeDevices updating device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}`);
-          setDevices((prevDevices) =>
-            prevDevices.map((d) =>
-              d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber
-                ? { ...d, reachable: msg.response.value as boolean }
-                : d
-            )
-          );
+          setDevices((prev) => {
+            const index = prev.findIndex((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
+            if (index < 0) {
+              /*if (debug)*/ console.warn(`HomeDevices: device to update not found for plugin ${msg.response.plugin} serial ${msg.response.serialNumber}`);
+              return prev;
+            }
+            prev[index] = { ...prev[index], reachable: msg.response.value as boolean };
+            return [...prev];
+          });
         }
       }
       // Local messages
@@ -357,16 +359,28 @@ function HomeDevices({storeId, setStoreId}: HomeDevicesProps) {
   // Handle checkbox change to select/unselect a device
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, device: MixedApiDevices) => {
     /*if(debug)*/ console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
-    setDevices(prev => { 
-      const i = prev.findIndex(d => d.pluginName === device.pluginName && d.serial === device.serial); 
-      if(i < 0) {
-        console.error(`handleCheckboxChange: device not found ${device.name} serial ${device.serial}`);
-        return prev; 
-      }
-      const next = [...prev]; 
-      next[i] = {...next[i], selected: event.target.checked}; 
-      return next; 
-    });
+    if(devices.findIndex(d => d.pluginName === device.pluginName && d.serial === device.serial) < 0) {
+      if(debug) console.warn(`handleCheckboxChange: device ${device.name} serial ${device.serial} not found in devices, trying in mixedDevices`);
+      setMixedDevices(prev => { 
+        const index = prev.findIndex(d => d.pluginName === device.pluginName && d.serial === device.serial); 
+        if(index < 0) {
+          console.error(`handleCheckboxChange: device ${device.name} serial ${device.serial} not found in mixedDevices`);
+          return prev; 
+        }
+        prev[index] = {...prev[index], selected: event.target.checked}; 
+        return [...prev];
+      });
+    } else {
+      setDevices(prev => { 
+        const index = prev.findIndex(d => d.pluginName === device.pluginName && d.serial === device.serial); 
+        if(index < 0) {
+          console.error(`handleCheckboxChange: device ${device.name} serial ${device.serial} not found in devices`);
+          return prev; 
+        }
+        prev[index] = {...prev[index], selected: event.target.checked}; 
+        return [...prev];
+      });
+    }
     if(event.target.checked ) {
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
     } else {

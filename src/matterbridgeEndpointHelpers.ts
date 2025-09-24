@@ -409,7 +409,7 @@ export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, clu
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the required cluster servers to.
  * @returns {void}
  */
-export function addRequiredClusterServers(endpoint: MatterbridgeEndpoint) {
+export function addRequiredClusterServers(endpoint: MatterbridgeEndpoint): void {
   const requiredServerList: ClusterId[] = [];
   endpoint.log.debug(`addRequiredClusterServers for ${CYAN}${endpoint.maybeId}${db}`);
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
@@ -430,7 +430,7 @@ export function addRequiredClusterServers(endpoint: MatterbridgeEndpoint) {
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the optional cluster servers to.
  * @returns {void}
  */
-export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint) {
+export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint): void {
   const optionalServerList: ClusterId[] = [];
   endpoint.log.debug(`addOptionalClusterServers for ${CYAN}${endpoint.maybeId}${db}`);
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
