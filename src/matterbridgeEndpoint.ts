@@ -1827,7 +1827,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default thermostat cluster server with features Heating, Cooling and AutoMode.
+   * Creates a default thermostat cluster server with features **Heating**, **Cooling** and **AutoMode**.
+   *
+   * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
+   * - When the outdoorTemperature parameter is provided (either null or a number), the outdoorTemperature attribute is also added (defaults to undefined).
    *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
@@ -1837,6 +1840,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
    * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
    * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @param {number | undefined} [unoccupiedHeatingSetpoint] - The unoccupied heating setpoint value in degrees Celsius. Defaults to 19° (it will be ignored if occupied is not provided).
+   * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
+   * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
+   * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultThermostatClusterServer(
@@ -1848,9 +1855,14 @@ export class MatterbridgeEndpoint extends Endpoint {
     maxHeatSetpointLimit: number = 50,
     minCoolSetpointLimit: number = 0,
     maxCoolSetpointLimit: number = 50,
+    unoccupiedHeatingSetpoint: number | undefined = undefined,
+    unoccupiedCoolingSetpoint: number | undefined = undefined,
+    occupied: boolean | undefined = undefined,
+    outdoorTemperature: number | null | undefined = undefined,
   ): this {
-    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode), {
+    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       localTemperature: localTemperature * 100,
+      ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       systemMode: Thermostat.SystemMode.Auto,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
       // Thermostat.Feature.Heating
@@ -1868,22 +1880,41 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Thermostat.Feature.AutoMode
       minSetpointDeadBand: minSetpointDeadBand * 100,
       thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
+      // Thermostat.Feature.Occupancy
+      ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
+      ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
+      ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
     });
     return this;
   }
 
   /**
-   * Creates a default heating thermostat cluster server with feature Heating.
+   * Creates a default heating thermostat cluster server with feature **Heating**.
+   *
+   * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
+   * - When the outdoorTemperature parameter is provided (either null or a number), the outdoorTemperature attribute is also added (defaults to undefined).
    *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
    * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number | undefined} [unoccupiedHeatingSetpoint] - The unoccupied heating setpoint value in degrees Celsius. Defaults to 19° (it will be ignored if occupied is not provided).
+   * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
+   * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultHeatingThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, minHeatSetpointLimit: number = 0, maxHeatSetpointLimit: number = 50): this {
-    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating), {
+  createDefaultHeatingThermostatClusterServer(
+    localTemperature: number = 23,
+    occupiedHeatingSetpoint: number = 21,
+    minHeatSetpointLimit: number = 0,
+    maxHeatSetpointLimit: number = 50,
+    unoccupiedHeatingSetpoint: number | undefined = undefined,
+    occupied: boolean | undefined = undefined,
+    outdoorTemperature: number | null | undefined = undefined,
+  ): this {
+    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       localTemperature: localTemperature * 100,
+      ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       systemMode: Thermostat.SystemMode.Heat,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
       // Thermostat.Feature.Heating
@@ -1892,22 +1923,40 @@ export class MatterbridgeEndpoint extends Endpoint {
       maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
       absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
       absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+      // Thermostat.Feature.Occupancy
+      ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
+      ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
     });
     return this;
   }
 
   /**
-   * Creates a default cooling thermostat cluster server with feature Cooling.
+   * Creates a default cooling thermostat cluster server with feature **Cooling**.
+   *
+   * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
+   * - When the outdoorTemperature parameter is provided (either null or a number), the outdoorTemperature attribute is also added (defaults to undefined).
    *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
    * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
    * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
+   * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
+   * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultCoolingThermostatClusterServer(localTemperature: number = 23, occupiedCoolingSetpoint: number = 25, minCoolSetpointLimit: number = 0, maxCoolSetpointLimit: number = 50): this {
-    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling), {
+  createDefaultCoolingThermostatClusterServer(
+    localTemperature: number = 23,
+    occupiedCoolingSetpoint: number = 25,
+    minCoolSetpointLimit: number = 0,
+    maxCoolSetpointLimit: number = 50,
+    unoccupiedCoolingSetpoint: number | undefined = undefined,
+    occupied: boolean | undefined = undefined,
+    outdoorTemperature: number | null | undefined = undefined,
+  ): this {
+    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       localTemperature: localTemperature * 100,
+      ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       systemMode: Thermostat.SystemMode.Cool,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
       // Thermostat.Feature.Cooling
@@ -1916,6 +1965,9 @@ export class MatterbridgeEndpoint extends Endpoint {
       maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
       absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
       absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+      // Thermostat.Feature.Occupancy
+      ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
+      ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
     });
     return this;
   }
