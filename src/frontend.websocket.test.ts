@@ -640,7 +640,7 @@ describe('Matterbridge frontend', () => {
     const msg = await waitMessageId(++WS_ID, '/api/uninstall', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
     expect(msg.response).toBeUndefined();
     expect(msg.error).toBeDefined();
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['uninstall', '-g', 'matterbridge-st', '--verbose']);
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['uninstall', '-g', 'matterbridge-st', '--verbose'], 'matterbridge-st');
   }, 60000);
 
   test('Websocket API /api/addplugin', async () => {
