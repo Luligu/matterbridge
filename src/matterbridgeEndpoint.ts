@@ -1911,8 +1911,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     unoccupiedHeatingSetpoint: number | undefined = undefined,
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
+    schedules: Thermostat.ScheduleStruct[] = []
   ): this {
-    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
+    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : []), Thermostat.Feature.MatterScheduleConfiguration), {
       localTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       systemMode: Thermostat.SystemMode.Heat,
@@ -1926,6 +1927,12 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+      // Thermostat.Feature.MatterScheduleConfiguration
+      numberOfSchedules: 0,
+      numberOfScheduleTransitions: 0,
+      numberOfScheduleTransitionPerDay: null,
+      activeScheduleHandle: null,
+      schedules
     });
     return this;
   }
