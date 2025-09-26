@@ -105,8 +105,11 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
     if (childProcess.stdout) {
       childProcess.stdout.on('data', (data: Buffer) => {
         const message = data.toString().trim();
-        matterbridge.log.debug(`Spawn output (stdout): ${message}`);
-        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', message);
+        const lines = message.split('\n');
+        for (const line of lines) {
+          matterbridge.log.debug(`Spawn output (stdout): ${line}`);
+          matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', line);
+        }
       });
       /*
       childProcess.stdout.on('close', () => {
@@ -127,8 +130,11 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
     if (childProcess.stderr) {
       childProcess.stderr.on('data', (data: Buffer) => {
         const message = data.toString().trim();
-        matterbridge.log.debug(`Spawn verbose (stderr): ${message}`);
-        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', message);
+        const lines = message.split('\n');
+        for (const line of lines) {
+          matterbridge.log.debug(`Spawn verbose (stderr): ${line}`);
+          matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', line);
+        }
       });
       /*
       childProcess.stderr.on('close', () => {

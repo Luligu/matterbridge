@@ -1964,8 +1964,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Remove leading asterisks from the message
     message = message.replace(/^\*+/, '');
     // Replace all occurrences of \t and \n
-    if (level !== 'spawn') message = message.replace(/[\t\n]/g, '');
-    // else message = message.replace(/[\r\n|\r|\n]/g, '\n');
+    /* if (level !== 'spawn')*/ message = message.replace(/[\t\n]/g, '');
     // Remove non-printable characters
     // eslint-disable-next-line no-control-regex
     message = message.replace(/[\x00-\x1F\x7F]/g, '');
