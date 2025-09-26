@@ -2815,6 +2815,57 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a default Electrical Apparent Power Measurement Cluster Server with features AlternatingCurrent.
+   *
+   * @param {number} voltage - The voltage value in millivolts.
+   * @param {number} apparentCurrent - The current value in milliamperes.
+   * @param {number} apparentPower - The apparent power value in millivoltamperes.
+   * @param {number} frequency - The frequency value in millihertz.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultElectricalActivePowerMeasurementClusterServer(voltage: number | bigint | null = null, apparentCurrent: number | bigint | null = null, apparentPower: number | bigint | null = null, frequency: number | bigint | null = null): this {
+    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), {
+      powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
+      numberOfMeasurementTypes: 4,
+      accuracy: [
+        {
+          measurementType: MeasurementType.Voltage,
+          measured: true,
+          minMeasuredValue: Number.MIN_SAFE_INTEGER,
+          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+        },
+        {
+          measurementType: MeasurementType.ApparentCurrent,
+          measured: true,
+          minMeasuredValue: Number.MIN_SAFE_INTEGER,
+          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+        },
+        {
+          measurementType: MeasurementType.ApparentPower,
+          measured: true,
+          minMeasuredValue: Number.MIN_SAFE_INTEGER,
+          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+        },
+        {
+          measurementType: MeasurementType.Frequency,
+          measured: true,
+          minMeasuredValue: Number.MIN_SAFE_INTEGER,
+          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+        },
+      ],
+      voltage: voltage,
+      apparentCurrent: apparentCurrent,
+      apparentPower: apparentPower,
+      frequency: frequency,
+    });
+    return this;
+  }
+
+  /**
    * Creates a default TemperatureMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value of the temperature x 100.
