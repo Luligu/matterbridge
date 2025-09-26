@@ -34,6 +34,7 @@ export interface UiContextType {
     handleCancel: (command: string) => void
   ) => void;
   showInstallProgress: (packageName: string) => void;
+  hideInstallProgress: () => void;
   addInstallProgress: (output: string) => void;
 }
 
@@ -134,13 +135,16 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   const [installOutput, setInstallOutput] = useState('');
 
   const showInstallProgress = useCallback((packageName: string) => {
-    if(!installDialogOpen) {
-      /*if(debug)*/ console.log(`UiProvider show install progress for package ${packageName}`);
-      setInstallPackageName(packageName);
-      setInstallOutput(`Starting installation of ${packageName}...\n`);
-      setInstallDialogOpen(true);
-    }
-  }, [installDialogOpen]);
+    /*if(debug)*/ console.log(`UiProvider show install progress for package ${packageName}`);
+    setInstallPackageName(packageName);
+    setInstallOutput(`Starting installation of ${packageName}...\n`);
+    setInstallDialogOpen(true);
+}, []);
+
+  const hideInstallProgress = useCallback(() => {
+    /*if(debug)*/ console.log(`UiProvider hide install progress`);
+    setInstallDialogOpen(false);
+  }, []);
 
   const addInstallProgress = useCallback((output: string) => {
     /*if(debug)*/ console.log(`UiProvider addInstallProgress: output ${output}`);
@@ -160,8 +164,9 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     closeSnackbar,
     showConfirmCancelDialog,
     showInstallProgress,
+    hideInstallProgress,
     addInstallProgress,
-  }), [showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showConfirmCancelDialog, showInstallProgress, addInstallProgress]);
+  }), [showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showConfirmCancelDialog, showInstallProgress, hideInstallProgress, addInstallProgress]);
 
   return (
     <UiContext.Provider value={contextValue}>

@@ -62,7 +62,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const [online, setOnline] = useState(false);
 
   // Contexts
-  const { showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showInstallProgress, addInstallProgress } = useContext(UiContext);
+  const { showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showInstallProgress, hideInstallProgress, addInstallProgress } = useContext(UiContext);
 
   // Refs
   const listenersRef = useRef<{ listener: (msg: WsMessageApiResponse) => void; id: number }[]>([]);
@@ -276,6 +276,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
       setOnline(false);
       closeSnackbar();
+      hideInstallProgress();
       if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
       if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
       if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
