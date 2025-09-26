@@ -44,7 +44,7 @@ export const InstallProgressDialog = ({ open, output, packageName, onInstall, on
         onClose();
       }}
       slotProps={{
-        paper: { sx: { width: '800px', maxWidth: '50vw', height: '600px', maxHeight: '50vh', overflow: 'hidden' } }
+        paper: { sx: { width: '70vw', maxWidth: '70vw', height: '70vw', maxHeight: '70vh', overflow: 'hidden' } }
       }}
     >
       <DialogTitle>
@@ -67,7 +67,7 @@ export const InstallProgressDialog = ({ open, output, packageName, onInstall, on
           paddingBottom: 0
         }}
       >
-        <label style={{ display: 'block', marginBottom: '10px', fontSize: '16px', color: 'var(--primary-color)' }}>Install log</label>
+        <label style={{ display: 'block', marginBottom: '10px', fontSize: '16px', fontWeight: 'bold', color: 'var(--primary-color)' }}>Install log</label>
           <ul
             style={{
               width: '100%',
@@ -83,13 +83,13 @@ export const InstallProgressDialog = ({ open, output, packageName, onInstall, on
               listStyle: 'none',
               boxSizing: 'border-box',
               borderRadius: 4,
-              border: '1px solid var(--primary-color)',
+              border: '4px solid var(--primary-color)',
               whiteSpace: 'pre-wrap',
               display: 'block',
             }}
           >
             {output.split('\n').map((line, idx) => (
-              <li key={idx} style={{ padding: 0, margin: 0 }}>{line}</li>
+              <li key={idx} style={{ padding: 0, margin: 0, wordBreak: 'break-all' }}>{line}</li>
             ))}
             <li ref={endOfMessagesRef} style={{ padding: 0, margin: 0 }} />
           </ul>

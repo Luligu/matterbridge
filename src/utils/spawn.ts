@@ -66,30 +66,33 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
 
     childProcess.on('error', (err) => {
       matterbridge.log.error(`Failed to start child process "${cmdLine}": ${err.message}`);
+      matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit-error', 'Spawn process error');
       reject(err);
     });
 
     childProcess.on('close', (code, signal) => {
       matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
-      matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit', 'Child process closed');
       if (code === 0) {
         if (cmdLine.startsWith('npm install -g')) matterbridge.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '').replace('--omit=dev', '')} installed correctly`);
         matterbridge.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
+        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit-success', 'Child process closed');
         resolve(true);
       } else {
         matterbridge.log.error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
+        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit-error', 'Child process closed');
         reject(new Error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`));
       }
     });
 
     childProcess.on('exit', (code, signal) => {
       matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', `child process exited with code ${code} and signal ${signal}`);
-      matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit', 'Child process exited');
       if (code === 0) {
         matterbridge.log.debug(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
+        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit-success', 'Child process exited');
         resolve(true);
       } else {
         matterbridge.log.error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
+        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit-error', 'Child process exited');
         reject(new Error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`));
       }
     });

@@ -62,7 +62,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const [online, setOnline] = useState(false);
 
   // Contexts
-  const { showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showInstallProgress, hideInstallProgress, addInstallProgress } = useContext(UiContext);
+  const { showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showInstallProgress, hideInstallProgress, exitInstallProgressSuccess, exitInstallProgressError, addInstallProgress } = useContext(UiContext);
 
   // Refs
   const listenersRef = useRef<{ listener: (msg: WsMessageApiResponse) => void; id: number }[]>([]);
@@ -199,7 +199,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           // Send to InstallProgressDialog if it's an install log
           if (msg.response.level === 'spawn') {
             if (msg.response.name === 'Matterbridge:spawn-init') showInstallProgress(msg.response.message);
-            else if (msg.response.name === 'Matterbridge:spawn-exit') { /*Do nothing on exit for now*/ }
+            else if (msg.response.name === 'Matterbridge:spawn-exit-success') exitInstallProgressSuccess();
+            else if (msg.response.name === 'Matterbridge:spawn-exit-error') exitInstallProgressError();
             else addInstallProgress(msg.response.message + '\n');
           }
 

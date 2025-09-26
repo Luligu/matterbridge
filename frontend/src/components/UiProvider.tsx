@@ -34,6 +34,8 @@ export interface UiContextType {
     handleCancel: (command: string) => void
   ) => void;
   showInstallProgress: (packageName: string) => void;
+  exitInstallProgressSuccess: () => void;
+  exitInstallProgressError: () => void;
   hideInstallProgress: () => void;
   addInstallProgress: (output: string) => void;
 }
@@ -141,14 +143,24 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     setInstallDialogOpen(true);
 }, []);
 
-  const hideInstallProgress = useCallback(() => {
-    /*if(debug)*/ console.log(`UiProvider hide install progress`);
-    setInstallDialogOpen(false);
-  }, []);
-
   const addInstallProgress = useCallback((output: string) => {
     /*if(debug)*/ console.log(`UiProvider addInstallProgress: output ${output}`);
     setInstallOutput( prevOutput => prevOutput + output + '\n' );
+  }, []);
+
+  const exitInstallProgressSuccess = useCallback(() => {
+    /*if(debug)*/ console.log(`UiProvider exitInstallProgressSuccess: package ${installPackageName}`);
+    setInstallOutput( prevOutput => prevOutput + `Successfully installed ${installPackageName}\n` );
+  }, [installPackageName]);
+
+  const exitInstallProgressError = useCallback(() => {
+    /*if(debug)*/ console.log(`UiProvider exitInstallProgressError: package ${installPackageName}`);
+    setInstallOutput( prevOutput => prevOutput + `Failed to install ${installPackageName}\n` );
+  }, [installPackageName]);
+
+  const hideInstallProgress = useCallback(() => {
+    /*if(debug)*/ console.log(`UiProvider hide install progress`);
+    setInstallDialogOpen(false);
   }, []);
 
   const handleInstallClose = () => {
@@ -164,9 +176,11 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     closeSnackbar,
     showConfirmCancelDialog,
     showInstallProgress,
+    exitInstallProgressSuccess,
+    exitInstallProgressError,
     hideInstallProgress,
     addInstallProgress,
-  }), [showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showConfirmCancelDialog, showInstallProgress, hideInstallProgress, addInstallProgress]);
+  }), [showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showConfirmCancelDialog, showInstallProgress, exitInstallProgressSuccess, exitInstallProgressError, hideInstallProgress, addInstallProgress]);
 
   return (
     <UiContext.Provider value={contextValue}>

@@ -1964,7 +1964,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Remove leading asterisks from the message
     message = message.replace(/^\*+/, '');
     // Replace all occurrences of \t and \n
-    message = message.replace(/[\t\n]/g, '');
+    if (level !== 'spawn') message = message.replace(/[\t\n]/g, '');
+    // else message = message.replace(/[\r\n|\r|\n]/g, '\n');
     // Remove non-printable characters
     // eslint-disable-next-line no-control-regex
     message = message.replace(/[\x00-\x1F\x7F]/g, '');
@@ -1976,17 +1977,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     const keepStartLength = 20;
     const keepEndLength = 20;
     // Split the message into words
-    message = message
-      .split(' ')
-      .map((word) => {
-        // If the word length exceeds the max continuous length, insert spaces and truncate
-        if (word.length > maxContinuousLength) {
-          return word.slice(0, keepStartLength) + ' ... ' + word.slice(-keepEndLength);
-        }
-        return word;
-      })
-      .join(' ');
-
+    if (level !== 'spawn') {
+      message = message
+        .split(' ')
+        .map((word) => {
+          // If the word length exceeds the max continuous length, insert spaces and truncate
+          if (word.length > maxContinuousLength) {
+            return word.slice(0, keepStartLength) + ' ... ' + word.slice(-keepEndLength);
+          }
+          return word;
+        })
+        .join(' ');
+    }
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'log', success: true, response: { level, time, name, message } });
   }
