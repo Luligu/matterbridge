@@ -55,8 +55,8 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {boolean} heaterTypes.other - Indicates if the water heater has other types of heating sources.
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 90.
    * @param {number} [voltage] - The voltage value in millivolts. Defaults to null if not provided.
-   * @param {number} [current] - The current value in milliamperes. Defaults to null if not provided.
-   * @param {number} [power] - The power value in milliwatts. Defaults to null if not provided.
+   * @param {number} [apparentCurrent] - The current value in milliamperes. Defaults to null if not provided.
+   * @param {number} [apparentPower] - The power value in milliwatts. Defaults to null if not provided.
    * @param {number} [energy] - The total consumption value in mW/h. Defaults to null if not provided.
    * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
@@ -71,8 +71,8 @@ export class WaterHeater extends MatterbridgeEndpoint {
     heaterTypes: { immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean } = { immersionElement1: true },
     tankPercentage = 90,
     voltage: number | bigint | null = null,
-    current: number | bigint | null = null,
-    power: number | bigint | null = null,
+    apparentCurrent: number | bigint | null = null,
+    apparentPower: number | bigint | null = null,
     energy: number | bigint | null = null,
     absMinPower: number = 0,
     absMaxPower: number = 0,
@@ -85,7 +85,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
       .createDefaultWaterHeaterManagementClusterServer(heaterTypes, {}, tankPercentage)
       .createDefaultWaterHeaterModeClusterServer()
       .createDefaultPowerTopologyClusterServer()
-      .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
+      .createDefaultElectricalApparentPowerMeasurementClusterServer(voltage, apparentCurrent, apparentPower)
       .createDefaultElectricalEnergyMeasurementClusterServer(energy)
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.WaterHeating, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer();
