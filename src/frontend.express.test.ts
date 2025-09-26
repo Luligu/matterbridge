@@ -17,7 +17,7 @@ import { LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -437,6 +437,7 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('POST /api/uploadpackage with matterbridge-plugin-template.tgz', async () => {
+    // setDebug(true);
     // Read the test file
     const testFileContent = await fs.readFile('./src/mock/matterbridge-plugin-template._tgz');
     const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
@@ -444,6 +445,7 @@ describe('Matterbridge frontend express with http', () => {
     expect(typeof response.body).toBe('string');
     expect(response.body).toContain('Plugin package matterbridge-plugin-template.tgz uploaded and installed successfully');
     await expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/matterbridge-plugin-template.tgz'))).resolves.toBeUndefined();
+    // setDebug(false);
   }, 30000);
 
   test('POST /api/uploadpackage with wrong tgz', async () => {

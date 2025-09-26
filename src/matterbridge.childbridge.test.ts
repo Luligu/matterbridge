@@ -43,7 +43,7 @@ import { PluginManager } from './pluginManager.js';
 import { dev, plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -130,6 +130,9 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   test('removeBridgedEndpoint with invalid plugin', async () => {
     await matterbridge.removeBridgedEndpoint('invalid-plugin', {} as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error removing bridged endpoint`));
+
+    expect(matterbridge.plugins.size).toBe(0);
+    expect(matterbridge.devices.size).toBe(0);
   });
 
   test('addBridgedEndpoint twice for AccessoryPlatform', async () => {
@@ -142,6 +145,9 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     await matterbridge.addBridgedEndpoint('matterbridge-mock4', new MatterbridgeEndpoint(pressureSensor, { uniqueStorageKey: 'invalidDevice' }));
     expect(await plugins.remove('./src/mock/plugin4')).not.toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Only one device is allowed per AccessoryPlatform plugin.`));
+
+    expect(matterbridge.plugins.size).toBe(0);
+    expect(matterbridge.devices.size).toBe(0);
   });
 
   test('addBridgedEndpoint for AccessoryPlatform with mode = matter', async () => {
@@ -157,6 +163,10 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     await matterbridge.addBridgedEndpoint('matterbridge-mock4', { mode: 'matter', uniqueId: '123', uniqueStorageKey: 'invalidDevice' } as any);
     expect(await plugins.remove('./src/mock/plugin4')).not.toBeNull();
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Only one device is allowed per AccessoryPlatform plugin.`));
+    matterbridge.devices.clear();
+
+    expect(matterbridge.plugins.size).toBe(0);
+    expect(matterbridge.devices.size).toBe(0);
   });
 
   test('addBridgedEndpoint for DynamicPlatform with mode = matter', async () => {
@@ -172,6 +182,9 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     await matterbridge.addBridgedEndpoint('matterbridge-mock1', { mode: 'matter', uniqueId: '123', uniqueStorageKey: 'invalidDevice' } as any);
     expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Only one device is allowed per AccessoryPlatform plugin.`));
+
+    expect(matterbridge.plugins.size).toBe(0);
+    expect(matterbridge.devices.size).toBe(0);
   });
 
   test('addBridgedEndpoint fails adding for AccessoryPlatform', async () => {
@@ -203,6 +216,9 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   });
 
   test('add plugin', async () => {
+    expect(matterbridge.plugins.size).toBe(0);
+    expect(matterbridge.devices.size).toBe(0);
+
     expect(plugins.length).toBe(0);
     expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
     expect(plugins.length).toBe(1);
@@ -216,6 +232,9 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugins.get('matterbridge-mock2')?.type).toBe('AnyPlatform');
     expect(plugins.get('matterbridge-mock3')?.type).toBe('AnyPlatform');
     expect(plugins.get('matterbridge-mock4')?.type).toBe('AnyPlatform');
+
+    expect(matterbridge.plugins.size).toBe(4);
+    expect(matterbridge.devices.size).toBe(0);
   });
 
   test('create and start server node for each plugin', async () => {
@@ -278,6 +297,9 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   });
 
   test('Matterbridge.destroyInstance() -childbridge mode', async () => {
+    expect(matterbridge.plugins.size).toBe(4);
+    expect(matterbridge.devices.size).toBe(4);
+
     expect(matterbridge.bridgeMode).toBe('childbridge');
     let i = 1;
     for (const plugin of plugins) {
@@ -294,6 +316,9 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
       i++;
     }
+    expect(matterbridge.plugins.size).toBe(4);
+    expect(matterbridge.devices.size).toBe(0);
+
     await matterbridge.destroyInstance(10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
@@ -304,12 +329,18 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   }, 60000);
 
   test('Restart initialize() -childbridge mode', async () => {
+    expect(matterbridge.plugins.size).toBe(0);
+    expect(matterbridge.devices.size).toBe(0);
+
+    // setDebug(true);
+
     expect((matterbridge as any).initialized).toBeFalsy();
     await matterbridge.initialize();
     expect((matterbridge as any).initialized).toBeTruthy();
     plugins = (matterbridge as any).plugins;
+
     expect(matterbridge.plugins.size).toBe(4);
-    expect(matterbridge.devices.size).toBe(0);
+    expect(matterbridge.devices.size).toBe(2);
 
     await waiter(
       'Matterbridge restarted',
@@ -362,6 +393,8 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
 
     expect(matterbridge.plugins.size).toBe(4);
     expect(matterbridge.devices.size).toBe(4);
+
+    // setDebug(false);
   }, 300000);
 
   test('set reachable -bridge mode', async () => {

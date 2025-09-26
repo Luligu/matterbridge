@@ -898,6 +898,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       return;
     }
 
+    // Initialize frontend
+    if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
+
     // Start the matter storage and create the matterbridge context
     try {
       await this.startMatterStorage();
@@ -946,7 +949,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Initialize frontend
-    if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
+    // if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
 
     // Check in 30 seconds the latest and dev versions of matterbridge and the plugins
     clearTimeout(this.checkUpdateTimeout);
@@ -1007,9 +1010,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * This method is responsible for initializing and starting all enabled plugins.
    * It ensures that each plugin is properly loaded and started before the bridge starts.
    *
+   * @param {boolean} [wait] - If true, the method will wait for all plugins to be fully loaded and started before resolving.
+   * @param {boolean} [start] - If true, the method will start the plugins after loading them.
    * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and started.
    */
-  private async startPlugins(): Promise<void> {
+  private async startPlugins(wait: boolean = false, start: boolean = true): Promise<void> {
     // Check, load and start the plugins
     for (const plugin of this.plugins) {
       plugin.configJson = await this.plugins.loadConfig(plugin);
@@ -1031,7 +1036,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.started = false;
       plugin.configured = false;
       plugin.registeredDevices = undefined;
-      this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
+      if (wait) await this.plugins.load(plugin, start, 'Matterbridge is starting');
+      else this.plugins.load(plugin, start, 'Matterbridge is starting'); // No await do it asyncronously
     }
     this.frontend.wssSendRefreshRequired('plugins');
   }
@@ -1704,8 +1710,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private async startChildbridge(delay: number = 1000): Promise<void> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
 
-    await this.startPlugins();
+    // Load with await all plugins but don't start them. We get the platform.type to pre-create server nodes for DynamicPlatform plugins
+    this.log.debug('Loading all plugins in childbridge mode...');
+    await this.startPlugins(true, false);
 
+    // Create server nodes for DynamicPlatform plugins and start all plugins in the background
+    this.log.debug('Creating server nodes for DynamicPlatform plugins and starting all plugins in childbridge mode...');
+    for (const plugin of this.plugins.array().filter((p) => p.enabled && !p.error)) {
+      if (plugin.type === 'DynamicPlatform') await this.createDynamicPlugin(plugin);
+      this.plugins.start(plugin, 'Matterbridge is starting'); // Start the plugin in the background
+    }
+
+    // Start the Matterbridge in childbridge mode when all plugins are loaded and started
     this.log.debug('Starting start matter interval in childbridge mode...');
     let failCount = 0;
     this.startMatterInterval = setInterval(async () => {
@@ -1732,9 +1748,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
             plugin.error = true;
           }
-        }
-        if (plugin.type === 'DynamicPlatform' && !plugin.locked) {
-          await this.createDynamicPlugin(plugin);
         }
       }
       if (!allStarted) return;

@@ -161,11 +161,6 @@ function App(): React.JSX.Element {
     : '/';
   if (debug) {
     console.log(`Loading App...`);
-    if (import.meta.env.PROD) {
-      console.log('- production mode');
-    } else {
-      console.log('- development mode');
-    }
     console.log(`- with href = "${window.location.href}"`);
     console.log(`- pathname = "${window.location.pathname}"`);
     console.log(`- baseName = "${baseName}"`);

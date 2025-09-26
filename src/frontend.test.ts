@@ -7,7 +7,7 @@ const FRONTEND_PORT = 8285;
 const NAME = 'Frontend';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString(), '-debug'];
+process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString(), '-debug', '-logger', 'debug'];
 
 import { copyFileSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -76,7 +76,12 @@ describe('Matterbridge frontend', () => {
     expect(frontend).toBeDefined();
 
     await new Promise<void>((resolve) => {
-      frontend.once('server_listening', () => resolve());
+      const interval = setInterval(() => {
+        if ((frontend as any).listening) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100).unref();
     });
 
     expect((matterbridge as any).initialized).toBe(true);

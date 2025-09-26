@@ -61,9 +61,11 @@ function QRDiv({ id }: QRDivProps) {
   // Ui context
   const { showConfirmCancelDialog } = useContext(UiContext);
   
-  // Effect to request server data when id changes
+  if (debug) console.log(`QRDiv loading with id = "${id}" storeId "${storeId}" and matter:`, matter);
+
+  // Request server data when id changes
   useEffect(() => {
-    if (debug) console.log(`QRDiv received storeId update "${id}"`);
+    if (debug) console.log(`QRDiv id effect "${id}"`);
     if(id) {
       if (debug) console.log(`QRDiv sending data request for storeId "${id}"`);
       setStoreId(id);
@@ -72,26 +74,29 @@ function QRDiv({ id }: QRDivProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]); // run on mount/unmount and id change
 
+  // Render when storeId changes
+  useEffect(() => {
+    if (debug) console.log(`QRDiv storeId effect "${storeId}"`);
+  }, [storeId]); // run on mount/unmount and storeId change
+
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'refresh_required' && msg.response.changed === 'matter' && msg.response.matter) {
-          if(debug) console.log(`QRDiv received refresh_required: changed=${msg.response.changed} for storeId "${msg.response.matter.id}":`, msg.response.matter);
-          if(storeId === msg.response.matter.id) {
-            if(debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.response.matter.id}":`, msg.response.matter);
-            if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
-            if (msg.response.matter.advertising && msg.response.matter.advertiseTime && msg.response.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.response.matter.advertising = false; // already expired
-            setMatter(msg.response.matter);
-            if(msg.response.matter.advertising) {
-              if(debug) console.log(`QRDiv setting matter advertise timeout for storeId "${msg.response.matter.id}":`, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
-              advertiseTimeoutRef.current = setTimeout(() => {
-                // Clear advertising state after 15 minutes
-                if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
-                if(debug) console.log(`QRDiv clearing advertising state for storeId "${storeId}" after 15 minutes`);
-                setMatter((prev) => prev ? { ...prev, advertising: false } : prev);
-              }, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
-            }
+      if (msg.method === 'refresh_required' && msg.response.changed === 'matter' && msg.response.matter) {
+        if(debug) console.log(`QRDiv received refresh_required: changed=${msg.response.changed} for storeId "${msg.response.matter.id}":`, msg.response.matter);
+        if(storeId === msg.response.matter.id) {
+          if(debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.response.matter.id}":`, msg.response.matter);
+          if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+          if (msg.response.matter.advertising && msg.response.matter.advertiseTime && msg.response.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.response.matter.advertising = false; // already expired
+          setMatter(msg.response.matter);
+          if(msg.response.matter.advertising) {
+            if(debug) console.log(`QRDiv setting matter advertise timeout for storeId "${msg.response.matter.id}":`, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
+            advertiseTimeoutRef.current = setTimeout(() => {
+              // Clear advertising state after 15 minutes
+              if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+              if(debug) console.log(`QRDiv clearing advertising state for storeId "${storeId}" after 15 minutes`);
+              setMatter((prev) => prev ? { ...prev, advertising: false } : prev);
+            }, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
           }
         }
       }
@@ -106,8 +111,7 @@ function QRDiv({ id }: QRDivProps) {
       advertiseTimeoutRef.current = null;
       if(debug) console.log('QRDiv webSocket effect unmounted');
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId]); // run on mount/unmount and storeId change
+  }, [addListener, removeListener, storeId]); // run on mount/unmount and storeId change
   
   const handleStartCommissioningClick = () => {
     if (debug) console.log(`QRDiv sent matter startCommission for node "${matter?.id}"`);
@@ -170,7 +174,7 @@ function QRDiv({ id }: QRDivProps) {
           </div>
         </div>
         <p className="MbfWindowHeaderText" style={{ overflow: 'hidden', maxWidth: '280px', textOverflow: 'ellipsis', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
-        <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Server offline: restart to commission</p>
+        <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'normal' }}>Server offline</p>
         <div className="MbfWindowFooter">
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Serial number: {matter.serialNumber}</p>
         </div>

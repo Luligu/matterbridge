@@ -68,6 +68,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
   private port = 8283;
+  private listening = false;
 
   private expressApp: express.Express | undefined;
   private httpServer: HttpServer | undefined;
@@ -152,12 +153,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (hasParameter('ingress')) {
         this.httpServer.listen(this.port, '0.0.0.0', () => {
           this.log.info(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${this.port}${UNDERLINEOFF}${rs}`);
+          this.listening = true;
           this.emit('server_listening', 'http', this.port, '0.0.0.0');
         });
       } else {
         this.httpServer.listen(this.port, () => {
           if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
           if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+          this.listening = true;
           this.emit('server_listening', 'http', this.port);
         });
       }
@@ -252,12 +255,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (hasParameter('ingress')) {
         this.httpsServer.listen(this.port, '0.0.0.0', () => {
           this.log.info(`The frontend https server is listening on ${UNDERLINE}https://0.0.0.0:${this.port}${UNDERLINEOFF}${rs}`);
+          this.listening = true;
           this.emit('server_listening', 'https', this.port, '0.0.0.0');
         });
       } else {
         this.httpsServer.listen(this.port, () => {
           if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
           if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+          this.listening = true;
           this.emit('server_listening', 'https', this.port);
         });
       }
@@ -781,6 +786,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       */
       this.httpServer.close();
       this.log.debug('Http server closed successfully');
+      this.listening = false;
       this.emit('server_stopped');
 
       this.httpServer.removeAllListeners();
@@ -811,6 +817,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       */
       this.httpsServer.close();
       this.log.debug('Https server closed successfully');
+      this.listening = false;
       this.emit('server_stopped');
       this.httpsServer.removeAllListeners();
       this.httpsServer = undefined;
