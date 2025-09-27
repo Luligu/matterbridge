@@ -20,8 +20,8 @@ import HomePlugins from './HomePlugins';
 import HomeDevices from './HomeDevices';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 function Home() {
   // States

@@ -8,6 +8,24 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.2.10] - Not released
+
+### Breaking Changes
+
+### Added
+
+- [frontend]: Bumped `frontend` version to 3.1.1. Some improvements and small bug fixes.
+
+### Changed
+
+- [package]: Updated dependencies.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.2.9] - 2025-09-27
 
 ### Breaking Changes

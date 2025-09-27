@@ -326,21 +326,21 @@ function DevicesIcons({filter}: { filter: string }) {
   const filteredDevicesRef = useRef(filteredDevices);
 
   const updateDevices = useCallback((msg: WsMessageApiStateUpdate) => {
-    /*if(debug)*/ console.log(`DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`, msg.response);
+    if(debug) console.log(`DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`, msg.response);
     const updateDevice = filteredDevicesRef.current.find((device) => device.pluginName === msg.response.plugin && device.uniqueId === msg.response.uniqueId);
     if(!updateDevice) {
-      /*if(debug)*/ console.warn(`DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" not found in filteredDevicesRef.current`);
+      if(debug) console.warn(`DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" not found in filteredDevicesRef.current`);
       return;
     }
     const updatedCluster = clusters[updateDevice.serial].find((c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute);
     if(!updatedCluster) {
-      /*if(debug)*/ console.warn(`DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters`);
+      if(debug) console.warn(`DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters`);
       return;
     }
     updatedCluster.attributeValue = String(msg.response.value);
     updatedCluster.attributeLocalValue = msg.response.value;
     setClusters({ ...clusters });
-    /*if(debug)*/ console.log(`DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
+    if(debug) console.log(`DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
   }, [clusters]);
 
   useEffect(() => {

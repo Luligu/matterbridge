@@ -1796,7 +1796,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
         // Setting reachability to true
         plugin.reachabilityTimeout = setTimeout(() => {
-          this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf} type ${plugin.type} server node ${plugin.serverNode !== undefined} aggregator node ${plugin.aggregatorNode !== undefined} device ${plugin.device !== undefined}`);
+          this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf}`);
           if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
         }, 60 * 1000).unref();
       }

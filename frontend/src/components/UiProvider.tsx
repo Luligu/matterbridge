@@ -137,34 +137,34 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   const [installOutput, setInstallOutput] = useState('');
 
   const showInstallProgress = useCallback((packageName: string) => {
-    /*if(debug)*/ console.log(`UiProvider show install progress for package ${packageName}`);
+    if(debug) console.log(`UiProvider show install progress for package ${packageName}`);
     setInstallPackageName(packageName);
     setInstallOutput(`Starting installation of ${packageName}...\n`);
     setInstallDialogOpen(true);
 }, []);
 
   const addInstallProgress = useCallback((output: string) => {
-    /*if(debug)*/ console.log(`UiProvider addInstallProgress: output ${output}`);
+    if(debug) console.log(`UiProvider addInstallProgress: output ${output}`);
     setInstallOutput( prevOutput => prevOutput + output + '\n' );
   }, []);
 
   const exitInstallProgressSuccess = useCallback(() => {
-    /*if(debug)*/ console.log(`UiProvider exitInstallProgressSuccess: package ${installPackageName}`);
+    if(debug) console.log(`UiProvider exitInstallProgressSuccess: package ${installPackageName}`);
     setInstallOutput( prevOutput => prevOutput + `Successfully installed ${installPackageName}\n` );
   }, [installPackageName]);
 
   const exitInstallProgressError = useCallback(() => {
-    /*if(debug)*/ console.log(`UiProvider exitInstallProgressError: package ${installPackageName}`);
+    if(debug) console.log(`UiProvider exitInstallProgressError: package ${installPackageName}`);
     setInstallOutput( prevOutput => prevOutput + `Failed to install ${installPackageName}\n` );
   }, [installPackageName]);
 
   const hideInstallProgress = useCallback(() => {
-    /*if(debug)*/ console.log(`UiProvider hide install progress`);
+    if(debug) console.log(`UiProvider hide install progress`);
     setInstallDialogOpen(false);
   }, []);
 
   const handleInstallClose = () => {
-    /*if(debug)*/ console.log(`UiProvider handle install close action`);
+    if(debug) console.log(`UiProvider handle install close action`);
     setInstallDialogOpen(false);
     setInstallPackageName('');
     setInstallOutput('');

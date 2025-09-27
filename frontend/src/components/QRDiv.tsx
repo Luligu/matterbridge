@@ -18,8 +18,8 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { ApiMatterResponse } from '../../../src/matterbridgeTypes';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
-import { debug } from '../App';
-// const debug = true; // Debug flag for this component
+// import { debug } from '../App';
+const debug = true; // Debug flag for this component
 
 // Reusable hover styling for all action icon buttons (mdi icons)
 const iconBtnSx = {
@@ -60,27 +60,27 @@ function QRDiv({ id }: QRDivProps) {
   const uniqueId = useRef(getUniqueId());
   // Ui context
   const { showConfirmCancelDialog } = useContext(UiContext);
-  
-  if (debug) console.log(`QRDiv loading with id = "${id}" storeId "${storeId}" and matter:`, matter);
+
+  if (debug) console.log(`QRDiv loading with id = "${id}" storeId = "${storeId}" timeout = ${advertiseTimeoutRef.current} and  matter:`, matter);
 
   // Request server data when id changes
   useEffect(() => {
     if (debug) console.log(`QRDiv id effect "${id}"`);
+    setStoreId(id);
+    setMatter(null);
+    if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+    advertiseTimeoutRef.current = null;
     if(id) {
-      if (debug) console.log(`QRDiv sending data request for storeId "${id}"`);
-      setStoreId(id);
-      setMatter(null);
-      if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
-      advertiseTimeoutRef.current = null;
+      if (debug) console.log(`QRDiv id effect sending data request for storeId "${id}"`);
       sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: id, server: true } });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]); // run on mount/unmount and id change
 
-  // Render when storeId changes
+  // Render when storeId or matter changes
   useEffect(() => {
     if (debug) console.log(`QRDiv storeId effect "${storeId}"`);
-  }, [storeId]); // run on mount/unmount and storeId change
+  }, [storeId, matter]); // run on mount/unmount and storeId or matter change
 
   // WebSocket message handler effect
   useEffect(() => {
@@ -176,7 +176,7 @@ function QRDiv({ id }: QRDivProps) {
           <div className="MbfWindowHeaderFooterIcons">
           </div>
         </div>
-        <p className="MbfWindowHeaderText" style={{ overflow: 'hidden', maxWidth: '280px', textOverflow: 'ellipsis', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
+        <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
         <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'normal' }}>Server offline</p>
         <div className="MbfWindowFooter">
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Serial number: {matter.serialNumber}</p>
@@ -198,7 +198,7 @@ function QRDiv({ id }: QRDivProps) {
             </IconButton>
           </div>
         </div>
-        <p className="MbfWindowHeaderText" style={{ overflow: 'hidden', maxWidth: '280px', textOverflow: 'ellipsis', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
+        <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
         <QRCodeSVG value={matter.qrPairingCode} size={256} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
         <div className="MbfWindowFooter" style={{ justifyContent: 'space-between' }}>
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {formatManualCode(matter.manualPairingCode)}</p>
@@ -228,7 +228,7 @@ function QRDiv({ id }: QRDivProps) {
           </div>
         </div>
         <div className="MbfWindowBodyColumn" style={{ paddingTop: '0px' }}>
-          <p className="MbfWindowHeaderText thin-scroll" style={{ overflowX: 'auto', maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
+          <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
           {matter.fabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
               <div style={{ marginLeft: '20px', marginBottom: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '20px', alignItems: 'center' }}>
@@ -265,7 +265,7 @@ function QRDiv({ id }: QRDivProps) {
         <div className="MbfWindowHeader" style={{ height: '30px' }}>
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
         </div>
-        <p className="MbfWindowHeaderText thin-scroll" style={{ overflowX: 'auto', maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
+        <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
         <Button onClick={handleStartCommissioningClick} endIcon={<Icon path={mdiShareOutline} size={1}/>} style={{ margin: '20px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>Turn on pairing</Button>
         <div className="MbfWindowFooter">
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Serial number: {matter.serialNumber}</p>

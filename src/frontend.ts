@@ -1113,6 +1113,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {ApiClustersResponse | undefined} A promise that resolves to the clusters or undefined if not found.
    */
   private getClusters(pluginName: string, endpointNumber: number): ApiClustersResponse | undefined {
+    if (this.matterbridge.hasCleanupStarted) return; // Skip if cleanup has started
     const endpoint = this.matterbridge.devices.array().find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber);
     if (!endpoint || !endpoint.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
       this.log.error(`getClusters: no device found for plugin ${pluginName} and endpoint number ${endpointNumber}`);

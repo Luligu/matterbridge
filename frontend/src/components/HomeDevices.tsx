@@ -247,11 +247,11 @@ function HomeDevices({storeId, setStoreId}: HomeDevicesProps) {
         setRestart(false);
       } else if (msg.method === 'state_update') {
         if (msg.response.plugin && msg.response.serialNumber && msg.response.cluster.includes('BasicInformation') && msg.response.attribute === 'reachable') {
-          /*if(debug)*/ console.log(`HomeDevices updating device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}`);
+          if(debug) console.log(`HomeDevices updating device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}`);
           setDevices((prev) => {
             const index = prev.findIndex((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
             if (index < 0) {
-              /*if (debug)*/ console.warn(`HomeDevices: device to update not found for plugin ${msg.response.plugin} serial ${msg.response.serialNumber}`);
+              if (debug) console.warn(`HomeDevices: device to update not found for plugin ${msg.response.plugin} serial ${msg.response.serialNumber}`);
               return prev;
             }
             prev[index] = { ...prev[index], reachable: msg.response.value as boolean };
@@ -343,7 +343,7 @@ function HomeDevices({storeId, setStoreId}: HomeDevicesProps) {
     }
     if(mixed.length > 0) {
       setMixedDevices(mixed);
-      /*if(debug)*/ console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
+      if(debug) console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
     }
   }, [plugins, devices, selectDevices, setMixedDevices]);
   
@@ -358,7 +358,7 @@ function HomeDevices({storeId, setStoreId}: HomeDevicesProps) {
 
   // Handle checkbox change to select/unselect a device
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, device: MixedApiDevices) => {
-    /*if(debug)*/ console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
+    if(debug) console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
     if(devices.findIndex(d => d.pluginName === device.pluginName && d.serial === device.serial) < 0) {
       if(debug) console.warn(`handleCheckboxChange: device ${device.name} serial ${device.serial} not found in devices, trying in mixedDevices`);
       setMixedDevices(prev => { 
