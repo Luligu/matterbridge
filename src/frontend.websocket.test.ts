@@ -1133,7 +1133,9 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket SendMessage', async () => {
+    const spyWssBroadcastMessage = jest.spyOn(Frontend.prototype, 'wssBroadcastMessage');
     matterbridge.frontend.wssSendLogMessage('', '', '', ``);
+    expect(spyWssBroadcastMessage).not.toHaveBeenCalled();
 
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
@@ -1147,7 +1149,7 @@ describe('Matterbridge frontend', () => {
       };
       ws.addEventListener('message', onMessage);
     });
-    matterbridge.frontend.wssSendLogMessage('info', '12:45', 'Frontend', `***${CYAN}Test message${rs}`);
+    matterbridge.frontend.wssSendLogMessage('info', '12:45', 'Frontend', `***${CYAN}Test message 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789${rs}`);
     const response = await received;
     expect(response).toBeDefined();
     const data = JSON.parse(response as string) as WsMessageApiLog;
@@ -1161,10 +1163,12 @@ describe('Matterbridge frontend', () => {
     expect(data.response.level).toBe('info');
     expect(data.response.time).toBe('12:45');
     expect(data.response.name).toBe('Frontend');
-    expect(data.response.message).toBe('Test message');
+    expect(data.response.message).toBe('Test message 01234567890123456789 ... 01234567890123456789');
     expect(data.method).toBe('log');
-    expect(data.response).toEqual({ level: 'info', time: '12:45', name: 'Frontend', message: 'Test message' });
+    expect(data.response).toEqual({ level: 'info', time: '12:45', name: 'Frontend', message: 'Test message 01234567890123456789 ... 01234567890123456789' });
     expect((data as any).error).toBeUndefined();
+    expect(spyWssBroadcastMessage).toHaveBeenCalled();
+    spyWssBroadcastMessage.mockRestore();
   });
 
   test('Websocket SendRefreshRequired', async () => {

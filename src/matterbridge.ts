@@ -1778,6 +1778,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.error(`Plugin ${plg}${plugin.name}${er} didn't register any devices to Matterbridge. Verify the plugin configuration.`);
           continue;
         }
+        // istanbul ignore next if cause is just a safety check
         if (!plugin.serverNode) {
           this.log.error(`Server node not found for plugin ${plg}${plugin.name}${er}`);
           continue;
@@ -2495,7 +2496,7 @@ const commissioningController = new CommissioningController({
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
     // Add the device to the DeviceManager
     this.devices.set(device);
-    // Subscribe to the reachable$Changed event
+    // Subscribe to the attributes changed event
     await this.subscribeAttributeChanged(plugin, device);
     this.log.info(`Added and registered bridged endpoint (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
@@ -2637,33 +2638,6 @@ const commissioningController = new CommissioningController({
         }
       }
     }
-    /*
-
-    // Subscribe to the reachable$Changed event of the BridgedDeviceBasicInformationServer cluster server of the bridged device
-    if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) {
-      device.eventsOf(BridgedDeviceBasicInformationServer).reachable$Changed.on((reachable: boolean) => {
-        this.log.info(`Bridged endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, 'BridgedDeviceBasicInformation', 'reachable', reachable);
-      });
-    }
-    // Subscribe to the onOff$Changed event of the OnOffServer cluster server of the bridged device
-    if (device.hasClusterServer('OnOff')) {
-      device.eventsOf(OnOffServer).onOff$Changed.on((onOff: boolean) => {
-        this.log.info(`Bridged endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${onOff ? 'on' : 'off'}`);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, 'OnOff', 'onOff', onOff);
-      });
-    }
-    // Subscribe to the onOff$currentLevel event of the LevelControl cluster server of the bridged device
-    if (device.hasClusterServer('LevelControl')) {
-      device.eventsOf(LevelControlServer).currentLevel$Changed.on((level: number | null) => {
-        this.log.info(`Bridged endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) level is ${level}`);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, 'LevelControl', 'level', level);
-      });
-    }
-    */
   }
 
   /**

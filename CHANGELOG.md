@@ -8,7 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.2.9] - Not released
+## [3.2.9] - 2025-09-27
 
 ### Breaking Changes
 
@@ -21,7 +21,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Use MbfTable for Plugins, Devices, Registered devices and Clusters tables.
 - [frontend]: Optimized WebSocker message handlers. Now, the handler targets the component.
 - [frontend]: Removed dangerouslySetInnerHTML from log rendering.
-- [frontend]: Added push update to Icon view and table view cluster panel.
+- [frontend]: Added push update to Icon view and table view cluster panel. Now, they updates data in real time.
 - [frontend]: Added install progress dialog when installing or uploading packages.
 - [endpoint]: Added occupancy feature to all Thermostat cluster helpers. When provided (either false or true) it will create a Thermostat with occupancy feature.
 - [endpoint]: Added outdoorTemperature to all Thermostat cluster helpers. Default is undefined (it will be ignored).

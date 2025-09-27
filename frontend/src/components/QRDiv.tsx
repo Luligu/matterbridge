@@ -69,6 +69,9 @@ function QRDiv({ id }: QRDivProps) {
     if(id) {
       if (debug) console.log(`QRDiv sending data request for storeId "${id}"`);
       setStoreId(id);
+      setMatter(null);
+      if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+      advertiseTimeoutRef.current = null;
       sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: id, server: true } });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
