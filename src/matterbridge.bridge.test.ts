@@ -35,7 +35,6 @@ import { jest } from '@jest/globals';
 import { Environment } from '@matter/main';
 import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { BridgedDeviceBasicInformationServer, PressureMeasurementServer } from '@matter/main/behaviors';
-import { PressureMeasurement } from '@matter/main/clusters';
 
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
@@ -43,7 +42,7 @@ import { PluginManager } from './pluginManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
 import { plg } from './matterbridgeTypes.js';
-import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { loggerLogSpy, setupTest, flushAsync } from './utils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -271,6 +270,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
         if (child.hasClusterServer(PressureMeasurementServer)) await child.setStateOf(PressureMeasurementServer, { measuredValue: 9900 });
       });
     }
+    await flushAsync(undefined, undefined, 500);
   }, 60000);
 
   test('remove all devices', async () => {
