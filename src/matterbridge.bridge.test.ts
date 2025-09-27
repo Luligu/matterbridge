@@ -270,7 +270,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
         if (child.hasClusterServer(PressureMeasurementServer)) await child.setStateOf(PressureMeasurementServer, { measuredValue: 9900 });
       });
     }
-    await flushAsync(undefined, undefined, 500);
+    await flushAsync(undefined, undefined, 100);
   }, 60000);
 
   test('remove all devices', async () => {
@@ -287,6 +287,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     }
     expect(plugins.length).toBe(6);
     expect(matterbridge.devices.size).toBe(0);
+    await flushAsync(undefined, undefined, 100);
   }, 60000);
 
   test('Finally Matterbridge.destroyInstance() -bridge mode', async () => {
