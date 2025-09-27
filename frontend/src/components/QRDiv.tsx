@@ -18,8 +18,8 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { ApiMatterResponse } from '../../../src/matterbridgeTypes';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
-// import { debug } from '../App';
-const debug = true; // Debug flag for this component
+import { debug } from '../App';
+// const debug = true; // Debug flag for this component
 
 // Reusable hover styling for all action icon buttons (mdi icons)
 const iconBtnSx = {
@@ -53,41 +53,37 @@ function QRDiv({ id }: QRDivProps) {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // States
-  const [storeId, setStoreId] = useState<string | null>(null);
   const [matter, setMatter] = useState<ApiMatterResponse | null>(null);
   // Refs
+  const storeIdRef = useRef<string | null>(null);
   const advertiseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const uniqueId = useRef(getUniqueId());
   // Ui context
   const { showConfirmCancelDialog } = useContext(UiContext);
 
-  if (debug) console.log(`QRDiv loading with id = "${id}" storeId = "${storeId}" timeout = ${advertiseTimeoutRef.current} and  matter:`, matter);
+  if (debug) console.log(`QRDiv loading with id = "${id}" storeId = "${storeIdRef.current}" timeout = ${advertiseTimeoutRef.current} and  matter:`, matter);
 
   // Request server data when id changes
   useEffect(() => {
     if (debug) console.log(`QRDiv id effect "${id}"`);
-    setStoreId(id);
-    setMatter(null);
+    storeIdRef.current = id;
     if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
     advertiseTimeoutRef.current = null;
     if(id) {
       if (debug) console.log(`QRDiv id effect sending data request for storeId "${id}"`);
       sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: id, server: true } });
+    } else {
+      if (debug) console.log('QRDiv id effect setting matter to null');
+      setMatter(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]); // run on mount/unmount and id change
-
-  // Render when storeId or matter changes
-  useEffect(() => {
-    if (debug) console.log(`QRDiv storeId effect "${storeId}"`);
-  }, [storeId, matter]); // run on mount/unmount and storeId or matter change
+  }, [id, sendMessage]);
 
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (msg.method === 'refresh_required' && msg.response.changed === 'matter' && msg.response.matter) {
         if(debug) console.log(`QRDiv received refresh_required: changed=${msg.response.changed} for storeId "${msg.response.matter.id}":`, msg.response.matter);
-        if(storeId === msg.response.matter.id) {
+        if(storeIdRef.current === msg.response.matter.id) {
           if(debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.response.matter.id}":`, msg.response.matter);
           if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
           if (msg.response.matter.advertising && msg.response.matter.advertiseTime && msg.response.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.response.matter.advertising = false; // already expired
@@ -97,7 +93,7 @@ function QRDiv({ id }: QRDivProps) {
             advertiseTimeoutRef.current = setTimeout(() => {
               // Clear advertising state after 15 minutes
               if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
-              if(debug) console.log(`QRDiv clearing advertising state for storeId "${storeId}" after 15 minutes`);
+              if(debug) console.log(`QRDiv clearing advertising state for storeId "${storeIdRef.current}" after 15 minutes`);
               setMatter((prev) => prev ? { ...prev, advertising: false } : prev);
             }, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
           }
@@ -114,7 +110,7 @@ function QRDiv({ id }: QRDivProps) {
       advertiseTimeoutRef.current = null;
       if(debug) console.log('QRDiv webSocket effect unmounted');
     };
-  }, [addListener, removeListener, storeId]); // run on mount/unmount and storeId change
+  }, [addListener, removeListener]);
   
   const handleStartCommissioningClick = () => {
     if (debug) console.log(`QRDiv sent matter startCommission for node "${matter?.id}"`);
@@ -176,7 +172,7 @@ function QRDiv({ id }: QRDivProps) {
           <div className="MbfWindowHeaderFooterIcons">
           </div>
         </div>
-        <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
+        <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</p>
         <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'normal' }}>Server offline</p>
         <div className="MbfWindowFooter">
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Serial number: {matter.serialNumber}</p>
@@ -198,7 +194,7 @@ function QRDiv({ id }: QRDivProps) {
             </IconButton>
           </div>
         </div>
-        <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
+        <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</p>
         <QRCodeSVG value={matter.qrPairingCode} size={256} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
         <div className="MbfWindowFooter" style={{ justifyContent: 'space-between' }}>
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {formatManualCode(matter.manualPairingCode)}</p>
@@ -228,7 +224,7 @@ function QRDiv({ id }: QRDivProps) {
           </div>
         </div>
         <div className="MbfWindowBodyColumn" style={{ paddingTop: '0px' }}>
-          <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
+          <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</p>
           {matter.fabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
               <div style={{ marginLeft: '20px', marginBottom: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '20px', alignItems: 'center' }}>
@@ -265,7 +261,7 @@ function QRDiv({ id }: QRDivProps) {
         <div className="MbfWindowHeader" style={{ height: '30px' }}>
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
         </div>
-        <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
+        <p className="MbfWindowHeaderText" style={{ maxWidth: '280px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</p>
         <Button onClick={handleStartCommissioningClick} endIcon={<Icon path={mdiShareOutline} size={1}/>} style={{ margin: '20px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>Turn on pairing</Button>
         <div className="MbfWindowFooter">
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Serial number: {matter.serialNumber}</p>

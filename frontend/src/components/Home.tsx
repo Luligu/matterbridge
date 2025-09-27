@@ -97,20 +97,20 @@ function Home() {
   }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
-    if (debug) console.log(`Home settings and plugins effect with storeId ${storeId}`);
-      if (matterbridgeInfo?.bridgeMode === 'bridge'&& !storeId) {
-        if (debug) console.log(`Home set storeId from ${storeId} to Matterbridge`);
-        setStoreId('Matterbridge');
-      }
-      if (matterbridgeInfo?.bridgeMode === 'childbridge' && !storeId && plugins) {
-        for(const plugin of plugins) {
-          if(plugin.matter?.id) {
-            if (debug) console.log(`Home set storeId from ${storeId} to ${plugin.matter.id}`);
-            setStoreId(plugin.matter.id);
-            break;
-          }
+    if (debug) console.log(`Home storeId effect with storeId ${storeId}`);
+    if (matterbridgeInfo?.bridgeMode === 'bridge' && !storeId) {
+      if (debug) console.log(`Home storeId effect set storeId to Matterbridge`);
+      setStoreId('Matterbridge');
+    }
+    if (matterbridgeInfo?.bridgeMode === 'childbridge' && !storeId && plugins) {
+      for(const plugin of plugins) {
+        if(plugin.matter?.id) {
+          if (debug) console.log(`Home storeId effect set storeId to ${plugin.matter.id}`);
+          setStoreId(plugin.matter.id);
+          break;
         }
       }
+    }
   }, [matterbridgeInfo, plugins, storeId]);
 
   useEffect(() => {
@@ -167,7 +167,7 @@ function Home() {
           </div>
         }
 
-        {/* Install plugins */}
+        {/* Install plugins (cannot grow) */}
         {homePagePlugins && !matterbridgeInfo.readOnly &&
           <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader">
@@ -177,7 +177,7 @@ function Home() {
           </div>
         }
 
-        {/* Plugins */}
+        {/* Plugins (cannot grow) */}
         {homePagePlugins &&
           <HomePlugins storeId={storeId} setStoreId={setStoreId}/>
         }
