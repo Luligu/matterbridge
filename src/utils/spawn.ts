@@ -31,9 +31,10 @@ import { hasParameter } from './commandLine.js';
  * @param {Matterbridge} matterbridge - The Matterbridge instance to use for logging and sending messages.
  * @param {string} command - The command to execute.
  * @param {string[]} args - The arguments to pass to the command (default: []).
+ * @param {string} [packageName] - The name of the package being installed (optional).
  * @returns {Promise<boolean>} A promise that resolves when the child process exits successfully, or rejects if there is an error.
  */
-export async function spawnCommand(matterbridge: Matterbridge, command: string, args: string[]): Promise<boolean> {
+export async function spawnCommand(matterbridge: Matterbridge, command: string, args: string[], packageName?: string): Promise<boolean> {
   const { spawn } = await import('node:child_process');
 
   /*
@@ -57,12 +58,15 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
   }
   matterbridge.log.debug(`Spawn command ${command} with ${args.join(' ')}`);
   return new Promise((resolve, reject) => {
+    matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-init', packageName || `unknown-package`);
+
     const childProcess = spawn(command, args, {
       stdio: ['inherit', 'pipe', 'pipe'],
     });
 
     childProcess.on('error', (err) => {
       matterbridge.log.error(`Failed to start child process "${cmdLine}": ${err.message}`);
+      matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit-error', 'Spawn process error');
       reject(err);
     });
 
@@ -71,9 +75,11 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
       if (code === 0) {
         if (cmdLine.startsWith('npm install -g')) matterbridge.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '').replace('--omit=dev', '')} installed correctly`);
         matterbridge.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
+        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit-success', 'Child process closed');
         resolve(true);
       } else {
         matterbridge.log.error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
+        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit-error', 'Child process closed');
         reject(new Error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`));
       }
     });
@@ -82,9 +88,11 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
       matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', `child process exited with code ${code} and signal ${signal}`);
       if (code === 0) {
         matterbridge.log.debug(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
+        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit-success', 'Child process exited');
         resolve(true);
       } else {
         matterbridge.log.error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
+        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn-exit-error', 'Child process exited');
         reject(new Error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`));
       }
     });
@@ -97,8 +105,11 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
     if (childProcess.stdout) {
       childProcess.stdout.on('data', (data: Buffer) => {
         const message = data.toString().trim();
-        matterbridge.log.debug(`Spawn output (stdout): ${message}`);
-        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', message);
+        const lines = message.split('\n');
+        for (const line of lines) {
+          matterbridge.log.debug(`Spawn output (stdout): ${line}`);
+          matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', line);
+        }
       });
       /*
       childProcess.stdout.on('close', () => {
@@ -119,8 +130,11 @@ export async function spawnCommand(matterbridge: Matterbridge, command: string, 
     if (childProcess.stderr) {
       childProcess.stderr.on('data', (data: Buffer) => {
         const message = data.toString().trim();
-        matterbridge.log.debug(`Spawn verbose (stderr): ${message}`);
-        matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', message);
+        const lines = message.split('\n');
+        for (const line of lines) {
+          matterbridge.log.debug(`Spawn verbose (stderr): ${line}`);
+          matterbridge.frontend.wssSendLogMessage('spawn', matterbridge.log.now(), 'Matterbridge:spawn', line);
+        }
       });
       /*
       childProcess.stderr.on('close', () => {

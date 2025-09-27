@@ -49,10 +49,10 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).initialized).toBeFalsy();
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
-      expect(matterbridge.nodeStorageName).toBe('storage.Jest');
-      expect(matterbridge.matterStorageName).toBe('matterstorage.Jest');
-      expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.Jest.log');
-      expect(matterbridge.matterLoggerFile).toBe('matter.Jest.log');
+      expect(matterbridge.nodeStorageName).toBe('storage');
+      expect(matterbridge.matterStorageName).toBe('matterstorage');
+      expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.log');
+      expect(matterbridge.matterLoggerFile).toBe('matter.log');
       expect(matterbridge.serverNode).toBeUndefined();
       expect(matterbridge.aggregatorNode).toBeUndefined();
       expect(matterbridge.matterStorageManager).toBeUndefined();
@@ -106,19 +106,19 @@ describe('Matterbridge', () => {
 
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
-      expect(matterbridge.nodeStorageName).toBe('storage.Jest');
-      expect(matterbridge.matterStorageName).toBe('matterstorage.Jest');
-      expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.Jest.log');
-      expect(matterbridge.matterLoggerFile).toBe('matter.Jest.log');
+      expect(matterbridge.nodeStorageName).toBe('storage');
+      expect(matterbridge.matterStorageName).toBe('matterstorage');
+      expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.log');
+      expect(matterbridge.matterLoggerFile).toBe('matter.log');
       expect((matterbridge as any).initialized).toBeTruthy();
       expect((matterbridge as any).log).toBeDefined();
       expect(matterbridge.homeDirectory).toBe(getParameter('homedir') ?? os.homedir());
       expect(matterbridge.matterbridgeInformation.homeDirectory).toBe(matterbridge.homeDirectory);
-      expect(matterbridge.matterbridgeDirectory).toBe(path.join(matterbridge.homeDirectory, '.matterbridge'));
+      expect(matterbridge.matterbridgeDirectory).toBe(path.join(matterbridge.homeDirectory, '.matterbridge', 'profiles', 'Jest'));
       expect(matterbridge.matterbridgeInformation.matterbridgeDirectory).toBe(matterbridge.matterbridgeDirectory);
-      expect(matterbridge.matterbridgePluginDirectory).toBe(path.join(matterbridge.homeDirectory, 'Matterbridge'));
+      expect(matterbridge.matterbridgePluginDirectory).toBe(path.join(matterbridge.homeDirectory, 'Matterbridge', 'profiles', 'Jest'));
       expect(matterbridge.matterbridgeInformation.matterbridgePluginDirectory).toBe(matterbridge.matterbridgePluginDirectory);
-      expect(matterbridge.matterbridgeCertDirectory).toBe(path.join(matterbridge.homeDirectory, '.mattercert'));
+      expect(matterbridge.matterbridgeCertDirectory).toBe(path.join(matterbridge.homeDirectory, '.mattercert', 'profiles', 'Jest'));
       expect(matterbridge.matterbridgeInformation.matterbridgeCertDirectory).toBe(matterbridge.matterbridgeCertDirectory);
       expect(matterbridge.globalModulesDirectory).not.toBe('');
       expect(matterbridge.matterbridgeInformation.globalModulesDirectory).toBe(matterbridge.globalModulesDirectory);
@@ -150,10 +150,10 @@ describe('Matterbridge', () => {
 
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Home Directory: ${HOMEDIR}`));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'certs')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'uploads')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join('jest', 'MatterbridgeGlobal', 'Matterbridge')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join('jest', 'MatterbridgeGlobal', '.mattercert')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'profiles', 'Jest', 'certs')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'profiles', 'Jest', 'uploads')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join('jest', 'MatterbridgeGlobal', 'Matterbridge', 'profiles', 'Jest')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join('jest', 'MatterbridgeGlobal', '.mattercert', 'profiles', 'Jest')}`));
 
       // -frontend 0
       expect((matterbridge as any).frontend.httpServer).toBeUndefined();
@@ -195,11 +195,17 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).devices.size).toBe(0);
 
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Home Directory already exists at path: ${HOMEDIR}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'certs')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'uploads')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', 'Matterbridge')}`));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.mattercert')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'profiles', 'Jest')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.DEBUG,
+        expect.stringContaining(`Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'profiles', 'Jest', 'certs')}`),
+      );
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.DEBUG,
+        expect.stringContaining(`Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'profiles', 'Jest', 'uploads')}`),
+      );
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', 'Matterbridge', 'profiles', 'Jest')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.mattercert', 'profiles', 'Jest')}`));
 
       // -frontend 8081
       expect((matterbridge as any).frontend.port).toBe(8081);

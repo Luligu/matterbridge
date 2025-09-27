@@ -34,7 +34,7 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { Environment } from '@matter/main';
 import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
-import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors';
+import { BridgedDeviceBasicInformationServer, PressureMeasurementServer } from '@matter/main/behaviors';
 
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
@@ -42,7 +42,7 @@ import { PluginManager } from './pluginManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
 import { plg } from './matterbridgeTypes.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { loggerLogSpy, setupTest, flushAsync } from './utils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -67,7 +67,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('JestBridge');
     expect(matterbridge.bridgeMode).toBe('bridge');
-    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, 'matterstorage.JestBridge'));
+    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, 'matterstorage'));
 
     // Clear all plugins
     plugins = matterbridge.plugins;
@@ -90,13 +90,13 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
-    expect((matterbridge as any).nodeStorageName).toBe('storage.JestBridge');
+    expect((matterbridge as any).nodeStorageName).toBe('storage');
 
     expect((matterbridge as any).matterStorageService).toBeDefined();
     expect((matterbridge as any).matterStorageManager).toBeDefined();
     expect((matterbridge as any).matterbridgeContext).toBeDefined();
     expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
-    expect((matterbridge as any).matterStorageName).toBe('matterstorage.JestBridge');
+    expect((matterbridge as any).matterStorageName).toBe('matterstorage');
 
     expect((matterbridge as any).serverNode).toBeDefined();
     expect((matterbridge as any).aggregatorNode).toBeDefined();
@@ -255,6 +255,8 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
         .createDefaultBridgedDeviceBasicInformationClusterServer('Pressure sensor ' + i, '0x123456789', 0xfff1, 'Matterbridge', 'PressureSensor')
         .addRequiredClusterServers();
       expect(device).toBeDefined();
+      const child = device.addChildDeviceType('PressureSensor', pressureSensor);
+      child.addRequiredClusterServers();
       device.plugin = 'matterbridge-mock' + i;
       await matterbridge.addBridgedEndpoint('matterbridge-mock' + i++, device);
     }
@@ -264,7 +266,11 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     for (const device of matterbridge.devices.array()) {
       expect(device).toBeDefined();
       if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) device?.setStateOf(BridgedDeviceBasicInformationServer, { reachable: false });
+      device.getChildEndpoints().some(async (child) => {
+        if (child.hasClusterServer(PressureMeasurementServer)) await child.setStateOf(PressureMeasurementServer, { measuredValue: 9900 });
+      });
     }
+    await flushAsync(undefined, undefined, 100);
   }, 60000);
 
   test('remove all devices', async () => {
@@ -281,6 +287,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     }
     expect(plugins.length).toBe(6);
     expect(matterbridge.devices.size).toBe(0);
+    await flushAsync(undefined, undefined, 100);
   }, 60000);
 
   test('Finally Matterbridge.destroyInstance() -bridge mode', async () => {

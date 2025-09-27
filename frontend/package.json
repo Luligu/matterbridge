@@ -9,7 +9,7 @@
     "build": "vite build",
     "watch": "vite build --watch",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --project ./tsconfig.json --noEmit",
     "lint": "eslint --max-warnings=0 .",
     "lint:fix": "eslint --fix --max-warnings=0 .",
     "test": "vitest run",
@@ -24,24 +24,18 @@
     "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild",
     "runMeBeforePublish": "npm run lint && npm run build && npm run test",
     "reset": "npm run deepClean && npm run install:all && npm run build && npm run test",
-    "install:all": "npm run install:react && npm run install:emotion && npm run install:muimaterial && npm run install:mdi && npm run install:qrcode && npm run install:notistack && npm run install:rjsf && npm run install:react-table && npm run install:typescript && npm run install:vite && npm run install:vitest",
+    "install:all": "npm run install:react && npm run install:emotion && npm run install:mui && npm run install:mdi && npm run install:qrcode && npm run install:notistack && npm run install:rjsf && npm run install:typescript && npm run install:vite && npm run install:vitest && npm run install:eslint",
     "install:react": "npm install react react-dom react-router react-router-dom --omit=dev && npm install --save-dev @types/react @types/react-dom",
     "install:emotion": "npm install @emotion/react @emotion/styled --omit=dev",
-    "install:muimaterial": "npm install @mui/material @mui/icons-material --omit=dev",
+    "install:mui": "npm install @mui/material @mui/icons-material --omit=dev",
     "install:mdi": "npm install @mdi/js @mdi/react --omit=dev",
     "install:qrcode": "npm install qrcode.react --omit=dev",
     "install:notistack": "npm install notistack --omit=dev",
     "install:rjsf": "npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 --omit=dev",
-    "install:react-table": "npm install react-table@latest --omit=dev && npm install --save-dev @types/react-table",
     "install:typescript": "npm install --save-dev typescript @types/node",
     "install:vite": "npm install --save-dev vite @vitejs/plugin-react",
     "install:vitest": "npm install --save-dev vitest jsdom @testing-library/react @testing-library/jest-dom",
     "install:eslint": "npm install --save-dev eslint eslint-plugin-react eslint-plugin-react-hooks typescript-eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser"
-  },
-  "overrides": {
-    "react-table": {
-      "react": "^19.0.0"
-    }
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -58,21 +52,18 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router": "^7.9.1",
-    "react-router-dom": "^7.9.1",
-    "react-table": "^7.8.0"
+    "react-router-dom": "^7.9.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.35.0",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^24.5.2",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
-    "@types/react-table": "^7.7.20",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
     "@vitejs/plugin-react": "^5.0.3",
-    "eslint": "^9.35.0",
+    "eslint": "^9.36.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "jsdom": "^27.0.0",

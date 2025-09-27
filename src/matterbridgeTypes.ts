@@ -192,13 +192,20 @@ export interface ApiClustersResponse {
   plugin: string;
   deviceName: string;
   serialNumber: string;
-  endpoint: number;
+  /** Endpoint number */
+  number: EndpointNumber;
+  /** Endpoint id */
+  id: string;
   deviceTypes: number[];
   clusters: ApiClusters[];
 }
 
 export interface ApiClusters {
+  /** Endpoint number > string */
   endpoint: string;
+  /** Endpoint number */
+  number: EndpointNumber;
+  /** Endpoint id or main for the device root endpoint */
   id: string;
   deviceTypes: number[];
   clusterName: string;

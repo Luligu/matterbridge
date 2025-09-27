@@ -1,22 +1,12 @@
  
 // React
-import React, { useContext, useEffect, useState, useRef, memo } from 'react';
-import { useTable, useSortBy } from 'react-table';
+import { useContext, useEffect, useState, useRef, memo } from 'react';
 
 // @mui/material
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 
 // @mui/icons-material
-import SettingsIcon from '@mui/icons-material/Settings';
 import Favorite from '@mui/icons-material/Favorite';
 import Help from '@mui/icons-material/Help';
 import Announcement from '@mui/icons-material/Announcement';
@@ -34,72 +24,19 @@ import { Connecting } from './Connecting';
 import { StatusIndicator } from './StatusIndicator';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
 import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
-import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { getQRColor } from './getQRColor';
 import { debug } from '../App';
+import MbfTable, { MbfTableColumn } from './MbfTable';
 // const debug = true;
 
-interface HomePluginsTableProps {
-  data: BaseRegisteredPlugin[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  columns: Array<any>;
-  columnVisibility: Record<string, boolean>;
-}
-
-function HomePluginsTable({ data, columns, columnVisibility }: HomePluginsTableProps) {
-  // Filter columns based on visibility
-  const visibleColumns = React.useMemo(
-    () => columns.filter(column => columnVisibility[column.accessor]),
-    [columns, columnVisibility]
-  );
-  
-  // React-Table
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = useTable({ columns: visibleColumns, data }, useSortBy);
-
-  return (
-    <table {...getTableProps()} style={{ border: 'none', borderCollapse: 'collapse' }}>
-      <thead style={{ border: 'none', borderCollapse: 'collapse' }}>
-        {headerGroups.map(headerGroup => (
-          <tr {...headerGroup.getHeaderGroupProps()} style={{ border: 'none', borderCollapse: 'collapse' }}>
-            {headerGroup.headers.map(column => (
-              <th {...column.getHeaderProps(undefined)} style={{ border: 'none', borderCollapse: 'collapse', cursor: 'default' }}>
-                {column.render('Header')}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody {...getTableBodyProps()} style={{ border: 'none', borderCollapse: 'collapse' }}>
-        {rows.map((row, index) => {
-          prepareRow(row);
-          return (
-            <tr 
-              className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} 
-              {...row.getRowProps()} style={{ border: 'none', borderCollapse: 'collapse' }}
-            >
-              {row.cells.map(cell => (
-                <td {...cell.getCellProps()} style={{ border: 'none', borderCollapse: 'collapse' }}>{cell.render('Cell')}</td>
-              ))}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  );
-}
-
 interface HomePluginsProps {
-  _storeId: string;
-  setStoreId: (id: string) => void;
+  storeId: string | null;
+  setStoreId: (id: string | null) => void;
 }
 
-function HomePlugins({_storeId, setStoreId}: HomePluginsProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function HomePlugins({storeId, setStoreId}: HomePluginsProps) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   const { showConfirmCancelDialog } = useContext(UiContext);
@@ -109,120 +46,123 @@ function HomePlugins({_storeId, setStoreId}: HomePluginsProps) {
   const [_systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
   const [plugins, setPlugins] = useState<BaseRegisteredPlugin[]>([]);
-  const [dialogPluginsColumnsOpen, setDialogPluginsColumnsOpen] = useState(false);
-  const [pluginsColumnVisibility, setPluginsColumnVisibility] = useState({
-    name: true,
-    description: true,
-    version: true,
-    author: true,
-    type: true,
-    registeredDevices: true,
-    actions: true,
-    status: true,
-  });
 
-  const pluginsColumns = [
+  const pluginsColumns: MbfTableColumn<BaseRegisteredPlugin>[] = [
     {
-      Header: 'Name',
-      accessor: 'name',
-      Cell: ({ row: plugin }: { row: { original: BaseRegisteredPlugin } }) => (
+      label: 'Name',
+      id: 'name',
+      required: true,
+      render: (value, rowKey, plugin, _column) => (
         <Tooltip title="Open the plugin homepage">
-          <span style={{ cursor: 'pointer' }} onClick={() => handleHomepagePlugin(plugin.original)}>
-            {plugin.original.name}
+          <span style={{ cursor: 'pointer' }} onClick={() => handleHomepagePlugin(plugin)}>
+            {plugin.name}
           </span>
         </Tooltip>
       ),
     },
     {
-      Header: 'Description',
-      accessor: 'description',
-      Cell: ({ row: plugin }: { row: { original: BaseRegisteredPlugin } }) => (
+      label: 'Description',
+      id: 'description',
+      render: (value, rowKey, plugin, _column) => (
         <Tooltip title="Open the plugin homepage">
-          <span style={{ cursor: 'pointer' }} onClick={() => handleHomepagePlugin(plugin.original)}>
-            {plugin.original.description}
+          <span style={{ cursor: 'pointer' }} onClick={() => handleHomepagePlugin(plugin)}>
+            {plugin.description}
           </span>
         </Tooltip>
       ),
     },
     {
-      Header: 'Version',
-      accessor: 'version',
-      Cell: ({ row: plugin }: { row: { original: BaseRegisteredPlugin } }) => (
+      label: 'Version',
+      id: 'version',
+      render: (value, rowKey, plugin, _column) => (
         <>
-          {plugin.original.latestVersion !== undefined && plugin.original.latestVersion !== plugin.original.version && matterbridgeInfo && !matterbridgeInfo.readOnly &&
-            <Tooltip title="New plugin stable version available, click to install"><span className="status-warning" style={{ marginRight: '10px' }} onClick={() => handleUpdatePlugin(plugin.original)}>Update to v.{plugin.original.latestVersion}</span></Tooltip>
+          {plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly &&
+            <Tooltip title="New plugin stable version available, click to install"><span className="status-warning" style={{ marginRight: '10px' }} onClick={() => handleUpdatePlugin(plugin)}>Update to v.{plugin.latestVersion}</span></Tooltip>
           }
-          {plugin.original.version.includes('-dev-') && plugin.original.devVersion !== undefined && plugin.original.devVersion !== plugin.original.version && matterbridgeInfo && !matterbridgeInfo.readOnly &&
-            <Tooltip title="New plugin dev version available, click to install"><span className="status-warning" style={{ marginRight: '10px' }} onClick={() => handleUpdateDevPlugin(plugin.original)}>Update to new dev v.{plugin.original.devVersion.split('-dev-')[0]}</span></Tooltip>
+          {plugin.version.includes('-dev-') && plugin.devVersion !== undefined && plugin.devVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly &&
+            <Tooltip title="New plugin dev version available, click to install"><span className="status-warning" style={{ marginRight: '10px' }} onClick={() => handleUpdateDevPlugin(plugin)}>Update to new dev v.{plugin.devVersion.split('-dev-')[0]}</span></Tooltip>
           }
-          <Tooltip title="Plugin version"><span>{plugin.original.version}</span></Tooltip>
+          <Tooltip title="Plugin version"><span>{plugin.version}</span></Tooltip>
         </>
       ),
     },
     {
-      Header: 'Author',
-      accessor: 'author',
-      Cell: ({ row: plugin }: { row: { original: BaseRegisteredPlugin } }) => (
-        <>{plugin.original.author ? plugin.original.author.replace('https://github.com/', '') : 'Unknown'}</>
+      label: 'Author',
+      id: 'author',
+      render: (value, rowKey, plugin, _column) => (
+        <>
+          {plugin.author ? plugin.author.replace('https://github.com/', '') : 'Unknown'}
+        </>
       ),
     },
     {
-      Header: 'Type',
-      accessor: 'type',
-      Cell: ({ row: plugin }: { row: { original: BaseRegisteredPlugin } }) => (
-        <>{plugin.original.type ? plugin.original.type.replace('Platform', '') : 'Unknown'}</>
+      label: 'Type',
+      id: 'type',
+      render: (value, rowKey, plugin, _column) => (
+        <>
+          {plugin.type ? plugin.type.replace('Platform', '') : 'Unknown'}
+        </>
       ),
     },
     {
-      Header: 'Devices',
-      accessor: 'registeredDevices',
+      label: 'Devices',
+      id: 'registeredDevices',
     },
     {
-      Header: 'Actions',
-      accessor: 'actions',
-      Cell: ({ row: plugin }: { row: { original: BaseRegisteredPlugin } }) => (
+      label: 'Actions',
+      id: 'actions',
+      required: true,
+      noSort: true,
+      render: (value, rowKey, plugin, _column) => (
         <div style={{ margin: '0px', padding: '0px', gap: '4px', display: 'flex', flexDirection: 'row' }}>
-          {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
-            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: getQRColor(plugin.original.matter) }} onClick={() => { if(plugin.original?.matter?.id) setStoreId(plugin.original?.matter?.id) }} size="small"><QrCode2/></IconButton></Tooltip>
+          {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled &&
+            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: getQRColor(plugin.matter) }} onClick={() => { if(plugin.matter?.id) setStoreId(plugin.matter?.id) }} size="small"><QrCode2/></IconButton></Tooltip>
           }
-          {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
-            <Tooltip title="Restart the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => handleRestartPlugin(plugin.original)} size="small"><RestartAltIcon/></IconButton></Tooltip>
+          {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled &&
+            <Tooltip title="Restart the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => handleRestartPlugin(plugin)} size="small"><RestartAltIcon/></IconButton></Tooltip>
           }
-          <Tooltip title="Plugin config" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton disabled={plugin.original.restartRequired === true} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
+          <Tooltip title="Plugin config" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton disabled={plugin.restartRequired === true} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin)} size="small"><Settings/></IconButton></Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly &&
-            <Tooltip title="Remove the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will also remove all devices and configuration from the controller.', 'remove', plugin.original); }} size="small"><DeleteForever/></IconButton></Tooltip>
+            <Tooltip title="Remove the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will also remove all devices and configuration from the controller.', 'remove', plugin); }} size="small"><DeleteForever/></IconButton></Tooltip>
           }
-          {plugin.original.enabled ? <Tooltip title="Disable the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will also remove all devices and configuration from the controller.', 'disable', plugin.original); }} size="small"><Unpublished/></IconButton></Tooltip> : <></>}
-          {!plugin.original.enabled ? <Tooltip title="Enable the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleEnableDisablePlugin(plugin.original)} size="small"><PublishedWithChanges/></IconButton></Tooltip> : <></>}
-          <Tooltip title="Open the plugin help" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleHelpPlugin(plugin.original)} size="small"><Help/></IconButton></Tooltip>
-          <Tooltip title="Open the plugin version history" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleChangelogPlugin(plugin.original)} size="small"><Announcement/></IconButton></Tooltip>
+          {plugin.enabled ? <Tooltip title="Disable the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will also remove all devices and configuration from the controller.', 'disable', plugin); }} size="small"><Unpublished/></IconButton></Tooltip> : <></>}
+          {!plugin.enabled ? <Tooltip title="Enable the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleEnableDisablePlugin(plugin)} size="small"><PublishedWithChanges/></IconButton></Tooltip> : <></>}
+          <Tooltip title="Open the plugin help" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleHelpPlugin(plugin)} size="small"><Help/></IconButton></Tooltip>
+          <Tooltip title="Open the plugin version history" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleChangelogPlugin(plugin)} size="small"><Announcement/></IconButton></Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly &&
-            <Tooltip title="Sponsor the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: '#b6409c' }} onClick={() => handleSponsorPlugin(plugin.original)} size="small"><Favorite/></IconButton></Tooltip>
+            <Tooltip title="Sponsor the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: '#b6409c' }} onClick={() => handleSponsorPlugin(plugin)} size="small"><Favorite/></IconButton></Tooltip>
           }
         </div>
       ),
     },
     {
-      Header: 'Status',
-      accessor: 'status',
-      Cell: ({ row: plugin }: { row: { original: BaseRegisteredPlugin } }) => (
-        <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
-  
-          {plugin.original.error ?
+      label: 'Status',
+      id: 'status',
+      required: true,
+      noSort: true,
+      render: (value, rowKey, plugin, _column) => (
+        <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', margin: '0', padding: '0', gap: '5px', width: 'auto', maxWidth: 'max-content' }}>
+          {plugin.error ?
             <>
-              <StatusIndicator status={false} enabledText='Error' disabledText='Error' tooltipText='The plugin is in error state. Check the log!' /></> :
+              <StatusIndicator status={false} enabledText='Error' disabledText='Error' tooltipText='The plugin is in error state. Check the log!' />
+            </>
+            :
             <>
-              {plugin.original.enabled === false ?
+              {plugin.enabled === false ?
                 <>
-                  <StatusIndicator status={plugin.original.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled' /></> :
+                  <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled' />
+                </>
+                :
                 <>
-                  {plugin.original.loaded && plugin.original.started && plugin.original.configured ?
+                  {plugin.loaded && plugin.started && plugin.configured ?
                     <>
-                      <StatusIndicator status={plugin.original.loaded} enabledText='Running' tooltipText='Whether the plugin is running' /></> :
+                      <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running' />
+                    </>
+                    :
                     <>
-                      <StatusIndicator status={plugin.original.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded' />
-                      <StatusIndicator status={plugin.original.started} enabledText='Started' tooltipText='Whether the plugin started' />
-                      <StatusIndicator status={plugin.original.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured' />
+                      <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded' />
+                      <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started' />
+                      <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured' />
                     </>
                   }
                 </>
@@ -236,45 +176,45 @@ function HomePlugins({_storeId, setStoreId}: HomePluginsProps) {
   
   // WebSocket message handler effect
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'plugins') {
-          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and sending /api/plugins request`);
+        if (msg.method === 'refresh_required' && msg.response.changed === 'plugins') {
+          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and sending /api/plugins request`);
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'matter') {
-          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and setting matter id ${msg.params.matter?.id}`);
+        if (msg.method === 'refresh_required' && msg.response.changed === 'matter') {
+          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and setting matter id ${msg.response.matter?.id}`);
           setPlugins((prevPlugins) => {
-            const i = prevPlugins.findIndex(p => p.matter?.id === msg.params.matter?.id);
+            const i = prevPlugins.findIndex(p => p.matter?.id === msg.response.matter?.id);
             if (i < 0) {
-              if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and matter id ${msg.params.matter?.id} not found`);
+              if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and matter id ${msg.response.matter?.id} not found`);
               return prevPlugins;
             }
-            if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} set matter id ${msg.params.matter?.id}`);
+            if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} set matter id ${msg.response.matter?.id}`);
             const next = [...prevPlugins];
-            next[i] = { ...next[i], matter: msg.params.matter };
+            next[i] = { ...next[i], matter: msg.response.matter };
             return next;
           });
         }
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'settings') {
-          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
+        if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
+          if(debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages
-        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/settings') {
+        if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log(`HomePlugins (id: ${msg.id}) received settings:`, msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
         }
-        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/plugins') {
+        if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if(debug) console.log(`HomePlugins (id: ${msg.id}) received ${msg.response.length} plugins:`, msg.response);
           setPlugins(msg.response);
         }
       }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if(debug) console.log('HomePlugins added WebSocket listener id:', uniqueId.current);
 
     return () => {
@@ -291,30 +231,6 @@ function HomePlugins({_storeId, setStoreId}: HomePluginsProps) {
       sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
-
-  // Load column visibility from local storage
-  useEffect(() => {
-    const storedVisibility = localStorage.getItem('homePluginsColumnVisibility');
-    if (storedVisibility) {
-      setPluginsColumnVisibility(JSON.parse(storedVisibility));
-    }
-  }, []);
-
-  // Toggle configure columns dialog
-  const handleDialogPluginsColumnsToggle = () => {
-    setDialogPluginsColumnsOpen(!dialogPluginsColumnsOpen);
-  };
-
-  const handlePluginsColumnVisibilityChange = (accessor: string) => {
-    setPluginsColumnVisibility((prev) => {
-      const newVisibility = {
-        ...prev,
-        [accessor]: !prev[accessor as keyof typeof prev],
-      };
-      localStorage.setItem('homePluginsColumnVisibility', JSON.stringify(newVisibility));
-      return newVisibility;
-    });
-  };
 
   const confirmCancelPluginRef = useRef<BaseRegisteredPlugin | null>(null);
 
@@ -392,7 +308,7 @@ function HomePlugins({_storeId, setStoreId}: HomePluginsProps) {
   };
   
   // ConfigPluginDialog
-  const [selectedPlugin, setSelectedPlugin] = useState({});
+  const [selectedPlugin, setSelectedPlugin] = useState<BaseRegisteredPlugin>();
   const [openConfigPluginDialog, setOpenConfigPluginDialog] = useState(false);
 
   const handleConfigPlugin = (plugin: BaseRegisteredPlugin) => {
@@ -417,50 +333,17 @@ function HomePlugins({_storeId, setStoreId}: HomePluginsProps) {
   }
   return (
       <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '0 0 auto', overflow: 'hidden' }}>
-
         {/* Config plugin dialog */}
-        <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin}/>
+        {selectedPlugin && <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin}/>} 
 
-        {/* HomePlugins Configure Columns Dialog */}
-        <Dialog open={dialogPluginsColumnsOpen} onClose={handleDialogPluginsColumnsToggle}>
-          <DialogTitle>Configure Plugins Columns</DialogTitle>
-          <DialogContent>
-            <FormGroup>
-              {pluginsColumns.map((column) => (
-                <FormControlLabel
-                  key={column.accessor}
-                  control={
-                    <Checkbox
-                      disabled={['description', 'actions', 'status'].includes(column.accessor)}
-                      checked={pluginsColumnVisibility[column.accessor as keyof typeof pluginsColumnVisibility] ?? false}
-                      onChange={() => handlePluginsColumnVisibilityChange(column.accessor)}
-                    />
-                  }
-                  label={column.Header}
-                />
-              ))}
-            </FormGroup>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDialogPluginsColumnsToggle}>Close</Button>
-          </DialogActions>
-        </Dialog>
-
-        <div className="MbfWindowHeader" style={{ justifyContent: 'space-between' }}>
-          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Plugins</p>
-          <div className="MbfWindowHeaderFooterIcons">
-            <IconButton onClick={handleDialogPluginsColumnsToggle} aria-label="Configure Columns" style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}}>
-              <Tooltip title="Configure columns">
-                <SettingsIcon style={{ color: 'var(--header-text-color)', fontSize: '19px' }}/>
-              </Tooltip>
-            </IconButton>
-          </div>
-        </div>
-        <div className="MbfWindowBodyColumn" style={{margin: '0px', padding: '0px', gap: '0', overflow: 'auto'}} >
-          <HomePluginsTable data={plugins} columns={pluginsColumns} columnVisibility={pluginsColumnVisibility}/>
-        </div>
+        <MbfTable<BaseRegisteredPlugin>
+          name="Plugins"
+          columns={pluginsColumns}
+          rows={plugins}
+          footerRight=''
+          footerLeft=''
+        />
       </div>
-
   );
 }
 

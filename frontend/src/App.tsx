@@ -1,5 +1,5 @@
 // React
-import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router';
 
 // @mui
@@ -28,63 +28,9 @@ export const toggleDebug = () => {
   debug = !debug;
 };
 
-interface AuthContextType {
-  loggedIn: boolean;
-  logIn: (password: string) => Promise<void>;
-  errorMessage: string;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-function AuthProvider({ children }: AuthProviderProps) {
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const logIn = async (password: string) => {
-    try {
-      const response = await fetch('./api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-      if (response.ok) {
-        const { valid } = await response.json();
-        if (valid) {
-          setLoggedIn(true);
-        } else {
-          if (password !== '') setErrorMessage('Incorrect password!');
-        }
-      } else {
-        console.error('Failed to log in:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Failed to log in:', error);
-    }
-  };
-
-  return (
-    <AuthContext.Provider value={{ loggedIn, logIn, errorMessage }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function LoginForm() {
+export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
   const [password, setPassword] = useState('');
-  const auth = useContext(AuthContext);
-  const [primaryColor, setPrimaryColor] = useState('#1976d2');
-
-  if (!auth) throw new Error('AuthContext not found');
-  const { loggedIn, logIn, errorMessage } = auth;
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    logIn(password);
-  };
+  const [errorMessage, setErrorMessage] = useState('');
 
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -116,19 +62,83 @@ export function LoginForm() {
     backgroundColor: 'var(--div-bg-color)',
   };
 
-  useEffect(() => {
-    if (debug) console.log('Setting frontend theme');
-    const savedTheme = localStorage.getItem('frontendTheme');
-    if (debug) console.log('Saved theme:', savedTheme);
-    if (savedTheme) {
-      document.body.setAttribute('frontend-theme', savedTheme);
-    } else {
-      document.body.setAttribute('frontend-theme', 'dark');
+  const logIn = async (password: string) => {
+    try {
+      const response = await fetch('./api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (response.ok) {
+        const { valid } = await response.json();
+        if (valid) {
+          setLoggedIn(true);
+        } else {
+          if (password !== '') setErrorMessage('Incorrect password!');
+        }
+      } else {
+        console.error('Failed to log in:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Failed to log in:', error);
     }
-    const primaryColorFromCSS = getCssVariable('--primary-color', '#1976d2');
-    if (debug) console.log('Primary color from CSS:', primaryColorFromCSS);
-    setPrimaryColor(primaryColorFromCSS);
-  }, []);
+  };
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    logIn(password);
+  };
+
+  logIn(''); // Auto login if no password is required
+
+  return (
+    <div style={containerStyle}>
+      <form onSubmit={handleSubmit} style={formStyle}>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+          <h3 style={{ color: 'var(--div-text-color)' }}>Welcome to Matterbridge</h3>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
+          <input
+            type="text"
+            name="username"
+            autoComplete="username"
+            style={{ display: 'none' }}
+            tabIndex={-1}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            style={inputStyle}
+            placeholder="password"
+            autoComplete="current-password"
+          />
+          <button type="submit" style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', borderColor: 'var(--div-bg-color)' }}>Log in</button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: 0, height: '30px' }}>
+          {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function App(): React.JSX.Element {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  // Set the theme based on saved preference or default to dark
+  if (debug) console.log('Setting frontend theme');
+  const savedTheme = localStorage.getItem('frontendTheme');
+  if (debug) console.log('Saved theme:', savedTheme);
+  if (savedTheme) {
+    document.body.setAttribute('frontend-theme', savedTheme);
+  } else {
+    document.body.setAttribute('frontend-theme', 'dark');
+  }
+  const primaryColor = getCssVariable('--primary-color', '#1976d2');
+  if (debug) console.log('Primary color from CSS:', primaryColor);
+  const theme = createMuiTheme(primaryColor);
 
   /*
     Normal:
@@ -143,83 +153,48 @@ export function LoginForm() {
     >>>
     baseName="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
   */
+  // Set the base name for the BrowserRouter
   const baseName = window.location.pathname.includes('/matterbridge/')
     ? '/matterbridge'
     : window.location.href.includes('/api/hassio_ingress/')
     ? window.location.pathname
     : '/';
-  console.log(
-    `Loading App.js with href="${window.location.href}" and pathname="${window.location.pathname}" >>> baseName="${baseName}"`
-  );
-
-  const theme = createMuiTheme(primaryColor);
-  logIn(''); // Auto login if no password is required
+  if (debug) {
+    console.log(`Loading App...`);
+    console.log(`- with href = "${window.location.href}"`);
+    console.log(`- pathname = "${window.location.pathname}"`);
+    console.log(`- baseName = "${baseName}"`);
+  }
 
   if (loggedIn) {
     return (
-      <ThemeProvider theme={theme}>
-        <SnackbarProvider dense maxSnack={10} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-          <UiProvider>
-            <WebSocketProvider>
-              <BrowserRouter basename={baseName}>
-                <div className="MbfScreen">
-                  <Header />
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/devices" element={<Devices />} />
-                    <Route path="/log" element={<Logs />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/test" element={<Test />} />
-                    <Route path="*" element={<Navigate to="/" />} />
-                  </Routes>
-                </div>
-              </BrowserRouter>
-            </WebSocketProvider>
-          </UiProvider>
-        </SnackbarProvider>
-      </ThemeProvider>
+    <ThemeProvider theme={theme}>
+      <SnackbarProvider dense maxSnack={10} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+        <UiProvider>
+          <WebSocketProvider>
+            <BrowserRouter basename={baseName}>
+              <div className="MbfScreen">
+                <Header />
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/devices" element={<Devices />} />
+                  <Route path="/log" element={<Logs />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/test" element={<Test />} />
+                  <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+              </div>
+            </BrowserRouter>
+          </WebSocketProvider>
+        </UiProvider>
+      </SnackbarProvider>
+    </ThemeProvider>
     );
   } else {
     return (
-      <div style={containerStyle}>
-        <form onSubmit={handleSubmit} style={formStyle}>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-            <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
-            <h3 style={{ color: 'var(--div-text-color)' }}>Welcome to Matterbridge</h3>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
-            <input
-              type="text"
-              name="username"
-              autoComplete="username"
-              style={{ display: 'none' }}
-              tabIndex={-1}
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              style={inputStyle}
-              placeholder="password"
-              autoComplete="current-password"
-            />
-            <button type="submit" style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', borderColor: 'var(--div-bg-color)' }}>Log in</button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: 0, height: '30px' }}>
-            {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-          </div>
-        </form>
-      </div>
+      <LoginForm setLoggedIn={setLoggedIn}/>
     );
   }
-}
-
-function App(): React.JSX.Element {
-  return (
-    <AuthProvider>
-      <LoginForm />
-    </AuthProvider>
-  );
 }
 
 export default App;

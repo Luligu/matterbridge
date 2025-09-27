@@ -7,7 +7,7 @@ const FRONTEND_PORT = 8285;
 const NAME = 'Frontend';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString(), '-debug'];
+process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString(), '-debug', '-logger', 'debug'];
 
 import { copyFileSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -38,7 +38,7 @@ import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
 import { wait } from './utils/wait.js';
 import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
-import { WsBroadcastMessageId, WsMessageBroadcastMap, WsMessageById, WsMessageRestartRequired } from './frontendTypes.ts';
+import {} from './frontendTypes.ts';
 
 const startSpy = jest.spyOn(Frontend.prototype, 'start');
 const stopSpy = jest.spyOn(Frontend.prototype, 'stop');
@@ -60,15 +60,6 @@ describe('Matterbridge frontend', () => {
     jest.restoreAllMocks();
   });
 
-  test('Check typed broadcast messages', () => {
-    function handleMessage<T extends keyof WsMessageBroadcastMap>(msg: WsMessageById<T>) {
-      expect(msg.id).toBeDefined();
-      // msg is strongly typed based on its id
-    }
-    const msg1: WsMessageRestartRequired = { id: WsBroadcastMessageId.RestartRequired, method: 'restart_required', src: 'Matterbridge', dst: 'Frontend', params: { fixed: true } };
-    handleMessage(msg1);
-  });
-
   test('Verify mock of createServer', () => {
     // Call the createServer mock to ensure it is defined
     http.createServer();
@@ -85,7 +76,12 @@ describe('Matterbridge frontend', () => {
     expect(frontend).toBeDefined();
 
     await new Promise<void>((resolve) => {
-      frontend.once('server_listening', () => resolve());
+      const interval = setInterval(() => {
+        if ((frontend as any).listening) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100).unref();
     });
 
     expect((matterbridge as any).initialized).toBe(true);

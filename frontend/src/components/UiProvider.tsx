@@ -1,8 +1,10 @@
 // React
 import React, { useState, useCallback, useMemo, createContext, useRef, ReactNode } from 'react';
 
-// @mui
-import { Alert, Box, IconButton } from '@mui/material';
+// @mui/material
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 
 // Notistack
@@ -11,6 +13,7 @@ import { SnackbarKey, useSnackbar } from 'notistack';
 // Frontend
 import { ConfirmCancelForm } from './ConfirmCancelForm';
 import { debug } from '../App';
+import { InstallProgressDialog } from './InstallProgressDialog ';
 // const debug = true;
 
 interface PersistMessage {
@@ -30,6 +33,11 @@ export interface UiContextType {
     handleConfirm: (command: string) => void,
     handleCancel: (command: string) => void
   ) => void;
+  showInstallProgress: (packageName: string) => void;
+  exitInstallProgressSuccess: () => void;
+  exitInstallProgressError: () => void;
+  hideInstallProgress: () => void;
+  addInstallProgress: (output: string) => void;
 }
 
 export const UiContext = createContext<UiContextType>(null as unknown as UiContextType);
@@ -39,7 +47,7 @@ interface UiProviderProps {
 }
 
 export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
-  // Snackbar
+  // ******************************** Snackbar ******************************** 
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   const closeSnackbarMessage = useCallback((message: string) => {
@@ -89,7 +97,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     }
   }, [enqueueSnackbar, closeSnackbar]);
 
-  // ConfirmCancelForm
+  // ******************************** ConfirmCancelForm ******************************** 
   const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(false);
   const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('');
   const [confirmCancelFormMessage, setConfirmCancelFormMessage] = useState('');
@@ -123,16 +131,61 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     setShowConfirmCancelForm(true);
   }, []);
 
+  // ******************************** InstallProgressDialog ******************************** 
+  const [installDialogOpen, setInstallDialogOpen] = useState(false);
+  const [installPackageName, setInstallPackageName] = useState('');
+  const [installOutput, setInstallOutput] = useState('');
+
+  const showInstallProgress = useCallback((packageName: string) => {
+    /*if(debug)*/ console.log(`UiProvider show install progress for package ${packageName}`);
+    setInstallPackageName(packageName);
+    setInstallOutput(`Starting installation of ${packageName}...\n`);
+    setInstallDialogOpen(true);
+}, []);
+
+  const addInstallProgress = useCallback((output: string) => {
+    /*if(debug)*/ console.log(`UiProvider addInstallProgress: output ${output}`);
+    setInstallOutput( prevOutput => prevOutput + output + '\n' );
+  }, []);
+
+  const exitInstallProgressSuccess = useCallback(() => {
+    /*if(debug)*/ console.log(`UiProvider exitInstallProgressSuccess: package ${installPackageName}`);
+    setInstallOutput( prevOutput => prevOutput + `Successfully installed ${installPackageName}\n` );
+  }, [installPackageName]);
+
+  const exitInstallProgressError = useCallback(() => {
+    /*if(debug)*/ console.log(`UiProvider exitInstallProgressError: package ${installPackageName}`);
+    setInstallOutput( prevOutput => prevOutput + `Failed to install ${installPackageName}\n` );
+  }, [installPackageName]);
+
+  const hideInstallProgress = useCallback(() => {
+    /*if(debug)*/ console.log(`UiProvider hide install progress`);
+    setInstallDialogOpen(false);
+  }, []);
+
+  const handleInstallClose = () => {
+    /*if(debug)*/ console.log(`UiProvider handle install close action`);
+    setInstallDialogOpen(false);
+    setInstallPackageName('');
+    setInstallOutput('');
+  };
+
   const contextValue = useMemo(() => ({
     showSnackbarMessage,
     closeSnackbarMessage,
     closeSnackbar,
     showConfirmCancelDialog,
-  }), [showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showConfirmCancelDialog]);
+    showInstallProgress,
+    exitInstallProgressSuccess,
+    exitInstallProgressError,
+    hideInstallProgress,
+    addInstallProgress,
+  }), [showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showConfirmCancelDialog, showInstallProgress, exitInstallProgressSuccess, exitInstallProgressError, hideInstallProgress, addInstallProgress]);
 
   return (
     <UiContext.Provider value={contextValue}>
       <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
+      <InstallProgressDialog open={installDialogOpen} packageName={installPackageName} output={installOutput} onClose={handleInstallClose} />
       {children}
     </UiContext.Provider>
   );

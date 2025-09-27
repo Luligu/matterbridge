@@ -1,4 +1,5 @@
-import { Tooltip } from '@mui/material';
+// @mui/material
+import Tooltip from '@mui/material/Tooltip';
 
 export interface TruncatedTextProps {
   value: string;

@@ -1,5 +1,6 @@
-// @mui
-import { createTheme, Theme } from '@mui/material';
+// @mui/material
+import { createTheme } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
 
 // Frontend
 import { debug } from '../App';

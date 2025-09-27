@@ -1,13 +1,13 @@
- 
-
 // React
 import { useContext, useEffect, useState, useRef, memo } from 'react';
 
 // QRCode
 import { QRCodeSVG } from 'qrcode.react';
 
-// @mui
-import { IconButton, Tooltip, Button }  from '@mui/material';
+// @mui/material
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Button from '@mui/material/Button';
 
 // @mdi/js
 import Icon from '@mdi/react';
@@ -17,7 +17,7 @@ import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDel
 import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { ApiMatterResponse } from '../../../src/matterbridgeTypes';
-import { isBroadcast, WsBroadcastMessageId, WsMessage } from '../../../src/frontendTypes';
+import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { debug } from '../App';
 // const debug = true; // Debug flag for this component
 
@@ -61,52 +61,60 @@ function QRDiv({ id }: QRDivProps) {
   // Ui context
   const { showConfirmCancelDialog } = useContext(UiContext);
   
-  // Effect to request server data when id changes
+  if (debug) console.log(`QRDiv loading with id = "${id}" storeId "${storeId}" and matter:`, matter);
+
+  // Request server data when id changes
   useEffect(() => {
-    if (debug) console.log(`QRDiv received storeId update "${id}"`);
+    if (debug) console.log(`QRDiv id effect "${id}"`);
     if(id) {
       if (debug) console.log(`QRDiv sending data request for storeId "${id}"`);
       setStoreId(id);
+      setMatter(null);
+      if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+      advertiseTimeoutRef.current = null;
       sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: id, server: true } });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]); // run on mount/unmount and id change
 
+  // Render when storeId changes
+  useEffect(() => {
+    if (debug) console.log(`QRDiv storeId effect "${storeId}"`);
+  }, [storeId]); // run on mount/unmount and storeId change
+
   // WebSocket message handler effect
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
-      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (isBroadcast(msg) && msg.id === WsBroadcastMessageId.RefreshRequired && msg.params.changed === 'matter' && msg.params.matter) {
-          if(debug) console.log(`QRDiv received refresh_required: changed=${msg.params.changed} for storeId "${msg.params.matter.id}":`, msg.params.matter);
-          if(storeId === msg.params.matter.id) {
-            if(debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.params.matter.id}":`, msg.params.matter);
-            if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
-            if (msg.params.matter.advertising && msg.params.matter.advertiseTime && msg.params.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.params.matter.advertising = false; // already expired
-            setMatter(msg.params.matter);
-            if(msg.params.matter.advertising) {
-              if(debug) console.log(`QRDiv setting matter advertise timeout for storeId "${msg.params.matter.id}":`, msg.params.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
-              advertiseTimeoutRef.current = setTimeout(() => {
-                // Clear advertising state after 15 minutes
-                if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
-                if(debug) console.log(`QRDiv clearing advertising state for storeId "${storeId}" after 15 minutes`);
-                setMatter((prev) => prev ? { ...prev, advertising: false } : prev);
-              }, msg.params.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
-            }
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
+      if (msg.method === 'refresh_required' && msg.response.changed === 'matter' && msg.response.matter) {
+        if(debug) console.log(`QRDiv received refresh_required: changed=${msg.response.changed} for storeId "${msg.response.matter.id}":`, msg.response.matter);
+        if(storeId === msg.response.matter.id) {
+          if(debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.response.matter.id}":`, msg.response.matter);
+          if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+          if (msg.response.matter.advertising && msg.response.matter.advertiseTime && msg.response.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.response.matter.advertising = false; // already expired
+          setMatter(msg.response.matter);
+          if(msg.response.matter.advertising) {
+            if(debug) console.log(`QRDiv setting matter advertise timeout for storeId "${msg.response.matter.id}":`, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
+            advertiseTimeoutRef.current = setTimeout(() => {
+              // Clear advertising state after 15 minutes
+              if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+              if(debug) console.log(`QRDiv clearing advertising state for storeId "${storeId}" after 15 minutes`);
+              setMatter((prev) => prev ? { ...prev, advertising: false } : prev);
+            }, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
           }
         }
       }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if(debug) console.log('QRDiv webSocket effect mounted');
 
     return () => {
       removeListener(handleWebSocketMessage);
       if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+      advertiseTimeoutRef.current = null;
       if(debug) console.log('QRDiv webSocket effect unmounted');
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId]); // run on mount/unmount and storeId change
+  }, [addListener, removeListener, storeId]); // run on mount/unmount and storeId change
   
   const handleStartCommissioningClick = () => {
     if (debug) console.log(`QRDiv sent matter startCommission for node "${matter?.id}"`);
@@ -169,7 +177,7 @@ function QRDiv({ id }: QRDivProps) {
           </div>
         </div>
         <p className="MbfWindowHeaderText" style={{ overflow: 'hidden', maxWidth: '280px', textOverflow: 'ellipsis', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeId}</p>
-        <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Server offline: restart to commission</p>
+        <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'normal' }}>Server offline</p>
         <div className="MbfWindowFooter">
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Serial number: {matter.serialNumber}</p>
         </div>

@@ -1,12 +1,13 @@
  
 // React
-import { useState, useContext } from 'react';
+import { useState, useContext, memo } from 'react';
 
 // @mui/material
 import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
+import Select from '@mui/material/Select';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import Checkbox from '@mui/material/Checkbox';
@@ -99,4 +100,4 @@ function Logs() {
   );
 }
 
-export default Logs;
+export default memo(Logs);

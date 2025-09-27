@@ -8,9 +8,38 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.2.8] - 2025-09-20
+## [3.2.9] - 2025-09-27
 
 ### Breaking Changes
+
+- [profiles]: Profile management has changed. Now, each profile has its own independent directories under `profiles` with storage, matterstorage, plugin config, and plugin directory. This means that if you are using profiles, Matterbridge will not find the old profile data. The new profile management allows to run multiple instances of matterbridge (change the frontend port and the matter port for each profile) or to simply make a test of a new plugin without modifing your production setup.
+
+### Added
+
+- [frontend]: Bumped `frontend` version to 3.1.0. Now, 100% on typescript and fully typed with the backend.
+- [frontend]: Removed legacy `react-table` and created an autonomous component `MbfTable`. Features: unique UI for all tables with integrated column sorting and column selection.
+- [frontend]: Use MbfTable for Plugins, Devices, Registered devices and Clusters tables.
+- [frontend]: Optimized WebSocker message handlers. Now, the handler targets the component.
+- [frontend]: Removed dangerouslySetInnerHTML from log rendering.
+- [frontend]: Added push update to Icon view and table view cluster panel. Now, they updates data in real time.
+- [frontend]: Added install progress dialog when installing or uploading packages.
+- [endpoint]: Added occupancy feature to all Thermostat cluster helpers. When provided (either false or true) it will create a Thermostat with occupancy feature.
+- [endpoint]: Added outdoorTemperature to all Thermostat cluster helpers. Default is undefined (it will be ignored).
+
+### Changed
+
+- [matter]: Bumped `matter.js` version to 0.15.4. Thanks matter.js!
+- [package]: Updated dependencies.
+
+### Fixed
+
+- [frontend]: Fix default values (devices) for homePageMode (logs/devices) in MatterbridgeSettings.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
+## [3.2.8] - 2025-09-20
 
 ### Added
 

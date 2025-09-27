@@ -1,5 +1,7 @@
+// React
 import React from 'react';
 
+// @mui/material
 import Tooltip from '@mui/material/Tooltip';
 
 interface StatusIndicatorProps {
@@ -18,11 +20,7 @@ export function StatusIndicator({
   onClick
 }: StatusIndicatorProps) {
   if (status === undefined) {
-    return (
-      <div style={{ margin: '-2.5px' }}>
-        <div></div>
-      </div>
-    );
+    return null;
   } else {
     const content = (
       <div

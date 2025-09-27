@@ -1,8 +1,10 @@
 // React
 import { useContext } from 'react';
 
-// @mui
-import { CircularProgress, Box, Button } from '@mui/material';
+// @mui/material
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -29,15 +31,17 @@ export function Connecting() {
       <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
         {retry < 100 ? (
           <>
+            <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '256px', width: '256px', margin: '10px', marginBottom: '20px' }}/>
             <CircularProgress style={{ color: 'var(--primary-color)' }} />
             <div style={{ marginTop: '20px', color: 'var(--primary-color)' }}>
-              Reconnecting to Matterbridge {"(attempt " + retry + ")"}...
+              <span>Reconnecting to Matterbridge {"(attempt " + retry + ")"}...</span>
             </div>
           </>
         ) : (
           <div style={{ marginTop: '20px', color: 'var(--primary-color)', textAlign: 'center' }}>
-            Unable to connect to Matterbridge after multiple attempts.<br />
-            Please check your network connection.<br /> 
+            <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '256px', width: '256px', margin: '10px', marginBottom: '20px' }}/>
+            <span>Unable to connect to Matterbridge after multiple attempts.</span><br />
+            <span>Please check your network connection.</span><br />
             <Button
               variant="contained"
               color="primary"

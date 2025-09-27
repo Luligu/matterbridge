@@ -30,7 +30,7 @@ import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt, BLUE } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt, BLUE, or } from 'node-ansi-logger';
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
@@ -55,7 +55,6 @@ import {
 import { DeviceCertification, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
-import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
 
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
@@ -167,18 +166,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   // Matterbridge logger
   public log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
-  public matterbridgeLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+  public matterbridgeLoggerFile = 'matterbridge.log';
 
   // Matter logger
   public matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-  public matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+  public matterLoggerFile = 'matter.log';
 
   public plugins = new PluginManager(this);
   public devices = new DeviceManager(this);
   public frontend = new Frontend(this);
 
   // Matterbridge storage
-  public nodeStorageName = 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
+  public nodeStorageName = 'storage';
   public nodeStorage: NodeStorageManager | undefined;
   public nodeContext: NodeStorage | undefined;
 
@@ -200,7 +199,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   environment = Environment.default;
 
   // Matter storage
-  matterStorageName = 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
+  matterStorageName = 'matterstorage';
   matterStorageService: StorageService | undefined;
   matterStorageManager: StorageManager | undefined;
   matterbridgeContext: StorageContext | undefined;
@@ -369,19 +368,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await createDirectory(this.homeDirectory, 'Matterbridge Home Directory', this.log);
 
     // Set the matterbridge directory
-    this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
+    this.matterbridgeDirectory = this.profile ? path.join(this.homeDirectory, '.matterbridge', 'profiles', this.profile) : path.join(this.homeDirectory, '.matterbridge');
     this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
     await createDirectory(this.matterbridgeDirectory, 'Matterbridge Directory', this.log);
     await createDirectory(path.join(this.matterbridgeDirectory, 'certs'), 'Matterbridge Frontend Certificate Directory', this.log);
     await createDirectory(path.join(this.matterbridgeDirectory, 'uploads'), 'Matterbridge Frontend Uploads Directory', this.log);
 
     // Set the matterbridge plugin directory
-    this.matterbridgePluginDirectory = path.join(this.homeDirectory, 'Matterbridge');
+    this.matterbridgePluginDirectory = this.profile ? path.join(this.homeDirectory, 'Matterbridge', 'profiles', this.profile) : path.join(this.homeDirectory, 'Matterbridge');
     this.matterbridgeInformation.matterbridgePluginDirectory = this.matterbridgePluginDirectory;
     await createDirectory(this.matterbridgePluginDirectory, 'Matterbridge Plugin Directory', this.log);
 
     // Set the matterbridge cert directory
-    this.matterbridgeCertDirectory = path.join(this.homeDirectory, '.mattercert');
+    this.matterbridgeCertDirectory = this.profile ? path.join(this.homeDirectory, '.mattercert', 'profiles', this.profile) : path.join(this.homeDirectory, '.mattercert');
     this.matterbridgeInformation.matterbridgeCertDirectory = this.matterbridgeCertDirectory;
     await createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory', this.log);
 
@@ -718,7 +717,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
           const { spawnCommand } = await import('./utils/spawn.js');
-          await spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose']);
+          await spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose'], plugin.name);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } catch (error) {
@@ -899,6 +898,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       return;
     }
 
+    // Initialize frontend
+    if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
+
     // Start the matter storage and create the matterbridge context
     try {
       await this.startMatterStorage();
@@ -947,7 +949,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Initialize frontend
-    if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
+    // if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
 
     // Check in 30 seconds the latest and dev versions of matterbridge and the plugins
     clearTimeout(this.checkUpdateTimeout);
@@ -1008,9 +1010,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * This method is responsible for initializing and starting all enabled plugins.
    * It ensures that each plugin is properly loaded and started before the bridge starts.
    *
+   * @param {boolean} [wait] - If true, the method will wait for all plugins to be fully loaded and started before resolving.
+   * @param {boolean} [start] - If true, the method will start the plugins after loading them.
    * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and started.
    */
-  private async startPlugins(): Promise<void> {
+  private async startPlugins(wait: boolean = false, start: boolean = true): Promise<void> {
     // Check, load and start the plugins
     for (const plugin of this.plugins) {
       plugin.configJson = await this.plugins.loadConfig(plugin);
@@ -1032,7 +1036,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.started = false;
       plugin.configured = false;
       plugin.registeredDevices = undefined;
-      this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
+      if (wait) await this.plugins.load(plugin, start, 'Matterbridge is starting');
+      else this.plugins.load(plugin, start, 'Matterbridge is starting'); // No await do it asyncronously
     }
     this.frontend.wssSendRefreshRequired('plugins');
   }
@@ -1287,7 +1292,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.info('Updating matterbridge...');
     try {
       const { spawnCommand } = await import('./utils/spawn.js');
-      await spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
+      await spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'matterbridge');
       this.log.info('Matterbridge has been updated. Full restart required.');
     } catch (error) {
       this.log.error(`Error updating matterbridge: ${error instanceof Error ? error.message : error}`);
@@ -1705,8 +1710,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private async startChildbridge(delay: number = 1000): Promise<void> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
 
-    await this.startPlugins();
+    // Load with await all plugins but don't start them. We get the platform.type to pre-create server nodes for DynamicPlatform plugins
+    this.log.debug('Loading all plugins in childbridge mode...');
+    await this.startPlugins(true, false);
 
+    // Create server nodes for DynamicPlatform plugins and start all plugins in the background
+    this.log.debug('Creating server nodes for DynamicPlatform plugins and starting all plugins in childbridge mode...');
+    for (const plugin of this.plugins.array().filter((p) => p.enabled && !p.error)) {
+      if (plugin.type === 'DynamicPlatform') await this.createDynamicPlugin(plugin);
+      this.plugins.start(plugin, 'Matterbridge is starting'); // Start the plugin in the background
+    }
+
+    // Start the Matterbridge in childbridge mode when all plugins are loaded and started
     this.log.debug('Starting start matter interval in childbridge mode...');
     let failCount = 0;
     this.startMatterInterval = setInterval(async () => {
@@ -1733,9 +1748,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
             plugin.error = true;
           }
-        }
-        if (plugin.type === 'DynamicPlatform' && !plugin.locked) {
-          await this.createDynamicPlugin(plugin);
         }
       }
       if (!allStarted) return;
@@ -1766,6 +1778,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.error(`Plugin ${plg}${plugin.name}${er} didn't register any devices to Matterbridge. Verify the plugin configuration.`);
           continue;
         }
+        // istanbul ignore next if cause is just a safety check
         if (!plugin.serverNode) {
           this.log.error(`Server node not found for plugin ${plg}${plugin.name}${er}`);
           continue;
@@ -2483,7 +2496,7 @@ const commissioningController = new CommissioningController({
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
     // Add the device to the DeviceManager
     this.devices.set(device);
-    // Subscribe to the reachable$Changed event
+    // Subscribe to the attributes changed event
     await this.subscribeAttributeChanged(plugin, device);
     this.log.info(`Added and registered bridged endpoint (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
@@ -2561,21 +2574,69 @@ const commissioningController = new CommissioningController({
    * @returns {Promise<void>} A promise that resolves when the subscription is set up.
    */
   private async subscribeAttributeChanged(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
-    if (!plugin || !device || !device.plugin || !device.serialNumber || !device.uniqueId) return;
+    if (!plugin || !device || !device.plugin || !device.serialNumber || !device.uniqueId || !device.maybeNumber) return;
     this.log.info(`Subscribing attributes for endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) plugin ${plg}${plugin.name}${nf}`);
+    // Subscribe to the reachable$Changed event of the BasicInformationServer cluster server of the server node in childbridge mode
     if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform' && plugin.serverNode) {
       plugin.serverNode.eventsOf(BasicInformationServer).reachable$Changed?.on((reachable: boolean) => {
         this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, 'BasicInformationServer', 'reachable', reachable);
+        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, device.id, 'BasicInformation', 'reachable', reachable);
       });
     }
-    if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) {
-      device.eventsOf(BridgedDeviceBasicInformationServer).reachable$Changed.on((reachable: boolean) => {
-        this.log.info(`Bridged endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, 'BridgedDeviceBasicInformationServer', 'reachable', reachable);
-      });
+
+    const subscriptions: { cluster: string; attribute: string }[] = [
+      { cluster: 'BridgedDeviceBasicInformation', attribute: 'reachable' },
+      { cluster: 'OnOff', attribute: 'onOff' },
+      { cluster: 'LevelControl', attribute: 'currentLevel' },
+      { cluster: 'ColorControl', attribute: 'colorMode' },
+      { cluster: 'ColorControl', attribute: 'currentHue' },
+      { cluster: 'ColorControl', attribute: 'currentSaturation' },
+      { cluster: 'ColorControl', attribute: 'currentX' },
+      { cluster: 'ColorControl', attribute: 'currentY' },
+      { cluster: 'ColorControl', attribute: 'colorTemperatureMireds' },
+      { cluster: 'Thermostat', attribute: 'localTemperature' },
+      { cluster: 'Thermostat', attribute: 'occupiedCoolingSetpoint' },
+      { cluster: 'Thermostat', attribute: 'occupiedHeatingSetpoint' },
+      { cluster: 'Thermostat', attribute: 'systemMode' },
+      { cluster: 'WindowCovering', attribute: 'operationalStatus' },
+      { cluster: 'WindowCovering', attribute: 'currentPositionLiftPercent100ths' },
+      { cluster: 'DoorLock', attribute: 'lockState' },
+      { cluster: 'PumpConfigurationAndControl', attribute: 'pumpStatus' },
+      { cluster: 'FanControl', attribute: 'fanMode' },
+      { cluster: 'FanControl', attribute: 'fanModeSequence' },
+      { cluster: 'FanControl', attribute: 'percentSetting' },
+      { cluster: 'AirQuality', attribute: 'airQuality' },
+      { cluster: 'TotalVolatileOrganicCompoundsConcentrationMeasurement', attribute: 'measuredValue' },
+      { cluster: 'BooleanState', attribute: 'stateValue' },
+      { cluster: 'OccupancySensing', attribute: 'occupancy' },
+      { cluster: 'IlluminanceMeasurement', attribute: 'measuredValue' },
+      { cluster: 'TemperatureMeasurement', attribute: 'measuredValue' },
+      { cluster: 'RelativeHumidityMeasurement', attribute: 'measuredValue' },
+      { cluster: 'PressureMeasurement', attribute: 'measuredValue' },
+      { cluster: 'FlowMeasurement', attribute: 'measuredValue' },
+    ];
+    for (const sub of subscriptions) {
+      if (device.hasAttributeServer(sub.cluster, sub.attribute)) {
+        this.log.debug(`Subscribing to endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
+        await device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+          this.log.debug(`Bridged endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, device.id, sub.cluster, sub.attribute, value);
+        });
+      }
+      for (const child of device.getChildEndpoints()) {
+        for (const sub of subscriptions) {
+          if (child.hasAttributeServer(sub.cluster, sub.attribute)) {
+            this.log.debug(`Subscribing to child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
+            await child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+              this.log.debug(`Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`);
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, child.number, child.id, sub.cluster, sub.attribute, value);
+            });
+          }
+        }
+      }
     }
   }
 

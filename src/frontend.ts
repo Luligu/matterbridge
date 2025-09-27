@@ -38,9 +38,10 @@ import multer from 'multer';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt } from 'node-ansi-logger';
 // @matter
-import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle, ServerNode, LogDestination, Diagnostic, Time, FabricIndex } from '@matter/main';
+import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle, ServerNode, LogDestination, Diagnostic, Time, FabricIndex, EndpointNumber } from '@matter/main';
 import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/main/protocol';
+import { CommissioningOptions } from '@matter/main/types';
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
@@ -50,7 +51,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
-import { RefreshRequiredChanged, WsBroadcastMessageId, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
+import { RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
 
 /**
  * Represents the Matterbridge events.
@@ -67,6 +68,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
   private port = 8283;
+  private listening = false;
 
   private expressApp: express.Express | undefined;
   private httpServer: HttpServer | undefined;
@@ -151,12 +153,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (hasParameter('ingress')) {
         this.httpServer.listen(this.port, '0.0.0.0', () => {
           this.log.info(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${this.port}${UNDERLINEOFF}${rs}`);
+          this.listening = true;
           this.emit('server_listening', 'http', this.port, '0.0.0.0');
         });
       } else {
         this.httpServer.listen(this.port, () => {
           if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
           if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+          this.listening = true;
           this.emit('server_listening', 'http', this.port);
         });
       }
@@ -251,12 +255,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (hasParameter('ingress')) {
         this.httpsServer.listen(this.port, '0.0.0.0', () => {
           this.log.info(`The frontend https server is listening on ${UNDERLINE}https://0.0.0.0:${this.port}${UNDERLINEOFF}${rs}`);
+          this.listening = true;
           this.emit('server_listening', 'https', this.port, '0.0.0.0');
         });
       } else {
         this.httpsServer.listen(this.port, () => {
           if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
           if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+          this.listening = true;
           this.emit('server_listening', 'https', this.port);
         });
       }
@@ -694,7 +700,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // Install the plugin package
         if (filename.endsWith('.tgz')) {
           const { spawnCommand } = await import('./utils/spawn.js');
-          await spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
+          await spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose'], filename);
           this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
           this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
           this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
@@ -780,6 +786,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       */
       this.httpServer.close();
       this.log.debug('Http server closed successfully');
+      this.listening = false;
       this.emit('server_stopped');
 
       this.httpServer.removeAllListeners();
@@ -810,6 +817,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       */
       this.httpsServer.close();
       this.log.debug('Https server closed successfully');
+      this.listening = false;
       this.emit('server_stopped');
       this.httpsServer.removeAllListeners();
       this.httpsServer = undefined;
@@ -1106,7 +1114,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   private getClusters(pluginName: string, endpointNumber: number): ApiClustersResponse | undefined {
     const endpoint = this.matterbridge.devices.array().find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber);
-    if (!endpoint || !endpoint.plugin || !endpoint.maybeNumber || !endpoint.deviceName || !endpoint.serialNumber) {
+    if (!endpoint || !endpoint.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
       this.log.error(`getClusters: no device found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
       return;
     }
@@ -1128,6 +1136,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       // );
       clusters.push({
         endpoint: endpoint.number.toString(),
+        number: endpoint.number,
         id: 'main',
         deviceTypes,
         clusterName: capitalizeFirstLetter(clusterName),
@@ -1166,7 +1175,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // );
         clusters.push({
           endpoint: childEndpoint.number.toString(),
-          id: childEndpoint.maybeId ?? 'null', // Never happens
+          number: childEndpoint.number,
+          id: childEndpoint.id,
           deviceTypes,
           clusterName: capitalizeFirstLetter(clusterName),
           clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
@@ -1177,7 +1187,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         });
       });
     });
-    return { plugin: endpoint.plugin, deviceName: endpoint.deviceName, serialNumber: endpoint.serialNumber, endpoint: endpoint.maybeNumber, deviceTypes, clusters };
+    return { plugin: endpoint.plugin, deviceName: endpoint.deviceName, serialNumber: endpoint.serialNumber, number: endpoint.number, id: endpoint.id, deviceTypes, clusters };
   }
 
   /**
@@ -1214,7 +1224,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.debug(`Received message from websocket client: ${debugStringify(data)}`);
 
       if (data.method === 'ping') {
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: 'pong' });
+        sendResponse({ id: data.id, method: 'pong', src: 'Matterbridge', dst: data.src, success: true, response: 'pong' });
         return;
       } else if (data.method === '/api/login') {
         if (!this.matterbridge.nodeContext) {
@@ -1240,7 +1250,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
         const { spawnCommand } = await import('./utils/spawn.js');
-        spawnCommand(this.matterbridge, 'npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
+        spawnCommand(this.matterbridge, 'npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'], data.params.packageName)
           .then((_response) => {
             sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: data.src, success: true });
             this.wssSendCloseSnackbarMessage(`Installing package ${localData.params.packageName}...`);
@@ -1320,7 +1330,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // Uninstall the package
         this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
         const { spawnCommand } = await import('./utils/spawn.js');
-        spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
+        spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', data.params.packageName, '--verbose'], data.params.packageName)
           .then((_response) => {
             sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: data.src, success: true });
             this.wssSendCloseSnackbarMessage(`Uninstalling package ${localData.params.packageName}...`);
@@ -1490,8 +1500,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellynetconfig') {
         this.log.debug('/api/shellynetconfig:', data.params);
-        const { triggerShellyChangeIp: triggerShellyChangeNet } = await import('./shelly.js');
-        triggerShellyChangeNet(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
+        const { triggerShellyChangeIp } = await import('./shelly.js');
+        triggerShellyChangeIp(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/softreset') {
         const { triggerShellySoftReset } = await import('./shelly.js');
@@ -1545,7 +1555,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         else
           serverNode = this.matterbridge.getPlugins().find((p) => p.serverNode && p.serverNode.id === localData.params.id)?.serverNode || this.matterbridge.getDevices().find((d) => d.serverNode && d.serverNode.id === localData.params.id)?.serverNode;
         if (!serverNode) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Unknown server node id in /api/matter' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown server node id ${localData.params.id} in /api/matter` });
           return;
         }
         const matter = this.matterbridge.getServerNodeData(serverNode);
@@ -1617,7 +1627,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/devices' });
           return;
         }
-        const selectDeviceValues = plugin.platform?.getSelectDevices().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
+        const selectDeviceValues = !plugin.platform ? [] : plugin.platform.getSelectDevices().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDeviceValues });
       } else if (data.method === '/api/select/entities') {
         if (!isValidString(data.params.plugin, 10)) {
@@ -1629,7 +1639,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' });
           return;
         }
-        const selectEntityValues = plugin.platform?.getSelectEntities().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
+        const selectEntityValues = !plugin.platform ? [] : plugin.platform.getSelectEntities().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectEntityValues });
       } else if (data.method === '/api/action') {
         const localData = data;
@@ -1788,7 +1798,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           case 'setmatterdiscriminator':
             // eslint-disable-next-line no-case-declarations
             const discriminator = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
-            if (isValidNumber(discriminator, 1000, 4095)) {
+            if (isValidNumber(discriminator, 0, 4095)) {
               this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
               this.matterbridge.matterbridgeInformation.matterDiscriminator = discriminator;
               await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', discriminator);
@@ -1805,7 +1815,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           case 'setmatterpasscode':
             // eslint-disable-next-line no-case-declarations
             const passcode = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
-            if (isValidNumber(passcode, 10000000, 90000000)) {
+            if (isValidNumber(passcode, 1, 99999998) && CommissioningOptions.FORBIDDEN_PASSCODES.includes(passcode) === false) {
               this.matterbridge.matterbridgeInformation.matterPasscode = passcode;
               this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
               await this.matterbridge.nodeContext?.set<number>('matterpasscode', passcode);
@@ -1960,27 +1970,26 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     message = message.replace(/[\x00-\x1F\x7F]/g, '');
     // Replace all occurrences of \" with "
     message = message.replace(/\\"/g, '"');
-    // Replace all occurrences of angle-brackets with &lt; and &gt;"
-    message = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     // Define the maximum allowed length for continuous characters without a space
     const maxContinuousLength = 100;
     const keepStartLength = 20;
     const keepEndLength = 20;
     // Split the message into words
-    message = message
-      .split(' ')
-      .map((word) => {
-        // If the word length exceeds the max continuous length, insert spaces and truncate
-        if (word.length > maxContinuousLength) {
-          return word.slice(0, keepStartLength) + ' ... ' + word.slice(-keepEndLength);
-        }
-        return word;
-      })
-      .join(' ');
-
+    if (level !== 'spawn') {
+      message = message
+        .split(' ')
+        .map((word) => {
+          // If the word length exceeds the max continuous length, insert spaces and truncate
+          if (word.length > maxContinuousLength) {
+            return word.slice(0, keepStartLength) + ' ... ' + word.slice(-keepEndLength);
+          }
+          return word;
+        })
+        .join(' ');
+    }
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.Log, src: 'Matterbridge', dst: 'Frontend', method: 'log', params: { level, time, name, message } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'log', success: true, response: { level, time, name, message } });
   }
 
   /**
@@ -1998,7 +2007,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter: ApiMatterResponse }) {
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.RefreshRequired, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: { changed, ...params } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, ...params } });
   }
 
   /**
@@ -2013,7 +2022,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.matterbridgeInformation.fixedRestartRequired = fixed;
     if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.RestartRequired, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', params: { fixed } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', success: true, response: { fixed } });
   }
 
   /**
@@ -2026,7 +2035,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.matterbridgeInformation.restartRequired = false;
     if (snackbar === true) this.wssSendCloseSnackbarMessage(`Restart required`);
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.RestartNotRequired, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required' });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', success: true });
   }
 
   /**
@@ -2038,7 +2047,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.debug('Sending an update required message to all connected clients');
     this.matterbridge.matterbridgeInformation.updateRequired = true;
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.UpdateRequired, src: 'Matterbridge', dst: 'Frontend', method: devVersion ? 'update_required_dev' : 'update_required' });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { devVersion } });
   }
 
   /**
@@ -2049,7 +2058,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendCpuUpdate(cpuUsage: number) {
     if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.CpuUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', params: { cpuUsage: Math.round(cpuUsage * 100) / 100 } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', success: true, response: { cpuUsage: Math.round(cpuUsage * 100) / 100 } });
   }
 
   /**
@@ -2066,7 +2075,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
     if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.MemoryUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', success: true, response: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers } });
   }
 
   /**
@@ -2078,7 +2087,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
     if (hasParameter('debug')) this.log.debug('Sending a uptime update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.UptimeUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', params: { systemUptime, processUptime } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
   }
 
   /**
@@ -2095,7 +2104,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendSnackbarMessage(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info') {
     this.log.debug('Sending a snackbar message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.Snackbar, src: 'Matterbridge', dst: 'Frontend', method: 'snackbar', params: { message, timeout, severity } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'snackbar', success: true, response: { message, timeout, severity } });
   }
 
   /**
@@ -2107,7 +2116,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendCloseSnackbarMessage(message: string) {
     this.log.debug('Sending a close snackbar message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.CloseSnackbar, src: 'Matterbridge', dst: 'Frontend', method: 'close_snackbar', params: { message } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'close_snackbar', success: true, response: { message } });
   }
 
   /**
@@ -2116,6 +2125,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string | undefined} plugin - The name of the plugin.
    * @param {string | undefined} serialNumber - The serial number of the device.
    * @param {string | undefined} uniqueId - The unique identifier of the device.
+   * @param {EndpointNumber} number - The endpoint number where the attribute belongs.
+   * @param {string} id - The endpoint id where the attribute belongs.
    * @param {string} cluster - The cluster name where the attribute belongs.
    * @param {string} attribute - The name of the attribute that changed.
    * @param {number | string | boolean} value - The new value of the attribute.
@@ -2124,10 +2135,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * This method logs a debug message and sends a JSON-formatted message to all connected WebSocket clients
    * with the updated attribute information.
    */
-  wssSendAttributeChangedMessage(plugin: string, serialNumber: string, uniqueId: string, cluster: string, attribute: string, value: number | string | boolean) {
+  wssSendAttributeChangedMessage(plugin: string, serialNumber: string, uniqueId: string, number: EndpointNumber, id: string, cluster: string, attribute: string, value: number | string | boolean | null) {
     this.log.debug('Sending an attribute update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: WsBroadcastMessageId.StateUpdate, src: 'Matterbridge', dst: 'Frontend', method: 'state_update', params: { plugin, serialNumber, uniqueId, cluster, attribute, value } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'state_update', success: true, response: { plugin, serialNumber, uniqueId, number, id, cluster, attribute, value } });
   }
 
   /**
@@ -2139,7 +2150,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssBroadcastMessage(msg: WsMessageBroadcast) {
     // Send the message to all connected clients
     const stringifiedMsg = JSON.stringify(msg);
-    if (msg.id !== WsBroadcastMessageId.Log) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
+    if (msg.method !== 'log') this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(stringifiedMsg);

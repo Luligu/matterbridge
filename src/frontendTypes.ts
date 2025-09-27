@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+import { EndpointNumber } from '@matter/main';
+
 import type { PlatformConfig } from './matterbridgePlatform.js';
 import type { ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
@@ -30,6 +32,28 @@ export type RefreshRequiredChanged = 'settings' | 'plugins' | 'devices' | 'matte
 export interface ApiSettingResponse {
   matterbridgeInformation: MatterbridgeInformation;
   systemInformation: SystemInformation;
+}
+
+export interface ApiSelectDevice {
+  pluginName: string;
+  serial: string;
+  name: string;
+  configUrl?: string;
+  icon?: string;
+  entities?: ApiSelectDeviceEntity[];
+}
+
+export interface ApiSelectDeviceEntity {
+  name: string;
+  description: string;
+  icon?: string;
+}
+
+export interface ApiSelectEntity {
+  pluginName: string;
+  name: string;
+  description: string;
+  icon?: string;
 }
 
 /**
@@ -81,7 +105,7 @@ export interface WsMessagePingRequest extends WsMessageBaseApiRequest {
   method: 'ping';
 }
 export interface WsMessagePingResponse extends WsMessageSuccessApiResponse {
-  method: 'ping';
+  method: 'pong';
   response: 'pong';
   success: true;
 }
@@ -208,13 +232,7 @@ export interface WsMessageApiShellyCreateSystemLogResponse extends WsMessageSucc
 
 export interface WsMessageApiShellyNetConfigRequest extends WsMessageBaseApiRequest {
   method: '/api/shellynetconfig';
-  params: {
-    type: 'static' | 'dhcp';
-    ip: string;
-    subnet: string;
-    gateway: string;
-    dns: string;
-  };
+  params: { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string };
 }
 export interface WsMessageApiShellyNetConfigResponse extends WsMessageSuccessApiResponse {
   method: '/api/shellynetconfig';
@@ -346,22 +364,7 @@ export interface WsMessageApiSelectDevicesRequest extends WsMessageBaseApiReques
 }
 export interface WsMessageApiSelectDevicesResponse extends WsMessageSuccessApiResponse {
   method: '/api/select/devices';
-  response:
-    | {
-        pluginName: string;
-        serial: string;
-        name: string;
-        configUrl?: string | undefined;
-        icon?: string | undefined;
-        entities?:
-          | {
-              name: string;
-              description: string;
-              icon?: string | undefined;
-            }[]
-          | undefined;
-      }[]
-    | undefined;
+  response: ApiSelectDevice[];
 }
 
 export interface WsMessageApiSelectEntitiesRequest extends WsMessageBaseApiRequest {
@@ -372,14 +375,7 @@ export interface WsMessageApiSelectEntitiesRequest extends WsMessageBaseApiReque
 }
 export interface WsMessageApiSelectEntitiesResponse extends WsMessageSuccessApiResponse {
   method: '/api/select/entities';
-  response:
-    | {
-        pluginName: string;
-        name: string;
-        description: string;
-        icon?: string | undefined;
-      }[]
-    | undefined;
+  response: ApiSelectEntity[];
 }
 
 export interface WsMessageApiActionRequest extends WsMessageBaseApiRequest {
@@ -419,6 +415,125 @@ export interface WsMessageApiCommandRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiCommandResponse extends WsMessageSuccessApiResponse {
   method: '/api/command';
+}
+
+// Broadcast message types
+
+export interface WsMessageApiLog extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'log';
+  response: {
+    level: string;
+    time: string;
+    name: string;
+    message: string;
+  };
+}
+
+export interface WsMessageApiRefreshRequired extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'refresh_required';
+  response: {
+    changed: RefreshRequiredChanged;
+    matter?: ApiMatterResponse;
+  };
+}
+
+export interface WsMessageApiRestartRequired extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'restart_required';
+  response: {
+    fixed: boolean;
+  };
+}
+
+export interface WsMessageApiRestartNotRequired extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'restart_not_required';
+}
+
+export interface WsMessageApiCpuUpdate extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'cpu_update';
+  response: {
+    cpuUsage: number;
+  };
+}
+
+export interface WsMessageApiMemoryUpdate extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'memory_update';
+  response: {
+    totalMemory: string;
+    freeMemory: string;
+    heapTotal: string;
+    heapUsed: string;
+    external: string;
+    arrayBuffers: string;
+    rss: string;
+  };
+}
+
+export interface WsMessageApiUptimeUpdate extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'uptime_update';
+  response: {
+    systemUptime: string;
+    processUptime: string;
+  };
+}
+
+export interface WsMessageApiSnackbar extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'snackbar';
+  response: {
+    message: string;
+    timeout?: number;
+    severity?: 'info' | 'warning' | 'error' | 'success';
+  };
+}
+
+export interface WsMessageApiCloseSnackbar extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'close_snackbar';
+  response: {
+    message: string;
+  };
+}
+
+export interface WsMessageApiUpdateRequired extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'update_required';
+  response: {
+    devVersion: boolean;
+  };
+}
+
+export interface WsMessageApiStateUpdate extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'state_update';
+  response: {
+    plugin: string;
+    serialNumber: string;
+    uniqueId: string;
+    number: EndpointNumber;
+    id: string;
+    cluster: string;
+    attribute: string;
+    value: number | string | boolean | null | undefined;
+  };
+}
+
+export interface WsMessageApiShellySysUpdate extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'shelly_sys_update';
+  response: { available: boolean };
+}
+
+export interface WsMessageApiShellyMainUpdate extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'shelly_main_update';
+  response: { available: boolean };
 }
 
 // Union type for all specific WebSocket API request message types
@@ -493,242 +608,46 @@ export type WsMessageApiResponse =
   | WsMessageApiSelectEntitiesResponse
   | WsMessageApiActionResponse
   | WsMessageApiConfigResponse
-  | WsMessageApiCommandResponse;
-
-/**
- * Enumeration of WebSocket broadcast message IDs.
- */
-export const enum WsBroadcastMessageId {
-  Log = 0,
-  RefreshRequired = 1,
-  RestartRequired = 2,
-  RestartNotRequired = 3,
-  CpuUpdate = 4,
-  MemoryUpdate = 5,
-  UptimeUpdate = 6,
-  Snackbar = 7,
-  UpdateRequired = 8,
-  StateUpdate = 9,
-  CloseSnackbar = 10,
-  ShellySysUpdate = 100,
-  ShellyMainUpdate = 101,
-}
-
-/**
- * Type of WebSocket broadcast message methods.
- */
-export type WsBroadcastMessageMethod =
-  | 'log'
-  | 'refresh_required'
-  | 'restart_required'
-  | 'restart_not_required'
-  | 'update_required'
-  | 'update_required_dev'
-  | 'snackbar'
-  | 'close_snackbar'
-  | 'cpu_update'
-  | 'memory_update'
-  | 'uptime_update'
-  | 'state_update'
-  | 'shelly_sys_update'
-  | 'shelly_main_update';
-
-export interface WsMessageLog {
-  id: WsBroadcastMessageId.Log;
-  dst: string;
-  src: string;
-  method: 'log';
-  params: {
-    level: string;
-    time: string;
-    name: string;
-    message: string;
-  };
-}
-
-export interface WsMessageRefreshRequired {
-  id: WsBroadcastMessageId.RefreshRequired;
-  dst: string;
-  src: string;
-  method: 'refresh_required';
-  params: {
-    changed: RefreshRequiredChanged;
-    matter?: ApiMatterResponse;
-  };
-}
-
-export interface WsMessageRestartRequired {
-  id: WsBroadcastMessageId.RestartRequired;
-  dst: string;
-  src: string;
-  method: 'restart_required';
-  params: {
-    fixed: boolean;
-  };
-}
-
-export interface WsMessageRestartNotRequired {
-  id: WsBroadcastMessageId.RestartNotRequired;
-  dst: string;
-  src: string;
-  method: 'restart_not_required';
-}
-
-export interface WsMessageCpuUpdate {
-  id: WsBroadcastMessageId.CpuUpdate;
-  dst: string;
-  src: string;
-  method: 'cpu_update';
-  params: {
-    cpuUsage: number;
-  };
-}
-
-export interface WsMessageMemoryUpdate {
-  id: WsBroadcastMessageId.MemoryUpdate;
-  dst: string;
-  src: string;
-  method: 'memory_update';
-  params: {
-    totalMemory: string;
-    freeMemory: string;
-    heapTotal: string;
-    heapUsed: string;
-    external: string;
-    arrayBuffers: string;
-    rss: string;
-  };
-}
-
-export interface WsMessageUptimeUpdate {
-  id: WsBroadcastMessageId.UptimeUpdate;
-  dst: string;
-  src: string;
-  method: 'uptime_update';
-  params: {
-    systemUptime: string;
-    processUptime: string;
-  };
-}
-
-export interface WsMessageSnackbar {
-  id: WsBroadcastMessageId.Snackbar;
-  dst: string;
-  src: string;
-  method: 'snackbar';
-  params: {
-    message: string;
-    timeout?: number;
-    severity?: 'info' | 'warning' | 'error' | 'success';
-  };
-}
-
-export interface WsMessageCloseSnackbar {
-  id: WsBroadcastMessageId.CloseSnackbar;
-  dst: string;
-  src: string;
-  method: 'close_snackbar';
-  params: {
-    message: string;
-  };
-}
-
-export interface WsMessageUpdateRequired {
-  id: WsBroadcastMessageId.UpdateRequired;
-  dst: string;
-  src: string;
-  method: 'update_required' | 'update_required_dev';
-}
-
-export interface WsMessageStateUpdate {
-  id: WsBroadcastMessageId.StateUpdate;
-  dst: string;
-  src: string;
-  method: 'state_update';
-  params: Record<string, string | number | boolean | null | undefined>;
-}
-
-export interface WsMessageShellySysUpdate {
-  id: WsBroadcastMessageId.ShellySysUpdate;
-  dst: string;
-  src: string;
-  method: 'shelly_sys_update';
-  params: { available: boolean };
-}
-
-export interface WsMessageShellyMainUpdate {
-  id: WsBroadcastMessageId.ShellyMainUpdate;
-  dst: string;
-  src: string;
-  method: 'shelly_main_update';
-  params: { available: boolean };
-}
+  | WsMessageApiCommandResponse
+  | WsMessageApiLog
+  | WsMessageApiRefreshRequired
+  | WsMessageApiRestartRequired
+  | WsMessageApiRestartNotRequired
+  | WsMessageApiUpdateRequired
+  | WsMessageApiCpuUpdate
+  | WsMessageApiMemoryUpdate
+  | WsMessageApiUptimeUpdate
+  | WsMessageApiStateUpdate
+  | WsMessageApiSnackbar
+  | WsMessageApiCloseSnackbar
+  | WsMessageApiShellySysUpdate
+  | WsMessageApiShellyMainUpdate;
 
 // Union type for all specific WebSocket broadcast message types
 export type WsMessageBroadcast =
-  | WsMessageLog
-  | WsMessageRefreshRequired
-  | WsMessageRestartRequired
-  | WsMessageRestartNotRequired
-  | WsMessageUpdateRequired
-  | WsMessageCpuUpdate
-  | WsMessageMemoryUpdate
-  | WsMessageUptimeUpdate
-  | WsMessageStateUpdate
-  | WsMessageSnackbar
-  | WsMessageCloseSnackbar
-  | WsMessageShellySysUpdate
-  | WsMessageShellyMainUpdate;
-
-// Mapping of WebSocket broadcast message IDs to their corresponding types
-export type WsMessageBroadcastMap = {
-  [WsBroadcastMessageId.Log]: WsMessageLog;
-  [WsBroadcastMessageId.RefreshRequired]: WsMessageRefreshRequired;
-  [WsBroadcastMessageId.RestartRequired]: WsMessageRestartRequired;
-  [WsBroadcastMessageId.RestartNotRequired]: WsMessageRestartNotRequired;
-  [WsBroadcastMessageId.UpdateRequired]: WsMessageUpdateRequired;
-  [WsBroadcastMessageId.CpuUpdate]: WsMessageCpuUpdate;
-  [WsBroadcastMessageId.MemoryUpdate]: WsMessageMemoryUpdate;
-  [WsBroadcastMessageId.UptimeUpdate]: WsMessageUptimeUpdate;
-  [WsBroadcastMessageId.StateUpdate]: WsMessageStateUpdate;
-  [WsBroadcastMessageId.Snackbar]: WsMessageSnackbar;
-  [WsBroadcastMessageId.CloseSnackbar]: WsMessageCloseSnackbar;
-  [WsBroadcastMessageId.ShellySysUpdate]: WsMessageShellySysUpdate;
-  [WsBroadcastMessageId.ShellyMainUpdate]: WsMessageShellyMainUpdate;
-};
-
-/**
- * Type helper to get the specific WebSocket message type by its ID.
- *
- * @example
- * function handleMessage<T extends keyof WsMessageBroadcastMap>(msg: WsMessageById<T>) {
- *   // msg is strongly typed based on its id
- * }
- *
- * @template T - The WebSocket message ID.
- */
-export type WsMessageById<T extends keyof WsMessageBroadcastMap> = WsMessageBroadcastMap[T];
-
-/**
- * Type guard to check if a message is a WsMessageBroadcast.
- *
- * @param {WsMessage} msg - The message to check.
- *
- * @returns {msg is WsMessageBroadcast} True if the message is a WsMessageBroadcast, false otherwise.
- */
-export function isBroadcast(msg: WsMessage): msg is WsMessageBroadcast {
-  return msg.id >= WsBroadcastMessageId.Log && msg.id <= WsBroadcastMessageId.ShellyMainUpdate;
-}
+  | WsMessageApiLog
+  | WsMessageApiRefreshRequired
+  | WsMessageApiRestartRequired
+  | WsMessageApiRestartNotRequired
+  | WsMessageApiUpdateRequired
+  | WsMessageApiCpuUpdate
+  | WsMessageApiMemoryUpdate
+  | WsMessageApiUptimeUpdate
+  | WsMessageApiStateUpdate
+  | WsMessageApiSnackbar
+  | WsMessageApiCloseSnackbar
+  | WsMessageApiShellySysUpdate
+  | WsMessageApiShellyMainUpdate;
 
 /**
  * Type guard to check if a message is a WsMessageApiRequest.
  *
  * @param {WsMessage} msg - The message to check.
  *
- * @returns {msg is WsMessageBaseApiRequest} True if the message is a WsMessageApiRequest, false otherwise.
+ * @returns {msg is WsMessageApiRequest} True if the message is a WsMessageApiRequest, false otherwise.
  */
-export function isApiRequest(msg: WsMessage): msg is WsMessageBaseApiRequest {
-  return msg.id > WsBroadcastMessageId.ShellyMainUpdate && msg.src === 'Frontend' && msg.dst === 'Matterbridge' && !('success' in msg) && !('error' in msg);
+export function isApiRequest(msg: WsMessage): msg is WsMessageApiRequest {
+  return msg.id !== 0 && msg.src === 'Frontend' && msg.dst === 'Matterbridge';
 }
 
 /**
@@ -739,5 +658,16 @@ export function isApiRequest(msg: WsMessage): msg is WsMessageBaseApiRequest {
  * @returns {msg is WsMessageApiResponse} True if the message is a WsMessageApiResponse, false otherwise.
  */
 export function isApiResponse(msg: WsMessage): msg is WsMessageApiResponse {
-  return msg.id > WsBroadcastMessageId.ShellyMainUpdate && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && ('success' in msg || 'error' in msg);
+  return msg.id !== 0 && msg.src === 'Matterbridge' && msg.dst === 'Frontend';
+}
+
+/**
+ * Type guard to check if a message is a WsMessageBroadcast.
+ *
+ * @param {WsMessage} msg - The message to check.
+ *
+ * @returns {msg is WsMessageBroadcast} True if the message is a WsMessageBroadcast, false otherwise.
+ */
+export function isBroadcast(msg: WsMessage): msg is WsMessageBroadcast {
+  return msg.id === 0 && msg.src === 'Matterbridge' && msg.dst === 'Frontend';
 }

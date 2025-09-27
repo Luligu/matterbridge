@@ -18,10 +18,10 @@ import QRDiv from './QRDiv';
 import InstallAddPlugins  from './InstallAddPlugins';
 import HomePlugins from './HomePlugins';
 import HomeDevices from './HomeDevices';
-import { isApiResponse, isBroadcast, WsMessage } from '../../../src/frontendTypes';
+import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
-import { debug } from '../App';
-// const debug = true;
+// import { debug } from '../App';
+const debug = true;
 
 function Home() {
   // States
@@ -40,76 +40,82 @@ function Home() {
   const uniqueId = useRef(getUniqueId());
 
   useEffect(() => {
-    const handleWebSocketMessage = (msg: WsMessage) => {
-      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        // Broadcast messages
-        if (isBroadcast(msg) && msg.method === 'refresh_required' && msg.params.changed === 'settings') {
-          if (debug) console.log(`Home received refresh_required: changed=${msg.params.changed} and sending /api/settings request`);
-          setStoreId(null);
-          setPlugins([]);
-          sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+    const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
+      // Broadcast messages
+      if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
+        if (debug) console.log(`Home received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
+        setStoreId(null);
+        setPlugins([]);
+        sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+        sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      }
+      // Local messages
+      if (msg.method === '/api/settings' && msg.id === uniqueId.current ) {
+        if (debug) console.log(`Home received settings:`, msg.response);
+        setSystemInfo(msg.response.systemInformation);
+        setMatterbridgeInfo(msg.response.matterbridgeInformation);
+        if(msg.response.matterbridgeInformation.matterbridgeVersion) {
+          setChangelog(`https://github.com/Luligu/matterbridge/blob/${msg.response.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main' }/CHANGELOG.md`);
         }
-        // Local messages
-        if (isApiResponse(msg) && msg.method === '/api/settings' && msg.id === uniqueId.current ) {
-          if (debug) console.log('Home received settings:', msg.response);
-          setSystemInfo(msg.response.systemInformation);
-          setMatterbridgeInfo(msg.response.matterbridgeInformation);
-          if (msg.response.matterbridgeInformation.bridgeMode === 'bridge') {
-            if(!storeId) setStoreId('Matterbridge');
-          }
-          if (msg.response.matterbridgeInformation.bridgeMode === 'childbridge' && plugins.length > 0 && storeId === null) {
-            if(!storeId && plugins.length > 0 && plugins[0].matter?.id) setStoreId(plugins[0].matter.id);
-          }
-          if(msg.response.matterbridgeInformation.matterbridgeVersion) {
-            setChangelog(`https://github.com/Luligu/matterbridge/blob/${msg.response.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main' }/CHANGELOG.md`);
-          }
 
-          if(localStorage.getItem('frontendVersion') === null && msg.response.matterbridgeInformation.frontendVersion) {
-            localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
-          }
-          else if(msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem('frontendVersion') && msg.response.matterbridgeInformation.frontendVersion) {
-            localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
-            setBrowserRefresh(true);
-          }
-          
-          if(localStorage.getItem('matterbridgeVersion') === null) {
-            localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
-          }
-          else if(msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
-            localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
-            setShowChangelog(true);
-          }
-          
-          if(msg.response.matterbridgeInformation.shellyBoard) {
-            if(!localStorage.getItem('homePageMode')) {
-              localStorage.setItem('homePageMode', 'devices');
-              setHomePageMode('devices');
-            }
-          }
+        if(localStorage.getItem('frontendVersion') === null && msg.response.matterbridgeInformation.frontendVersion) {
+          localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
         }
-        if (isApiResponse(msg) && msg.method === '/api/plugins' && msg.id === uniqueId.current ) {
-          if (debug) console.log(`Home received plugins (${matterbridgeInfo?.bridgeMode}):`, msg.response);
-          setPlugins(msg.response);
-          if (matterbridgeInfo?.bridgeMode === 'childbridge' && msg.response.length > 0) {
-            if(!storeId && msg.response.length > 0 && msg.response[0].matter?.id) setStoreId(msg.response[0].matter.id);
+        else if(msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem('frontendVersion') && msg.response.matterbridgeInformation.frontendVersion) {
+          localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
+          setBrowserRefresh(true);
+        }
+        
+        if(localStorage.getItem('matterbridgeVersion') === null) {
+          localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
+        }
+        else if(msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
+          localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
+          setShowChangelog(true);
+        }
+        
+        if(msg.response.matterbridgeInformation.shellyBoard) {
+          if(!localStorage.getItem('homePageMode')) {
+            localStorage.setItem('homePageMode', 'devices');
+            setHomePageMode('devices');
           }
         }
       }
+      if (msg.method === '/api/plugins' && msg.id === uniqueId.current ) {
+        if (debug) console.log(`Home received plugins:`, msg.response);
+        setPlugins(msg.response);
+      }
     };
 
-    addListener(handleWebSocketMessage);
+    addListener(handleWebSocketMessage, uniqueId.current);
     if (debug) console.log(`Home added WebSocket listener id ${uniqueId.current}`);
 
     return () => {
       removeListener(handleWebSocketMessage);
       if (debug) console.log('Home removed WebSocket listener');
     };
-  }, [addListener, removeListener, sendMessage, matterbridgeInfo, plugins, storeId]);
+  }, [addListener, removeListener, sendMessage]);
+
+  useEffect(() => {
+    if (debug) console.log(`Home settings and plugins effect with storeId ${storeId}`);
+      if (matterbridgeInfo?.bridgeMode === 'bridge'&& !storeId) {
+        if (debug) console.log(`Home set storeId from ${storeId} to Matterbridge`);
+        setStoreId('Matterbridge');
+      }
+      if (matterbridgeInfo?.bridgeMode === 'childbridge' && !storeId && plugins) {
+        for(const plugin of plugins) {
+          if(plugin.matter?.id) {
+            if (debug) console.log(`Home set storeId from ${storeId} to ${plugin.matter.id}`);
+            setStoreId(plugin.matter.id);
+            break;
+          }
+        }
+      }
+  }, [matterbridgeInfo, plugins, storeId]);
 
   useEffect(() => {
     if (online) {
-      if (debug) console.log('Home received online');
+      if (debug) console.log('Home online effect, sending /api/settings and /api/plugins requests');
       sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
     }
@@ -192,7 +198,7 @@ function Home() {
               </div>
             </div>
             <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto' }}>
-              <WebSocketLogs />
+              <WebSocketLogs/>
             </div>
           </div>
         }
