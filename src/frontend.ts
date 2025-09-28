@@ -878,7 +878,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
     this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
     this.matterbridge.matterbridgeInformation.loggerLevel = this.matterbridge.log.logLevel;
-    this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
+    this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.level as MatterLogLevel;
     this.matterbridge.matterbridgeInformation.matterMdnsInterface = this.matterbridge.mdnsInterface;
     this.matterbridge.matterbridgeInformation.matterIpv4Address = this.matterbridge.ipv4address;
     this.matterbridge.matterbridgeInformation.matterIpv6Address = this.matterbridge.ipv6address;
@@ -1275,6 +1275,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                       .then(() => {
                         this.wssSendSnackbarMessage(`Started plugin ${packageName}`, 5, 'success');
                         this.wssSendRefreshRequired('plugins');
+                        this.wssSendRefreshRequired('devices');
                         return;
                       })
                       // eslint-disable-next-line promise/no-nesting
@@ -1999,7 +2000,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} changed - The changed value.
    * @param {Record<string, unknown>} params - Additional parameters to send with the message.
    * possible values for changed:
-   * - 'settings'
+   * - 'settings' (when the bridge has started in bridge mode or childbridge mode)
    * - 'plugins'
    * - 'devices'
    * - 'matter' with param 'matter' (QRDiv component)

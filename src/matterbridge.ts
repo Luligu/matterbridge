@@ -197,7 +197,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private rejectionHandler: NodeJS.UnhandledRejectionListener | undefined;
 
   // Matter environment
-  environment = Environment.default;
+  private environment = Environment.default;
 
   // Matter storage
   matterStorageName = 'matterstorage';
@@ -207,7 +207,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   controllerContext: StorageContext | undefined;
 
   // Matter parameters
-  mdnsInterface: string | undefined; // matter server node mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
+  mdnsInterface: string | undefined; // matter server node mdnsInterface: e.g. 'eth0' or 'wlan0' or 'Wi-Fi'
   ipv4address: string | undefined; // matter server node listeningAddressIpv4
   ipv6address: string | undefined; // matter server node listeningAddressIpv6
   port: number | undefined; // first server node port
