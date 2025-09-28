@@ -10,7 +10,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.2.10] - Not released
 
-### Breaking Changes
+### Development Breaking Changes
+
+- [platform]: Internal use only properties are private readonly.
 
 ### Added
 
