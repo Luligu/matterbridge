@@ -26,7 +26,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
-import { hasParameter } from './utils/export.js';
+import { hasParameter } from './utils/commandLine.js';
 
 // Matterbridge
 export * from './matterbridge.js';

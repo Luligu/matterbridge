@@ -160,7 +160,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterbridgeDevVersion = '';
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
-  public profile = getParameter('profile');
+  public readonly profile = getParameter('profile');
   public shutdown = false;
   private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
 
@@ -172,6 +172,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   public matterLoggerFile = 'matter.log';
 
+  // Managers
   public plugins = new PluginManager(this);
   public devices = new DeviceManager(this);
   public frontend = new Frontend(this);
@@ -352,7 +353,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    *
    * @returns {Promise<void>} A Promise that resolves when the initialization is complete.
    */
-  public async initialize(): Promise<void> {
+  private async initialize(): Promise<void> {
     // for (let i = 1; i <= 255; i++) console.log(`\x1b[38;5;${i}mColor: ${i}`);
 
     // Emit the initialize_started event
@@ -1350,7 +1351,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    *
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
-  protected async cleanup(message: string, restart: boolean = false, timeout: number = 1000): Promise<void> {
+  private async cleanup(message: string, restart: boolean = false, timeout: number = 1000): Promise<void> {
     if (this.initialized && !this.hasCleanupStarted) {
       this.emit('cleanup_started');
       this.hasCleanupStarted = true;
@@ -1823,7 +1824,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  protected async startController(): Promise<void> {
+  private async startController(): Promise<void> {
     /*
     if (!this.matterStorageManager) {
       this.log.error('No storage manager initialized');
@@ -2646,7 +2647,7 @@ const commissioningController = new CommissioningController({
    * @param {ExposedFabricInformation[]} fabricInfo - The array of exposed fabric information objects.
    * @returns {SanitizedExposedFabricInformation[]} An array of sanitized exposed fabric information objects.
    */
-  sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]): SanitizedExposedFabricInformation[] {
+  private sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]): SanitizedExposedFabricInformation[] {
     return fabricInfo.map((info) => {
       return {
         fabricIndex: info.fabricIndex,
@@ -2666,7 +2667,7 @@ const commissioningController = new CommissioningController({
    * @param {SessionsBehavior.Session[]} sessions - The array of session information objects.
    * @returns {SanitizedSession[]} An array of sanitized session information objects.
    */
-  sanitizeSessionInformation(sessions: SessionsBehavior.Session[]): SanitizedSession[] {
+  private sanitizeSessionInformation(sessions: SessionsBehavior.Session[]): SanitizedSession[] {
     return sessions
       .filter((session) => session.isPeerActive)
       .map((session) => {
@@ -2710,7 +2711,7 @@ const commissioningController = new CommissioningController({
     */
   }
 
-  getVendorIdName = (vendorId: number | undefined) => {
+  private getVendorIdName = (vendorId: number | undefined) => {
     if (!vendorId) return '';
     let vendorName = '(Unknown vendorId)';
     switch (vendorId) {

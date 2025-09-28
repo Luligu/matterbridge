@@ -26,7 +26,7 @@
 import path from 'node:path';
 
 // Matter
-import { EndpointNumber } from '@matter/main';
+import { EndpointNumber, VendorId } from '@matter/main';
 import { Descriptor } from '@matter/main/clusters/descriptor';
 import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
 // Node AnsiLogger module
@@ -36,11 +36,14 @@ import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
+import { Frontend } from './frontend.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
-import { isValidArray, isValidObject, isValidString } from './utils/export.js';
+import { isValidArray, isValidObject, isValidString } from './utils/isvalid.js';
 import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
+import { PluginManager } from './pluginManager.js';
+import { SystemInformation } from './matterbridgeTypes.js';
 
 // Platform types
 
@@ -56,13 +59,40 @@ export type PlatformSchemaValue = string | number | boolean | bigint | object | 
 /** Platform schema type. */
 export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
+export type PlatformMatterbridge = Matterbridge & {
+  readonly systemInformation: SystemInformation;
+  readonly homeDirectory: string;
+  readonly rootDirectory: string;
+  readonly matterbridgeDirectory: string;
+  readonly matterbridgePluginDirectory: string;
+  readonly globalModulesDirectory: string;
+  readonly matterbridgeVersion: string;
+  readonly matterbridgeLatestVersion: string;
+  readonly matterbridgeDevVersion: string;
+  readonly bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
+  readonly restartMode: 'service' | 'docker' | '';
+  readonly aggregatorVendorId: VendorId;
+  readonly aggregatorVendorName: string;
+  readonly aggregatorProductId: number;
+  readonly aggregatorProductName: string;
+};
+
+// Internal use only methods: they will be converted to messages through the MessagePort of the MessageChannel in the future versions with threading
+type InternalPlatformMatterbridge = PlatformMatterbridge & {
+  frontend: Frontend;
+  plugins: PluginManager;
+  addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void>;
+  removeBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void>;
+  removeAllBridgedEndpoints(pluginName: string, delay?: number): Promise<void>;
+};
+
 /**
  * Represents the base Matterbridge platform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
  *
  */
 export class MatterbridgePlatform {
   /** The Matterbridge instance of this Platform. */
-  matterbridge: Matterbridge;
+  matterbridge: PlatformMatterbridge;
   /** The logger instance for this platform. */
   log: AnsiLogger;
   /** The configuration for this platform. */
@@ -100,11 +130,11 @@ export class MatterbridgePlatform {
    * It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
    * Each plugin must extend the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
    *
-   * @param {Matterbridge} matterbridge - The Matterbridge instance.
+   * @param {PlatformMatterbridge} matterbridge - The Matterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
    * @param {PlatformConfig} config - The platform configuration.
    */
-  constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
+  constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
     this.matterbridge = matterbridge;
     this.log = log;
     this.config = config;
@@ -258,6 +288,31 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Save the platform configuration to the platform config JSON.
+   *
+   * @param {PlatformConfig} [config] - The platform configuration to save.
+   * @returns {void}
+   */
+  saveConfig(config: PlatformConfig): void {
+    const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
+    if (!plugin) {
+      throw new Error(`Plugin ${this.name} not found`);
+    }
+    (this.matterbridge as InternalPlatformMatterbridge).plugins.saveConfigFromJson(plugin, config); // No await as it's not necessary to wait
+  }
+
+  /**
+   * Sends a restart required message to the frontend.
+   *
+   * @param {boolean} [snackbar] - If true, shows a snackbar notification. Default is true.
+   * @param {boolean} [fixed] - If true, shows a fixed notification. Default is false.
+   * @returns {void}
+   */
+  wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false): void {
+    (this.matterbridge as InternalPlatformMatterbridge).frontend.wssSendRestartRequired(snackbar, fixed);
+  }
+
+  /**
    * Retrieves the devices registered with the platform.
    *
    * @returns {MatterbridgeEndpoint[]} The registered devices.
@@ -351,7 +406,7 @@ export class MatterbridgePlatform {
       }
     }
 
-    await this.matterbridge.addBridgedEndpoint(this.name, device);
+    await (this.matterbridge as InternalPlatformMatterbridge).addBridgedEndpoint(this.name, device);
     this.registeredEndpointsByUniqueId.set(device.uniqueId, device);
     this.registeredEndpointsByName.set(device.deviceName, device);
   }
@@ -362,7 +417,7 @@ export class MatterbridgePlatform {
    * @param {MatterbridgeEndpoint} device - The device to unregister.
    */
   async unregisterDevice(device: MatterbridgeEndpoint) {
-    await this.matterbridge.removeBridgedEndpoint(this.name, device);
+    await (this.matterbridge as InternalPlatformMatterbridge).removeBridgedEndpoint(this.name, device);
     if (device.uniqueId) this.registeredEndpointsByUniqueId.delete(device.uniqueId);
     if (device.deviceName) this.registeredEndpointsByName.delete(device.deviceName);
   }
@@ -373,7 +428,7 @@ export class MatterbridgePlatform {
    * @param {number} [delay] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    */
   async unregisterAllDevices(delay: number = 0) {
-    await this.matterbridge.removeAllBridgedEndpoints(this.name, delay);
+    await (this.matterbridge as InternalPlatformMatterbridge).removeAllBridgedEndpoints(this.name, delay);
     this.registeredEndpointsByUniqueId.clear();
     this.registeredEndpointsByName.clear();
   }
@@ -653,14 +708,14 @@ export class MatterbridgePlatform {
    *
    * @returns {Promise<number>} The size of the updated endpoint map, or -1 if storage is not available.
    */
-  async checkEndpointNumbers(): Promise<number> {
+  private async checkEndpointNumbers(): Promise<number> {
     if (!this.storage) return -1;
     this.log.debug('Checking endpoint numbers...');
     const context = await this.storage.createStorage('endpointNumbers');
     const separator = '|.|';
     const endpointMap = new Map<string, EndpointNumber>(await context.get<[string, EndpointNumber][]>('endpointMap', []));
 
-    for (const device of this.matterbridge.getDevices().filter((d) => d.plugin === this.name)) {
+    for (const device of this.getDevices()) {
       if (device.uniqueId === undefined || device.maybeNumber === undefined) {
         this.log.debug(`Not checking device ${device.deviceName} without uniqueId or maybeNumber`);
         continue;
