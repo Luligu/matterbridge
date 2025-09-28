@@ -2000,7 +2000,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} changed - The changed value.
    * @param {Record<string, unknown>} params - Additional parameters to send with the message.
    * possible values for changed:
-   * - 'settings' (when the bridge has started in bridge mode or childbridge mode)
+   * - 'settings' (when the bridge has started in bridge mode or childbridge mode and when update finds a new version)
    * - 'plugins'
    * - 'devices'
    * - 'matter' with param 'matter' (QRDiv component)
