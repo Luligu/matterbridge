@@ -60,16 +60,14 @@ function Home() {
 
         if(localStorage.getItem('frontendVersion') === null && msg.response.matterbridgeInformation.frontendVersion) {
           localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
-        }
-        else if(msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem('frontendVersion') && msg.response.matterbridgeInformation.frontendVersion) {
+        } else if(msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem('frontendVersion') && msg.response.matterbridgeInformation.frontendVersion) {
           localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
           setBrowserRefresh(true);
         }
         
         if(localStorage.getItem('matterbridgeVersion') === null) {
           localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
-        }
-        else if(msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
+        } else if(msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
           localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
           setShowChangelog(true);
         }

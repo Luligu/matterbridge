@@ -19,10 +19,10 @@ import QrCode2 from '@mui/icons-material/QrCode2';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { getQRColor } from './getQRColor';
-import { debug } from '../App';
 import MbfTable, { MbfTableColumn } from './MbfTable';
 import { ApiDevices, ApiMatterResponse, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
 import { ApiSelectDevice, ApiSettingResponse, WsMessageApiResponse } from '../../../src/frontendTypes';
+import { debug } from '../App';
 // const debug = true;
 
 /**

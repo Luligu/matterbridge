@@ -14,7 +14,7 @@ import { debug } from '../App';
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformation, compact: boolean }) {
   // WebSocket context
-  const { sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
+  const { addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
   // Local states
   const [localSystemInfo, setLocalSystemInfo] = useState(systemInfo);
@@ -22,7 +22,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   // Refs
   const uniqueId = useRef(getUniqueId());
 
-  if(debug) console.log('SystemInfoTable:', localSystemInfo, 'compact:', compact);
+  if(debug) console.log('SystemInfoTable loading with systemInfo:', localSystemInfo, 'compact:', compact);
 
   // Compact some fields if compact is true
   if (systemInfo && compact && localSystemInfo.totalMemory && localSystemInfo.freeMemory) {
@@ -50,56 +50,54 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
     localSystemInfo.osArch = '';
   }
 
+  const handleMemoryUpdate = (totalMemory: string, freeMemory: string, heapTotal: string, heapUsed: string, rss: string) => {
+    setLocalSystemInfo((prev) => ({
+      ...prev,
+      totalMemory: totalMemory,
+      freeMemory: freeMemory,
+      heapTotal: heapTotal,
+      heapUsed: heapUsed,
+      rss: rss,
+    }))
+  }
+
+  const handleCpuUpdate = (cpuUsage: number) => {
+    setLocalSystemInfo((prev) => ({
+      ...prev,
+      cpuUsage: cpuUsage.toFixed(2) + ' %',
+    }))
+  }
+
+  const handleUptimeUpdate = (systemUptime: string, processUptime: string) => {
+    setLocalSystemInfo((prev) => ({
+      ...prev,
+      systemUptime: systemUptime,
+      processUptime: processUptime,
+    }))
+  }
+
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'memory_update' && msg.response && msg.response.totalMemory && msg.response.freeMemory && msg.response.heapTotal && msg.response.heapUsed && msg.response.rss) {
-          if(debug) console.log('SystemInfoTable received memory_update', msg);
-          if(localSystemInfo.totalMemory !== msg.response.totalMemory || localSystemInfo.freeMemory !== msg.response.freeMemory ||
-            localSystemInfo.heapTotal !== msg.response.heapTotal || localSystemInfo.heapUsed !== msg.response.heapUsed ||
-            localSystemInfo.rss !== msg.response.rss) {
-            setLocalSystemInfo((prev) => ({
-              ...prev,
-              totalMemory: msg.response.totalMemory,
-              freeMemory: msg.response.freeMemory,
-              heapTotal: msg.response.heapTotal,
-              heapUsed: msg.response.heapUsed,
-              rss: msg.response.rss,
-            }))
-          }
-        }
-        if (msg.method === 'cpu_update' && msg.response && msg.response.cpuUsage) {
-          if(debug) console.log('SystemInfoTable received cpu_update', msg);
-          if(localSystemInfo.cpuUsage !== (msg.response.cpuUsage ? msg.response.cpuUsage.toFixed(2) + ' %' : '')) {
-            setLocalSystemInfo((prev) => ({
-              ...prev,
-              cpuUsage: msg.response.cpuUsage.toFixed(2) + ' %',
-            }))
-          }
-        }
-        if (msg.method === 'uptime_update' && msg.response && msg.response.systemUptime && msg.response.processUptime) {
-          if(debug) console.log('SystemInfoTable received uptime_update', msg);
-          if(localSystemInfo.systemUptime !== msg.response.systemUptime || localSystemInfo.processUptime !== msg.response.processUptime) {
-            setLocalSystemInfo((prev) => ({
-              ...prev,
-              systemUptime: msg.response.systemUptime,
-              processUptime: msg.response.processUptime,
-            }))
-          }
-        }
+      if (msg.method === 'memory_update' && msg.response && msg.response.totalMemory && msg.response.freeMemory && msg.response.heapTotal && msg.response.heapUsed && msg.response.rss) {
+        if(debug) console.log('SystemInfoTable received memory_update', msg);
+        handleMemoryUpdate(msg.response.totalMemory, msg.response.freeMemory, msg.response.heapTotal, msg.response.heapUsed, msg.response.rss);
+      } else if (msg.method === 'cpu_update' && msg.response && msg.response.cpuUsage) {
+        if(debug) console.log('SystemInfoTable received cpu_update', msg);
+        handleCpuUpdate(msg.response.cpuUsage);
+      } else if (msg.method === 'uptime_update' && msg.response && msg.response.systemUptime && msg.response.processUptime) {
+        if(debug) console.log('SystemInfoTable received uptime_update', msg);
+        handleUptimeUpdate(msg.response.systemUptime, msg.response.processUptime);
       }
     };
 
-    if(debug) console.log('SystemInfoTable useEffect WebSocketMessage mounting');
     addListener(handleWebSocketMessage, uniqueId.current);
-    if(debug) console.log('SystemInfoTable useEffect WebSocketMessage mounted');
+    if(debug) console.log(`SystemInfoTable added WebSocket listener id ${uniqueId.current}`);
 
     return () => {
-      if(debug) console.log('SystemInfoTable useEffect WebSocketMessage unmounting');
       removeListener(handleWebSocketMessage);
-      if(debug) console.log('SystemInfoTable useEffect WebSocketMessage unmounted');
+      if(debug) console.log('SystemInfoTable removed WebSocket listener');
     };
-  }, [addListener, localSystemInfo.cpuUsage, localSystemInfo.freeMemory, localSystemInfo.heapTotal, localSystemInfo.heapUsed, localSystemInfo.processUptime, localSystemInfo.rss, localSystemInfo.systemUptime, localSystemInfo.totalMemory, removeListener, sendMessage]);
+  }, [addListener, removeListener]);
 
   if (!localSystemInfo) return null;
 
