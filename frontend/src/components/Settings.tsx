@@ -21,6 +21,7 @@ import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { debug } from '../App';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
+import { MbfPage } from './MbfPage';
 // const debug = true;
 
 function Settings() {
@@ -71,13 +72,15 @@ function Settings() {
     return ( <Connecting /> );
   }
   return (
-    <div className="MbfPageDiv">
+    <MbfPage>
+
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
         <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} systemInfo={systemInfo}/>
         <MatterSettings matterbridgeInfo={matterbridgeInfo}/>
         <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo}/>
       </div>  
-    </div>
+
+    </MbfPage>
   );
 }
 

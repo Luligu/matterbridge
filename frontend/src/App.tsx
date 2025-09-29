@@ -7,7 +7,6 @@ import { ThemeProvider } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 
 // Frontend routes
-import Header from './components/Header';
 import Home from './components/Home';
 import Devices from './components/Devices';
 import Logs from './components/Logs';
@@ -18,6 +17,7 @@ import Test from './components/Test';
 import { WebSocketProvider } from './components/WebSocketProvider';
 import { UiProvider } from './components/UiProvider';
 import { createMuiTheme, getCssVariable } from './components/muiTheme';
+import { MbfScreen } from './components/MbfScreen';
 
 // App styles
 import './App.css';
@@ -128,29 +128,22 @@ function App(): React.JSX.Element {
   const [loggedIn, setLoggedIn] = useState(false);
 
   // Set the theme based on saved preference or default to dark
-  if (debug) console.log('Setting frontend theme');
-  const savedTheme = localStorage.getItem('frontendTheme');
-  if (debug) console.log('Saved theme:', savedTheme);
-  if (savedTheme) {
-    document.body.setAttribute('frontend-theme', savedTheme);
-  } else {
-    document.body.setAttribute('frontend-theme', 'dark');
-  }
+  const savedTheme = localStorage.getItem('frontendTheme') || 'dark';
+  if (debug) console.log(`Setting frontend theme "%s"`, savedTheme);
+  document.body.setAttribute('frontend-theme', savedTheme);
   const primaryColor = getCssVariable('--primary-color', '#1976d2');
-  if (debug) console.log('Primary color from CSS:', primaryColor);
+  if (debug) console.log(`Primary color from CSS "%s"`, primaryColor);
   const theme = createMuiTheme(primaryColor);
 
   /*
     Normal:
     href="https://lucalaptop7/"
     pathname="/" 
-    >>>
     baseName="/"
 
     Ingress:
     href="https://homeassistant.local:8123/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
     pathname="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/" 
-    >>>
     baseName="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
   */
   // Set the base name for the BrowserRouter
@@ -173,8 +166,7 @@ function App(): React.JSX.Element {
         <UiProvider>
           <WebSocketProvider>
             <BrowserRouter basename={baseName}>
-              <div className="MbfScreen">
-                <Header />
+              <MbfScreen>
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/devices" element={<Devices />} />
@@ -183,7 +175,7 @@ function App(): React.JSX.Element {
                   <Route path="/test" element={<Test />} />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
-              </div>
+              </MbfScreen>
             </BrowserRouter>
           </WebSocketProvider>
         </UiProvider>

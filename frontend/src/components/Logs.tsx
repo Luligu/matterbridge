@@ -20,6 +20,7 @@ import DeleteForever from '@mui/icons-material/DeleteForever';
 import WebSocketLogs from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
+import { MbfPage } from './MbfPage';
 import { debug } from '../App';
 // const debug = true;
 
@@ -60,7 +61,9 @@ function Logs() {
     return ( <Connecting /> );
   }
   return (
-    <div className="MbfPageDiv">
+    <MbfPage>
+
+      {/* Logs Filter and Clear Button */}
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', margin: '0px', padding: '0px', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <InputLabel id="select-level" style={{ color: 'var(--div-text-color)' }}>Filter log by level:</InputLabel>
@@ -93,10 +96,13 @@ function Logs() {
           </Tooltip>        
         </div>
       </div>  
+
+      {/* WebSocket Logs */}
       <div style={{ flex: '1', overflow: 'auto', margin: '0px', padding: '0px' }}>
         <WebSocketLogs/>
       </div>  
-    </div>
+
+    </MbfPage>
   );
 }
 

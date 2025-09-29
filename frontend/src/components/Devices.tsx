@@ -17,6 +17,7 @@ import { WebSocketContext } from './WebSocketProvider';
 import DevicesIcons from './DevicesIcons';
 import DevicesTable from './DevicesTable';
 import { Connecting } from './Connecting';
+import { MbfPage } from './MbfPage';
 import { debug } from '../App';
 
 function Devices() {
@@ -58,7 +59,7 @@ function Devices() {
     return ( <Connecting /> );
   }
   return (
-    <div className="MbfPageDiv">
+    <MbfPage>
 
       {/* Devices Filter and View Mode Dialog */}
       <div className="MbfWindowBodyRow" style={{ justifyContent: 'space-between', padding: 0, gap: '20px', width: '100%', height: '45px', minHeight: '45px', maxHeight: '45px' }}>
@@ -102,7 +103,7 @@ function Devices() {
         <DevicesIcons filter={filter} />
       )}
 
-    </div>
+    </MbfPage>
   );
 }
 

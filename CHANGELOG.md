@@ -58,6 +58,7 @@ In this phase (matterbridge 3.3.x) all plugins will continue to build and run ev
 
 ```typescript
 export type PlatformMatterbridge = {
+  readonly systemInformation: SystemInformation;
   readonly homeDirectory: string;
   readonly rootDirectory: string;
   readonly matterbridgeDirectory: string;
@@ -79,7 +80,7 @@ In this phase (matterbridge 3.4.x) all plugins will not build and will not run w
 
 ### Added
 
-- [frontend]: Bumped `frontend` version to 3.1.1. Some improvements and small bug fixes.
+- [frontend]: Bumped `frontend` version to 3.1.1. Improvements and small bug fixes.
 
 ### Changed
 

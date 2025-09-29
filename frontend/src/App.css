@@ -415,10 +415,11 @@ h3 {
 }
 
 /* Define the style for the main page element */
+/*   height: calc(100% - 60px); */
 .MbfPageDiv {
   display: flex;
   flex-direction: column;
-  height: calc(100% - 60px);
+  height: 100%;
   width: 100%;
   margin: 0px;
   padding: 0px;

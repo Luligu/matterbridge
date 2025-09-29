@@ -225,6 +225,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   aggregatorDeviceType = DeviceTypeId(getIntParameter('deviceType') ?? bridge.code);
   aggregatorSerialNumber = getParameter('serialNumber');
   aggregatorUniqueId = getParameter('uniqueId');
+
   /** Advertising nodes map: time advertising started keyed by storeId */
   advertisingNodes = new Map<string, number>();
 
@@ -948,9 +949,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.shutdown = true;
       return;
     }
-
-    // Initialize frontend
-    // if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
 
     // Check in 30 seconds the latest and dev versions of matterbridge and the plugins
     clearTimeout(this.checkUpdateTimeout);

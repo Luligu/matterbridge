@@ -10,17 +10,18 @@ import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import CancelIcon from '@mui/icons-material/Cancel';
 
 // Frontend
-import WebSocketLogs from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import SystemInfoTable from './SystemInfoTable';
 import QRDiv from './QRDiv';
-import InstallAddPlugins  from './InstallAddPlugins';
+import HomeInstallAddPlugins  from './HomeInstallAddPlugins';
 import HomePlugins from './HomePlugins';
 import HomeDevices from './HomeDevices';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
+import { MbfPage } from './MbfPage';
 import { debug } from '../App';
+import HomeLogs from './HomeLogs';
 // const debug = true;
 
 function Home() {
@@ -35,7 +36,7 @@ function Home() {
   const [browserRefresh, setBrowserRefresh] = useState(false);
   const [storeId, setStoreId] = useState<string | null>(null);
   // Contexts
-  const { addListener, removeListener, online, sendMessage, logFilterLevel, logFilterSearch, autoScroll, getUniqueId } = useContext(WebSocketContext);
+  const { addListener, removeListener, online, sendMessage, getUniqueId } = useContext(WebSocketContext);
   // Refs
   const uniqueId = useRef(getUniqueId());
 
@@ -124,12 +125,15 @@ function Home() {
     return (<Connecting />);
   }
   return (
-    <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
+    <MbfPage style={{ flexDirection: 'row' }}>
+
       {/* Left column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
+
         <QRDiv id={storeId}/>
         <SystemInfoTable systemInfo={systemInfo} compact={true}/>
         {/* matterbridgeInfo.bridgeMode === 'childbridge' && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/> */}
+        
       </div>
 
       {/* Right column */}
@@ -149,6 +153,7 @@ function Home() {
             </div>
           </div>
         }
+
         {/* Show changelog page on Matterbridge updates */}
         {showChangelog &&
           <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
@@ -165,44 +170,28 @@ function Home() {
           </div>
         }
 
-        {/* Install plugins (cannot grow) */}
+        {/* Install plugins (flex: '0 0 auto', overflow: 'hidden') */}
         {homePagePlugins && !matterbridgeInfo.readOnly &&
-          <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
-            <div className="MbfWindowHeader">
-              <p className="MbfWindowHeaderText">Install plugins</p>
-            </div>
-            <InstallAddPlugins/>
-          </div>
+          <HomeInstallAddPlugins/>
         }
 
-        {/* Plugins (cannot grow) */}
+        {/* Plugins (flex: '0 0 auto', overflow: 'hidden') */}
         {homePagePlugins &&
           <HomePlugins storeId={storeId} setStoreId={setStoreId}/>
         }
 
-        {/* Devices (can grow) */}
+        {/* Devices (flex: '1 1 auto', overflow: 'hidden') */}
         {homePageMode === 'devices' &&
           <HomeDevices storeId={storeId} setStoreId={setStoreId}/>
         }
-        {/* Logs (can grow) */}
+
+        {/* Logs (flex: '1 1 auto', overflow: 'hidden') */}
         {homePageMode === 'logs' &&
-          <div className="MbfWindowDiv" style={{ flex: '1 1 auto', width: '100%', overflow: 'hidden' }}>
-            <div className="MbfWindowHeader" style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between' }}>
-              <p className="MbfWindowHeaderText">Logs</p>
-              <div className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 'normal', fontSize: '12px', marginTop: '2px' }}>
-                  Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}" Scroll: {autoScroll ? 'auto' : 'manual'} 
-                </span>
-              </div>
-            </div>
-            <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto' }}>
-              <WebSocketLogs/>
-            </div>
-          </div>
+          <HomeLogs />
         }
 
       </div>
-    </div>
+    </MbfPage>
   );
 }
 

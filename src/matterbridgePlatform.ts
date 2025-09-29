@@ -26,9 +26,10 @@
 import path from 'node:path';
 
 // Matter
-import { EndpointNumber, VendorId } from '@matter/main';
+import { Endpoint, EndpointNumber, VendorId } from '@matter/main';
 import { Descriptor } from '@matter/main/clusters/descriptor';
 import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
+import { AggregatorEndpoint } from '@matter/main/endpoints';
 // Node AnsiLogger module
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
@@ -44,6 +45,7 @@ import { isValidArray, isValidObject, isValidString } from './utils/isvalid.js';
 import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { SystemInformation } from './matterbridgeTypes.js';
+import { addVirtualDevice } from './helpers.js';
 
 // Platform types
 
@@ -329,6 +331,39 @@ export class MatterbridgePlatform {
    */
   hasDeviceName(deviceName: string): boolean {
     return this.registeredEndpointsByName.has(deviceName);
+  }
+
+  /**
+   * Registers a virtual device with the platform aggregator endpoint.
+   *
+   * The virtual device is created as an instance of `Endpoint` with the provided device type.
+   * When the virtual device is turned on, the provided callback function is executed.
+   * The onOff state of the virtual device always reverts to false when the device is turned on.
+   *
+   * @param { string } name - The name of the virtual device.
+   * @param { 'light' | 'outlet' | 'switch' | 'mounted_switch' } type - The type of the virtual device.
+   * @param { () => Promise<void> } callback - The callback to call when the virtual device is turned on.
+   *
+   * @returns {Promise<void>} A promise that resolves when the virtual device is registered.
+   *
+   * @remarks
+   * The virtual devices don't show up in the device list of the frontend.
+   */
+  async registerVirtualDevice(name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<void> {
+    let aggregator: Endpoint<AggregatorEndpoint> | undefined;
+    if (this.matterbridge.bridgeMode === 'bridge') {
+      aggregator = this.matterbridge.aggregatorNode;
+    } else if (this.matterbridge.bridgeMode === 'childbridge') {
+      aggregator = this.matterbridge.plugins.get(this.name)?.aggregatorNode;
+    }
+    if (aggregator) {
+      if (aggregator.parts.has(name.replaceAll(' ', '') + ':' + type)) {
+        this.log.warn(`Virtual device ${name} already registered. Please use a different name.`);
+      } else {
+        await addVirtualDevice(aggregator, name.slice(0, 32), type, callback);
+        this.log.info(`Virtual device ${name} created.`);
+      }
+    }
   }
 
   /**
