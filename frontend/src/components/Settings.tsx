@@ -24,7 +24,7 @@ import { MatterbridgeInformation, SystemInformation } from '../../../src/matterb
 import { MbfPage } from './MbfPage';
 // const debug = true;
 
-function Settings() {
+function Settings(): React.JSX.Element {
   // WebSocket context
   const { online, addListener, removeListener, sendMessage, getUniqueId } = useContext(WebSocketContext);
 
@@ -65,10 +65,8 @@ function Settings() {
     }
   }, [online, sendMessage]);
 
-  if(!matterbridgeInfo) return null;
-  
   if(debug) console.log('Settings rendering...');
-  if (!online) {
+  if (!online || !matterbridgeInfo || !systemInfo) {
     return ( <Connecting /> );
   }
   return (

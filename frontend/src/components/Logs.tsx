@@ -24,7 +24,7 @@ import { MbfPage } from './MbfPage';
 import { debug } from '../App';
 // const debug = true;
 
-function Logs() {
+function Logs(): React.JSX.Element {
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
   const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll')==='false' ? false : true);

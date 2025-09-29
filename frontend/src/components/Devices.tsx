@@ -20,7 +20,7 @@ import { Connecting } from './Connecting';
 import { MbfPage } from './MbfPage';
 import { debug } from '../App';
 
-function Devices() {
+function Devices(): React.JSX.Element {
   // WebSocket context
   const { online } = useContext(WebSocketContext);
 

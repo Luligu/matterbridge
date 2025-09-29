@@ -24,7 +24,7 @@ import { debug } from '../App';
 import HomeLogs from './HomeLogs';
 // const debug = true;
 
-function Home() {
+function Home(): React.JSX.Element {
   // States
   const [systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
@@ -133,7 +133,7 @@ function Home() {
         <QRDiv id={storeId}/>
         <SystemInfoTable systemInfo={systemInfo} compact={true}/>
         {/* matterbridgeInfo.bridgeMode === 'childbridge' && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/> */}
-        
+
       </div>
 
       {/* Right column */}
