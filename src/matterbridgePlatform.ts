@@ -83,6 +83,7 @@ export type PlatformMatterbridge = Matterbridge & {
 type InternalPlatformMatterbridge = PlatformMatterbridge & {
   frontend: Frontend;
   plugins: PluginManager;
+  aggregatorNode: Endpoint<AggregatorEndpoint> | undefined;
   addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void>;
   removeBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void>;
   removeAllBridgedEndpoints(pluginName: string, delay?: number): Promise<void>;
@@ -296,6 +297,7 @@ export class MatterbridgePlatform {
    * @returns {void}
    */
   saveConfig(config: PlatformConfig): void {
+    // TODO: replace with a message to the matterbridge thread
     const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
     if (!plugin) {
       throw new Error(`Plugin ${this.name} not found`);
@@ -311,6 +313,7 @@ export class MatterbridgePlatform {
    * @returns {void}
    */
   wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false): void {
+    // TODO: replace with a message to the frontend thread
     (this.matterbridge as InternalPlatformMatterbridge).frontend.wssSendRestartRequired(snackbar, fixed);
   }
 
@@ -351,10 +354,11 @@ export class MatterbridgePlatform {
    */
   async registerVirtualDevice(name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<void> {
     let aggregator: Endpoint<AggregatorEndpoint> | undefined;
+    // TODO: replace with a message to the matterbridge thread
     if (this.matterbridge.bridgeMode === 'bridge') {
-      aggregator = this.matterbridge.aggregatorNode;
+      aggregator = (this.matterbridge as InternalPlatformMatterbridge).aggregatorNode;
     } else if (this.matterbridge.bridgeMode === 'childbridge') {
-      aggregator = this.matterbridge.plugins.get(this.name)?.aggregatorNode;
+      aggregator = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name)?.aggregatorNode;
     }
     if (aggregator) {
       if (aggregator.parts.has(name.replaceAll(' ', '') + ':' + type)) {
@@ -441,6 +445,7 @@ export class MatterbridgePlatform {
       }
     }
 
+    // TODO: replace with a message to the matterbridge thread
     await (this.matterbridge as InternalPlatformMatterbridge).addBridgedEndpoint(this.name, device);
     this.registeredEndpointsByUniqueId.set(device.uniqueId, device);
     this.registeredEndpointsByName.set(device.deviceName, device);
@@ -452,6 +457,7 @@ export class MatterbridgePlatform {
    * @param {MatterbridgeEndpoint} device - The device to unregister.
    */
   async unregisterDevice(device: MatterbridgeEndpoint) {
+    // TODO: replace with a message to the matterbridge thread
     await (this.matterbridge as InternalPlatformMatterbridge).removeBridgedEndpoint(this.name, device);
     if (device.uniqueId) this.registeredEndpointsByUniqueId.delete(device.uniqueId);
     if (device.deviceName) this.registeredEndpointsByName.delete(device.deviceName);
@@ -463,6 +469,7 @@ export class MatterbridgePlatform {
    * @param {number} [delay] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    */
   async unregisterAllDevices(delay: number = 0) {
+    // TODO: replace with a message to the matterbridge thread
     await (this.matterbridge as InternalPlatformMatterbridge).removeAllBridgedEndpoints(this.name, delay);
     this.registeredEndpointsByUniqueId.clear();
     this.registeredEndpointsByName.clear();
@@ -622,7 +629,7 @@ export class MatterbridgePlatform {
    * In the schema use selectEntityFrom: 'name' or 'description'
    * ```json
    * "entityBlackList": {
-   *   "description": "The entities in the list that belongs to a device will not be exposed.",
+   *   "description": "The entities in the list will not be exposed.",
    *   "type": "array",
    *   "items": {
    *     "type": "string"

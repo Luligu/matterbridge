@@ -50,7 +50,7 @@ This change, necassary to obtain the plugin isolation, will require to adapt all
     }
 ```
 
-- check that you didn't used any matterbridge calls.
+- check that you didn't use any matterbridge calls.
 
 In this phase (matterbridge 3.3.x) all plugins will continue to build and run even without updates.
 
