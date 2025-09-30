@@ -255,13 +255,13 @@ function DevicesTable({filter}: { filter: string; }) {
     <div style={{ display: 'flex', flexDirection: 'column', margin: '0px', padding: '0px', gap: '20px', width: '100%', overflow: 'hidden' }}>
 
       {/* Devices Table */}
-      <div className="MbfWindowDiv" style={{ margin: '0px', padding: '0px', gap: '0px', maxHeight: `${pluginName && endpoint ? '30%' : '100%'}`, width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+      <div className="MbfWindowDiv" style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: `${pluginName && endpoint ? '30%' : '100%'}`, flex: '1 1 auto', overflow: 'hidden' }}>
         <MbfTable name="Registered devices" getRowKey={getDeviceRowKey} onRowClick={handleDeviceClick} rows={filteredDevices} columns={devicesColumns} footerLeft={`Total devices: ${filteredDevices.length.toString()}`}/>
       </div>
 
       {/* Clusters Table */}
       {pluginName && endpoint && (
-        <div className="MbfWindowDiv" style={{ margin: '0px', padding: '0px', gap: '0px', height: '50%', maxHeight: '70%', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+        <div className="MbfWindowDiv" style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', height: '70%', maxHeight: '70%', flex: '1 1 auto', overflow: 'hidden' }}>
           <MbfTable name="Clusters" title={deviceName || ''} getRowKey={getClusterRowKey} rows={clusters} columns={clustersColumns} footerLeft={`Total child endpoints: ${subEndpointsCount - 1}`} />
         </div>
       )}

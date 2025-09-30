@@ -61,7 +61,7 @@ function Logs(): React.JSX.Element {
     return ( <Connecting /> );
   }
   return (
-    <MbfPage>
+    <MbfPage name='Logs'>
 
       {/* Logs Filter and Clear Button */}
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', margin: '0px', padding: '0px', gap: '10px' }}>

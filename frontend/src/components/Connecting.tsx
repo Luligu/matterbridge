@@ -3,7 +3,6 @@ import { useContext } from 'react';
 
 // @mui/material
 import CircularProgress from '@mui/material/CircularProgress';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 
 // Frontend
@@ -21,15 +20,15 @@ export function Connecting() {
   return (
     <div style={{
       display: 'flex',
+      flexDirection: 'column',
+      width: '100vw',
+      height: '100vh',
       justifyContent: 'center',
       alignItems: 'center',
       fontSize: '20px',
-      flexDirection: 'column',
       color: 'var(--main-text-color)',
-      height: '100vh',
       backgroundColor: 'var(--main-bg-color)',
     }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
         <MatterbridgeLogo style={{ height: '128px', width: '128px', margin: '10px', marginBottom: '20px' }} />
         {retry < 100 ? (
           <>
@@ -54,7 +53,6 @@ export function Connecting() {
             </Button>
           </>
         )}      
-      </Box>
     </div>
   );
 }

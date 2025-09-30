@@ -119,14 +119,14 @@ function Home(): React.JSX.Element {
     return (<Connecting />);
   }
   return (
-    <MbfPage style={{ flexDirection: 'row' }}>
+    <MbfPage name='Home' style={{ flexDirection: 'row' }}>
 
       {/* Left column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
 
         <QRDiv id={storeId}/>
         <SystemInfoTable systemInfo={systemInfo} compact={true}/>
-        {/*matterbridgeInfo.bridgeMode === 'childbridge' && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>*/}
+        {/*<MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>*/}
 
       </div>
 

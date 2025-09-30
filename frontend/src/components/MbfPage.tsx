@@ -1,12 +1,22 @@
 // React
-import React, { ReactNode } from "react";
+import React, { ReactNode, useContext } from "react";
+
+// Frontend
+import { UiContext } from './UiProvider';
+import { debug } from '../App';
 
 interface MbfPageProps {
   children: ReactNode;
   style?: React.CSSProperties;
+  name: string;
 }
 
-export function MbfPage({ children, style }: MbfPageProps): React.JSX.Element {
+export function MbfPage({ children, style, name }: MbfPageProps): React.JSX.Element {
+  // Contexts
+  const { setCurrentPage } = useContext(UiContext);
+  setCurrentPage(name);
+  if (debug) console.log(`MbfPage: current page set to ${name}`);
+
   const defaultStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',

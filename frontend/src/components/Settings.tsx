@@ -73,7 +73,7 @@ function Settings(): React.JSX.Element {
     return ( <Connecting /> );
   }
   return (
-    <MbfPage>
+    <MbfPage name='Settings'>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
         <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} systemInfo={systemInfo}/>

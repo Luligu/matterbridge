@@ -8,7 +8,7 @@ import { SystemInformation } from '../../../src/matterbridgeTypes';
 import { TruncatedText } from './TruncatedText';
 import { WebSocketContext } from './WebSocketProvider';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
-import { MbfWindow } from './MbfWindow';
+import { MbfWindow, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { debug } from '../App';
 // const debug = true;
 
@@ -99,15 +99,18 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
     };
   }, [addListener, removeListener]);
 
-  if (!localSystemInfo) return null;
+  const [closed, setClosed] = useState(false);
+
+  if (!localSystemInfo || closed) return null;
 
   if(debug) console.log('SystemInfoTable rendering...');
 
   return (
-    <MbfWindow style={{ width: '302px', minWidth: '302px' }}>
-      <div className="MbfWindowHeader">
-        <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>System Information</p>
-      </div>
+    <MbfWindow style={{ flex: '0 1 auto', width: '302px', minWidth: '302px' }}>
+      <MbfWindowHeader>
+        <MbfWindowHeaderText>System Information</MbfWindowHeaderText>
+        <MbfWindowIcons onClose={() => setClosed(true)} />
+      </MbfWindowHeader>
       <div className="MbfWindowDivTable">
         <table style={{ border: 'none', borderCollapse: 'collapse' }}>
           <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>
@@ -126,7 +129,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   );
 }
 
-/** 
+/**
  * System Information Table
  * Displays system information in a table format.
  * 

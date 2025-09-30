@@ -59,7 +59,7 @@ function Devices(): React.JSX.Element {
     return ( <Connecting /> );
   }
   return (
-    <MbfPage>
+    <MbfPage name='Devices'>
 
       {/* Devices Filter and View Mode Dialog */}
       <div className="MbfWindowBodyRow" style={{ justifyContent: 'space-between', padding: 0, gap: '20px', width: '100%', height: '45px', minHeight: '45px', maxHeight: '45px' }}>

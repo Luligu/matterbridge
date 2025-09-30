@@ -17,7 +17,7 @@ import MoreVert from '@mui/icons-material/MoreVert';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-import { MbfWindow } from './MbfWindow';
+import { MbfWindow, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { debug } from '../App';
 
 function HomeInstallAddPlugins() {
@@ -115,12 +115,22 @@ function HomeInstallAddPlugins() {
     setAnchorEl(null);
   };
 
-  if (debug) console.log('HomeInstallAddPlugins rendering...');
-  return (
-    <MbfWindow>
+  /*
       <div className="MbfWindowHeader">
         <p className="MbfWindowHeaderText">Install plugins</p>
       </div>
+  */
+  const [closed, setClosed] = useState(false);
+
+  if (debug) console.log('HomeInstallAddPlugins rendering...');
+
+  if (closed) return null;
+  return (
+    <MbfWindow>
+      <MbfWindowHeader>
+        <MbfWindowHeaderText>Install plugins</MbfWindowHeaderText>
+        <MbfWindowIcons onClose={() => setClosed(true)} />
+      </MbfWindowHeader>
       <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

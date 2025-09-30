@@ -1,12 +1,12 @@
 // React
-import { memo } from 'react';
+import { memo, useState } from 'react';
 
 // Backend
 import { MatterbridgeInformation } from '../../../src/matterbridgeTypes';
 
 // Frontend
 import { TruncatedText } from './TruncatedText';
-import { MbfWindow } from './MbfWindow';
+import { MbfWindow, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { debug } from '../App';
 // const debug = true;
 
@@ -18,13 +18,18 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
     'matterMdnsInterface', 'matterIpv4Address', 'matterIpv6Address', 
     'readOnly', 'shellyBoard', 'shellySysUpdate', 'shellyMainUpdate', 'matterPort', 'matterDiscriminator', 'matterPasscode'];
 
+  const [closed, setClosed] = useState(false);
+    
+  if (!matterbridgeInfo || closed) return null;
+
   if (debug) console.log('MatterbridgeInfoTable rendering...');
 
   return (
-    <MbfWindow style={{ width: '302px', minWidth: '302px' }}>
-      <div className="MbfWindowHeader">
-        <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Matterbridge Information</p>
-      </div>
+    <MbfWindow style={{ flex: '0 1 auto', width: '302px', minWidth: '302px' }}>
+      <MbfWindowHeader>
+        <MbfWindowHeaderText>Matterbridge Information</MbfWindowHeaderText>
+        <MbfWindowIcons onClose={() => setClosed(true)} />
+      </MbfWindowHeader>
       <div className="MbfWindowDivTable">
         <table style={{ border: 'none', borderCollapse: 'collapse' }}>
           <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>

@@ -27,10 +27,10 @@ Advantages:
 
 ### Development Breaking Changes
 
-- [platform]: Now, internal use only properties are private readonly and internal use only methods are private. This prepares the road to plugin isolation.
-- [platform]: The signature of the matterbridge param in the platform constructor has changed from Matterbridge to `PlatformMatterbridge` that has only the approriate readonly properties from matterbridge. This prepares the road to plugin isolation.
+- [platform]: Now, internal use only properties are private readonly and internal use only methods are private.
+- [platform]: The signature of the matterbridge param in the platform constructor has changed from Matterbridge to `PlatformMatterbridge` that has only the approriate readonly properties from matterbridge.
 
-This change will require to adapt all plugins in two steps.
+This change, necassary to obtain the plugin isolation, will require to adapt all plugins in two steps.
 
 1. `After` matterbridge `3.3.0` will be published as latest:
 
@@ -80,7 +80,9 @@ In this phase (matterbridge 3.4.x) all plugins will not build and will not run w
 
 ### Added
 
-- [frontend]: Bumped `frontend` version to 3.1.1. Improvements and small bug fixes.
+- [frontend]: Bumped `frontend` version to 3.2.0.
+- [frontend]: General improvements and small bug fixes.
+- [frontend]: Added SystemInfo to Settings.
 
 ### Changed
 

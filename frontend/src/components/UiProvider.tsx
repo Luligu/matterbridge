@@ -23,6 +23,10 @@ interface PersistMessage {
 const persistMessages: PersistMessage[] = [];
 
 export interface UiContextType {
+  mobile: boolean;
+  setMobile: (mobile: boolean) => void;
+  currentPage: string | null;
+  setCurrentPage: (page: string | null) => void;
   showSnackbarMessage: (message: string, timeout?: number, severity?: 'info' | 'warning' | 'error' | 'success') => void;
   closeSnackbarMessage: (message: string) => void;
   closeSnackbar: (key?: SnackbarKey | undefined) => void;
@@ -47,6 +51,12 @@ interface UiProviderProps {
 }
 
 export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
+  // ******************************** Mobile ******************************** 
+  const [mobile, setMobile] = useState(false);
+
+  // ******************************** Page ******************************** 
+  const [currentPage, setCurrentPage] = useState<string | null>(null);
+
   // ******************************** Snackbar ******************************** 
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
@@ -171,6 +181,10 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   };
 
   const contextValue = useMemo(() => ({
+    mobile,
+    setMobile,
+    currentPage,
+    setCurrentPage,
     showSnackbarMessage,
     closeSnackbarMessage,
     closeSnackbar,
@@ -180,7 +194,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     exitInstallProgressError,
     hideInstallProgress,
     addInstallProgress,
-  }), [showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showConfirmCancelDialog, showInstallProgress, exitInstallProgressSuccess, exitInstallProgressError, hideInstallProgress, addInstallProgress]);
+  }), [mobile, currentPage, setMobile, setCurrentPage, showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showConfirmCancelDialog, showInstallProgress, exitInstallProgressSuccess, exitInstallProgressError, hideInstallProgress, addInstallProgress]);
 
   return (
     <UiContext.Provider value={contextValue}>

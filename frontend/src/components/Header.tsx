@@ -36,7 +36,7 @@ import { debug, toggleDebug } from '../App';
 
 function Header() {
   // Contexts
-  const { showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
+  const { mobile, showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
   const { online, sendMessage, logMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // States
   const [restart, setRestart] = useState(false);
@@ -331,7 +331,7 @@ function Header() {
     }
   }, [online, sendMessage]);
 
-  if(debug) console.log('Header rendering...');
+  if(debug) console.log('Header rendering... mobile %s', mobile);
   if (!online || !settings) {
     return null;
   }
@@ -636,3 +636,12 @@ function Header() {
 }
 
 export default memo(Header);
+
+/*
+  Old code:
+    <div className="header">
+
+  New code:
+      <div className="header" style={ isMobile ? { flexDirection: 'column', alignItems: 'center', width: '100%', height: '120px', gap: '0px' } : {}}>
+
+*/
