@@ -1,14 +1,6 @@
 // React
 import { useEffect, useState, useContext, useRef, memo } from 'react';
 
-// @mui/material
-import Button from '@mui/material/Button';
-
-// @mui/icons-material
-import Refresh from '@mui/icons-material/Refresh';
-import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
-import CancelIcon from '@mui/icons-material/Cancel';
-
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
@@ -20,8 +12,10 @@ import HomeDevices from './HomeDevices';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 import { MbfPage } from './MbfPage';
-import { debug } from '../App';
 import HomeLogs from './HomeLogs';
+import HomeBrowserRefresh from './HomeBrowserRefresh';
+import HomeShowChangelog from './HomeShowChangelog';
+import { debug } from '../App';
 // const debug = true;
 
 function Home(): React.JSX.Element {
@@ -132,42 +126,21 @@ function Home(): React.JSX.Element {
 
         <QRDiv id={storeId}/>
         <SystemInfoTable systemInfo={systemInfo} compact={true}/>
-        {/* matterbridgeInfo.bridgeMode === 'childbridge' && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/> */}
+        {/*matterbridgeInfo.bridgeMode === 'childbridge' && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>*/}
 
       </div>
 
       {/* Right column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
 
-        {/* Refresh page on frontend updates */}
+        {/* Refresh page on Frontend updates (flex: '0 0 auto', overflow: 'hidden') */}
         {browserRefresh &&
-          <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
-            <div className="MbfWindowHeader">
-              <p className="MbfWindowHeaderText">Frontend Update</p>
-            </div>
-            <div className="MbfWindowBody" style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <h4 style={{ margin: 0 }}>The frontend has been updated. You are viewing an outdated web UI. Please refresh the page now.</h4>
-              <div>
-                <Button onClick={() => window.location.reload()} endIcon={<Refresh />} style={{ marginLeft: '10px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Refresh</Button>
-              </div>
-            </div>
-          </div>
+          <HomeBrowserRefresh/>
         }
 
-        {/* Show changelog page on Matterbridge updates */}
+        {/* Show changelog page on Matterbridge updates (flex: '0 0 auto', overflow: 'hidden') */}
         {showChangelog &&
-          <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
-            <div className="MbfWindowHeader">
-              <p className="MbfWindowHeaderText">Matterbridge Update</p>
-            </div>
-            <div className="MbfWindowBody" style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <h4 style={{ margin: 0 }}>Matterbridge has been updated.</h4>
-              <div>
-                <Button onClick={() => window.open(changelog, '_blank')} endIcon={<AnnouncementOutlinedIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Changelog</Button>
-                <Button onClick={() => window.location.reload()} endIcon={<CancelIcon />} style={{ marginLeft: '10px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Close</Button>
-            </div>
-            </div>
-          </div>
+          <HomeShowChangelog changelog={changelog} />
         }
 
         {/* Install plugins (flex: '0 0 auto', overflow: 'hidden') */}

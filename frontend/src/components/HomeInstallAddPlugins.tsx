@@ -17,6 +17,7 @@ import MoreVert from '@mui/icons-material/MoreVert';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
+import { MbfWindow } from './MbfWindow';
 import { debug } from '../App';
 
 function HomeInstallAddPlugins() {
@@ -116,7 +117,7 @@ function HomeInstallAddPlugins() {
 
   if (debug) console.log('HomeInstallAddPlugins rendering...');
   return (
-    <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
+    <MbfWindow>
       <div className="MbfWindowHeader">
         <p className="MbfWindowHeaderText">Install plugins</p>
       </div>
@@ -162,7 +163,7 @@ function HomeInstallAddPlugins() {
           onChange={handleFileUpload}
         />
       </div>
-    </div>
+    </MbfWindow>
   );
 }
 

@@ -3,6 +3,8 @@ import { ReactNode, useState, useEffect } from "react";
 
 // Frontend
 import Header from "./Header";
+import { debug } from "../App";
+// const debug = true;
 
 const MOBILE_WIDTH_THRESHOLD = 1300;
 const MOBILE_HEIGHT_THRESHOLD = 1024;
@@ -16,10 +18,10 @@ function isMobile(): boolean {
   if (typeof window !== 'undefined') {
     viewportWidth = Math.floor(window.visualViewport?.width ?? window.innerWidth);
     viewportHeight = Math.floor(window.visualViewport?.height ?? window.innerHeight);
-    console.log("Visual viewport width %i height %i", viewportWidth, viewportHeight);
+    if (debug) console.log("Visual viewport width %i height %i", viewportWidth, viewportHeight);
     mobile = viewportWidth < MOBILE_WIDTH_THRESHOLD || viewportHeight < MOBILE_HEIGHT_THRESHOLD;
     desktop = !mobile;
-    console.log("Mobile %s desktop %s", mobile, desktop);
+    if (debug) console.log("Mobile %s desktop %s", mobile, desktop);
     return mobile;
   }
   return false;
@@ -39,6 +41,8 @@ export function MbfScreen({ children }: MbfScreenProps): React.JSX.Element {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  if(debug) console.log('MbfScreen rendering... mobile %s desktop %s', mobile, desktop);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', width: mobile ? `${MOBILE_WIDTH_THRESHOLD}px` : 'calc(100vw - 40px)', height: mobile ? `${MOBILE_HEIGHT_THRESHOLD}px` : 'calc(100vh - 40px)', margin: '0px', padding: '20px', gap: '20px' }}>

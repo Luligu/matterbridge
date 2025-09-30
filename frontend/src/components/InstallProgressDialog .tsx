@@ -74,7 +74,7 @@ export const InstallProgressDialog = ({ open, output, packageName, onInstall, on
               height: '100%',
               fontFamily: 'monospace',
               fontSize: '14px',
-              padding: 8,
+              padding: '10px',
               margin: 0,
               marginBottom: '10px',
               color: 'var(--div-text-color)',

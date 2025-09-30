@@ -8,10 +8,10 @@ import { SystemInformation } from '../../../src/matterbridgeTypes';
 import { TruncatedText } from './TruncatedText';
 import { WebSocketContext } from './WebSocketProvider';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
+import { MbfWindow } from './MbfWindow';
 import { debug } from '../App';
 // const debug = true;
 
-// This function takes systemInfo as a parameter and returns a table element with the systemInfo
 function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformation, compact: boolean }) {
   // WebSocket context
   const { addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
@@ -104,7 +104,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   if(debug) console.log('SystemInfoTable rendering...');
 
   return (
-    <div className="MbfWindowDiv" style={{ minWidth: '302px', overflow: 'hidden' }}>
+    <MbfWindow style={{ width: '302px', minWidth: '302px' }}>
       <div className="MbfWindowHeader">
         <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>System Information</p>
       </div>
@@ -115,15 +115,25 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
               <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
                 <td style={{ border: 'none', borderCollapse: 'collapse' }}>{key}</td>
                 <td style={{ border: 'none', borderCollapse: 'collapse' }}>
-                  <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={25} />
+                  <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={24} />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </div>
+    </MbfWindow>
   );
 }
-  
+
+/** 
+ * System Information Table
+ * Displays system information in a table format.
+ * 
+ * Props:
+ * - systemInfo: SystemInformation object containing system details.
+ * - compact: boolean indicating whether to display compact information.
+ * 
+ * The component listens for WebSocket messages to update memory, CPU, and uptime information in real-time.
+ */
 export default memo(SystemInfoTable);
