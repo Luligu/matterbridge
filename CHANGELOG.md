@@ -84,6 +84,8 @@ In this phase (matterbridge 3.4.x) all plugins will not build and will not run w
 - [frontend]: General improvements and small bug fixes.
 - [frontend]: Added SystemInfo to Settings.
 - [frontend]: Added RvcRunMode to IconView.
+- [frontend]: Added prettier, prettierPlugin and prettierConfig.
+- [frontend]: Added SmokeCoAlarm to state update.
 
 ### Changed
 
