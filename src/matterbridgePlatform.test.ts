@@ -18,7 +18,7 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { flushAsync, loggerLogSpy, setupTest } from './utils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -598,6 +598,37 @@ describe('Matterbridge platform', () => {
 
   test('getDevice should return []', async () => {
     expect(platform.getDevices()).toEqual([]);
+  });
+
+  test('saveConfig should throw', async () => {
+    const originalName = platform.name;
+    platform.name = 'unknown';
+    expect(() => platform.saveConfig(platform.config)).toThrow('Plugin unknown not found');
+
+    (matterbridge.plugins as any)._plugins.set('unknown', { name: 'unknown', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false } as any);
+    expect(() => platform.saveConfig(platform.config)).not.toThrow();
+    (matterbridge.plugins as any)._plugins.delete('unknown');
+    platform.name = originalName;
+    await flushAsync();
+  });
+
+  test('wssSendRestartRequired', async () => {
+    expect(platform.wssSendRestartRequired()).toBeUndefined();
+  });
+
+  test('registerVirtualDevice', async () => {
+    async function testCallback(): Promise<void> {}
+    expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBeUndefined();
+    expect(matterbridge.aggregatorNode?.parts.has('Virtual' + ':' + 'switch')).toBeTruthy();
+
+    jest.spyOn(matterbridge.plugins, 'get').mockReturnValueOnce({ name: platform.name, type: 'type', version: '1.0.0', aggregatorNode: matterbridge.aggregatorNode } as any);
+    matterbridge.bridgeMode = 'childbridge';
+    expect(await platform.registerVirtualDevice('VirtualChildbridge', 'switch', testCallback)).toBeUndefined();
+    matterbridge.bridgeMode = 'bridge';
+    expect(matterbridge.aggregatorNode?.parts.has('VirtualChildbridge' + ':' + 'switch')).toBeTruthy();
+
+    expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Virtual device Virtual already registered. Please use a different name.`);
   });
 
   test('registerDevice calls matterbridge.addBridgedEndpoint with correct parameters', async () => {
