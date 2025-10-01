@@ -11,7 +11,7 @@ import Button from '@mui/material/Button';
 
 // @mdi/js
 import Icon from '@mdi/react';
-import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForever  } from '@mdi/js';
+import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForever } from '@mdi/js';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -32,7 +32,7 @@ const iconBtnSx = {
   '& svg path': { fill: 'var(--div-text-color)', transition: 'fill 0.2s ease' },
   '&:hover': { color: 'var(--primary-color)' },
   '&:hover svg path': { fill: 'var(--primary-color)' },
-  '&:focus-visible': { outline: '2px solid var(--primary-color)', outlineOffset: '2px' }
+  '&:focus-visible': { outline: '2px solid var(--primary-color)', outlineOffset: '2px' },
 };
 
 // Format manual pairing code as 0000-000-0000; non-digit characters are stripped.
@@ -68,11 +68,11 @@ function QRDiv({ id }: QRDivProps) {
   useEffect(() => {
     if (debug) console.log(`QRDiv id effect "${id}"`);
     storeIdRef.current = id;
-    if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+    if (advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
     advertiseTimeoutRef.current = null;
-    if(id) {
+    if (id) {
       if (debug) console.log(`QRDiv id effect sending data request for storeId "${id}"`);
-      sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: id, server: true } });
+      sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: '/api/matter', src: 'Frontend', dst: 'Matterbridge', params: { id: id, server: true } });
     } else {
       if (debug) console.log('QRDiv id effect setting matter to null');
       setMatter(null);
@@ -83,60 +83,63 @@ function QRDiv({ id }: QRDivProps) {
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (msg.method === 'refresh_required' && msg.response.changed === 'matter' && msg.response.matter) {
-        if(debug) console.log(`QRDiv received refresh_required: changed=${msg.response.changed} for storeId "${msg.response.matter.id}":`, msg.response.matter);
-        if(storeIdRef.current === msg.response.matter.id) {
-          if(debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.response.matter.id}":`, msg.response.matter);
-          if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+        if (debug) console.log(`QRDiv received refresh_required: changed=${msg.response.changed} for storeId "${msg.response.matter.id}":`, msg.response.matter);
+        if (storeIdRef.current === msg.response.matter.id) {
+          if (debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.response.matter.id}":`, msg.response.matter);
+          if (advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
           if (msg.response.matter.advertising && msg.response.matter.advertiseTime && msg.response.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.response.matter.advertising = false; // already expired
           setMatter(msg.response.matter);
-          if(msg.response.matter.advertising) {
-            if(debug) console.log(`QRDiv setting matter advertise timeout for storeId "${msg.response.matter.id}":`, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
-            advertiseTimeoutRef.current = setTimeout(() => {
-              // Clear advertising state after 15 minutes
-              if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
-              if(debug) console.log(`QRDiv clearing advertising state for storeId "${storeIdRef.current}" after 15 minutes`);
-              setMatter((prev) => prev ? { ...prev, advertising: false } : prev);
-            }, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
+          if (msg.response.matter.advertising) {
+            if (debug) console.log(`QRDiv setting matter advertise timeout for storeId "${msg.response.matter.id}":`, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
+            advertiseTimeoutRef.current = setTimeout(
+              () => {
+                // Clear advertising state after 15 minutes
+                if (advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+                if (debug) console.log(`QRDiv clearing advertising state for storeId "${storeIdRef.current}" after 15 minutes`);
+                setMatter((prev) => (prev ? { ...prev, advertising: false } : prev));
+              },
+              msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now(),
+            );
           }
         }
       }
     };
 
     addListener(handleWebSocketMessage, uniqueId.current);
-    if(debug) console.log('QRDiv webSocket effect mounted');
+    if (debug) console.log('QRDiv webSocket effect mounted');
 
     return () => {
       removeListener(handleWebSocketMessage);
-      if(advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
+      if (advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
       advertiseTimeoutRef.current = null;
-      if(debug) console.log('QRDiv webSocket effect unmounted');
+      if (debug) console.log('QRDiv webSocket effect unmounted');
     };
   }, [addListener, removeListener]);
-  
+
   const handleStartCommissioningClick = () => {
     if (debug) console.log(`QRDiv sent matter startCommission for node "${matter?.id}"`);
     if (!matter) return;
-    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, startCommission: true } });
+    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: '/api/matter', src: 'Frontend', dst: 'Matterbridge', params: { id: matter.id, startCommission: true } });
   };
 
   const handleStopCommissioningClick = () => {
     if (debug) console.log(`QRDiv sent matter stopCommission for node "${matter?.id}"`);
     if (!matter) return;
-    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, stopCommission: true } });
+    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: '/api/matter', src: 'Frontend', dst: 'Matterbridge', params: { id: matter.id, stopCommission: true } });
   };
 
   const handleAdvertiseClick = () => {
     if (debug) console.log(`QRDiv sent matter advertise for node "${matter?.id}"`);
     if (!matter) return;
-    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, advertise: true } });
+    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: '/api/matter', src: 'Frontend', dst: 'Matterbridge', params: { id: matter.id, advertise: true } });
   };
 
   const handleRemoveFabric = (fabricIndex: number) => {
     if (debug) console.log(`QRDiv sent matter removeFabric for node "${matter?.id}" and fabricIndex ${fabricIndex}`);
     if (!matter) return;
-    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: "/api/matter", src: "Frontend", dst: "Matterbridge", params: { id: matter.id, removeFabric: fabricIndex } });
+    sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: '/api/matter', src: 'Frontend', dst: 'Matterbridge', params: { id: matter.id, removeFabric: fabricIndex } });
   };
-  
+
   const handleCopyManualCode = async () => {
     if (!matter || !matter.manualPairingCode) return;
     const text = matter.manualPairingCode.toString();
@@ -159,8 +162,9 @@ function QRDiv({ id }: QRDivProps) {
       console.error('Failed to copy manual pairing code', e);
     }
   };
-  
+
   // if(debug) console.log('QRDiv:', matterbridgeInfo, plugin);
+  // prettier-ignore
   if (!matter || !online) {
     if(debug) console.log('QRDiv rendering undefined state');
     return null;

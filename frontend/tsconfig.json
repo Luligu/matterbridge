@@ -8,11 +8,5 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "vitest/**/*.ts",
-    "vitest/**/*.tsx",
-    "vite.config.ts"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vitest/**/*.ts", "vitest/**/*.tsx", "vite.config.ts"]
 }

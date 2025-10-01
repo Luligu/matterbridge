@@ -11,15 +11,35 @@ import { debug } from '../App';
 // const debug = true;
 
 function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeInformation }) {
-  if(debug) console.log('MatterbridgeInfoTable:', matterbridgeInfo);
+  if (debug) console.log('MatterbridgeInfoTable:', matterbridgeInfo);
 
-  const excludeKeys = ['matterbridgeLatestVersion', 'matterbridgeDevVersion', 'matterFileLogger', 'fileLogger', 'matterLoggerLevel', 'loggerLevel',
-    'virtualMode', 'bridgeMode', 'restartMode', 'restartRequired', 'fixedRestartRequired', 'updateRequired',
-    'matterMdnsInterface', 'matterIpv4Address', 'matterIpv6Address', 
-    'readOnly', 'shellyBoard', 'shellySysUpdate', 'shellyMainUpdate', 'matterPort', 'matterDiscriminator', 'matterPasscode'];
+  const excludeKeys = [
+    'matterbridgeLatestVersion',
+    'matterbridgeDevVersion',
+    'matterFileLogger',
+    'fileLogger',
+    'matterLoggerLevel',
+    'loggerLevel',
+    'virtualMode',
+    'bridgeMode',
+    'restartMode',
+    'restartRequired',
+    'fixedRestartRequired',
+    'updateRequired',
+    'matterMdnsInterface',
+    'matterIpv4Address',
+    'matterIpv6Address',
+    'readOnly',
+    'shellyBoard',
+    'shellySysUpdate',
+    'shellyMainUpdate',
+    'matterPort',
+    'matterDiscriminator',
+    'matterPasscode',
+  ];
 
   const [closed, setClosed] = useState(false);
-    
+
   if (!matterbridgeInfo || closed) return null;
 
   if (debug) console.log('MatterbridgeInfoTable rendering...');
@@ -30,14 +50,24 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
         <MbfWindowHeaderText>Matterbridge Information</MbfWindowHeaderText>
         <MbfWindowIcons onClose={() => setClosed(true)} />
       </MbfWindowHeader>
-      <div className="MbfWindowDivTable">
+      <div className='MbfWindowDivTable'>
         <table style={{ border: 'none', borderCollapse: 'collapse' }}>
           <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>
             {Object.entries(matterbridgeInfo)
               .filter(([key, value]) => !excludeKeys.includes(key) && value !== null && value !== undefined && value !== '')
               .map(([key, value], index) => (
                 <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
-                  <td style={{ border: 'none', borderCollapse: 'collapse' }}>{key.replace('matterbridgeVersion', 'matterbridge').replace('frontendVersion', 'frontend').replace('homeDirectory', 'home').replace('rootDirectory', 'root').replace('matterbridgeDirectory', 'storage').replace('matterbridgeCertDirectory', 'cert').replace('matterbridgePluginDirectory', 'plugins').replace('globalModulesDirectory', 'modules')}</td>
+                  <td style={{ border: 'none', borderCollapse: 'collapse' }}>
+                    {key
+                      .replace('matterbridgeVersion', 'matterbridge')
+                      .replace('frontendVersion', 'frontend')
+                      .replace('homeDirectory', 'home')
+                      .replace('rootDirectory', 'root')
+                      .replace('matterbridgeDirectory', 'storage')
+                      .replace('matterbridgeCertDirectory', 'cert')
+                      .replace('matterbridgePluginDirectory', 'plugins')
+                      .replace('globalModulesDirectory', 'modules')}
+                  </td>
                   <td style={{ border: 'none', borderCollapse: 'collapse' }}>
                     <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={26} />
                   </td>

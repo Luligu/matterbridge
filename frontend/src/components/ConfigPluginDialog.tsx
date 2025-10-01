@@ -27,21 +27,43 @@ import Add from '@mui/icons-material/Add'; // For AddButton
 import ListIcon from '@mui/icons-material/List';
 import WifiIcon from '@mui/icons-material/Wifi'; // For selectDevice icon=wifi
 import BluetoothIcon from '@mui/icons-material/Bluetooth'; // For selectDevice icon=ble
-import HubIcon from '@mui/icons-material/Hub';  // For selectDevice icon=hub
+import HubIcon from '@mui/icons-material/Hub'; // For selectDevice icon=hub
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';  // For ErrorListTemplate
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'; // For ErrorListTemplate
 import ViewInArIcon from '@mui/icons-material/ViewInAr'; // For entities icon=component
 import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=matter
 
 // @rjsf
 import Form, { IChangeEvent } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
-import { getSubmitButtonOptions, getUiOptions, getTemplate, enumOptionsValueForIndex, ariaDescribedByIds, enumOptionsIndexForValue, 
-  ADDITIONAL_PROPERTY_FLAG, WidgetProps, SubmitButtonProps, IconButtonProps, FieldTemplateProps, DescriptionFieldProps, TitleFieldProps, 
-  FieldHelpProps, ErrorListProps, FieldErrorProps, BaseInputTemplateProps, ArrayFieldTitleProps, ArrayFieldDescriptionProps, 
-  ArrayFieldTemplateProps, ArrayFieldTemplateItemType, ObjectFieldTemplateProps, WrapIfAdditionalTemplateProps, UiSchema,
-  RJSFSchema} from '@rjsf/utils';
+import {
+  getSubmitButtonOptions,
+  getUiOptions,
+  getTemplate,
+  enumOptionsValueForIndex,
+  ariaDescribedByIds,
+  enumOptionsIndexForValue,
+  ADDITIONAL_PROPERTY_FLAG,
+  WidgetProps,
+  SubmitButtonProps,
+  IconButtonProps,
+  FieldTemplateProps,
+  DescriptionFieldProps,
+  TitleFieldProps,
+  FieldHelpProps,
+  ErrorListProps,
+  FieldErrorProps,
+  BaseInputTemplateProps,
+  ArrayFieldTitleProps,
+  ArrayFieldDescriptionProps,
+  ArrayFieldTemplateProps,
+  ArrayFieldTemplateItemType,
+  ObjectFieldTemplateProps,
+  WrapIfAdditionalTemplateProps,
+  UiSchema,
+  RJSFSchema,
+} from '@rjsf/utils';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -80,17 +102,15 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   // States
   const [formData, setFormData] = useState(plugin.configJson);
   const [schema, setSchema] = useState<any>(null as any);
-  const [uiSchema, setUiSchema] = useState<UiSchema>(
-    {
-      "ui:submitButtonOptions": {
-        "submitText": "Confirm",
-      },
-      "ui:globalOptions": { orderable: true },
-    }
-  );
+  const [uiSchema, setUiSchema] = useState<UiSchema>({
+    'ui:submitButtonOptions': {
+      'submitText': 'Confirm',
+    },
+    'ui:globalOptions': { orderable: true },
+  });
 
-  const [newkey, setNewkey] = useState(''); // For ObjectFieldTemplate select from device list 
-  let currentFormData = {}
+  const [newkey, setNewkey] = useState(''); // For ObjectFieldTemplate select from device list
+  let currentFormData = {};
 
   // WebSocket message handler effect
   useEffect(() => {
@@ -137,8 +157,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     if (plugin.name && plugin.configJson && plugin.schemaJson) {
       setFormData(plugin.configJson);
       setSchema(plugin.schemaJson);
-      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
-      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
+      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/select/devices', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
+      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/select/entities', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
       if (debug) console.log('HomePlugins sent "/api/select/devices" and "/api/select/entities" for plugin:', plugin.name);
     }
 
@@ -159,7 +179,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     setFormData(data.formData);
     plugin.configJson = data.formData;
     plugin.restartRequired = true;
-    sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/savepluginconfig", src: "Frontend", dst: "Matterbridge", params: { pluginName: data.formData.name, formData: data.formData } });
+    sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/savepluginconfig', src: 'Frontend', dst: 'Matterbridge', params: { pluginName: data.formData.name, formData: data.formData } });
     // Close the dialog
     onClose();
   };
@@ -172,28 +192,30 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const additional = ADDITIONAL_PROPERTY_FLAG in schema;
 
     if (!additional) {
-      return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>
-          {children}
-        </Box>
-      );
+      return <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>{children}</Box>;
     }
     const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onKeyChange(target && target.value);
     return (
       <Box sx={{ display: 'flex', flexDirection: 'row', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>
-        <TextField id={`${id}-key`} name={`${id}-key`} required={required} disabled={disabled || readonly} defaultValue={label}
-          onBlur={!readonly ? handleBlur : undefined} type='text' variant="outlined" sx={{ width: '250px', minWidth: '250px', maxWidth: '250px', marginRight: '20px' }} />
-        <Box sx={{ flex: 1 }}>
-          {children}
-        </Box>
+        <TextField
+          id={`${id}-key`}
+          name={`${id}-key`}
+          required={required}
+          disabled={disabled || readonly}
+          defaultValue={label}
+          onBlur={!readonly ? handleBlur : undefined}
+          type='text'
+          variant='outlined'
+          sx={{ width: '250px', minWidth: '250px', maxWidth: '250px', marginRight: '20px' }}
+        />
+        <Box sx={{ flex: 1 }}>{children}</Box>
         <RemoveButton disabled={disabled || readonly} onClick={onDropPropertyClick(label)} registry={registry} />
       </Box>
     );
   }
 
   function FieldTemplate(props: FieldTemplateProps) {
-    const { children, description, displayLabel, errors, help, hidden,
-      registry, uiSchema } = props;
+    const { children, description, displayLabel, errors, help, hidden, registry, uiSchema } = props;
     const uiOptions = getUiOptions(uiSchema);
     const WrapIfAdditionalTemplate = getTemplate('WrapIfAdditionalTemplate', registry, uiOptions);
     // const rjsfDebug = true;
@@ -219,7 +241,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     if (rjsfDebug) console.log('DescriptionFieldTemplate:', props);
     if (!description) return null;
     return (
-      <Typography sx={descriptionSx}>{/* id: {id} desc: */}{description}</Typography>
+      <Typography sx={descriptionSx}>
+        {/* id: {id} desc: */}
+        {description}
+      </Typography>
     );
   }
 
@@ -229,7 +254,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     if (!title) return null;
     return (
       <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
-        <Typography sx={titleSx}>{/* id: {id} title: */}Title {title} {required && <mark>***</mark>}</Typography>
+        <Typography sx={titleSx}>
+          {/* id: {id} title: */}Title {title} {required && <mark>***</mark>}
+        </Typography>
       </Box>
     );
   }
@@ -240,7 +267,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     if (!help) return null;
     return (
       <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
-        <Typography sx={helpSx}>{/* id: {id} help: */}{help}</Typography>
+        <Typography sx={helpSx}>
+          {/* id: {id} help: */}
+          {help}
+        </Typography>
       </Box>
     );
   }
@@ -252,12 +282,14 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     if (!errors) return null;
     return (
       <Box sx={{ padding: '10px', margin: '10px', border: '1px solid grey' }}>
-        <Typography color='error' sx={errorTitleSx}>Please fix the following errors:</Typography>
+        <Typography color='error' sx={errorTitleSx}>
+          Please fix the following errors:
+        </Typography>
         <List>
           {errors.map((error, index) => (
             <ListItem key={index}>
               <ListItemIcon>
-                <ErrorOutlineIcon color="error" />
+                <ErrorOutlineIcon color='error' />
               </ListItemIcon>
               <ListItemText primary={error.stack} />
             </ListItem>
@@ -265,7 +297,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         </List>
       </Box>
     );
-  };
+  }
 
   // Shows the field error at the bottom of the field
   function FieldErrorTemplate(props: FieldErrorProps) {
@@ -275,26 +307,39 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     return (
       <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
         {errors.map((error, index) => (
-          <Typography key={index} color="error" variant="body2" sx={{ marginLeft: 1 }}>
+          <Typography key={index} color='error' variant='body2' sx={{ marginLeft: 1 }}>
             This field {error}
           </Typography>
         ))}
       </Box>
     );
-  };
+  }
 
   function BaseInputTemplate(props: BaseInputTemplateProps) {
-    const { id, name, _schema, _uiSchema, value, options, label, type, placeholder, required, disabled, readonly, autofocus,
-      onChange, onChangeOverride, onBlur, onFocus, _rawErrors, _hideError, _registry, _formContext } = props;
+    const { id, name, _schema, _uiSchema, value, options, label, type, placeholder, required, disabled, readonly, autofocus, onChange, onChangeOverride, onBlur, onFocus, _rawErrors, _hideError, _registry, _formContext } = props;
     if (rjsfDebug) console.log('BaseInputTemplate:', props);
     const _onChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(value === '' ? options.emptyValue : value);
     const _onBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, target && target.value);
     const _onFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, target && target.value);
     return (
       <Box sx={{ padding: '0px', margin: '0px' }}>
-        <TextField id={id} name={id} label={placeholder && placeholder !== '' ? label : undefined} variant="outlined" placeholder={placeholder && placeholder !== '' ? placeholder : label}
-          required={required} disabled={disabled || readonly} autoFocus={autofocus} value={value || value === 0 ? value : ''} type={type} autoComplete={type === 'password' ? 'current-password' : name}
-          onChange={onChangeOverride || _onChange} onBlur={_onBlur} onFocus={_onFocus} fullWidth />
+        <TextField
+          id={id}
+          name={id}
+          label={placeholder && placeholder !== '' ? label : undefined}
+          variant='outlined'
+          placeholder={placeholder && placeholder !== '' ? placeholder : label}
+          required={required}
+          disabled={disabled || readonly}
+          autoFocus={autofocus}
+          value={value || value === 0 ? value : ''}
+          type={type}
+          autoComplete={type === 'password' ? 'current-password' : name}
+          onChange={onChangeOverride || _onChange}
+          onBlur={_onBlur}
+          onFocus={_onFocus}
+          fullWidth
+        />
       </Box>
     );
   }
@@ -346,10 +391,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       // console.log('ArrayFieldTemplate: handleSelectValue', value);
       setDialogDeviceOpen(false);
       // Trigger onAddClick to add the selected new item
-      if (schema.selectFrom === 'serial')
-        (schema as any).items.default = value.serial;
-      else if (schema.selectFrom === 'name')
-        (schema as any).items.default = value.name;
+      if (schema.selectFrom === 'serial') (schema as any).items.default = value.serial;
+      else if (schema.selectFrom === 'name') (schema as any).items.default = value.name;
       onAddClick();
     };
 
@@ -357,23 +400,19 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
       setDialogEntityOpen(false);
       // Trigger onAddClick to add the selected new item
-      if (schema.selectEntityFrom === 'name')
-        (schema as any).items.default = value.name;
-      else if (schema.selectEntityFrom === 'description')
-        (schema as any).items.default = value.description;
+      if (schema.selectEntityFrom === 'name') (schema as any).items.default = value.name;
+      else if (schema.selectEntityFrom === 'description') (schema as any).items.default = value.description;
       onAddClick();
-    }
+    };
 
     const handleSelectDeviceEntityValue = (value: ApiSelectDeviceEntity) => {
       // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
       setDialogDeviceEntityOpen(false);
       // Trigger onAddClick to add the selected new item
-      if (schema.selectDeviceEntityFrom === 'name')
-        (schema as any).items.default = value.name;
-      else if (schema.selectDeviceEntityFrom === 'description')
-        (schema as any).items.default = value.description;
+      if (schema.selectDeviceEntityFrom === 'name') (schema as any).items.default = value.name;
+      else if (schema.selectDeviceEntityFrom === 'description') (schema as any).items.default = value.description;
       onAddClick();
-    }
+    };
 
     // const rjsfDebug = true;
 
@@ -381,34 +420,32 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       <Box sx={{ margin: '0px', padding: '5px 10px 5px 10px', border: rjsfDebug ? '2px solid yellow' : '1px solid grey' }}>
         {title && (
           <Box sx={{ margin: '0px', padding: '0px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            {title && (
-              <Typography sx={titleSx}>{title}</Typography>
-            )}
+            {title && <Typography sx={titleSx}>{title}</Typography>}
             {canAdd && (
               <Box sx={{ margin: '0px', padding: '0px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {schema.selectFrom &&
-                  <Tooltip title="Add a device from the list">
-                    <IconButton onClick={handleDialogDeviceToggle} size="small" color="primary" sx={iconButtonSx}>
+                {schema.selectFrom && (
+                  <Tooltip title='Add a device from the list'>
+                    <IconButton onClick={handleDialogDeviceToggle} size='small' color='primary' sx={iconButtonSx}>
                       <ListIcon />
                     </IconButton>
                   </Tooltip>
-                }
-                {schema.selectEntityFrom &&
-                  <Tooltip title="Add an entity from the list">
-                    <IconButton onClick={handleDialogEntityToggle} size="small" color="primary" sx={iconButtonSx}>
+                )}
+                {schema.selectEntityFrom && (
+                  <Tooltip title='Add an entity from the list'>
+                    <IconButton onClick={handleDialogEntityToggle} size='small' color='primary' sx={iconButtonSx}>
                       <ListIcon />
                     </IconButton>
                   </Tooltip>
-                }
-                {schema.selectDeviceEntityFrom &&
-                  <Tooltip title="Add a device entity from the list">
-                    <IconButton onClick={handleDialogDeviceEntityToggle} size="small" color="primary" sx={iconButtonSx}>
+                )}
+                {schema.selectDeviceEntityFrom && (
+                  <Tooltip title='Add a device entity from the list'>
+                    <IconButton onClick={handleDialogDeviceEntityToggle} size='small' color='primary' sx={iconButtonSx}>
                       <ListIcon />
                     </IconButton>
                   </Tooltip>
-                }
-                <Tooltip title="Add a new item">
-                  <IconButton onClick={onAddClick} size="small" color="primary" sx={iconButtonSx}>
+                )}
+                <Tooltip title='Add a new item'>
+                  <IconButton onClick={onAddClick} size='small' color='primary' sx={iconButtonSx}>
                     <Add />
                   </IconButton>
                 </Tooltip>
@@ -416,55 +453,65 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
             )}
           </Box>
         )}
-        {schema.description && (
-          <Typography sx={descriptionSx}>{schema.description}</Typography>
-        )}
+        {schema.description && <Typography sx={descriptionSx}>{schema.description}</Typography>}
         {props.items.map((element) => (
           <Box key={element.index} sx={{ margin: '2px 0px', padding: '0px', display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ flexGrow: 1, marginRight: '10px' }}>
-              {element.children}
-            </Box>
-            <IconButton disabled={!element.hasMoveUp} onClick={element.onReorderClick(element.index, element.index - 1)} size="small" color="primary" sx={iconButtonSx}>
+            <Box sx={{ flexGrow: 1, marginRight: '10px' }}>{element.children}</Box>
+            <IconButton disabled={!element.hasMoveUp} onClick={element.onReorderClick(element.index, element.index - 1)} size='small' color='primary' sx={iconButtonSx}>
               <KeyboardDoubleArrowUpIcon />
             </IconButton>
-            <IconButton disabled={!element.hasMoveDown} onClick={element.onReorderClick(element.index, element.index + 1)} size="small" color="primary" sx={iconButtonSx}>
+            <IconButton disabled={!element.hasMoveDown} onClick={element.onReorderClick(element.index, element.index + 1)} size='small' color='primary' sx={iconButtonSx}>
               <KeyboardDoubleArrowDownIcon />
             </IconButton>
-            <IconButton onClick={element.onDropIndexClick(element.index)} size="small" color="primary" sx={iconButtonSx}>
+            <IconButton onClick={element.onDropIndexClick(element.index)} size='small' color='primary' sx={iconButtonSx}>
               <DeleteForever />
             </IconButton>
           </Box>
         ))}
 
         {/* Dialog for selecting a device */}
-        <Dialog open={dialogDeviceOpen} onClose={handleDialogDeviceToggle} PaperProps={{
-          sx: {
-            maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
-            maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
-            overflow: 'auto',  // Allow scrolling for overflowing content
-          },
-        }}>
+        <Dialog
+          open={dialogDeviceOpen}
+          onClose={handleDialogDeviceToggle}
+          PaperProps={{
+            sx: {
+              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+              maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
+              overflow: 'auto', // Allow scrolling for overflowing content
+            },
+          }}
+        >
           <DialogTitle>Select a device</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>Filter by:</Typography>
-              <TextField
-                fullWidth
-                variant="outlined"
-                value={filter}
-                onChange={handleFilterChange}
-                placeholder="Enter serial or name"
-              />
+              <Typography variant='subtitle1' sx={{ whiteSpace: 'nowrap' }}>
+                Filter by:
+              </Typography>
+              <TextField fullWidth variant='outlined' value={filter} onChange={handleFilterChange} placeholder='Enter serial or name' />
             </Box>
             <List dense>
-              {selectDevices.filter((v) => v.serial.toLowerCase().includes(filter.toLowerCase()) || v.name.toLowerCase().includes(filter.toLowerCase())).map((value, index) => (
-                <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listItemButtonSx}>
-                  {value.icon === 'wifi' && <ListItemIcon><WifiIcon style={listItemIconStyle} /></ListItemIcon>}
-                  {value.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listItemIconStyle} /></ListItemIcon>}
-                  {value.icon === 'hub' && <ListItemIcon><HubIcon style={listItemIconStyle} /></ListItemIcon>}
-                  <ListItemText primary={value.name} secondary={value.serial} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
-                </ListItemButton>
-              ))}
+              {selectDevices
+                .filter((v) => v.serial.toLowerCase().includes(filter.toLowerCase()) || v.name.toLowerCase().includes(filter.toLowerCase()))
+                .map((value, index) => (
+                  <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listItemButtonSx}>
+                    {value.icon === 'wifi' && (
+                      <ListItemIcon>
+                        <WifiIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    {value.icon === 'ble' && (
+                      <ListItemIcon>
+                        <BluetoothIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    {value.icon === 'hub' && (
+                      <ListItemIcon>
+                        <HubIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    <ListItemText primary={value.name} secondary={value.serial} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
+                  </ListItemButton>
+                ))}
             </List>
           </DialogContent>
           <DialogActions>
@@ -473,36 +520,58 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         </Dialog>
 
         {/* Dialog for selecting an entity */}
-        <Dialog open={dialogEntityOpen} onClose={handleDialogEntityToggle} PaperProps={{
-          sx: {
-            maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
-            maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
-            overflow: 'auto',  // Allow scrolling for overflowing content
-          },
-        }}>
+        <Dialog
+          open={dialogEntityOpen}
+          onClose={handleDialogEntityToggle}
+          PaperProps={{
+            sx: {
+              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+              maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
+              overflow: 'auto', // Allow scrolling for overflowing content
+            },
+          }}
+        >
           <DialogTitle>Select an entity</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>Filter by:</Typography>
-              <TextField
-                fullWidth
-                variant="outlined"
-                value={filter}
-                onChange={handleFilterChange}
-                placeholder="Enter name or description"
-              />
+              <Typography variant='subtitle1' sx={{ whiteSpace: 'nowrap' }}>
+                Filter by:
+              </Typography>
+              <TextField fullWidth variant='outlined' value={filter} onChange={handleFilterChange} placeholder='Enter name or description' />
             </Box>
             <List dense>
-              {selectEntities.filter((v) => v.name.toLowerCase().includes(filter.toLowerCase()) || v.description.toLowerCase().includes(filter.toLowerCase())).map((value, index) => (
-                <ListItemButton onClick={() => handleSelectEntityValue(value)} key={index} sx={listItemButtonSx}>
-                  {value.icon === 'wifi' && <ListItemIcon><WifiIcon style={listItemIconStyle} /></ListItemIcon>}
-                  {value.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listItemIconStyle} /></ListItemIcon>}
-                  {value.icon === 'hub' && <ListItemIcon><HubIcon style={listItemIconStyle} /></ListItemIcon>}
-                  {value.icon === 'component' && <ListItemIcon><ViewInArIcon style={listItemIconStyle} /></ListItemIcon>}
-                  {value.icon === 'matter' && <ListItemIcon><DeviceHubIcon style={listItemIconStyle} /></ListItemIcon>}
-                  <ListItemText primary={value.name} secondary={value.description} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
-                </ListItemButton>
-              ))}
+              {selectEntities
+                .filter((v) => v.name.toLowerCase().includes(filter.toLowerCase()) || v.description.toLowerCase().includes(filter.toLowerCase()))
+                .map((value, index) => (
+                  <ListItemButton onClick={() => handleSelectEntityValue(value)} key={index} sx={listItemButtonSx}>
+                    {value.icon === 'wifi' && (
+                      <ListItemIcon>
+                        <WifiIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    {value.icon === 'ble' && (
+                      <ListItemIcon>
+                        <BluetoothIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    {value.icon === 'hub' && (
+                      <ListItemIcon>
+                        <HubIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    {value.icon === 'component' && (
+                      <ListItemIcon>
+                        <ViewInArIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    {value.icon === 'matter' && (
+                      <ListItemIcon>
+                        <DeviceHubIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    <ListItemText primary={value.name} secondary={value.description} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
+                  </ListItemButton>
+                ))}
             </List>
           </DialogContent>
           <DialogActions>
@@ -511,37 +580,62 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         </Dialog>
 
         {/* Dialog for selecting a device entity */}
-        <Dialog open={dialogDeviceEntityOpen} onClose={handleDialogDeviceEntityToggle} PaperProps={{
-          sx: {
-            maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
-            maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
-            overflow: 'auto',  // Allow scrolling for overflowing content
-          },
-        }}>
+        <Dialog
+          open={dialogDeviceEntityOpen}
+          onClose={handleDialogDeviceEntityToggle}
+          PaperProps={{
+            sx: {
+              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+              maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
+              overflow: 'auto', // Allow scrolling for overflowing content
+            },
+          }}
+        >
           <DialogTitle>Select an entity for {title}</DialogTitle>
           <DialogContent>
             <List dense>
-              {selectDevices.filter((d) => d.serial === title || d.name === title).map((value) => {
-                // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue value:', value, value.entities);
-                // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue schema:', schema);
-                return value.entities?.map((entity, index) => (
-                  <ListItemButton onClick={() => handleSelectDeviceEntityValue(entity)} key={index} sx={listItemButtonSx}>
-                    {entity.icon === 'wifi' && <ListItemIcon><WifiIcon style={listItemIconStyle} /></ListItemIcon>}
-                    {entity.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listItemIconStyle} /></ListItemIcon>}
-                    {entity.icon === 'hub' && <ListItemIcon><HubIcon style={listItemIconStyle} /></ListItemIcon>}
-                    {entity.icon === 'component' && <ListItemIcon><ViewInArIcon style={listItemIconStyle} /></ListItemIcon>}
-                    {entity.icon === 'matter' && <ListItemIcon><DeviceHubIcon style={listItemIconStyle} /></ListItemIcon>}
-                    <ListItemText primary={entity.name} secondary={entity.description} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
-                  </ListItemButton>
-                ));
-              })}
+              {selectDevices
+                .filter((d) => d.serial === title || d.name === title)
+                .map((value) => {
+                  // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue value:', value, value.entities);
+                  // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue schema:', schema);
+                  return value.entities?.map((entity, index) => (
+                    <ListItemButton onClick={() => handleSelectDeviceEntityValue(entity)} key={index} sx={listItemButtonSx}>
+                      {entity.icon === 'wifi' && (
+                        <ListItemIcon>
+                          <WifiIcon style={listItemIconStyle} />
+                        </ListItemIcon>
+                      )}
+                      {entity.icon === 'ble' && (
+                        <ListItemIcon>
+                          <BluetoothIcon style={listItemIconStyle} />
+                        </ListItemIcon>
+                      )}
+                      {entity.icon === 'hub' && (
+                        <ListItemIcon>
+                          <HubIcon style={listItemIconStyle} />
+                        </ListItemIcon>
+                      )}
+                      {entity.icon === 'component' && (
+                        <ListItemIcon>
+                          <ViewInArIcon style={listItemIconStyle} />
+                        </ListItemIcon>
+                      )}
+                      {entity.icon === 'matter' && (
+                        <ListItemIcon>
+                          <DeviceHubIcon style={listItemIconStyle} />
+                        </ListItemIcon>
+                      )}
+                      <ListItemText primary={entity.name} secondary={entity.description} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
+                    </ListItemButton>
+                  ));
+                })}
             </List>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleDialogDeviceEntityToggle}>Close</Button>
           </DialogActions>
         </Dialog>
-
       </Box>
     );
   }
@@ -564,10 +658,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       if (debug) console.log(`ObjectFieldTemplate: handleSelectValue value "${value.serial}" for schema "${schema.selectFrom}"`);
       setDialogDeviceOpen(false);
       let newkey = '';
-      if (schema.selectFrom === 'serial')
-        newkey = value.serial;
-      else if (schema.selectFrom === 'name')
-        newkey = value.name;
+      if (schema.selectFrom === 'serial') newkey = value.serial;
+      else if (schema.selectFrom === 'name') newkey = value.name;
       setNewkey(newkey);
       if (debug) console.log(`ObjectFieldTemplate: handleSelectValue newkey "${newkey}"`);
 
@@ -615,15 +707,15 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px' }}>
             <Typography sx={titleSx}>{title}</Typography>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px' }}>
-              {schema.selectFrom &&
-                <Tooltip title="Add a device from the list">
-                  <IconButton onClick={handleDialogDeviceToggle} size="small" color="primary" sx={iconButtonSx}>
+              {schema.selectFrom && (
+                <Tooltip title='Add a device from the list'>
+                  <IconButton onClick={handleDialogDeviceToggle} size='small' color='primary' sx={iconButtonSx}>
                     <ListIcon />
                   </IconButton>
                 </Tooltip>
-              }
-              <Tooltip title="Add a new item">
-                <IconButton onClick={handleAddItem} size="small" color="primary" sx={iconButtonSx}>
+              )}
+              <Tooltip title='Add a new item'>
+                <IconButton onClick={handleAddItem} size='small' color='primary' sx={iconButtonSx}>
                   <Add />
                 </IconButton>
               </Tooltip>
@@ -637,62 +729,73 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           </Box>
         )}
         {/* Iterate over each property in the object */}
-        {properties.map(({ content, name, hidden }) => (
-          !hidden && (
-            <Box
-              key={name}
-              sx={{
-                margin: '0px',
-                marginBottom: '10px',
-                padding: ['object', 'array', 'boolean'].includes((schema as any).properties[name].type) ? '0px' : boxPadding,
-                border: ['object', 'array', 'boolean'].includes((schema as any).properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
-              }}>
-              {!['object', 'array', 'boolean'].includes((schema as any).properties[name].type) && (
-                <Typography sx={titleSx}>{name}</Typography>
-              )}
-              <Box sx={{ flexGrow: 1, padding: '0px', margin: '0px' }}>
-                {content}
+        {properties.map(
+          ({ content, name, hidden }) =>
+            !hidden && (
+              <Box
+                key={name}
+                sx={{
+                  margin: '0px',
+                  marginBottom: '10px',
+                  padding: ['object', 'array', 'boolean'].includes((schema as any).properties[name].type) ? '0px' : boxPadding,
+                  border: ['object', 'array', 'boolean'].includes((schema as any).properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
+                }}
+              >
+                {!['object', 'array', 'boolean'].includes((schema as any).properties[name].type) && <Typography sx={titleSx}>{name}</Typography>}
+                <Box sx={{ flexGrow: 1, padding: '0px', margin: '0px' }}>{content}</Box>
               </Box>
-            </Box>
-          )
-        ))}
+            ),
+        )}
 
         {/* Dialog for selecting a device */}
-        <Dialog open={dialogDeviceOpen} onClose={handleDialogDeviceToggle} PaperProps={{
-          sx: {
-            maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
-            maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
-            overflow: 'auto',  // Allow scrolling for overflowing content
-          },
-        }}>
+        <Dialog
+          open={dialogDeviceOpen}
+          onClose={handleDialogDeviceToggle}
+          PaperProps={{
+            sx: {
+              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+              maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
+              overflow: 'auto', // Allow scrolling for overflowing content
+            },
+          }}
+        >
           <DialogTitle>Select a device</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>Filter by:</Typography>
-              <TextField
-                fullWidth
-                variant="outlined"
-                value={filter}
-                onChange={handleFilterChange}
-                placeholder="Enter serial or name"
-              />
+              <Typography variant='subtitle1' sx={{ whiteSpace: 'nowrap' }}>
+                Filter by:
+              </Typography>
+              <TextField fullWidth variant='outlined' value={filter} onChange={handleFilterChange} placeholder='Enter serial or name' />
             </Box>
             <List dense>
-              {selectDevices.filter((v) => v.serial.toLowerCase().includes(filter.toLowerCase()) || v.name.toLowerCase().includes(filter.toLowerCase())).map((value, index) => (
-                <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listItemButtonSx}>
-                  {value.icon === 'wifi' && <ListItemIcon><WifiIcon style={listItemIconStyle} /></ListItemIcon>}
-                  {value.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listItemIconStyle} /></ListItemIcon>}
-                  {value.icon === 'hub' && <ListItemIcon><HubIcon style={listItemIconStyle} /></ListItemIcon>}
-                  <ListItemText primary={value.name} secondary={value.serial} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
-                </ListItemButton>
-              ))}
+              {selectDevices
+                .filter((v) => v.serial.toLowerCase().includes(filter.toLowerCase()) || v.name.toLowerCase().includes(filter.toLowerCase()))
+                .map((value, index) => (
+                  <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listItemButtonSx}>
+                    {value.icon === 'wifi' && (
+                      <ListItemIcon>
+                        <WifiIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    {value.icon === 'ble' && (
+                      <ListItemIcon>
+                        <BluetoothIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    {value.icon === 'hub' && (
+                      <ListItemIcon>
+                        <HubIcon style={listItemIconStyle} />
+                      </ListItemIcon>
+                    )}
+                    <ListItemText primary={value.name} secondary={value.serial} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
+                  </ListItemButton>
+                ))}
             </List>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleDialogDeviceToggle}>Close</Button>
           </DialogActions>
         </Dialog>
-
       </Box>
     );
   }
@@ -714,13 +817,13 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         </Button>
       </div>
     );
-  };
+  }
 
   function RemoveButton(props: IconButtonProps) {
     const { className, disabled, onClick, registry, style, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('RemoveButton:', otherProps);
     return (
-      <Tooltip title="Remove the item">
+      <Tooltip title='Remove the item'>
         <IconButton disabled={disabled} size='small' color='primary' onClick={onClick}>
           <DeleteForever />
         </IconButton>
@@ -732,7 +835,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const { className, disabled, onClick, registry, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('AddButton:', otherProps);
     return (
-      <Tooltip title="Add an item">
+      <Tooltip title='Add an item'>
         <IconButton size='small' color='primary' onClick={onClick}>
           <Add />
         </IconButton>
@@ -744,7 +847,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const { disabled, onClick, registry, style, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('MoveUpButton:', otherProps);
     return (
-      <Tooltip title="Move up the item">
+      <Tooltip title='Move up the item'>
         <IconButton size='small' color='primary' onClick={onClick}>
           <KeyboardDoubleArrowUpIcon />
         </IconButton>
@@ -756,7 +859,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const { disabled, onClick, registry, style, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('MoveDownButton:', otherProps);
     return (
-      <Tooltip title="Move down the item">
+      <Tooltip title='Move down the item'>
         <IconButton size='small' color='primary' onClick={onClick}>
           <KeyboardDoubleArrowDownIcon />
         </IconButton>
@@ -778,7 +881,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
 
     const onClick = () => {
       if (debug) console.log(`CheckboxWidget onClick plugin="${plugin.name}" action="${name}" value="${fieldValue}"`);
-      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/action", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id } });
+      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/action', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id } });
       if (schema.buttonClose === true) onClose();
       else if (schema.buttonSave === true) handleSaveChanges({ formData } as any); // Save changes and we don't close (no need for other props).
     };
@@ -787,7 +890,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       return (
         <Box sx={{ margin: '0px', padding: '10px', border: '1px solid grey', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography sx={descriptionSx}>{schema.description}</Typography>
-          <Button variant='contained' color='primary' onClick={() => onClick()}>{schema.buttonText}</Button>
+          <Button variant='contained' color='primary' onClick={() => onClick()}>
+            {schema.buttonText}
+          </Button>
         </Box>
       );
     } else if (schema.buttonField && schema.description) {
@@ -795,7 +900,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         <Box sx={{ margin: '0px', padding: '10px', gap: '20px', border: '1px solid grey', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography sx={descriptionSx}>{schema.description}</Typography>
           <TextField id={name + '-input'} name={name} label={schema.textLabel} placeholder={schema.textPlaceholder} onChange={(event) => onChangeField(event.target.value)} sx={{ width: '250px', minWidth: '250px', maxWidth: '250px' }} />
-          <Button id={name + '-button'} variant='contained' color='primary' disabled={fieldValue === undefined} onClick={() => onClick()}>{schema.buttonField}</Button>
+          <Button id={name + '-button'} variant='contained' color='primary' disabled={fieldValue === undefined} onClick={() => onClick()}>
+            {schema.buttonField}
+          </Button>
         </Box>
       );
     }
@@ -807,12 +914,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
             <Checkbox checked={value} readOnly={readonly} onChange={() => onChange(!value)} sx={{ padding: '0px', margin: '0px' }} />
           </Box>
         )}
-        {schema.description && (
-          <Typography sx={descriptionSx}>{schema.description}</Typography>
-        )}
+        {schema.description && <Typography sx={descriptionSx}>{schema.description}</Typography>}
       </Box>
     );
-  };
+  }
 
   function SelectWidget({
     schema,
@@ -846,12 +951,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const emptyValue = multiple ? [] : '';
     const isEmpty = typeof value === 'undefined' || (multiple && value.length < 1) || (!multiple && value === emptyValue);
 
-    const _onChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) =>
-      onChange(enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
-    const _onBlur = ({ target }: React.FocusEvent<HTMLInputElement>) =>
-      onBlur(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
-    const _onFocus = ({ target }: React.FocusEvent<HTMLInputElement>) =>
-      onFocus(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
+    const _onChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
+    const _onBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
+    const _onFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
     const selectedIndexes = enumOptionsIndexForValue(value, enumOptions, multiple);
     const { InputLabelProps, SelectProps, autocomplete, ...textFieldRemainingProps } = textFieldProps;
     const showPlaceholderOption = !multiple && schema.default === undefined;
@@ -903,7 +1005,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     <Dialog open={open} onClose={onClose} slotProps={{ paper: { sx: { maxWidth: '800px' } } }}>
       <DialogTitle gap={'20px'}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
+          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
           <h3>Matterbridge plugin configuration</h3>
         </div>
       </DialogTitle>
@@ -914,20 +1016,20 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           uiSchema={uiSchema}
           validator={validator}
           templates={{
-            FieldTemplate, 
-            BaseInputTemplate, 
-            TitleFieldTemplate, 
-            DescriptionFieldTemplate, 
-            FieldHelpTemplate, 
-            FieldErrorTemplate, 
-            ErrorListTemplate, 
+            FieldTemplate,
+            BaseInputTemplate,
+            TitleFieldTemplate,
+            DescriptionFieldTemplate,
+            FieldHelpTemplate,
+            FieldErrorTemplate,
+            ErrorListTemplate,
             WrapIfAdditionalTemplate,
-            ArrayFieldTitleTemplate, 
-            ArrayFieldDescriptionTemplate, 
-            ArrayFieldItemTemplate, 
-            ArrayFieldTemplate, 
-            ObjectFieldTemplate, 
-            ButtonTemplates: { SubmitButton, RemoveButton, AddButton, MoveUpButton, MoveDownButton }
+            ArrayFieldTitleTemplate,
+            ArrayFieldDescriptionTemplate,
+            ArrayFieldItemTemplate,
+            ArrayFieldTemplate,
+            ObjectFieldTemplate,
+            ButtonTemplates: { SubmitButton, RemoveButton, AddButton, MoveUpButton, MoveDownButton },
           }}
           widgets={{ CheckboxWidget, SelectWidget }}
           onChange={handleFormChange}
@@ -937,5 +1039,3 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     </Dialog>
   );
 };
-
-

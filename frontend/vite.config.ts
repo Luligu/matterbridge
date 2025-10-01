@@ -49,8 +49,8 @@ export default defineConfig({
             return 'vendor_node_modules';
           }
           return null;
-        }
-      }
-    }
-  }
+        },
+      },
+    },
+  },
 });

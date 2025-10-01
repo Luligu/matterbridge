@@ -1,15 +1,15 @@
 // React
-import React, { ReactNode } from "react";
+import React, { ReactNode } from 'react';
 
 // @mui/material
-import { IconButton, Tooltip } from "@mui/material";
+import { IconButton, Tooltip } from '@mui/material';
 
 // @mdi/js
-import Icon from "@mdi/react";
-import { mdiClose } from "@mdi/js";
+import Icon from '@mdi/react';
+import { mdiClose } from '@mdi/js';
 
 // Frontend
-import { enableWindows } from "../App";
+import { enableWindows } from '../App';
 
 interface MbfWindowProps {
   children: ReactNode;
@@ -20,8 +20,8 @@ export function MbfWindow({ children, style }: MbfWindowProps): React.JSX.Elemen
   const defaultStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
-    flex: '0 0 auto', 
-    width: '100%', 
+    flex: '0 0 auto',
+    width: '100%',
     overflow: 'hidden',
     margin: '0px',
     padding: '0px',
@@ -33,11 +33,7 @@ export function MbfWindow({ children, style }: MbfWindowProps): React.JSX.Elemen
     boxSizing: 'border-box',
   };
 
-  return (
-    <div style={{ ...defaultStyle, ...style }}>
-      {children}
-    </div>
-  );
+  return <div style={{ ...defaultStyle, ...style }}>{children}</div>;
 }
 
 interface MbfWindowHeaderProps {
@@ -60,11 +56,7 @@ export function MbfWindowHeader({ children, style }: MbfWindowHeaderProps): Reac
     boxSizing: 'border-box',
   };
 
-  return (
-    <div style={{ ...defaultStyle, ...style }}>
-      {children}
-    </div>
-  );
+  return <div style={{ ...defaultStyle, ...style }}>{children}</div>;
 }
 
 interface MbfWindowHeaderTextProps {
@@ -82,11 +74,7 @@ export function MbfWindowHeaderText({ children, style }: MbfWindowHeaderTextProp
     padding: '5px 10px',
   };
 
-  return (
-    <div style={{ ...defaultStyle, ...style }}>
-      {children}
-    </div>
-  );
+  return <div style={{ ...defaultStyle, ...style }}>{children}</div>;
 }
 
 interface MbfWindowFooterProps {
@@ -108,11 +96,7 @@ export function MbfWindowFooter({ children, style }: MbfWindowFooterProps): Reac
     boxSizing: 'border-box',
   };
 
-  return (
-    <div style={{ ...defaultStyle, ...style }}>
-      {children}
-    </div>
-  );
+  return <div style={{ ...defaultStyle, ...style }}>{children}</div>;
 }
 
 interface MbfWindowFooterTextProps {
@@ -130,11 +114,7 @@ export function MbfWindowFooterText({ children, style }: MbfWindowFooterTextProp
     padding: '5px 10px',
   };
 
-  return (
-    <div style={{ ...defaultStyle, ...style }}>
-      {children}
-    </div>
-  );
+  return <div style={{ ...defaultStyle, ...style }}>{children}</div>;
 }
 
 interface MbfWindowTextProps {
@@ -152,11 +132,7 @@ export function MbfWindowText({ children, style }: MbfWindowTextProps): React.JS
     padding: '5px 10px',
   };
 
-  return (
-    <div style={{ ...defaultStyle, ...style }}>
-      {children}
-    </div>
-  );
+  return <div style={{ ...defaultStyle, ...style }}>{children}</div>;
 }
 
 interface MbfWindowIconsProps {
@@ -181,7 +157,7 @@ export function MbfWindowIcons({ children, style, onClose }: MbfWindowIconsProps
       {enableWindows && onClose && (
         <IconButton style={{ margin: '0px' }} onClick={onClose}>
           <Tooltip title={`Close the window`}>
-            <Icon path={mdiClose} size="20px" color={'var(--header-text-color)'} />
+            <Icon path={mdiClose} size='20px' color={'var(--header-text-color)'} />
           </Tooltip>
         </IconButton>
       )}

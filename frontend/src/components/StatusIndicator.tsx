@@ -12,23 +12,13 @@ interface StatusIndicatorProps {
   onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
-export function StatusIndicator({
-  status,
-  enabledText = 'Enabled',
-  disabledText = undefined,
-  tooltipText = undefined,
-  onClick
-}: StatusIndicatorProps) {
+export function StatusIndicator({ status, enabledText = 'Enabled', disabledText = undefined, tooltipText = undefined, onClick }: StatusIndicatorProps) {
   if (status === undefined) {
     return null;
   } else {
     const content = (
-      <div
-        className={status ? 'status-enabled' : 'status-disabled'}
-        style={{ cursor: 'default' }}
-        onClick={onClick}
-      >
-        {status ? enabledText : disabledText ?? enabledText}
+      <div className={status ? 'status-enabled' : 'status-disabled'} style={{ cursor: 'default' }} onClick={onClick}>
+        {status ? enabledText : (disabledText ?? enabledText)}
       </div>
     );
     if (tooltipText !== undefined) {

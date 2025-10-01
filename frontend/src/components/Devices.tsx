@@ -48,28 +48,27 @@ function Devices(): React.JSX.Element {
     setFilter(event.target.value.toLowerCase());
     localStorage.setItem('devicesFilter', event.target.value.toLowerCase());
   };
-  
+
   const handleViewModeChange = (mode: string) => {
     setViewMode(mode);
     localStorage.setItem('devicesViewMode', mode);
   };
 
-  if(debug) console.log('Devices rendering...');
+  if (debug) console.log('Devices rendering...');
   if (!online) {
-    return ( <Connecting /> );
+    return <Connecting />;
   }
   return (
     <MbfPage name='Devices'>
-
       {/* Devices Filter and View Mode Dialog */}
-      <div className="MbfWindowBodyRow" style={{ justifyContent: 'space-between', padding: 0, gap: '20px', width: '100%', height: '45px', minHeight: '45px', maxHeight: '45px' }}>
+      <div className='MbfWindowBodyRow' style={{ justifyContent: 'space-between', padding: 0, gap: '20px', width: '100%', height: '45px', minHeight: '45px', maxHeight: '45px' }}>
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
           <Typography sx={{ fontSize: '16px', fontWeight: 'normal', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>Filter by:</Typography>
           <TextField
-            variant="outlined"
+            variant='outlined'
             value={filter}
             onChange={handleFilterChange}
-            placeholder="Enter the device name or serial number"
+            placeholder='Enter the device name or serial number'
             sx={{ width: '320px' }}
             InputProps={{
               style: {
@@ -80,29 +79,24 @@ function Devices(): React.JSX.Element {
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
           <Typography sx={{ fontSize: '16px', fontWeight: 'normal', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>View mode:</Typography>
-          <IconButton onClick={() => handleViewModeChange('table')} aria-label="Table View" disabled={viewMode === 'table'}>
-              <Tooltip title="Table View">
-                <TableViewIcon style={{ color: viewMode === 'table' ? 'var(--main-icon-color)' : 'var(--primary-color)' }} />
-              </Tooltip>
-            </IconButton>
-            <IconButton onClick={() => handleViewModeChange('icon')} aria-label="Icon View" disabled={viewMode === 'icon'}>
-              <Tooltip title="Icon View (beta)">
-                <ViewModuleIcon style={{ color: viewMode === 'icon' ? 'var(--main-icon-color)' : 'var(--primary-color)' }} />
-              </Tooltip>
-            </IconButton>         
+          <IconButton onClick={() => handleViewModeChange('table')} aria-label='Table View' disabled={viewMode === 'table'}>
+            <Tooltip title='Table View'>
+              <TableViewIcon style={{ color: viewMode === 'table' ? 'var(--main-icon-color)' : 'var(--primary-color)' }} />
+            </Tooltip>
+          </IconButton>
+          <IconButton onClick={() => handleViewModeChange('icon')} aria-label='Icon View' disabled={viewMode === 'icon'}>
+            <Tooltip title='Icon View (beta)'>
+              <ViewModuleIcon style={{ color: viewMode === 'icon' ? 'var(--main-icon-color)' : 'var(--primary-color)' }} />
+            </Tooltip>
+          </IconButton>
         </Box>
       </div>
 
       {/* Table View mode*/}
-      {viewMode === 'table' && (
-        <DevicesTable filter={filter} />
-      )}
+      {viewMode === 'table' && <DevicesTable filter={filter} />}
 
       {/* Icon View mode*/}
-      {viewMode === 'icon' && (
-        <DevicesIcons filter={filter} />
-      )}
-
+      {viewMode === 'icon' && <DevicesIcons filter={filter} />}
     </MbfPage>
   );
 }

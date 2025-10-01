@@ -30,13 +30,7 @@ export interface UiContextType {
   showSnackbarMessage: (message: string, timeout?: number, severity?: 'info' | 'warning' | 'error' | 'success') => void;
   closeSnackbarMessage: (message: string) => void;
   closeSnackbar: (key?: SnackbarKey | undefined) => void;
-  showConfirmCancelDialog: (
-    title: string,
-    message: string,
-    command: string,
-    handleConfirm: (command: string) => void,
-    handleCancel: (command: string) => void
-  ) => void;
+  showConfirmCancelDialog: (title: string, message: string, command: string, handleConfirm: (command: string) => void, handleCancel: (command: string) => void) => void;
   showInstallProgress: (packageName: string) => void;
   exitInstallProgressSuccess: () => void;
   exitInstallProgressError: () => void;
@@ -51,63 +45,69 @@ interface UiProviderProps {
 }
 
 export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
-  // ******************************** Mobile ******************************** 
+  // ******************************** Mobile ********************************
   const [mobile, setMobile] = useState(false);
 
-  // ******************************** Page ******************************** 
+  // ******************************** Page ********************************
   const [currentPage, setCurrentPage] = useState<string | null>(null);
 
-  // ******************************** Snackbar ******************************** 
+  // ******************************** Snackbar ********************************
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
-  const closeSnackbarMessage = useCallback((message: string) => {
-    if(debug) console.log(`UiProvider closeSnackbarMessage: message ${message}`);
-    const messageIndex = persistMessages.findIndex((msg) => msg.message === message);
-    if (messageIndex !== -1) {
-      closeSnackbar(persistMessages[messageIndex].key);
-      persistMessages.splice(messageIndex, 1);
-      if(debug) console.log(`UiProvider closeSnackbarMessage: message ${message} removed from persistMessages`);
-    }
-  }, [closeSnackbar]);
+  const closeSnackbarMessage = useCallback(
+    (message: string) => {
+      if (debug) console.log(`UiProvider closeSnackbarMessage: message ${message}`);
+      const messageIndex = persistMessages.findIndex((msg) => msg.message === message);
+      if (messageIndex !== -1) {
+        closeSnackbar(persistMessages[messageIndex].key);
+        persistMessages.splice(messageIndex, 1);
+        if (debug) console.log(`UiProvider closeSnackbarMessage: message ${message} removed from persistMessages`);
+      }
+    },
+    [closeSnackbar],
+  );
 
-  const showSnackbarMessage = useCallback((message: string, timeout?: number, severity?: 'info' | 'warning' | 'error' | 'success') => {
-    if(debug) console.log(`UiProvider showSnackbarMessage: message ${message} timeout ${timeout}`);
-    const key = enqueueSnackbar(message, {
-      variant: 'default',
-      autoHideDuration: timeout === null || timeout === undefined || timeout > 0 ? (timeout ?? 5) * 1000 : null,
-      persist: timeout === 0,
-      content: (key) => (
-        <Box key={key} sx={{ margin: '0', padding: '0', width: '300px', marginRight: '30px' }}>
-          <Alert
-            key={key}
-            severity={severity ?? 'info'}
-            variant="filled"
-            sx={{
-              color: '#fff',
-              fontWeight: 'normal',
-              width: '100%',
-              cursor: 'pointer',
-              padding: '0px 10px',
-            }}
-            onClick={() => closeSnackbar(key)}
-            action={
-              <IconButton size="small" onClick={() => closeSnackbar(key)} sx={{ color: '#fff' }}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            }
-          >
-            {message}
-          </Alert>
-        </Box>
-      ),
-    });
-    if(timeout === 0) {
-      if(debug) console.log(`UiProvider showSnackbarMessage: message ${message} timeout ${timeout} - persist key ${key}`);
-      persistMessages.push({message, key});
-    }
-  }, [enqueueSnackbar, closeSnackbar]);
+  const showSnackbarMessage = useCallback(
+    (message: string, timeout?: number, severity?: 'info' | 'warning' | 'error' | 'success') => {
+      if (debug) console.log(`UiProvider showSnackbarMessage: message ${message} timeout ${timeout}`);
+      const key = enqueueSnackbar(message, {
+        variant: 'default',
+        autoHideDuration: timeout === null || timeout === undefined || timeout > 0 ? (timeout ?? 5) * 1000 : null,
+        persist: timeout === 0,
+        content: (key) => (
+          <Box key={key} sx={{ margin: '0', padding: '0', width: '300px', marginRight: '30px' }}>
+            <Alert
+              key={key}
+              severity={severity ?? 'info'}
+              variant='filled'
+              sx={{
+                color: '#fff',
+                fontWeight: 'normal',
+                width: '100%',
+                cursor: 'pointer',
+                padding: '0px 10px',
+              }}
+              onClick={() => closeSnackbar(key)}
+              action={
+                <IconButton size='small' onClick={() => closeSnackbar(key)} sx={{ color: '#fff' }}>
+                  <CloseIcon fontSize='small' />
+                </IconButton>
+              }
+            >
+              {message}
+            </Alert>
+          </Box>
+        ),
+      });
+      if (timeout === 0) {
+        if (debug) console.log(`UiProvider showSnackbarMessage: message ${message} timeout ${timeout} - persist key ${key}`);
+        persistMessages.push({ message, key });
+      }
+    },
+    [enqueueSnackbar, closeSnackbar],
+  );
 
-  // ******************************** ConfirmCancelForm ******************************** 
+  // ******************************** ConfirmCancelForm ********************************
   const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(false);
   const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('');
   const [confirmCancelFormMessage, setConfirmCancelFormMessage] = useState('');
@@ -116,7 +116,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   const confirmCancelFormHandleCancelRef = useRef<((command: string) => void) | null>(null);
 
   const handleConfirm = () => {
-    if(debug) console.log(`UiProvider handle confirm action ${confirmCancelFormCommand}`);
+    if (debug) console.log(`UiProvider handle confirm action ${confirmCancelFormCommand}`);
     setShowConfirmCancelForm(false);
     if (confirmCancelFormHandleConfirmRef.current) {
       confirmCancelFormHandleConfirmRef.current(confirmCancelFormCommand);
@@ -124,7 +124,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   };
 
   const handleCancel = () => {
-    if(debug) console.log(`UiProvider handle cancel action ${confirmCancelFormCommand}`);
+    if (debug) console.log(`UiProvider handle cancel action ${confirmCancelFormCommand}`);
     setShowConfirmCancelForm(false);
     if (confirmCancelFormHandleCancelRef.current) {
       confirmCancelFormHandleCancelRef.current(confirmCancelFormCommand);
@@ -132,7 +132,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   };
 
   const showConfirmCancelDialog = useCallback((title: string, message: string, command: string, handleConfirm: (command: string) => void, handleCancel: (command: string) => void) => {
-    if(debug) console.log(`UiProvider showConfirmCancelDialog for command ${command}`);
+    if (debug) console.log(`UiProvider showConfirmCancelDialog for command ${command}`);
     setConfirmCancelFormTitle(title);
     setConfirmCancelFormMessage(message);
     setConfirmCancelFormCommand(command);
@@ -141,60 +141,77 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     setShowConfirmCancelForm(true);
   }, []);
 
-  // ******************************** InstallProgressDialog ******************************** 
+  // ******************************** InstallProgressDialog ********************************
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
   const [installPackageName, setInstallPackageName] = useState('');
   const [installOutput, setInstallOutput] = useState('');
 
   const showInstallProgress = useCallback((packageName: string) => {
-    if(debug) console.log(`UiProvider show install progress for package ${packageName}`);
+    if (debug) console.log(`UiProvider show install progress for package ${packageName}`);
     setInstallPackageName(packageName);
     setInstallOutput(`Starting installation of ${packageName}...\n`);
     setInstallDialogOpen(true);
-}, []);
+  }, []);
 
   const addInstallProgress = useCallback((output: string) => {
-    if(debug) console.log(`UiProvider addInstallProgress: output ${output}`);
-    setInstallOutput( prevOutput => prevOutput + output + '\n' );
+    if (debug) console.log(`UiProvider addInstallProgress: output ${output}`);
+    setInstallOutput((prevOutput) => prevOutput + output + '\n');
   }, []);
 
   const exitInstallProgressSuccess = useCallback(() => {
-    if(debug) console.log(`UiProvider exitInstallProgressSuccess: package ${installPackageName}`);
-    setInstallOutput( prevOutput => prevOutput + `Successfully installed ${installPackageName}\n` );
+    if (debug) console.log(`UiProvider exitInstallProgressSuccess: package ${installPackageName}`);
+    setInstallOutput((prevOutput) => prevOutput + `Successfully installed ${installPackageName}\n`);
   }, [installPackageName]);
 
   const exitInstallProgressError = useCallback(() => {
-    if(debug) console.log(`UiProvider exitInstallProgressError: package ${installPackageName}`);
-    setInstallOutput( prevOutput => prevOutput + `Failed to install ${installPackageName}\n` );
+    if (debug) console.log(`UiProvider exitInstallProgressError: package ${installPackageName}`);
+    setInstallOutput((prevOutput) => prevOutput + `Failed to install ${installPackageName}\n`);
   }, [installPackageName]);
 
   const hideInstallProgress = useCallback(() => {
-    if(debug) console.log(`UiProvider hide install progress`);
+    if (debug) console.log(`UiProvider hide install progress`);
     setInstallDialogOpen(false);
   }, []);
 
   const handleInstallClose = () => {
-    if(debug) console.log(`UiProvider handle install close action`);
+    if (debug) console.log(`UiProvider handle install close action`);
     setInstallDialogOpen(false);
     setInstallPackageName('');
     setInstallOutput('');
   };
 
-  const contextValue = useMemo(() => ({
-    mobile,
-    setMobile,
-    currentPage,
-    setCurrentPage,
-    showSnackbarMessage,
-    closeSnackbarMessage,
-    closeSnackbar,
-    showConfirmCancelDialog,
-    showInstallProgress,
-    exitInstallProgressSuccess,
-    exitInstallProgressError,
-    hideInstallProgress,
-    addInstallProgress,
-  }), [mobile, currentPage, setMobile, setCurrentPage, showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showConfirmCancelDialog, showInstallProgress, exitInstallProgressSuccess, exitInstallProgressError, hideInstallProgress, addInstallProgress]);
+  const contextValue = useMemo(
+    () => ({
+      mobile,
+      setMobile,
+      currentPage,
+      setCurrentPage,
+      showSnackbarMessage,
+      closeSnackbarMessage,
+      closeSnackbar,
+      showConfirmCancelDialog,
+      showInstallProgress,
+      exitInstallProgressSuccess,
+      exitInstallProgressError,
+      hideInstallProgress,
+      addInstallProgress,
+    }),
+    [
+      mobile,
+      currentPage,
+      setMobile,
+      setCurrentPage,
+      showSnackbarMessage,
+      closeSnackbarMessage,
+      closeSnackbar,
+      showConfirmCancelDialog,
+      showInstallProgress,
+      exitInstallProgressSuccess,
+      exitInstallProgressError,
+      hideInstallProgress,
+      addInstallProgress,
+    ],
+  );
 
   return (
     <UiContext.Provider value={contextValue}>

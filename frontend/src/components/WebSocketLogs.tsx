@@ -7,7 +7,7 @@ import { debug } from '../App';
 
 /**
  * Function to detect if the device has a touchscreen
- */ 
+ */
 const detectTouchscreen = (): boolean => {
   if (
     'ontouchstart' in window ||
@@ -72,18 +72,14 @@ function WebSocketLogs() {
 
   return (
     <div style={{ margin: '0px', padding: '0px' }}>
-      <ul
-          style={{ margin: '0px', padding: '0px' }}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-      >
+      <ul style={{ margin: '0px', padding: '0px' }} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         {messages.map((msg, index) => (
-            <li key={index} style={{ wordWrap: 'break-word', maxHeight: '200px', overflow: 'hidden' }}>
-              <span style={{ marginRight: '5px', padding: '1px 5px', backgroundColor: getLevelMessageBgColor(msg.level), color: getLevelMessageColor(msg.level), fontSize: '12px', borderRadius: '3px', textAlign: 'center' }}>{msg.level}</span>
-              {msg.time && <span style={{ marginRight: '3px', color: '#505050' }}>{'['+msg.time+']'}</span>}
-              {msg.name && <span style={{ marginRight: '3px', color: '#09516d' }}>{'['+msg.name+']'}</span>}
-              <span style={{ color: 'var(--main-log-color)' }}>{msg.message}</span>
-            </li>
+          <li key={index} style={{ wordWrap: 'break-word', maxHeight: '200px', overflow: 'hidden' }}>
+            <span style={{ marginRight: '5px', padding: '1px 5px', backgroundColor: getLevelMessageBgColor(msg.level), color: getLevelMessageColor(msg.level), fontSize: '12px', borderRadius: '3px', textAlign: 'center' }}>{msg.level}</span>
+            {msg.time && <span style={{ marginRight: '3px', color: '#505050' }}>{'[' + msg.time + ']'}</span>}
+            {msg.name && <span style={{ marginRight: '3px', color: '#09516d' }}>{'[' + msg.name + ']'}</span>}
+            <span style={{ color: 'var(--main-log-color)' }}>{msg.message}</span>
+          </li>
         ))}
         <div ref={endOfMessagesRef} />
       </ul>

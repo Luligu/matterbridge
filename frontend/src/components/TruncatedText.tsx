@@ -18,7 +18,7 @@ export function TruncatedText({ value, maxChars }: TruncatedTextProps) {
     return (
       <Tooltip
         title={value}
-        placement="top"
+        placement='top'
         slotProps={{
           popper: {
             modifiers: [

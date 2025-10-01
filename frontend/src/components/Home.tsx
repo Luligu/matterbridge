@@ -6,7 +6,7 @@ import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import SystemInfoTable from './SystemInfoTable';
 import QRDiv from './QRDiv';
-import HomeInstallAddPlugins  from './HomeInstallAddPlugins';
+import HomeInstallAddPlugins from './HomeInstallAddPlugins';
 import HomePlugins from './HomePlugins';
 import HomeDevices from './HomeDevices';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
@@ -23,8 +23,8 @@ function Home(): React.JSX.Element {
   const [systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
   const [plugins, setPlugins] = useState<BaseRegisteredPlugin[]>([]);
-  const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true); // default true
-  const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'devices'); // default devices
+  const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins') === 'false' ? false : true); // default true
+  const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode') ?? 'devices'); // default devices
   const [changelog, setChangelog] = useState('');
   const [showChangelog, setShowChangelog] = useState(false);
   const [browserRefresh, setBrowserRefresh] = useState(false);
@@ -41,40 +41,40 @@ function Home(): React.JSX.Element {
         if (debug) console.log(`Home received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
         setStoreId(null);
         setPlugins([]);
-        sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-        sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+        sendMessage({ id: uniqueId.current, sender: 'Home', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        sendMessage({ id: uniqueId.current, sender: 'Home', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
       }
       // Local messages
-      if (msg.method === '/api/settings' && msg.id === uniqueId.current ) {
+      if (msg.method === '/api/settings' && msg.id === uniqueId.current) {
         if (debug) console.log(`Home received settings:`, msg.response);
         setSystemInfo(msg.response.systemInformation);
         setMatterbridgeInfo(msg.response.matterbridgeInformation);
-        if(msg.response.matterbridgeInformation.matterbridgeVersion) {
-          setChangelog(`https://github.com/Luligu/matterbridge/blob/${msg.response.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main' }/CHANGELOG.md`);
+        if (msg.response.matterbridgeInformation.matterbridgeVersion) {
+          setChangelog(`https://github.com/Luligu/matterbridge/blob/${msg.response.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main'}/CHANGELOG.md`);
         }
 
-        if(localStorage.getItem('frontendVersion') === null && msg.response.matterbridgeInformation.frontendVersion) {
+        if (localStorage.getItem('frontendVersion') === null && msg.response.matterbridgeInformation.frontendVersion) {
           localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
-        } else if(msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem('frontendVersion') && msg.response.matterbridgeInformation.frontendVersion) {
+        } else if (msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem('frontendVersion') && msg.response.matterbridgeInformation.frontendVersion) {
           localStorage.setItem('frontendVersion', msg.response.matterbridgeInformation.frontendVersion);
           setBrowserRefresh(true);
         }
-        
-        if(localStorage.getItem('matterbridgeVersion') === null) {
+
+        if (localStorage.getItem('matterbridgeVersion') === null) {
           localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
-        } else if(msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
+        } else if (msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
           localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
           setShowChangelog(true);
         }
-        
-        if(msg.response.matterbridgeInformation.shellyBoard) {
-          if(!localStorage.getItem('homePageMode')) {
+
+        if (msg.response.matterbridgeInformation.shellyBoard) {
+          if (!localStorage.getItem('homePageMode')) {
             localStorage.setItem('homePageMode', 'devices');
             setHomePageMode('devices');
           }
         }
       }
-      if (msg.method === '/api/plugins' && msg.id === uniqueId.current ) {
+      if (msg.method === '/api/plugins' && msg.id === uniqueId.current) {
         if (debug) console.log(`Home received plugins:`, msg.response);
         setPlugins(msg.response);
       }
@@ -96,8 +96,8 @@ function Home(): React.JSX.Element {
       setStoreId('Matterbridge');
     }
     if (matterbridgeInfo?.bridgeMode === 'childbridge' && !storeId && plugins) {
-      for(const plugin of plugins) {
-        if(plugin.matter?.id) {
+      for (const plugin of plugins) {
+        if (plugin.matter?.id) {
           if (debug) console.log(`Home storeId effect set storeId to ${plugin.matter.id}`);
           setStoreId(plugin.matter.id);
           break;
@@ -109,60 +109,43 @@ function Home(): React.JSX.Element {
   useEffect(() => {
     if (online) {
       if (debug) console.log('Home online effect, sending /api/settings and /api/plugins requests');
-      sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Home', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Home', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
   }, [online, sendMessage]);
 
-  if(debug) console.log('Home rendering...');
+  if (debug) console.log('Home rendering...');
   if (!online || !systemInfo || !matterbridgeInfo) {
-    return (<Connecting />);
+    return <Connecting />;
   }
   return (
     <MbfPage name='Home' style={{ flexDirection: 'row' }}>
-
       {/* Left column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
-
-        <QRDiv id={storeId}/>
-        <SystemInfoTable systemInfo={systemInfo} compact={true}/>
+        <QRDiv id={storeId} />
+        <SystemInfoTable systemInfo={systemInfo} compact={true} />
         {/*<MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>*/}
-
       </div>
 
       {/* Right column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
-
         {/* Refresh page on Frontend updates (flex: '0 0 auto', overflow: 'hidden') */}
-        {browserRefresh &&
-          <HomeBrowserRefresh/>
-        }
+        {browserRefresh && <HomeBrowserRefresh />}
 
         {/* Show changelog page on Matterbridge updates (flex: '0 0 auto', overflow: 'hidden') */}
-        {showChangelog &&
-          <HomeShowChangelog changelog={changelog} />
-        }
+        {showChangelog && <HomeShowChangelog changelog={changelog} />}
 
         {/* Install plugins (flex: '0 0 auto', overflow: 'hidden') */}
-        {homePagePlugins && !matterbridgeInfo.readOnly &&
-          <HomeInstallAddPlugins/>
-        }
+        {homePagePlugins && !matterbridgeInfo.readOnly && <HomeInstallAddPlugins />}
 
         {/* Plugins (flex: '0 0 auto', overflow: 'hidden') */}
-        {homePagePlugins &&
-          <HomePlugins storeId={storeId} setStoreId={setStoreId}/>
-        }
+        {homePagePlugins && <HomePlugins storeId={storeId} setStoreId={setStoreId} />}
 
         {/* Devices (flex: '1 1 auto', overflow: 'hidden') */}
-        {homePageMode === 'devices' &&
-          <HomeDevices storeId={storeId} setStoreId={setStoreId}/>
-        }
+        {homePageMode === 'devices' && <HomeDevices storeId={storeId} setStoreId={setStoreId} />}
 
         {/* Logs (flex: '1 1 auto', overflow: 'hidden') */}
-        {homePageMode === 'logs' &&
-          <HomeLogs />
-        }
-
+        {homePageMode === 'logs' && <HomeLogs />}
       </div>
     </MbfPage>
   );

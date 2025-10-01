@@ -1,5 +1,5 @@
 // React
-import React, { ReactNode, useContext } from "react";
+import React, { ReactNode, useContext } from 'react';
 
 // Frontend
 import { UiContext } from './UiProvider';
@@ -27,10 +27,5 @@ export function MbfPage({ children, style, name }: MbfPageProps): React.JSX.Elem
     gap: '20px',
   };
 
-  return (
-    <div style={{ ...defaultStyle, ...style }}>
-      {children}
-    </div>
-  );
+  return <div style={{ ...defaultStyle, ...style }}>{children}</div>;
 }
-

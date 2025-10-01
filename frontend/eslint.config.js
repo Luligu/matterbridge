@@ -13,6 +13,8 @@ import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import prettierPlugin from 'eslint-plugin-prettier';
+import prettierConfig from 'eslint-config-prettier';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
@@ -27,6 +29,8 @@ export default defineConfig([
   //   ...config,
   //   files: ['src/**/*.{ts,tsx}'],
   // })),
+  // Prettier config disables formatting-related rules from ESLint
+  prettierConfig,
   {
     name: 'Global Configuration Options',
     languageOptions: {
@@ -55,6 +59,15 @@ export default defineConfig([
     ...reactPlugin.configs.flat.recommended,
     ...reactPlugin.configs.flat['jsx-runtime'], // Add this if you are using React 17+
     ...reactHooks.configs['recommended-latest'],
+    plugins: {
+      prettier: prettierPlugin,
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      'prettier/prettier': 'warn',
+      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/rules-of-hooks': 'error',
+    },
   },
   {
     name: 'JavaScript',
@@ -74,6 +87,7 @@ export default defineConfig([
           caughtErrorsIgnorePattern: '^_', // Ignore unused caught errors starting with _
         },
       ],
+      'prettier/prettier': 'warn',
     },
   },
   {
@@ -93,6 +107,7 @@ export default defineConfig([
           caughtErrorsIgnorePattern: '^_', // Ignore unused caught errors starting with _
         },
       ],
+      'prettier/prettier': 'warn',
     },
   },
 ]);

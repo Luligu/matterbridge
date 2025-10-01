@@ -23,20 +23,24 @@ function HomeShowChangelog({ changelog }: HomeShowChangelogProps): React.JSX.Ele
   // Contexts
   const { online } = useContext(WebSocketContext);
 
-  if(debug) console.log('HomeShowChangelog rendering...');
+  if (debug) console.log('HomeShowChangelog rendering...');
   if (!online) {
-    return ( <Connecting /> );
+    return <Connecting />;
   }
   return (
     <MbfWindow>
-      <div className="MbfWindowHeader">
-        <p className="MbfWindowHeaderText">Matterbridge Update</p>
+      <div className='MbfWindowHeader'>
+        <p className='MbfWindowHeaderText'>Matterbridge Update</p>
       </div>
-      <div className="MbfWindowBody" style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      <div className='MbfWindowBody' style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <h4 style={{ margin: 0 }}>Matterbridge has been updated.</h4>
         <div>
-          <Button onClick={() => window.open(changelog, '_blank')} endIcon={<AnnouncementOutlinedIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Changelog</Button>
-          <Button onClick={() => window.location.reload()} endIcon={<CancelIcon />} style={{ marginLeft: '10px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Close</Button>
+          <Button onClick={() => window.open(changelog, '_blank')} endIcon={<AnnouncementOutlinedIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>
+            Changelog
+          </Button>
+          <Button onClick={() => window.location.reload()} endIcon={<CancelIcon />} style={{ marginLeft: '10px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>
+            Close
+          </Button>
         </div>
       </div>
     </MbfWindow>

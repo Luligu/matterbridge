@@ -58,11 +58,11 @@ function HomeInstallAddPlugins() {
         method: 'POST',
         body: formData,
       })
-        .then(response => response.text())
-        .then(data => {
+        .then((response) => response.text())
+        .then((data) => {
           logMessage('Plugins', `Server response: ${data}`);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error('Error uploading plugin file:', error);
           logMessage('Plugins', `Error installing package ${error}`);
         });
@@ -83,11 +83,11 @@ function HomeInstallAddPlugins() {
         method: 'POST',
         body: formData,
       })
-        .then(response => response.text())
-        .then(data => {
+        .then((response) => response.text())
+        .then((data) => {
           logMessage('Plugins', `Server response: ${data}`);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error('Error uploading plugin file:', error);
           logMessage('Plugins', `Error uploading package ${error}`);
         });
@@ -95,7 +95,7 @@ function HomeInstallAddPlugins() {
   };
 
   const handleInstallPluginClick = () => {
-    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: pluginName, restart: false } });
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: pluginName, restart: false } });
   };
 
   const handleUploadClick = () => {
@@ -103,7 +103,7 @@ function HomeInstallAddPlugins() {
   };
 
   const handleAddPluginClick = () => {
-    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: "/api/addplugin", src: "Frontend", dst: "Matterbridge", params: { pluginNameOrPath: pluginName } });
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/addplugin', src: 'Frontend', dst: 'Matterbridge', params: { pluginNameOrPath: pluginName } });
   };
 
   const handleClickVertical = (event: React.MouseEvent<HTMLElement>) => {
@@ -131,16 +131,27 @@ function HomeInstallAddPlugins() {
         <MbfWindowHeaderText>Install plugins</MbfWindowHeaderText>
         <MbfWindowIcons onClose={() => setClosed(true)} />
       </MbfWindowHeader>
-      <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}
+      <div
+        style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onDrop={handleFileDrop}>
-
-        <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth />
+        onDrop={handleFileDrop}
+      >
+        <TextField
+          value={pluginName}
+          onChange={(event) => {
+            setPluginName(event.target.value);
+          }}
+          size='small'
+          id='plugin-name'
+          label='Plugin name or plugin path'
+          variant='outlined'
+          fullWidth
+        />
         <IconButton onClick={handleClickVertical}>
           <MoreVert />
         </IconButton>
-        <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
+        <Menu id='simple-menu' anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
           <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
           <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
           <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>
@@ -156,22 +167,25 @@ function HomeInstallAddPlugins() {
           <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-weather')}>matterbridge-eve-weather</MenuItem>
           <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
         </Menu>
-        <Tooltip title="Install or update a plugin from npm">
-          <Button onClick={handleInstallPluginClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}> Install</Button>
+        <Tooltip title='Install or update a plugin from npm'>
+          <Button onClick={handleInstallPluginClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+            {' '}
+            Install
+          </Button>
         </Tooltip>
-        <Tooltip title="Upload and install a plugin from a tarball">
-          <Button onClick={handleUploadClick} endIcon={<FileUploadIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}> Upload</Button>
+        <Tooltip title='Upload and install a plugin from a tarball'>
+          <Button onClick={handleUploadClick} endIcon={<FileUploadIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+            {' '}
+            Upload
+          </Button>
         </Tooltip>
-        <Tooltip title="Add an installed plugin">
-          <Button onClick={handleAddPluginClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}> Add</Button>
+        <Tooltip title='Add an installed plugin'>
+          <Button onClick={handleAddPluginClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+            {' '}
+            Add
+          </Button>
         </Tooltip>
-        <input
-          id="file-upload"
-          type="file"
-          accept=".tgz"
-          style={{ display: 'none' }}
-          onChange={handleFileUpload}
-        />
+        <input id='file-upload' type='file' accept='.tgz' style={{ display: 'none' }} onChange={handleFileUpload} />
       </div>
     </MbfWindow>
   );
