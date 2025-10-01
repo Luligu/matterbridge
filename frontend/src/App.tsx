@@ -27,6 +27,8 @@ export let debug = false;
 export const toggleDebug = () => {
   debug = !debug;
 };
+export const enableWindows = false;
+export const enableMobile = false;
 
 export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
   const [password, setPassword] = useState('');

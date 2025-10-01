@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useContext } from "react";
 // Frontend
 import Header from "./Header";
 import { UiContext } from './UiProvider';
-import { debug } from "../App";
+import { debug, enableMobile } from "../App";
 // const debug = true;
 
 export const MOBILE_WIDTH_THRESHOLD = 1200;
@@ -18,7 +18,7 @@ export let viewportHeight: number;
  * Returns true if the window width and height are less than the thresholds.
  * We consider a minimum of 360px in width to render the mobile layout.
  */
-function isMobile(): boolean {
+export function isMobile(): boolean {
   if (typeof window !== 'undefined') {
     viewportWidth = Math.floor(window.visualViewport?.width ?? window.innerWidth);
     viewportHeight = Math.floor(window.visualViewport?.height ?? window.innerHeight);
@@ -37,6 +37,7 @@ export function MbfScreen({ children }: MbfScreenProps): React.JSX.Element {
   // Context
   const { mobile, setMobile } = useContext(UiContext);
 
+  // Resize effect
   useEffect(() => {
     function handleResize() {
       setMobile(isMobile());
@@ -47,26 +48,7 @@ export function MbfScreen({ children }: MbfScreenProps): React.JSX.Element {
 
   if(debug) console.log('MbfScreen rendering... mobile %s', mobile);
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', width: mobile ? `${MOBILE_WIDTH_THRESHOLD}px` : 'calc(100vw - 40px)', height: mobile ? `${MOBILE_HEIGHT_THRESHOLD}px` : 'calc(100vh - 40px)', margin: '0px', padding: '20px', gap: '20px' }}>
-      <Header />
-      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', height: 'calc(100% - 60px)', margin: '0px', padding: '0px', gap: '20px' }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-/*
-  Old code:
-    <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', width: mobile ? `${MOBILE_WIDTH_THRESHOLD}px` : 'calc(100vw - 40px)', height: mobile ? `${MOBILE_HEIGHT_THRESHOLD}px` : 'calc(100vh - 40px)', margin: '0px', padding: '20px', gap: '20px' }}>
-      <Header />
-      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', height: 'calc(100% - 60px)', margin: '0px', padding: '0px', gap: '20px' }}>
-        {children}
-      </div>
-    </div>
-
-  New code:
+  if(enableMobile) return (
     <div style={{ display: 'flex', flexDirection: 'column', 
       overflow: mobile ? 'visible' : 'hidden', 
       width: mobile ? 'calc(100vw - 60px)' : 'calc(100vw - 40px)', maxWidth: mobile ? 'calc(100vw - 60px)' : 'calc(100vw - 40px)',
@@ -77,4 +59,17 @@ export function MbfScreen({ children }: MbfScreenProps): React.JSX.Element {
         {children}
       </div>
     </div>
-*/
+  ) 
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', 
+      overflow: 'hidden', 
+      width: mobile ? `${MOBILE_WIDTH_THRESHOLD}px` : 'calc(100vw - 40px)', 
+      height: mobile ? `${MOBILE_HEIGHT_THRESHOLD}px` : 'calc(100vh - 40px)', 
+      margin: '0px', padding: '20px', gap: '20px' }}>
+      <Header />
+      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', height: 'calc(100% - 60px)', margin: '0px', padding: '0px', gap: '20px' }}>
+        {children}
+      </div>
+    </div>
+  );
+}

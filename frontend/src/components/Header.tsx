@@ -31,7 +31,7 @@ import { ApiSettingResponse, WsMessageApiResponse } from '../../../src/frontendT
 // Frontend
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
-import { debug, toggleDebug } from '../App';
+import { debug, toggleDebug, enableMobile } from '../App';
 // const debug = true;
 
 function Header() {
@@ -336,7 +336,7 @@ function Header() {
     return null;
   }
   return (
-    <div className="header">
+    <div className="header" style={ enableMobile && mobile ? { flexDirection: 'column', alignItems: 'center', width: '100%', height: '120px', gap: '0px' } : {}}>
       <div className="sub-header">
         <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '30px' }} onClick={handleLogoClick}/>
         <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>

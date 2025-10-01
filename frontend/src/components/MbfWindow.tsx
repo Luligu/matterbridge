@@ -8,6 +8,9 @@ import { IconButton, Tooltip } from "@mui/material";
 import Icon from "@mdi/react";
 import { mdiClose } from "@mdi/js";
 
+// Frontend
+import { enableWindows } from "../App";
+
 interface MbfWindowProps {
   children: ReactNode;
   style?: React.CSSProperties;
@@ -175,13 +178,13 @@ export function MbfWindowIcons({ children, style, onClose }: MbfWindowIconsProps
   return (
     <div style={{ ...defaultStyle, ...style }}>
       {children}
-      {/*onClose && (
+      {enableWindows && onClose && (
         <IconButton style={{ margin: '0px' }} onClick={onClose}>
           <Tooltip title={`Close the window`}>
             <Icon path={mdiClose} size="20px" color={'var(--header-text-color)'} />
           </Tooltip>
         </IconButton>
-      )*/}
+      )}
     </div>
   );
 }

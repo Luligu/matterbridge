@@ -48,19 +48,22 @@ import { ApiSettingResponse, WsMessageApiResponse, WsMessageApiStateUpdate } fro
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
 
-const valueBoxSx = { display: 'flex', gap: '2px', justifyContent: 'space-evenly', width: '100%', height: '40px' };
+// Icon, value, unit
+const renderBoxSx = { display: 'flex', gap: '2px', justifyContent: 'space-evenly', width: '100%', height: '40px' };
 const iconSx = { margin: '0', padding: '0', fontSize: '36px', fontWeight: 'medium', color: 'var(--primary-color)' };
 const valueSx = { margin: '0', padding: '0', fontSize: '20px', fontWeight: 'medium', color: 'var(--div-text-color)', textAlign: 'center' };
 const unitSx = { margin: '0', padding: '0', paddingBottom: '2px', fontSize: '16px', fontWeight: 'medium', color: 'var(--div-text-color)', textAlign: 'center' };
 
+// Details
 const detailsBoxSx = { display: 'flex', gap: '2px', justifyContent: 'center', width: '100%', height: '18px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' }
 const detailsSx = { margin: '0', padding: '0', fontSize: '12px', fontWeight: 'normal', color: 'var(--div-text-color)' };
 
+// Name
 const nameBoxSx = { display: 'flex', justifyContent: 'center', width: '100%', height: '52px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' };
 const nameSx = { margin: '0', padding: '0', fontSize: '14px', fontWeight: 'bold', color: 'var(--div-text-color)' };
 
+// Endpoint
 const endpointBoxSx = { display: 'flex', gap: '4px', justifyContent: 'center', width: '100%', height: '15px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' }
-// const endpointSx = { margin: '0', padding: '0px 4px', borderRadius: '5px', textAlign: 'center', fontSize: '10px', fontWeight: 'normal', color: 'white', backgroundColor: 'var(--secondary-color)' };
 const endpointSx = { margin: '0', padding: '0px 4px', borderRadius: '5px', textAlign: 'center', fontSize: '12px', fontWeight: 'normal', color: 'var(--secondary-color)' };
 
 const lightDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d];
@@ -68,13 +71,23 @@ const outletDeviceTypes = [0x010a, 0x010b];
 const switchDeviceTypes = [0x0103, 0x0104, 0x0105, 0x010f, 0x0110];
 const currentLevelDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105, 0x0110];
 
-function Render({ icon, iconColor, cluster, value, unit, prefix }: { icon?: React.JSX.Element; iconColor?: string; cluster: ApiClusters; value: string | number | boolean | null | undefined; unit?: string; prefix?: boolean }) {
+
+interface RenderProps { 
+  icon: React.JSX.Element, 
+  iconColor?: string, 
+  cluster: ApiClusters, 
+  value: string | number | boolean | null | undefined, 
+  unit?: string, 
+  prefix?: boolean 
+};
+
+function Render({ icon, iconColor, cluster, value, unit, prefix }: RenderProps): React.JSX.Element {
   if(debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof(value)}-${isNaN(value as any)}) "${value}" unit "${unit}"`);
   prefix = prefix ?? false;
   return (
-    <Box key={`${cluster.clusterId}-${cluster.attributeId}-box`} sx={valueBoxSx}>
+    <Box key={`${cluster.clusterId}-${cluster.attributeId}-box`} sx={renderBoxSx}>
       {icon && cloneElement(icon, { key: `${cluster.clusterId}-${cluster.attributeId}-icon`, sx: {...iconSx, color: iconColor ?? 'var(--primary-color)'} })}
-      <Box key={`${cluster.clusterId}-${cluster.attributeId}-valueunitbox`} sx={{...valueBoxSx, gap: '4px', alignContent: 'center', alignItems: 'end', justifyContent: 'center'}}>
+      <Box key={`${cluster.clusterId}-${cluster.attributeId}-valueunitbox`} sx={{...renderBoxSx, gap: '4px', alignContent: 'center', alignItems: 'end', justifyContent: 'center'}}>
         {unit && prefix===true &&
           <Typography key={`${cluster.clusterId}-${cluster.attributeId}-unit`} sx={unitSx}>
             {unit}
@@ -95,7 +108,15 @@ function Render({ icon, iconColor, cluster, value, unit, prefix }: { icon?: Reac
   );
 };
 
-function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDevices; endpoint: string; id: string; deviceType: number; clusters: ApiClusters[] }) {
+interface DeviceProps {
+  device: ApiDevices;
+  endpoint: string;
+  id: string;
+  deviceType: number;
+  clusters: ApiClusters[];
+}
+
+function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): React.JSX.Element {
   const airQualityLookup = ['Unknown', 'Good', 'Fair', 'Moderate', 'Poor', 'VeryPoor', 'Ext.Poor'];
   let details = '';
 
@@ -122,11 +143,20 @@ function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDev
   deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activeCurrent').map(cluster => details = details +`${cluster.attributeLocalValue as number/1000} A, `);
   deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activePower').map(cluster => details = details +`${cluster.attributeLocalValue as number/1000} W`);
 
+  // Rvc
+  if(deviceType===0x0074) {
+    const runMode = clusters.find(cluster => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'currentMode')?.attributeLocalValue as number | undefined;
+    const runSupportedModes = clusters.find(cluster => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as Array<{mode: number, label: string}> | undefined;
+    details = runSupportedModes?.find(m => m.mode === runMode)?.label || 'Unknown';
+  }
+
   return (
     <div className='MbfWindowDiv' style={{ margin: '0px', padding: '5px', width: '150px', height: '150px', borderColor: 'var(--div-bg-color)', borderRadius: '5px', justifyContent: 'space-between' }}>
+      {/* BridgedDeviceBasicInformation.reachable */}
       {deviceType===0x0013 && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
         <Render icon={cluster.attributeLocalValue===true ? <WifiIcon/> : <WifiOffIcon/>} iconColor={cluster.attributeLocalValue===true ?'green':'red'} cluster={cluster} value={cluster.attributeLocalValue===true ? 'Online' : 'Offline'} />
       ))}
+      {/* PowerSource */}
       {deviceType===0x0011 && clusters.filter(cluster => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'batPercentRemaining').map(cluster => (
         <Render icon={<Battery4BarIcon/>} cluster={cluster} value={cluster.attributeLocalValue as number/2} unit='%' />
       ))}
@@ -179,9 +209,6 @@ function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDev
       {deviceType===0x77 && clusters.filter(cluster => cluster.clusterName === 'TemperatureControl' && cluster.attributeName === 'selectedTemperatureLevel').map(cluster => (
         <Render icon={<Icon path={mdiStove} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue as number} unit='mode' prefix={true} />
       ))}
-      {deviceType===0x74 && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
-        <Render icon={<Icon path={mdiRobotVacuum} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Robot' />
-      ))}
 
       {deviceType===0x0202 && clusters.filter(cluster => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map(cluster => (
         <Render icon={<BlindsIcon/>} cluster={cluster} value={cluster.attributeLocalValue as number / 100} unit='%' />
@@ -226,6 +253,11 @@ function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDev
       {/* Rain sensor */}
       {deviceType===0x0044 && clusters.filter(cluster => cluster.clusterName === 'BooleanState' && cluster.attributeName === 'stateValue').map(cluster => (
         <Render icon={<ThunderstormIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'Rain':'No rain'}/>
+      ))}
+
+      {/* Rvc */}
+      {deviceType===0x0074 && clusters.filter(cluster => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'currentMode').map(cluster => (
+        <Render icon={<Icon path={mdiRobotVacuum} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeValue} unit='Run mode' prefix={true}/>
       ))}
 
       {/* Evse */}
@@ -304,11 +336,15 @@ function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDev
         <Typography sx={endpointSx}>{id}</Typography>
         {debug && <Typography sx={endpointSx}>0x{deviceType.toString(16).padStart(4, '0')}</Typography>}
       </Box>
-      </div>
+    </div>
   );
 }
 
-function DevicesIcons({filter}: { filter: string }) {
+interface DevicesIconsProps {
+  filter: string;
+}
+
+function DevicesIcons({filter}: DevicesIconsProps): React.JSX.Element {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
