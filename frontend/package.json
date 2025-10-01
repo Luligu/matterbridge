@@ -12,6 +12,8 @@
     "typecheck": "tsc --project ./tsconfig.json --noEmit",
     "lint": "eslint --max-warnings=0 .",
     "lint:fix": "eslint --fix --max-warnings=0 .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest --reporter verbose",
     "test:verbose": "vitest run --reporter verbose",
@@ -35,7 +37,8 @@
     "install:typescript": "npm install --save-dev typescript @types/node",
     "install:vite": "npm install --save-dev vite @vitejs/plugin-react",
     "install:vitest": "npm install --save-dev vitest jsdom @testing-library/react @testing-library/jest-dom",
-    "install:eslint": "npm install --save-dev eslint eslint-plugin-react eslint-plugin-react-hooks typescript-eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser"
+    "install:eslint": "npm install --save-dev eslint eslint-plugin-react eslint-plugin-react-hooks typescript-eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser",
+    "install:prettier": "npm install --save-dev prettier eslint-config-prettier eslint-plugin-prettier"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -64,9 +67,12 @@
     "@typescript-eslint/parser": "^8.44.1",
     "@vitejs/plugin-react": "^5.0.4",
     "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "jsdom": "^27.0.0",
+    "prettier": "^3.6.2",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.44.1",
     "vite": "^7.1.7",
