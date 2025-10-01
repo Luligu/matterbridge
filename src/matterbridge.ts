@@ -2614,6 +2614,8 @@ const commissioningController = new CommissioningController({
       { cluster: 'RelativeHumidityMeasurement', attribute: 'measuredValue' },
       { cluster: 'PressureMeasurement', attribute: 'measuredValue' },
       { cluster: 'FlowMeasurement', attribute: 'measuredValue' },
+      { cluster: 'SmokeCoAlarm', attribute: 'smokeState' },
+      { cluster: 'SmokeCoAlarm', attribute: 'coState' },
     ];
     for (const sub of subscriptions) {
       if (device.hasAttributeServer(sub.cluster, sub.attribute)) {
