@@ -48,21 +48,21 @@ import { ApiSettingResponse, WsMessageApiResponse, WsMessageApiStateUpdate } fro
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
 
-// Icon, value, unit
+// Icon, value, unit sx
 const renderBoxSx = { display: 'flex', gap: '2px', justifyContent: 'space-evenly', width: '100%', height: '40px' };
 const iconSx = { margin: '0', padding: '0', fontSize: '36px', fontWeight: 'medium', color: 'var(--primary-color)' };
 const valueSx = { margin: '0', padding: '0', fontSize: '20px', fontWeight: 'medium', color: 'var(--div-text-color)', textAlign: 'center' };
 const unitSx = { margin: '0', padding: '0', paddingBottom: '2px', fontSize: '16px', fontWeight: 'medium', color: 'var(--div-text-color)', textAlign: 'center' };
 
-// Details
+// Details sx
 const detailsBoxSx = { display: 'flex', gap: '2px', justifyContent: 'center', width: '100%', height: '18px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' }
 const detailsSx = { margin: '0', padding: '0', fontSize: '12px', fontWeight: 'normal', color: 'var(--div-text-color)' };
 
-// Name
+// Name sx
 const nameBoxSx = { display: 'flex', justifyContent: 'center', width: '100%', height: '52px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' };
 const nameSx = { margin: '0', padding: '0', fontSize: '14px', fontWeight: 'bold', color: 'var(--div-text-color)' };
 
-// Endpoint
+// Endpoint sx
 const endpointBoxSx = { display: 'flex', gap: '4px', justifyContent: 'center', width: '100%', height: '15px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' }
 const endpointSx = { margin: '0', padding: '0px 4px', borderRadius: '5px', textAlign: 'center', fontSize: '12px', fontWeight: 'normal', color: 'var(--secondary-color)' };
 
