@@ -174,7 +174,14 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
     clusters.filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activeCurrent').map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1000} A, `));
   deviceType === 0x0510 && clusters.filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activePower').map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1000} W`));
 
-  // Rvc
+  // ModeSelect
+  if (deviceType === 0x0027) {
+    const mode = clusters.find((cluster) => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'currentMode')?.attributeLocalValue as number | undefined;
+    const supportedModes = clusters.find((cluster) => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as Array<{ mode: number; label: string }> | undefined;
+    details = supportedModes?.find((m) => m.mode === mode)?.label || 'Unknown';
+  }
+
+  // RvcRunMode
   if (deviceType === 0x0074) {
     const runMode = clusters.find((cluster) => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'currentMode')?.attributeLocalValue as number | undefined;
     const runSupportedModes = clusters.find((cluster) => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as Array<{ mode: number; label: string }> | undefined;
@@ -260,7 +267,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       ))}
       {/* ModeSelect */}
       {deviceType===0x0027 && clusters.filter(cluster => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'currentMode').map(cluster => (
-        <Render icon={<ChecklistIcon/>} cluster={cluster} value={cluster.attributeValue} unit='mode' prefix={true}/>
+        <Render icon={<ChecklistIcon/>} cluster={cluster} value={cluster.attributeValue} unit='Mode' prefix={true}/>
       ))}
       {/* Pump */}
       {deviceType===0x0303 && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
@@ -442,6 +449,7 @@ function DevicesIcons({ filter }: DevicesIconsProps): React.JSX.Element {
 
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
+      if (debug) console.log('DevicesIcons received WebSocket Message:', msg);
       if (msg.method === 'refresh_required') {
         if (debug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
         sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });

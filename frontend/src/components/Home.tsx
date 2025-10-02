@@ -36,6 +36,7 @@ function Home(): React.JSX.Element {
 
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
+      if (debug) console.log('Home received WebSocket Message:', msg);
       // Broadcast messages
       if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
         if (debug) console.log(`Home received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);

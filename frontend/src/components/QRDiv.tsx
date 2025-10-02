@@ -82,6 +82,7 @@ function QRDiv({ id }: QRDivProps) {
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
+      if (debug) console.log('QRDiv received WebSocket Message:', msg);
       if (msg.method === 'refresh_required' && msg.response.changed === 'matter' && msg.response.matter) {
         if (debug) console.log(`QRDiv received refresh_required: changed=${msg.response.changed} for storeId "${msg.response.matter.id}":`, msg.response.matter);
         if (storeIdRef.current === msg.response.matter.id) {

@@ -78,6 +78,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
 
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
+      if (debug) console.log('SystemInfoTable received WebSocket Message:', msg);
       if (msg.method === 'memory_update' && msg.response && msg.response.totalMemory && msg.response.freeMemory && msg.response.heapTotal && msg.response.heapUsed && msg.response.rss) {
         if (debug) console.log('SystemInfoTable received memory_update', msg);
         handleMemoryUpdate(msg.response.totalMemory, msg.response.freeMemory, msg.response.heapTotal, msg.response.heapUsed, msg.response.rss);

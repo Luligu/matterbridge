@@ -40,16 +40,14 @@ function Settings(): React.JSX.Element {
 
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
-          if (debug) console.log(`Settings received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
-          sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
-        }
-        if (msg.method === '/api/settings') {
-          if (debug) console.log('Settings received /api/settings:', msg.response);
-          setMatterbridgeInfo(msg.response.matterbridgeInformation);
-          setSystemInfo(msg.response.systemInformation);
-        }
+      if (debug) console.log('Settings received WebSocket Message:', msg);
+      if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
+        if (debug) console.log(`Settings received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
+        sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      } else if (msg.method === '/api/settings') {
+        if (debug) console.log('Settings received /api/settings:', msg.response);
+        setMatterbridgeInfo(msg.response.matterbridgeInformation);
+        setSystemInfo(msg.response.systemInformation);
       }
     };
 

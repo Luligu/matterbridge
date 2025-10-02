@@ -211,6 +211,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
+      if (debug) console.log('HomeDevices received WebSocket Message:', msg);
       // Broadcast messages
       // 'settings' | 'plugins' | 'devices' | 'matter';
       if (msg.method === 'refresh_required' && msg.response.changed !== 'matter') {

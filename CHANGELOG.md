@@ -84,7 +84,13 @@ In this phase (matterbridge `3.4.x`) all plugins will not build and will not run
 - [frontend]: Added SystemInfo to Settings.
 - [frontend]: Added RvcRunMode to IconView.
 - [frontend]: Added prettier, eslint-config-prettier and eslint-plugin-prettier.
-- [matterbridge]: Added SmokeCoAlarm to state update.
+- [matterbridge]: Added SmokeCoAlarm to frontend state update.
+- [matterbridge]: Added RvcRunMode to frontend state update.
+- [matterbridge]: Added RvcCleanMode to frontend state update.
+- [matterbridge]: Added RvcOperationalState to frontend state update.
+- [matterbridge]: Added RvcOperationalState to frontend state update.
+- [matterbridge]: Added ServiceArea to frontend state update.
+- [matterbridge]: Added ModeSelect to frontend state update.
 
 ### Changed
 
