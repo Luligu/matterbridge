@@ -10,7 +10,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## Project evolution
 
-The project will evolve to multi thread (the cli will become the threads manager) with these initial threads:
+The project will evolve to a multi-threaded architecture (the CLI will become the thread manager) with these initial threads:
 
 - matterbridge;
 - frontend;
@@ -21,18 +21,18 @@ Advantages:
 
 - real concurrency outside the Node.js main loop;
 - isolation between threads;
-- single plugin isolation in childbridge mode;
+- individual plugin isolation in childbridge mode;
 
 ## [3.3.0] - Not released
 
 ### Development Breaking Changes
 
 - [platform]: Now, internal use only properties are private readonly and internal use only methods are private.
-- [platform]: The signature of the matterbridge param in the platform constructor has changed from Matterbridge to `PlatformMatterbridge` that has only the approriate readonly properties from matterbridge.
+- [platform]: The signature of the matterbridge param in the platform constructor has changed from Matterbridge to `PlatformMatterbridge` which has only the appropriate readonly properties from matterbridge.
 
-This change, necassary to obtain the plugin isolation, will require to adapt all plugins in two steps.
+This change, necessary to achieve plugin isolation, will require all plugins to be adapted in two steps.
 
-1. `After` matterbridge `3.3.0` will be published as latest:
+1. `After` matterbridge `3.3.0` is published as latest:
 
 - update the plugin platform constructor with the new signature:
 
@@ -50,11 +50,11 @@ This change, necassary to obtain the plugin isolation, will require to adapt all
     }
 ```
 
-- check that you didn't use any matterbridge calls.
+- check that you are not using any matterbridge calls directly (this should not be the case).
 
-In this phase (matterbridge 3.3.x) all plugins will continue to build and run even without updates.
+In this phase (matterbridge `3.3.x`) all plugins will continue to build and run even without updates.
 
-2. `After` matterbridge `3.4.0` will be published as latest, the new signature `PlatformMatterbridge` with the plugin isolation will be effective.
+2. `After` matterbridge `3.4.0` is published as latest, the new signature `PlatformMatterbridge` with the plugin isolation will be effective.
 
 ```typescript
 export type PlatformMatterbridge = {
@@ -76,20 +76,20 @@ export type PlatformMatterbridge = {
 };
 ```
 
-In this phase (matterbridge 3.4.x) all plugins will not build and will not run without updates.
+In this phase (matterbridge `3.4.x`) all plugins will not build and will not run without updates.
 
 ### Added
 
 - [frontend]: Bumped `frontend` version to 3.2.0.
-- [frontend]: General improvements and small bug fixes.
 - [frontend]: Added SystemInfo to Settings.
 - [frontend]: Added RvcRunMode to IconView.
-- [frontend]: Added prettier, prettierPlugin and prettierConfig.
-- [frontend]: Added SmokeCoAlarm to state update.
+- [frontend]: Added prettier, eslint-config-prettier and eslint-plugin-prettier.
+- [matterbridge]: Added SmokeCoAlarm to state update.
 
 ### Changed
 
 - [package]: Updated dependencies.
+- [frontend]: General improvements and small bug fixes.
 
 ### Fixed
 
