@@ -497,7 +497,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to provide devices
     this.expressApp.get('/api/devices', async (req, res) => {
       this.log.debug('The frontend sent /api/devices');
-      const devices = await this.getDevices();
+      const devices = this.getDevices();
       res.json(devices);
     });
 
@@ -1119,9 +1119,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * Retrieves the devices from Matterbridge.
    *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
-   * @returns {Promise<ApiDevices[]>} A promise that resolves to an array of ApiDevices for the frontend.
+   * @returns {ApiDevices[]} An array of ApiDevices for the frontend.
    */
-  private async getDevices(pluginName?: string): Promise<ApiDevices[]> {
+  private getDevices(pluginName?: string): ApiDevices[] {
     if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const devices: ApiDevices[] = [];
     for (const device of this.matterbridge.devices.array()) {
@@ -1640,7 +1640,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const plugins = this.getPlugins();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
-        const devices = await this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        const devices = this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.plugin, 10)) {
