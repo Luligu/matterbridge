@@ -59,7 +59,21 @@ import { BasicInformationServer } from '@matter/main/behaviors/basic-information
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
 import { withTimeout, waiter, wait } from './utils/wait.js';
-import { ApiMatterResponse, dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
+import {
+  ApiMatterResponse,
+  dev,
+  MATTER_LOGGER_FILE,
+  MATTER_STORAGE_NAME,
+  MATTERBRIDGE_LOGGER_FILE,
+  MatterbridgeInformation,
+  NODE_STORAGE_DIR,
+  plg,
+  RegisteredPlugin,
+  SanitizedExposedFabricInformation,
+  SanitizedSession,
+  SystemInformation,
+  typ,
+} from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -166,11 +180,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   // Matterbridge logger
   public readonly log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
-  public readonly matterbridgeLoggerFile = 'matterbridge.log';
 
   // Matter logger
   public readonly matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-  public readonly matterLoggerFile = 'matter.log';
 
   // Managers
   public readonly plugins = new PluginManager(this);
@@ -178,7 +190,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public readonly frontend = new Frontend(this);
 
   // Matterbridge storage
-  public readonly nodeStorageName = 'storage';
   public nodeStorage: NodeStorageManager | undefined;
   public nodeContext: NodeStorage | undefined;
 
@@ -200,7 +211,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private readonly environment = Environment.default;
 
   // Matter storage
-  readonly matterStorageName = 'matterstorage';
   matterStorageService: StorageService | undefined;
   matterStorageManager: StorageManager | undefined;
   matterbridgeContext: StorageContext | undefined;
@@ -377,7 +387,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Setup the matter environment
     this.environment.vars.set('log.level', MatterLogLevel.INFO);
     this.environment.vars.set('log.format', MatterLogFormat.ANSI);
-    this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, this.matterStorageName));
+    this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
 
@@ -386,8 +396,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Initialize nodeStorage and nodeContext
     try {
-      this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
-      this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
+      this.log.debug(`Creating node storage manager: ${CYAN}${NODE_STORAGE_DIR}${db}`);
+      this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
       this.log.debug('Creating node storage context for matterbridge');
       this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
       // TODO: Remove this code when node-persist-manager is updated
@@ -412,7 +422,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
       // Creating a backup of the node storage since it is not corrupted
       this.log.debug('Creating node storage backup...');
-      await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName), path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'));
+      await copyDirectory(path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR), path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR + '.backup'));
       this.log.debug('Created node storage backup');
     } catch (error) {
       // Restoring the backup of the node storage since it is corrupted
@@ -421,7 +431,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.fatal(`The matterbridge storage is corrupted. Found -norestore parameter: exiting...`);
       } else {
         this.log.notice(`The matterbridge storage is corrupted. Restoring it with backup...`);
-        await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'), path.join(this.matterbridgeDirectory, this.nodeStorageName));
+        await copyDirectory(path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR + '.backup'), path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR));
         this.log.notice(`The matterbridge storage has been restored with backup`);
       }
     }
@@ -545,7 +555,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Create the file logger for matterbridge (context: matterbridgeFileLog)
     if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
-      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbridgeLoggerFile), this.log.logLevel, true);
+      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), this.log.logLevel, true);
       this.matterbridgeInformation.fileLogger = true;
     }
 
@@ -1217,7 +1227,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private createDestinationMatterLogger(fileLogger: boolean): (text: string, message: Diagnostic.Message) => void {
     this.matterLog.logNameColor = '\x1b[34m'; // Blue matter.js Logger
     if (fileLogger) {
-      this.matterLog.logFilePath = path.join(this.matterbridgeDirectory, this.matterLoggerFile);
+      this.matterLog.logFilePath = path.join(this.matterbridgeDirectory, MATTER_LOGGER_FILE);
     }
 
     return (text: string, message: Diagnostic.Message) => {
@@ -1488,10 +1498,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (message === 'shutting down with factory reset...') {
         try {
           // Delete matter storage directory with its subdirectories and backup
-          const dir = path.join(this.matterbridgeDirectory, this.matterStorageName);
+          const dir = path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME);
           this.log.info(`Removing matter storage directory: ${dir}`);
           await fs.rm(dir, { recursive: true });
-          const backup = path.join(this.matterbridgeDirectory, this.matterStorageName + '.backup');
+          const backup = path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup');
           this.log.info(`Removing matter storage backup directory: ${backup}`);
           await fs.rm(backup, { recursive: true });
         } catch (error) {
@@ -1502,10 +1512,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         }
         try {
           // Delete matterbridge storage directory with its subdirectories and backup
-          const dir = path.join(this.matterbridgeDirectory, this.nodeStorageName);
+          const dir = path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR);
           this.log.info(`Removing matterbridge storage directory: ${dir}`);
           await fs.rm(dir, { recursive: true });
-          const backup = path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup');
+          const backup = path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR + '.backup');
           this.log.info(`Removing matterbridge storage backup directory: ${backup}`);
           await fs.rm(backup, { recursive: true });
         } catch (error) {
@@ -1999,7 +2009,7 @@ const commissioningController = new CommissioningController({
     this.log.info('Matter node storage started');
 
     // Backup matter storage since it is created/opened correctly
-    await this.backupMatterStorage(path.join(this.matterbridgeDirectory, this.matterStorageName), path.join(this.matterbridgeDirectory, this.matterStorageName + '.backup'));
+    await this.backupMatterStorage(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME), path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup'));
   }
 
   /**

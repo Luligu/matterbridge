@@ -141,8 +141,6 @@ describe('Matterbridge mocked', () => {
     expect((matterbridge as any).failCountLimit).toBe(120);
 
     expect(matterbridge.log).toBeDefined();
-    expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.log');
-    expect(matterbridge.matterLoggerFile).toBe('matter.log');
 
     expect(matterbridge.plugins).toBeDefined();
     expect(matterbridge.devices).toBeDefined();
@@ -155,11 +153,9 @@ describe('Matterbridge mocked', () => {
 
     expect((matterbridge as any).environment).toBeDefined();
 
-    expect(matterbridge.nodeStorageName).toBe('storage');
     expect(matterbridge.nodeStorage).toBeUndefined();
     expect(matterbridge.nodeContext).toBeUndefined();
 
-    expect(matterbridge.matterStorageName).toBe('matterstorage');
     expect(matterbridge.matterStorageService).toBeUndefined();
     expect(matterbridge.matterStorageManager).toBeUndefined();
     expect(matterbridge.matterbridgeContext).toBeUndefined();

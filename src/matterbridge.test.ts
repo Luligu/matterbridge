@@ -49,10 +49,6 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).initialized).toBeFalsy();
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
-      expect(matterbridge.nodeStorageName).toBe('storage');
-      expect(matterbridge.matterStorageName).toBe('matterstorage');
-      expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.log');
-      expect(matterbridge.matterLoggerFile).toBe('matter.log');
       expect(matterbridge.serverNode).toBeUndefined();
       expect(matterbridge.aggregatorNode).toBeUndefined();
       expect(matterbridge.matterStorageManager).toBeUndefined();
@@ -106,10 +102,6 @@ describe('Matterbridge', () => {
 
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
-      expect(matterbridge.nodeStorageName).toBe('storage');
-      expect(matterbridge.matterStorageName).toBe('matterstorage');
-      expect(matterbridge.matterbridgeLoggerFile).toBe('matterbridge.log');
-      expect(matterbridge.matterLoggerFile).toBe('matter.log');
       expect((matterbridge as any).initialized).toBeTruthy();
       expect((matterbridge as any).log).toBeDefined();
       expect(matterbridge.homeDirectory).toBe(getParameter('homedir') ?? os.homedir());
