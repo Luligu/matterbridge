@@ -23,7 +23,17 @@ Advantages:
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 
-## [3.3.0] - Not released
+## [3.3.1] - Not released
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
+## [3.3.0] - 2025-10-03
 
 ### Development Breaking Changes Notice
 
@@ -97,8 +107,6 @@ In this phase (matterbridge `3.4.x`) all plugins will not build and will not run
 
 - [package]: Updated dependencies.
 - [frontend]: General improvements and small bug fixes.
-
-### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
