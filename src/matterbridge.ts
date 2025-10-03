@@ -165,20 +165,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
 
   // Matterbridge logger
-  public log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
-  public matterbridgeLoggerFile = 'matterbridge.log';
+  public readonly log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+  public readonly matterbridgeLoggerFile = 'matterbridge.log';
 
   // Matter logger
-  public matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-  public matterLoggerFile = 'matter.log';
+  public readonly matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  public readonly matterLoggerFile = 'matter.log';
 
   // Managers
-  public plugins = new PluginManager(this);
-  public devices = new DeviceManager(this);
-  public frontend = new Frontend(this);
+  public readonly plugins = new PluginManager(this);
+  public readonly devices = new DeviceManager(this);
+  public readonly frontend = new Frontend(this);
 
   // Matterbridge storage
-  public nodeStorageName = 'storage';
+  public readonly nodeStorageName = 'storage';
   public nodeStorage: NodeStorageManager | undefined;
   public nodeContext: NodeStorage | undefined;
 
@@ -186,7 +186,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public hasCleanupStarted = false;
   private initialized = false;
   private startMatterInterval: NodeJS.Timeout | undefined;
-  private startMatterIntervalMs = 1000;
+  private readonly startMatterIntervalMs = 1000;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
@@ -197,10 +197,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private rejectionHandler: NodeJS.UnhandledRejectionListener | undefined;
 
   // Matter environment
-  private environment = Environment.default;
+  private readonly environment = Environment.default;
 
   // Matter storage
-  matterStorageName = 'matterstorage';
+  readonly matterStorageName = 'matterstorage';
   matterStorageService: StorageService | undefined;
   matterStorageManager: StorageManager | undefined;
   matterbridgeContext: StorageContext | undefined;
@@ -235,24 +235,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   protected constructor() {
     super();
     this.log.logNameColor = '\x1b[38;5;115m';
-  }
-
-  /**
-   * Retrieves the list of Matterbridge devices.
-   *
-   * @returns {MatterbridgeEndpoint[]} An array of MatterbridgeDevice objects.
-   */
-  getDevices(): MatterbridgeEndpoint[] {
-    return this.devices.array();
-  }
-
-  /**
-   * Retrieves the list of registered plugins.
-   *
-   * @returns {RegisteredPlugin[]} An array of RegisteredPlugin objects.
-   */
-  getPlugins(): RegisteredPlugin[] {
-    return this.plugins.array();
   }
 
   /**
@@ -781,8 +763,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       --childbridge:           start Matterbridge in childbridge mode
       --port [port]:           start the commissioning server on the given port (default 5540)
       --mdnsinterface [name]:  set the interface to use for the matter server mdnsInterface (default all interfaces)
-      --ipv4address [address]: set the ipv4 interface address to use for the matter listener (default all interfaces)
-      --ipv6address [address]: set the ipv6 interface address to use for the matter listener (default all interfaces)
+      --ipv4address [address]: set the ipv4 interface address to use for the matter listener (default all addresses)
+      --ipv6address [address]: set the ipv6 interface address to use for the matter listener (default all addresses)
       --frontend [port]:       start the frontend on the given port (default 8283)
       --logger:                set the matterbridge logger level: debug | info | notice | warn | error | fatal (default info)
       --filelogger             enable the matterbridge file logger (matterbridge.log)
@@ -1043,7 +1025,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   /**
    * Registers the process handlers for uncaughtException, unhandledRejection, SIGINT and SIGTERM.
-   * When either of these signals are received, the cleanup method is called with an appropriate message.
+   * - When an uncaught exception occurs, the exceptionHandler logs the error message and stack trace.
+   * - When an unhandled promise rejection occurs, the rejectionHandler logs the reason and stack trace.
+   * - When either of SIGINT and SIGTERM signals are received, the cleanup method is called with an appropriate message.
    */
   private registerProcessHandlers() {
     this.log.debug(`Registering uncaughtException and unhandledRejection handlers...`);
@@ -1403,8 +1387,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Stop matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
-      this.log.debug('Waiting for the MessageExchange to finish...');
-      await wait(timeout, 'Waiting for the MessageExchange to finish...', true);
+      if (timeout > 0) {
+        this.log.debug(`Waiting ${timeout}ms for the MessageExchange to finish...`);
+        await wait(timeout, `Waiting ${timeout}ms for the MessageExchange to finish...`, true);
+      }
       if (this.bridgeMode === 'bridge') {
         if (this.serverNode) {
           await this.stopServerNode(this.serverNode);
@@ -1553,59 +1539,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.initialized = false;
       this.emit('cleanup_completed');
     } else {
-      this.log.debug('Cleanup already started...');
-    }
-  }
-
-  /**
-   * Creates and configures the server node for a single not bridged device.
-   *
-   * @param {RegisteredPlugin} plugin - The plugin to configure.
-   * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
-   * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
-   */
-  private async createDeviceServerNode(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
-    if (device.mode === 'server' && !device.serverNode && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
-      this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);
-      const context = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
-      device.serverNode = await this.createServerNode(context, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
-      this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node...`);
-      await device.serverNode.add(device);
-      this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node`);
-    }
-  }
-
-  /**
-   * Creates and configures the server node for an accessory plugin for a given device.
-   *
-   * @param {RegisteredPlugin} plugin - The plugin to configure.
-   * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
-   * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
-   */
-  private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
-    if (!plugin.locked && device.deviceType && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
-      plugin.locked = true;
-      plugin.device = device;
-      plugin.storageContext = await this.createServerNodeContext(plugin.name, device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
-      plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
-      this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node`);
-      await plugin.serverNode.add(device);
-    }
-  }
-
-  /**
-   * Creates and configures the server node and the aggregator node for a dynamic plugin.
-   *
-   * @param {RegisteredPlugin} plugin - The plugin to configure.
-   * @returns {Promise<void>} A promise that resolves when the server node and the aggregator node for the dynamic plugin is created and configured.
-   */
-  private async createDynamicPlugin(plugin: RegisteredPlugin): Promise<void> {
-    if (!plugin.locked) {
-      plugin.locked = true;
-      plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', this.aggregatorDeviceType, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
-      plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
-      plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
-      await plugin.serverNode.add(plugin.aggregatorNode);
+      if (!this.initialized) this.log.debug('Cleanup with instance not initialized...');
+      if (this.hasCleanupStarted) this.log.debug('Cleanup already started...');
     }
   }
 
@@ -2391,6 +2326,62 @@ const commissioningController = new CommissioningController({
     const aggregatorNode = new Endpoint(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
     this.log.info(`Created ${await storageContext.get<string>('storeId')} aggregator`);
     return aggregatorNode;
+  }
+
+  /**
+   * Creates and configures the server node for an accessory plugin for a given device.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin to configure.
+   * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
+   * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
+   */
+  private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
+    if (!plugin.locked && device.deviceType && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
+      plugin.locked = true;
+      plugin.device = device;
+      this.log.debug(`Creating accessory plugin ${plg}${plugin.name}${db} server node...`);
+      plugin.storageContext = await this.createServerNodeContext(plugin.name, device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
+      plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node...`);
+      await plugin.serverNode.add(device);
+    }
+  }
+
+  /**
+   * Creates and configures the server node and the aggregator node for a dynamic plugin.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin to configure.
+   * @returns {Promise<void>} A promise that resolves when the server node and the aggregator node for the dynamic plugin is created and configured.
+   */
+  private async createDynamicPlugin(plugin: RegisteredPlugin): Promise<void> {
+    if (!plugin.locked) {
+      plugin.locked = true;
+      this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} server node...`);
+      plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', this.aggregatorDeviceType, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
+      plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
+      plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
+      this.log.debug(`Adding dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
+      await plugin.serverNode.add(plugin.aggregatorNode);
+    }
+  }
+
+  /**
+   * Creates and configures the server node for a single not bridged device.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin to configure.
+   * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
+   * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
+   */
+  private async createDeviceServerNode(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
+    if (device.mode === 'server' && !device.serverNode && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
+      this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);
+      const context = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
+      device.serverNode = await this.createServerNode(context, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node...`);
+      await device.serverNode.add(device);
+      this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node`);
+    }
   }
 
   /**

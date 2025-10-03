@@ -60,7 +60,7 @@ describe('DeviceManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `The device ${dev}Device1${er} with uniqueId ${BLUE}DeviceUniqueId1${er} serialNumber ${BLUE}DeviceSerial1${er} is already in the device manager`);
   });
 
-  test('has returns true if plugin exists', () => {
+  test('has returns true if device exists', () => {
     expect(devices.has('Unknown')).toBe(false);
     expect(devices.has('DeviceUniqueId1')).toBe(true);
     expect(devices.has('DeviceUniqueId2')).toBe(true);

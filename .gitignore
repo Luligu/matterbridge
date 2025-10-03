@@ -24,3 +24,4 @@ crypto
 docs/Matter specifications/
 STYLEGUIDE.md
 workers/
+matter.ts

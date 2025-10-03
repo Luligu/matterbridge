@@ -53,6 +53,50 @@ import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpe
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
 import { RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type ReadonlyMatterbridge = Readonly<
+  Pick<
+    Matterbridge,
+    | 'matterbridgeInformation'
+    | 'systemInformation'
+    | 'homeDirectory'
+    | 'rootDirectory'
+    | 'matterbridgeDirectory'
+    | 'matterbridgePluginDirectory'
+    | 'matterbridgeCertDirectory'
+    | 'globalModulesDirectory'
+    | 'matterbridgeVersion'
+    | 'matterbridgeLatestVersion'
+    | 'matterbridgeDevVersion'
+    | 'bridgeMode'
+    | 'restartMode'
+    | 'profile'
+    | 'matterbridgeLoggerFile'
+    | 'matterLoggerFile'
+    | 'nodeStorageName'
+    | 'matterStorageName'
+    | 'mdnsInterface'
+    | 'ipv4address'
+    | 'ipv6address'
+    // Thread communication
+    | 'hasCleanupStarted'
+    | 'log'
+    | 'matterLog'
+    | 'setLogLevel'
+    | 'plugins'
+    | 'devices'
+    | 'nodeContext'
+    | 'serverNode'
+    | 'getServerNodeData'
+    | 'advertisingNodes'
+    | 'restartProcess'
+    | 'shutdownProcess'
+    | 'unregisterAndShutdownProcess'
+    | 'shutdownProcessAndReset'
+    | 'shutdownProcessAndFactoryReset'
+  >
+>;
+
 /**
  * Represents the Matterbridge events.
  */
@@ -492,12 +536,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (this.matterbridge.bridgeMode === 'bridge') {
         if (this.matterbridge.serverNode) serverNodes.push(this.matterbridge.serverNode);
       } else if (this.matterbridge.bridgeMode === 'childbridge') {
-        for (const plugin of this.matterbridge.getPlugins()) {
+        for (const plugin of this.matterbridge.plugins.array()) {
           if (plugin.serverNode) serverNodes.push(plugin.serverNode);
         }
       }
       // istanbul ignore next
-      for (const device of this.matterbridge.getDevices()) {
+      for (const device of this.matterbridge.devices.array()) {
         if (device.serverNode) serverNodes.push(device.serverNode);
       }
 
@@ -1555,7 +1599,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         let serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
         if (data.params.id === 'Matterbridge') serverNode = this.matterbridge.serverNode;
         else
-          serverNode = this.matterbridge.getPlugins().find((p) => p.serverNode && p.serverNode.id === localData.params.id)?.serverNode || this.matterbridge.getDevices().find((d) => d.serverNode && d.serverNode.id === localData.params.id)?.serverNode;
+          serverNode =
+            this.matterbridge.plugins.array().find((p) => p.serverNode && p.serverNode.id === localData.params.id)?.serverNode || this.matterbridge.devices.array().find((d) => d.serverNode && d.serverNode.id === localData.params.id)?.serverNode;
         if (!serverNode) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown server node id ${localData.params.id} in /api/matter` });
           return;

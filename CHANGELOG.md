@@ -25,12 +25,13 @@ Advantages:
 
 ## [3.3.0] - Not released
 
-### Development Breaking Changes
+### Development Breaking Changes Notice
 
+- [matterbridge]: Now, internal use only properties are private readonly and internal use only methods are private.
 - [platform]: Now, internal use only properties are private readonly and internal use only methods are private.
 - [platform]: The signature of the matterbridge param in the platform constructor has changed from Matterbridge to `PlatformMatterbridge` which has only the appropriate readonly properties from matterbridge.
 
-This change, necessary to achieve plugin isolation, will require all plugins to be adapted in two steps.
+This change, necessary to achieve plugin isolation, will require all plugins to be updated in two steps.
 
 1. `After` matterbridge `3.3.0` is published as latest:
 
@@ -88,7 +89,6 @@ In this phase (matterbridge `3.4.x`) all plugins will not build and will not run
 - [matterbridge]: Added SmokeCoAlarm to frontend state update.
 - [matterbridge]: Added RvcRunMode to frontend state update.
 - [matterbridge]: Added RvcCleanMode to frontend state update.
-- [matterbridge]: Added RvcOperationalState to frontend state update.
 - [matterbridge]: Added RvcOperationalState to frontend state update.
 - [matterbridge]: Added ServiceArea to frontend state update.
 - [matterbridge]: Added ModeSelect to frontend state update.
