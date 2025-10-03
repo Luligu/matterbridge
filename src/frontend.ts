@@ -475,18 +475,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         physical_space_size: this.formatMemoryUsage(space.physical_space_size),
       }));
 
-      // Define a type for the module with a _cache property
-      interface ModuleWithCache {
-        _cache: Record<string, unknown>;
-      }
-      const { default: module } = await import('node:module');
-      const loadedModules = (module as unknown as ModuleWithCache)._cache ? Object.keys((module as unknown as ModuleWithCache)._cache).sort() : [];
+      const { createRequire } = await import('node:module');
+      const require = createRequire(import.meta.url);
+      const cjsModules = Object.keys(require.cache).sort();
 
       const memoryReport = {
         memoryUsage,
         heapStats,
         heapSpaces,
-        loadedModules,
+        cjsModules,
       };
 
       res.status(200).json(memoryReport);
