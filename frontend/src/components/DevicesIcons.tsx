@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
- 
+
 // React
 import { useContext, useEffect, useState, useRef, memo, cloneElement, useCallback } from 'react';
 
@@ -39,28 +39,53 @@ import KitchenIcon from '@mui/icons-material/Kitchen';
 
 // @mdi/js use: <Icon path={mdiSortDescending} size='15px'/>
 import Icon from '@mdi/react';
-import { mdiPowerSocketEu, mdiTransmissionTower, mdiEvStation, mdiWaterBoiler, mdiHeatPump, mdiSolarPanel, mdiHomeBattery, mdiLightSwitch, mdiThermostat, mdiGestureTapButton, mdiWaterPercent, 
-  mdiSmokeDetectorVariant, mdiAirPurifier, mdiAirFilter, mdiWashingMachine, mdiTumbleDryer, mdiDishwasher, mdiStove, mdiThermostatBox, mdiRobotVacuum } from '@mdi/js';
+import {
+  mdiPowerSocketEu,
+  mdiTransmissionTower,
+  mdiEvStation,
+  mdiWaterBoiler,
+  mdiHeatPump,
+  mdiSolarPanel,
+  mdiHomeBattery,
+  mdiLightSwitch,
+  mdiThermostat,
+  mdiGestureTapButton,
+  mdiWaterPercent,
+  mdiSmokeDetectorVariant,
+  mdiAirPurifier,
+  mdiAirFilter,
+  mdiWashingMachine,
+  mdiTumbleDryer,
+  mdiDishwasher,
+  mdiStove,
+  mdiThermostatBox,
+  mdiRobotVacuum,
+} from '@mdi/js';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-import { ApiSettingResponse, WsMessageApiResponse, WsMessageApiStateUpdate } from '../../../src/frontendTypes';
-import { ApiClusters, ApiDevices, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
+import { WsMessageApiClustersResponse, WsMessageApiResponse, WsMessageApiStateUpdate } from '../../../src/frontendTypes';
+import { ApiClusters, ApiDevices } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
+// const debug = true;
+const debugUpdate = false;
 
-const valueBoxSx = { display: 'flex', gap: '2px', justifyContent: 'space-evenly', width: '100%', height: '40px' };
+// Icon, value, unit sx
+const renderBoxSx = { display: 'flex', gap: '2px', justifyContent: 'space-evenly', width: '100%', height: '40px' };
 const iconSx = { margin: '0', padding: '0', fontSize: '36px', fontWeight: 'medium', color: 'var(--primary-color)' };
 const valueSx = { margin: '0', padding: '0', fontSize: '20px', fontWeight: 'medium', color: 'var(--div-text-color)', textAlign: 'center' };
 const unitSx = { margin: '0', padding: '0', paddingBottom: '2px', fontSize: '16px', fontWeight: 'medium', color: 'var(--div-text-color)', textAlign: 'center' };
 
-const detailsBoxSx = { display: 'flex', gap: '2px', justifyContent: 'center', width: '100%', height: '18px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' }
+// Details sx
+const detailsBoxSx = { display: 'flex', gap: '2px', justifyContent: 'center', width: '100%', height: '18px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' };
 const detailsSx = { margin: '0', padding: '0', fontSize: '12px', fontWeight: 'normal', color: 'var(--div-text-color)' };
 
+// Name sx
 const nameBoxSx = { display: 'flex', justifyContent: 'center', width: '100%', height: '52px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' };
 const nameSx = { margin: '0', padding: '0', fontSize: '14px', fontWeight: 'bold', color: 'var(--div-text-color)' };
 
-const endpointBoxSx = { display: 'flex', gap: '4px', justifyContent: 'center', width: '100%', height: '15px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' }
-// const endpointSx = { margin: '0', padding: '0px 4px', borderRadius: '5px', textAlign: 'center', fontSize: '10px', fontWeight: 'normal', color: 'white', backgroundColor: 'var(--secondary-color)' };
+// Endpoint sx
+const endpointBoxSx = { display: 'flex', gap: '4px', justifyContent: 'center', width: '100%', height: '15px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' };
 const endpointSx = { margin: '0', padding: '0px 4px', borderRadius: '5px', textAlign: 'center', fontSize: '12px', fontWeight: 'normal', color: 'var(--secondary-color)' };
 
 const lightDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d];
@@ -68,65 +93,109 @@ const outletDeviceTypes = [0x010a, 0x010b];
 const switchDeviceTypes = [0x0103, 0x0104, 0x0105, 0x010f, 0x0110];
 const currentLevelDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105, 0x0110];
 
-function Render({ icon, iconColor, cluster, value, unit, prefix }: { icon?: React.JSX.Element; iconColor?: string; cluster: ApiClusters; value: string | number | boolean | null | undefined; unit?: string; prefix?: boolean }) {
-  if(debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof(value)}-${isNaN(value as any)}) "${value}" unit "${unit}"`);
+interface RenderProps {
+  icon: React.JSX.Element;
+  iconColor?: string;
+  cluster: ApiClusters;
+  value: string | number | boolean | null | undefined;
+  unit?: string;
+  prefix?: boolean;
+}
+
+function Render({ icon, iconColor, cluster, value, unit, prefix }: RenderProps): React.JSX.Element {
+  if (debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof value}-${isNaN(value as any)}) "${value}" unit "${unit}"`);
   prefix = prefix ?? false;
   return (
-    <Box key={`${cluster.clusterId}-${cluster.attributeId}-box`} sx={valueBoxSx}>
-      {icon && cloneElement(icon, { key: `${cluster.clusterId}-${cluster.attributeId}-icon`, sx: {...iconSx, color: iconColor ?? 'var(--primary-color)'} })}
-      <Box key={`${cluster.clusterId}-${cluster.attributeId}-valueunitbox`} sx={{...valueBoxSx, gap: '4px', alignContent: 'center', alignItems: 'end', justifyContent: 'center'}}>
-        {unit && prefix===true &&
+    <Box key={`${cluster.clusterId}-${cluster.attributeId}-box`} sx={renderBoxSx}>
+      {icon && cloneElement(icon, { key: `${cluster.clusterId}-${cluster.attributeId}-icon`, sx: { ...iconSx, color: iconColor ?? 'var(--primary-color)' } })}
+      <Box key={`${cluster.clusterId}-${cluster.attributeId}-valueunitbox`} sx={{ ...renderBoxSx, gap: '4px', alignContent: 'center', alignItems: 'end', justifyContent: 'center' }}>
+        {unit && prefix === true && (
           <Typography key={`${cluster.clusterId}-${cluster.attributeId}-unit`} sx={unitSx}>
             {unit}
           </Typography>
-        }
+        )}
         <Typography key={`${cluster.clusterId}-${cluster.attributeId}-value`} sx={valueSx}>
-          {(value===null || value===undefined || (typeof(value)==='number' && isNaN(value)) ||  value==='NaN') ?
-            '---' : value
-          }
-        </Typography> 
-        {unit && prefix===false &&
+          {value === null || value === undefined || (typeof value === 'number' && isNaN(value)) || value === 'NaN' ? '---' : value}
+        </Typography>
+        {unit && prefix === false && (
           <Typography key={`${cluster.clusterId}-${cluster.attributeId}-unit`} sx={unitSx}>
             {unit}
           </Typography>
-        }
+        )}
       </Box>
     </Box>
   );
-};
+}
 
-function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDevices; endpoint: string; id: string; deviceType: number; clusters: ApiClusters[] }) {
+interface DeviceProps {
+  device: ApiDevices;
+  endpoint: string;
+  id: string;
+  deviceType: number;
+  clusters: ApiClusters[];
+}
+
+function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): React.JSX.Element {
   const airQualityLookup = ['Unknown', 'Good', 'Fair', 'Moderate', 'Poor', 'VeryPoor', 'Ext.Poor'];
   let details = '';
 
-  if(debug) console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length}):`, clusters);
+  if (debug) console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length})`);
+
+  // Descriptor tagList
+  const tagList = clusters.find((cluster) => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'tagList')?.attributeLocalValue as Array<{ namespaceId: number; tag: number; label: string }> | undefined;
+  if (tagList) {
+    let tagListLabels = '';
+    tagList.map((t) => {
+      if (t.label) tagListLabels += t.label + ' ';
+    });
+    details = tagListLabels.trim();
+  }
 
   // PowerSource
-  deviceType===0x0011 && clusters.filter(cluster => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'batVoltage').map(cluster => details = `${cluster.attributeLocalValue} mV`);
-  
+  deviceType === 0x0011 && clusters.filter((cluster) => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'batVoltage').map((cluster) => (details = `${cluster.attributeLocalValue} mV`));
+
   // LevelControl
-  currentLevelDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'LevelControl' && cluster.attributeName === 'currentLevel').map(cluster => details = `Level ${cluster.attributeValue}`);
+  currentLevelDeviceTypes.includes(deviceType) && clusters.filter((cluster) => cluster.clusterName === 'LevelControl' && cluster.attributeName === 'currentLevel').map((cluster) => (details = `Level ${cluster.attributeValue}`));
 
   // WindowCovering
-  deviceType===0x0202 && clusters.filter(cluster => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map(cluster => details = `Position ${cluster.attributeLocalValue as number/100}%`);
+  deviceType === 0x0202 &&
+    clusters.filter((cluster) => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map((cluster) => (details = `Position ${(cluster.attributeLocalValue as number) / 100}%`));
 
   // Thermostat
-  deviceType===0x0301 && clusters.filter(cluster => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedHeatingSetpoint').map(cluster => details = `Heat ${cluster.attributeLocalValue as number/100}°C `);
-  deviceType===0x0301 && clusters.filter(cluster => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedCoolingSetpoint').map(cluster => details = details + `Cool ${cluster.attributeLocalValue as number/100}°C`);
+  deviceType === 0x0301 && clusters.filter((cluster) => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedHeatingSetpoint').map((cluster) => (details = `Heat ${(cluster.attributeLocalValue as number) / 100}°C `));
+  deviceType === 0x0301 && clusters.filter((cluster) => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedCoolingSetpoint').map((cluster) => (details = details + `Cool ${(cluster.attributeLocalValue as number) / 100}°C`));
 
   // SmokeCoAlarm
-  deviceType===0x0076 && clusters.filter(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'coState').map(cluster => details = `${cluster.attributeLocalValue===0?'No CO detected':'CO alarm!'}`);
+  deviceType === 0x0076 && clusters.filter((cluster) => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'coState').map((cluster) => (details = `${cluster.attributeLocalValue === 0 ? 'No CO detected' : 'CO alarm!'}`));
 
   // ElectricalPowerMeasurement
-  deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'voltage').map(cluster => details = `${cluster.attributeLocalValue as number/1000} V, `);
-  deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activeCurrent').map(cluster => details = details +`${cluster.attributeLocalValue as number/1000} A, `);
-  deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activePower').map(cluster => details = details +`${cluster.attributeLocalValue as number/1000} W`);
+  deviceType === 0x0510 && clusters.filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'voltage').map((cluster) => (details = `${(cluster.attributeLocalValue as number) / 1000} V, `));
+  deviceType === 0x0510 &&
+    clusters.filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activeCurrent').map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1000} A, `));
+  deviceType === 0x0510 && clusters.filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activePower').map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1000} W`));
 
+  // ModeSelect
+  if (deviceType === 0x0027) {
+    const mode = clusters.find((cluster) => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'currentMode')?.attributeLocalValue as number | undefined;
+    const supportedModes = clusters.find((cluster) => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as Array<{ mode: number; label: string }> | undefined;
+    details = supportedModes?.find((m) => m.mode === mode)?.label || 'Unknown';
+  }
+
+  // RvcRunMode
+  if (deviceType === 0x0074) {
+    const runMode = clusters.find((cluster) => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'currentMode')?.attributeLocalValue as number | undefined;
+    const runSupportedModes = clusters.find((cluster) => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as Array<{ mode: number; label: string }> | undefined;
+    details = runSupportedModes?.find((m) => m.mode === runMode)?.label || 'Unknown';
+  }
+
+  // prettier-ignore
   return (
     <div className='MbfWindowDiv' style={{ margin: '0px', padding: '5px', width: '150px', height: '150px', borderColor: 'var(--div-bg-color)', borderRadius: '5px', justifyContent: 'space-between' }}>
+      {/* BridgedDeviceBasicInformation.reachable */}
       {deviceType===0x0013 && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
         <Render icon={cluster.attributeLocalValue===true ? <WifiIcon/> : <WifiOffIcon/>} iconColor={cluster.attributeLocalValue===true ?'green':'red'} cluster={cluster} value={cluster.attributeLocalValue===true ? 'Online' : 'Offline'} />
       ))}
+      {/* PowerSource */}
       {deviceType===0x0011 && clusters.filter(cluster => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'batPercentRemaining').map(cluster => (
         <Render icon={<Battery4BarIcon/>} cluster={cluster} value={cluster.attributeLocalValue as number/2} unit='%' />
       ))}
@@ -179,9 +248,6 @@ function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDev
       {deviceType===0x77 && clusters.filter(cluster => cluster.clusterName === 'TemperatureControl' && cluster.attributeName === 'selectedTemperatureLevel').map(cluster => (
         <Render icon={<Icon path={mdiStove} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue as number} unit='mode' prefix={true} />
       ))}
-      {deviceType===0x74 && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
-        <Render icon={<Icon path={mdiRobotVacuum} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Robot' />
-      ))}
 
       {deviceType===0x0202 && clusters.filter(cluster => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map(cluster => (
         <Render icon={<BlindsIcon/>} cluster={cluster} value={cluster.attributeLocalValue as number / 100} unit='%' />
@@ -201,7 +267,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDev
       ))}
       {/* ModeSelect */}
       {deviceType===0x0027 && clusters.filter(cluster => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'currentMode').map(cluster => (
-        <Render icon={<ChecklistIcon/>} cluster={cluster} value={cluster.attributeValue} unit='mode' prefix={true}/>
+        <Render icon={<ChecklistIcon/>} cluster={cluster} value={cluster.attributeValue} unit='Mode' prefix={true}/>
       ))}
       {/* Pump */}
       {deviceType===0x0303 && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
@@ -226,6 +292,11 @@ function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDev
       {/* Rain sensor */}
       {deviceType===0x0044 && clusters.filter(cluster => cluster.clusterName === 'BooleanState' && cluster.attributeName === 'stateValue').map(cluster => (
         <Render icon={<ThunderstormIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'Rain':'No rain'}/>
+      ))}
+
+      {/* Rvc */}
+      {deviceType===0x0074 && clusters.filter(cluster => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'currentMode').map(cluster => (
+        <Render icon={<Icon path={mdiRobotVacuum} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeValue} unit='Run mode' prefix={true}/>
       ))}
 
       {/* Evse */}
@@ -304,144 +375,148 @@ function Device({ device, endpoint, id, deviceType, clusters }: { device: ApiDev
         <Typography sx={endpointSx}>{id}</Typography>
         {debug && <Typography sx={endpointSx}>0x{deviceType.toString(16).padStart(4, '0')}</Typography>}
       </Box>
-      </div>
+    </div>
   );
 }
 
-function DevicesIcons({filter}: { filter: string }) {
+interface DevicesIconsProps {
+  filter: string;
+}
+
+function DevicesIcons({ filter }: DevicesIconsProps): React.JSX.Element {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
   // Local states
-  const [_settings, setSettings] = useState<ApiSettingResponse | null>(null);
-  const [_plugins, setPlugins] = useState<BaseRegisteredPlugin[]>([]);
   const [devices, setDevices] = useState<ApiDevices[]>([]);
-  const [filteredDevices, setFilteredDevices] = useState<ApiDevices[]>(devices);
   const [endpoints, setEndpoints] = useState<{ [serial: string]: { endpoint: string; id: string; deviceTypes: number[] }[] }>({});
   const [deviceTypes, setDeviceTypes] = useState<{ [serial: string]: number[] }>({});
   const [clusters, setClusters] = useState<{ [serial: string]: ApiClusters[] }>({});
 
   // Refs
   const uniqueId = useRef(getUniqueId());
-  const filteredDevicesRef = useRef(filteredDevices);
 
-  const updateDevices = useCallback((msg: WsMessageApiStateUpdate) => {
-    /*if(debug)*/ console.log(`DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`, msg.response);
-    const updateDevice = filteredDevicesRef.current.find((device) => device.pluginName === msg.response.plugin && device.uniqueId === msg.response.uniqueId);
-    if(!updateDevice) {
-      /*if(debug)*/ console.warn(`DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" not found in filteredDevicesRef.current`);
-      return;
-    }
-    const updatedCluster = clusters[updateDevice.serial].find((c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute);
-    if(!updatedCluster) {
-      /*if(debug)*/ console.warn(`DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters`);
-      return;
-    }
-    updatedCluster.attributeValue = String(msg.response.value);
-    updatedCluster.attributeLocalValue = msg.response.value;
-    setClusters({ ...clusters });
-    /*if(debug)*/ console.log(`DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
-  }, [clusters]);
+  const stateUpdate = useCallback(
+    (msg: WsMessageApiStateUpdate) => {
+      if (debug || debugUpdate) console.log(`DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`, msg.response);
+      const updateDevice = devices.find((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
+      if (!updateDevice) {
+        if (debug || debugUpdate) console.warn(`DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" number "${msg.response.number}" id "${msg.response.id}" not found in devices(${devices.length})`);
+        return;
+      }
+      const updatedCluster = clusters[updateDevice.serial]?.find((c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute);
+      if (!updatedCluster) {
+        if (debug || debugUpdate)
+          console.warn(`DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters(${clusters[updateDevice.serial]?.length})`);
+        return;
+      }
+      updatedCluster.attributeValue = String(msg.response.value);
+      updatedCluster.attributeLocalValue = msg.response.value;
+      setClusters({ ...clusters });
+      if (debug || debugUpdate) console.log(`DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
+    },
+    [clusters, devices],
+  );
+
+  const clusterUpdate = useCallback(
+    (msg: WsMessageApiClustersResponse) => {
+      if (debug)
+        console.log(
+          `DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceTypes (${msg.response.deviceTypes.length}) "${msg.response.deviceTypes.join(',')}" clusters (${msg.response.clusters.length}):`,
+          msg.response,
+        );
+      if (msg.response.clusters.length === 0) return;
+      const serial = msg.response.serialNumber;
+      endpoints[serial] = [];
+      deviceTypes[serial] = msg.response.deviceTypes;
+      clusters[serial] = [];
+      for (const cluster of msg.response.clusters) {
+        if (!endpoints[serial].find((e) => e.endpoint === cluster.endpoint)) {
+          endpoints[serial].push({ endpoint: cluster.endpoint, id: cluster.id, deviceTypes: cluster.deviceTypes });
+        }
+        if (['FixedLabel', 'Identify', 'Groups', 'PowerTopology'].includes(cluster.clusterName)) continue;
+        clusters[serial].push(cluster);
+      }
+      setEndpoints({ ...endpoints });
+      setDeviceTypes({ ...deviceTypes });
+      setClusters({ ...clusters });
+      if (debug) console.log(`DevicesIcons endpoints for "${serial}":`, endpoints[serial]);
+      if (debug) console.log(`DevicesIcons deviceTypes for "${serial}":`, deviceTypes[serial]);
+      if (debug) console.log(`DevicesIcons clusters for "${serial}":`, clusters[serial]);
+    },
+    [clusters, deviceTypes, endpoints],
+  );
 
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
+      if (debug) console.log('DevicesIcons received WebSocket Message:', msg);
       if (msg.method === 'refresh_required') {
-        if(debug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
-        sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-        sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-        sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+        if (debug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
+        sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
       } else if (msg.method === 'state_update' && msg.response) {
-        updateDevices(msg);
-      } else if (msg.method === '/api/settings' && msg.response) {
-        if(debug) console.log('DevicesIcons received settings:', msg.response);
-        setSettings(msg.response);
-      } else if (msg.method === '/api/plugins' && msg.response) {
-        if(debug) console.log('DevicesIcons received plugins:', msg.response);
-        setPlugins(msg.response);
+        stateUpdate(msg);
       } else if (msg.method === '/api/devices' && msg.response) {
-        if(debug) console.log(`DevicesIcons received ${msg.response.length} devices:`, msg.response);
+        if (debug) console.log(`DevicesIcons received ${msg.response.length} devices:`, msg.response);
         setDevices(msg.response);
-        for(const device of msg.response) {
-          if(debug) console.log('DevicesIcons sending /api/clusters');
-          sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint || 0} });
+        setEndpoints({});
+        setDeviceTypes({});
+        setClusters({});
+        // Request clusters for all devices
+        for (const device of msg.response) {
+          if (debug) console.log('DevicesIcons sending /api/clusters');
+          sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/clusters', src: 'Frontend', dst: 'Matterbridge', params: { plugin: device.pluginName, endpoint: device.endpoint || 0 } });
         }
       } else if (msg.method === '/api/clusters' && msg.response) {
-        if(debug) console.log(`DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceTypes (${msg.response.deviceTypes.length}) "${msg.response.deviceTypes.join(',')}" clusters (${msg.response.clusters.length}):`, msg.response);
-        if(msg.response.clusters.length === 0) return;
-        const serial = msg.response.serialNumber;
-        endpoints[serial] = [];
-        deviceTypes[serial] = msg.response.deviceTypes;
-        clusters[serial] = [];
-        for(const cluster of msg.response.clusters) {
-          if(!endpoints[serial].find((e) => e.endpoint === cluster.endpoint)) {
-            endpoints[serial].push({ endpoint: cluster.endpoint, id: cluster.id, deviceTypes: cluster.deviceTypes });
-          }
-          if(['FixedLabel', 'Descriptor', 'Identify', 'Groups', 'PowerTopology'].includes(cluster.clusterName)) continue;
-          clusters[serial].push(cluster);
-        }
-        setEndpoints({ ...endpoints });
-        setDeviceTypes({ ...deviceTypes });
-        setClusters({ ...clusters });
-        if(debug) console.log(`DevicesIcons endpoints for "${serial}":`, endpoints[serial]);
-        if(debug) console.log(`DevicesIcons deviceTypes for "${serial}":`, deviceTypes[serial]);
-        if(debug) console.log(`DevicesIcons clusters for "${serial}":`, clusters[serial]);
+        clusterUpdate(msg);
       }
     };
 
     addListener(handleWebSocketMessage, uniqueId.current);
-    if(debug) console.log('DevicesIcons useEffect webSocket mounted');
+    if (debug) console.log('DevicesIcons WebSocket effect mounted');
 
     return () => {
       removeListener(handleWebSocketMessage);
-      if(debug) console.log('DevicesIcons useEffect webSocket unmounted');
+      if (debug) console.log('DevicesIcons WebSocket effect unmounted');
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [devices]);
+
   useEffect(() => {
-    if(debug) console.log('DevicesIcons useEffect online mounting');
-    if(online) {
-      if(debug) console.log('DevicesIcons useEffect online sending api requests');
-      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+    if (debug) console.log('DevicesIcons useEffect online mounting');
+    if (online) {
+      if (debug) console.log('DevicesIcons useEffect online sending api requests');
+      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
-    if(debug) console.log('DevicesIcons useEffect online mounted');
+    if (debug) console.log('DevicesIcons useEffect online mounted');
 
     return () => {
-      if(debug) console.log('DevicesIcons useEffect online unmounted');
+      if (debug) console.log('DevicesIcons useEffect online unmounted');
     };
   }, [online, sendMessage]);
-  
-  useEffect(() => {
-    if(filter === '') {
-      setFilteredDevices(devices);
-      filteredDevicesRef.current = devices;
-      return;
-    }
-    const filteredDevices = devices.filter((device) => device.name.toLowerCase().includes(filter) || device.serial.toLowerCase().includes(filter) );
-    setFilteredDevices(filteredDevices);
-    filteredDevicesRef.current = filteredDevices;
-  }, [devices, filter]);
 
   const MemoizedDevice = memo(Device);
 
-  if(debug) console.log('DevicesIcons rendering...');
+  if (debug) console.log('DevicesIcons rendering...');
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', paddingBottom: '5px', gap: '20px', width: '100%', overflow: 'auto' }}>
-      {filteredDevices.map((device) => (
-        endpoints[device.serial] && endpoints[device.serial].map((endpoint) => (
-          endpoint.deviceTypes.map((deviceType) => (
-            <MemoizedDevice
-              key={`${device.pluginName}-${device.uniqueId}-${endpoint.id}-${deviceType.toString()}`}
-              device={device}
-              endpoint={endpoint.endpoint}
-              id={endpoint.id}
-              deviceType={deviceType}
-              clusters={clusters[device.serial].filter((c) => c.endpoint === endpoint.endpoint)} />
-          ))
-        ))
-      ))}
+      {devices
+        .filter((device) => device.name.toLowerCase().includes(filter) || device.serial.toLowerCase().includes(filter))
+        .map(
+          (device) =>
+            endpoints[device.serial] &&
+            endpoints[device.serial].map((endpoint) =>
+              endpoint.deviceTypes.map((deviceType) => (
+                <MemoizedDevice
+                  key={`${device.pluginName}-${device.uniqueId}-${endpoint.endpoint}-${endpoint.id}-${deviceType.toString()}`}
+                  device={device}
+                  endpoint={endpoint.endpoint}
+                  id={endpoint.id}
+                  deviceType={deviceType}
+                  clusters={clusters[device.serial].filter((c) => c.endpoint === endpoint.endpoint)}
+                />
+              )),
+            ),
+        )}
     </div>
   );
 }

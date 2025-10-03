@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
- 
 // React
 import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext, ReactNode } from 'react';
 
@@ -49,7 +48,7 @@ export interface WebSocketContextType {
 }
 
 export const WebSocketMessagesContext = createContext<WebSocketMessagesContextType>(null as unknown as WebSocketMessagesContextType);
- 
+
 export const WebSocketContext = createContext<WebSocketContextType>(null as unknown as WebSocketContextType);
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
@@ -133,18 +132,21 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logMessage = useCallback((badge: string, message: string) => {
-    setMessages(prevMessages => [...prevMessages, { level: badge, time: '', name: '', message }]);
+    setMessages((prevMessages) => [...prevMessages, { level: badge, time: '', name: '', message }]);
   }, []);
 
-  const setLogFilters = useCallback((level: string, search: string) => {
-    setLogFilterLevel(level);
-    setLogFilterSearch(search);
-    logMessage('WebSocket', `Filtering by log level "${level}" and log search "${search}"`);
-  }, [logMessage]);
+  const setLogFilters = useCallback(
+    (level: string, search: string) => {
+      setLogFilterLevel(level);
+      setLogFilterSearch(search);
+      logMessage('WebSocket', `Filtering by log level "${level}" and log search "${search}"`);
+    },
+    [logMessage],
+  );
 
   const addListener = useCallback((listener: (msg: WsMessageApiResponse) => void, id: number) => {
     if (debug) console.log(`WebSocket addListener id ${id}:`, listener);
-    if(id === undefined || id === null || isNaN(id) || id === 0) console.error(`WebSocket addListener called without id, listener not added:`, listener);
+    if (id === undefined || id === null || isNaN(id) || id === 0) console.error(`WebSocket addListener called without id, listener not added:`, listener);
     // listenersRef.current = [...listenersRef.current, listener];
     listenersRef.current = [...listenersRef.current, { listener, id }];
     if (debug) console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
@@ -153,7 +155,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const removeListener = useCallback((listener: (msg: WsMessageApiResponse) => void) => {
     if (debug) console.log(`WebSocket removeListener:`, listener);
     // listenersRef.current = listenersRef.current.filter(l => l !== listener);
-    listenersRef.current = listenersRef.current.filter(l =>  l.listener !== listener);
+    listenersRef.current = listenersRef.current.filter((l) => l.listener !== listener);
     if (debug) console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
   }, []);
 
@@ -215,12 +217,18 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           }
 
           // Process log filtering by search
-          if (logFilterSearchRef.current !== '*' && logFilterSearchRef.current !== '' && !msg.response.message.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) && !msg.response.name.toLowerCase().includes(logFilterSearchRef.current.toLowerCase())) return;
+          if (
+            logFilterSearchRef.current !== '*' &&
+            logFilterSearchRef.current !== '' &&
+            !msg.response.message.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) &&
+            !msg.response.name.toLowerCase().includes(logFilterSearchRef.current.toLowerCase())
+          )
+            return;
 
           // Ignore uncommissioned messages
-          if(msg.response.name === 'Commissioning' && msg.response.message.includes('is uncommissioned')) return;
+          if (msg.response.name === 'Commissioning' && msg.response.message.includes('is uncommissioned')) return;
 
-          setMessages(prevMessagesNew => {
+          setMessages((prevMessagesNew) => {
             const newMessagesNew = [...prevMessagesNew, { level: msg.response.level, time: msg.response.time, name: msg.response.name, message: msg.response.message }];
             // Check if the new array length exceeds the maximum allowed
             if (newMessagesNew.length > maxMessages * 2) {
@@ -230,22 +238,20 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           });
         } else {
           if (debug) console.log(`WebSocket received message id ${msg.id} method ${msg.method}:`, msg);
-          if(msg.id === 0) {
-            listenersRef.current.forEach(listener => listener.listener(msg)); // Notify all listeners for broadcast messages
+          if (msg.id === 0) {
+            listenersRef.current.forEach((listener) => listener.listener(msg)); // Notify all listeners for broadcast messages
           } else {
-            const listener = listenersRef.current.find(l => l.id === msg.id);
-            if (listener) listener.listener(msg); // Notify the specific listener
+            const listener = listenersRef.current.find((l) => l.id === msg.id);
+            if (listener)
+              listener.listener(msg); // Notify the specific listener
             else {
-              if (debug) console.debug(`WebSocket no listener found for message id ${msg.id}:`, msg);
-              // listenersRef.current.forEach(listener => console.error(`WebSocket existing listener id ${listener.id}:`, listener.listener));
-              // listenersRef.current.forEach(listener => listener.listener(msg)); // Notify all listeners
+              /*if (debug)*/ console.warn(`WebSocket no listener found for message id ${msg.id}:`, msg);
             }
           }
           return;
         }
-
       } catch (error) {
-        console.error(`WebSocketUse error parsing message: ${error}`);
+        console.error(`WebSocket error parsing message: ${error}`, error instanceof Error ? error.stack : null);
       }
     };
 
@@ -257,9 +263,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       retryCountRef.current = 1;
 
       startTimeoutRef.current = setTimeout(() => {
-
         pingIntervalRef.current = setInterval(() => {
-          sendMessage({ id: uniqueIdRef.current, method: "ping", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueIdRef.current, method: 'ping', src: 'Frontend', dst: 'Matterbridge', params: {} });
           if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
           offlineTimeoutRef.current = setTimeout(() => {
             if (debug) console.error(`WebSocketUse: No pong response received from WebSocket: ${wssHost}`);
@@ -267,13 +272,11 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
             setOnline(false);
           }, 1000 * offlineTimeoutSeconds);
         }, 1000 * pingIntervalSeconds);
-
       }, 1000 * startTimeoutSeconds);
-
     };
 
     wsRef.current.onclose = () => {
-      if (debug) console.error(`WebSocket: Disconnected from WebSocket ${isIngress?'with Ingress':''}: ${wssHost}`);
+      if (debug) console.error(`WebSocket: Disconnected from WebSocket ${isIngress ? 'with Ingress' : ''}: ${wssHost}`);
       logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
       setOnline(false);
       closeSnackbar();
@@ -282,7 +285,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
       if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
       logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket${isIngress ? ' (Ingress)' : ''}: ${wssHost}`);
-      if(isIngress) {
+      if (isIngress) {
         setTimeout(attemptReconnect, 5000);
       } else {
         if (retryCountRef.current === 1) attemptReconnect();
@@ -312,39 +315,43 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     };
   }, [connectWebSocket]);
 
-  const contextMessagesValue = useMemo(() => ({
-    messages,
-    maxMessages,
-    autoScroll,
-    setMessages,
-    setLogFilters,
-    setMaxMessages,
-    setAutoScroll,
-  }), [messages, setMessages, setLogFilters]);
+  const contextMessagesValue = useMemo(
+    () => ({
+      messages,
+      maxMessages,
+      autoScroll,
+      setMessages,
+      setLogFilters,
+      setMaxMessages,
+      setAutoScroll,
+    }),
+    [messages, setMessages, setLogFilters],
+  );
 
-  const contextValue = useMemo(() => ({
-    maxMessages,
-    autoScroll,
-    logFilterLevel,
-    logFilterSearch,
-    setMessages,
-    setLogFilters,
-    setMaxMessages,
-    setAutoScroll,
-    online,
-    retry: retryCountRef.current,
-    getUniqueId,
-    addListener,
-    removeListener,
-    sendMessage,
-    logMessage,
-  }), [maxMessages, autoScroll, setMessages, setLogFilters, setMaxMessages, setAutoScroll, online, retryCountRef.current, addListener, removeListener, sendMessage, logMessage]);
+  const contextValue = useMemo(
+    () => ({
+      maxMessages,
+      autoScroll,
+      logFilterLevel,
+      logFilterSearch,
+      setMessages,
+      setLogFilters,
+      setMaxMessages,
+      setAutoScroll,
+      online,
+      retry: retryCountRef.current,
+      getUniqueId,
+      addListener,
+      removeListener,
+      sendMessage,
+      logMessage,
+    }),
+    [maxMessages, autoScroll, setMessages, setLogFilters, setMaxMessages, setAutoScroll, online, retryCountRef.current, addListener, removeListener, sendMessage, logMessage],
+  );
 
   return (
     <WebSocketMessagesContext.Provider value={contextMessagesValue}>
-      <WebSocketContext.Provider value={contextValue}>
-        {children}
-      </WebSocketContext.Provider>
+      <WebSocketContext.Provider value={contextValue}>{children}</WebSocketContext.Provider>
     </WebSocketMessagesContext.Provider>
   );
 }

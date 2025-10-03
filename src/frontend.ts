@@ -45,13 +45,67 @@ import { CommissioningOptions } from '@matter/main/types';
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
-import { ApiClusters, ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
+import {
+  ApiClusters,
+  ApiClustersResponse,
+  ApiDevices,
+  ApiMatterResponse,
+  BaseRegisteredPlugin,
+  MATTER_LOGGER_FILE,
+  MATTER_STORAGE_NAME,
+  MATTERBRIDGE_LOGGER_FILE,
+  MatterbridgeInformation,
+  NODE_STORAGE_DIR,
+  plg,
+  RegisteredPlugin,
+  SystemInformation,
+} from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
 import { RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type ReadonlyMatterbridge = Readonly<
+  Pick<
+    Matterbridge,
+    | 'matterbridgeInformation'
+    | 'systemInformation'
+    | 'homeDirectory'
+    | 'rootDirectory'
+    | 'matterbridgeDirectory'
+    | 'matterbridgePluginDirectory'
+    | 'matterbridgeCertDirectory'
+    | 'globalModulesDirectory'
+    | 'matterbridgeVersion'
+    | 'matterbridgeLatestVersion'
+    | 'matterbridgeDevVersion'
+    | 'bridgeMode'
+    | 'restartMode'
+    | 'profile'
+    | 'mdnsInterface'
+    | 'ipv4address'
+    | 'ipv6address'
+    // Thread communication
+    | 'hasCleanupStarted'
+    | 'log'
+    | 'matterLog'
+    | 'setLogLevel'
+    | 'plugins'
+    | 'devices'
+    | 'nodeContext'
+    | 'serverNode'
+    | 'getServerNodeData'
+    | 'advertisingNodes'
+    | 'restartProcess'
+    | 'shutdownProcess'
+    | 'unregisterAndShutdownProcess'
+    | 'shutdownProcessAndReset'
+    | 'shutdownProcessAndFactoryReset'
+  >
+>;
 
 /**
  * Represents the Matterbridge events.
@@ -421,18 +475,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         physical_space_size: this.formatMemoryUsage(space.physical_space_size),
       }));
 
-      // Define a type for the module with a _cache property
-      interface ModuleWithCache {
-        _cache: Record<string, unknown>;
-      }
-      const { default: module } = await import('node:module');
-      const loadedModules = (module as unknown as ModuleWithCache)._cache ? Object.keys((module as unknown as ModuleWithCache)._cache).sort() : [];
+      const { createRequire } = await import('node:module');
+      const require = createRequire(import.meta.url);
+      const cjsModules = Object.keys(require.cache).sort();
 
       const memoryReport = {
         memoryUsage,
         heapStats,
         heapSpaces,
-        loadedModules,
+        cjsModules,
       };
 
       res.status(200).json(memoryReport);
@@ -453,7 +504,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to provide devices
     this.expressApp.get('/api/devices', async (req, res) => {
       this.log.debug('The frontend sent /api/devices');
-      const devices = await this.getDevices();
+      const devices = this.getDevices();
       res.json(devices);
     });
 
@@ -461,11 +512,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/view-mblog', async (req, res) => {
       this.log.debug('The frontend sent /api/view-mblog');
       try {
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), 'utf8');
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
         res.type('text/plain');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error reading matterbridge log file ${this.matterbridge.matterbridgeLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        this.log.error(`Error reading matterbridge log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
         res.status(500).send('Error reading matterbridge log file. Please enable the matterbridge log on file in the settings.');
       }
     });
@@ -474,11 +525,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/view-mjlog', async (req, res) => {
       this.log.debug('The frontend sent /api/view-mjlog');
       try {
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'utf8');
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
         res.type('text/plain');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error reading matter log file ${this.matterbridge.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        this.log.error(`Error reading matter log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
         res.status(500).send('Error reading matter log file. Please enable the matter log on file in the settings.');
       }
     });
@@ -492,12 +543,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (this.matterbridge.bridgeMode === 'bridge') {
         if (this.matterbridge.serverNode) serverNodes.push(this.matterbridge.serverNode);
       } else if (this.matterbridge.bridgeMode === 'childbridge') {
-        for (const plugin of this.matterbridge.getPlugins()) {
+        for (const plugin of this.matterbridge.plugins.array()) {
           if (plugin.serverNode) serverNodes.push(plugin.serverNode);
         }
       }
       // istanbul ignore next
-      for (const device of this.matterbridge.getDevices()) {
+      for (const device of this.matterbridge.devices.array()) {
         if (device.serverNode) serverNodes.push(device.serverNode);
       }
 
@@ -530,7 +581,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.send(data.slice(29));
       } catch (error) {
         // istanbul ignore next
-        this.log.error(`Error reading diagnostic log file ${this.matterbridge.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        this.log.error(`Error reading diagnostic log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
         // istanbul ignore next
         res.status(500).send('Error reading diagnostic log file.');
       }
@@ -544,27 +595,27 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/plain');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error reading shelly log file ${this.matterbridge.matterbridgeLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        this.log.error(`Error reading shelly log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
         res.status(500).send('Error reading shelly log file. Please create the shelly system log before loading it.');
       }
     });
 
     // Endpoint to download the matterbridge log
     this.expressApp.get('/api/download-mblog', async (req, res) => {
-      this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile)}`);
+      this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE)}`);
       try {
-        await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), fs.constants.F_OK);
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), 'utf8');
-        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbridgeLoggerFile), data, 'utf-8');
+        await fs.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), fs.constants.F_OK);
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
+        await fs.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), data, 'utf-8');
       } catch (error) {
-        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbridgeLoggerFile), 'Enable the matterbridge log on file in the settings to download the matterbridge log.', 'utf-8');
+        await fs.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'Enable the matterbridge log on file in the settings to download the matterbridge log.', 'utf-8');
         this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
       res.type('text/plain');
-      res.download(path.join(os.tmpdir(), this.matterbridge.matterbridgeLoggerFile), 'matterbridge.log', (error) => {
+      res.download(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'matterbridge.log', (error) => {
         /* istanbul ignore if */
         if (error) {
-          this.log.error(`Error downloading log file ${this.matterbridge.matterbridgeLoggerFile}: ${error instanceof Error ? error.message : error}`);
+          this.log.error(`Error downloading log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge log file');
         }
       });
@@ -572,20 +623,20 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Endpoint to download the matter log
     this.expressApp.get('/api/download-mjlog', async (req, res) => {
-      this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile)}`);
+      this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE)}`);
       try {
-        await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), fs.constants.F_OK);
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'utf8');
-        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), data, 'utf-8');
+        await fs.access(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), fs.constants.F_OK);
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
+        await fs.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), data, 'utf-8');
       } catch (error) {
-        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
+        await fs.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
         this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
       res.type('text/plain');
-      res.download(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), 'matter.log', (error) => {
+      res.download(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'matter.log', (error) => {
         /* istanbul ignore if */
         if (error) {
-          this.log.error(`Error downloading log file ${this.matterbridge.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
+          this.log.error(`Error downloading log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter log file');
         }
       });
@@ -615,11 +666,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matterbridge storage directory
     this.expressApp.get('/api/download-mbstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mbstorage');
-      await createZip(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.nodeStorageName}.zip`), path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.nodeStorageName));
-      res.download(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.nodeStorageName}.zip`), `matterbridge.${this.matterbridge.nodeStorageName}.zip`, (error) => {
+      await createZip(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), path.join(this.matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR));
+      res.download(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), `matterbridge.${NODE_STORAGE_DIR}.zip`, (error) => {
         /* istanbul ignore if */
         if (error) {
-          this.log.error(`Error downloading file ${`matterbridge.${this.matterbridge.nodeStorageName}.zip`}: ${error instanceof Error ? error.message : error}`);
+          this.log.error(`Error downloading file ${`matterbridge.${NODE_STORAGE_DIR}.zip`}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge storage file');
         }
       });
@@ -628,11 +679,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matter storage file
     this.expressApp.get('/api/download-mjstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mjstorage');
-      await createZip(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.matterStorageName}.zip`), path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterStorageName));
-      res.download(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.matterStorageName}.zip`), `matterbridge.${this.matterbridge.matterStorageName}.zip`, (error) => {
+      await createZip(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`), path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
+      res.download(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`), `matterbridge.${MATTER_STORAGE_NAME}.zip`, (error) => {
         /* istanbul ignore if */
         if (error) {
-          this.log.error(`Error downloading the matter storage matterbridge.${this.matterbridge.matterStorageName}.zip: ${error instanceof Error ? error.message : error}`);
+          this.log.error(`Error downloading the matter storage matterbridge.${MATTER_STORAGE_NAME}.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter storage zip file');
         }
       });
@@ -878,7 +929,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
     this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
     this.matterbridge.matterbridgeInformation.loggerLevel = this.matterbridge.log.logLevel;
-    this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
+    this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.level as MatterLogLevel;
     this.matterbridge.matterbridgeInformation.matterMdnsInterface = this.matterbridge.mdnsInterface;
     this.matterbridge.matterbridgeInformation.matterIpv4Address = this.matterbridge.ipv4address;
     this.matterbridge.matterbridgeInformation.matterIpv6Address = this.matterbridge.ipv6address;
@@ -1075,9 +1126,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * Retrieves the devices from Matterbridge.
    *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
-   * @returns {Promise<ApiDevices[]>} A promise that resolves to an array of ApiDevices for the frontend.
+   * @returns {ApiDevices[]} An array of ApiDevices for the frontend.
    */
-  private async getDevices(pluginName?: string): Promise<ApiDevices[]> {
+  private getDevices(pluginName?: string): ApiDevices[] {
     if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const devices: ApiDevices[] = [];
     for (const device of this.matterbridge.devices.array()) {
@@ -1113,6 +1164,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {ApiClustersResponse | undefined} A promise that resolves to the clusters or undefined if not found.
    */
   private getClusters(pluginName: string, endpointNumber: number): ApiClustersResponse | undefined {
+    if (this.matterbridge.hasCleanupStarted) return; // Skip if cleanup has started
     const endpoint = this.matterbridge.devices.array().find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber);
     if (!endpoint || !endpoint.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
       this.log.error(`getClusters: no device found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
@@ -1274,6 +1326,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                       .then(() => {
                         this.wssSendSnackbarMessage(`Started plugin ${packageName}`, 5, 'success');
                         this.wssSendRefreshRequired('plugins');
+                        this.wssSendRefreshRequired('devices');
                         return;
                       })
                       // eslint-disable-next-line promise/no-nesting
@@ -1553,7 +1606,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         let serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
         if (data.params.id === 'Matterbridge') serverNode = this.matterbridge.serverNode;
         else
-          serverNode = this.matterbridge.getPlugins().find((p) => p.serverNode && p.serverNode.id === localData.params.id)?.serverNode || this.matterbridge.getDevices().find((d) => d.serverNode && d.serverNode.id === localData.params.id)?.serverNode;
+          serverNode =
+            this.matterbridge.plugins.array().find((p) => p.serverNode && p.serverNode.id === localData.params.id)?.serverNode || this.matterbridge.devices.array().find((d) => d.serverNode && d.serverNode.id === localData.params.id)?.serverNode;
         if (!serverNode) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown server node id ${localData.params.id} in /api/matter` });
           return;
@@ -1593,7 +1647,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const plugins = this.getPlugins();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
-        const devices = await this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        const devices = this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.plugin, 10)) {
@@ -1709,7 +1763,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.fileLogger = data.params.value;
               await this.matterbridge.nodeContext?.set('matterbridgeFileLog', data.params.value);
               // Create the file logger for matterbridge
-              if (data.params.value) AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgeLoggerFile), this.matterbridge.matterbridgeInformation.loggerLevel, true);
+              if (data.params.value) AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), this.matterbridge.matterbridgeInformation.loggerLevel, true);
               else AnsiLogger.setGlobalLogfile(undefined);
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
             }
@@ -1741,7 +1795,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.matterbridgeInformation.matterFileLogger = data.params.value;
               await this.matterbridge.nodeContext?.set('matterFileLog', data.params.value);
               if (data.params.value) {
-                this.matterbridge.matterLog.logFilePath = path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile);
+                this.matterbridge.matterLog.logFilePath = path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE);
               } else {
                 this.matterbridge.matterLog.logFilePath = undefined;
               }
@@ -1998,7 +2052,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} changed - The changed value.
    * @param {Record<string, unknown>} params - Additional parameters to send with the message.
    * possible values for changed:
-   * - 'settings'
+   * - 'settings' (when the bridge has started in bridge mode or childbridge mode and when update finds a new version)
    * - 'plugins'
    * - 'devices'
    * - 'matter' with param 'matter' (QRDiv component)

@@ -100,7 +100,9 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
     try {
       const stored = localStorage.getItem(`${name}_column_visibility`);
       if (stored) return JSON.parse(stored) as ColumnVisibility;
-    } catch { /**/ }
+    } catch {
+      /**/
+    }
     return {};
   });
 
@@ -145,7 +147,6 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       if (typeof sortCol.comparator === 'function') {
         cmp = sortCol.comparator(a.el, b.el);
       } else {
-         
         cmp = comparator<any>(a.el as any, b.el as any, orderBy as string);
       }
       if (cmp !== 0) return order === 'asc' ? cmp : -cmp;
@@ -192,7 +193,9 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       }
       try {
         localStorage.setItem(`${name}_column_visibility`, JSON.stringify(next));
-      } catch { /**/ }
+      } catch {
+        /**/
+      }
       return next;
     });
   };
@@ -202,11 +205,13 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
     setColumnVisibility(next);
     try {
       localStorage.removeItem(`${name}_column_visibility`);
-    } catch { /**/ }
+    } catch {
+      /**/
+    }
     setConfigureVisibilityDialogOpen(false);
   };
 
-  if(debug) console.log(`Rendering table ${name}${orderBy && order ? ` ordered by ${orderBy}:${order}` : ''}`);
+  if (debug) console.log(`Rendering table ${name}${orderBy && order ? ` ordered by ${orderBy}:${order}` : ''}`);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', margin: '0', padding: '0', gap: '0', width: '100%', flex: '1 1 auto', height: '100%', minHeight: 0, overflow: 'hidden' }}>
@@ -221,38 +226,42 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       >
         <DialogTitle gap={'20px'}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-            <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
+            <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
             <h4 style={{ margin: 0 }}>{`Configure ${name} columns`}</h4>
           </div>
         </DialogTitle>
         <DialogContent>
           <FormGroup>
-            {columns.filter((c) => !c.hidden).map((column) => (
-              <FormControlLabel
-                key={column.id}
-                control={
-                  <Checkbox
-                    disabled={!!column.required}
-                    checked={column.required ? true : visibleMap[column.id] !== false}
-                    onChange={() => handleConfigureVisibilityChange(column.id)}
-                  />
-                }
-                label={column.label}
-              />
-            ))}
+            {columns
+              .filter((c) => !c.hidden)
+              .map((column) => (
+                <FormControlLabel
+                  key={column.id}
+                  control={<Checkbox disabled={!!column.required} checked={column.required ? true : visibleMap[column.id] !== false} onChange={() => handleConfigureVisibilityChange(column.id)} />}
+                  label={column.label}
+                />
+              ))}
           </FormGroup>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleResetVisibility}>Reset</Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={(e) => {
               if (e?.currentTarget && typeof e.currentTarget.blur === 'function') {
-                try { e.currentTarget.blur(); } catch { /**/ }
+                try {
+                  e.currentTarget.blur();
+                } catch {
+                  /**/
+                }
               }
               const active = document.activeElement;
               if (active && active instanceof HTMLElement && typeof active.blur === 'function') {
-                try { active.blur(); } catch { /**/ }
+                try {
+                  active.blur();
+                } catch {
+                  /**/
+                }
               }
               toggleConfigureVisibilityDialog();
             }}
@@ -262,23 +271,32 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
         </DialogActions>
       </Dialog>
 
-      <div className="MbfWindowHeader" style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', borderBottom: 'none' }}>
-        <p className="MbfWindowHeaderText">{name}</p>
-        {title && <p className="MbfWindowHeaderText">{title}</p>}
-        <div className="MbfWindowHeaderFooterIcons">
+      <div className='MbfWindowHeader' style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', borderBottom: 'none' }}>
+        <p className='MbfWindowHeaderText'>{name}</p>
+        {title && <p className='MbfWindowHeaderText'>{title}</p>}
+        <div className='MbfWindowHeaderFooterIcons'>
           <IconButton
-            onClick={(e) => { if (e?.currentTarget?.blur) { try { e.currentTarget.blur(); } catch { /**/ } } toggleConfigureVisibilityDialog(); }}
-            aria-label="Configure Columns"
+            onClick={(e) => {
+              if (e?.currentTarget?.blur) {
+                try {
+                  e.currentTarget.blur();
+                } catch {
+                  /**/
+                }
+              }
+              toggleConfigureVisibilityDialog();
+            }}
+            aria-label='Configure Columns'
             style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }}
           >
             <Tooltip title={`Configure ${name} columns`}>
-              <Icon path={mdiCog} size="20px" color={'var(--header-text-color)'} />
+              <Icon path={mdiCog} size='20px' color={'var(--header-text-color)'} />
             </Tooltip>
           </IconButton>
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, width: '100%', overflow: 'auto', margin: '0px', padding: '0px', gap: '0' }} >
+      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, width: '100%', overflow: 'auto', margin: '0px', padding: '0px', gap: '0' }}>
         <table aria-label={`${name} table`} style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10, border: 'none', color: 'var(--header-text-color)', backgroundColor: 'var(--header-bg-color' }}>
             <tr style={{ height: '30px', minHeight: '30px' }}>
@@ -301,7 +319,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                       textAlign: column.align || 'left',
                       cursor: sortable ? 'pointer' : 'default',
                       border: 'none',
-                      color: 'var(--header-text-color)', 
+                      color: 'var(--header-text-color)',
                       backgroundColor: 'var(--header-bg-color)',
                       whiteSpace: column.maxWidth ? 'nowrap' : undefined,
                       overflow: column.maxWidth ? 'hidden' : undefined,
@@ -310,12 +328,12 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                     aria-sort={sortable ? (isActive ? (order === 'asc' ? 'ascending' : 'descending') : 'none') : undefined}
                   >
                     {column.label}
-                    {isActive && 
+                    {isActive && (
                       <span style={{ marginLeft: 6 }}>
-                        {order === 'asc' && (<Icon path={mdiSortAscending} size='15px' />)}
-                        {order === 'desc' && (<Icon path={mdiSortDescending} size='15px' />)}
+                        {order === 'asc' && <Icon path={mdiSortAscending} size='15px' />}
+                        {order === 'desc' && <Icon path={mdiSortDescending} size='15px' />}
                       </span>
-                    }
+                    )}
                   </th>
                 );
               })}
@@ -356,16 +374,15 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                           textOverflow: column.maxWidth ? 'ellipsis' : undefined,
                         }}
                       >
-                        {typeof column.render === 'function'
-                          ? column.render(value, rowKey, row, column)
-                          : (typeof value === 'boolean'
-                              ? <Checkbox checked={value} disabled size="small" sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }} />
-                              : (column.format && typeof value === 'number'
-                                  ? column.format(value)
-                                  : (value !== undefined && value !== null
-                                      ? String(value)
-                                      : null)))
-                        }
+                        {typeof column.render === 'function' ? (
+                          column.render(value, rowKey, row, column)
+                        ) : typeof value === 'boolean' ? (
+                          <Checkbox checked={value} disabled size='small' sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }} />
+                        ) : column.format && typeof value === 'number' ? (
+                          column.format(value)
+                        ) : value !== undefined && value !== null ? (
+                          String(value)
+                        ) : null}
                       </td>
                     );
                   })}
@@ -377,17 +394,22 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       </div>
 
       {(footerLeft || footerRight) && (
-        <div className="MbfWindowFooter" style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', border: 'none' }}>
-          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerLeft}</p>
-          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerRight}</p>
+        <div className='MbfWindowFooter' style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', border: 'none' }}>
+          <p className='MbfWindowFooterText' style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>
+            {footerLeft}
+          </p>
+          <p className='MbfWindowFooterText' style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>
+            {footerRight}
+          </p>
         </div>
       )}
-
     </div>
   );
 }
 
 // Helper to preserve generics with React.memo
-function typedMemo<T>(c: T): T { return memo(c as any) as T; }
+function typedMemo<T>(c: T): T {
+  return memo(c as any) as T;
+}
 
 export default typedMemo(MbfTable);

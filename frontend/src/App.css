@@ -7,7 +7,7 @@ body {
 /* Define the style for the body element */
 
 /* Classic Mode */
-[frontend-theme="classic"] {
+[frontend-theme='classic'] {
   --main-bg-color: #c4c2c2;
   --main-text-color: black;
   --main-grey-color: #616161;
@@ -54,7 +54,7 @@ body {
 }
 
 /* Dark Mode */
-[frontend-theme="dark"] {
+[frontend-theme='dark'] {
   --main-bg-color: #26292d;
   --main-text-color: #ffffff;
   --main-grey-color: #616161;
@@ -101,7 +101,7 @@ body {
 }
 
 /* Light Mode */
-[frontend-theme="light"] {
+[frontend-theme='light'] {
   --main-bg-color: #f0f0f0;
   --main-text-color: #212121;
   --main-grey-color: #616161;
@@ -415,10 +415,11 @@ h3 {
 }
 
 /* Define the style for the main page element */
+/*   height: calc(100% - 60px); */
 .MbfPageDiv {
   display: flex;
   flex-direction: column;
-  height: calc(100% - 60px);
+  height: 100%;
   width: 100%;
   margin: 0px;
   padding: 0px;

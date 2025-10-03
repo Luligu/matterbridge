@@ -1,0 +1,13 @@
+# .prettierignore
+# This file specifies directories and files that should be ignored by prettier formatting
+
+# Ignore specific directories
+.git/
+build/
+coverage/
+dist/
+public/
+vitest/
+node_modules/
+
+

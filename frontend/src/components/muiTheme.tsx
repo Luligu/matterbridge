@@ -11,7 +11,7 @@ export function getCssVariable(variableName: string, defaultValue: string): stri
   if (debug) console.log('getCssVariable:', variableName, 'defaultValue', defaultValue);
   const value = getComputedStyle(document.body).getPropertyValue(variableName).trim();
   // if(value) console.log('getCssVariable:', value);
-  if(!value) console.error('getCssVariable: undefined', value);
+  if (!value) console.error('getCssVariable: undefined', value);
   return value || defaultValue;
 }
 

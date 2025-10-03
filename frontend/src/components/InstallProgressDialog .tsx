@@ -44,17 +44,15 @@ export const InstallProgressDialog = ({ open, output, packageName, onInstall, on
         onClose();
       }}
       slotProps={{
-        paper: { sx: { width: '70vw', maxWidth: '70vw', height: '70vw', maxHeight: '70vh', overflow: 'hidden' } }
+        paper: { sx: { width: '70vw', maxWidth: '70vw', height: '70vw', maxHeight: '70vh', overflow: 'hidden' } },
       }}
     >
       <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img
-            src="matterbridge.svg"
-            alt="Matterbridge Logo"
-            style={{ height: '32px', width: '32px' }}
-          />
-          <h4 style={{ margin: 0 }}>Install{onInstall ? '' : 'ing'} package {packageName}</h4>
+          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+          <h4 style={{ margin: 0 }}>
+            Install{onInstall ? '' : 'ing'} package {packageName}
+          </h4>
         </div>
       </DialogTitle>
       <DialogContent
@@ -64,38 +62,44 @@ export const InstallProgressDialog = ({ open, output, packageName, onInstall, on
           display: 'flex',
           flexDirection: 'column',
           height: 400,
-          paddingBottom: 0
+          paddingBottom: 0,
         }}
       >
         <label style={{ display: 'block', marginBottom: '10px', fontSize: '16px', fontWeight: 'bold', color: 'var(--primary-color)' }}>Install log</label>
-          <ul
-            style={{
-              width: '100%',
-              height: '100%',
-              fontFamily: 'monospace',
-              fontSize: '14px',
-              padding: 8,
-              margin: 0,
-              marginBottom: '10px',
-              color: 'var(--div-text-color)',
-              background: 'var(--div-bg-color)',
-              overflow: 'auto',
-              listStyle: 'none',
-              boxSizing: 'border-box',
-              borderRadius: 4,
-              border: '4px solid var(--primary-color)',
-              whiteSpace: 'pre-wrap',
-              display: 'block',
-            }}
-          >
-            {output.split('\n').map((line, idx) => (
-              <li key={idx} style={{ padding: 0, margin: 0, wordBreak: 'break-all' }}>{line}</li>
-            ))}
-            <li ref={endOfMessagesRef} style={{ padding: 0, margin: 0 }} />
-          </ul>
+        <ul
+          style={{
+            width: '100%',
+            height: '100%',
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            padding: '10px',
+            margin: 0,
+            marginBottom: '10px',
+            color: 'var(--div-text-color)',
+            background: 'var(--div-bg-color)',
+            overflow: 'auto',
+            listStyle: 'none',
+            boxSizing: 'border-box',
+            borderRadius: 4,
+            border: '4px solid var(--primary-color)',
+            whiteSpace: 'pre-wrap',
+            display: 'block',
+          }}
+        >
+          {output.split('\n').map((line, idx) => (
+            <li key={idx} style={{ padding: 0, margin: 0, wordBreak: 'break-all' }}>
+              {line}
+            </li>
+          ))}
+          <li ref={endOfMessagesRef} style={{ padding: 0, margin: 0 }} />
+        </ul>
       </DialogContent>
       <DialogActions>
-        {onInstall && <Button variant="contained" onClick={onInstall}>Install</Button>}
+        {onInstall && (
+          <Button variant='contained' onClick={onInstall}>
+            Install
+          </Button>
+        )}
         <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>

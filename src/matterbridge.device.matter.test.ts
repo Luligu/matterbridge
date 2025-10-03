@@ -64,13 +64,11 @@ describe('Matterbridge  Device serverMode=matter', () => {
 
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
-    expect((matterbridge as any).nodeStorageName).toBe('storage');
 
     expect((matterbridge as any).matterStorageService).toBeDefined();
     expect((matterbridge as any).matterStorageManager).toBeDefined();
     expect((matterbridge as any).matterbridgeContext).toBeDefined();
     expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
-    expect((matterbridge as any).matterStorageName).toBe('matterstorage');
 
     expect((matterbridge as any).serverNode).toBeDefined();
     expect((matterbridge as any).aggregatorNode).toBeDefined();
@@ -138,7 +136,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
 
   test('Restart initialize()', async () => {
     expect((matterbridge as any).initialized).toBeFalsy();
-    await matterbridge.initialize();
+    await (matterbridge as any).initialize();
     expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
     expect((matterbridge as any).checkUpdateInterval).toBeDefined();
     clearTimeout((matterbridge as any).checkUpdateTimeout);

@@ -39,6 +39,12 @@ export const plg = '\u001B[38;5;33m';
 export const dev = '\u001B[38;5;79m';
 export const typ = '\u001B[38;5;207m';
 
+// Default names
+export const MATTERBRIDGE_LOGGER_FILE = 'matterbridge.log';
+export const MATTER_LOGGER_FILE = 'matter.log';
+export const NODE_STORAGE_DIR = 'storage';
+export const MATTER_STORAGE_NAME = 'matterstorage';
+
 // Define an interface for storing the plugins
 export interface RegisteredPlugin extends BaseRegisteredPlugin {
   nodeContext?: NodeStorage;

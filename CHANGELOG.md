@@ -8,6 +8,102 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## Project evolution
+
+The project will evolve to a multi-threaded architecture (the CLI will become the thread manager) with these initial threads:
+
+- matterbridge;
+- frontend;
+- all plugins in bridge mode;
+- each plugin in childbridge mode;
+
+Advantages:
+
+- real concurrency outside the Node.js main loop;
+- isolation between threads;
+- individual plugin isolation in childbridge mode;
+
+## [3.3.0] - Not released
+
+### Development Breaking Changes Notice
+
+- [matterbridge]: Now, internal use only properties are private readonly and internal use only methods are private.
+- [platform]: Now, internal use only properties are private readonly and internal use only methods are private.
+- [platform]: The signature of the matterbridge param in the platform constructor has changed from Matterbridge to `PlatformMatterbridge` which has only the appropriate readonly properties from matterbridge.
+
+This change, necessary to achieve plugin isolation, will require all plugins to be updated in two steps.
+
+1. `After` matterbridge `3.3.0` is published as latest:
+
+- update the plugin platform constructor with the new signature:
+
+```typescript
+  constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig)
+```
+
+- require matterbridge 3.3.0:
+
+```typescript
+    if (this.verifyMatterbridgeVersion === undefined || typeof this.verifyMatterbridgeVersion !== 'function' || !this.verifyMatterbridgeVersion('3.3.0')) {
+      throw new Error(
+        `This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`,
+      );
+    }
+```
+
+- check that you are not using any matterbridge calls directly (this should not be the case).
+
+In this phase (matterbridge `3.3.x`) all plugins will continue to build and run even without updates.
+
+2. `After` matterbridge `3.4.0` is published as latest, the new signature `PlatformMatterbridge` with the plugin isolation will be effective.
+
+```typescript
+export type PlatformMatterbridge = {
+  readonly systemInformation: SystemInformation;
+  readonly homeDirectory: string;
+  readonly rootDirectory: string;
+  readonly matterbridgeDirectory: string;
+  readonly matterbridgePluginDirectory: string;
+  readonly globalModulesDirectory: string;
+  readonly matterbridgeVersion: string;
+  readonly matterbridgeLatestVersion: string;
+  readonly matterbridgeDevVersion: string;
+  readonly bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
+  readonly restartMode: 'service' | 'docker' | '';
+  readonly aggregatorVendorId: VendorId;
+  readonly aggregatorVendorName: string;
+  readonly aggregatorProductId: number;
+  readonly aggregatorProductName: string;
+};
+```
+
+In this phase (matterbridge `3.4.x`) all plugins will not build and will not run without updates.
+
+### Added
+
+- [frontend]: Bumped `frontend` version to 3.2.0.
+- [frontend]: Added SystemInfo to Settings.
+- [frontend]: Added RvcRunMode to IconView.
+- [frontend]: Added tagList to IconView.
+- [frontend]: Added prettier, eslint-config-prettier and eslint-plugin-prettier.
+- [matterbridge]: Added SmokeCoAlarm to frontend state update.
+- [matterbridge]: Added RvcRunMode to frontend state update.
+- [matterbridge]: Added RvcCleanMode to frontend state update.
+- [matterbridge]: Added RvcOperationalState to frontend state update.
+- [matterbridge]: Added ServiceArea to frontend state update.
+- [matterbridge]: Added ModeSelect to frontend state update.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [frontend]: General improvements and small bug fixes.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.2.9] - 2025-09-27
 
 ### Breaking Changes

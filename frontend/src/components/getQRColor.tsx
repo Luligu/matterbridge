@@ -1,5 +1,5 @@
 // Backend
-import { ApiMatterResponse } from "../../../src/matterbridgeTypes";
+import { ApiMatterResponse } from '../../../src/matterbridgeTypes';
 
 // Frontend
 import { debug } from '../App';
@@ -27,5 +27,4 @@ export function getQRColor(matter: ApiMatterResponse | undefined): string {
   }
   if (matter.commissioned === true && matter.fabricInformations && matter.sessionInformations && (sessions === 0 || subscriptions === 0)) return 'var(--secondary-color)';
   return 'var(--div-text-color)';
-};
-
+}

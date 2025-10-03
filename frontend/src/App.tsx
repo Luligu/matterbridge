@@ -7,7 +7,6 @@ import { ThemeProvider } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 
 // Frontend routes
-import Header from './components/Header';
 import Home from './components/Home';
 import Devices from './components/Devices';
 import Logs from './components/Logs';
@@ -18,6 +17,7 @@ import Test from './components/Test';
 import { WebSocketProvider } from './components/WebSocketProvider';
 import { UiProvider } from './components/UiProvider';
 import { createMuiTheme, getCssVariable } from './components/muiTheme';
+import { MbfScreen } from './components/MbfScreen';
 
 // App styles
 import './App.css';
@@ -27,6 +27,8 @@ export let debug = false;
 export const toggleDebug = () => {
   debug = !debug;
 };
+export const enableWindows = false;
+export const enableMobile = false;
 
 export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
   const [password, setPassword] = useState('');
@@ -95,30 +97,17 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
     <div style={containerStyle}>
       <form onSubmit={handleSubmit} style={formStyle}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '64px', width: '64px' }} />
           <h3 style={{ color: 'var(--div-text-color)' }}>Welcome to Matterbridge</h3>
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
-          <input
-            type="text"
-            name="username"
-            autoComplete="username"
-            style={{ display: 'none' }}
-            tabIndex={-1}
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            style={inputStyle}
-            placeholder="password"
-            autoComplete="current-password"
-          />
-          <button type="submit" style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', borderColor: 'var(--div-bg-color)' }}>Log in</button>
+          <input type='text' name='username' autoComplete='username' style={{ display: 'none' }} tabIndex={-1} />
+          <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} placeholder='password' autoComplete='current-password' />
+          <button type='submit' style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', borderColor: 'var(--div-bg-color)' }}>
+            Log in
+          </button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: 0, height: '30px' }}>
-          {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-        </div>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: 0, height: '30px' }}>{errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}</div>
       </form>
     </div>
   );
@@ -128,37 +117,26 @@ function App(): React.JSX.Element {
   const [loggedIn, setLoggedIn] = useState(false);
 
   // Set the theme based on saved preference or default to dark
-  if (debug) console.log('Setting frontend theme');
-  const savedTheme = localStorage.getItem('frontendTheme');
-  if (debug) console.log('Saved theme:', savedTheme);
-  if (savedTheme) {
-    document.body.setAttribute('frontend-theme', savedTheme);
-  } else {
-    document.body.setAttribute('frontend-theme', 'dark');
-  }
+  const savedTheme = localStorage.getItem('frontendTheme') || 'dark';
+  if (debug) console.log(`Setting frontend theme "%s"`, savedTheme);
+  document.body.setAttribute('frontend-theme', savedTheme);
   const primaryColor = getCssVariable('--primary-color', '#1976d2');
-  if (debug) console.log('Primary color from CSS:', primaryColor);
+  if (debug) console.log(`Primary color from CSS "%s"`, primaryColor);
   const theme = createMuiTheme(primaryColor);
 
   /*
     Normal:
     href="https://lucalaptop7/"
     pathname="/" 
-    >>>
     baseName="/"
 
     Ingress:
     href="https://homeassistant.local:8123/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
     pathname="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/" 
-    >>>
     baseName="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
   */
   // Set the base name for the BrowserRouter
-  const baseName = window.location.pathname.includes('/matterbridge/')
-    ? '/matterbridge'
-    : window.location.href.includes('/api/hassio_ingress/')
-    ? window.location.pathname
-    : '/';
+  const baseName = window.location.pathname.includes('/matterbridge/') ? '/matterbridge' : window.location.href.includes('/api/hassio_ingress/') ? window.location.pathname : '/';
   if (debug) {
     console.log(`Loading App...`);
     console.log(`- with href = "${window.location.href}"`);
@@ -168,32 +146,29 @@ function App(): React.JSX.Element {
 
   if (loggedIn) {
     return (
-    <ThemeProvider theme={theme}>
-      <SnackbarProvider dense maxSnack={10} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-        <UiProvider>
-          <WebSocketProvider>
-            <BrowserRouter basename={baseName}>
-              <div className="MbfScreen">
-                <Header />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/devices" element={<Devices />} />
-                  <Route path="/log" element={<Logs />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/test" element={<Test />} />
-                  <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
-              </div>
-            </BrowserRouter>
-          </WebSocketProvider>
-        </UiProvider>
-      </SnackbarProvider>
-    </ThemeProvider>
+      <ThemeProvider theme={theme}>
+        <SnackbarProvider dense maxSnack={10} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+          <UiProvider>
+            <WebSocketProvider>
+              <BrowserRouter basename={baseName}>
+                <MbfScreen>
+                  <Routes>
+                    <Route path='/' element={<Home />} />
+                    <Route path='/devices' element={<Devices />} />
+                    <Route path='/log' element={<Logs />} />
+                    <Route path='/settings' element={<Settings />} />
+                    <Route path='/test' element={<Test />} />
+                    <Route path='*' element={<Navigate to='/' />} />
+                  </Routes>
+                </MbfScreen>
+              </BrowserRouter>
+            </WebSocketProvider>
+          </UiProvider>
+        </SnackbarProvider>
+      </ThemeProvider>
     );
   } else {
-    return (
-      <LoginForm setLoggedIn={setLoggedIn}/>
-    );
+    return <LoginForm setLoggedIn={setLoggedIn} />;
   }
 }
 

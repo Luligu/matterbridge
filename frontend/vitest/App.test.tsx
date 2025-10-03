@@ -1,5 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import React from 'react';
+
+// Mock UiContext and UiProvider before all other imports to avoid hoisting issues
+vi.mock('../src/components/UiProvider', () => {
+  const UiContext = React.createContext({ mobile: false, setMobile: () => {} });
+  return {
+    UiProvider: ({ children }: { children: React.ReactNode }) => <div>UiProvider{children}</div>,
+    UiContext,
+  };
+});
+
 import { cleanup } from '@testing-library/react';
+
 describe('App dynamic import for import.meta.env.PROD coverage', () => {
   afterEach(() => {
     cleanup();
@@ -13,6 +25,7 @@ describe('App dynamic import for import.meta.env.PROD coverage', () => {
     expect(screen.getByText('Welcome to Matterbridge')).toBeInTheDocument();
   });
 });
+
 describe('App debug logging full coverage', () => {
   let originalDebug: boolean;
   let originalMeta: any;
@@ -39,6 +52,7 @@ describe('App debug logging full coverage', () => {
     expect(screen.getByText('Welcome to Matterbridge')).toBeInTheDocument();
   });
 });
+
 describe('App debug/theme/import.meta.env.PROD coverage', () => {
   let originalDebug: boolean;
   beforeEach(() => {
@@ -73,6 +87,7 @@ describe('App debug/theme/import.meta.env.PROD coverage', () => {
     else delete (globalThis as any).importMeta;
   });
 });
+
 // Silence all console output during tests (must be before all imports)
 globalThis.console = Object.assign({}, console, {
   log: vi.fn(),
@@ -96,9 +111,6 @@ vi.mock('../src/components/Settings', () => ({ default: () => <div>Settings</div
 vi.mock('../src/components/Test', () => ({ default: () => <div>Test</div> }));
 vi.mock('../src/components/WebSocketProvider', () => ({
   WebSocketProvider: ({ children }: { children: React.ReactNode }) => <div>WebSocketProvider{children}</div>
-}));
-vi.mock('../src/components/UiProvider', () => ({
-  UiProvider: ({ children }: { children: React.ReactNode }) => <div>UiProvider{children}</div>
 }));
 vi.mock('../src/components/muiTheme', () => ({
   createMuiTheme: (primaryColor: string) => ({ theme: `mock-theme-${primaryColor}` }),
@@ -208,8 +220,6 @@ describe('toggleDebug', () => {
     });
   });
 });
-
-
 
 describe('App', () => {
   beforeEach(() => {

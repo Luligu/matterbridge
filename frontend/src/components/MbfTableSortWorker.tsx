@@ -4,7 +4,7 @@
 // Usage: see MbfTable.tsx for how to use this worker
 
 // TypeScript in web workers: use self as DedicatedWorkerGlobalScope
-self.onmessage = function(e: MessageEvent<{ rows: any[]; orderBy: string; order: 'asc' | 'desc'; columns: Array<any> }>) {
+self.onmessage = function (e: MessageEvent<{ rows: any[]; orderBy: string; order: 'asc' | 'desc'; columns: Array<any> }>) {
   const { rows, orderBy, order, columns } = e.data;
   if (!orderBy || !order) {
     self.postMessage(rows);
