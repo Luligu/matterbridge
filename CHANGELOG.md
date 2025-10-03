@@ -23,7 +23,7 @@ Advantages:
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 
-## [3.3.0] - Not released
+## [3.3.0] - 2025-10-03
 
 ### Development Breaking Changes Notice
 
