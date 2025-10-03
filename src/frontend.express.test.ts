@@ -206,7 +206,7 @@ describe('Matterbridge frontend express with http', () => {
     expect(typeof response.body.memoryUsage).toBe('object');
     expect(typeof response.body.heapStats).toBe('object');
     expect(typeof response.body.heapSpaces).toBe('object');
-    expect(typeof response.body.loadedModules).toBe('object');
+    expect(typeof response.body.cjsModules).toBe('object');
   });
 
   test('GET /api/settings', async () => {
