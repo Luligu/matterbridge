@@ -1926,6 +1926,15 @@ export class MatterbridgeEndpoint extends Endpoint {
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       systemMode: Thermostat.SystemMode.Heat,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
+      thermostatRunningState: {
+        heat: false,
+        cool: false,
+        fan: false,
+        heatStage2: false,
+        coolStage2: false,
+        fanStage2: false,
+        fanStage3: false,
+      },
       // Thermostat.Feature.Heating
       occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
       minHeatSetpointLimit: minHeatSetpointLimit * 100,
@@ -1968,6 +1977,15 @@ export class MatterbridgeEndpoint extends Endpoint {
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       systemMode: Thermostat.SystemMode.Cool,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
+      thermostatRunningState: {
+        heat: false,
+        cool: false,
+        fan: false,
+        heatStage2: false,
+        coolStage2: false,
+        fanStage2: false,
+        fanStage3: false,
+      },
       // Thermostat.Feature.Cooling
       occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
       minCoolSetpointLimit: minCoolSetpointLimit * 100,
