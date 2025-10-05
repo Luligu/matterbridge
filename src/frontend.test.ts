@@ -93,7 +93,7 @@ describe('Matterbridge frontend', () => {
     expect(createServerMock).toHaveBeenCalled();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Initializing the frontend http server on port ${YELLOW}${FRONTEND_PORT}${db}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening on`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening`));
   }, 60000);
 
   test('Frontend cliEmitter', () => {
@@ -231,7 +231,7 @@ describe('Matterbridge frontend', () => {
     expect(startSpy).toHaveBeenNthCalledWith(1, FRONTEND_PORT);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Initializing the frontend http server on port ${YELLOW}${FRONTEND_PORT}${db}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening on`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening`));
 
     // Test httpServer on error
     const errorEACCES = new Error('Test error');
@@ -307,9 +307,8 @@ describe('Matterbridge frontend', () => {
         expect(protocol).toBe('https');
         expect(port).toBe(FRONTEND_PORT);
       });
-      frontend.on('websocket_server_listening', (host) => {
-        expect(host.startsWith('wss://')).toBe(true);
-        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+      frontend.on('websocket_server_listening', (protocol) => {
+        expect(protocol).toBe('wss');
         resolve();
       });
       frontend.start(FRONTEND_PORT);
@@ -347,9 +346,8 @@ describe('Matterbridge frontend', () => {
         expect(protocol).toBe('https');
         expect(port).toBe(FRONTEND_PORT);
       });
-      frontend.on('websocket_server_listening', (host) => {
-        expect(host.startsWith('wss://')).toBe(true);
-        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+      frontend.on('websocket_server_listening', (protocol) => {
+        expect(protocol).toBe('wss');
         resolve();
       });
       frontend.start(FRONTEND_PORT);
@@ -448,9 +446,8 @@ describe('Matterbridge frontend', () => {
         expect(protocol).toBe('https');
         expect(port).toBe(FRONTEND_PORT);
       });
-      frontend.on('websocket_server_listening', (host) => {
-        expect(host.startsWith('wss://')).toBe(true);
-        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+      frontend.on('websocket_server_listening', (protocol) => {
+        expect(protocol).toBe('wss');
         resolve();
       });
       frontend.start(FRONTEND_PORT);
@@ -515,9 +512,8 @@ describe('Matterbridge frontend', () => {
         expect(protocol).toBe('https');
         expect(port).toBe(FRONTEND_PORT);
       });
-      frontend.on('websocket_server_listening', (host) => {
-        expect(host.startsWith('wss://')).toBe(true);
-        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+      frontend.on('websocket_server_listening', (protocol) => {
+        expect(protocol).toBe('wss');
         resolve();
       });
       frontend.start(FRONTEND_PORT);

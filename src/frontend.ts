@@ -62,7 +62,7 @@ interface FrontendEvents {
   server_listening: [protocol: string, port: number, address?: string];
   server_error: [error: Error];
   server_stopped: [];
-  websocket_server_listening: [host: string];
+  websocket_server_listening: [protocol: string];
   websocket_server_stopped: [];
 }
 
@@ -274,9 +274,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     }
 
     // Create a WebSocket server and attach it to the http or https server
-    const wssPort = this.port;
-    const wssHost = hasParameter('ssl') ? `wss://${this.matterbridge.systemInformation.ipv4Address}:${wssPort}` : `ws://${this.matterbridge.systemInformation.ipv4Address}:${wssPort}`;
-    this.log.debug(`Creating WebSocketServer on host ${CYAN}${wssHost}${db}...`);
+    this.log.debug(`Creating WebSocketServer...`);
     this.webSocketServer = new WebSocketServer(hasParameter('ssl') ? { server: this.httpsServer } : { server: this.httpServer });
 
     this.webSocketServer.on('connection', (ws: WebSocket, request: IncomingMessage) => {
@@ -322,8 +320,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     this.webSocketServer.on('listening', () => {
-      this.log.info(`The WebSocketServer is listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
-      this.emit('websocket_server_listening', wssHost);
+      this.log.info(`The WebSocketServer is listening`);
+      this.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
     });
 
     this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
