@@ -138,6 +138,18 @@ describe('PluginManager', () => {
     expect(plugins.has('matterbridge-mock3')).toBe(true);
   });
 
+  test('array returns array of plugins', () => {
+    const arr = plugins.array();
+    expect(arr).toBeInstanceOf(Array);
+    expect(arr).toHaveLength(3);
+  });
+
+  test('baseArray returns array of base plugins', () => {
+    const arr = plugins.baseArray();
+    expect(arr).toBeInstanceOf(Array);
+    expect(arr).toHaveLength(3);
+  });
+
   test('Symbol.iterator allows for iteration over plugins', () => {
     let count = 0;
     for (const plugin of plugins) {

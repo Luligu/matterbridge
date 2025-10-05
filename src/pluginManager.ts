@@ -31,7 +31,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, d
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
+import { BaseRegisteredPlugin, plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
 import { inspectError, logError } from './utils/error.js';
 
 interface PluginManagerEvents {
@@ -86,6 +86,39 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
 
   array(): RegisteredPlugin[] {
     return Array.from(this._plugins.values());
+  }
+
+  baseArray(): BaseRegisteredPlugin[] {
+    const basePlugins: BaseRegisteredPlugin[] = [];
+    for (const plugin of this._plugins.values()) {
+      basePlugins.push({
+        name: plugin.name,
+        version: plugin.version,
+        description: plugin.description,
+        author: plugin.author,
+        path: plugin.path,
+        type: plugin.type,
+        latestVersion: plugin.latestVersion,
+        devVersion: plugin.devVersion,
+        homepage: plugin.homepage,
+        help: plugin.help,
+        changelog: plugin.changelog,
+        funding: plugin.funding,
+        locked: plugin.locked,
+        error: plugin.error,
+        enabled: plugin.enabled,
+        loaded: plugin.loaded,
+        started: plugin.started,
+        configured: plugin.configured,
+        restartRequired: plugin.restartRequired,
+        registeredDevices: plugin.registeredDevices,
+        configJson: plugin.configJson,
+        schemaJson: plugin.schemaJson,
+        hasWhiteList: plugin.hasWhiteList,
+        hasBlackList: plugin.hasBlackList,
+      });
+    }
+    return basePlugins;
   }
 
   [Symbol.iterator]() {
