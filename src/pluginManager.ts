@@ -32,7 +32,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, d
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
-import { logError } from './utils/error.js';
+import { inspectError, logError } from './utils/error.js';
 
 interface PluginManagerEvents {
   added: [name: string];
@@ -250,6 +250,57 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     } catch (err) {
       logError(this.log, `Failed to resolve plugin path ${plg}${pluginPath}${er}`, err);
       return null;
+    }
+  }
+
+  /**
+   * Installs a package globally using npm.
+   *
+   * @param {string} packageName - The name of the package to install.
+   * @returns {Promise<boolean>} A promise that resolves to true if the installation was successful, false otherwise.
+   */
+  async install(packageName: string): Promise<boolean> {
+    const { spawnCommand } = await import('./utils/spawn.js');
+    try {
+      await spawnCommand(this.matterbridge, 'npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], packageName);
+      this.matterbridge.restartRequired = true;
+      this.matterbridge.fixedRestartRequired = true;
+      packageName = packageName.replace(/@.*$/, '');
+      if (packageName !== 'matterbridge') {
+        if (!this.has(packageName)) await this.add(packageName);
+      } else {
+        if (this.matterbridge.restartMode !== '') {
+          await this.matterbridge.shutdownProcess();
+        }
+      }
+      return true;
+    } catch (error) {
+      inspectError(this.log, `Failed to install package ${plg}${packageName}${er}`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Uninstalls a package globally using npm.
+   *
+   * @param {string} packageName - The name of the package to uninstall.
+   * @returns {Promise<boolean>} A promise that resolves to true if the uninstallation was successful, false otherwise.
+   */
+  async uninstall(packageName: string): Promise<boolean> {
+    const { spawnCommand } = await import('./utils/spawn.js');
+    packageName = packageName.replace(/@.*$/, '');
+    if (packageName === 'matterbridge') return false;
+    try {
+      if (this.has(packageName)) {
+        const plugin = this.get(packageName);
+        if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
+        await this.remove(packageName);
+      }
+      await spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', packageName, '--verbose'], packageName);
+      return true;
+    } catch (error) {
+      inspectError(this.log, `Failed to uninstall package ${plg}${packageName}${er}`, error);
+      return false;
     }
   }
 
