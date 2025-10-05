@@ -25,9 +25,17 @@ Advantages:
 
 ## [3.3.1] - Not released
 
+### Added
+
+- [network]: Added getInterfaceDetails() function.
+- [network]: Added getInterfaceName() function.
+- [network]: Optimized code.
+- [matterbridge]: Added SharedMatterbridge readonly type.
+
 ### Changed
 
 - [package]: Updated dependencies.
+- [matterbridge]: Removed matterbridgeInformation. It will be recreated when the frontend requires it.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

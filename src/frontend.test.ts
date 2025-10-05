@@ -110,24 +110,6 @@ describe('Matterbridge frontend', () => {
     cliEmitter.emit('cpu', 12.34);
   });
 
-  test('Frontend formatMemoryUsage', () => {
-    // Test the formatMemoryUsage  functionality
-    expect((frontend as any).formatMemoryUsage(1024 ** 3)).toBe('1.00 GB');
-    expect((frontend as any).formatMemoryUsage(1024 ** 2)).toBe('1.00 MB');
-    expect((frontend as any).formatMemoryUsage(3000)).toBe('2.93 KB');
-  });
-
-  test('Frontend formatOsUpTime', () => {
-    // Test the formatOsUpTime functionality
-    expect((frontend as any).formatOsUpTime(123456)).toBe('1 day');
-    expect((frontend as any).formatOsUpTime(3800)).toBe('1 hour');
-    expect((frontend as any).formatOsUpTime(3600)).toBe('1 hour');
-    expect((frontend as any).formatOsUpTime(65)).toBe('1 minute');
-    expect((frontend as any).formatOsUpTime(60)).toBe('1 minute');
-    expect((frontend as any).formatOsUpTime(30)).toBe('30 seconds');
-    expect((frontend as any).formatOsUpTime(0)).toBe('0 seconds');
-  });
-
   test('Frontend getReachability', () => {
     // Test the getReachability functionality
     expect((frontend as any).getReachability({ lifecycle: { isReady: false } })).toBeFalsy();
@@ -221,9 +203,9 @@ describe('Matterbridge frontend', () => {
       throw new Error('Test error');
     });
 
-    frontend.start(FRONTEND_PORT);
     await new Promise<void>((resolve) => {
       frontend.once('server_error', () => resolve());
+      frontend.start(FRONTEND_PORT);
     });
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).frontend.httpServer).toBeUndefined();

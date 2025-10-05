@@ -106,7 +106,6 @@ export async function getMatterbridgeLatestVersion(matterbridge: Matterbridge): 
   try {
     const version = await getNpmPackageVersion('matterbridge');
     matterbridge.matterbridgeLatestVersion = version;
-    matterbridge.matterbridgeInformation.matterbridgeLatestVersion = version;
     await matterbridge.nodeContext?.set<string>('matterbridgeLatestVersion', matterbridge.matterbridgeLatestVersion);
     if (matterbridge.matterbridgeVersion !== matterbridge.matterbridgeLatestVersion) {
       matterbridge.log.notice(`Matterbridge is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeLatestVersion}.`);
@@ -136,7 +135,6 @@ export async function getMatterbridgeDevVersion(matterbridge: Matterbridge): Pro
   try {
     const version = await getNpmPackageVersion('matterbridge', 'dev');
     matterbridge.matterbridgeDevVersion = version;
-    matterbridge.matterbridgeInformation.matterbridgeDevVersion = version;
     await matterbridge.nodeContext?.set<string>('matterbridgeDevVersion', version);
     if (matterbridge.matterbridgeVersion.includes('-dev-') && matterbridge.matterbridgeVersion !== version) {
       matterbridge.log.notice(`Matterbridge@dev is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${matterbridge.matterbridgeDevVersion}.`);

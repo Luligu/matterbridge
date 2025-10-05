@@ -176,14 +176,14 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('should not add the virtual devices', async () => {
-    mockMatterbridge.matterbridgeInformation.virtualMode = 'disabled';
+    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'disabled';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
     expect(aggregator.parts.size).toBe(1);
   });
 
   test('add all the light virtual devices', async () => {
-    mockMatterbridge.matterbridgeInformation.virtualMode = 'light';
+    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'light';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
     expect(aggregator.parts.has('TestDevice:light')).toBeTruthy();
@@ -194,7 +194,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the outlet virtual devices', async () => {
-    mockMatterbridge.matterbridgeInformation.virtualMode = 'outlet';
+    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'outlet';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
     expect(aggregator.parts.has('UpdateMatterbridge:outlet')).toBeTruthy();
@@ -204,7 +204,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the switch virtual devices', async () => {
-    mockMatterbridge.matterbridgeInformation.virtualMode = 'switch';
+    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'switch';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
     expect(aggregator.parts.has('UpdateMatterbridge:switch')).toBeTruthy();
@@ -214,7 +214,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the mounted-switch virtual devices', async () => {
-    mockMatterbridge.matterbridgeInformation.virtualMode = 'mounted_switch';
+    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'mounted_switch';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
     expect(aggregator.parts.has('UpdateMatterbridge:mounted_switch')).toBeTruthy();
@@ -283,7 +283,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the virtual devices with shelly parameter', async () => {
-    mockMatterbridge.matterbridgeInformation.virtualMode = 'light';
+    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'light';
     const restartDevice = aggregator.parts.get('RestartMatterbridge:light');
     await restartDevice?.delete();
     const updateDevice = aggregator.parts.get('UpdateMatterbridge:light');

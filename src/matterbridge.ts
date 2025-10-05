@@ -57,7 +57,11 @@ import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter, copyDirectory, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
+import { getParameter, getIntParameter, hasParameter } from './utils/commandLine.js';
+import { copyDirectory } from './utils/copyDirectory.js';
+import { createDirectory } from './utils/createDirectory.js';
+import { isValidString, parseVersionString, isValidNumber } from './utils/isvalid.js';
+import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
 import { withTimeout, waiter, wait } from './utils/wait.js';
 import {
   ApiMatterResponse,
@@ -65,7 +69,7 @@ import {
   MATTER_LOGGER_FILE,
   MATTER_STORAGE_NAME,
   MATTERBRIDGE_LOGGER_FILE,
-  MatterbridgeInformation,
+  MaybePromise,
   NODE_STORAGE_DIR,
   plg,
   RegisteredPlugin,
@@ -108,6 +112,7 @@ interface MatterbridgeEvents {
  * Represents the Matterbridge application.
  */
 export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
+  /** Matterbridge system information */
   public systemInformation: SystemInformation = {
     interfaceName: '',
     macAddress: '',
@@ -130,39 +135,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     heapUsed: '',
   };
 
-  public matterbridgeInformation: MatterbridgeInformation = {
-    homeDirectory: '',
-    rootDirectory: '',
-    matterbridgeDirectory: '',
-    matterbridgePluginDirectory: '',
-    matterbridgeCertDirectory: '',
-    globalModulesDirectory: '',
-    matterbridgeVersion: '',
-    matterbridgeLatestVersion: '',
-    matterbridgeDevVersion: '',
-    bridgeMode: '',
-    restartMode: '',
-    virtualMode: 'outlet',
-    readOnly: hasParameter('readonly') || hasParameter('shelly'),
-    shellyBoard: hasParameter('shelly'),
-    shellySysUpdate: false,
-    shellyMainUpdate: false,
-    profile: getParameter('profile'),
-    loggerLevel: LogLevel.INFO,
-    fileLogger: false,
-    matterLoggerLevel: MatterLogLevel.INFO,
-    matterFileLogger: false,
-    matterMdnsInterface: undefined,
-    matterIpv4Address: undefined,
-    matterIpv6Address: undefined,
-    matterPort: 5540,
-    matterDiscriminator: undefined,
-    matterPasscode: undefined,
-    restartRequired: false,
-    fixedRestartRequired: false,
-    updateRequired: false,
-  };
-
+  // Matterbridge settings
   public homeDirectory = '';
   public rootDirectory = '';
   public matterbridgeDirectory = '';
@@ -172,28 +145,49 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
   public matterbridgeDevVersion = '';
+  public frontendVersion = '';
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
+  public virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch' = 'outlet';
   public readonly profile = getParameter('profile');
-  public shutdown = false;
-  private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
 
-  // Matterbridge logger
+  /** Matterbridge logger */
   public readonly log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+  /** Whether to log to a file */
+  public fileLogger = false;
 
-  // Matter logger
+  /** Matter logger */
   public readonly matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  /** Whether to log Matter to a file */
+  public matterFileLogger = false;
+
+  // Frontend settings
+  public readonly readOnly = hasParameter('readonly') || hasParameter('shelly');
+  public readonly shellyBoard = hasParameter('shelly');
+  public shellySysUpdate = false;
+  public shellyMainUpdate = false;
+  public restartRequired = false;
+  public fixedRestartRequired = false;
+  public updateRequired = false;
 
   // Managers
   public readonly plugins = new PluginManager(this);
   public readonly devices = new DeviceManager(this);
+
+  // Frontend
   public readonly frontend = new Frontend(this);
 
-  // Matterbridge storage
+  /** Matterbridge node storage manager created in matterbridgeDirectory with name 'storage' */
   public nodeStorage: NodeStorageManager | undefined;
+  /** Matterbridge node context created with name 'matterbridge' */
   public nodeContext: NodeStorage | undefined;
 
-  // Cleanup
+  /** The main instance of the Matterbridge class (singleton) */
+  protected static instance: Matterbridge | undefined;
+
+  // Instance properties
+  public shutdown = false;
+  private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
   public hasCleanupStarted = false;
   private initialized = false;
   private startMatterInterval: NodeJS.Timeout | undefined;
@@ -207,26 +201,35 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
   private rejectionHandler: NodeJS.UnhandledRejectionListener | undefined;
 
-  // Matter environment
+  /** Matter environment default */
   private readonly environment = Environment.default;
 
-  // Matter storage
+  /** Matter storage service from environment default */
   matterStorageService: StorageService | undefined;
+  /** Matter storage manager created with name 'Matterbridge' */
   matterStorageManager: StorageManager | undefined;
+  /** Matter matterbridge storage context created in the storage manager with name 'persist' */
   matterbridgeContext: StorageContext | undefined;
   controllerContext: StorageContext | undefined;
 
-  // Matter parameters
-  mdnsInterface: string | undefined; // matter server node mdnsInterface: e.g. 'eth0' or 'wlan0' or 'Wi-Fi'
-  ipv4address: string | undefined; // matter server node listeningAddressIpv4
-  ipv6address: string | undefined; // matter server node listeningAddressIpv6
+  /** Matter mdns interface e.g. 'eth0' or 'wlan0' or 'Wi-Fi' */
+  mdnsInterface: string | undefined;
+  /** Matter listeningAddressIpv4 address */
+  ipv4Address: string | undefined;
+  /** Matter listeningAddressIpv6 address */
+  ipv6Address: string | undefined;
+  /** Matter commissioning port */
   port: number | undefined; // first server node port
+  /** Matter commissioning passcode */
   passcode: number | undefined; // first server node passcode
+  /** Matter commissioning discriminator */
   discriminator: number | undefined; // first server node discriminator
+  /** Matter device certification */
   certification: DeviceCertification.Configuration | undefined; // device certification
 
-  // Matter nodes
+  /** Matter server node in bridge mode */
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+  /** Matter aggregator node in bridge mode */
   aggregatorNode: Endpoint<AggregatorEndpoint> | undefined;
   aggregatorVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
   aggregatorVendorName = getParameter('vendorName') ?? 'Matterbridge';
@@ -239,37 +242,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Advertising nodes map: time advertising started keyed by storeId */
   advertisingNodes = new Map<string, number>();
 
-  protected static instance: Matterbridge | undefined;
-
-  // We load asyncronously so is private
+  /** We load asyncronously so is private */
   protected constructor() {
     super();
     this.log.logNameColor = '\x1b[38;5;115m';
-  }
-
-  /**
-   * Set the logger logLevel for the Matterbridge classes and call onChangeLoggerLevel() for each plugin.
-   *
-   * @param {LogLevel} logLevel The logger logLevel to set.
-   */
-  async setLogLevel(logLevel: LogLevel) {
-    if (this.log) this.log.logLevel = logLevel;
-    this.matterbridgeInformation.loggerLevel = logLevel;
-    this.frontend.logLevel = logLevel;
-    MatterbridgeEndpoint.logLevel = logLevel;
-    if (this.devices) this.devices.logLevel = logLevel;
-    if (this.plugins) this.plugins.logLevel = logLevel;
-    for (const plugin of this.plugins) {
-      if (!plugin.platform || !plugin.platform.log || !plugin.platform.config) continue;
-      plugin.platform.log.logLevel = plugin.platform.config.debug === true ? LogLevel.DEBUG : this.log.logLevel;
-      await plugin.platform.onChangeLoggerLevel(plugin.platform.config.debug === true ? LogLevel.DEBUG : this.log.logLevel);
-    }
-    // Set the global logger callback for the WebSocketServer to the common minimum logLevel
-    let callbackLogLevel = LogLevel.NOTICE;
-    if (this.matterbridgeInformation.loggerLevel === LogLevel.INFO || this.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
-    if (this.matterbridgeInformation.loggerLevel === LogLevel.DEBUG || this.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
-    AnsiLogger.setGlobalCallback(this.frontend.wssSendLogMessage.bind(this.frontend), callbackLogLevel);
-    this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
   }
 
   //* ************************************************************************************************************************************ */
@@ -358,33 +334,28 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Set the matterbridge home directory
     this.homeDirectory = getParameter('homedir') ?? os.homedir();
-    this.matterbridgeInformation.homeDirectory = this.homeDirectory;
     await createDirectory(this.homeDirectory, 'Matterbridge Home Directory', this.log);
 
     // Set the matterbridge directory
     this.matterbridgeDirectory = this.profile ? path.join(this.homeDirectory, '.matterbridge', 'profiles', this.profile) : path.join(this.homeDirectory, '.matterbridge');
-    this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
     await createDirectory(this.matterbridgeDirectory, 'Matterbridge Directory', this.log);
     await createDirectory(path.join(this.matterbridgeDirectory, 'certs'), 'Matterbridge Frontend Certificate Directory', this.log);
     await createDirectory(path.join(this.matterbridgeDirectory, 'uploads'), 'Matterbridge Frontend Uploads Directory', this.log);
 
     // Set the matterbridge plugin directory
     this.matterbridgePluginDirectory = this.profile ? path.join(this.homeDirectory, 'Matterbridge', 'profiles', this.profile) : path.join(this.homeDirectory, 'Matterbridge');
-    this.matterbridgeInformation.matterbridgePluginDirectory = this.matterbridgePluginDirectory;
     await createDirectory(this.matterbridgePluginDirectory, 'Matterbridge Plugin Directory', this.log);
 
     // Set the matterbridge cert directory
     this.matterbridgeCertDirectory = this.profile ? path.join(this.homeDirectory, '.mattercert', 'profiles', this.profile) : path.join(this.homeDirectory, '.mattercert');
-    this.matterbridgeInformation.matterbridgeCertDirectory = this.matterbridgeCertDirectory;
     await createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory', this.log);
 
     // Set the matterbridge root directory
     const { fileURLToPath } = await import('node:url');
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
-    this.rootDirectory = path.resolve(currentFileDirectory, '../');
-    this.matterbridgeInformation.rootDirectory = this.rootDirectory;
+    this.rootDirectory = path.resolve(currentFileDirectory, '../'); // Adjust the path for dist directory
 
-    // Setup the matter environment
+    // Setup the matter environment with default values
     this.environment.vars.set('log.level', MatterLogLevel.INFO);
     this.environment.vars.set('log.format', MatterLogFormat.ANSI);
     this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME));
@@ -547,21 +518,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.logLevel = LogLevel.INFO;
       }
     } else {
-      this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', this.matterbridgeInformation.shellyBoard ? LogLevel.NOTICE : LogLevel.INFO);
+      this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', this.shellyBoard ? LogLevel.NOTICE : LogLevel.INFO);
     }
     this.frontend.logLevel = this.log.logLevel;
     MatterbridgeEndpoint.logLevel = this.log.logLevel;
-    this.matterbridgeInformation.loggerLevel = this.log.logLevel;
 
     // Create the file logger for matterbridge (context: matterbridgeFileLog)
     if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
       AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), this.log.logLevel, true);
-      this.matterbridgeInformation.fileLogger = true;
+      this.fileLogger = true;
     }
 
     this.log.notice('Matterbridge is starting...');
 
-    this.log.debug(`Matterbridge logLevel: ${this.log.logLevel} fileLoger: ${this.matterbridgeInformation.fileLogger}.`);
+    this.log.debug(`Matterbridge logLevel: ${this.log.logLevel} fileLoger: ${this.fileLogger}.`);
 
     if (this.profile !== undefined) this.log.debug(`Matterbridge profile: ${this.profile}.`);
 
@@ -585,22 +555,21 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         Logger.level = MatterLogLevel.INFO;
       }
     } else {
-      Logger.level = (await this.nodeContext.get<number>('matterLogLevel', this.matterbridgeInformation.shellyBoard ? MatterLogLevel.NOTICE : MatterLogLevel.INFO)) as MatterLogLevel;
+      Logger.level = (await this.nodeContext.get<number>('matterLogLevel', this.shellyBoard ? MatterLogLevel.NOTICE : MatterLogLevel.INFO)) as MatterLogLevel;
     }
     Logger.format = MatterLogFormat.ANSI;
 
     // Create the logger for matter.js with file logging (context: matterFileLog)
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
-      this.matterbridgeInformation.matterFileLogger = true;
+      this.matterFileLogger = true;
     }
-    Logger.destinations.default.write = this.createDestinationMatterLogger(this.matterbridgeInformation.matterFileLogger);
-    this.matterbridgeInformation.matterLoggerLevel = Logger.level;
-    this.log.debug(`Matter logLevel: ${Logger.level} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
+    Logger.destinations.default.write = this.createDestinationMatterLogger(this.matterFileLogger);
+    this.log.debug(`Matter logLevel: ${Logger.level} fileLoger: ${this.matterFileLogger}.`);
 
     // Log network interfaces
     const networkInterfaces = os.networkInterfaces();
     const availableAddresses = Object.entries(networkInterfaces);
-    const availableInterfaces = Object.keys(networkInterfaces);
+    const availableInterfaceNames = Object.keys(networkInterfaces);
     for (const [ifaceName, ifaces] of availableAddresses) {
       if (ifaces && ifaces.length > 0) {
         this.log.debug(`Network interface ${BLUE}${ifaceName}${db}:`);
@@ -622,8 +591,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
     // Validate mdnsInterface
     if (this.mdnsInterface) {
-      if (!availableInterfaces.includes(this.mdnsInterface)) {
-        this.log.error(`Invalid mdnsinterface: ${this.mdnsInterface}. Available interfaces are: ${availableInterfaces.join(', ')}. Using all available interfaces.`);
+      if (!availableInterfaceNames.includes(this.mdnsInterface)) {
+        this.log.error(`Invalid mdnsinterface: ${this.mdnsInterface}. Available interfaces are: ${availableInterfaceNames.join(', ')}. Using all available interfaces.`);
         this.mdnsInterface = undefined;
         await this.nodeContext.remove('mattermdnsinterface');
       } else {
@@ -634,66 +603,66 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Set the listeningAddressIpv4 for the matter commissioning server
     if (hasParameter('ipv4address')) {
-      this.ipv4address = getParameter('ipv4address');
+      this.ipv4Address = getParameter('ipv4address');
     } else {
-      this.ipv4address = await this.nodeContext.get<string>('matteripv4address', undefined);
-      if (this.ipv4address === '') this.ipv4address = undefined;
+      this.ipv4Address = await this.nodeContext.get<string>('matteripv4address', undefined);
+      if (this.ipv4Address === '') this.ipv4Address = undefined;
     }
     // Validate ipv4address
-    if (this.ipv4address) {
+    if (this.ipv4Address) {
       let isValid = false;
       for (const [ifaceName, ifaces] of availableAddresses) {
-        if (ifaces && ifaces.find((iface) => iface.address === this.ipv4address)) {
-          this.log.info(`Using ipv4address ${CYAN}${this.ipv4address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
+        if (ifaces && ifaces.find((iface) => iface.address === this.ipv4Address)) {
+          this.log.info(`Using ipv4address ${CYAN}${this.ipv4Address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
           isValid = true;
           break;
         }
       }
       if (!isValid) {
-        this.log.error(`Invalid ipv4address: ${this.ipv4address}. Using all available addresses.`);
-        this.ipv4address = undefined;
+        this.log.error(`Invalid ipv4address: ${this.ipv4Address}. Using all available addresses.`);
+        this.ipv4Address = undefined;
         await this.nodeContext.remove('matteripv4address');
       }
     }
 
     // Set the listeningAddressIpv6 for the matter commissioning server
     if (hasParameter('ipv6address')) {
-      this.ipv6address = getParameter('ipv6address');
+      this.ipv6Address = getParameter('ipv6address');
     } else {
-      this.ipv6address = await this.nodeContext?.get<string>('matteripv6address', undefined);
-      if (this.ipv6address === '') this.ipv6address = undefined;
+      this.ipv6Address = await this.nodeContext?.get<string>('matteripv6address', undefined);
+      if (this.ipv6Address === '') this.ipv6Address = undefined;
     }
     // Validate ipv6address
-    if (this.ipv6address) {
+    if (this.ipv6Address) {
       let isValid = false;
       for (const [ifaceName, ifaces] of availableAddresses) {
-        if (ifaces && ifaces.find((iface) => (iface.scopeid === undefined || iface.scopeid === 0) && iface.address === this.ipv6address)) {
-          this.log.info(`Using ipv6address ${CYAN}${this.ipv6address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
+        if (ifaces && ifaces.find((iface) => (iface.scopeid === undefined || iface.scopeid === 0) && iface.address === this.ipv6Address)) {
+          this.log.info(`Using ipv6address ${CYAN}${this.ipv6Address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
           isValid = true;
           break;
         }
         /* istanbul ignore next */
-        if (ifaces && ifaces.find((iface) => iface.scopeid && iface.scopeid > 0 && iface.address + '%' + (process.platform === 'win32' ? iface.scopeid : ifaceName) === this.ipv6address)) {
-          this.log.info(`Using ipv6address ${CYAN}${this.ipv6address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
+        if (ifaces && ifaces.find((iface) => iface.scopeid && iface.scopeid > 0 && iface.address + '%' + (process.platform === 'win32' ? iface.scopeid : ifaceName) === this.ipv6Address)) {
+          this.log.info(`Using ipv6address ${CYAN}${this.ipv6Address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
           isValid = true;
           break;
         }
       }
       if (!isValid) {
-        this.log.error(`Invalid ipv6address: ${this.ipv6address}. Using all available addresses.`);
-        this.ipv6address = undefined;
+        this.log.error(`Invalid ipv6address: ${this.ipv6Address}. Using all available addresses.`);
+        this.ipv6Address = undefined;
         await this.nodeContext.remove('matteripv6address');
       }
     }
 
     // Initialize the virtual mode
     if (hasParameter('novirtual')) {
-      this.matterbridgeInformation.virtualMode = 'disabled';
+      this.virtualMode = 'disabled';
       await this.nodeContext.set<string>('virtualmode', 'disabled');
     } else {
-      this.matterbridgeInformation.virtualMode = (await this.nodeContext.get<string>('virtualmode', 'outlet')) as 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
+      this.virtualMode = (await this.nodeContext.get<string>('virtualmode', 'outlet')) as 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
     }
-    this.log.debug(`Virtual mode ${this.matterbridgeInformation.virtualMode}.`);
+    this.log.debug(`Virtual mode ${this.virtualMode}.`);
 
     // Initialize PluginManager
     this.plugins.logLevel = this.log.logLevel;
@@ -1101,6 +1070,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.systemInformation.interfaceName = '';
     this.systemInformation.ipv4Address = '';
     this.systemInformation.ipv6Address = '';
+    this.systemInformation.macAddress = '';
     for (const [interfaceName, interfaceDetails] of Object.entries(networkInterfaces)) {
       // this.log.debug(`Checking interface: '${interfaceName}' for '${this.mdnsInterface}'`);
       if (this.mdnsInterface && interfaceName !== this.mdnsInterface) continue;
@@ -1140,9 +1110,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.systemInformation.osRelease = os.release(); // Kernel version
     this.systemInformation.osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
     this.systemInformation.osArch = os.arch(); // "x64", "arm", etc.
-    this.systemInformation.totalMemory = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2) + ' GB'; // Convert to GB
-    this.systemInformation.freeMemory = (os.freemem() / 1024 / 1024 / 1024).toFixed(2) + ' GB'; // Convert to GB
-    this.systemInformation.systemUptime = (os.uptime() / 60 / 60).toFixed(2) + ' hours'; // Convert to hours
+    this.systemInformation.totalMemory = formatMemoryUsage(os.totalmem());
+    this.systemInformation.freeMemory = formatMemoryUsage(os.freemem());
+    this.systemInformation.systemUptime = formatOsUpTime(os.uptime());
+    this.systemInformation.processUptime = formatOsUpTime(Math.floor(process.uptime()));
+    this.systemInformation.cpuUsage = '0.00 %';
+    this.systemInformation.rss = formatMemoryUsage(process.memoryUsage().rss);
+    this.systemInformation.heapTotal = formatMemoryUsage(process.memoryUsage().heapTotal);
+    this.systemInformation.heapUsed = formatMemoryUsage(process.memoryUsage().heapUsed);
 
     // Log the system information
     this.log.debug('Host System Information:');
@@ -1160,6 +1135,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`- Total Memory: ${this.systemInformation.totalMemory}`);
     this.log.debug(`- Free Memory: ${this.systemInformation.freeMemory}`);
     this.log.debug(`- System Uptime: ${this.systemInformation.systemUptime}`);
+    this.log.debug(`- Process Uptime: ${this.systemInformation.processUptime}`);
+    this.log.debug(`- RSS: ${this.systemInformation.rss}`);
+    this.log.debug(`- Heap Total: ${this.systemInformation.heapTotal}`);
+    this.log.debug(`- Heap Used: ${this.systemInformation.heapUsed}`);
 
     // Log directories
     this.log.debug(`Root Directory: ${this.rootDirectory}`);
@@ -1169,13 +1148,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`Matterbridge Matter Certificate Directory: ${this.matterbridgeCertDirectory}`);
 
     // Global node_modules directory
-    if (this.nodeContext) this.globalModulesDirectory = this.matterbridgeInformation.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
+    if (this.nodeContext) this.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
     if (this.globalModulesDirectory === '') {
       // First run of Matterbridge so the node storage is empty
       this.log.debug(`Getting global node_modules directory...`);
       try {
         const { getGlobalNodeModules } = await import('./utils/network.js');
-        this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
+        this.globalModulesDirectory = await getGlobalNodeModules();
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
       } catch (error) {
@@ -1186,7 +1165,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.debug(`Checking global node_modules directory: ${this.globalModulesDirectory}`);
       try {
         const { getGlobalNodeModules } = await import('./utils/network.js');
-        this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
+        this.globalModulesDirectory = await getGlobalNodeModules();
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
       } catch (error) {
@@ -1195,18 +1174,24 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Matterbridge version
+    this.log.debug(`Reading matterbridge package.json...`);
     const packageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));
     this.matterbridgeVersion = this.matterbridgeLatestVersion = this.matterbridgeDevVersion = packageJson.version;
-    this.matterbridgeInformation.matterbridgeVersion = this.matterbridgeInformation.matterbridgeLatestVersion = this.matterbridgeInformation.matterbridgeDevVersion = packageJson.version;
     this.log.debug(`Matterbridge Version: ${this.matterbridgeVersion}`);
 
     // Matterbridge latest version (will be set in the checkUpdate function)
-    if (this.nodeContext) this.matterbridgeLatestVersion = this.matterbridgeInformation.matterbridgeLatestVersion = await this.nodeContext.get<string>('matterbridgeLatestVersion', this.matterbridgeVersion);
+    if (this.nodeContext) this.matterbridgeLatestVersion = await this.nodeContext.get<string>('matterbridgeLatestVersion', this.matterbridgeVersion);
     this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
 
     // Matterbridge dev version (will be set in the checkUpdate function)
-    if (this.nodeContext) this.matterbridgeDevVersion = this.matterbridgeInformation.matterbridgeDevVersion = await this.nodeContext.get<string>('matterbridgeDevVersion', this.matterbridgeVersion);
+    if (this.nodeContext) this.matterbridgeDevVersion = await this.nodeContext.get<string>('matterbridgeDevVersion', this.matterbridgeVersion);
     this.log.debug(`Matterbridge Dev Version: ${this.matterbridgeDevVersion}`);
+
+    // Frontend version
+    this.log.debug(`Reading frontend package.json...`);
+    const frontendPackageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'frontend/package.json'), 'utf8'));
+    this.frontendVersion = frontendPackageJson.version;
+    this.log.debug(`Frontend version ${CYAN}${this.frontendVersion}${db}`);
 
     // Current working directory
     const currentDir = process.cwd();
@@ -1215,6 +1200,40 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Command line arguments (excluding 'node' and the script name)
     const cmdArgs = process.argv.slice(2).join(' ');
     this.log.debug(`Command Line Arguments: ${cmdArgs}`);
+  }
+
+  /**
+   * Set the logger logLevel for the Matterbridge classes and call onChangeLoggerLevel() for each plugin.
+   *
+   * @param {LogLevel} logLevel The logger logLevel to set.
+   * @returns {Promise<void>} A promise that resolves when the logLevel has been set.
+   */
+  async setLogLevel(logLevel: LogLevel): Promise<void> {
+    if (this.log) this.log.logLevel = logLevel;
+    this.frontend.logLevel = logLevel;
+    MatterbridgeEndpoint.logLevel = logLevel;
+    if (this.devices) this.devices.logLevel = logLevel;
+    if (this.plugins) this.plugins.logLevel = logLevel;
+    for (const plugin of this.plugins) {
+      if (!plugin.platform || !plugin.platform.log || !plugin.platform.config) continue;
+      plugin.platform.log.logLevel = plugin.platform.config.debug === true ? LogLevel.DEBUG : this.log.logLevel;
+      await plugin.platform.onChangeLoggerLevel(plugin.platform.config.debug === true ? LogLevel.DEBUG : this.log.logLevel);
+    }
+    // Set the global logger callback for the WebSocketServer to the common minimum logLevel
+    let callbackLogLevel = LogLevel.NOTICE;
+    if (this.log.logLevel === LogLevel.INFO || Logger.level === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
+    if (this.log.logLevel === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
+    AnsiLogger.setGlobalCallback(this.frontend.wssSendLogMessage.bind(this.frontend), callbackLogLevel);
+    this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
+  }
+
+  /**
+   * Get the current logger logLevel.
+   *
+   * @returns {LogLevel} The current logger logLevel.
+   */
+  getLogLevel(): MaybePromise<LogLevel> {
+    return this.log.logLevel;
   }
 
   /**
@@ -2128,8 +2147,8 @@ const commissioningController = new CommissioningController({
       // Provide Network relevant configuration like the port
       // Optional when operating only one device on a host, Default port is 5540
       network: {
-        listeningAddressIpv4: this.ipv4address,
-        listeningAddressIpv6: this.ipv6address,
+        listeningAddressIpv4: this.ipv4Address,
+        listeningAddressIpv6: this.ipv6Address,
         port,
       },
 

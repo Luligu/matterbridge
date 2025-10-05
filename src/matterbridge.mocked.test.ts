@@ -11,6 +11,12 @@ jest.unstable_mockModule('./utils/network.js', () => ({
   logInterfaces: jest.fn(() => {
     return;
   }),
+  formatMemoryUsage: jest.fn(() => {
+    return '';
+  }),
+  formatOsUpTime: jest.fn(() => {
+    return '';
+  }),
 }));
 const networkModule = await import('./utils/network.js');
 const getGlobalNodeModulesMock = networkModule.getGlobalNodeModules as jest.MockedFunction<typeof networkModule.getGlobalNodeModules>;
@@ -55,7 +61,7 @@ import { jest } from '@jest/globals';
 import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 // import { Matterbridge } from './matterbridge.js';
-const { Matterbridge } = await import('./matterbridge.ts');
+const { Matterbridge } = await import('./matterbridge.js');
 import { VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
 
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
@@ -122,7 +128,6 @@ describe('Matterbridge mocked', () => {
 
   test('Matterbridge.loadInstance(false)', async () => {
     expect(matterbridge.systemInformation).toBeDefined();
-    expect(matterbridge.matterbridgeInformation).toBeDefined();
 
     expect(matterbridge.homeDirectory).toBe('');
     expect(matterbridge.rootDirectory).toBe('');
@@ -162,8 +167,8 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.controllerContext).toBeUndefined();
 
     expect(matterbridge.mdnsInterface).toBeUndefined();
-    expect(matterbridge.ipv4address).toBeUndefined();
-    expect(matterbridge.ipv6address).toBeUndefined();
+    expect(matterbridge.ipv4Address).toBeUndefined();
+    expect(matterbridge.ipv6Address).toBeUndefined();
     expect(matterbridge.port).toBeUndefined();
     expect(matterbridge.passcode).toBeUndefined();
     expect(matterbridge.discriminator).toBeUndefined();
@@ -191,21 +196,13 @@ describe('Matterbridge mocked', () => {
 
     expect((matterbridge as any).log).toBeDefined();
     expect(matterbridge.homeDirectory).toBe(getParameter('homedir') ?? os.homedir());
-    expect(matterbridge.matterbridgeInformation.homeDirectory).toBe(matterbridge.homeDirectory);
     expect(matterbridge.matterbridgeDirectory).toBe(path.join(matterbridge.homeDirectory, '.matterbridge', 'profiles', 'Jest'));
-    expect(matterbridge.matterbridgeInformation.matterbridgeDirectory).toBe(matterbridge.matterbridgeDirectory);
     expect(matterbridge.matterbridgePluginDirectory).toBe(path.join(matterbridge.homeDirectory, 'Matterbridge', 'profiles', 'Jest'));
-    expect(matterbridge.matterbridgeInformation.matterbridgePluginDirectory).toBe(matterbridge.matterbridgePluginDirectory);
     expect(matterbridge.matterbridgeCertDirectory).toBe(path.join(matterbridge.homeDirectory, '.mattercert', 'profiles', 'Jest'));
-    expect(matterbridge.matterbridgeInformation.matterbridgeCertDirectory).toBe(matterbridge.matterbridgeCertDirectory);
     expect(matterbridge.globalModulesDirectory).not.toBe('');
-    expect(matterbridge.matterbridgeInformation.globalModulesDirectory).toBe(matterbridge.globalModulesDirectory);
     expect(matterbridge.matterbridgeVersion).not.toBe('');
-    expect(matterbridge.matterbridgeInformation.matterbridgeVersion).toBe(matterbridge.matterbridgeVersion);
     expect(matterbridge.matterbridgeLatestVersion).toBe(matterbridge.matterbridgeVersion);
-    expect(matterbridge.matterbridgeInformation.matterbridgeLatestVersion).toBe(matterbridge.matterbridgeLatestVersion);
     expect(matterbridge.matterbridgeDevVersion).toBe(matterbridge.matterbridgeVersion);
-    expect(matterbridge.matterbridgeInformation.matterbridgeDevVersion).toBe(matterbridge.matterbridgeDevVersion);
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
     expect(matterbridge.plugins).toBeDefined();
@@ -239,8 +236,6 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.log.logLevel).toBe(LogLevel.INFO);
     expect(matterbridge.frontend.logLevel).toBeUndefined();
     expect(MatterbridgeEndpoint.logLevel).toBe(LogLevel.INFO);
-    expect(matterbridge.matterbridgeInformation.loggerLevel).toBe(LogLevel.INFO);
-    expect(matterbridge.matterbridgeInformation.matterLoggerLevel).toBe(MatterLogLevel.INFO);
     expect((matterbridge as any).initialized).toBeFalsy();
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
     expect((Matterbridge as any).instance).toBeUndefined();
@@ -272,10 +267,6 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.discriminator).toBe(1234);
 
     expect(matterbridge.log.logLevel).toBe(LogLevel.DEBUG);
-    expect(matterbridge.matterbridgeInformation.loggerLevel).toBe(LogLevel.DEBUG);
-    expect(matterbridge.matterbridgeInformation.fileLogger).toBe(true);
-    expect(matterbridge.matterbridgeInformation.matterLoggerLevel).toBe(MatterLogLevel.DEBUG);
-    expect(matterbridge.matterbridgeInformation.matterFileLogger).toBe(true);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Home Directory already exists at path: ${HOMEDIR}`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge')}`));
@@ -300,42 +291,37 @@ describe('Matterbridge mocked', () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'info', '-matterlogger', 'info', '-debug'];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.INFO);
-    expect(matterbridge.matterbridgeInformation.loggerLevel).toBe(LogLevel.INFO);
-    expect(matterbridge.matterbridgeInformation.fileLogger).toBe(false);
-    expect(matterbridge.matterbridgeInformation.matterLoggerLevel).toBe(MatterLogLevel.INFO);
-    expect(matterbridge.matterbridgeInformation.matterFileLogger).toBe(false);
+    expect(matterbridge.fileLogger).toBe(false);
+    expect(Logger.level).toBe(MatterLogLevel.INFO);
+    expect(matterbridge.matterFileLogger).toBe(false);
   });
 
   test('Matterbridge.initialize() logger notice', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'notice', '-matterlogger', 'notice', '-debug'];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.NOTICE);
-    expect(matterbridge.matterbridgeInformation.loggerLevel).toBe(LogLevel.NOTICE);
-    expect(matterbridge.matterbridgeInformation.matterLoggerLevel).toBe(MatterLogLevel.NOTICE);
+    expect(Logger.level).toBe(MatterLogLevel.NOTICE);
   });
 
   test('Matterbridge.initialize() logger warn', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'warn', '-matterlogger', 'warn', '-debug'];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.WARN);
-    expect(matterbridge.matterbridgeInformation.loggerLevel).toBe(LogLevel.WARN);
-    expect(matterbridge.matterbridgeInformation.matterLoggerLevel).toBe(MatterLogLevel.WARN);
+    expect(Logger.level).toBe(MatterLogLevel.WARN);
   });
 
   test('Matterbridge.initialize() logger error', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'error', '-matterlogger', 'error', '-debug'];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.ERROR);
-    expect(matterbridge.matterbridgeInformation.loggerLevel).toBe(LogLevel.ERROR);
-    expect(matterbridge.matterbridgeInformation.matterLoggerLevel).toBe(MatterLogLevel.ERROR);
+    expect(Logger.level).toBe(MatterLogLevel.ERROR);
   });
 
   test('Matterbridge.initialize() logger fatal', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'fatal', '-matterlogger', 'fatal', '-debug'];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.FATAL);
-    expect(matterbridge.matterbridgeInformation.loggerLevel).toBe(LogLevel.FATAL);
-    expect(matterbridge.matterbridgeInformation.matterLoggerLevel).toBe(MatterLogLevel.FATAL);
+    expect(Logger.level).toBe(MatterLogLevel.FATAL);
   });
 
   test('Matterbridge.initialize() logger default', async () => {
@@ -368,13 +354,12 @@ describe('Matterbridge mocked', () => {
     (Matterbridge as any).instance = undefined; // Reset the instance to ensure a fresh start
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge.log.logLevel).toBe(LogLevel.INFO);
-    expect(matterbridge.matterbridgeInformation.loggerLevel).toBe(LogLevel.INFO);
-    expect(matterbridge.matterbridgeInformation.matterLoggerLevel).toBe(MatterLogLevel.INFO);
+    expect(Logger.level).toBe(MatterLogLevel.INFO);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Using mdnsinterface ${CYAN}${availableInterfaces[0]}${nf} for the Matter MdnsBroadcaster.`);
     await (matterbridge as any).nodeContext.set('mattermdnsinterface', ''); // Prepare for next test
     await (matterbridge as any).nodeContext.set('matteripv4address', ''); // Prepare for next test
     await (matterbridge as any).nodeContext.set('matteripv6address', ''); // Prepare for next test
-    expect(matterbridge.matterbridgeInformation.virtualMode).toBe('disabled');
+    expect(matterbridge.virtualMode).toBe('disabled');
     await matterbridge.destroyInstance(10, 10);
 
     process.argv = [
@@ -411,7 +396,7 @@ describe('Matterbridge mocked', () => {
     process.argv = ['node', 'matterbridge.mocked.test.js', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'null', '-matterlogger', 'null', '-debug'];
     await (matterbridge as any).initialize();
     expect(matterbridge.mdnsInterface).toBeUndefined();
-    expect(matterbridge.matterbridgeInformation.virtualMode).toBe('outlet');
+    expect(matterbridge.virtualMode).toBe('outlet');
 
     await matterbridge.setLogLevel(LogLevel.DEBUG);
     expect(MatterbridgeEndpoint.logLevel).toBe(LogLevel.DEBUG);
@@ -658,7 +643,6 @@ describe('Matterbridge mocked', () => {
     await wait(100);
     expect(getGlobalNodeModulesMock).toHaveBeenCalled();
     expect(matterbridge.globalModulesDirectory).toBe('usr/local/lib/node_modules');
-    expect(matterbridge.matterbridgeInformation.globalModulesDirectory).toBe(matterbridge.globalModulesDirectory);
   });
 
   test('Matterbridge.initialize() logNodeAndSystemInfo global node modules failed', async () => {
@@ -670,12 +654,11 @@ describe('Matterbridge mocked', () => {
 
     await (matterbridge as any).initialize();
     await matterbridge.nodeContext?.set<string>('globalModulesDirectory', '');
-    matterbridge.globalModulesDirectory = matterbridge.matterbridgeInformation.globalModulesDirectory = '';
+    matterbridge.globalModulesDirectory = '';
     await (matterbridge as any).logNodeAndSystemInfo();
     await wait(100);
     expect(getGlobalNodeModulesMock).toHaveBeenCalled();
     expect(matterbridge.globalModulesDirectory).toBe('');
-    expect(matterbridge.matterbridgeInformation.globalModulesDirectory).toBe(matterbridge.globalModulesDirectory);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error getting global node_modules directory: Error: Test error for getGlobalNodeModules'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error checking global node_modules directory: Error: Test error for getGlobalNodeModules'));
 

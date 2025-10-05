@@ -44,71 +44,19 @@ import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/mai
 import { CommissioningOptions } from '@matter/main/types';
 
 // Matterbridge
+import type { ApiClusters, ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin } from './matterbridgeTypes.js';
+import type { Matterbridge } from './matterbridge.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import type { PlatformConfig } from './matterbridgePlatform.js';
+import type { ApiSettings, RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
+import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from './matterbridgeTypes.js';
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
-import {
-  ApiClusters,
-  ApiClustersResponse,
-  ApiDevices,
-  ApiMatterResponse,
-  BaseRegisteredPlugin,
-  MATTER_LOGGER_FILE,
-  MATTER_STORAGE_NAME,
-  MATTERBRIDGE_LOGGER_FILE,
-  MatterbridgeInformation,
-  NODE_STORAGE_DIR,
-  plg,
-  RegisteredPlugin,
-  SystemInformation,
-} from './matterbridgeTypes.js';
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { PlatformConfig } from './matterbridgePlatform.js';
+import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
-import { RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type ReadonlyMatterbridge = Readonly<
-  Pick<
-    Matterbridge,
-    | 'matterbridgeInformation'
-    | 'systemInformation'
-    | 'homeDirectory'
-    | 'rootDirectory'
-    | 'matterbridgeDirectory'
-    | 'matterbridgePluginDirectory'
-    | 'matterbridgeCertDirectory'
-    | 'globalModulesDirectory'
-    | 'matterbridgeVersion'
-    | 'matterbridgeLatestVersion'
-    | 'matterbridgeDevVersion'
-    | 'bridgeMode'
-    | 'restartMode'
-    | 'profile'
-    | 'mdnsInterface'
-    | 'ipv4address'
-    | 'ipv6address'
-    // Thread communication
-    | 'hasCleanupStarted'
-    | 'log'
-    | 'matterLog'
-    | 'setLogLevel'
-    | 'plugins'
-    | 'devices'
-    | 'nodeContext'
-    | 'serverNode'
-    | 'getServerNodeData'
-    | 'advertisingNodes'
-    | 'restartProcess'
-    | 'shutdownProcess'
-    | 'unregisterAndShutdownProcess'
-    | 'shutdownProcessAndReset'
-    | 'shutdownProcessAndFactoryReset'
-  >
->;
 
 /**
- * Represents the Matterbridge events.
+ * Represents the Frontend events.
  */
 interface FrontendEvents {
   server_listening: [protocol: string, port: number, address?: string];
@@ -180,17 +128,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Serve static files from '/static' endpoint
     this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'frontend/build')));
-
-    // Read the package.json file to get the frontend version
-    try {
-      this.log.debug(`Reading frontend package.json...`);
-      const frontendJson = await fs.readFile(path.join(this.matterbridge.rootDirectory, 'frontend/package.json'), 'utf8');
-      this.matterbridge.matterbridgeInformation.frontendVersion = JSON.parse(frontendJson)?.version;
-      this.log.debug(`Frontend version ${CYAN}${this.matterbridge.matterbridgeInformation.frontendVersion}${db}`);
-    } catch (error) {
-      // istanbul ignore next
-      this.log.error(`Failed to read frontend package.json: ${error instanceof Error ? error.message : String(error)}`);
-    }
 
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
@@ -347,8 +284,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       // Set the global logger callback for the WebSocketServer
       let callbackLogLevel = LogLevel.NOTICE;
-      if (this.matterbridge.matterbridgeInformation.loggerLevel === LogLevel.INFO || this.matterbridge.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
-      if (this.matterbridge.matterbridgeInformation.loggerLevel === LogLevel.DEBUG || this.matterbridge.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
+      if (this.matterbridge.getLogLevel() === LogLevel.INFO || Logger.level === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
+      if (this.matterbridge.getLogLevel() === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
       AnsiLogger.setGlobalCallback(this.wssSendLogMessage.bind(this), callbackLogLevel);
       this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
       this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
@@ -451,11 +388,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       // Memory usage from process
       const memoryUsageRaw = process.memoryUsage();
       const memoryUsage = {
-        rss: this.formatMemoryUsage(memoryUsageRaw.rss),
-        heapTotal: this.formatMemoryUsage(memoryUsageRaw.heapTotal),
-        heapUsed: this.formatMemoryUsage(memoryUsageRaw.heapUsed),
-        external: this.formatMemoryUsage(memoryUsageRaw.external),
-        arrayBuffers: this.formatMemoryUsage(memoryUsageRaw.arrayBuffers),
+        rss: formatMemoryUsage(memoryUsageRaw.rss),
+        heapTotal: formatMemoryUsage(memoryUsageRaw.heapTotal),
+        heapUsed: formatMemoryUsage(memoryUsageRaw.heapUsed),
+        external: formatMemoryUsage(memoryUsageRaw.external),
+        arrayBuffers: formatMemoryUsage(memoryUsageRaw.arrayBuffers),
       };
 
       // V8 heap statistics
@@ -464,15 +401,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       const heapSpacesRaw = v8.getHeapSpaceStatistics();
 
       // Format heapStats
-      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, this.formatMemoryUsage(value as number)]));
+      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, formatMemoryUsage(value as number)]));
 
       // Format heapSpaces
       const heapSpaces = heapSpacesRaw.map((space) => ({
         ...space,
-        space_size: this.formatMemoryUsage(space.space_size),
-        space_used_size: this.formatMemoryUsage(space.space_used_size),
-        space_available_size: this.formatMemoryUsage(space.space_available_size),
-        physical_space_size: this.formatMemoryUsage(space.physical_space_size),
+        space_size: formatMemoryUsage(space.space_size),
+        space_used_size: formatMemoryUsage(space.space_used_size),
+        space_available_size: formatMemoryUsage(space.space_available_size),
+        physical_space_size: formatMemoryUsage(space.physical_space_size),
       }));
 
       const { createRequire } = await import('node:module');
@@ -877,67 +814,58 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.debug('Frontend stopped successfully');
   }
 
-  // Function to format bytes to KB, MB, or GB
-  private formatMemoryUsage = (bytes: number): string => {
-    if (bytes >= 1024 ** 3) {
-      return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
-    } else if (bytes >= 1024 ** 2) {
-      return `${(bytes / 1024 ** 2).toFixed(2)} MB`;
-    } else {
-      return `${(bytes / 1024).toFixed(2)} KB`;
-    }
-  };
-
-  // Function to format system uptime with only the most significant unit
-  private formatOsUpTime = (seconds: number): string => {
-    if (seconds >= 86400) {
-      const days = Math.floor(seconds / 86400);
-      return `${days} day${days !== 1 ? 's' : ''}`;
-    }
-    if (seconds >= 3600) {
-      const hours = Math.floor(seconds / 3600);
-      return `${hours} hour${hours !== 1 ? 's' : ''}`;
-    }
-    if (seconds >= 60) {
-      const minutes = Math.floor(seconds / 60);
-      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-    }
-    return `${seconds} second${seconds !== 1 ? 's' : ''}`;
-  };
-
   /**
    * Retrieves the api settings data.
    *
    * @returns {Promise<{ matterbridgeInformation: MatterbridgeInformation, systemInformation: SystemInformation }>} A promise that resolve in the api settings object.
    */
-  private async getApiSettings(): Promise<{
-    matterbridgeInformation: MatterbridgeInformation;
-    systemInformation: SystemInformation;
-  }> {
-    // Update the system information
-    this.matterbridge.systemInformation.totalMemory = this.formatMemoryUsage(os.totalmem());
-    this.matterbridge.systemInformation.freeMemory = this.formatMemoryUsage(os.freemem());
-    this.matterbridge.systemInformation.systemUptime = this.formatOsUpTime(os.uptime());
-    this.matterbridge.systemInformation.processUptime = this.formatOsUpTime(Math.floor(process.uptime()));
+  private async getApiSettings(): Promise<ApiSettings> {
+    // Update the variable system information properties
+    this.matterbridge.systemInformation.totalMemory = formatMemoryUsage(os.totalmem());
+    this.matterbridge.systemInformation.freeMemory = formatMemoryUsage(os.freemem());
+    this.matterbridge.systemInformation.systemUptime = formatOsUpTime(os.uptime());
+    this.matterbridge.systemInformation.processUptime = formatOsUpTime(Math.floor(process.uptime()));
     this.matterbridge.systemInformation.cpuUsage = lastCpuUsage.toFixed(2) + ' %';
-    this.matterbridge.systemInformation.rss = this.formatMemoryUsage(process.memoryUsage().rss);
-    this.matterbridge.systemInformation.heapTotal = this.formatMemoryUsage(process.memoryUsage().heapTotal);
-    this.matterbridge.systemInformation.heapUsed = this.formatMemoryUsage(process.memoryUsage().heapUsed);
+    this.matterbridge.systemInformation.rss = formatMemoryUsage(process.memoryUsage().rss);
+    this.matterbridge.systemInformation.heapTotal = formatMemoryUsage(process.memoryUsage().heapTotal);
+    this.matterbridge.systemInformation.heapUsed = formatMemoryUsage(process.memoryUsage().heapUsed);
 
-    // Update the matterbridge information
-    this.matterbridge.matterbridgeInformation.bridgeMode = this.matterbridge.bridgeMode;
-    this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
-    this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
-    this.matterbridge.matterbridgeInformation.loggerLevel = this.matterbridge.log.logLevel;
-    this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.level as MatterLogLevel;
-    this.matterbridge.matterbridgeInformation.matterMdnsInterface = this.matterbridge.mdnsInterface;
-    this.matterbridge.matterbridgeInformation.matterIpv4Address = this.matterbridge.ipv4address;
-    this.matterbridge.matterbridgeInformation.matterIpv6Address = this.matterbridge.ipv6address;
-    this.matterbridge.matterbridgeInformation.matterPort = (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
-    this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
-    this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
+    // Create the matterbridge information
+    const info: MatterbridgeInformation = {
+      homeDirectory: this.matterbridge.homeDirectory,
+      rootDirectory: this.matterbridge.rootDirectory,
+      matterbridgeDirectory: this.matterbridge.matterbridgeDirectory,
+      matterbridgePluginDirectory: this.matterbridge.matterbridgePluginDirectory,
+      matterbridgeCertDirectory: this.matterbridge.matterbridgeCertDirectory,
+      globalModulesDirectory: this.matterbridge.globalModulesDirectory,
+      matterbridgeVersion: this.matterbridge.matterbridgeVersion,
+      matterbridgeLatestVersion: this.matterbridge.matterbridgeLatestVersion,
+      matterbridgeDevVersion: this.matterbridge.matterbridgeDevVersion,
+      frontendVersion: this.matterbridge.frontendVersion,
+      bridgeMode: this.matterbridge.bridgeMode,
+      restartMode: this.matterbridge.restartMode,
+      virtualMode: this.matterbridge.virtualMode,
+      profile: this.matterbridge.profile,
+      readOnly: this.matterbridge.readOnly,
+      shellyBoard: this.matterbridge.shellyBoard,
+      shellySysUpdate: this.matterbridge.shellySysUpdate,
+      shellyMainUpdate: this.matterbridge.shellyMainUpdate,
+      loggerLevel: await this.matterbridge.getLogLevel(),
+      fileLogger: this.matterbridge.fileLogger,
+      matterLoggerLevel: Logger.level as MatterLogLevel,
+      matterFileLogger: this.matterbridge.matterFileLogger,
+      matterMdnsInterface: this.matterbridge.mdnsInterface,
+      matterIpv4Address: this.matterbridge.ipv4Address,
+      matterIpv6Address: this.matterbridge.ipv6Address,
+      matterPort: (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540,
+      matterDiscriminator: await this.matterbridge.nodeContext?.get<number>('matterdiscriminator'),
+      matterPasscode: await this.matterbridge.nodeContext?.get<number>('matterpasscode'),
+      restartRequired: this.matterbridge.restartRequired,
+      fixedRestartRequired: this.matterbridge.fixedRestartRequired,
+      updateRequired: this.matterbridge.updateRequired,
+    };
 
-    return { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: this.matterbridge.matterbridgeInformation };
+    return { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: info };
   }
 
   /**
@@ -1089,7 +1017,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private getPlugins(): BaseRegisteredPlugin[] {
     if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
-    for (const plugin of this.matterbridge.plugins) {
+    for (const plugin of this.matterbridge.plugins.array()) {
       baseRegisteredPlugins.push({
         path: plugin.path,
         type: plugin.type,
@@ -1335,7 +1263,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
                       });
                   } else {
                     // The plugin is already registered
-                    this.matterbridge.matterbridgeInformation.fixedRestartRequired = true;
+                    this.matterbridge.fixedRestartRequired = true;
                     this.wssSendRefreshRequired('plugins');
                     this.wssSendRestartRequired(true, true);
                   }
@@ -1348,7 +1276,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             } else {
               // The package is matterbridge
               // istanbul ignore next
-              this.matterbridge.matterbridgeInformation.fixedRestartRequired = true;
+              this.matterbridge.fixedRestartRequired = true;
               // istanbul ignore next if
               if (this.matterbridge.restartMode !== '') {
                 this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
@@ -1760,10 +1688,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           case 'setmblogfile':
             if (isValidBoolean(data.params.value)) {
               this.log.debug('Matterbridge file log:', data.params.value);
-              this.matterbridge.matterbridgeInformation.fileLogger = data.params.value;
+              this.matterbridge.fileLogger = data.params.value;
               await this.matterbridge.nodeContext?.set('matterbridgeFileLog', data.params.value);
               // Create the file logger for matterbridge
-              if (data.params.value) AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), this.matterbridge.matterbridgeInformation.loggerLevel, true);
+              if (data.params.value) AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), await this.matterbridge.getLogLevel(), true);
               else AnsiLogger.setGlobalLogfile(undefined);
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
             }
@@ -1784,7 +1712,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               } else if (data.params.value === 'Fatal') {
                 Logger.level = MatterLogLevel.FATAL;
               }
-              this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.level as MatterLogLevel;
               await this.matterbridge.nodeContext?.set('matterLogLevel', Logger.level);
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
             }
@@ -1792,7 +1719,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           case 'setmjlogfile':
             if (isValidBoolean(data.params.value)) {
               this.log.debug('Matter file log:', data.params.value);
-              this.matterbridge.matterbridgeInformation.matterFileLogger = data.params.value;
+              this.matterbridge.fileLogger = data.params.value;
               await this.matterbridge.nodeContext?.set('matterFileLog', data.params.value);
               if (data.params.value) {
                 this.matterbridge.matterLog.logFilePath = path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE);
@@ -1806,30 +1733,30 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             if (isValidString(data.params.value)) {
               this.log.debug(`Matter.js mdns interface: ${data.params.value === '' ? 'all interfaces' : data.params.value}`);
               this.matterbridge.mdnsInterface = data.params.value === '' ? undefined : data.params.value;
-              this.matterbridge.matterbridgeInformation.matterMdnsInterface = this.matterbridge.mdnsInterface;
               await this.matterbridge.nodeContext?.set('mattermdnsinterface', data.params.value);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+              this.wssSendSnackbarMessage(`Mdns interface changed to ${data.params.value === '' ? 'all interfaces' : data.params.value}`);
             }
             break;
           case 'setipv4address':
             if (isValidString(data.params.value)) {
               this.log.debug(`Matter.js ipv4 address: ${data.params.value === '' ? 'all ipv4 addresses' : data.params.value}`);
-              this.matterbridge.ipv4address = data.params.value === '' ? undefined : data.params.value;
-              this.matterbridge.matterbridgeInformation.matterIpv4Address = this.matterbridge.ipv4address;
+              this.matterbridge.ipv4Address = data.params.value === '' ? undefined : data.params.value;
               await this.matterbridge.nodeContext?.set('matteripv4address', data.params.value);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+              this.wssSendSnackbarMessage(`IPv4 address changed to ${data.params.value === '' ? 'all ipv4 addresses' : data.params.value}`);
             }
             break;
           case 'setipv6address':
             if (isValidString(data.params.value)) {
               this.log.debug(`Matter.js ipv6 address: ${data.params.value === '' ? 'all ipv6 addresses' : data.params.value}`);
-              this.matterbridge.ipv6address = data.params.value === '' ? undefined : data.params.value;
-              this.matterbridge.matterbridgeInformation.matterIpv6Address = this.matterbridge.ipv6address;
+              this.matterbridge.ipv6Address = data.params.value === '' ? undefined : data.params.value;
               await this.matterbridge.nodeContext?.set('matteripv6address', data.params.value);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+              this.wssSendSnackbarMessage(`IPv6 address changed to ${data.params.value === '' ? 'all ipv6 addresses' : data.params.value}`);
             }
             break;
           case 'setmatterport':
@@ -1837,16 +1764,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             const port = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
             if (isValidNumber(port, 5540, 5600)) {
               this.log.debug(`Set matter commissioning port to ${CYAN}${port}${db}`);
-              this.matterbridge.matterbridgeInformation.matterPort = port;
+              this.matterbridge.port = port;
               await this.matterbridge.nodeContext?.set<number>('matterport', port);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+              this.wssSendSnackbarMessage(`Matter port changed to ${port}`);
             } else {
               this.log.debug(`Reset matter commissioning port to ${CYAN}5540${db}`);
-              this.matterbridge.matterbridgeInformation.matterPort = 5540;
+              this.matterbridge.port = 5540;
               await this.matterbridge.nodeContext?.set<number>('matterport', 5540);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning port to default 5540' });
+              this.wssSendSnackbarMessage(`Matter port reset to default 5540`, undefined, 'error');
             }
             break;
           case 'setmatterdiscriminator':
@@ -1854,38 +1783,42 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             const discriminator = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
             if (isValidNumber(discriminator, 0, 4095)) {
               this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
-              this.matterbridge.matterbridgeInformation.matterDiscriminator = discriminator;
+              this.matterbridge.discriminator = discriminator;
               await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', discriminator);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+              this.wssSendSnackbarMessage(`Matter discriminator changed to ${discriminator}`);
             } else {
               this.log.debug(`Reset matter commissioning discriminator to ${CYAN}undefined${db}`);
-              this.matterbridge.matterbridgeInformation.matterDiscriminator = undefined;
+              this.matterbridge.discriminator = undefined;
               await this.matterbridge.nodeContext?.remove('matterdiscriminator');
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning discriminator to default undefined' });
+              this.wssSendSnackbarMessage(`Matter discriminator reset to default`, undefined, 'error');
             }
             break;
           case 'setmatterpasscode':
             // eslint-disable-next-line no-case-declarations
             const passcode = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
             if (isValidNumber(passcode, 1, 99999998) && CommissioningOptions.FORBIDDEN_PASSCODES.includes(passcode) === false) {
-              this.matterbridge.matterbridgeInformation.matterPasscode = passcode;
+              this.matterbridge.passcode = passcode;
               this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
               await this.matterbridge.nodeContext?.set<number>('matterpasscode', passcode);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+              this.wssSendSnackbarMessage(`Matter passcode changed to ${passcode}`);
             } else {
               this.log.debug(`Reset matter commissioning passcode to ${CYAN}undefined${db}`);
-              this.matterbridge.matterbridgeInformation.matterPasscode = undefined;
+              this.matterbridge.passcode = undefined;
               await this.matterbridge.nodeContext?.remove('matterpasscode');
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning passcode to default undefined' });
+              this.wssSendSnackbarMessage(`Matter passcode reset to default`, undefined, 'error');
             }
             break;
           case 'setvirtualmode':
             if (isValidString(data.params.value, 1) && ['disabled', 'light', 'outlet', 'switch', 'mounted_switch'].includes(data.params.value)) {
-              this.matterbridge.matterbridgeInformation.virtualMode = data.params.value as 'disabled' | 'light' | 'outlet' | 'switch' | 'mounted_switch';
+              this.matterbridge.virtualMode = data.params.value as 'disabled' | 'light' | 'outlet' | 'switch' | 'mounted_switch';
               this.log.debug(`Set matterbridge virtual mode to ${CYAN}${data.params.value}${db}`);
               await this.matterbridge.nodeContext?.set<string>('virtualmode', data.params.value);
               this.wssSendRestartRequired();
@@ -2072,8 +2005,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false) {
     this.log.debug('Sending a restart required message to all connected clients');
-    this.matterbridge.matterbridgeInformation.restartRequired = true;
-    this.matterbridge.matterbridgeInformation.fixedRestartRequired = fixed;
+    this.matterbridge.restartRequired = true;
+    this.matterbridge.fixedRestartRequired = fixed;
     if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', success: true, response: { fixed } });
@@ -2086,7 +2019,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   wssSendRestartNotRequired(snackbar: boolean = true) {
     this.log.debug('Sending a restart not required message to all connected clients');
-    this.matterbridge.matterbridgeInformation.restartRequired = false;
+    this.matterbridge.restartRequired = false;
     if (snackbar === true) this.wssSendCloseSnackbarMessage(`Restart required`);
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', success: true });
@@ -2099,7 +2032,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   wssSendUpdateRequired(devVersion: boolean = false) {
     this.log.debug('Sending an update required message to all connected clients');
-    this.matterbridge.matterbridgeInformation.updateRequired = true;
+    this.matterbridge.updateRequired = true;
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { devVersion } });
   }

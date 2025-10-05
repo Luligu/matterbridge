@@ -23,16 +23,17 @@
  */
 
 // NodeStorage and AnsiLogger modules
-import { NodeStorage } from 'node-persist-manager';
-import { LogLevel } from 'node-ansi-logger';
+import type { NodeStorage } from 'node-persist-manager';
+import type { LogLevel } from 'node-ansi-logger';
 // @matter
-import { FabricIndex, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
-import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
+import type { FabricIndex, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
+import type { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
+import type { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
 
 // Matterbridge
-import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import type { Matterbridge } from './matterbridge.js';
+import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Default colors
 export const plg = '\u001B[38;5;33m';
@@ -44,6 +45,37 @@ export const MATTERBRIDGE_LOGGER_FILE = 'matterbridge.log';
 export const MATTER_LOGGER_FILE = 'matter.log';
 export const NODE_STORAGE_DIR = 'storage';
 export const MATTER_STORAGE_NAME = 'matterstorage';
+
+export type MaybePromise<T> = T | Promise<T>;
+
+export type SharedMatterbridge = Readonly<
+  Pick<
+    Matterbridge,
+    | 'systemInformation'
+    | 'homeDirectory'
+    | 'rootDirectory'
+    | 'matterbridgeDirectory'
+    | 'matterbridgePluginDirectory'
+    | 'matterbridgeCertDirectory'
+    | 'globalModulesDirectory'
+    | 'matterbridgeVersion'
+    | 'matterbridgeLatestVersion'
+    | 'matterbridgeDevVersion'
+    | 'frontendVersion'
+    | 'bridgeMode'
+    | 'restartMode'
+    | 'virtualMode'
+    | 'profile'
+    | 'fileLogger'
+    | 'matterFileLogger'
+    | 'mdnsInterface'
+    | 'ipv4Address'
+    | 'ipv6Address'
+    | 'port'
+    | 'discriminator'
+    | 'passcode'
+  >
+>;
 
 // Define an interface for storing the plugins
 export interface RegisteredPlugin extends BaseRegisteredPlugin {
@@ -88,17 +120,21 @@ export interface BaseRegisteredPlugin {
 
 // Define an interface for storing the system information
 export interface SystemInformation {
+  // Network properties
   interfaceName: string;
   macAddress: string;
   ipv4Address: string;
   ipv6Address: string;
+  // Node.js properties
   nodeVersion: string;
+  // Fixed properties
   hostname: string;
   user: string;
   osType: string;
   osRelease: string;
   osPlatform: string;
   osArch: string;
+  // Variable properties
   totalMemory: string;
   freeMemory: string;
   systemUptime: string;
@@ -120,15 +156,15 @@ export interface MatterbridgeInformation {
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
   matterbridgeDevVersion: string;
-  frontendVersion?: string;
+  frontendVersion: string;
   bridgeMode: string;
   restartMode: string;
   virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
+  profile: string | undefined;
   readOnly: boolean;
   shellyBoard: boolean;
   shellySysUpdate: boolean;
   shellyMainUpdate: boolean;
-  profile?: string;
   loggerLevel: LogLevel;
   fileLogger: boolean;
   matterLoggerLevel: number;

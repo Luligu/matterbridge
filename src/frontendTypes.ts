@@ -22,14 +22,14 @@
  * limitations under the License.
  */
 
-import { EndpointNumber } from '@matter/main';
+import type { EndpointNumber } from '@matter/main';
 
 import type { PlatformConfig } from './matterbridgePlatform.js';
 import type { ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
 export type RefreshRequiredChanged = 'settings' | 'plugins' | 'devices' | 'matter';
 
-export interface ApiSettingResponse {
+export interface ApiSettings {
   matterbridgeInformation: MatterbridgeInformation;
   systemInformation: SystemInformation;
 }
@@ -322,7 +322,7 @@ export interface WsMessageApiSettingsRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiSettingsResponse extends WsMessageSuccessApiResponse {
   method: '/api/settings';
-  response: ApiSettingResponse;
+  response: ApiSettings;
 }
 
 export interface WsMessageApiPluginsRequest extends WsMessageBaseApiRequest {

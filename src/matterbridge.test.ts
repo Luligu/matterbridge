@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { FabricId, FabricIndex, NodeId, SessionsBehavior, VendorId, LogLevel as MatterLogLevel } from '@matter/main';
+import { FabricId, FabricIndex, NodeId, SessionsBehavior, VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
 import { AnsiLogger, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
@@ -105,21 +105,13 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).initialized).toBeTruthy();
       expect((matterbridge as any).log).toBeDefined();
       expect(matterbridge.homeDirectory).toBe(getParameter('homedir') ?? os.homedir());
-      expect(matterbridge.matterbridgeInformation.homeDirectory).toBe(matterbridge.homeDirectory);
       expect(matterbridge.matterbridgeDirectory).toBe(path.join(matterbridge.homeDirectory, '.matterbridge', 'profiles', 'Jest'));
-      expect(matterbridge.matterbridgeInformation.matterbridgeDirectory).toBe(matterbridge.matterbridgeDirectory);
       expect(matterbridge.matterbridgePluginDirectory).toBe(path.join(matterbridge.homeDirectory, 'Matterbridge', 'profiles', 'Jest'));
-      expect(matterbridge.matterbridgeInformation.matterbridgePluginDirectory).toBe(matterbridge.matterbridgePluginDirectory);
       expect(matterbridge.matterbridgeCertDirectory).toBe(path.join(matterbridge.homeDirectory, '.mattercert', 'profiles', 'Jest'));
-      expect(matterbridge.matterbridgeInformation.matterbridgeCertDirectory).toBe(matterbridge.matterbridgeCertDirectory);
       expect(matterbridge.globalModulesDirectory).not.toBe('');
-      expect(matterbridge.matterbridgeInformation.globalModulesDirectory).toBe(matterbridge.globalModulesDirectory);
       expect(matterbridge.matterbridgeVersion).not.toBe('');
-      expect(matterbridge.matterbridgeInformation.matterbridgeVersion).toBe(matterbridge.matterbridgeVersion);
       expect(matterbridge.matterbridgeLatestVersion).toBe(matterbridge.matterbridgeVersion);
-      expect(matterbridge.matterbridgeInformation.matterbridgeLatestVersion).toBe(matterbridge.matterbridgeLatestVersion);
       expect(matterbridge.matterbridgeDevVersion).toBe(matterbridge.matterbridgeVersion);
-      expect(matterbridge.matterbridgeInformation.matterbridgeDevVersion).toBe(matterbridge.matterbridgeDevVersion);
       expect((matterbridge as any).nodeStorage).toBeDefined();
       expect((matterbridge as any).nodeContext).toBeDefined();
       expect(matterbridge.plugins).toBeDefined();
@@ -477,7 +469,7 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('setLogLevel LogLevel.INFO', async () => {
-      matterbridge.matterbridgeInformation.matterLoggerLevel = MatterLogLevel.INFO;
+      Logger.level = MatterLogLevel.INFO;
       matterbridge.setLogLevel(LogLevel.INFO);
       expect((matterbridge as any).log.logLevel).toBe(LogLevel.INFO);
       expect((matterbridge as any).frontend.log.logLevel).toBe(LogLevel.INFO);
@@ -485,7 +477,6 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).devices.log.logLevel).toBe(LogLevel.INFO);
       expect(MatterbridgeEndpoint.logLevel).toBe(LogLevel.INFO);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocketServer logger global callback set to ${LogLevel.INFO}`);
-      matterbridge.matterbridgeInformation.matterLoggerLevel = MatterLogLevel.DEBUG;
     });
 
     test('setLogLevel LogLevel.DEBUG', async () => {
