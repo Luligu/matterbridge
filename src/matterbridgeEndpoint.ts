@@ -1865,6 +1865,15 @@ export class MatterbridgeEndpoint extends Endpoint {
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       systemMode: Thermostat.SystemMode.Auto,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+      thermostatRunningState: {
+        heat: false,
+        cool: false,
+        fan: false,
+        heatStage2: false,
+        coolStage2: false,
+        fanStage2: false,
+        fanStage3: false,
+      },
       // Thermostat.Feature.Heating
       occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
       minHeatSetpointLimit: minHeatSetpointLimit * 100,
