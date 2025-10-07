@@ -25,7 +25,7 @@
 import type { EndpointNumber } from '@matter/main';
 
 import type { PlatformConfig } from './matterbridgePlatform.js';
-import type { ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
+import type { ApiClusters, ApiDevice as ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
 export type RefreshRequiredChanged = 'settings' | 'plugins' | 'devices' | 'matter';
 
@@ -314,7 +314,7 @@ export interface WsMessageApiMatterRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiMatterResponse extends WsMessageSuccessApiResponse {
   method: '/api/matter';
-  response: ApiMatterResponse;
+  response: ApiMatter;
 }
 
 export interface WsMessageApiSettingsRequest extends WsMessageBaseApiRequest {
@@ -330,7 +330,7 @@ export interface WsMessageApiPluginsRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiPluginsResponse extends WsMessageSuccessApiResponse {
   method: '/api/plugins';
-  response: BaseRegisteredPlugin[];
+  response: ApiPlugin[];
 }
 
 export interface WsMessageApiDevicesRequest extends WsMessageBaseApiRequest {
@@ -341,7 +341,7 @@ export interface WsMessageApiDevicesRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiDevicesResponse extends WsMessageSuccessApiResponse {
   method: '/api/devices';
-  response: ApiDevices[];
+  response: ApiDevice[];
 }
 
 export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
@@ -353,7 +353,7 @@ export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiClustersResponse extends WsMessageSuccessApiResponse {
   method: '/api/clusters';
-  response: ApiClustersResponse;
+  response: ApiClusters;
 }
 
 export interface WsMessageApiSelectDevicesRequest extends WsMessageBaseApiRequest {
@@ -435,7 +435,7 @@ export interface WsMessageApiRefreshRequired extends WsMessageSuccessApiResponse
   method: 'refresh_required';
   response: {
     changed: RefreshRequiredChanged;
-    matter?: ApiMatterResponse;
+    matter?: ApiMatter;
   };
 }
 

@@ -36,7 +36,7 @@ import express from 'express';
 import WebSocket, { WebSocketServer } from 'ws';
 import multer from 'multer';
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt, wr } from 'node-ansi-logger';
 // @matter
 import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle, ServerNode, LogDestination, Diagnostic, Time, FabricIndex, EndpointNumber } from '@matter/main';
 import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
@@ -44,7 +44,7 @@ import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/mai
 import { CommissioningOptions } from '@matter/main/types';
 
 // Matterbridge
-import type { ApiClusters, ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin } from './matterbridgeTypes.js';
+import type { Cluster, ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, Plugin } from './matterbridgeTypes.js';
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { PlatformConfig } from './matterbridgePlatform.js';
@@ -54,6 +54,7 @@ import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, i
 import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
+import { BroadcastServer, WorkerMessage } from './broadcastServer.js';
 
 /**
  * Represents the Frontend events.
@@ -76,12 +77,56 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private httpServer: HttpServer | undefined;
   private httpsServer: https.Server | undefined;
   private webSocketServer: WebSocketServer | undefined;
+  private server: BroadcastServer;
 
   constructor(matterbridge: Matterbridge) {
     super();
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({ logName: 'Frontend', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.logNameColor = '\x1b[38;5;97m';
+    this.server = new BroadcastServer('plugins', this.log);
+    this.server.on('broadcast_message', this.msgHandler.bind(this));
+  }
+
+  destroy(): void {
+    this.server.close();
+  }
+
+  private async msgHandler(msg: WorkerMessage) {
+    if (this.server.isWorkerRequest(msg, msg.type)) {
+      this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        default:
+          this.log.warn(`Unknown broadcast request ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+      }
+    }
+    if (this.server.isWorkerResponse(msg, msg.type)) {
+      this.log.debug(`**Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        case 'plugins_install':
+          this.wssSendCloseSnackbarMessage(`Installing package ${msg.response.packageName}...`);
+          if (msg.response.success) {
+            this.wssSendRestartRequired(true, true);
+            this.wssSendRefreshRequired('plugins');
+            this.wssSendSnackbarMessage(`Installed package ${msg.response.packageName}`, 5, 'success');
+          } else {
+            this.wssSendSnackbarMessage(`Package ${msg.response.packageName} not installed`, 10, 'error');
+          }
+          break;
+        case 'plugins_uninstall':
+          this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.response.packageName}...`);
+          if (msg.response.success) {
+            this.wssSendRestartRequired(true, true);
+            this.wssSendRefreshRequired('plugins');
+            this.wssSendSnackbarMessage(`Uninstalled package ${msg.response.packageName}`, 5, 'success');
+          } else {
+            this.wssSendSnackbarMessage(`Package ${msg.response.packageName} not uninstalled`, 10, 'error');
+          }
+          break;
+        default:
+          this.log.warn(`Unknown broadcast response ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+      }
+    }
   }
 
   set logLevel(logLevel: LogLevel) {
@@ -126,7 +171,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
     */
 
-    // Serve static files from '/static' endpoint
+    // Serve static files from 'frontend/build' directory
     this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'frontend/build')));
 
     if (!hasParameter('ssl')) {
@@ -433,14 +478,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      res.json(this.getPlugins());
+      res.json(this.matterbridge.hasCleanupStarted ? [] : this.getPlugins());
     });
 
     // Endpoint to provide devices
     this.expressApp.get('/api/devices', async (req, res) => {
       this.log.debug('The frontend sent /api/devices');
-      const devices = this.getDevices();
-      res.json(devices);
+      res.json(this.matterbridge.hasCleanupStarted ? [] : this.getDevices());
     });
 
     // Endpoint to view the matterbridge log
@@ -686,7 +730,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // Install the plugin package
         if (filename.endsWith('.tgz')) {
           const { spawnCommand } = await import('./utils/spawn.js');
-          await spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose'], filename);
+          await spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose'], 'install', filename);
           this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
           this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
           this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
@@ -1010,13 +1054,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Retrieves the registered plugins sanitized for res.json().
    *
-   * @returns {BaseRegisteredPlugin[]} An array of BaseRegisteredPlugin.
+   * @returns {ApiPlugin[]} An array of BaseRegisteredPlugin.
    */
-  private getPlugins(): BaseRegisteredPlugin[] {
-    if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
-    const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
+  private getPlugins(): ApiPlugin[] {
+    const plugins: ApiPlugin[] = [];
     for (const plugin of this.matterbridge.plugins.array()) {
-      baseRegisteredPlugins.push({
+      plugins.push({
         path: plugin.path,
         type: plugin.type,
         name: plugin.name,
@@ -1045,18 +1088,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
       });
     }
-    return baseRegisteredPlugins;
+    return plugins;
   }
 
   /**
    * Retrieves the devices from Matterbridge.
    *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
-   * @returns {ApiDevices[]} An array of ApiDevices for the frontend.
+   * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
    */
-  private getDevices(pluginName?: string): ApiDevices[] {
-    if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
-    const devices: ApiDevices[] = [];
+  private getDevices(pluginName?: string): ApiDevice[] {
+    const devices: ApiDevice[] = [];
     for (const device of this.matterbridge.devices.array()) {
       // Filter by pluginName if provided
       if (pluginName && pluginName !== device.plugin) continue;
@@ -1087,9 +1129,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    *
    * @param {string} pluginName - The name of the plugin.
    * @param {number} endpointNumber - The endpoint number.
-   * @returns {ApiClustersResponse | undefined} A promise that resolves to the clusters or undefined if not found.
+   * @returns {ApiClusters | undefined} A promise that resolves to the clusters or undefined if not found.
    */
-  private getClusters(pluginName: string, endpointNumber: number): ApiClustersResponse | undefined {
+  private getClusters(pluginName: string, endpointNumber: number): ApiClusters | undefined {
     if (this.matterbridge.hasCleanupStarted) return; // Skip if cleanup has started
     const endpoint = this.matterbridge.devices.array().find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber);
     if (!endpoint || !endpoint.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
@@ -1100,7 +1142,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Get the device types from the main endpoint
     const deviceTypes: number[] = [];
-    const clusters: ApiClusters[] = [];
+    const clusters: Cluster[] = [];
     endpoint.state.descriptor.deviceTypeList.forEach((d) => {
       deviceTypes.push(d.deviceType);
     });
@@ -1221,107 +1263,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
       } else if (data.method === '/api/install') {
-        const localData = data;
-        if (!isValidString(data.params.packageName, 10) || !isValidBoolean(data.params.restart)) {
+        if (isValidString(data.params.packageName, 14) && isValidBoolean(data.params.restart)) {
+          this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
+          this.server.request({ type: 'plugins_install', src: this.server.name, dst: 'plugins', params: { packageName: data.params.packageName } });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/install' });
-          return;
         }
-        this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
-        const { spawnCommand } = await import('./utils/spawn.js');
-        spawnCommand(this.matterbridge, 'npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'], data.params.packageName)
-          .then((_response) => {
-            sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: data.src, success: true });
-            this.wssSendCloseSnackbarMessage(`Installing package ${localData.params.packageName}...`);
-            this.wssSendSnackbarMessage(`Installed package ${localData.params.packageName}`, 5, 'success');
-            const packageName = (localData.params.packageName as string).replace(/@.*$/, '');
-            if (localData.params.restart === false && packageName !== 'matterbridge') {
-              // The install comes from InstallPlugins
-              this.matterbridge.plugins
-                .add(packageName)
-                .then((plugin) => {
-                  // istanbul ignore next if
-                  if (plugin) {
-                    // The plugin is not registered
-                    this.wssSendSnackbarMessage(`Added plugin ${packageName}`, 5, 'success');
-                    // In childbridge mode the plugins server node is not started when added
-                    if (this.matterbridge.bridgeMode === 'childbridge') this.wssSendRestartRequired(true, true);
-
-                    this.matterbridge.plugins
-                      .load(plugin, true, 'The plugin has been added', true)
-                      // eslint-disable-next-line promise/no-nesting
-                      .then(() => {
-                        this.wssSendSnackbarMessage(`Started plugin ${packageName}`, 5, 'success');
-                        this.wssSendRefreshRequired('plugins');
-                        this.wssSendRefreshRequired('devices');
-                        return;
-                      })
-                      // eslint-disable-next-line promise/no-nesting
-                      .catch((_error) => {
-                        //
-                      });
-                  } else {
-                    // The plugin is already registered
-                    this.matterbridge.fixedRestartRequired = true;
-                    this.wssSendRefreshRequired('plugins');
-                    this.wssSendRestartRequired(true, true);
-                  }
-                  return;
-                })
-                // eslint-disable-next-line promise/no-nesting
-                .catch((_error) => {
-                  //
-                });
-            } else {
-              // The package is matterbridge
-              // istanbul ignore next
-              this.matterbridge.fixedRestartRequired = true;
-              // istanbul ignore next if
-              if (this.matterbridge.restartMode !== '') {
-                this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
-                this.matterbridge.shutdownProcess();
-              } else {
-                this.wssSendRestartRequired(true, true);
-              }
-            }
-            return;
-          })
-          .catch((error) => {
-            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error });
-            this.wssSendCloseSnackbarMessage(`Installing package ${localData.params.packageName}...`);
-            this.wssSendSnackbarMessage(`Package ${localData.params.packageName} not installed`, 10, 'error');
-          });
       } else if (data.method === '/api/uninstall') {
-        const localData = data;
-        if (!isValidString(data.params.packageName, 10)) {
+        if (isValidString(data.params.packageName, 14)) {
+          this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
+          this.server.request({ type: 'plugins_uninstall', src: this.server.name, dst: 'plugins', params: { packageName: data.params.packageName } });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' });
-          return;
         }
-        // The package is a plugin
-        const plugin = this.matterbridge.plugins.get(data.params.packageName) as RegisteredPlugin;
-        // istanbul ignore next if
-        if (plugin) {
-          await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true);
-          await this.matterbridge.plugins.remove(data.params.packageName);
-          this.wssSendSnackbarMessage(`Removed plugin ${data.params.packageName}`, 5, 'success');
-          this.wssSendRefreshRequired('plugins');
-          this.wssSendRefreshRequired('devices');
-        }
-        // Uninstall the package
-        this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
-        const { spawnCommand } = await import('./utils/spawn.js');
-        spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', data.params.packageName, '--verbose'], data.params.packageName)
-          .then((_response) => {
-            sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: data.src, success: true });
-            this.wssSendCloseSnackbarMessage(`Uninstalling package ${localData.params.packageName}...`);
-            this.wssSendSnackbarMessage(`Uninstalled package ${localData.params.packageName}`, 5, 'success');
-            return;
-          })
-          .catch((error) => {
-            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error });
-            this.wssSendCloseSnackbarMessage(`Uninstalling package ${localData.params.packageName}...`);
-            this.wssSendSnackbarMessage(`Package ${localData.params.packageName} not uninstalled`, 10, 'error');
-            this.wssSendSnackbarMessage(`Restart required`, 0);
-          });
       } else if (data.method === '/api/addplugin') {
         const localData = data;
         if (!isValidString(data.params.pluginNameOrPath, 10)) {
@@ -1359,7 +1315,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/removeplugin' });
           return;
         }
-        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true);
         await this.matterbridge.plugins.remove(data.params.pluginName);
         this.wssSendSnackbarMessage(`Removed plugin ${data.params.pluginName}`, 5, 'success');
@@ -1372,7 +1328,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/enableplugin' });
           return;
         }
-        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         if (plugin && !plugin.enabled) {
           plugin.locked = undefined;
           plugin.error = undefined;
@@ -1402,7 +1358,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/disableplugin' });
           return;
         }
-        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true);
         await this.matterbridge.plugins.disable(data.params.pluginName);
         this.wssSendSnackbarMessage(`Disabled plugin ${data.params.pluginName}`, 5, 'success');
@@ -1414,7 +1370,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/restartplugin' });
           return;
         }
-        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         await this.matterbridge.plugins.shutdown(plugin, 'The plugin is restarting.', false, true);
         if (plugin.serverNode) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1454,7 +1410,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         this.log.info(`Saving config for plugin ${plg}${data.params.pluginName}${nf}...`);
-        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         if (plugin) {
           this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true);
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
@@ -1570,10 +1526,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/settings') {
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: await this.getApiSettings() });
       } else if (data.method === '/api/plugins') {
-        const plugins = this.getPlugins();
+        const plugins = this.matterbridge.hasCleanupStarted ? [] : this.getPlugins();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
-        const devices = this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        const devices = this.matterbridge.hasCleanupStarted ? [] : this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.plugin, 10)) {
@@ -1987,9 +1943,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * - 'plugins'
    * - 'devices'
    * - 'matter' with param 'matter' (QRDiv component)
-   * @param {ApiMatterResponse} params.matter - The matter device that has changed. Required if changed is 'matter'.
+   * @param {ApiMatter} params.matter - The matter device that has changed. Required if changed is 'matter'.
    */
-  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter: ApiMatterResponse }) {
+  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter: ApiMatter }) {
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, ...params } });

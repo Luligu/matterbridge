@@ -1,11 +1,31 @@
 // src\frontend.express.test.ts
 
 const MATTER_PORT = 6007;
-const FRONTEND_PORT = 8283;
+const FRONTEND_PORT = 8286;
 const NAME = 'FrontendExpress';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'frontend.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-homedir', HOMEDIR, '-profile', 'JestFrontendExpress', '-port', MATTER_PORT.toString(), '-passcode', '123456', '-discriminator', '3860'];
+process.argv = [
+  'node',
+  'frontend.test.js',
+  '-logger',
+  'debug',
+  '-matterlogger',
+  'debug',
+  '-bridge',
+  '-frontend',
+  FRONTEND_PORT.toString(),
+  '-homedir',
+  HOMEDIR,
+  '-profile',
+  'JestFrontendExpress',
+  '-port',
+  MATTER_PORT.toString(),
+  '-passcode',
+  '123456',
+  '-discriminator',
+  '3860',
+];
 
 import http from 'node:http';
 import path from 'node:path';
@@ -13,12 +33,23 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
+import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
 import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
 import { MATTER_LOGGER_FILE, MATTERBRIDGE_LOGGER_FILE } from './matterbridgeTypes.js';
+import { BroadcastServer } from './broadcastServer.js';
+
+// Mock BroadcastServer methods
+const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
+const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
+const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
+const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
+const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
+  return Promise.resolve(undefined) as any;
+});
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -33,6 +64,7 @@ describe('Matterbridge frontend express with http', () => {
   });
 
   afterAll(async () => {
+    matterbridge.frontend.destroy();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -41,7 +73,7 @@ describe('Matterbridge frontend express with http', () => {
     return new Promise<{ status: number; body: any }>((resolve, reject) => {
       const data = body ? JSON.stringify(body) : null;
       const req = http.request(
-        `${'http://localhost:8283'}${path}`,
+        `${'http://localhost:8286'}${path}`,
         {
           method,
           headers: {
@@ -91,7 +123,7 @@ describe('Matterbridge frontend express with http', () => {
       ].join('\r\n');
 
       const req = http.request(
-        `http://localhost:8283${path}`,
+        `http://localhost:8286${path}`,
         {
           method: 'POST',
           headers: {
@@ -122,6 +154,22 @@ describe('Matterbridge frontend express with http', () => {
     expect(matterbridge.profile).toBe('JestFrontendExpress');
     expect(matterbridge.bridgeMode).toBe('bridge');
     expect((matterbridge as any).initialized).toBe(true);
+
+    // prettier-ignore
+    await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
+    // prettier-ignore
+    await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
+    // prettier-ignore
+    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
+    // prettier-ignore
+    await waiter('Matter server node started', () => { return (matterbridge as any).reachabilityTimeout; });
+    // prettier-ignore
+    await waiter('Matter server node started', () => { return matterbridge.serverNode?.lifecycle.isOnline === true; });
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8286${UNDERLINEOFF}${rs}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
   }, 60000);
 
   test('Frontend is running on http', async () => {

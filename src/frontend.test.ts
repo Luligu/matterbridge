@@ -36,10 +36,22 @@ import { PowerSource } from '@matter/main/clusters/power-source';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
-import { wait } from './utils/wait.js';
+import { wait, waiter } from './utils/wait.js';
 import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
 import {} from './frontendTypes.ts';
+import { BroadcastServer } from './broadcastServer.ts';
 
+// Mock BroadcastServer methods
+const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
+const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
+const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
+const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
+const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
+  return Promise.resolve(undefined) as any;
+});
+
+// Spy on Frontend methods
 const startSpy = jest.spyOn(Frontend.prototype, 'start');
 const stopSpy = jest.spyOn(Frontend.prototype, 'stop');
 
@@ -56,6 +68,7 @@ describe('Matterbridge frontend', () => {
   });
 
   afterAll(async () => {
+    frontend.destroy();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -75,14 +88,12 @@ describe('Matterbridge frontend', () => {
     expect(matterbridge).toBeDefined();
     expect(frontend).toBeDefined();
 
-    await new Promise<void>((resolve) => {
-      const interval = setInterval(() => {
-        if ((frontend as any).listening) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 100).unref();
-    });
+    // prettier-ignore
+    await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
+    // prettier-ignore
+    await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
+    // prettier-ignore
+    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
 
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
@@ -95,6 +106,23 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening`));
   }, 60000);
+
+  test('broadcast handler', async () => {
+    expect((frontend as any).server).toBeInstanceOf(BroadcastServer);
+    broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
+    await (frontend as any).msgHandler({} as any);
+    broadcastServerIsWorkerResponseSpy.mockImplementationOnce(() => false);
+    await (frontend as any).msgHandler({} as any);
+
+    (frontend as any).msgHandler({ type: 'jest', src: 'manager', dst: 'frontend' } as any); // no id
+    (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
+    (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend' } as any); // valid
+    (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
+    for (const type of ['plugins_install', 'plugins_uninstall'] as const) {
+      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: true, packageName: 'testPlugin' } } as any);
+      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: false, packageName: 'testPlugin' } } as any);
+    }
+  });
 
   test('Frontend cliEmitter', () => {
     // Test the cliEmitter functionality

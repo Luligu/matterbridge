@@ -37,13 +37,14 @@ import { Identify } from '@matter/main/clusters';
 
 import { Matterbridge } from './matterbridge.js';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
+import { plg, Plugin } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Frontend } from './frontend.js';
 import { isApiRequest, isApiResponse, isBroadcast, WsMessageApiLog, WsMessageApiMemoryUpdate } from './frontendTypes.ts';
 import { wait, waiter } from './utils/wait.js';
 import { PluginManager } from './pluginManager.js';
 import { loggerLogSpy, setupTest } from './utils/jestHelpers.ts';
+import { BroadcastServer } from './broadcastServer.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
@@ -55,6 +56,32 @@ jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellyChangeIp: jest.fn(() => Promise.resolve()),
 }));
 const { triggerShellySysUpdate, triggerShellyMainUpdate, createShellySystemLog, triggerShellySoftReset, triggerShellyHardReset, triggerShellyReboot, triggerShellyChangeIp } = await import('./shelly.ts');
+
+// Spy on Matterbridge methods
+const createServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'createServerNode');
+const startServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'startServerNode');
+const stopServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'stopServerNode');
+
+// Spy on PluginManager methods
+const addPluginSpy = jest.spyOn(PluginManager.prototype, 'add');
+const loadPluginSpy = jest.spyOn(PluginManager.prototype, 'load');
+
+// Spy on Frontend methods
+const wssSendSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendSnackbarMessage');
+const wssSendCloseSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendCloseSnackbarMessage');
+const wssSendRefreshRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRefreshRequired');
+const wssSendRestartRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
+const wssSendRestartNotRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartNotRequired');
+
+// Mock BroadcastServer methods
+const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
+const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
+const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
+const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
+const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
+  return Promise.resolve(undefined) as any;
+});
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -71,6 +98,7 @@ describe('Matterbridge frontend', () => {
   });
 
   afterAll(async () => {
+    matterbridge.frontend.destroy();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -106,19 +134,6 @@ describe('Matterbridge frontend', () => {
     });
   };
 
-  const createServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'createServerNode');
-  const startServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'startServerNode');
-  const stopServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'stopServerNode');
-
-  const addPluginSpy = jest.spyOn(PluginManager.prototype, 'add');
-  const loadPluginSpy = jest.spyOn(PluginManager.prototype, 'load');
-
-  const wssSendSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendSnackbarMessage');
-  const wssSendCloseSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendCloseSnackbarMessage');
-  const wssSendRefreshRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRefreshRequired');
-  const wssSendRestartRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
-  const wssSendRestartNotRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartNotRequired');
-
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
@@ -145,7 +160,7 @@ describe('Matterbridge frontend', () => {
 
   test('Add mock plugin 1', async () => {
     await matterbridge.plugins.add('./src/mock/plugin1');
-    const plugins: RegisteredPlugin[] = matterbridge.plugins.array();
+    const plugins: Plugin[] = matterbridge.plugins.array();
     expect(plugins).toBeDefined();
     expect(plugins.length).toBe(1);
     expect(plugins[0].name).toBe('matterbridge-mock1');
@@ -159,7 +174,7 @@ describe('Matterbridge frontend', () => {
 
   test('Add mock plugin 2', async () => {
     await matterbridge.plugins.add('./src/mock/plugin2');
-    const plugins: RegisteredPlugin[] = matterbridge.plugins.array();
+    const plugins: Plugin[] = matterbridge.plugins.array();
     expect(plugins).toBeDefined();
     expect(plugins.length).toBe(2);
     expect(plugins[1].name).toBe('matterbridge-mock2');
@@ -173,7 +188,7 @@ describe('Matterbridge frontend', () => {
 
   test('Add mock plugin 3', async () => {
     await matterbridge.plugins.add('./src/mock/plugin3');
-    const plugins: RegisteredPlugin[] = matterbridge.plugins.array();
+    const plugins: Plugin[] = matterbridge.plugins.array();
     expect(plugins).toBeDefined();
     expect(plugins.length).toBe(3);
     expect(plugins[2].name).toBe('matterbridge-mock3');
@@ -565,44 +580,16 @@ describe('Matterbridge frontend', () => {
 
   test('Websocket API /api/install with wrong params', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbri' } });
-    expect(msg.response).not.toBeDefined();
+    expect(msg.response).toBeUndefined();
     expect(msg.error).toBe('Wrong parameter in /api/install');
   });
 
   test('Websocket API /api/install', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test', restart: false } });
-    await wait(500); // Wait for the installation to complete
     expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/installed correctly$/));
     expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`, 0);
-    expect(wssSendCloseSnackbarMessageSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`);
-    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(`Installed package matterbridge-test`, 5, 'success');
-    expect(addPluginSpy).toHaveBeenCalledWith('matterbridge-test');
-    // expect(loadPluginSpy).toHaveBeenCalled();
-  }, 60000);
-
-  test('Websocket API /api/install second time', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test', restart: false } });
-    await wait(500); // Wait for the installation to complete
-    expect(msg.success).toBe(true);
-    expect(msg.error).not.toBeDefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/installed correctly$/));
-    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`, 0);
-    expect(wssSendCloseSnackbarMessageSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`);
-    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(`Installed package matterbridge-test`, 5, 'success');
-    expect(addPluginSpy).toHaveBeenCalledWith('matterbridge-test');
-    // expect(loadPluginSpy).not.toHaveBeenCalled();
-  }, 60000);
-
-  test('Websocket API /api/install with wrong package name', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-xxxtest', restart: false } });
-    expect(msg.response).toBeUndefined();
-    expect(msg.error).toBeDefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
-  }, 60000);
+  });
 
   test('Websocket API /api/uninstall with wrong params', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/uninstall', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbri' } });
@@ -614,34 +601,7 @@ describe('Matterbridge frontend', () => {
     const msg = await waitMessageId(++WS_ID, '/api/uninstall', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-test' } });
     expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Shutting down plugin/));
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Removed plugin/));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('closed with code 0'));
-  }, 60000);
-
-  test('Websocket API /api/uninstall with wrong package name', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/uninstall', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
-    expect(msg.success).toBeDefined();
-    expect(msg.error).toBeUndefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
-  }, 60000);
-
-  test('Websocket API /api/uninstall wrong package name with mock', async () => {
-    // Mock `spawnCommand` to reject with an error
-    jest.unstable_mockModule('./utils/spawn.js', () => ({
-      spawnCommand: jest.fn((matterbridge: Matterbridge, command: string, args: string[]) => {
-        return Promise.reject(new Error(`Mocked spawnCommand error for command: ${command} with args: ${args.join(' ')}`));
-      }),
-    }));
-    const spawn = await import('./utils/spawn.js');
-    const spawnCommandMock = spawn.spawnCommand as jest.MockedFunction<typeof spawn.spawnCommand>;
-
-    const msg = await waitMessageId(++WS_ID, '/api/uninstall', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
-    expect(msg.response).toBeUndefined();
-    expect(msg.error).toBeDefined();
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['uninstall', '-g', 'matterbridge-st', '--verbose'], 'matterbridge-st');
-  }, 60000);
+  });
 
   test('Websocket API /api/addplugin', async () => {
     const pluginNameOrPath = path.join('.', 'src', 'mock', 'plugin4');
