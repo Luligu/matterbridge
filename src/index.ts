@@ -21,12 +21,14 @@
  * limitations under the License.
  */
 
+// Removed 07/10/2025 all main function loaders cause there should not be around anymore any plugins using them
+
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+// import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // Matterbridge
-import { Matterbridge } from './matterbridge.js';
-import { hasParameter } from './utils/commandLine.js';
+// import { Matterbridge } from './matterbridge.js';
+// import { hasParameter } from './utils/commandLine.js';
 
 // Matterbridge
 export * from './matterbridge.js';
@@ -40,11 +42,12 @@ export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export { addVirtualDevice } from './helpers.js';
 
-const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+// const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
 /**
  * Main function to load the Matterbridge instance.
  */
+/*
 async function main() {
   log.debug('***Matterbridge.loadInstance() called');
   await Matterbridge.loadInstance();
@@ -54,3 +57,4 @@ async function main() {
 main().catch((error) => {
   log.error(`Matterbridge.loadInstance() failed with error: ${error instanceof Error ? error.message : error}`);
 });
+*/
