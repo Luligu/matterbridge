@@ -26,7 +26,7 @@ import StarIcon from '@mui/icons-material/Star';
 import Favorite from '@mui/icons-material/Favorite';
 
 // Backend
-import { ApiSettingResponse, WsMessageApiResponse } from '../../../src/frontendTypes';
+import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 
 // Frontend
 import { UiContext } from './UiProvider';
@@ -43,7 +43,7 @@ function Header() {
   const [fixedRestart, setFixedRestart] = useState(false);
   const [update, setUpdate] = useState(false);
   const [updateDev, setUpdateDev] = useState(false);
-  const [settings, setSettings] = useState<ApiSettingResponse | null>(null);
+  const [settings, setSettings] = useState<ApiSettings | null>(null);
   // Refs
   const uniqueId = useRef(getUniqueId());
   // Menu states

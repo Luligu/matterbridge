@@ -14,13 +14,15 @@ import { debug } from '../App';
 
 interface InstallProgressDialogProps {
   open: boolean;
-  packageName: string;
+  title: string;
   output: string;
+  _command: string;
+  _packageName: string;
   onInstall?: () => void;
   onClose: () => void;
 }
 
-export const InstallProgressDialog = ({ open, output, packageName, onInstall, onClose }: InstallProgressDialogProps) => {
+export const InstallProgressDialog = ({ open, output, title, _command, _packageName, onInstall, onClose }: InstallProgressDialogProps) => {
   // Ref to access the log <ul> element for auto-scrolling.
   const endOfMessagesRef = useRef<HTMLLIElement>(null);
 
@@ -50,9 +52,7 @@ export const InstallProgressDialog = ({ open, output, packageName, onInstall, on
       <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
           <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
-          <h4 style={{ margin: 0 }}>
-            Install{onInstall ? '' : 'ing'} package {packageName}
-          </h4>
+          <h4 style={{ margin: 0 }}>{title}</h4>
         </div>
       </DialogTitle>
       <DialogContent
@@ -65,7 +65,7 @@ export const InstallProgressDialog = ({ open, output, packageName, onInstall, on
           paddingBottom: 0,
         }}
       >
-        <label style={{ display: 'block', marginBottom: '10px', fontSize: '16px', fontWeight: 'bold', color: 'var(--primary-color)' }}>Install log</label>
+        <label style={{ display: 'block', marginBottom: '10px', fontSize: '16px', fontWeight: 'bold', color: 'var(--primary-color)' }}>Process log</label>
         <ul
           style={{
             width: '100%',

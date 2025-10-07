@@ -12,11 +12,11 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { debug } from '../App';
-import { ApiClusters, ApiDevices } from '../../../src/matterbridgeTypes';
+import { ApiDevice, Cluster } from '../../../src/matterbridgeTypes';
 import { WsMessageApiResponse, WsMessageApiStateUpdate } from '../../../src/frontendTypes';
 import MbfTable, { MbfTableColumn } from './MbfTable';
 
-const devicesColumns: MbfTableColumn<ApiDevices>[] = [
+const devicesColumns: MbfTableColumn<ApiDevice>[] = [
   {
     label: 'Plugin name',
     id: 'pluginName',
@@ -65,7 +65,7 @@ const devicesColumns: MbfTableColumn<ApiDevices>[] = [
   },
 ];
 
-const clustersColumns: MbfTableColumn<ApiClusters>[] = [
+const clustersColumns: MbfTableColumn<Cluster>[] = [
   {
     label: 'Endpoint',
     id: 'endpoint',
@@ -115,11 +115,11 @@ const clustersColumns: MbfTableColumn<ApiClusters>[] = [
   },
 ];
 
-const getDeviceRowKey = (row: ApiDevices) => {
+const getDeviceRowKey = (row: ApiDevice) => {
   return `${row.pluginName}::${row.uniqueId}`;
 };
 
-const getClusterRowKey = (row: ApiClusters) => {
+const getClusterRowKey = (row: Cluster) => {
   return `${row.endpoint}::${row.clusterName}::${row.attributeName}`;
 };
 
@@ -128,9 +128,9 @@ function DevicesTable({ filter }: { filter: string }) {
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
   // Local states
-  const [devices, setDevices] = useState<ApiDevices[]>([]);
+  const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [filteredDevices, setFilteredDevices] = useState(devices);
-  const [clusters, setClusters] = useState<ApiClusters[]>([]);
+  const [clusters, setClusters] = useState<Cluster[]>([]);
   const [subEndpointsCount, setSubEndpointsCount] = useState(0);
 
   // Selected device for clusters view
@@ -232,7 +232,7 @@ function DevicesTable({ filter }: { filter: string }) {
     filteredDevicesRef.current = filteredDevices;
   }, [devices, filter]);
 
-  const handleDeviceClick = (row: ApiDevices) => {
+  const handleDeviceClick = (row: ApiDevice) => {
     if (row.uniqueId === selectedDeviceUniqueId) {
       setSelectedDeviceUniqueId(null);
       setPluginName(null);

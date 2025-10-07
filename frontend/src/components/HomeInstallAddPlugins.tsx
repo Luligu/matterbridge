@@ -106,6 +106,22 @@ function HomeInstallAddPlugins() {
     sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/addplugin', src: 'Frontend', dst: 'Matterbridge', params: { pluginNameOrPath: pluginName } });
   };
 
+  // Right-click handlers
+  const handleInstallRightClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/uninstall', src: 'Frontend', dst: 'Matterbridge', params: { packageName: pluginName } });
+  };
+
+  const handleUploadRightClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    console.log('Right-clicked Upload button');
+  };
+
+  const handleAddRightClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    console.log('Right-clicked Add button');
+  };
+
   const handleClickVertical = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget as HTMLElement);
   };
@@ -168,19 +184,19 @@ function HomeInstallAddPlugins() {
           <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
         </Menu>
         <Tooltip title='Install or update a plugin from npm'>
-          <Button onClick={handleInstallPluginClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Button onClick={handleInstallPluginClick} onContextMenu={handleInstallRightClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
             {' '}
             Install
           </Button>
         </Tooltip>
         <Tooltip title='Upload and install a plugin from a tarball'>
-          <Button onClick={handleUploadClick} endIcon={<FileUploadIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Button onClick={handleUploadClick} onContextMenu={handleUploadRightClick} endIcon={<FileUploadIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
             {' '}
             Upload
           </Button>
         </Tooltip>
         <Tooltip title='Add an installed plugin'>
-          <Button onClick={handleAddPluginClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Button onClick={handleAddPluginClick} onContextMenu={handleAddRightClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
             {' '}
             Add
           </Button>

@@ -65,7 +65,7 @@ import {
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { WsMessageApiClustersResponse, WsMessageApiResponse, WsMessageApiStateUpdate } from '../../../src/frontendTypes';
-import { ApiClusters, ApiDevices } from '../../../src/matterbridgeTypes';
+import { ApiDevice, Cluster } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
 // const debug = true;
 const debugUpdate = false;
@@ -96,7 +96,7 @@ const currentLevelDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b,
 interface RenderProps {
   icon: React.JSX.Element;
   iconColor?: string;
-  cluster: ApiClusters;
+  cluster: Cluster;
   value: string | number | boolean | null | undefined;
   unit?: string;
   prefix?: boolean;
@@ -128,11 +128,11 @@ function Render({ icon, iconColor, cluster, value, unit, prefix }: RenderProps):
 }
 
 interface DeviceProps {
-  device: ApiDevices;
+  device: ApiDevice;
   endpoint: string;
   id: string;
   deviceType: number;
-  clusters: ApiClusters[];
+  clusters: Cluster[];
 }
 
 function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): React.JSX.Element {
@@ -388,10 +388,10 @@ function DevicesIcons({ filter }: DevicesIconsProps): React.JSX.Element {
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
   // Local states
-  const [devices, setDevices] = useState<ApiDevices[]>([]);
+  const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [endpoints, setEndpoints] = useState<{ [serial: string]: { endpoint: string; id: string; deviceTypes: number[] }[] }>({});
   const [deviceTypes, setDeviceTypes] = useState<{ [serial: string]: number[] }>({});
-  const [clusters, setClusters] = useState<{ [serial: string]: ApiClusters[] }>({});
+  const [clusters, setClusters] = useState<{ [serial: string]: Cluster[] }>({});
 
   // Refs
   const uniqueId = useRef(getUniqueId());

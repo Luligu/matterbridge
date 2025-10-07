@@ -1,5 +1,5 @@
 // Backend
-import { ApiMatterResponse } from '../../../src/matterbridgeTypes';
+import { ApiMatter } from '../../../src/matterbridgeTypes';
 
 // Frontend
 import { debug } from '../App';
@@ -12,7 +12,7 @@ import { debug } from '../App';
  *          'var(--secondary-color)' if commissioned but no active sessions or subscriptions,
  *          'var(--div-text-color)' otherwise.
  */
-export function getQRColor(matter: ApiMatterResponse | undefined): string {
+export function getQRColor(matter: ApiMatter | undefined): string {
   if (debug) console.log(`getQRColor (id: ${matter?.id}) received matter:`, matter ?? 'undefined');
   if (matter === undefined) return 'red';
   if (!matter.online) return 'red';

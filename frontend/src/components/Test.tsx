@@ -11,8 +11,8 @@ import { useContext, useEffect, useState, useRef, memo } from 'react';
 import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
-import { ApiSettingResponse, WsMessageApiResponse } from '../../../src/frontendTypes';
-import { ApiClustersResponse, ApiDevices, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
+import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
+import { ApiClusters, ApiDevice, ApiPlugin } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
 // const debug = true;
 
@@ -23,10 +23,10 @@ function Test() {
   const { showSnackbarMessage } = useContext(UiContext);
 
   // Local states
-  const [_settings, setSettings] = useState<ApiSettingResponse | null>(null);
-  const [_plugins, setPlugins] = useState<BaseRegisteredPlugin[]>([]);
-  const [_devices, setDevices] = useState<ApiDevices[]>([]);
-  const [_clusters, setClusters] = useState<ApiClustersResponse | null>(null);
+  const [_settings, setSettings] = useState<ApiSettings | null>(null);
+  const [_plugins, setPlugins] = useState<ApiPlugin[]>([]);
+  const [_devices, setDevices] = useState<ApiDevice[]>([]);
+  const [_clusters, setClusters] = useState<ApiClusters | null>(null);
   const [_cpu, setCpu] = useState<{ cpuUsage: number }>({ cpuUsage: 0 });
   const [_memory, setMemory] = useState<{ totalMemory: string; freeMemory: string; heapTotal: string; heapUsed: string; external: string; arrayBuffers: string; rss: string }>({
     totalMemory: '',
