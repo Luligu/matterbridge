@@ -63,21 +63,7 @@ import { createDirectory } from './utils/createDirectory.js';
 import { isValidString, parseVersionString, isValidNumber } from './utils/isvalid.js';
 import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
 import { withTimeout, waiter, wait } from './utils/wait.js';
-import {
-  ApiMatterResponse,
-  dev,
-  MATTER_LOGGER_FILE,
-  MATTER_STORAGE_NAME,
-  MATTERBRIDGE_LOGGER_FILE,
-  MaybePromise,
-  NODE_STORAGE_DIR,
-  plg,
-  RegisteredPlugin,
-  SanitizedExposedFabricInformation,
-  SanitizedSession,
-  SystemInformation,
-  typ,
-} from './matterbridgeTypes.js';
+import { ApiMatter, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, MaybePromise, NODE_STORAGE_DIR, plg, Plugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -172,7 +158,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   // Managers
   public readonly plugins = new PluginManager(this);
-  public readonly devices = new DeviceManager(this);
+  public readonly devices = new DeviceManager();
 
   // Frontend
   public readonly frontend = new Frontend(this);
@@ -680,7 +666,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
           const { spawnCommand } = await import('./utils/spawn.js');
-          await spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose'], plugin.name);
+          await spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose'], 'install', plugin.name);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } catch (error) {
@@ -1304,7 +1290,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.info('Updating matterbridge...');
     try {
       const { spawnCommand } = await import('./utils/spawn.js');
-      await spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'matterbridge');
+      await spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
       this.log.info('Matterbridge has been updated. Full restart required.');
     } catch (error) {
       this.log.error(`Error updating matterbridge: ${error instanceof Error ? error.message : error}`);
@@ -1476,6 +1462,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Stop the frontend
       await this.frontend.stop();
+      this.frontend.destroy();
+
+      // Close PluginManager and DeviceManager
+      this.plugins.destroy();
+      this.devices.destroy();
 
       // Close the matterbridge node storage and context
       if (this.nodeStorage && this.nodeContext) {
@@ -2296,7 +2287,7 @@ const commissioningController = new CommissioningController({
    * @param {ServerNode} [serverNode] - The server node to start.
    * @returns {ApiMatter} The sanitized data of the server node.
    */
-  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiMatterResponse {
+  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiMatter {
     const advertiseTime = this.advertisingNodes.get(serverNode.id) || 0;
     return {
       id: serverNode.id,
@@ -2360,11 +2351,11 @@ const commissioningController = new CommissioningController({
   /**
    * Creates and configures the server node for an accessory plugin for a given device.
    *
-   * @param {RegisteredPlugin} plugin - The plugin to configure.
+   * @param {Plugin} plugin - The plugin to configure.
    * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
    * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
    */
-  private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
+  private async createAccessoryPlugin(plugin: Plugin, device: MatterbridgeEndpoint): Promise<void> {
     if (!plugin.locked && device.deviceType && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
       plugin.locked = true;
       plugin.device = device;
@@ -2379,10 +2370,10 @@ const commissioningController = new CommissioningController({
   /**
    * Creates and configures the server node and the aggregator node for a dynamic plugin.
    *
-   * @param {RegisteredPlugin} plugin - The plugin to configure.
+   * @param {Plugin} plugin - The plugin to configure.
    * @returns {Promise<void>} A promise that resolves when the server node and the aggregator node for the dynamic plugin is created and configured.
    */
-  private async createDynamicPlugin(plugin: RegisteredPlugin): Promise<void> {
+  private async createDynamicPlugin(plugin: Plugin): Promise<void> {
     if (!plugin.locked) {
       plugin.locked = true;
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} server node...`);
@@ -2398,11 +2389,11 @@ const commissioningController = new CommissioningController({
   /**
    * Creates and configures the server node for a single not bridged device.
    *
-   * @param {RegisteredPlugin} plugin - The plugin to configure.
+   * @param {Plugin} plugin - The plugin to configure.
    * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
    * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
    */
-  private async createDeviceServerNode(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
+  private async createDeviceServerNode(plugin: Plugin, device: MatterbridgeEndpoint): Promise<void> {
     if (device.mode === 'server' && !device.serverNode && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
       this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);
       const context = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
@@ -2588,11 +2579,11 @@ const commissioningController = new CommissioningController({
    * Specifically, it listens for changes in the 'reachable' attribute of the
    * BridgedDeviceBasicInformationServer cluster server of the bridged device or BasicInformationServer cluster server of server node.
    *
-   * @param {RegisteredPlugin} plugin - The plugin associated with the device.
+   * @param {Plugin} plugin - The plugin associated with the device.
    * @param {MatterbridgeEndpoint} device - The device to subscribe to attribute changes for.
    * @returns {Promise<void>} A promise that resolves when the subscription is set up.
    */
-  private async subscribeAttributeChanged(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
+  private async subscribeAttributeChanged(plugin: Plugin, device: MatterbridgeEndpoint): Promise<void> {
     if (!plugin || !device || !device.plugin || !device.serialNumber || !device.uniqueId || !device.maybeNumber) return;
     this.log.info(`Subscribing attributes for endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) plugin ${plg}${plugin.name}${nf}`);
     // Subscribe to the reachable$Changed event of the BasicInformationServer cluster server of the server node in childbridge mode

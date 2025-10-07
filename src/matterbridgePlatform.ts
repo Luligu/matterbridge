@@ -103,7 +103,7 @@ export class MatterbridgePlatform {
   /** The name of the platform. Will be set by the loadPlugin() method using the package.json value. */
   name = '';
   /** The type of the platform. Will be set by the extending classes. */
-  type = '';
+  type: 'DynamicPlatform' | 'AccessoryPlatform' | 'AnyPlatform' = 'AnyPlatform';
   /** The version of the platform. Will be set by the loadPlugin() method using the package.json value */
   version = '1.0.0';
 

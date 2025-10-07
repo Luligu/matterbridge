@@ -78,7 +78,7 @@ export type SharedMatterbridge = Readonly<
 >;
 
 // Define an interface for storing the plugins
-export interface RegisteredPlugin extends BaseRegisteredPlugin {
+export interface Plugin extends ApiPlugin {
   nodeContext?: NodeStorage;
   storageContext?: StorageContext;
   serverNode?: ServerNode<ServerNode.RootEndpoint>;
@@ -89,13 +89,7 @@ export interface RegisteredPlugin extends BaseRegisteredPlugin {
 }
 
 // Simplified interface for saving the plugins in node storage
-export interface BaseRegisteredPlugin {
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  path: string;
-  type: string;
+export interface ApiPlugin extends StoragePlugin {
   latestVersion?: string;
   devVersion?: string;
   homepage?: string;
@@ -104,7 +98,6 @@ export interface BaseRegisteredPlugin {
   funding?: string;
   locked?: boolean;
   error?: boolean;
-  enabled?: boolean;
   loaded?: boolean;
   started?: boolean;
   configured?: boolean;
@@ -115,7 +108,17 @@ export interface BaseRegisteredPlugin {
   schemaJson?: PlatformSchema;
   hasWhiteList?: boolean;
   hasBlackList?: boolean;
-  matter?: ApiMatterResponse;
+  matter?: ApiMatter;
+}
+
+export interface StoragePlugin {
+  name: string;
+  path: string;
+  type: 'DynamicPlatform' | 'AccessoryPlatform' | 'AnyPlatform';
+  version: string;
+  description: string;
+  author: string;
+  enabled: boolean;
 }
 
 // Define an interface for storing the system information
@@ -201,7 +204,7 @@ export interface SanitizedSession {
   numberOfActiveSubscriptions: number;
 }
 
-export interface ApiDevices {
+export interface ApiDevice {
   pluginName: string;
   type: string;
   endpoint: EndpointNumber | undefined;
@@ -213,10 +216,10 @@ export interface ApiDevices {
   reachable: boolean;
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
   cluster: string;
-  matter?: ApiMatterResponse;
+  matter?: ApiMatter;
 }
 
-export interface ApiMatterResponse {
+export interface ApiMatter {
   id: string;
   online: boolean;
   commissioned: boolean;
@@ -230,7 +233,7 @@ export interface ApiMatterResponse {
   serialNumber: string | undefined;
 }
 
-export interface ApiClustersResponse {
+export interface ApiClusters {
   plugin: string;
   deviceName: string;
   serialNumber: string;
@@ -239,10 +242,10 @@ export interface ApiClustersResponse {
   /** Endpoint id */
   id: string;
   deviceTypes: number[];
-  clusters: ApiClusters[];
+  clusters: Cluster[];
 }
 
-export interface ApiClusters {
+export interface Cluster {
   /** Endpoint number > string */
   endpoint: string;
   /** Endpoint number */

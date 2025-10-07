@@ -66,7 +66,7 @@ import { VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
 
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
+import { plg, Plugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { getParameter } from './utils/commandLine.js';
 import { loggerLogSpy, setupTest } from './utils/jestHelpers.ts';
@@ -101,9 +101,9 @@ describe('Matterbridge mocked', () => {
 
   test('mocked spawnCommand', async () => {
     const { spawnCommand } = await import('./utils/spawn.js');
-    const result = await spawnCommand(matterbridge, 'echo', ['Hello, World!']);
+    const result = await spawnCommand(matterbridge, 'echo', ['Hello, World!'], 'install', 'echo');
     expect(result).toBe(true);
-    expect(spawnCommand).toHaveBeenCalledWith(matterbridge, 'echo', ['Hello, World!']);
+    expect(spawnCommand).toHaveBeenCalledWith(matterbridge, 'echo', ['Hello, World!'], 'install', 'echo');
   });
 
   test('mocked wait', async () => {
@@ -425,7 +425,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.plugins.array()[0].platform?.log.logLevel).toBe(LogLevel.NOTICE);
 
     // Test reinstall of plugins
-    const parseSpy = jest.spyOn(PluginManager.prototype, 'parse').mockImplementation(async (plugin: RegisteredPlugin) => {
+    const parseSpy = jest.spyOn(PluginManager.prototype, 'parse').mockImplementation(async (plugin: Plugin) => {
       return null; // Simulate a plugin that does not return a valid instance
     });
     spawnCommandMock.mockImplementationOnce((matterbridge: MatterbridgeType, command: string, args: string[]) => {
@@ -831,7 +831,7 @@ describe('Matterbridge mocked', () => {
 
     await matterbridge.updateProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'matterbridge');
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
     jest.clearAllMocks();
 
     spawnCommandMock.mockImplementationOnce(() => {
@@ -839,7 +839,7 @@ describe('Matterbridge mocked', () => {
     });
     await matterbridge.updateProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'matterbridge');
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error updating matterbridge:'));
 
     cleanupSpy.mockRestore();
@@ -983,7 +983,7 @@ describe('Matterbridge mocked', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Cleared startMatterInterval interval for Matterbridge`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Matterbridge bridge started successfully`));
 
-    pluginsConfigureSpy.mockImplementation(async (plugin: RegisteredPlugin) => {
+    pluginsConfigureSpy.mockImplementation(async (plugin: Plugin) => {
       if (plugin.name === 'matterbridge-mock1') {
         plugin.configured = false; // Simulate not successful configuration
         return Promise.resolve(undefined as any);
@@ -1025,23 +1025,23 @@ describe('Matterbridge mocked', () => {
     matterbridge.plugins.set({ name: 'matterbridge-mock5', path: './src/mock/plugin5/package.json', type: 'DynamicPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
     matterbridge.plugins.set({ name: 'matterbridge-mock6', path: './src/mock/plugin6/package.json', type: 'DynamicPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
     // prettier-ignore-end
-    const plugin1 = matterbridge.plugins.get('matterbridge-mock1') as RegisteredPlugin;
+    const plugin1 = matterbridge.plugins.get('matterbridge-mock1') as Plugin;
     plugin1.enabled = true;
     plugin1.error = false;
-    const plugin2 = matterbridge.plugins.get('matterbridge-mock2') as RegisteredPlugin;
+    const plugin2 = matterbridge.plugins.get('matterbridge-mock2') as Plugin;
     plugin2.enabled = true;
     plugin2.error = false;
-    const plugin3 = matterbridge.plugins.get('matterbridge-mock3') as RegisteredPlugin;
+    const plugin3 = matterbridge.plugins.get('matterbridge-mock3') as Plugin;
     plugin3.enabled = true;
     plugin3.error = false;
     plugin3.enabled = false;
-    const plugin4 = matterbridge.plugins.get('matterbridge-mock4') as RegisteredPlugin;
+    const plugin4 = matterbridge.plugins.get('matterbridge-mock4') as Plugin;
     plugin4.enabled = true;
     plugin4.error = false;
-    const plugin5 = matterbridge.plugins.get('matterbridge-mock5') as RegisteredPlugin;
+    const plugin5 = matterbridge.plugins.get('matterbridge-mock5') as Plugin;
     plugin5.enabled = true;
     plugin5.error = false;
-    const plugin6 = matterbridge.plugins.get('matterbridge-mock6') as RegisteredPlugin;
+    const plugin6 = matterbridge.plugins.get('matterbridge-mock6') as Plugin;
     plugin6.enabled = true;
     plugin6.error = false;
 
@@ -1094,7 +1094,7 @@ describe('Matterbridge mocked', () => {
     expect((matterbridge as any).configureTimeout).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Matterbridge childbridge started successfully`));
 
-    pluginsConfigureSpy.mockImplementation(async (plugin: RegisteredPlugin) => {
+    pluginsConfigureSpy.mockImplementation(async (plugin: Plugin) => {
       if (plugin.name === 'matterbridge-mock5') {
         return Promise.reject(new Error(`Mocked error for plugin ${plugin.name}`));
       } else {

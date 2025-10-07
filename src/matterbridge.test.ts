@@ -44,7 +44,6 @@ describe('Matterbridge', () => {
     test('Matterbridge.loadInstance(false)', async () => {
       expect((Matterbridge as any).instance).toBeUndefined();
       matterbridge = await Matterbridge.loadInstance(); // Default to false if no parameter is provided
-      // matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
       expect((Matterbridge as any).instance).toBeDefined();
       expect((matterbridge as any).initialized).toBeFalsy();
       expect(matterbridge).toBeDefined();
