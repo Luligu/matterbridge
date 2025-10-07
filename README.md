@@ -84,7 +84,7 @@ Since Matter is designed as "a universal IPv6-based communication protocol for s
 
 Avoid using VLAN and firewall blocking the communications between the controllers and Matterbridge.
 
-To pair matterbridge, you need a matter enabled controller (Apple Home, Smart Things, Google Home, Alexa, Hose Assistant etc.).
+To pair matterbridge, you need a matter enabled controller (Apple Home, Smart Things, Google Home, Alexa, Home Assistant etc.).
 
 ## Installation
 
