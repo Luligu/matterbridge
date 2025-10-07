@@ -78,9 +78,13 @@ After follow the guidelines for the [Docker configurations](README-DOCKER.md).
 
 I suggest using Docker for its simplicity.
 
-Since as stated in the Matter specifications "Matter aims to build a universal IPv6-based communication protocol for smart home devices", ipv6 should be enabled in the network.
+Since Matter is designed as "a universal IPv6-based communication protocol for smart home devices" (per the Matter specifications), **IPv6 must be enabled on your local network (LAN)**.
+
+**Important:** You only need IPv6 on your local network - it doesn't matter if your internet provider doesn't provide IPv6 on the internet side (WAN).
 
 Avoid using VLAN and firewall blocking the communications between the controllers and Matterbridge.
+
+To pair matterbridge, you need a matter enabled controller (Apple Home, Smart Things, Google Home, Alexa, Hose Assistant etc.).
 
 ## Installation
 
@@ -574,3 +578,7 @@ Click on the badge below to get started:
 </a>
 
 Thank you for your support!
+
+# Licensing
+
+Matterbridge is licensed under the [Apache License 2.0](./LICENSE).
