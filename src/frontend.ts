@@ -54,7 +54,8 @@ import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, i
 import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
-import { BroadcastServer, WorkerMessage } from './broadcastServer.js';
+import { BroadcastServer } from './broadcastServer.js';
+import { WorkerMessage } from './broadcastServerTypes.js';
 
 /**
  * Represents the Frontend events.

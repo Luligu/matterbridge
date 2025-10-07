@@ -36,6 +36,7 @@ Advantages:
 - [network]: Added getInterfaceName() function.
 - [network]: Optimized code.
 - [matterbridge]: Added SharedMatterbridge readonly type.
+- [thread]: Add BroadcastServer to frontend plugins and devices.
 
 ### Changed
 

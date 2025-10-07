@@ -23,30 +23,67 @@
  */
 
 // AnsiLogger module
-import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampFormat, wr } from 'node-ansi-logger';
 
 // Matterbridge
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { dev } from './matterbridgeTypes.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { type ApiDevice, dev } from './matterbridgeTypes.js';
+import { BroadcastServer } from './broadcastServer.js';
+import { WorkerMessage } from './broadcastServerTypes.js';
 
 /**
  * Manages Matterbridge devices.
  */
 export class DeviceManager {
   private readonly _devices = new Map<string, MatterbridgeEndpoint>();
-  private readonly matterbridge: Matterbridge;
   private readonly log: AnsiLogger;
+  private server: BroadcastServer;
 
   /**
    * Creates an instance of DeviceManager.
-   *
-   * @param {Matterbridge} matterbridge - The Matterbridge instance.
    */
-  constructor(matterbridge: Matterbridge) {
-    this.matterbridge = matterbridge;
-    this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.log.logLevel });
+  constructor() {
+    this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
     this.log.debug('Matterbridge device manager starting...');
+    this.server = new BroadcastServer('devices', this.log);
+    this.server.on('broadcast_message', this.msgHandler.bind(this));
+    this.log.debug('Matterbridge device manager started');
+  }
+
+  destroy(): void {
+    this.server.close();
+  }
+
+  private async msgHandler(msg: WorkerMessage) {
+    if (!this.server.isWorkerRequest(msg, msg.type)) return;
+    if (!msg.id || (msg.dst !== 'all' && msg.dst !== 'devices')) return;
+    this.log.debug(`**Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+    switch (msg.type) {
+      case 'devices_length':
+        this.server.respond({ ...msg, id: msg.id, response: { length: this.length } });
+        break;
+      case 'devices_size':
+        this.server.respond({ ...msg, id: msg.id, response: { size: this.size } });
+        break;
+      case 'devices_has':
+        this.server.respond({ ...msg, id: msg.id, response: { has: this.has(msg.params.uniqueId) } });
+        break;
+      case 'devices_get':
+        this.server.respond({ ...msg, id: msg.id, response: { device: this.get(msg.params.uniqueId) as ApiDevice | undefined } });
+        break;
+      case 'devices_set':
+        this.server.respond({ ...msg, id: msg.id, response: { device: this.set(msg.params.device as unknown as MatterbridgeEndpoint) as unknown as ApiDevice } });
+        break;
+      case 'devices_remove':
+        this.server.respond({ ...msg, id: msg.id, response: { success: this.remove(msg.params.device as unknown as MatterbridgeEndpoint) } });
+        break;
+      case 'devices_clear':
+        this.clear();
+        this.server.respond({ ...msg, id: msg.id, response: { success: true } });
+        break;
+      default:
+        this.log.warn(`Unknown broadcast message ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+    }
   }
 
   /**
@@ -129,6 +166,39 @@ export class DeviceManager {
   array(): MatterbridgeEndpoint[] {
     return Array.from(this._devices.values());
   }
+
+  /**
+   * Gets an array of all devices suitable for serialization.
+   *
+   * @param {string} [pluginName] - Optional plugin name to filter devices (not used currently).
+   * @returns {ApiDevices[]} An array of all devices.
+   */
+  /*
+  baseArray(pluginName?: string): ApiDevices[] {
+    const devices: ApiDevices[] = [];
+    for (const device of this.matterbridge.devices.array()) {
+      // Filter by pluginName if provided
+      if (pluginName && pluginName !== device.plugin) continue;
+      // Check if the device has the required properties
+      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
+      devices.push({
+        pluginName: device.plugin,
+        type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
+        endpoint: device.number,
+        name: device.deviceName,
+        serial: device.serialNumber,
+        productUrl: device.productUrl,
+        configUrl: device.configUrl,
+        uniqueId: device.uniqueId,
+        reachable: this.getReachability(device),
+        powerSource: this.getPowerSource(device),
+        matter: device.mode === 'server' && device.serverNode ? this.matterbridge.getServerNodeData(device.serverNode) : undefined,
+        cluster: this.getClusterTextFromDevice(device),
+      });
+    }
+    return devices;
+  }
+  */
 
   /**
    * Iterates over all devices.

@@ -10,30 +10,54 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { BLUE, er, LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { DeviceManager } from './deviceManager.js';
 import { dev } from './matterbridgeTypes.js';
 import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { BroadcastServer } from './broadcastServer.js';
+
+// Mock BroadcastServer methods
+const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
+const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
+const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
+const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
+const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
+  return Promise.resolve(undefined) as any;
+});
 
 // Setup the test environment
 setupTest(NAME, false);
 
 describe('DeviceManager', () => {
-  let matterbridge: Matterbridge;
   let devices: DeviceManager;
 
-  beforeAll(async () => {
-    matterbridge = await Matterbridge.loadInstance(false);
-    devices = new DeviceManager(matterbridge);
-  });
+  beforeAll(async () => {});
 
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
   });
-  afterAll(async () => {
-    await matterbridge.destroyInstance(10, 10);
+
+  afterAll(async () => {});
+
+  test('constructor', () => {
+    devices = new DeviceManager();
+    expect(devices).toBeInstanceOf(DeviceManager);
+  });
+
+  test('broadcast handler', async () => {
+    expect((devices as any).server).toBeInstanceOf(BroadcastServer);
+    broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
+    await (devices as any).msgHandler({} as any);
+
+    (devices as any).msgHandler({ type: 'jest', src: 'frontend', dst: 'devices' } as any); // no id
+    (devices as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'unknown' } as any); // unknown dst
+    (devices as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'devices' } as any); // valid
+    (devices as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'all' } as any); // valid
+    for (const type of ['jest', 'devices_length', 'devices_size', 'devices_has', 'devices_get', 'devices_set', 'devices_remove', 'devices_clear'] as const) {
+      await (devices as any).msgHandler({ id: 123456, type, src: 'frontend', dst: 'all', params: { uniqueId: 'testDevice', device: { uniqueId: 'testDevice' } } } as any);
+    }
   });
 
   test('logLevel changes correctly', () => {
@@ -153,5 +177,10 @@ describe('DeviceManager', () => {
       count++;
     });
     expect(count).toBe(0);
+  });
+
+  test('destroy', () => {
+    devices.destroy();
+    expect(devices).toBeInstanceOf(DeviceManager);
   });
 });

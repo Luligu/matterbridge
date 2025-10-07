@@ -15,8 +15,26 @@ jest.unstable_mockModule('./utils/spawn.js', () => ({
 const spawnModule = await import('./utils/spawn.js');
 const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
 
+const jsonParseSpy = jest.spyOn(JSON, 'parse');
+
 const matterbridgeShutdownSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess');
 
+// Mock BroadcastServer methods
+const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
+const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
+const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
+const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
+const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
+  return Promise.resolve(undefined) as any;
+});
+
+// Mock MatterbridgePlatform methods
+const platformRegisterDeviceSpy = jest.spyOn(MatterbridgePlatform.prototype, 'registerDevice').mockImplementation(() => Promise.resolve(undefined));
+const platformUnregisterDeviceSpy = jest.spyOn(MatterbridgePlatform.prototype, 'unregisterDevice').mockImplementation(() => Promise.resolve(undefined));
+const platformUnregisterAllDevicesSpy = jest.spyOn(MatterbridgePlatform.prototype, 'unregisterAllDevices').mockImplementation(() => Promise.resolve(undefined));
+
+// Spy on PluginManager methods
 const pluginsAddSpy = jest.spyOn(PluginManager.prototype, 'add');
 const pluginsRemoveSpy = jest.spyOn(PluginManager.prototype, 'remove');
 const pluginsEnableSpy = jest.spyOn(PluginManager.prototype, 'enable');
@@ -27,7 +45,7 @@ const pluginsConfigureSpy = jest.spyOn(PluginManager.prototype, 'configure');
 const pluginsShutdownSpy = jest.spyOn(PluginManager.prototype, 'shutdown');
 
 import { execSync } from 'node:child_process';
-import { promises as fs, promises } from 'node:fs';
+import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -35,12 +53,13 @@ import { db, er, LogLevel, nf, nt } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
-import type { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
-import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
+import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
+import { plg, Plugin, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { waiter, wait } from './utils/export.js';
 import { DeviceManager } from './deviceManager.js';
-import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { flushAsync, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -48,25 +67,15 @@ setupTest(NAME, false);
 describe('PluginManager', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
-  let devices: DeviceManager;
 
-  let jsonParseSpy: jest.SpiedFunction<typeof JSON.parse>;
-
-  beforeAll(async () => {
-    //
-  });
+  beforeAll(async () => {});
 
   beforeEach(async () => {
-    // Spy on JSON.parse
-    jsonParseSpy = jest.spyOn(JSON, 'parse');
     // Clear all mocks
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {
-    // Restore JSON.parse
-    jsonParseSpy.mockRestore();
-  });
+  afterEach(async () => {});
 
   afterAll(async () => {
     // Restore all mocks
@@ -78,8 +87,37 @@ describe('PluginManager', () => {
     expect(matterbridge).toBeInstanceOf(Matterbridge);
     plugins = matterbridge.plugins;
     expect(plugins).toBeInstanceOf(PluginManager);
-    devices = matterbridge.devices;
-    expect(devices).toBeInstanceOf(DeviceManager);
+  });
+
+  test('broadcast handler', async () => {
+    expect((plugins as any).server).toBeInstanceOf(BroadcastServer);
+    broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
+    await (plugins as any).msgHandler({} as any);
+
+    (plugins as any).msgHandler({ type: 'jest', src: 'frontend', dst: 'plugins' } as any); // no id
+    (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'unknown' } as any); // unknown dst
+    (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'plugins' } as any); // valid
+    (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'all' } as any); // valid
+    for (const type of [
+      'plugins_length',
+      'plugins_size',
+      'plugins_has',
+      'plugins_get',
+      'plugins_set',
+      'plugins_add',
+      'plugins_remove',
+      'plugins_enable',
+      'plugins_disable',
+      'plugins_install',
+      'plugins_uninstall',
+      'plugins_baseArray',
+      'plugins_load',
+      'plugins_start',
+      'plugins_configure',
+      'plugins_shutdown',
+    ] as const) {
+      await (plugins as any).msgHandler({ id: 123456, type, src: 'frontend', dst: 'all', params: { name: 'testPlugin', plugin: {}, packageName: 'testPlugin' } } as any);
+    }
   });
 
   test('logLevel changes correctly', () => {
@@ -104,7 +142,7 @@ describe('PluginManager', () => {
 
   test('async forEach to return', async () => {
     let count = 0;
-    await plugins.forEach(async (plugin: RegisteredPlugin) => {
+    await plugins.forEach(async (plugin: Plugin) => {
       count++;
     });
     expect(count).toBe(0);
@@ -170,7 +208,7 @@ describe('PluginManager', () => {
 
   test('async forEach allows for iteration over plugins', async () => {
     let count = 0;
-    await plugins.forEach(async (plugin: RegisteredPlugin) => {
+    await plugins.forEach(async (plugin: Plugin) => {
       expect(plugin.name).toBeDefined();
       expect(plugin.path).toBeDefined();
       expect(plugin.type).toBeDefined();
@@ -188,7 +226,7 @@ describe('PluginManager', () => {
 
   test('async forEach to not throw', async () => {
     let count = 0;
-    await plugins.forEach(async (plugin: RegisteredPlugin) => {
+    await plugins.forEach(async (plugin: Plugin) => {
       count++;
       throw new Error('Test error');
     });
@@ -300,7 +338,7 @@ describe('PluginManager', () => {
     });
 
     await plugins.install('matterbridge-websocket');
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['install', '-g', 'matterbridge-websocket', '--omit=dev', '--verbose'], 'matterbridge-websocket');
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['install', '-g', 'matterbridge-websocket', '--omit=dev', '--verbose'], 'install', 'matterbridge-websocket');
     expect(matterbridge.restartRequired).toBe(true);
     expect(matterbridge.fixedRestartRequired).toBe(true);
     expect(pluginsAddSpy).toHaveBeenCalledTimes(1);
@@ -308,7 +346,7 @@ describe('PluginManager', () => {
 
     await plugins.install('matterbridge');
     expect(matterbridge.restartMode).toBe('');
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'matterbridge');
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
     expect(matterbridge.restartRequired).toBe(true);
     expect(matterbridge.fixedRestartRequired).toBe(true);
     expect(pluginsAddSpy).toHaveBeenCalledTimes(0);
@@ -317,7 +355,7 @@ describe('PluginManager', () => {
 
     matterbridge.restartMode = 'service';
     await plugins.install('matterbridge');
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'matterbridge');
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
     expect(matterbridge.restartRequired).toBe(true);
     expect(matterbridge.fixedRestartRequired).toBe(true);
     expect(pluginsAddSpy).toHaveBeenCalledTimes(0);
@@ -328,7 +366,7 @@ describe('PluginManager', () => {
       return Promise.reject(new Error('Test error'));
     });
     await expect(plugins.install('matterbridge')).resolves.toBe(false);
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'matterbridge');
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
     expect(matterbridge.restartRequired).toBe(true);
     expect(matterbridge.fixedRestartRequired).toBe(true);
     expect(pluginsAddSpy).toHaveBeenCalledTimes(0);
@@ -342,7 +380,7 @@ describe('PluginManager', () => {
 
   test('uninstall plugin', async () => {
     (plugins as any)._plugins.set('matterbridge-websocket', { name: 'matterbridge-websocket', loaded: true });
-    pluginsShutdownSpy.mockImplementationOnce(async (plugin: RegisteredPlugin, reason?: string, removeAllDevices: boolean = false, force: boolean = false) => {
+    pluginsShutdownSpy.mockImplementationOnce(async (plugin: Plugin, reason?: string, removeAllDevices: boolean = false, force: boolean = false) => {
       return plugin;
     });
     pluginsRemoveSpy.mockImplementationOnce(async (nameOrPath: string) => {
@@ -352,7 +390,7 @@ describe('PluginManager', () => {
     await plugins.uninstall('matterbridge-websocket');
     expect(pluginsShutdownSpy).toHaveBeenCalledTimes(1);
     expect(pluginsRemoveSpy).toHaveBeenCalledTimes(1);
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['uninstall', '-g', 'matterbridge-websocket', '--verbose'], 'matterbridge-websocket');
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['uninstall', '-g', 'matterbridge-websocket', '--verbose'], 'uninstall', 'matterbridge-websocket');
     expect(matterbridge.restartRequired).toBe(false);
     expect(matterbridge.fixedRestartRequired).toBe(false);
     jest.clearAllMocks();
@@ -361,7 +399,7 @@ describe('PluginManager', () => {
       return Promise.reject(new Error('Test error'));
     });
     await expect(plugins.uninstall('matterbridge-websocket')).resolves.toBe(false);
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['uninstall', '-g', 'matterbridge-websocket', '--verbose'], 'matterbridge-websocket');
+    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', ['uninstall', '-g', 'matterbridge-websocket', '--verbose'], 'uninstall', 'matterbridge-websocket');
     jest.clearAllMocks();
 
     await expect(plugins.uninstall('matterbridge')).resolves.toBe(false);
@@ -634,12 +672,12 @@ describe('PluginManager', () => {
 
     expect(await plugins.remove('./src/mock/plugin3')).not.toBeNull();
     expect(plugins.length).toBe(0);
-
     loggerLogSpy.mockClear();
+
     expect(await plugins.remove('./src/mock/plugintest/package.json')).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to remove plugin ${plg}./src/mock/plugintest/package.json${er}: plugin not registered`);
-
     loggerLogSpy.mockClear();
+
     plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
     jest.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
       throw new Error('Test error');
@@ -853,14 +891,20 @@ describe('PluginManager', () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
+    expect(plugin.loaded).toBeFalsy();
+    expect(plugin.platform).toBeUndefined();
+    expect(plugin.started).toBeFalsy();
+    expect(plugin.configured).toBeFalsy();
+    expect(plugin.error).toBeFalsy();
     await plugins.shutdown(plugin, 'Test with Jest', true, true);
-    const packageJson = JSON.parse(await promises.readFile(plugin.path, 'utf8'));
+    const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
     packageJson.description = undefined;
     await fs.writeFile(plugin.path, JSON.stringify(packageJson, null, 2), 'utf8');
     const platform = await plugins.load(plugin);
     expect(platform).toBeDefined();
     expect(plugin.platform).toBeDefined();
-    if (!plugin.platform) return;
+    if (!platform || !plugin.platform) return;
+    await platform.ready;
     expect(plugin.name).toBe('matterbridge-example-accessory-platform');
     expect(plugin.type).toBe('AccessoryPlatform');
     loggerLogSpy.mockClear();
@@ -1348,7 +1392,7 @@ describe('PluginManager', () => {
     plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
     expect(plugin).not.toBeUndefined();
 
-    plugin = await plugins.shutdown(plugin as RegisteredPlugin, 'Test with Jest');
+    plugin = await plugins.shutdown(plugin as Plugin, 'Test with Jest');
   });
 
   test('uninstall example plugins', async () => {
@@ -1358,8 +1402,9 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('Matterbridge.destroyInstance()', async () => {
+    // plugins.destroy();
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
+    await matterbridge.destroyInstance();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);
 });
