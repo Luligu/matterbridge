@@ -25,6 +25,11 @@ Advantages:
 
 ## [3.3.1] - Not released
 
+### Breaking Changes
+
+- [frontend]: When a plugin is first installed, it will not be anymore started to allow to configure it before restarting.
+- [index]: Removed old plugin api compatibility since it was changed one year ago.
+
 ### Added
 
 - [network]: Added getInterfaceDetails() function.
@@ -36,6 +41,10 @@ Advantages:
 
 - [package]: Updated dependencies.
 - [matterbridge]: Removed matterbridgeInformation. It will be recreated when the frontend requires it.
+- [frontend]: Bumped `frontend` version to 3.2.1.
+- [frontend]: Refactored InstallProgressDialog.
+- [spawn]: Refactored spawnCommand for compatibility with InstallProgressDialog.
+- [matter.js]: Bumped `matter.js` to 0.15.5. Thanks matter.js!
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
