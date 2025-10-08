@@ -22,13 +22,16 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli loaded.\u001B[40;0m');
+
 // Node modules
 import type { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
 import os from 'node:os';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, TimestampFormat, YELLOW } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
 // Matterbridge
 import { getIntParameter, hasParameter } from './utils/export.js';
@@ -43,9 +46,12 @@ let snapshotInterval: NodeJS.Timeout;
 
 // Cpu and memory check
 let memoryCheckInterval: NodeJS.Timeout;
+let memoryPeakResetTimeout: NodeJS.Timeout;
 let prevCpus: os.CpuInfo[];
 let peakCpu = 0;
 let peakRss = 0;
+let peakHeapUsed = 0;
+let peakHeapTotal = 0;
 
 const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
@@ -77,6 +83,11 @@ const formatOsUpTime = (seconds: number): string => {
 
 /**
  * Starts the CPU and memory check interval.
+ *
+ * @remarks
+ * Debug parameter
+ *
+ * -memoryinterval <milliseconds> can be used to set the interval. Default is 10 seconds.
  */
 async function startCpuMemoryCheck() {
   // const os = await import('node:os');
@@ -100,7 +111,18 @@ async function startCpuMemoryCheck() {
     const heapUsed = formatMemoryUsage(memoryUsageRaw.heapUsed);
     const external = formatMemoryUsage(memoryUsageRaw.external);
     const arrayBuffers = formatMemoryUsage(memoryUsageRaw.arrayBuffers);
-    if (memoryUsageRaw.rss > peakRss) peakRss = memoryUsageRaw.rss;
+    if (memoryUsageRaw.rss > peakRss) {
+      if (peakRss) log.debug(`****${RED}${BRIGHT}Rss peak detected.${db} Peak rss from ${CYAN}${formatMemoryUsage(peakRss)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.rss)}${db}`);
+      peakRss = memoryUsageRaw.rss;
+    }
+    if (memoryUsageRaw.heapUsed > peakHeapUsed) {
+      if (peakHeapUsed) log.debug(`****${RED}${BRIGHT}HeapUsed peak detected.${db} Peak heapUsed from ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.heapUsed)}${db}`);
+      peakHeapUsed = memoryUsageRaw.heapUsed;
+    }
+    if (memoryUsageRaw.heapTotal > peakHeapTotal) {
+      if (peakHeapTotal) log.debug(`****${RED}${BRIGHT}HeapTotal peak detected.${db} Peak heapTotal from ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.heapTotal)}${db}`);
+      peakHeapTotal = memoryUsageRaw.heapTotal;
+    }
     cliEmitter.emit('memory', totalMememory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
 
     // Get the cpu usage
@@ -124,37 +146,60 @@ async function startCpuMemoryCheck() {
     });
     const cpuUsage = 100 - (totalIdle / totalTick) * 100;
     if (totalTick === 0 || isNaN(cpuUsage) || !isFinite(cpuUsage) || cpuUsage <= 0) {
-      if (lastCpuUsage != 0) log.debug(`Cpu check failed, using previous cpus`);
+      /* if (lastCpuUsage != 0)*/ log.debug(`Cpu check failed, using previous cpus`);
       cpuUsageLog = lastCpuUsage.toFixed(2);
     } else {
       cpuUsageLog = cpuUsage.toFixed(2);
       setLastCpuUsage(cpuUsage);
-      if (lastCpuUsage > peakCpu) peakCpu = lastCpuUsage;
+      if (lastCpuUsage > peakCpu) {
+        peakCpu = lastCpuUsage;
+        if (peakCpu) log.debug(`****${RED}${BRIGHT}Cpu peak detected.${db} Peak cpu from ${CYAN}${peakCpu.toFixed(2)}%${db} to ${CYAN}${lastCpuUsage.toFixed(2)}%${db}`);
+      }
       cliEmitter.emit('cpu', lastCpuUsage);
     }
     prevCpus = currCpus;
 
     // Show the cpu and memory usage
     log.debug(
-      `***${YELLOW}${BRIGHT}Cpu usage:${db} ${CYAN}${cpuUsageLog.padStart(6, ' ')} %${db} ${YELLOW}${BRIGHT}Memory usage:${db} rss ${CYAN}${rss}${db} heapTotal ${CYAN}${heapTotal}${db} heapUsed ${CYAN}${heapUsed}${db} external ${external} arrayBuffers ${arrayBuffers}`,
+      `***${YELLOW}${BRIGHT}Cpu usage:${db} ${CYAN}${cpuUsageLog.padStart(6, ' ')}%${db} (peak ${peakCpu.toFixed(2)}%) ${YELLOW}${BRIGHT}Memory usage:${db} rss ${CYAN}${rss}${db} (peak ${formatMemoryUsage(peakRss)}) heapUsed ${CYAN}${heapUsed}${db} (peak ${formatMemoryUsage(peakHeapUsed)}) heapTotal ${CYAN}${heapTotal}${db} (peak ${formatMemoryUsage(peakHeapTotal)}) external ${external} arrayBuffers ${arrayBuffers}`,
     );
   };
-  interval();
+
   clearInterval(memoryCheckInterval);
   memoryCheckInterval = setInterval(interval, getIntParameter('memoryinterval') ?? 10 * 1000).unref();
+
+  clearTimeout(memoryPeakResetTimeout);
+  memoryPeakResetTimeout = setTimeout(
+    () => {
+      log.debug(`****${RED}${BRIGHT}Cpu and memory peaks reset after first 5 minutes.${db}`);
+      peakCpu = 0;
+      peakRss = 0;
+      peakHeapUsed = 0;
+      peakHeapTotal = 0;
+    },
+    5 * 60 * 1000,
+  ).unref(); // Reset peaks every 5 minutes
 }
 
 /**
  * Stops the CPU and memory check interval.
  */
 async function stopCpuMemoryCheck() {
-  log.debug(`***Cpu memory check stopped. Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}.`);
+  log.debug(
+    `***Cpu memory check stopped. Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}. Peak heapUsed: ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db}. Peak heapTotal: ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db}`,
+  );
   clearInterval(memoryCheckInterval);
+  clearTimeout(memoryPeakResetTimeout);
 }
 
 /**
  * Starts the inspector for heap sampling.
  * This function is called when the -inspect parameter is passed.
+ * The -snapshotinterval parameter can be used to set the heap snapshot interval. Default is undefined. Minimum is 30000 ms.
+ * The snapshot is saved in the heap_profile directory that is created in the current working directory.
+ * The snapshot can be analyzed using vscode or Chrome DevTools or other tools that support heap snapshots.
+ *
+ * @remarks To use the inspector, Node.js must be started with --inspect.
  */
 async function startInspector() {
   const { Session } = await import('node:inspector');
@@ -277,7 +322,9 @@ async function takeHeapSnapshot() {
 
 /**
  * Triggers a manual garbage collection.
- * This function is working only if the process is started with --expose-gc.
+ * This function is working only if the process is started with --expose_gc.
+ *
+ * @remarks To check the effect of the garbage collection, add --trace_gc or --trace_gc_verbose.
  */
 function triggerGarbageCollection() {
   if (typeof global.gc === 'function') {
@@ -357,6 +404,20 @@ async function stop() {
 
 /**
  * Main function that initializes the Matterbridge instance and starts the CLI.
+ *
+ * @remarks
+ *
+ * Debug parameters:
+ *
+ * --debug enables debug logging.
+ *
+ * --loader enables loader logging.
+ *
+ * --memoryinterval <milliseconds> can be used to set the CPU and memory check interval. Default is 10 seconds.
+ *
+ * --inspect enables the inspector for heap sampling.
+ *
+ * --snapshotinterval <milliseconds> can be used to set the heap snapshot interval. Default is undefined. Minimum is 30000 ms.
  */
 async function main() {
   log.debug(`Cli main() started`);
