@@ -22,8 +22,9 @@
  * limitations under the License.
  */
 
+import { RefreshRequiredChanged } from './frontendTypes.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import type { ApiDevice, ApiPlugin, Plugin } from './matterbridgeTypes.js';
+import type { ApiDevice, ApiMatter, ApiPlugin, Plugin } from './matterbridgeTypes.js';
 
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter';
 export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'all';
@@ -55,6 +56,32 @@ export type WorkerMessage = {
 
 type WorkerMessageMap = {
   'jest': { request: { type: 'jest' }; response: { type: 'jest'; response: { name: string; age: number } } };
+
+  // Frontend methods
+  'frontend_start': {
+    request: { type: 'frontend_start'; params: { port: number } };
+    response: { type: 'frontend_start'; response: { success: boolean } };
+  };
+  'frontend_stop': {
+    request: { type: 'frontend_stop' };
+    response: { type: 'frontend_stop'; response: { success: boolean } };
+  };
+  'frontend_refreshRequired': {
+    request: { type: 'frontend_refreshRequired'; params: { changed: RefreshRequiredChanged; matter: ApiMatter } };
+    response: { type: 'frontend_refreshRequired'; response: { success: boolean } };
+  };
+  'frontend_restartRequired': {
+    request: { type: 'frontend_restartRequired'; params: { snackbar: boolean; fixed: boolean } };
+    response: { type: 'frontend_restartRequired'; response: { success: boolean } };
+  };
+  'frontend_restartNotRequired': {
+    request: { type: 'frontend_restartNotRequired'; params: { snackbar: boolean } };
+    response: { type: 'frontend_restartNotRequired'; response: { success: boolean } };
+  };
+  'frontend_updateRequired': {
+    request: { type: 'frontend_updateRequired'; params: { devVersion: boolean } };
+    response: { type: 'frontend_updateRequired'; response: { success: boolean } };
+  };
 
   // PluginManager methods
   'plugins_length': {
