@@ -3,7 +3,7 @@
  * @file index.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.0.7
+ * @version 1.0.8
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -20,6 +20,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mIndex loaded.\u001B[40;0m');
 
 // Removed 07/10/2025 all main function loaders cause there should not be around anymore any plugins using them
 
@@ -53,7 +56,9 @@ async function main() {
   await Matterbridge.loadInstance();
   log.debug('***Matterbridge.loadInstance() exited');
 }
+*/
 
+/*
 main().catch((error) => {
   log.error(`Matterbridge.loadInstance() failed with error: ${error instanceof Error ? error.message : error}`);
 });

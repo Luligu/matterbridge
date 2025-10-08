@@ -22,6 +22,9 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridge loaded.\u001B[40;0m');
+
 // Node.js modules
 import os from 'node:os';
 import path from 'node:path';
@@ -2644,15 +2647,13 @@ const commissioningController = new CommissioningController({
         });
       }
       for (const child of device.getChildEndpoints()) {
-        for (const sub of subscriptions) {
-          if (child.hasAttributeServer(sub.cluster, sub.attribute)) {
-            this.log.debug(`Subscribing to child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
-            await child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
-              this.log.debug(`Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`);
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, child.number, child.id, sub.cluster, sub.attribute, value);
-            });
-          }
+        if (child.hasAttributeServer(sub.cluster, sub.attribute)) {
+          this.log.debug(`Subscribing to child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
+          await child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+            this.log.debug(`Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, child.number, child.id, sub.cluster, sub.attribute, value);
+          });
         }
       }
     }

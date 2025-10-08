@@ -22,6 +22,9 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgePlatform loaded.\u001B[40;0m');
+
 // Node.js modules
 import path from 'node:path';
 

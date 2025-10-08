@@ -46,6 +46,11 @@ Advantages:
 - [frontend]: Refactored InstallProgressDialog.
 - [spawn]: Refactored spawnCommand for compatibility with InstallProgressDialog.
 - [matter.js]: Bumped `matter.js` to 0.15.5. Thanks matter.js!
+- [backend]: Optimized imports.
+
+### Fixed
+
+- [frontend]: Fixed matter log on file not setting correctly.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
