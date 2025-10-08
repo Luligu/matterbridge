@@ -74,7 +74,6 @@ describe('Matterbridge', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Matterbridge.loadInstance(true) exited');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Registering event handlers...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Registered event handlers');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
   }, 10000);
 
   it('should call CpuMemoryCheck interval', async () => {

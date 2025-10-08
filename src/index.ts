@@ -56,9 +56,7 @@ async function main() {
   await Matterbridge.loadInstance();
   log.debug('***Matterbridge.loadInstance() exited');
 }
-*/
 
-/*
 main().catch((error) => {
   log.error(`Matterbridge.loadInstance() failed with error: ${error instanceof Error ? error.message : error}`);
 });
