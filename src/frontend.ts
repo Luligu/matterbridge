@@ -22,14 +22,15 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mFrontend loaded.\u001B[40;0m');
+
 // Node modules
-import { Server as HttpServer, createServer, IncomingMessage } from 'node:http';
-import https from 'node:https';
+import type { Server as HttpServer, IncomingMessage as HttpIncomingMessage } from 'node:http';
+import type { Server as HttpsServer, ServerOptions as HttpsServerOptions } from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
-import { existsSync, promises as fs, unlinkSync } from 'node:fs';
 import EventEmitter from 'node:events';
-import { appendFile } from 'node:fs/promises';
 
 // Third-party modules
 import express from 'express';
@@ -39,7 +40,8 @@ import multer from 'multer';
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt, wr } from 'node-ansi-logger';
 // @matter
 import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle, ServerNode, LogDestination, Diagnostic, Time, FabricIndex, EndpointNumber } from '@matter/main';
-import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
+import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
+import { PowerSource } from '@matter/main/clusters/power-source';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/main/protocol';
 import { CommissioningOptions } from '@matter/main/types';
 
@@ -76,7 +78,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   private expressApp: express.Express | undefined;
   private httpServer: HttpServer | undefined;
-  private httpsServer: https.Server | undefined;
+  private httpsServer: HttpsServer | undefined;
   private webSocketServer: WebSocketServer | undefined;
   private server: BroadcastServer;
 
@@ -95,8 +97,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg, msg.type)) {
+      if (!msg.id || (msg.dst !== 'all' && msg.dst !== 'frontend')) return;
       this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
+        case 'frontend_start':
+          await this.start(msg.params.port);
+          this.server.respond({ ...msg, id: msg.id, response: { success: true } });
+          break;
+        case 'frontend_stop':
+          await this.stop();
+          this.server.respond({ ...msg, id: msg.id, response: { success: true } });
+          break;
         default:
           this.log.warn(`Unknown broadcast request ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
       }
@@ -177,9 +188,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
+      const http = await import('node:http');
       try {
         this.log.debug(`Creating HTTP server...`);
-        this.httpServer = createServer(this.expressApp);
+        this.httpServer = http.createServer(this.expressApp);
       } catch (error) {
         this.log.error(`Failed to create HTTP server: ${error}`);
         this.emit('server_error', error as Error);
@@ -216,6 +228,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         return;
       });
     } else {
+      // SSL is enabled, load the certificate and the private key
       let cert: string | undefined;
       let key: string | undefined;
       let ca: string | undefined;
@@ -224,12 +237,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       let pfx: Buffer | undefined;
       let passphrase: string | undefined;
 
-      let httpsServerOptions: https.ServerOptions = {};
+      let httpsServerOptions: HttpsServerOptions = {};
 
-      if (existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'))) {
+      const fs = await import('node:fs');
+      if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'))) {
         // Load the p12 certificate and the passphrase
         try {
-          pfx = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
+          pfx = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
           this.log.info(`Loaded p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12')}`);
         } catch (error) {
           this.log.error(`Error reading p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12')}: ${error}`);
@@ -237,7 +251,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         try {
-          passphrase = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass'), 'utf8');
+          passphrase = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass'), 'utf8');
           passphrase = passphrase.trim(); // Ensure no extra characters
           this.log.info(`Loaded p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass')}`);
         } catch (error) {
@@ -249,7 +263,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else {
         // Load the SSL certificate, the private key and optionally the CA certificate. If the CA certificate is present, it will be used to create a full chain certificate.
         try {
-          cert = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem'), 'utf8');
+          cert = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem'), 'utf8');
           this.log.info(`Loaded certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}`);
         } catch (error) {
           this.log.error(`Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}: ${error}`);
@@ -257,7 +271,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         try {
-          key = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem'), 'utf8');
+          key = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem'), 'utf8');
           this.log.info(`Loaded key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}`);
         } catch (error) {
           this.log.error(`Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}: ${error}`);
@@ -265,7 +279,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         try {
-          ca = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8');
+          ca = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8');
           fullChain = `${cert}\n${ca}`;
           this.log.info(`Loaded CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem')}`);
         } catch (error) {
@@ -279,6 +293,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
 
       // Create an HTTPS server with the SSL certificate and private key (ca is optional) and attach the express app
+      const https = await import('node:https');
       try {
         this.log.debug(`Creating HTTPS server...`);
         this.httpsServer = https.createServer(httpsServerOptions, this.expressApp);
@@ -323,7 +338,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.debug(`Creating WebSocketServer...`);
     this.webSocketServer = new WebSocketServer(hasParameter('ssl') ? { server: this.httpsServer } : { server: this.httpServer });
 
-    this.webSocketServer.on('connection', (ws: WebSocket, request: IncomingMessage) => {
+    this.webSocketServer.on('connection', (ws: WebSocket, request: HttpIncomingMessage) => {
       const clientIp = request.socket.remoteAddress;
 
       // Set the global logger callback for the WebSocketServer
@@ -492,7 +507,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/view-mblog', async (req, res) => {
       this.log.debug('The frontend sent /api/view-mblog');
       try {
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
+        const fs = await import('node:fs');
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
         res.type('text/plain');
         res.send(data);
       } catch (error) {
@@ -505,7 +521,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/view-mjlog', async (req, res) => {
       this.log.debug('The frontend sent /api/view-mjlog');
       try {
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
+        const fs = await import('node:fs');
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
         res.type('text/plain');
         res.send(data);
       } catch (error) {
@@ -531,11 +548,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       for (const device of this.matterbridge.devices.array()) {
         if (device.serverNode) serverNodes.push(device.serverNode);
       }
-
-      if (existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'))) unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'));
+      const fs = await import('node:fs');
+      if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'))) fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'));
       const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
       diagnosticDestination.write = async (text: string, _message: Diagnostic.Message) => {
-        await appendFile(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'), text + '\n', { encoding: 'utf8' });
+        await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'), text + '\n', { encoding: 'utf8' });
       };
       Logger.destinations.diagnostic = diagnosticDestination;
       if (!diagnosticDestination.context) {
@@ -556,7 +573,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       await wait(500); // Wait for the log to be written
 
       try {
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'), 'utf8');
+        const fs = await import('node:fs');
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'), 'utf8');
         res.type('text/plain');
         res.send(data.slice(29));
       } catch (error) {
@@ -571,7 +589,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/shellyviewsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellyviewsystemlog');
       try {
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
+        const fs = await import('node:fs');
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
         res.type('text/plain');
         res.send(data);
       } catch (error) {
@@ -583,12 +602,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matterbridge log
     this.expressApp.get('/api/download-mblog', async (req, res) => {
       this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE)}`);
+      const fs = await import('node:fs');
       try {
-        await fs.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), fs.constants.F_OK);
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
-        await fs.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), data, 'utf-8');
+        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), fs.constants.F_OK);
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), data, 'utf-8');
       } catch (error) {
-        await fs.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'Enable the matterbridge log on file in the settings to download the matterbridge log.', 'utf-8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'Enable the matterbridge log on file in the settings to download the matterbridge log.', 'utf-8');
         this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
       res.type('text/plain');
@@ -604,12 +624,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matter log
     this.expressApp.get('/api/download-mjlog', async (req, res) => {
       this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE)}`);
+      const fs = await import('node:fs');
       try {
-        await fs.access(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), fs.constants.F_OK);
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
-        await fs.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), data, 'utf-8');
+        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), fs.constants.F_OK);
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), data, 'utf-8');
       } catch (error) {
-        await fs.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
         this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
       res.type('text/plain');
@@ -625,12 +646,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the shelly log
     this.expressApp.get('/api/shellydownloadsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellydownloadsystemlog');
+      const fs = await import('node:fs');
       try {
-        await fs.access(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), fs.constants.F_OK);
-        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
-        await fs.writeFile(path.join(os.tmpdir(), 'shelly.log'), data, 'utf-8');
+        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), fs.constants.F_OK);
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), 'shelly.log'), data, 'utf-8');
       } catch (error) {
-        await fs.writeFile(path.join(os.tmpdir(), 'shelly.log'), 'Create the Shelly system log before downloading it.', 'utf-8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), 'shelly.log'), 'Create the Shelly system log before downloading it.', 'utf-8');
         this.log.debug(`Error in /api/shellydownloadsystemlog: ${error instanceof Error ? error.message : error}`);
       }
       res.type('text/plain');
@@ -725,7 +747,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       try {
         // Move the uploaded file to the specified path
-        await fs.rename(file.path, filePath);
+        const fs = await import('node:fs');
+        await fs.promises.rename(file.path, filePath);
         this.log.info(`File ${plg}${filename}${nf} uploaded successfully`);
 
         // Install the plugin package
@@ -918,6 +941,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {boolean} The reachable attribute.
    */
   private getReachability(device: MatterbridgeEndpoint): boolean {
+    if (this.matterbridge.hasCleanupStarted) return false; // Skip if cleanup has started
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return false;
     if (device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) return device.getAttribute(BridgedDeviceBasicInformation.Cluster.id, 'reachable') as boolean;
     if (device.mode === 'server' && device.serverNode && device.serverNode.state.basicInformation.reachable !== undefined) return device.serverNode.state.basicInformation.reachable;
@@ -932,6 +956,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined} The power source attribute.
    */
   private getPowerSource(endpoint: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined {
+    if (this.matterbridge.hasCleanupStarted) return; // Skip if cleanup has started
     if (!endpoint.lifecycle.isReady || endpoint.construction.status !== Lifecycle.Status.Active) return undefined;
 
     const powerSource = (device: MatterbridgeEndpoint) => {
@@ -963,6 +988,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {string} The attributes description of the cluster servers in the device.
    */
   private getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
+    if (this.matterbridge.hasCleanupStarted) return ''; // Skip if cleanup has started
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return '';
 
     const getUserLabel = (device: MatterbridgeEndpoint) => {
@@ -1058,6 +1084,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {ApiPlugin[]} An array of BaseRegisteredPlugin.
    */
   private getPlugins(): ApiPlugin[] {
+    if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const plugins: ApiPlugin[] = [];
     for (const plugin of this.matterbridge.plugins.array()) {
       plugins.push({
@@ -1099,6 +1126,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
    */
   private getDevices(pluginName?: string): ApiDevice[] {
+    if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const devices: ApiDevice[] = [];
     for (const device of this.matterbridge.devices.array()) {
       // Filter by pluginName if provided
@@ -1674,7 +1702,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           case 'setmjlogfile':
             if (isValidBoolean(data.params.value)) {
               this.log.debug('Matter file log:', data.params.value);
-              this.matterbridge.fileLogger = data.params.value;
+              this.matterbridge.matterFileLogger = data.params.value;
               await this.matterbridge.nodeContext?.set('matterFileLog', data.params.value);
               if (data.params.value) {
                 this.matterbridge.matterLog.logFilePath = path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE);
