@@ -152,7 +152,7 @@
     "install:prettier": "npm install --save-dev --save-exact prettier eslint-config-prettier eslint-plugin-prettier"
   },
   "dependencies": {
-    "@matter/main": "0.15.4",
+    "@matter/main": "0.15.5",
     "archiver": "7.0.1",
     "express": "5.1.0",
     "glob": "11.0.3",
@@ -175,7 +175,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest": "29.0.1",
-    "eslint-plugin-jsdoc": "60.8.3",
+    "eslint-plugin-jsdoc": "61.0.1",
     "eslint-plugin-n": "17.23.1",
     "eslint-plugin-prettier": "5.5.4",
     "eslint-plugin-promise": "7.2.1",
