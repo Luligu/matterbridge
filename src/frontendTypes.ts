@@ -301,6 +301,14 @@ export interface WsMessageApiFactoryResetResponse extends WsMessageSuccessApiRes
   method: '/api/factoryreset';
 }
 
+export interface WsMessageApiGenerateHistoryPageRequest extends WsMessageBaseApiRequest {
+  method: '/api/generatehistorypage';
+}
+export interface WsMessageApiGenerateHistoryPageResponse extends WsMessageSuccessApiResponse {
+  method: '/api/generatehistorypage';
+  success: true;
+}
+
 export interface WsMessageApiMatterRequest extends WsMessageBaseApiRequest {
   method: '/api/matter';
   params: {
@@ -563,6 +571,7 @@ export type WsMessageApiRequest =
   | WsMessageApiUnregisterRequest
   | WsMessageApiResetRequest
   | WsMessageApiFactoryResetRequest
+  | WsMessageApiGenerateHistoryPageRequest
   | WsMessageApiMatterRequest
   | WsMessageApiSettingsRequest
   | WsMessageApiPluginsRequest
@@ -600,6 +609,7 @@ export type WsMessageApiResponse =
   | WsMessageApiUnregisterResponse
   | WsMessageApiResetResponse
   | WsMessageApiFactoryResetResponse
+  | WsMessageApiGenerateHistoryPageResponse
   | WsMessageApiMatterResponse
   | WsMessageApiSettingsResponse
   | WsMessageApiPluginsResponse

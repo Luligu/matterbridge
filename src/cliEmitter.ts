@@ -4,7 +4,7 @@
  * @file cliEmitter.ts
  * @author Luca Liguori
  * @created 2025-07-04
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -21,6 +21,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli emitter loaded.\u001B[40;0m');
 
 import { EventEmitter } from 'node:events';
 

@@ -108,16 +108,22 @@ describe('Matterbridge frontend', () => {
   }, 60000);
 
   test('broadcast handler', async () => {
-    expect((frontend as any).server).toBeInstanceOf(BroadcastServer);
+    startSpy.mockImplementationOnce(() => Promise.resolve());
+    stopSpy.mockImplementationOnce(() => Promise.resolve());
     broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
     await (frontend as any).msgHandler({} as any);
     broadcastServerIsWorkerResponseSpy.mockImplementationOnce(() => false);
     await (frontend as any).msgHandler({} as any);
 
+    expect((frontend as any).server).toBeInstanceOf(BroadcastServer);
+
     (frontend as any).msgHandler({ type: 'jest', src: 'manager', dst: 'frontend' } as any); // no id
     (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
     (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend' } as any); // valid
     (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
+    for (const type of ['frontend_start', 'frontend_stop'] as const) {
+      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', params: { port: 3000 } } as any);
+    }
     for (const type of ['plugins_install', 'plugins_uninstall'] as const) {
       await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: true, packageName: 'testPlugin' } } as any);
       await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: false, packageName: 'testPlugin' } } as any);
@@ -133,9 +139,9 @@ describe('Matterbridge frontend', () => {
     expect(cliEmitter.listeners('memory')).toHaveLength(1);
     expect(cliEmitter.listeners('cpu')).toHaveLength(1);
 
-    cliEmitter.emit('uptime', 123456);
-    cliEmitter.emit('memory', 123456789);
-    cliEmitter.emit('cpu', 12.34);
+    cliEmitter.emit('cpu', 12.34, 5.67);
+    cliEmitter.emit('uptime', '1 day, 10:00:00', '1 day, 10:00:00');
+    cliEmitter.emit('memory', '12345678', '87654321', '12345678', '87654321', '12345678', '87654321', '12345678');
   });
 
   test('Frontend getReachability', () => {

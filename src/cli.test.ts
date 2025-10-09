@@ -89,6 +89,10 @@ describe('Matterbridge', () => {
       console.log('mockImplementation of os.uptime() called');
       return 4000;
     });
+    jest.spyOn(process, 'cpuUsage').mockImplementationOnce(() => {
+      console.log('mockImplementation of process.cpuUsage() called');
+      return { user: 1, system: 2 };
+    });
     jest.spyOn(process, 'uptime').mockImplementationOnce(() => {
       console.log('mockImplementation of process.uptime() called');
       return 4000;
@@ -151,6 +155,10 @@ describe('Matterbridge', () => {
     });
     jest.advanceTimersByTime(10 * 1000); // Fast-forward time by 10 seconds
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cpu check length failed, resetting previous cpus`);
+
+    // Simulate a peak os.cpus()
+    jest.clearAllMocks();
+    jest.advanceTimersByTime(1 * 1000); // Fast-forward time by 10 seconds
   });
 
   it('should call Inspector interval', async () => {

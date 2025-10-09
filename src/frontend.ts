@@ -56,6 +56,7 @@ import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, i
 import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
+import { generateHistoryPage } from './cliHistory.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
 
@@ -1508,6 +1509,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/factoryreset') {
         this.wssSendSnackbarMessage('Factory reset of matterbridge...', 10);
         await this.matterbridge.shutdownProcessAndFactoryReset();
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/generatehistorypage') {
+        generateHistoryPage({ outputPath: path.join(this.matterbridge.rootDirectory, 'frontend/build', 'history.html'), pageTitle: `Matterbridge on ${this.matterbridge.systemInformation.hostname} Cpu & Memory History` });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/matter') {
         const localData = data;

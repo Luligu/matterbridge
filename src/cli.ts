@@ -23,7 +23,7 @@
  */
 
 // eslint-disable-next-line no-console
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli loaded.\u001B[40;0m');
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCLI loaded.\u001B[40;0m');
 
 // Node modules
 import type { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
@@ -33,10 +33,12 @@ import { inspect } from 'node:util';
 // AnsiLogger module
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
+// Cli
+import { cliEmitter, setLastCpuUsage, setLastProcessCpuUsage } from './cliEmitter.js';
+import { history, historyIndex, historySize, setHistoryIndex } from './cliHistory.js';
 // Matterbridge
 import { getIntParameter, hasParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
-import { cliEmitter, setLastCpuUsage, setLastProcessCpuUsage } from './cliEmitter.js';
 
 export let instance: Matterbridge | undefined;
 
@@ -57,38 +59,6 @@ let peakProcessCpu = 0;
 let peakRss = 0;
 let peakHeapUsed = 0;
 let peakHeapTotal = 0;
-
-// History
-const historySize: number = 1000;
-let historyIndex: number = 0;
-
-type CpuMemoryEntry = {
-  cpu: number;
-  peakCpu: number;
-  processCpu: number;
-  peakProcessCpu: number;
-  rss: number;
-  peakRss: number;
-  heapUsed: number;
-  peakHeapUsed: number;
-  heapTotal: number;
-  peakHeapTotal: number;
-  timestamp: number;
-};
-
-const history: CpuMemoryEntry[] = Array.from({ length: historySize }, () => ({
-  cpu: 0,
-  peakCpu: 0,
-  processCpu: 0,
-  peakProcessCpu: 0,
-  rss: 0,
-  peakRss: 0,
-  heapUsed: 0,
-  peakHeapUsed: 0,
-  heapTotal: 0,
-  peakHeapTotal: 0,
-  timestamp: 0,
-}));
 
 const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
@@ -190,7 +160,9 @@ async function startCpuMemoryCheck() {
     if (totalTick === 0 || isNaN(cpuUsage) || !isFinite(cpuUsage) || cpuUsage <= 0) {
       log.debug(`Cpu check failed, using previous cpus`);
     } else {
+      // istanbul ignore next
       setLastCpuUsage(cpuUsage);
+      // istanbul ignore next if
       if (cpuUsage > peakCpu) {
         peakCpu = cpuUsage;
         if (peakCpu && trace) log.debug(`****${RED}${BRIGHT}Cpu peak detected.${db} Peak cpu from ${CYAN}${formatCpuUsage(peakCpu)}${db} to ${CYAN}${formatCpuUsage(cpuUsage)}${db}`);
@@ -204,7 +176,11 @@ async function startCpuMemoryCheck() {
     const systemMs = diff.system / 1000;
     const totalMs = userMs + systemMs;
     const processCpuUsage = Number(((totalMs / memoryCheckIntervalMs) * 100).toFixed(2));
-    peakProcessCpu = Math.max(peakProcessCpu, processCpuUsage);
+    // istanbul ignore next if
+    if (processCpuUsage > peakProcessCpu) {
+      peakProcessCpu = processCpuUsage;
+      if (peakProcessCpu && trace) log.debug(`****${RED}${BRIGHT}Process cpu peak detected.${db} Peak process cpu from ${CYAN}${formatCpuUsage(peakProcessCpu)}${db} to ${CYAN}${formatCpuUsage(processCpuUsage)}${db}`);
+    }
     prevProcessCpu = process.cpuUsage();
     setLastProcessCpuUsage(processCpuUsage);
 
@@ -223,7 +199,7 @@ async function startCpuMemoryCheck() {
     entry.heapTotal = memoryUsageRaw.heapTotal;
     entry.peakHeapTotal = peakHeapTotal;
     entry.timestamp = Date.now();
-    historyIndex = (historyIndex + 1) % historySize;
+    setHistoryIndex((historyIndex + 1) % historySize);
 
     // Show the cpu and memory usage
     if (trace)
@@ -236,6 +212,7 @@ async function startCpuMemoryCheck() {
   memoryCheckInterval = setInterval(interval, memoryCheckIntervalMs).unref();
 
   clearTimeout(memoryPeakResetTimeout);
+  // istanbul ignore next
   memoryPeakResetTimeout = setTimeout(
     () => {
       log.debug(`****${RED}${BRIGHT}Cpu and memory peaks reset after first 5 minutes.${db}`);
@@ -253,26 +230,10 @@ async function startCpuMemoryCheck() {
  * Stops the CPU and memory check interval.
  */
 async function stopCpuMemoryCheck() {
-  try {
-    const generateHistoryPage = await import('./cliHistory.js');
-    generateHistoryPage.generateHistoryPage(history, historyIndex);
-  } catch (err) {
-    log.error(`Failed to generate history page: ${inspect(err)}`);
-  }
   if (trace) {
     log.debug(
       `***Cpu memory check stopped. Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}. Peak heapUsed: ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db}. Peak heapTotal: ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db}`,
     );
-
-    for (let i = 0; i < historySize; i++) {
-      const index = (historyIndex + i) % historySize;
-      const entry = history[index];
-      // Skip entries where all values are 0 (unfilled history slots)
-      if (entry.cpu === 0 && entry.peakCpu === 0 && entry.timestamp === 0) continue;
-      log.debug(
-        `Time: ${new Date(entry.timestamp).toLocaleString()} host cpu: ${CYAN}${formatCpuUsage(entry.cpu)}${db} (peak ${formatCpuUsage(entry.peakCpu)}) process cpu: ${CYAN}${formatCpuUsage(entry.processCpu)}${db} (peak ${formatCpuUsage(entry.peakProcessCpu)}) rss: ${CYAN}${formatMemoryUsage(entry.rss)}${db} (peak ${formatMemoryUsage(entry.peakRss)}) heapUsed: ${CYAN}${formatMemoryUsage(entry.heapUsed)}${db} (peak ${formatMemoryUsage(entry.peakHeapUsed)}) heapTotal: ${CYAN}${formatMemoryUsage(entry.heapTotal)}${db} (peak ${formatMemoryUsage(entry.peakHeapTotal)})`,
-      );
-    }
   }
   clearInterval(memoryCheckInterval);
   clearTimeout(memoryPeakResetTimeout);

@@ -41,6 +41,8 @@ Advantages:
 - [cli]: Added cpu and memory peaks history to cli.
 - [cli]: Added host cpu and process cpu to cli.
 - [frontend]: Added process cpu to SystemInformation.
+- [frontend]: Added under 'View' menu the item 'Matterbridge diagnostic log'. It shows the complete matter server nodes.
+- [frontend]: Added under 'View' menu the item 'Matterbridge system history'. It shows the graph page of the last 6h of host cpu, process cpu and memory usage (rss, heap used, heap total with peaks).
 
 ### Changed
 

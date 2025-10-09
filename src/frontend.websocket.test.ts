@@ -395,6 +395,12 @@ describe('Matterbridge frontend', () => {
     expect(msg.success).toBe(true);
   });
 
+  test('Websocket API send /api/generatehistorypage', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/generatehistorypage', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/generatehistorypage', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  });
+
   test('Websocket API send /api/matter', async () => {
     let msg = await waitMessageId(++WS_ID, '/api/matter', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/matter', params: {} });
     expect(msg.error).toBe('Wrong parameter id in /api/matter');

@@ -1,7 +1,54 @@
+/**
+ * This file contains the CLI history page generator.
+ *
+ * @file cliHistory.ts
+ * @author Luca Liguori
+ * @created 2025-10-09
+ * @version 1.0.0
+ * @license Apache-2.0
+ *
+ * Copyright 2025, 2026, 2027 Luca Liguori.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli history loaded.\u001B[40;0m');
+
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-export type CpuMemoryEntry = {
+// History for 6h at 1 sample each 10 seconds = 2160 entries
+export const historySize: number = 2160;
+
+export let historyIndex: number = 0;
+
+/**
+ * Sets the history index.
+ *
+ * @param {number} index - The new history index.
+ */
+export function setHistoryIndex(index: number) {
+  if (!Number.isFinite(index) || !Number.isSafeInteger(index)) {
+    throw new TypeError('historyIndex must be a finite, safe integer.');
+  }
+  if (index < 0 || index >= historySize) {
+    throw new RangeError(`historyIndex must be between 0 and ${historySize - 1}.`);
+  }
+  historyIndex = index;
+}
+
+export type HistoryEntry = {
   cpu: number;
   peakCpu: number;
   processCpu: number;
@@ -15,6 +62,20 @@ export type CpuMemoryEntry = {
   timestamp: number;
 };
 
+export const history: HistoryEntry[] = Array.from({ length: historySize }, () => ({
+  cpu: 0,
+  peakCpu: 0,
+  processCpu: 0,
+  peakProcessCpu: 0,
+  rss: 0,
+  peakRss: 0,
+  heapUsed: 0,
+  peakHeapUsed: 0,
+  heapTotal: 0,
+  peakHeapTotal: 0,
+  timestamp: 0,
+}));
+
 export type GenerateHistoryPageOptions = {
   /**
    * Full path (file name included) for the generated HTML file.
@@ -26,43 +87,28 @@ export type GenerateHistoryPageOptions = {
    * Defaults to `Matterbridge CPU & Memory History`.
    */
   pageTitle?: string;
-  /**
-   * Optional auto-refresh interval (in milliseconds). When provided, the page will reload itself.
-   */
-  refreshIntervalMs?: number;
 };
 
 /**
  * Generates a static HTML dashboard displaying CPU and memory history.
  *
- * @param {CpuMemoryEntry[]} history - The collected CPU/memory samples that should be visualised.
- * @param {number} historyIndex - The circular buffer index pointing to the next write position.
  * @param {GenerateHistoryPageOptions} [options] - Optional configuration for output path, page title, and refresh interval.
  *
- * @returns {string} The absolute path to the generated HTML file.
+ * @returns {string | undefined} The absolute path to the generated HTML file, or undefined if no samples exist.
  */
-export function generateHistoryPage(history: CpuMemoryEntry[], historyIndex: number, options: GenerateHistoryPageOptions = {}): string {
+export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): string | undefined {
   const pageTitle = options.pageTitle ?? 'Matterbridge CPU & Memory History';
   const outputPath = path.resolve(options.outputPath ?? path.join(process.cwd(), 'history.html'));
-  const refreshIntervalMs = options.refreshIntervalMs;
-
-  if (!Array.isArray(history)) {
-    throw new TypeError('history must be an array of CpuMemoryEntry objects.');
-  }
-
-  if (!Number.isFinite(historyIndex)) {
-    throw new TypeError('historyIndex must be a finite number.');
-  }
 
   const bufferLength = history.length;
 
   if (bufferLength === 0) {
-    throw new Error('history is empty.');
+    return undefined;
   }
 
   const startIndex = ((Math.trunc(historyIndex) % bufferLength) + bufferLength) % bufferLength;
 
-  const normalizedHistory: CpuMemoryEntry[] = [];
+  const normalizedHistory: HistoryEntry[] = [];
 
   for (let offset = 0; offset < bufferLength; offset += 1) {
     const index = (startIndex + offset) % bufferLength;
@@ -72,7 +118,7 @@ export function generateHistoryPage(history: CpuMemoryEntry[], historyIndex: num
   }
 
   if (normalizedHistory.length === 0) {
-    throw new Error('history does not contain any recorded entries.');
+    return undefined;
   }
 
   const peakCpu = Math.max(...normalizedHistory.map((entry) => entry.peakCpu ?? entry.cpu));
@@ -122,19 +168,22 @@ export function generateHistoryPage(history: CpuMemoryEntry[], historyIndex: num
         padding: 20px;
         background: linear-gradient(145deg, #020617, #0f172a);
         color: var(--fg);
+        min-width: 320px;
         min-height: 100vh;
       }
       h1 {
         margin-top: 0;
-        font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+        font-size: clamp(1.6rem, 2.2vw, 2.3rem);
         font-weight: 700;
         color: var(--accent);
       }
       .container {
-        width: 1240px;
+        min-width: 320px;
+        max-width: 1240px;
         margin: 0 auto;
+        padding: 0;
         display: grid;
-        gap: 24px;
+        gap: 20px;
       }
       .card {
         background: var(--bg-card);
@@ -143,8 +192,8 @@ export function generateHistoryPage(history: CpuMemoryEntry[], historyIndex: num
         padding: 20px;
         box-shadow: 0 20px 60px rgba(15, 23, 42, 0.35);
         backdrop-filter: blur(12px);
-        margin: 0 auto;
-        width: 100%;
+        margin: 0;
+        width: calc(100% - 40px);
         max-width: 1200px;
         position: relative;
         overflow: hidden;
@@ -304,15 +353,7 @@ export function generateHistoryPage(history: CpuMemoryEntry[], historyIndex: num
     <script type="module">
       const HISTORY_DATA = ${historySanitised};
       const SUMMARY_DATA = ${summarySanitised};
-      const REFRESH_INTERVAL_MS = ${typeof refreshIntervalMs === 'number' ? refreshIntervalMs : 'null'};
-
       let cleanup = () => {};
-
-      if (REFRESH_INTERVAL_MS && REFRESH_INTERVAL_MS > 0) {
-        setTimeout(function () {
-          window.location.reload();
-        }, REFRESH_INTERVAL_MS);
-      }
 
       const summaryContainer = document.getElementById('summary');
       const summaryEntries = [

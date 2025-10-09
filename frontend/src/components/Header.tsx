@@ -155,11 +155,15 @@ function Header() {
     } else if (value === 'view-mblog') {
       logMessage('Matterbridge', `Loading matterbridge log...`);
       showSnackbarMessage('Loading matterbridge log...', 5);
-      window.location.href = './api/view-mblog';
+      window.open('./api/view-mblog', '_blank', 'noopener,noreferrer');
     } else if (value === 'view-mjlog') {
       logMessage('Matterbridge', `Loading matter log...`);
       showSnackbarMessage('Loading matter log...', 5);
-      window.location.href = './api/view-mjlog';
+      window.open('./api/view-mjlog', '_blank', 'noopener,noreferrer');
+    } else if (value === 'view-diagnostic') {
+      logMessage('Matterbridge', `Loading diagnostic log...`);
+      showSnackbarMessage('Loading diagnostic log...', 5);
+      window.open('./api/view-diagnostic', '_blank', 'noopener,noreferrer');
     } else if (value === 'view-shellylog') {
       logMessage('Matterbridge', `Loading shelly system log...`);
       showSnackbarMessage('Loading shelly system log...', 5);
@@ -208,6 +212,8 @@ function Header() {
       handleShutdownClick();
     } else if (value === 'reboot') {
       handleRebootClick();
+    } else if (value === 'history') {
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/generatehistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'create-backup') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/create-backup', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'unregister') {
@@ -308,6 +314,9 @@ function Header() {
               }
             : null,
         );
+      } else if (msg.method === '/api/generatehistorypage' && msg.id === uniqueId.current && msg.success === true) {
+        if (debug) console.log('Header received /api/generatehistorypage success');
+        window.open(`./history.html`, '_blank', 'noopener,noreferrer');
       }
     };
 
@@ -568,6 +577,28 @@ function Header() {
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
               <ListItemText primary='Matter log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleMenuCloseConfirm('view-diagnostic');
+                handleViewMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Matterbridge diagnostic log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleMenuCloseConfirm('history');
+                handleViewMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Matterbridge system history' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
               <MenuItem
