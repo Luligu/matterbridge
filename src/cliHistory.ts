@@ -76,13 +76,7 @@ export function generateHistoryPage(history: CpuMemoryEntry[], historyIndex: num
   }
 
   const peakCpu = Math.max(...normalizedHistory.map((entry) => entry.peakCpu ?? entry.cpu));
-  const peakProcessCpu = Math.max(
-    ...normalizedHistory.map((entry) => {
-      if (Number.isFinite(entry.peakProcessCpu)) return entry.peakProcessCpu;
-      if (Number.isFinite(entry.processCpu)) return entry.processCpu;
-      return 0;
-    }),
-  );
+  const peakProcessCpu = Math.max(...normalizedHistory.map((entry) => entry.peakProcessCpu ?? entry.processCpu));
   const peakRss = Math.max(...normalizedHistory.map((entry) => entry.peakRss ?? entry.rss));
   const peakHeapUsed = Math.max(...normalizedHistory.map((entry) => entry.peakHeapUsed ?? entry.heapUsed));
   const peakHeapTotal = Math.max(...normalizedHistory.map((entry) => entry.peakHeapTotal ?? entry.heapTotal));

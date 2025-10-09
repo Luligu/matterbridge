@@ -240,6 +240,7 @@ async function startCpuMemoryCheck() {
     () => {
       log.debug(`****${RED}${BRIGHT}Cpu and memory peaks reset after first 5 minutes.${db}`);
       peakCpu = 0;
+      peakProcessCpu = 0;
       peakRss = 0;
       peakHeapUsed = 0;
       peakHeapTotal = 0;
