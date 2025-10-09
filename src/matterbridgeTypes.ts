@@ -45,6 +45,8 @@ export const MATTERBRIDGE_LOGGER_FILE = 'matterbridge.log';
 export const MATTER_LOGGER_FILE = 'matter.log';
 export const NODE_STORAGE_DIR = 'storage';
 export const MATTER_STORAGE_NAME = 'matterstorage';
+export const MATTERBRIDGE_DIAGNOSTIC_FILE = 'diagnostic.log';
+export const MATTERBRIDGE_HISTORY_FILE = 'history.html';
 
 export type MaybePromise<T> = T | Promise<T>;
 

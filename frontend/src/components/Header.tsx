@@ -316,7 +316,7 @@ function Header() {
         );
       } else if (msg.method === '/api/generatehistorypage' && msg.id === uniqueId.current && msg.success === true) {
         if (debug) console.log('Header received /api/generatehistorypage success');
-        window.open(`./history.html`, '_blank', 'noopener,noreferrer');
+        window.open(`./api/viewhistory`, '_blank', 'noopener,noreferrer');
       }
     };
 

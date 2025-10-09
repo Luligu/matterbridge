@@ -51,7 +51,7 @@ import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { PlatformConfig } from './matterbridgePlatform.js';
 import type { ApiSettings, RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
-import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from './matterbridgeTypes.js';
+import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from './matterbridgeTypes.js';
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
 import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
@@ -550,10 +550,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (device.serverNode) serverNodes.push(device.serverNode);
       }
       const fs = await import('node:fs');
-      if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'))) fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'));
+      if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE))) fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE));
       const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
       diagnosticDestination.write = async (text: string, _message: Diagnostic.Message) => {
-        await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'), text + '\n', { encoding: 'utf8' });
+        await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
       };
       Logger.destinations.diagnostic = diagnosticDestination;
       if (!diagnosticDestination.context) {
@@ -575,14 +575,28 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       try {
         const fs = await import('node:fs');
-        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'diagnostic.log'), 'utf8');
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
         res.type('text/plain');
         res.send(data.slice(29));
       } catch (error) {
         // istanbul ignore next
-        this.log.error(`Error reading diagnostic log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
+        this.log.error(`Error reading diagnostic log file ${MATTERBRIDGE_DIAGNOSTIC_FILE}: ${error instanceof Error ? error.message : error}`);
         // istanbul ignore next
         res.status(500).send('Error reading diagnostic log file.');
+      }
+    });
+
+    // Endpoint to view the history.html
+    this.expressApp.get('/api/viewhistory', async (req, res) => {
+      this.log.debug('The frontend sent /api/viewhistory');
+      try {
+        const fs = await import('node:fs');
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'utf8');
+        res.type('text/html');
+        res.send(data);
+      } catch (error) {
+        this.log.error(`Error reading history log file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading history log file. Please create the history log before loading it.');
       }
     });
 
@@ -1511,7 +1525,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await this.matterbridge.shutdownProcessAndFactoryReset();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/generatehistorypage') {
-        generateHistoryPage({ outputPath: path.join(this.matterbridge.rootDirectory, 'frontend/build', 'history.html'), pageTitle: `Matterbridge on ${this.matterbridge.systemInformation.hostname} Cpu & Memory History` });
+        generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge on ${this.matterbridge.systemInformation.hostname} Cpu & Memory History` });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/matter') {
         const localData = data;
