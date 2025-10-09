@@ -457,6 +457,7 @@ export interface WsMessageApiCpuUpdate extends WsMessageSuccessApiResponse {
   method: 'cpu_update';
   response: {
     cpuUsage: number;
+    processCpuUsage: number;
   };
 }
 

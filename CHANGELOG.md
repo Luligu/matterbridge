@@ -39,6 +39,8 @@ Advantages:
 - [thread]: Added BroadcastServer to frontend, plugins and devices.
 - [cli]: Added cpu and memory history to cli.
 - [cli]: Added cpu and memory peaks history to cli.
+- [cli]: Added host cpu and process cpu to cli.
+- [frontend]: Added process cpu to SystemInformation.
 
 ### Changed
 

@@ -34,9 +34,9 @@ import { inspect } from 'node:util';
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
 // Matterbridge
-import { getIntParameter, hasParameter } from './utils/export.js';
+import { getIntParameter, hasParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
-import { cliEmitter, setLastCpuUsage } from './cliEmitter.js';
+import { cliEmitter, setLastCpuUsage, setLastProcessCpuUsage } from './cliEmitter.js';
 
 export let instance: Matterbridge | undefined;
 
@@ -47,9 +47,13 @@ let snapshotInterval: NodeJS.Timeout;
 // Cpu and memory check
 const trace = hasParameter('trace');
 let memoryCheckInterval: NodeJS.Timeout;
+const memoryCheckIntervalMs = getIntParameter('memoryinterval') ?? 10 * 1000;
 let memoryPeakResetTimeout: NodeJS.Timeout;
 let prevCpus: os.CpuInfo[];
+let prevProcessCpu: NodeJS.CpuUsage;
+
 let peakCpu = 0;
+let peakProcessCpu = 0;
 let peakRss = 0;
 let peakHeapUsed = 0;
 let peakHeapTotal = 0;
@@ -61,6 +65,8 @@ let historyIndex: number = 0;
 type CpuMemoryEntry = {
   cpu: number;
   peakCpu: number;
+  processCpu: number;
+  peakProcessCpu: number;
   rss: number;
   peakRss: number;
   heapUsed: number;
@@ -73,6 +79,8 @@ type CpuMemoryEntry = {
 const history: CpuMemoryEntry[] = Array.from({ length: historySize }, () => ({
   cpu: 0,
   peakCpu: 0,
+  processCpu: 0,
+  peakProcessCpu: 0,
   rss: 0,
   peakRss: 0,
   heapUsed: 0,
@@ -127,6 +135,8 @@ async function startCpuMemoryCheck() {
 
   log.debug(`Cpu memory check started`);
   prevCpus = os.cpus();
+  prevProcessCpu = process.cpuUsage();
+
   clearInterval(memoryCheckInterval);
 
   const interval = () => {
@@ -158,7 +168,7 @@ async function startCpuMemoryCheck() {
     }
     cliEmitter.emit('memory', totalMememory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
 
-    // Get the cpu usage
+    // Get the host cpu usage
     const currCpus = os.cpus();
     // log.debug(`Cpus: ${JSON.stringify(currCpus)}`);
     if (currCpus.length !== prevCpus.length) {
@@ -185,14 +195,27 @@ async function startCpuMemoryCheck() {
         peakCpu = cpuUsage;
         if (peakCpu && trace) log.debug(`****${RED}${BRIGHT}Cpu peak detected.${db} Peak cpu from ${CYAN}${formatCpuUsage(peakCpu)}${db} to ${CYAN}${formatCpuUsage(cpuUsage)}${db}`);
       }
-      cliEmitter.emit('cpu', cpuUsage);
     }
     prevCpus = currCpus;
 
-    // Update preallocated history entry in place to avoid per-interval allocations
+    // Get the process cpu usage https://cdn.jsdelivr.net/npm/chart.js
+    const diff = process.cpuUsage(prevProcessCpu);
+    const userMs = diff.user / 1000;
+    const systemMs = diff.system / 1000;
+    const totalMs = userMs + systemMs;
+    const processCpuUsage = Number(((totalMs / memoryCheckIntervalMs) * 100).toFixed(2));
+    peakProcessCpu = Math.max(peakProcessCpu, processCpuUsage);
+    prevProcessCpu = process.cpuUsage();
+    setLastProcessCpuUsage(processCpuUsage);
+
+    cliEmitter.emit('cpu', cpuUsage, processCpuUsage);
+
+    // Update preallocated history entry in place to avoid per-interval allocations. Keep the same object reference.
     const entry = history[historyIndex];
     entry.cpu = cpuUsage;
     entry.peakCpu = peakCpu;
+    entry.processCpu = processCpuUsage;
+    entry.peakProcessCpu = peakProcessCpu;
     entry.rss = memoryUsageRaw.rss;
     entry.peakRss = peakRss;
     entry.heapUsed = memoryUsageRaw.heapUsed;
@@ -205,12 +228,12 @@ async function startCpuMemoryCheck() {
     // Show the cpu and memory usage
     if (trace)
       log.debug(
-        `***${YELLOW}${BRIGHT}Cpu usage:${db} ${CYAN}${formatCpuUsage(cpuUsage)}${db} (peak ${formatCpuUsage(peakCpu)}) ${YELLOW}${BRIGHT}Memory usage:${db} rss ${CYAN}${rss}${db} (peak ${formatMemoryUsage(peakRss)}) heapUsed ${CYAN}${heapUsed}${db} (peak ${formatMemoryUsage(peakHeapUsed)}) heapTotal ${CYAN}${heapTotal}${db} (peak ${formatMemoryUsage(peakHeapTotal)}) external ${external} arrayBuffers ${arrayBuffers}`,
+        `***${YELLOW}${BRIGHT}Host cpu:${db} ${CYAN}${formatCpuUsage(cpuUsage)}${db} (peak ${formatCpuUsage(peakCpu)}) ${YELLOW}${BRIGHT}Process cpu:${db} ${CYAN}${formatCpuUsage(processCpuUsage)}${db} (peak ${formatCpuUsage(peakProcessCpu)}) ${YELLOW}${BRIGHT}Process memory:${db} rss ${CYAN}${rss}${db} (peak ${formatMemoryUsage(peakRss)}) heapUsed ${CYAN}${heapUsed}${db} (peak ${formatMemoryUsage(peakHeapUsed)}) heapTotal ${CYAN}${heapTotal}${db} (peak ${formatMemoryUsage(peakHeapTotal)}) external ${external} arrayBuffers ${arrayBuffers}`,
       );
   };
 
   clearInterval(memoryCheckInterval);
-  memoryCheckInterval = setInterval(interval, getIntParameter('memoryinterval') ?? 10 * 1000).unref();
+  memoryCheckInterval = setInterval(interval, memoryCheckIntervalMs).unref();
 
   clearTimeout(memoryPeakResetTimeout);
   memoryPeakResetTimeout = setTimeout(
@@ -229,6 +252,8 @@ async function startCpuMemoryCheck() {
  * Stops the CPU and memory check interval.
  */
 async function stopCpuMemoryCheck() {
+  const generateHistoryPage = await import('./cliHistory.js');
+  generateHistoryPage.generateHistoryPage(history, historyIndex);
   if (trace) {
     log.debug(
       `***Cpu memory check stopped. Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}. Peak heapUsed: ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db}. Peak heapTotal: ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db}`,
@@ -240,7 +265,7 @@ async function stopCpuMemoryCheck() {
       // Skip entries where all values are 0 (unfilled history slots)
       if (entry.cpu === 0 && entry.peakCpu === 0 && entry.timestamp === 0) continue;
       log.debug(
-        `Time: ${new Date(entry.timestamp).toLocaleString()} Percent: ${CYAN}${formatCpuUsage(entry.cpu)}${db} (peak ${formatCpuUsage(entry.peakCpu)}) rss: ${CYAN}${formatMemoryUsage(entry.rss)}${db} (peak ${formatMemoryUsage(entry.peakRss)}) heapUsed: ${CYAN}${formatMemoryUsage(entry.heapUsed)}${db} (peak ${formatMemoryUsage(entry.peakHeapUsed)}) heapTotal: ${CYAN}${formatMemoryUsage(entry.heapTotal)}${db} (peak ${formatMemoryUsage(entry.peakHeapTotal)})`,
+        `Time: ${new Date(entry.timestamp).toLocaleString()} host cpu: ${CYAN}${formatCpuUsage(entry.cpu)}${db} (peak ${formatCpuUsage(entry.peakCpu)}) process cpu: ${CYAN}${formatCpuUsage(entry.processCpu)}${db} (peak ${formatCpuUsage(entry.peakProcessCpu)}) rss: ${CYAN}${formatMemoryUsage(entry.rss)}${db} (peak ${formatMemoryUsage(entry.peakRss)}) heapUsed: ${CYAN}${formatMemoryUsage(entry.heapUsed)}${db} (peak ${formatMemoryUsage(entry.peakHeapUsed)}) heapTotal: ${CYAN}${formatMemoryUsage(entry.heapTotal)}${db} (peak ${formatMemoryUsage(entry.peakHeapTotal)})`,
       );
     }
   }

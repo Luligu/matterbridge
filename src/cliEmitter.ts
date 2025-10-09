@@ -24,9 +24,18 @@
 
 import { EventEmitter } from 'node:events';
 
-export const cliEmitter = new EventEmitter();
+interface CliEvents {
+  shutdown: [];
+  cpu: [number, number];
+  memory: [string, string, string, string, string, string, string];
+  uptime: [string, string];
+  ready: [];
+}
+
+export const cliEmitter = new EventEmitter<CliEvents>();
 
 export let lastCpuUsage = 0;
+export let lastProcessCpuUsage = 0;
 
 /**
  * Sets the last CPU usage.
@@ -36,4 +45,14 @@ export let lastCpuUsage = 0;
  */
 export function setLastCpuUsage(val: number): void {
   lastCpuUsage = val;
+}
+
+/**
+ * Sets the last process CPU usage.
+ *
+ * @param {number} val - The process CPU usage percentage to set.
+ * @returns {void}
+ */
+export function setLastProcessCpuUsage(val: number): void {
+  lastProcessCpuUsage = val;
 }

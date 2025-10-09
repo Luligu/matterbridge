@@ -55,7 +55,7 @@ import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
 import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
-import { cliEmitter, lastCpuUsage } from './cliEmitter.js';
+import { cliEmitter, lastCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
 
@@ -397,8 +397,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     cliEmitter.on('memory', (totalMememory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) => {
       this.wssSendMemoryUpdate(totalMememory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
     });
-    cliEmitter.on('cpu', (cpuUsage: number) => {
-      this.wssSendCpuUpdate(cpuUsage);
+    cliEmitter.on('cpu', (cpuUsage: number, processCpuUsage: number) => {
+      this.wssSendCpuUpdate(cpuUsage, processCpuUsage);
     });
 
     // Endpoint to validate login code
@@ -892,6 +892,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.systemInformation.systemUptime = formatOsUpTime(os.uptime());
     this.matterbridge.systemInformation.processUptime = formatOsUpTime(Math.floor(process.uptime()));
     this.matterbridge.systemInformation.cpuUsage = lastCpuUsage.toFixed(2) + ' %';
+    this.matterbridge.systemInformation.processCpuUsage = lastProcessCpuUsage.toFixed(2) + ' %';
     this.matterbridge.systemInformation.rss = formatMemoryUsage(process.memoryUsage().rss);
     this.matterbridge.systemInformation.heapTotal = formatMemoryUsage(process.memoryUsage().heapTotal);
     this.matterbridge.systemInformation.heapUsed = formatMemoryUsage(process.memoryUsage().heapUsed);
@@ -2024,11 +2025,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * Sends a cpu update message to all connected clients.
    *
    * @param {number} cpuUsage - The CPU usage percentage to send.
+   * @param {number} processCpuUsage - The CPU usage percentage of the process to send.
    */
-  wssSendCpuUpdate(cpuUsage: number) {
+  wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number) {
     if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', success: true, response: { cpuUsage: Math.round(cpuUsage * 100) / 100 } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', success: true, response: { cpuUsage: Math.round(cpuUsage * 100) / 100, processCpuUsage: Math.round(processCpuUsage * 100) / 100 } });
   }
 
   /**

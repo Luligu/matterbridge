@@ -119,6 +119,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     systemUptime: '',
     processUptime: '',
     cpuUsage: '',
+    processCpuUsage: '',
     rss: '',
     heapTotal: '',
     heapUsed: '',

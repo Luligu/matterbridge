@@ -143,6 +143,7 @@ export interface SystemInformation {
   systemUptime: string;
   processUptime: string;
   cpuUsage: string;
+  processCpuUsage: string;
   rss: string;
   heapTotal: string;
   heapUsed: string;
