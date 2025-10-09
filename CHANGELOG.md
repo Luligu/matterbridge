@@ -38,6 +38,7 @@ Advantages:
 - [matterbridge]: Added SharedMatterbridge readonly type.
 - [thread]: Added BroadcastServer to frontend, plugins and devices.
 - [cli]: Added cpu and memory history to cli.
+- [cli]: Added cpu and memory peaks history to cli.
 
 ### Changed
 
@@ -48,6 +49,7 @@ Advantages:
 - [spawn]: Refactored spawnCommand for compatibility with InstallProgressDialog.
 - [matter.js]: Bumped `matter.js` to 0.15.5. Thanks matter.js!
 - [backend]: Optimized imports.
+- [cli]: Bumped `cli` version to 2.1.0.
 
 ### Fixed
 

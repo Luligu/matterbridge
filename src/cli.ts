@@ -4,7 +4,7 @@
  * @file cli.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 2.0.1
+ * @version 2.1.0
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -85,7 +85,7 @@ const history: CpuMemoryEntry[] = Array.from({ length: historySize }, () => ({
 const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
 const formatCpuUsage = (percent: number): string => {
-  return `${percent.toFixed(2).padStart(5, ' ')}%`;
+  return `${percent.toFixed(2).padStart(5, ' ')} %`;
 };
 
 const formatMemoryUsage = (bytes: number): string => {
@@ -469,7 +469,7 @@ async function stop() {
  *
  * --loader enables loader logging.
  *
- * --trace enables cpu and memory logging and history.
+ * --trace enables cpu and memory logging and history logging on shutdown.
  *
  * --memoryinterval <milliseconds> can be used to set the CPU and memory check interval. Default is 10 seconds.
  *
