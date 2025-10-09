@@ -4,7 +4,7 @@
 const NAME = 'CliMain';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', './cli.js', '-memorycheck', '-inspect', '-snapshotinterval', '60000', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
+process.argv = ['node', './cli.js', '-trace', '-memorycheck', '-inspect', '-snapshotinterval', '60000', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import os from 'node:os';
 import { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
@@ -57,7 +57,7 @@ describe('Matterbridge', () => {
     jest.useFakeTimers();
     // Dynamically import the cli module
     const cli = await import('./cli.js');
-    await new Promise((resolve) => {
+    await new Promise<void>((resolve) => {
       cliEmitter.once('ready', resolve);
     });
     expect(cli.instance).toBeDefined();
@@ -104,7 +104,7 @@ describe('Matterbridge', () => {
       };
     });
     jest.advanceTimersByTime(10 * 1000); // Fast-forward time by 10 seconds
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Host cpu:`));
 
     // Simulate different uptime values
     jest.clearAllMocks();
@@ -117,7 +117,7 @@ describe('Matterbridge', () => {
       return 90000;
     });
     jest.advanceTimersByTime(10 * 1000); // Fast-forward time by 10 seconds
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Host cpu:`));
 
     jest.clearAllMocks();
     jest.spyOn(os, 'uptime').mockImplementationOnce(() => {
@@ -129,7 +129,7 @@ describe('Matterbridge', () => {
       return 4000;
     });
     jest.advanceTimersByTime(10 * 1000); // Fast-forward time by 10 seconds
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Host cpu:`));
 
     jest.clearAllMocks();
     jest.spyOn(os, 'uptime').mockImplementationOnce(() => {
@@ -141,7 +141,7 @@ describe('Matterbridge', () => {
       return 70;
     });
     jest.advanceTimersByTime(10 * 1000); // Fast-forward time by 10 seconds
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Host cpu:`));
 
     // Simulate a failure in os.cpus()
     jest.clearAllMocks();
@@ -166,7 +166,7 @@ describe('Matterbridge', () => {
 
   it('should shutdown matterbridge', async () => {
     matterbridge.emit('shutdown');
-    await new Promise((resolve) => {
+    await new Promise<void>((resolve) => {
       cliEmitter.once('shutdown', resolve);
     });
 

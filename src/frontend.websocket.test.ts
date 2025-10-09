@@ -1251,7 +1251,7 @@ describe('Matterbridge frontend', () => {
       };
       ws.addEventListener('message', onMessage);
     });
-    matterbridge.frontend.wssSendCpuUpdate(50);
+    matterbridge.frontend.wssSendCpuUpdate(50, 35);
     const response = await received;
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
@@ -1260,7 +1260,7 @@ describe('Matterbridge frontend', () => {
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('cpu_update');
-    expect(data.response).toEqual({ cpuUsage: 50 });
+    expect(data.response).toEqual({ cpuUsage: 50, processCpuUsage: 35 });
     expect(data.error).toBeUndefined();
   });
 

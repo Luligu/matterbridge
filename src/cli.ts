@@ -253,8 +253,12 @@ async function startCpuMemoryCheck() {
  * Stops the CPU and memory check interval.
  */
 async function stopCpuMemoryCheck() {
-  const generateHistoryPage = await import('./cliHistory.js');
-  generateHistoryPage.generateHistoryPage(history, historyIndex);
+  try {
+    const generateHistoryPage = await import('./cliHistory.js');
+    generateHistoryPage.generateHistoryPage(history, historyIndex);
+  } catch (err) {
+    log.error(`Failed to generate history page: ${inspect(err)}`);
+  }
   if (trace) {
     log.debug(
       `***Cpu memory check stopped. Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}. Peak heapUsed: ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db}. Peak heapTotal: ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db}`,

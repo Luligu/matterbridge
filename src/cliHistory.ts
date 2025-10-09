@@ -213,12 +213,12 @@ export function generateHistoryPage(history: CpuMemoryEntry[], historyIndex: num
       }
       th {
         text-transform: uppercase;
-        font-size: 0.72rem;
+        font-size: 0.75rem;
         letter-spacing: 0.08em;
         color: var(--muted);
       }
       td {
-        font-size: 0.72rem;
+        font-size: 0.75rem;
       }
       tr:hover {
         background: rgba(148, 163, 184, 0.08);
