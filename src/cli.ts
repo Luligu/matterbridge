@@ -34,7 +34,7 @@ import { inspect } from 'node:util';
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
 // Cli
-import { cliEmitter, setLastCpuUsage, setLastProcessCpuUsage } from './cliEmitter.js';
+import { cliEmitter, setLastOsCpuUsage, setLastProcessCpuUsage } from './cliEmitter.js';
 import { history, historyIndex, historySize, setHistoryIndex } from './cliHistory.js';
 // Matterbridge
 import { getIntParameter, hasParameter } from './utils/commandLine.js';
@@ -59,6 +59,8 @@ let peakProcessCpu = 0;
 let peakRss = 0;
 let peakHeapUsed = 0;
 let peakHeapTotal = 0;
+let peakExternal = 0;
+let peakArrayBuffers = 0;
 
 const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
@@ -115,9 +117,11 @@ async function startCpuMemoryCheck() {
     const processUptime = formatOsUpTime(Math.floor(process.uptime()));
     cliEmitter.emit('uptime', systemUptime, processUptime);
 
-    // Get the memory usage
-    const totalMememory = formatMemoryUsage(os.totalmem());
+    // Get the free and total memory
+    const totalMemory = formatMemoryUsage(os.totalmem());
     const freeMemory = formatMemoryUsage(os.freemem());
+
+    // Get the memory usage
     const memoryUsageRaw = process.memoryUsage();
     const rss = formatMemoryUsage(memoryUsageRaw.rss);
     const heapTotal = formatMemoryUsage(memoryUsageRaw.heapTotal);
@@ -136,7 +140,15 @@ async function startCpuMemoryCheck() {
       if (peakHeapTotal && trace) log.debug(`****${RED}${BRIGHT}HeapTotal peak detected.${db} Peak heapTotal from ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.heapTotal)}${db}`);
       peakHeapTotal = memoryUsageRaw.heapTotal;
     }
-    cliEmitter.emit('memory', totalMememory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
+    if (memoryUsageRaw.external > peakExternal) {
+      if (peakExternal && trace) log.debug(`****${RED}${BRIGHT}External peak detected.${db} Peak external from ${CYAN}${formatMemoryUsage(peakExternal)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.external)}${db}`);
+      peakExternal = memoryUsageRaw.external;
+    }
+    if (memoryUsageRaw.arrayBuffers > peakArrayBuffers) {
+      if (peakArrayBuffers && trace) log.debug(`****${RED}${BRIGHT}ArrayBuffers peak detected.${db} Peak arrayBuffers from ${CYAN}${formatMemoryUsage(peakArrayBuffers)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.arrayBuffers)}${db}`);
+      peakArrayBuffers = memoryUsageRaw.arrayBuffers;
+    }
+    cliEmitter.emit('memory', totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
 
     // Get the host cpu usage
     const currCpus = os.cpus();
@@ -156,16 +168,16 @@ async function startCpuMemoryCheck() {
       totalIdle += idleDiff;
       totalTick += totalDiff;
     });
-    const cpuUsage = 100 - (totalIdle / totalTick) * 100;
-    if (totalTick === 0 || isNaN(cpuUsage) || !isFinite(cpuUsage) || cpuUsage <= 0) {
+    const osCpuUsage = 100 - (totalIdle / totalTick) * 100;
+    if (totalTick === 0 || isNaN(osCpuUsage) || !isFinite(osCpuUsage) || osCpuUsage <= 0) {
       log.debug(`Cpu check failed, using previous cpus`);
     } else {
       // istanbul ignore next
-      setLastCpuUsage(cpuUsage);
+      setLastOsCpuUsage(osCpuUsage);
       // istanbul ignore next if
-      if (cpuUsage > peakCpu) {
-        peakCpu = cpuUsage;
-        if (peakCpu && trace) log.debug(`****${RED}${BRIGHT}Cpu peak detected.${db} Peak cpu from ${CYAN}${formatCpuUsage(peakCpu)}${db} to ${CYAN}${formatCpuUsage(cpuUsage)}${db}`);
+      if (osCpuUsage > peakCpu) {
+        peakCpu = osCpuUsage;
+        if (peakCpu && trace) log.debug(`****${RED}${BRIGHT}Cpu peak detected.${db} Peak cpu from ${CYAN}${formatCpuUsage(peakCpu)}${db} to ${CYAN}${formatCpuUsage(osCpuUsage)}${db}`);
       }
     }
     prevCpus = currCpus;
@@ -175,7 +187,7 @@ async function startCpuMemoryCheck() {
     const userMs = diff.user / 1000;
     const systemMs = diff.system / 1000;
     const totalMs = userMs + systemMs;
-    const processCpuUsage = Number(((totalMs / memoryCheckIntervalMs) * 100).toFixed(2));
+    const processCpuUsage = Number((((totalMs / memoryCheckIntervalMs) * 100) / currCpus.length).toFixed(2));
     // istanbul ignore next if
     if (processCpuUsage > peakProcessCpu) {
       peakProcessCpu = processCpuUsage;
@@ -184,11 +196,12 @@ async function startCpuMemoryCheck() {
     prevProcessCpu = process.cpuUsage();
     setLastProcessCpuUsage(processCpuUsage);
 
-    cliEmitter.emit('cpu', cpuUsage, processCpuUsage);
+    cliEmitter.emit('cpu', osCpuUsage, processCpuUsage);
 
     // Update preallocated history entry in place to avoid per-interval allocations. Keep the same object reference.
     const entry = history[historyIndex];
-    entry.cpu = cpuUsage;
+    entry.timestamp = Date.now();
+    entry.cpu = osCpuUsage;
     entry.peakCpu = peakCpu;
     entry.processCpu = processCpuUsage;
     entry.peakProcessCpu = peakProcessCpu;
@@ -198,13 +211,21 @@ async function startCpuMemoryCheck() {
     entry.peakHeapUsed = peakHeapUsed;
     entry.heapTotal = memoryUsageRaw.heapTotal;
     entry.peakHeapTotal = peakHeapTotal;
-    entry.timestamp = Date.now();
     setHistoryIndex((historyIndex + 1) % historySize);
 
     // Show the cpu and memory usage
     if (trace)
       log.debug(
-        `***${YELLOW}${BRIGHT}Host cpu:${db} ${CYAN}${formatCpuUsage(cpuUsage)}${db} (peak ${formatCpuUsage(peakCpu)}) ${YELLOW}${BRIGHT}Process cpu:${db} ${CYAN}${formatCpuUsage(processCpuUsage)}${db} (peak ${formatCpuUsage(peakProcessCpu)}) ${YELLOW}${BRIGHT}Process memory:${db} rss ${CYAN}${rss}${db} (peak ${formatMemoryUsage(peakRss)}) heapUsed ${CYAN}${heapUsed}${db} (peak ${formatMemoryUsage(peakHeapUsed)}) heapTotal ${CYAN}${heapTotal}${db} (peak ${formatMemoryUsage(peakHeapTotal)}) external ${external} arrayBuffers ${arrayBuffers}`,
+        `***${YELLOW}${BRIGHT}Host cpu:${db} ` +
+          `${CYAN}${formatCpuUsage(osCpuUsage)}${db} (peak ${formatCpuUsage(peakCpu)}) ` +
+          `${YELLOW}${BRIGHT}Process cpu:${db} ` +
+          `${CYAN}${formatCpuUsage(processCpuUsage)}${db} (peak ${formatCpuUsage(peakProcessCpu)}) ` +
+          `${YELLOW}${BRIGHT}Process memory:${db} ` +
+          `rss ${CYAN}${rss}${db} (peak ${formatMemoryUsage(peakRss)}) ` +
+          `heapUsed ${CYAN}${heapUsed}${db} (peak ${formatMemoryUsage(peakHeapUsed)}) ` +
+          `heapTotal ${CYAN}${heapTotal}${db} (peak ${formatMemoryUsage(peakHeapTotal)}) ` +
+          `external ${CYAN}${external}${db} (peak ${formatMemoryUsage(peakExternal)}) ` +
+          `arrayBuffers ${CYAN}${arrayBuffers}${db} (peak ${formatMemoryUsage(peakArrayBuffers)})`,
       );
   };
 
@@ -215,7 +236,7 @@ async function startCpuMemoryCheck() {
   // istanbul ignore next
   memoryPeakResetTimeout = setTimeout(
     () => {
-      log.debug(`****${RED}${BRIGHT}Cpu and memory peaks reset after first 5 minutes.${db}`);
+      if (trace) log.debug(`****${RED}${BRIGHT}Cpu and memory peaks reset after first 5 minutes.${db}`);
       peakCpu = 0;
       peakProcessCpu = 0;
       peakRss = 0;
@@ -232,7 +253,13 @@ async function startCpuMemoryCheck() {
 async function stopCpuMemoryCheck() {
   if (trace) {
     log.debug(
-      `***Cpu memory check stopped. Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}. Peak heapUsed: ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db}. Peak heapTotal: ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db}`,
+      `***Cpu memory check stopped. ` +
+        `Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. ` +
+        `Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}. ` +
+        `Peak heapUsed: ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db}. ` +
+        `Peak heapTotal: ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db}. ` +
+        `Peak external: ${CYAN}${formatMemoryUsage(peakExternal)}${db}. ` +
+        `Peak arrayBuffers: ${CYAN}${formatMemoryUsage(peakArrayBuffers)}${db}.`,
     );
   }
   clearInterval(memoryCheckInterval);

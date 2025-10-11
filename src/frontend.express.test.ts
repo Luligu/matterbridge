@@ -38,7 +38,7 @@ import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
 import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
-import { MATTER_LOGGER_FILE, MATTERBRIDGE_LOGGER_FILE } from './matterbridgeTypes.js';
+import { MATTER_LOGGER_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Mock BroadcastServer methods
@@ -343,6 +343,16 @@ describe('Matterbridge frontend express with http', () => {
   test('GET /api/view-diagnostic', async () => {
     const response = await makeRequest('/api/view-diagnostic', 'GET');
 
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+  }, 30000);
+
+  test('GET /api/viewhistory', async () => {
+    let response = await makeRequest('/api/viewhistory', 'GET');
+    expect(response.status).toBe(500);
+
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'any data', 'utf8');
+    response = await makeRequest('/api/viewhistory', 'GET');
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
   }, 30000);

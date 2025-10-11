@@ -49,6 +49,7 @@ export function setHistoryIndex(index: number) {
 }
 
 export type HistoryEntry = {
+  timestamp: number;
   cpu: number;
   peakCpu: number;
   processCpu: number;
@@ -59,10 +60,14 @@ export type HistoryEntry = {
   peakHeapUsed: number;
   heapTotal: number;
   peakHeapTotal: number;
-  timestamp: number;
+  external: number;
+  peakExternal: number;
+  arrayBuffers: number;
+  peakArrayBuffers: number;
 };
 
 export const history: HistoryEntry[] = Array.from({ length: historySize }, () => ({
+  timestamp: 0,
   cpu: 0,
   peakCpu: 0,
   processCpu: 0,
@@ -73,7 +78,10 @@ export const history: HistoryEntry[] = Array.from({ length: historySize }, () =>
   peakHeapUsed: 0,
   heapTotal: 0,
   peakHeapTotal: 0,
-  timestamp: 0,
+  external: 0,
+  peakExternal: 0,
+  arrayBuffers: 0,
+  peakArrayBuffers: 0,
 }));
 
 export type GenerateHistoryPageOptions = {

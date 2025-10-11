@@ -26,16 +26,16 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mFrontend loaded.\u001B[40;0m');
 
 // Node modules
-import type { Server as HttpServer, IncomingMessage as HttpIncomingMessage } from 'node:http';
+import type { Server as HttpServer } from 'node:http';
 import type { Server as HttpsServer, ServerOptions as HttpsServerOptions } from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import EventEmitter from 'node:events';
 
 // Third-party modules
-import express from 'express';
-import WebSocket, { WebSocketServer } from 'ws';
-import multer from 'multer';
+import type { Express } from 'express';
+import type WebSocket from 'ws';
+import type { WebSocketServer } from 'ws';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt, wr } from 'node-ansi-logger';
 // @matter
@@ -52,10 +52,14 @@ import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { PlatformConfig } from './matterbridgePlatform.js';
 import type { ApiSettings, RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
 import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from './matterbridgeTypes.js';
-import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter, wait, inspectError } from './utils/export.js';
+import { isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean } from './utils/isvalid.js';
+import { createZip } from './utils/createZip.js';
+import { hasParameter } from './utils/commandLine.js';
+import { withTimeout, wait } from './utils/wait.js';
+import { inspectError } from './utils/error.js';
 import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
-import { cliEmitter, lastCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
+import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
 import { generateHistoryPage } from './cliHistory.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
@@ -77,7 +81,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private port = 8283;
   private listening = false;
 
-  private expressApp: express.Express | undefined;
+  private expressApp: Express | undefined;
   private httpServer: HttpServer | undefined;
   private httpsServer: HttpsServer | undefined;
   private webSocketServer: WebSocketServer | undefined;
@@ -151,11 +155,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.debug(`Initializing the frontend ${hasParameter('ssl') ? 'https' : 'http'} server on port ${YELLOW}${this.port}${db}`);
 
     // Initialize multer with the upload directory
+    const multer = await import('multer');
     const uploadDir = path.join(this.matterbridge.matterbridgeDirectory, 'uploads'); // Is created by matterbridge initialize
-    const upload = multer({ dest: uploadDir });
+    const upload = multer.default({ dest: uploadDir });
 
     // Create the express app that serves the frontend
-    this.expressApp = express();
+    const express = await import('express');
+    this.expressApp = express.default();
 
     // Inject logging/debug wrapper for route/middleware registration
     /*
@@ -336,10 +342,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     }
 
     // Create a WebSocket server and attach it to the http or https server
-    this.log.debug(`Creating WebSocketServer...`);
-    this.webSocketServer = new WebSocketServer(hasParameter('ssl') ? { server: this.httpsServer } : { server: this.httpServer });
+    const ws = await import('ws');
 
-    this.webSocketServer.on('connection', (ws: WebSocket, request: HttpIncomingMessage) => {
+    this.log.debug(`Creating WebSocketServer...`);
+    this.webSocketServer = new ws.WebSocketServer(hasParameter('ssl') ? { server: this.httpsServer } : { server: this.httpServer });
+
+    this.webSocketServer.on('connection', (ws, request) => {
       const clientIp = request.socket.remoteAddress;
 
       // Set the global logger callback for the WebSocketServer
@@ -795,6 +803,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   async stop() {
     this.log.debug('Stopping the frontend...');
+    const ws = await import('ws');
 
     // Remove listeners from the express app
     if (this.expressApp) {
@@ -808,7 +817,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.debug('Closing WebSocket server...');
       // Close all active connections
       this.webSocketServer.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
+        if (client.readyState === ws.WebSocket.OPEN) {
           client.close();
         }
       });
@@ -906,7 +915,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.systemInformation.freeMemory = formatMemoryUsage(os.freemem());
     this.matterbridge.systemInformation.systemUptime = formatOsUpTime(os.uptime());
     this.matterbridge.systemInformation.processUptime = formatOsUpTime(Math.floor(process.uptime()));
-    this.matterbridge.systemInformation.cpuUsage = lastCpuUsage.toFixed(2) + ' %';
+    this.matterbridge.systemInformation.cpuUsage = lastOsCpuUsage.toFixed(2) + ' %';
     this.matterbridge.systemInformation.processCpuUsage = lastProcessCpuUsage.toFixed(2) + ' %';
     this.matterbridge.systemInformation.rss = formatMemoryUsage(process.memoryUsage().rss);
     this.matterbridge.systemInformation.heapTotal = formatMemoryUsage(process.memoryUsage().heapTotal);
@@ -1266,7 +1275,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     let data: WsMessageApiRequest;
 
     const sendResponse = (data: WsMessageApiResponse | WsMessageErrorApiResponse) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (client.readyState === client.OPEN) {
         if ('response' in data) {
           const { response, ...rest } = data;
           this.log.debug(`Sending api response message: ${debugStringify(rest)}`);
@@ -1946,6 +1955,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * The function sends the message to all connected clients.
    */
   wssSendLogMessage(level: string, time: string, name: string, message: string) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     if (!level || !time || !name || !message) return;
     // Remove ANSI escape codes from the message
     // eslint-disable-next-line no-control-regex
@@ -1994,6 +2004,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {ApiMatter} params.matter - The matter device that has changed. Required if changed is 'matter'.
    */
   wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter: ApiMatter }) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, ...params } });
@@ -2006,6 +2017,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {boolean} fixed - If true, the restart is fixed and will not be reset by plugin restarts. Default is false.
    */
   wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a restart required message to all connected clients');
     this.matterbridge.restartRequired = true;
     this.matterbridge.fixedRestartRequired = fixed;
@@ -2020,6 +2032,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {boolean} snackbar - If true, the snackbar message will be cleared from all connected clients. Default is true.
    */
   wssSendRestartNotRequired(snackbar: boolean = true) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a restart not required message to all connected clients');
     this.matterbridge.restartRequired = false;
     if (snackbar === true) this.wssSendCloseSnackbarMessage(`Restart required`);
@@ -2033,6 +2046,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
    */
   wssSendUpdateRequired(devVersion: boolean = false) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending an update required message to all connected clients');
     this.matterbridge.updateRequired = true;
     // Send the message to all connected clients
@@ -2046,6 +2060,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {number} processCpuUsage - The CPU usage percentage of the process to send.
    */
   wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', success: true, response: { cpuUsage: Math.round(cpuUsage * 100) / 100, processCpuUsage: Math.round(processCpuUsage * 100) / 100 } });
@@ -2063,6 +2078,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} arrayBuffers - The array buffers memory in bytes.
    */
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', success: true, response: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers } });
@@ -2075,6 +2091,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} processUptime - The process uptime in a human-readable format.
    */
   wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     if (hasParameter('debug')) this.log.debug('Sending a uptime update message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
@@ -2092,6 +2109,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * If timeout is 0, the snackbar message will be displayed until closed by the user.
    */
   wssSendSnackbarMessage(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info') {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a snackbar message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'snackbar', success: true, response: { message, timeout, severity } });
@@ -2104,6 +2122,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} message - The message to send.
    */
   wssSendCloseSnackbarMessage(message: string) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a close snackbar message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'close_snackbar', success: true, response: { message } });
@@ -2126,6 +2145,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * with the updated attribute information.
    */
   wssSendAttributeChangedMessage(plugin: string, serialNumber: string, uniqueId: string, number: EndpointNumber, id: string, cluster: string, attribute: string, value: number | string | boolean | null) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending an attribute update message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'state_update', success: true, response: { plugin, serialNumber, uniqueId, number, id, cluster, attribute, value } });
@@ -2138,11 +2158,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {WsMessageBroadcast} msg - The message to send.
    */
   wssBroadcastMessage(msg: WsMessageBroadcast) {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     // Send the message to all connected clients
     const stringifiedMsg = JSON.stringify(msg);
     if (msg.method !== 'log') this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
     this.webSocketServer?.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (client.readyState === client.OPEN) {
         client.send(stringifiedMsg);
       }
     });

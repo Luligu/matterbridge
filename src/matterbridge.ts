@@ -1199,21 +1199,21 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when the logLevel has been set.
    */
   async setLogLevel(logLevel: LogLevel): Promise<void> {
-    if (this.log) this.log.logLevel = logLevel;
+    this.log.logLevel = logLevel;
     this.frontend.logLevel = logLevel;
     MatterbridgeEndpoint.logLevel = logLevel;
-    if (this.devices) this.devices.logLevel = logLevel;
-    if (this.plugins) this.plugins.logLevel = logLevel;
+    this.devices.logLevel = logLevel;
+    this.plugins.logLevel = logLevel;
     for (const plugin of this.plugins) {
       if (!plugin.platform || !plugin.platform.log || !plugin.platform.config) continue;
-      plugin.platform.log.logLevel = plugin.platform.config.debug === true ? LogLevel.DEBUG : this.log.logLevel;
-      await plugin.platform.onChangeLoggerLevel(plugin.platform.config.debug === true ? LogLevel.DEBUG : this.log.logLevel);
+      plugin.platform.log.logLevel = plugin.platform.config.debug === true ? LogLevel.DEBUG : logLevel;
+      await plugin.platform.onChangeLoggerLevel(plugin.platform.config.debug === true ? LogLevel.DEBUG : logLevel);
     }
     // Set the global logger callback for the WebSocketServer to the common minimum logLevel
     let callbackLogLevel = LogLevel.NOTICE;
-    if (this.log.logLevel === LogLevel.INFO || Logger.level === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
-    if (this.log.logLevel === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
-    AnsiLogger.setGlobalCallback(this.frontend.wssSendLogMessage.bind(this.frontend), callbackLogLevel);
+    if (logLevel === LogLevel.INFO || Logger.level === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
+    if (logLevel === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
+    AnsiLogger.setGlobalCallbackLevel(callbackLogLevel);
     this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
   }
 
