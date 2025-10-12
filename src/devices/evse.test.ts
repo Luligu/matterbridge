@@ -18,36 +18,15 @@ import { EnergyEvseServer, EnergyEvseModeServer, DeviceEnergyManagementModeServe
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeDeviceEnergyManagementModeServer } from '../matterbridgeBehaviors.js';
-import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, loggerLogSpy, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { Evse, MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './evse.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-// Setup the matter and test environment
+// Setup the Matter test environment
 createTestEnvironment(HOMEDIR);
+
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let server: ServerNode<ServerNode.RootEndpoint>;
@@ -119,8 +98,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.has(MatterbridgeDeviceEnergyManagementModeServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(DeviceEnergyManagementModeServer).commands.has('changeToMode')).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((device.state['deviceEnergyManagementMode'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['deviceEnergyManagementMode'] as any).generatedCommandList).toEqual([1]);
+    expect((device as any).state['deviceEnergyManagementMode'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['deviceEnergyManagementMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: 0`);
@@ -137,8 +116,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('disable')).toBeTruthy();
     expect(device.behaviors.elementsOf(EnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
-    expect((device.state['energyEvse'] as any).acceptedCommandList).toEqual([1, 2]);
-    expect((device.state['energyEvse'] as any).generatedCommandList).toEqual([]);
+    expect((device as any).state['energyEvse'].acceptedCommandList).toEqual([1, 2]);
+    expect((device as any).state['energyEvse'].generatedCommandList).toEqual([]);
     expect((device.stateOf(MatterbridgeEnergyEvseServer) as any).acceptedCommandList).toEqual([1, 2]);
     expect((device.stateOf(MatterbridgeEnergyEvseServer) as any).generatedCommandList).toEqual([]);
     jest.clearAllMocks();
@@ -162,8 +141,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.has(MatterbridgeEnergyEvseModeServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(EnergyEvseModeServer).commands.has('changeToMode')).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((device.state['energyEvseMode'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['energyEvseMode'] as any).generatedCommandList).toEqual([1]);
+    expect((device as any).state['energyEvseMode'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['energyEvseMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'energyEvseMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeEnergyEvseModeServer changeToMode called with unsupported newMode: 0`);

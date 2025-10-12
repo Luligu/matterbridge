@@ -18,36 +18,15 @@ import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } 
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeThermostatServer } from '../matterbridgeBehaviors.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, loggerLogSpy, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-// Setup the matter and test environment
+// Setup the Matter test environment
 createTestEnvironment(HOMEDIR);
+
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge Water Heater', () => {
   let server: ServerNode<ServerNode.RootEndpoint>;
@@ -145,8 +124,8 @@ describe('Matterbridge Water Heater', () => {
     expect(device.behaviors.elementsOf(MatterbridgeWaterHeaterManagementServer).commands.has('boost')).toBeTruthy();
     expect(device.behaviors.elementsOf(WaterHeaterManagementServer).commands.has('cancelBoost')).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeWaterHeaterManagementServer).commands.has('cancelBoost')).toBeTruthy();
-    expect((device.state['waterHeaterManagement'] as any).acceptedCommandList).toEqual([0, 1]);
-    expect((device.state['waterHeaterManagement'] as any).generatedCommandList).toEqual([]);
+    expect((device as any).state['waterHeaterManagement'].acceptedCommandList).toEqual([0, 1]);
+    expect((device as any).state['waterHeaterManagement'].generatedCommandList).toEqual([]);
     expect((device.stateOf(MatterbridgeWaterHeaterManagementServer) as any).acceptedCommandList).toEqual([0, 1]);
     expect((device.stateOf(MatterbridgeWaterHeaterManagementServer) as any).generatedCommandList).toEqual([]);
 
@@ -166,8 +145,8 @@ describe('Matterbridge Water Heater', () => {
     expect(device.behaviors.has(MatterbridgeWaterHeaterModeServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(WaterHeaterModeServer).commands.has('changeToMode')).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeWaterHeaterModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((device.state['waterHeaterMode'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['waterHeaterMode'] as any).generatedCommandList).toEqual([1]);
+    expect((device as any).state['waterHeaterMode'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['waterHeaterMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'waterHeaterMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: 0`);
