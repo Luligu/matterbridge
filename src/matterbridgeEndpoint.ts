@@ -276,6 +276,11 @@ export interface SerializedMatterbridgeEndpoint {
   clusterServersId: ClusterId[];
 }
 
+export enum PresetType {
+  None = 0,
+  // ... autres valeurs ...
+}
+
 const supportedPresets = [PresetType.Comfort, PresetType.Eco, PresetType.Away, PresetType.Sleep];
 
 // Mapping des presets vers leurs handles
@@ -1939,7 +1944,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Thermostat.Feature.Presets
       // supportedPresets: supportedPresets,
       numberOfPresets: supportedPresets.length,
-      selectedPreset: PresetType.None,
+      type ExtendedThermostatSettings = Partial<ThermostatSettings> & {
+      selectedPreset?: PresetType;
       activePresetHandle: new Uint8Array([0]),
     });
     return this;
