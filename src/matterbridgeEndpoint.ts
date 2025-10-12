@@ -261,7 +261,6 @@ export interface MatterbridgeEndpointCommands {
   resetCondition: HandlerFunction;
 }
 
-
 export interface SerializedMatterbridgeEndpoint {
   pluginName: string;
   deviceName: string;
