@@ -1940,7 +1940,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       // supportedPresets: supportedPresets,
       numberOfPresets: supportedPresets.length,
       selectedPreset: PresetType.None,
-      activePresetHandle: 0,
+      activePresetHandle: new Uint8Array([0]),
     });
     return this;
   }
