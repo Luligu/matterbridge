@@ -23,7 +23,7 @@ Advantages:
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 
-## [3.3.1] - Not released
+## [3.3.1] - 2025-10-12
 
 ### Breaking Changes
 
@@ -41,8 +41,8 @@ Advantages:
 - [cli]: Added cpu and memory peaks history to cli.
 - [cli]: Added host cpu and process cpu to cli.
 - [frontend]: Added process cpu to SystemInformation.
-- [frontend]: Added under 'View' menu the item 'Matterbridge diagnostic log'. It shows the complete matter server nodes.
-- [frontend]: Added under 'View' menu the item 'Matterbridge system history'. It shows the graph page of the last 6h of host cpu, process cpu and memory usage (rss, heap used, heap total with peaks).
+- [frontend]: Added under 'View' menu the item 'Matterbridge diagnostic log'. It shows the complete matter server nodes. The page is static and data are embedded so it can be sent for debug.
+- [frontend]: Added under 'View' menu the item 'Matterbridge system history'. It shows the graph page of the last 12h of host cpu, process cpu and memory usage (rss, heap used, heap total with peaks). The page is static and data are embedded so it can be sent for debug.
 
 ### Changed
 

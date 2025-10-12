@@ -372,6 +372,9 @@ async function takeHeapSnapshot() {
     return;
   }
 
+  // Trigger a garbage collection before taking the snapshot to reduce noise
+  triggerGarbageCollection();
+
   log.debug(`Taking heap snapshot...`);
 
   const chunks: Buffer[] = [];
@@ -384,12 +387,17 @@ async function takeHeapSnapshot() {
       if (!err) {
         session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
         writeFileSync(filename, Buffer.concat(chunks));
+        chunks.length = 0; // Clear the chunks array
         log.debug(`***Heap sampling snapshot saved to ${CYAN}${filename}${db}`);
+        // Trigger a garbage collection after the snapshot to clean up
         triggerGarbageCollection();
         resolve();
       } else {
         session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
+        chunks.length = 0; // Clear the chunks array
         log.error(`***Failed to take heap snapshot: ${err instanceof Error ? err.message : err}`);
+        // Trigger a garbage collection after the snapshot to clean up
+        triggerGarbageCollection();
         resolve();
       }
     });
@@ -403,8 +411,12 @@ async function takeHeapSnapshot() {
  * @remarks To check the effect of the garbage collection, add --trace_gc or --trace_gc_verbose.
  */
 function triggerGarbageCollection() {
-  if (typeof global.gc === 'function') {
-    global.gc();
+  if (global.gc && typeof global.gc === 'function') {
+    try {
+      global.gc({ type: 'major', execution: 'sync' });
+    } catch {
+      global.gc();
+    }
     log.debug('Manual garbage collection triggered via global.gc().');
   } else {
     log.debug('Garbage collection is not exposed. Start Node.js with --expose-gc to enable manual GC.');

@@ -453,9 +453,9 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
       }, 0);
       const memoryMaxYAxis = Number.isFinite(memoryMaxMb) && memoryMaxMb > 0 ? memoryMaxMb * 1.05 : undefined;
 
-        renderCharts();
+      renderCharts();
 
-        function renderCharts() {
+      function renderCharts() {
         cleanup();
 
         function draw() {
