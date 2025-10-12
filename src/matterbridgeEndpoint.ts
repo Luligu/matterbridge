@@ -1948,8 +1948,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       numberOfPresets: supportedPresets.length,
       // occupiedHeatingSetpoint: number
       ...(selectedPreset !== undefined ? { occupiedHeatingSetpoint: occupiedHeatingSetpoint !== undefined ? occupiedHeatingSetpoint * 100 : 1900 } : {}),
-      ...(occupied !== undefined ? { occupanc
-
       activePresetHandle: new Uint8Array([0]),
     });
     return this;
