@@ -276,17 +276,15 @@ export interface SerializedMatterbridgeEndpoint {
   clusterServersId: ClusterId[];
 }
 
-const supportedPresets = [ 
- PresetType.Comfort, PresetType.Eco, PresetType.Away, PresetType.Sleep,
-];
+const supportedPresets = [PresetType.Comfort, PresetType.Eco, PresetType.Away, PresetType.Sleep];
 
 // Mapping des presets vers leurs handles
-const presetHandles = {
+/* const presetHandles = {
   [PresetType.Comfort]: 1,
   [PresetType.Eco]: 2,
   [PresetType.Away]: 3,
   [PresetType.Sleep]: 4,
-};
+}; */
 
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
