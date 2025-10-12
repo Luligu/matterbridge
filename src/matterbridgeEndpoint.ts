@@ -277,8 +277,10 @@ export interface SerializedMatterbridgeEndpoint {
 }
 
 export enum PresetType {
-  None = 0,
-  // ... autres valeurs ...
+  Comfort = 0,
+  Eco = 1,
+  Away = 2,
+  Sleep = 3,
 }
 
 const supportedPresets = [PresetType.Comfort, PresetType.Eco, PresetType.Away, PresetType.Sleep];
