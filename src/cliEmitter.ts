@@ -4,7 +4,7 @@
  * @file cliEmitter.ts
  * @author Luca Liguori
  * @created 2025-07-04
- * @version 1.0.0
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,18 +22,40 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli emitter loaded.\u001B[40;0m');
+
 import { EventEmitter } from 'node:events';
 
-export const cliEmitter = new EventEmitter();
+interface CliEvents {
+  shutdown: [];
+  cpu: [number, number];
+  memory: [string, string, string, string, string, string, string];
+  uptime: [string, string];
+  ready: [];
+}
 
-export let lastCpuUsage = 0;
+export const cliEmitter = new EventEmitter<CliEvents>();
+
+export let lastOsCpuUsage = 0;
+export let lastProcessCpuUsage = 0;
 
 /**
- * Sets the last CPU usage.
+ * Sets the last os CPU usage.
  *
- * @param {number} val - The CPU usage percentage to set.
+ * @param {number} val - The os CPU usage percentage to set.
  * @returns {void}
  */
-export function setLastCpuUsage(val: number): void {
-  lastCpuUsage = val;
+export function setLastOsCpuUsage(val: number): void {
+  lastOsCpuUsage = val;
+}
+
+/**
+ * Sets the last process CPU usage.
+ *
+ * @param {number} val - The process CPU usage percentage to set.
+ * @returns {void}
+ */
+export function setLastProcessCpuUsage(val: number): void {
+  lastProcessCpuUsage = val;
 }

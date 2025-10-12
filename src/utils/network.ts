@@ -30,29 +30,51 @@ import type { ExecException } from 'node:child_process';
 import { AnsiLogger, BLUE, CYAN, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
 /**
+ * Retrieves the first non-internal network interface details.
+ *
+ * @returns {os.NetworkInterfaceInfo | undefined} The details of the selected network interface, or undefined if not found.
+ */
+export function getInterfaceDetails(): { interfaceName: string; ipv4Address: string | undefined; ipv6Address: string | undefined; macAddress: string | undefined } | undefined {
+  const result: { interfaceName: string; ipv4Address: string | undefined; ipv6Address: string | undefined; macAddress: string | undefined } = { interfaceName: '', ipv4Address: undefined, ipv6Address: undefined, macAddress: undefined };
+  for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
+    if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
+    for (const detail of interfaceDetails) {
+      if (detail.internal) continue;
+      if (!result.interfaceName) result.interfaceName = interfaceName;
+      if (interfaceName === result.interfaceName && !result.ipv4Address && detail.family === 'IPv4') result.ipv4Address = detail.address;
+      if (interfaceName === result.interfaceName && !result.ipv6Address && detail.family === 'IPv6') result.ipv6Address = detail.address;
+      if (interfaceName === result.interfaceName && !result.macAddress) result.macAddress = detail.mac;
+    }
+  }
+  if (result.interfaceName) return result;
+}
+
+/**
+ * Retrieves the first non-internal network interface name.
+ *
+ * @returns {string | undefined} The name of the selected network interface, or undefined if not found.
+ */
+export function getInterfaceName(): string | undefined {
+  for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
+    if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
+    for (const detail of interfaceDetails) {
+      if (!detail.internal) return interfaceName;
+    }
+  }
+}
+
+/**
  * Retrieves the IPv4 address of the first non-internal network interface.
  *
  * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
  */
 export function getIpv4InterfaceAddress(): string | undefined {
-  let ipv4Address: string | undefined;
-  const networkInterfaces = os.networkInterfaces();
-  // console.log('Available Network Interfaces:', networkInterfaces);
-  for (const interfaceDetails of Object.values(networkInterfaces)) {
-    if (!interfaceDetails) {
-      break;
-    }
+  for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
+    if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
     for (const detail of interfaceDetails) {
-      if (detail.family === 'IPv4' && !detail.internal && ipv4Address === undefined) {
-        ipv4Address = detail.address;
-      }
-    }
-    if (ipv4Address !== undefined) {
-      break;
+      if (detail.family === 'IPv4' && !detail.internal) return detail.address;
     }
   }
-  // console.log('Selected Network Interfaces:', ipv4Address);
-  return ipv4Address;
 }
 
 /**
@@ -61,24 +83,12 @@ export function getIpv4InterfaceAddress(): string | undefined {
  * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
  */
 export function getIpv6InterfaceAddress(): string | undefined {
-  let ipv6Address: string | undefined;
-  const networkInterfaces = os.networkInterfaces();
-  // console.log('Available Network Interfaces:', networkInterfaces);
-  for (const interfaceDetails of Object.values(networkInterfaces)) {
-    if (!interfaceDetails) {
-      break;
-    }
+  for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
+    if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
     for (const detail of interfaceDetails) {
-      if (detail.family === 'IPv6' && !detail.internal && ipv6Address === undefined) {
-        ipv6Address = detail.address;
-      }
-    }
-    if (ipv6Address !== undefined) {
-      break;
+      if (detail.family === 'IPv6' && !detail.internal) return detail.address;
     }
   }
-  // console.log('Selected Network Interfaces:', ipv6Address);
-  return ipv6Address;
 }
 
 /**
@@ -87,23 +97,12 @@ export function getIpv6InterfaceAddress(): string | undefined {
  * @returns {string | undefined} The mac address, or undefined if not found.
  */
 export function getMacAddress(): string | undefined {
-  let macAddress: string | undefined;
-  const networkInterfaces = os.networkInterfaces();
-  // console.log('Available Network Interfaces:', networkInterfaces);
-  for (const interfaceDetails of Object.values(networkInterfaces)) {
-    if (!interfaceDetails) {
-      break;
-    }
+  for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
+    if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
     for (const detail of interfaceDetails) {
-      if (!detail.internal && macAddress === undefined) {
-        macAddress = detail.mac;
-      }
-    }
-    if (macAddress !== undefined) {
-      break;
+      if (!detail.internal) return detail.mac;
     }
   }
-  return macAddress;
 }
 
 /**
@@ -278,4 +277,42 @@ export async function getGlobalNodeModules(): Promise<string> {
       }
     });
   });
+}
+
+/**
+ * Function to format bytes to KB, MB, or GB
+ *
+ * @param {number} bytes - The number of bytes to format
+ * @returns {string} The formatted memory usage string
+ */
+export function formatMemoryUsage(bytes: number): string {
+  if (bytes >= 1024 ** 3) {
+    return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+  } else if (bytes >= 1024 ** 2) {
+    return `${(bytes / 1024 ** 2).toFixed(2)} MB`;
+  } else {
+    return `${(bytes / 1024).toFixed(2)} KB`;
+  }
+}
+
+/**
+ * Function to format system uptime with only the most significant unit
+ *
+ * @param {number} seconds - The number of seconds to format
+ * @returns {string} The formatted uptime string
+ */
+export function formatOsUpTime(seconds: number): string {
+  if (seconds >= 86400) {
+    const days = Math.floor(seconds / 86400);
+    return `${days} day${days !== 1 ? 's' : ''}`;
+  }
+  if (seconds >= 3600) {
+    const hours = Math.floor(seconds / 3600);
+    return `${hours} hour${hours !== 1 ? 's' : ''}`;
+  }
+  if (seconds >= 60) {
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  }
+  return `${seconds} second${seconds !== 1 ? 's' : ''}`;
 }

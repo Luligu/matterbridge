@@ -36,10 +36,22 @@ import { PowerSource } from '@matter/main/clusters/power-source';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
-import { wait } from './utils/wait.js';
+import { wait, waiter } from './utils/wait.js';
 import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
 import {} from './frontendTypes.ts';
+import { BroadcastServer } from './broadcastServer.ts';
 
+// Mock BroadcastServer methods
+const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
+const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
+const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
+const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
+const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
+  return Promise.resolve(undefined) as any;
+});
+
+// Spy on Frontend methods
 const startSpy = jest.spyOn(Frontend.prototype, 'start');
 const stopSpy = jest.spyOn(Frontend.prototype, 'stop');
 
@@ -56,6 +68,7 @@ describe('Matterbridge frontend', () => {
   });
 
   afterAll(async () => {
+    frontend.destroy();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -75,14 +88,12 @@ describe('Matterbridge frontend', () => {
     expect(matterbridge).toBeDefined();
     expect(frontend).toBeDefined();
 
-    await new Promise<void>((resolve) => {
-      const interval = setInterval(() => {
-        if ((frontend as any).listening) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 100).unref();
-    });
+    // prettier-ignore
+    await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
+    // prettier-ignore
+    await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
+    // prettier-ignore
+    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
 
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
@@ -93,8 +104,31 @@ describe('Matterbridge frontend', () => {
     expect(createServerMock).toHaveBeenCalled();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Initializing the frontend http server on port ${YELLOW}${FRONTEND_PORT}${db}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening on`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening`));
   }, 60000);
+
+  test('broadcast handler', async () => {
+    startSpy.mockImplementationOnce(() => Promise.resolve());
+    stopSpy.mockImplementationOnce(() => Promise.resolve());
+    broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
+    await (frontend as any).msgHandler({} as any);
+    broadcastServerIsWorkerResponseSpy.mockImplementationOnce(() => false);
+    await (frontend as any).msgHandler({} as any);
+
+    expect((frontend as any).server).toBeInstanceOf(BroadcastServer);
+
+    (frontend as any).msgHandler({ type: 'jest', src: 'manager', dst: 'frontend' } as any); // no id
+    (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
+    (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend' } as any); // valid
+    (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
+    for (const type of ['frontend_start', 'frontend_stop'] as const) {
+      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', params: { port: 3000 } } as any);
+    }
+    for (const type of ['plugins_install', 'plugins_uninstall'] as const) {
+      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: true, packageName: 'testPlugin' } } as any);
+      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: false, packageName: 'testPlugin' } } as any);
+    }
+  });
 
   test('Frontend cliEmitter', () => {
     // Test the cliEmitter functionality
@@ -105,27 +139,9 @@ describe('Matterbridge frontend', () => {
     expect(cliEmitter.listeners('memory')).toHaveLength(1);
     expect(cliEmitter.listeners('cpu')).toHaveLength(1);
 
-    cliEmitter.emit('uptime', 123456);
-    cliEmitter.emit('memory', 123456789);
-    cliEmitter.emit('cpu', 12.34);
-  });
-
-  test('Frontend formatMemoryUsage', () => {
-    // Test the formatMemoryUsage  functionality
-    expect((frontend as any).formatMemoryUsage(1024 ** 3)).toBe('1.00 GB');
-    expect((frontend as any).formatMemoryUsage(1024 ** 2)).toBe('1.00 MB');
-    expect((frontend as any).formatMemoryUsage(3000)).toBe('2.93 KB');
-  });
-
-  test('Frontend formatOsUpTime', () => {
-    // Test the formatOsUpTime functionality
-    expect((frontend as any).formatOsUpTime(123456)).toBe('1 day');
-    expect((frontend as any).formatOsUpTime(3800)).toBe('1 hour');
-    expect((frontend as any).formatOsUpTime(3600)).toBe('1 hour');
-    expect((frontend as any).formatOsUpTime(65)).toBe('1 minute');
-    expect((frontend as any).formatOsUpTime(60)).toBe('1 minute');
-    expect((frontend as any).formatOsUpTime(30)).toBe('30 seconds');
-    expect((frontend as any).formatOsUpTime(0)).toBe('0 seconds');
+    cliEmitter.emit('cpu', 12.34, 5.67);
+    cliEmitter.emit('uptime', '1 day, 10:00:00', '1 day, 10:00:00');
+    cliEmitter.emit('memory', '12345678', '87654321', '12345678', '87654321', '12345678', '87654321', '12345678');
   });
 
   test('Frontend getReachability', () => {
@@ -221,9 +237,9 @@ describe('Matterbridge frontend', () => {
       throw new Error('Test error');
     });
 
-    frontend.start(FRONTEND_PORT);
     await new Promise<void>((resolve) => {
       frontend.once('server_error', () => resolve());
+      frontend.start(FRONTEND_PORT);
     });
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).frontend.httpServer).toBeUndefined();
@@ -249,7 +265,7 @@ describe('Matterbridge frontend', () => {
     expect(startSpy).toHaveBeenNthCalledWith(1, FRONTEND_PORT);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Initializing the frontend http server on port ${YELLOW}${FRONTEND_PORT}${db}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening on`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening`));
 
     // Test httpServer on error
     const errorEACCES = new Error('Test error');
@@ -325,9 +341,8 @@ describe('Matterbridge frontend', () => {
         expect(protocol).toBe('https');
         expect(port).toBe(FRONTEND_PORT);
       });
-      frontend.on('websocket_server_listening', (host) => {
-        expect(host.startsWith('wss://')).toBe(true);
-        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+      frontend.on('websocket_server_listening', (protocol) => {
+        expect(protocol).toBe('wss');
         resolve();
       });
       frontend.start(FRONTEND_PORT);
@@ -365,9 +380,8 @@ describe('Matterbridge frontend', () => {
         expect(protocol).toBe('https');
         expect(port).toBe(FRONTEND_PORT);
       });
-      frontend.on('websocket_server_listening', (host) => {
-        expect(host.startsWith('wss://')).toBe(true);
-        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+      frontend.on('websocket_server_listening', (protocol) => {
+        expect(protocol).toBe('wss');
         resolve();
       });
       frontend.start(FRONTEND_PORT);
@@ -466,9 +480,8 @@ describe('Matterbridge frontend', () => {
         expect(protocol).toBe('https');
         expect(port).toBe(FRONTEND_PORT);
       });
-      frontend.on('websocket_server_listening', (host) => {
-        expect(host.startsWith('wss://')).toBe(true);
-        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+      frontend.on('websocket_server_listening', (protocol) => {
+        expect(protocol).toBe('wss');
         resolve();
       });
       frontend.start(FRONTEND_PORT);
@@ -533,9 +546,8 @@ describe('Matterbridge frontend', () => {
         expect(protocol).toBe('https');
         expect(port).toBe(FRONTEND_PORT);
       });
-      frontend.on('websocket_server_listening', (host) => {
-        expect(host.startsWith('wss://')).toBe(true);
-        expect(host.endsWith(`:${FRONTEND_PORT}`)).toBe(true);
+      frontend.on('websocket_server_listening', (protocol) => {
+        expect(protocol).toBe('wss');
         resolve();
       });
       frontend.start(FRONTEND_PORT);

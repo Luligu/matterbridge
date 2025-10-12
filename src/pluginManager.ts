@@ -26,13 +26,15 @@
 import EventEmitter from 'node:events';
 
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr, debugStringify, CYAN } from 'node-ansi-logger';
 
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
-import { logError } from './utils/error.js';
+import { ApiPlugin, plg, Plugin, typ } from './matterbridgeTypes.js';
+import { inspectError, logError } from './utils/error.js';
+import { BroadcastServer } from './broadcastServer.js';
+import { WorkerMessage } from './broadcastServerTypes.js';
 
 interface PluginManagerEvents {
   added: [name: string];
@@ -47,52 +49,188 @@ interface PluginManagerEvents {
   shutdown: [name: string];
 }
 
+/**
+ * Manages Matterbridge plugins.
+ */
 export class PluginManager extends EventEmitter<PluginManagerEvents> {
-  private _plugins = new Map<string, RegisteredPlugin>();
+  private _plugins = new Map<string, Plugin>();
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
+  private server: BroadcastServer;
 
+  /**
+   * Creates an instance of PluginManager.
+   *
+   * @param {Matterbridge} matterbridge - The Matterbridge instance.
+   */
   constructor(matterbridge: Matterbridge) {
     super();
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({ logName: 'PluginManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.log.logLevel });
     this.log.debug('Matterbridge plugin manager starting...');
+    this.server = new BroadcastServer('plugins', this.log);
+    this.server.on('broadcast_message', this.msgHandler.bind(this));
+    this.log.debug('Matterbridge plugin manager started');
   }
 
+  destroy(): void {
+    this.server.close();
+  }
+
+  private async msgHandler(msg: WorkerMessage): Promise<void> {
+    if (!this.server.isWorkerRequest(msg, msg.type)) return;
+    if (!msg.id || (msg.dst !== 'all' && msg.dst !== 'plugins')) return;
+    this.log.debug(`**Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+    switch (msg.type) {
+      case 'plugins_length':
+        this.server.respond({ ...msg, id: msg.id, response: { length: this.length } });
+        break;
+      case 'plugins_size':
+        this.server.respond({ ...msg, id: msg.id, response: { size: this.size } });
+        break;
+      case 'plugins_has':
+        this.server.respond({ ...msg, id: msg.id, response: { has: this.has(msg.params.name) } });
+        break;
+      case 'plugins_get':
+        this.server.respond({ ...msg, id: msg.id, response: { plugin: this.get(msg.params.name) } });
+        break;
+      case 'plugins_set':
+        this.server.respond({ ...msg, id: msg.id, response: { plugin: this.set(msg.params.plugin) } });
+        break;
+      case 'plugins_baseArray':
+        this.server.respond({ ...msg, id: msg.id, response: { plugins: this.baseArray() } });
+        break;
+      case 'plugins_install':
+        this.server.respond({ ...msg, id: msg.id, response: { packageName: msg.params.packageName, success: await this.install(msg.params.packageName) } });
+        break;
+      case 'plugins_uninstall':
+        this.server.respond({ ...msg, id: msg.id, response: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
+        break;
+      default:
+        this.log.warn(`Unknown broadcast message ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+    }
+  }
+
+  /**
+   * Gets the number of plugins.
+   *
+   * @returns {number} The number of plugins.
+   */
   get length(): number {
     return this._plugins.size;
   }
 
+  /**
+   * Gets the number of plugins.
+   *
+   * @returns {number} The number of plugins.
+   */
   get size(): number {
     return this._plugins.size;
   }
 
+  /**
+   * Checks if a plugin with the specified name exists.
+   *
+   * @param {string} name - The name of the plugin.
+   * @returns {boolean} True if the plugin exists, false otherwise.
+   */
   has(name: string): boolean {
     return this._plugins.has(name);
   }
 
-  get(name: string): RegisteredPlugin | undefined {
+  /**
+   * Gets a plugin by its name.
+   *
+   * @param {string} name - The name of the plugin.
+   * @returns {Plugin | undefined} The plugin, or undefined if not found.
+   */
+  get(name: string): Plugin | undefined {
     return this._plugins.get(name);
   }
 
-  set(plugin: RegisteredPlugin): RegisteredPlugin {
+  /**
+   * Adds a plugin to the manager.
+   *
+   * @param {Plugin} plugin - The plugin to add.
+   * @returns {Plugin} The added plugin.
+   */
+  set(plugin: Plugin): Plugin {
     this._plugins.set(plugin.name, plugin);
     return plugin;
   }
 
+  /**
+   * Clears all plugins from the manager.
+   */
   clear(): void {
     this._plugins.clear();
   }
 
-  array(): RegisteredPlugin[] {
+  /**
+   * Gets an array of all plugins.
+   *
+   * @returns {Plugin[]} An array of all plugins.
+   */
+  array(): Plugin[] {
     return Array.from(this._plugins.values());
   }
 
+  /**
+   * Gets an array of all plugins suitable for serialization.
+   *
+   * @returns {ApiPlugin[]} An array of all plugins.
+   */
+  baseArray(): ApiPlugin[] {
+    const basePlugins: ApiPlugin[] = [];
+    for (const plugin of this._plugins.values()) {
+      basePlugins.push({
+        name: plugin.name,
+        version: plugin.version,
+        description: plugin.description,
+        author: plugin.author,
+        path: plugin.path,
+        type: plugin.type,
+        latestVersion: plugin.latestVersion,
+        devVersion: plugin.devVersion,
+        homepage: plugin.homepage,
+        help: plugin.help,
+        changelog: plugin.changelog,
+        funding: plugin.funding,
+        locked: plugin.locked,
+        error: plugin.error,
+        enabled: plugin.enabled,
+        loaded: plugin.loaded,
+        started: plugin.started,
+        configured: plugin.configured,
+        restartRequired: plugin.restartRequired,
+        registeredDevices: plugin.registeredDevices,
+        configJson: plugin.configJson,
+        schemaJson: plugin.schemaJson,
+        hasWhiteList: plugin.hasWhiteList,
+        hasBlackList: plugin.hasBlackList,
+        matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
+      });
+    }
+    return basePlugins;
+  }
+
+  /**
+   * Gets an iterator for the plugins.
+   *
+   * @returns {IterableIterator<Plugin>} An iterator for the plugins.
+   */
   [Symbol.iterator]() {
     return this._plugins.values();
   }
 
-  async forEach(callback: (plugin: RegisteredPlugin) => Promise<void>): Promise<void> {
+  /**
+   * Executes a provided function once for each plugin.
+   *
+   * @param {Function} callback - The function to execute for each plugin.
+   * @returns {Promise<void>}
+   */
+  async forEach(callback: (plugin: Plugin) => Promise<void>): Promise<void> {
     if (this.size === 0) return;
 
     const tasks = Array.from(this._plugins.values()).map(async (plugin) => {
@@ -105,6 +243,11 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     await Promise.all(tasks);
   }
 
+  /**
+   * Sets the log level for the plugin manager.
+   *
+   * @param {LogLevel} logLevel - The log level to set.
+   */
   set logLevel(logLevel: LogLevel) {
     this.log.logLevel = logLevel;
   }
@@ -115,14 +258,14 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * This method retrieves an array of registered plugins from the storage and converts it
    * into a map where the plugin names are the keys and the plugin objects are the values.
    *
-   * @returns {Promise<RegisteredPlugin[]>} A promise that resolves to an array of registered plugins.
+   * @returns {Promise<Plugin[]>} A promise that resolves to an array of registered plugins.
    */
-  async loadFromStorage(): Promise<RegisteredPlugin[]> {
+  async loadFromStorage(): Promise<Plugin[]> {
     if (!this.matterbridge.nodeContext) {
       throw new Error('loadFromStorage: node context is not available.');
     }
     // Load the array from storage and convert it to a map
-    const pluginsArray = await this.matterbridge.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+    const pluginsArray = await this.matterbridge.nodeContext.get<Plugin[]>('plugins', []);
     for (const plugin of pluginsArray) this._plugins.set(plugin.name, plugin);
     return pluginsArray;
   }
@@ -133,16 +276,15 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * This method retrieves an array of registered plugins from the storage and converts it
    * into a map where the plugin names are the keys and the plugin objects are the values.
    *
-   * @returns {Promise<RegisteredPlugin[]>} A promise that resolves to an array of registered plugins.
+   * @returns {Promise<Plugin[]>} A promise that resolves to an array of registered plugins.
    */
   async saveToStorage(): Promise<number> {
     if (!this.matterbridge.nodeContext) {
       throw new Error('loadFromStorage: node context is not available.');
     }
     // Convert the map to an array
-    const plugins: RegisteredPlugin[] = [];
-    const pluginArrayFromMap = Array.from(this._plugins.values());
-    for (const plugin of pluginArrayFromMap) {
+    const plugins: Plugin[] = [];
+    for (const plugin of this.array()) {
       plugins.push({
         name: plugin.name,
         path: plugin.path,
@@ -153,7 +295,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         enabled: plugin.enabled,
       });
     }
-    await this.matterbridge.nodeContext.set<RegisteredPlugin[]>('plugins', plugins);
+    await this.matterbridge.nodeContext.set<Plugin[]>('plugins', plugins);
     this.log.debug(`Saved ${BLUE}${plugins.length}${db} plugins to storage`);
     return plugins.length;
   }
@@ -254,6 +396,59 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   /**
+   * Installs a package globally using npm.
+   *
+   * @param {string} packageName - The name of the package to install.
+   * @returns {Promise<boolean>} A promise that resolves to true if the installation was successful, false otherwise.
+   */
+  async install(packageName: string): Promise<boolean> {
+    const { spawnCommand } = await import('./utils/spawn.js');
+    try {
+      await spawnCommand(this.matterbridge, 'npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName);
+      this.matterbridge.restartRequired = true;
+      this.matterbridge.fixedRestartRequired = true;
+      packageName = packageName.replace(/@.*$/, '');
+      if (packageName !== 'matterbridge') {
+        if (!this.has(packageName)) await this.add(packageName);
+        const plugin = this.get(packageName);
+        if (plugin && !plugin.loaded) await this.load(plugin);
+      } else {
+        if (this.matterbridge.restartMode !== '') {
+          await this.matterbridge.shutdownProcess();
+        }
+      }
+      return true;
+    } catch (error) {
+      inspectError(this.log, `Failed to install package ${plg}${packageName}${er}`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Uninstalls a package globally using npm.
+   *
+   * @param {string} packageName - The name of the package to uninstall.
+   * @returns {Promise<boolean>} A promise that resolves to true if the uninstallation was successful, false otherwise.
+   */
+  async uninstall(packageName: string): Promise<boolean> {
+    const { spawnCommand } = await import('./utils/spawn.js');
+    packageName = packageName.replace(/@.*$/, '');
+    if (packageName === 'matterbridge') return false;
+    try {
+      if (this.has(packageName)) {
+        const plugin = this.get(packageName);
+        if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
+        await this.remove(packageName);
+      }
+      await spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', packageName, '--verbose'], 'uninstall', packageName);
+      return true;
+    } catch (error) {
+      inspectError(this.log, `Failed to uninstall package ${plg}${packageName}${er}`, error);
+      return false;
+    }
+  }
+
+  /**
    * Get the author of a plugin from its package.json.
    *
    * @param {Record<string, string | number | Record<string, string | number | object>>} packageJson - The package.json object of the plugin.
@@ -342,10 +537,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   /**
    * Loads and parses the plugin package.json and returns it.
    *
-   * @param {RegisteredPlugin} plugin - The plugin to load the package from.
+   * @param {Plugin} plugin - The plugin to load the package from.
    * @returns {Promise<Record<string, string | number | object> | null>} A promise that resolves to the parsed package.json object or null if it could not be parsed.
    */
-  async parse(plugin: RegisteredPlugin): Promise<Record<string, string | number | object> | null> {
+  async parse(plugin: Plugin): Promise<Record<string, string | number | object> | null> {
     const { promises } = await import('node:fs');
     try {
       this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${db}`);
@@ -429,13 +624,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * If not, it attempts to resolve the plugin's `package.json` file to retrieve its name and enable it.
    *
    * @param {string} nameOrPath - The name or path of the plugin to enable.
-   * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the enabled plugin object, or null if the plugin could not be enabled.
+   * @returns {Promise<Plugin | null>} A promise that resolves to the enabled plugin object, or null if the plugin could not be enabled.
    */
-  async enable(nameOrPath: string): Promise<RegisteredPlugin | null> {
+  async enable(nameOrPath: string): Promise<Plugin | null> {
     const { promises } = await import('node:fs');
     if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
-      const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
+      const plugin = this._plugins.get(nameOrPath) as Plugin;
       plugin.enabled = true;
       this.log.info(`Enabled plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
@@ -473,13 +668,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * If not, it attempts to resolve the plugin's `package.json` file to retrieve its name and enable it.
    *
    * @param {string} nameOrPath - The name or path of the plugin to enable.
-   * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the enabled plugin object, or null if the plugin could not be enabled.
+   * @returns {Promise<Plugin | null>} A promise that resolves to the enabled plugin object, or null if the plugin could not be enabled.
    */
-  async disable(nameOrPath: string): Promise<RegisteredPlugin | null> {
+  async disable(nameOrPath: string): Promise<Plugin | null> {
     const { promises } = await import('node:fs');
     if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
-      const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
+      const plugin = this._plugins.get(nameOrPath) as Plugin;
       plugin.enabled = false;
       this.log.info(`Disabled plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
@@ -517,13 +712,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * the plugin's `package.json` file to retrieve its name and remove it.
    *
    * @param {string} nameOrPath - The name or path of the plugin to remove.
-   * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the removed plugin object, or null if the plugin could not be removed.
+   * @returns {Promise<Plugin | null>} A promise that resolves to the removed plugin object, or null if the plugin could not be removed.
    */
-  async remove(nameOrPath: string): Promise<RegisteredPlugin | null> {
+  async remove(nameOrPath: string): Promise<Plugin | null> {
     const { promises } = await import('node:fs');
     if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
-      const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
+      const plugin = this._plugins.get(nameOrPath) as Plugin;
       this._plugins.delete(nameOrPath);
       this.log.info(`Removed plugin ${plg}${plugin.name}${nf}`);
       await this.saveToStorage();
@@ -562,9 +757,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * and saves the updated plugin information to storage.
    *
    * @param {string} nameOrPath - The name or path of the plugin to add.
-   * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the added plugin object, or null if the plugin could not be added.
+   * @returns {Promise<Plugin | null>} A promise that resolves to the added plugin object, or null if the plugin could not be added.
    */
-  async add(nameOrPath: string): Promise<RegisteredPlugin | null> {
+  async add(nameOrPath: string): Promise<Plugin | null> {
     const { promises } = await import('node:fs');
     if (!nameOrPath) return null;
     const packageJsonPath = await this.resolve(nameOrPath);
@@ -586,13 +781,16 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         version: packageJson.version,
         description: packageJson.description,
         author: this.getAuthor(packageJson),
+        homepage: this.getHomepage(packageJson),
+        help: this.getHelp(packageJson),
+        changelog: this.getChangelog(packageJson),
+        funding: this.getFunding(packageJson),
       });
       this.log.info(`Added plugin ${plg}${packageJson.name}${nf}`);
       await this.saveToStorage();
       const plugin = this._plugins.get(packageJson.name);
       this.emit('added', packageJson.name);
-      // istanbul ignore next
-      return plugin || null;
+      return plugin as Plugin;
     } catch (err) {
       logError(this.log, `Failed to parse package.json of plugin ${plg}${nameOrPath}${er}`, err);
       return null;
@@ -602,13 +800,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   /**
    * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
    *
-   * @param {RegisteredPlugin} plugin - The plugin to load.
+   * @param {Plugin} plugin - The plugin to load.
    * @param {boolean} start - Optional flag indicating whether to start the plugin after loading. Default is false.
    * @param {string} message - Optional message to pass to the plugin when starting.
    * @param {boolean} configure - Optional flag indicating whether to configure the plugin after loading. Default is false.
    * @returns {Promise<MatterbridgePlatform | undefined>} A Promise that resolves to the loaded MatterbridgePlatform instance or undefined.
    */
-  async load(plugin: RegisteredPlugin, start: boolean = false, message: string = '', configure: boolean = false): Promise<MatterbridgePlatform | undefined> {
+  async load(plugin: Plugin, start: boolean = false, message: string = '', configure: boolean = false): Promise<MatterbridgePlatform | undefined> {
     const { promises } = await import('node:fs');
     const { default: path } = await import('node:path');
     if (!plugin.enabled) {
@@ -690,12 +888,12 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   /**
    * Starts a plugin.
    *
-   * @param {RegisteredPlugin} plugin - The plugin to start.
+   * @param {Plugin} plugin - The plugin to start.
    * @param {string} [message] - Optional message to pass to the plugin's onStart method.
    * @param {boolean} [configure] - Indicates whether to configure the plugin after starting (default false).
-   * @returns {Promise<RegisteredPlugin | undefined>} A promise that resolves when the plugin is started successfully, or rejects with an error if starting the plugin fails.
+   * @returns {Promise<Plugin | undefined>} A promise that resolves when the plugin is started successfully, or rejects with an error if starting the plugin fails.
    */
-  async start(plugin: RegisteredPlugin, message?: string, configure: boolean = false): Promise<RegisteredPlugin | undefined> {
+  async start(plugin: Plugin, message?: string, configure: boolean = false): Promise<Plugin | undefined> {
     if (!plugin.loaded) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded`);
       return undefined;
@@ -727,10 +925,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   /**
    * Configures a plugin.
    *
-   * @param {RegisteredPlugin} plugin - The plugin to configure.
-   * @returns {Promise<RegisteredPlugin | undefined>} A promise that resolves when the plugin is configured successfully, or rejects with an error if configuration fails.
+   * @param {Plugin} plugin - The plugin to configure.
+   * @returns {Promise<Plugin | undefined>} A promise that resolves when the plugin is configured successfully, or rejects with an error if configuration fails.
    */
-  async configure(plugin: RegisteredPlugin): Promise<RegisteredPlugin | undefined> {
+  async configure(plugin: Plugin): Promise<Plugin | undefined> {
     if (!plugin.loaded) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded`);
       return undefined;
@@ -767,13 +965,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * This method shuts down a plugin by calling its `onShutdown` method and resetting its state.
    * It logs the shutdown process and optionally removes all devices associated with the plugin.
    *
-   * @param {RegisteredPlugin} plugin - The plugin to shut down.
+   * @param {Plugin} plugin - The plugin to shut down.
    * @param {string} [reason] - The reason for shutting down the plugin.
    * @param {boolean} [removeAllDevices] - Whether to remove all devices associated with the plugin.
    * @param {boolean} [force] - Whether to force the shutdown even if the plugin is not loaded or started.
-   * @returns {Promise<RegisteredPlugin | undefined>} A promise that resolves to the shut down plugin object, or undefined if the shutdown failed.
+   * @returns {Promise<Plugin | undefined>} A promise that resolves to the shut down plugin object, or undefined if the shutdown failed.
    */
-  async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices: boolean = false, force: boolean = false): Promise<RegisteredPlugin | undefined> {
+  async shutdown(plugin: Plugin, reason?: string, removeAllDevices: boolean = false, force: boolean = false): Promise<Plugin | undefined> {
     this.log.debug(`Shutting down plugin ${plg}${plugin.name}${db}`);
     if (!plugin.loaded) {
       this.log.debug(`Plugin ${plg}${plugin.name}${db} not loaded`);
@@ -819,10 +1017,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * If the configuration file does not exist, it creates a new file with default configuration and returns it.
    * If any error occurs during file access or creation, it logs an error and return un empty config.
    *
-   * @param {RegisteredPlugin} plugin - The plugin for which to load the configuration.
+   * @param {Plugin} plugin - The plugin for which to load the configuration.
    * @returns {Promise<PlatformConfig>} A promise that resolves to the loaded or created configuration.
    */
-  async loadConfig(plugin: RegisteredPlugin): Promise<PlatformConfig> {
+  async loadConfig(plugin: Plugin): Promise<PlatformConfig> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
     const { shelly_config, somfytahoma_config, zigbee2mqtt_config } = await import('./defaultConfigSchema.js');
@@ -884,12 +1082,12 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * is successfully saved, it logs a debug message. If an error occurs during the file write operation, it logs
    * the error and rejects the promise.
    *
-   * @param {RegisteredPlugin} plugin - The plugin whose configuration is to be saved.
+   * @param {Plugin} plugin - The plugin whose configuration is to be saved.
    * @param {boolean} [restartRequired] - Indicates whether a restart is required after saving the configuration.
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or rejects if an error occurs.
    * @throws {Error} If the plugin's configuration is not found.
    */
-  async saveConfigFromPlugin(plugin: RegisteredPlugin, restartRequired: boolean = false): Promise<void> {
+  async saveConfigFromPlugin(plugin: Plugin, restartRequired: boolean = false): Promise<void> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
     if (!plugin.platform?.config) {
@@ -919,12 +1117,12 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * successfully saved, it updates the plugin's `configJson` property and logs a debug message. If an error occurs
    * during the file write operation, it logs the error and returns.
    *
-   * @param {RegisteredPlugin} plugin - The plugin whose configuration is to be saved.
+   * @param {Plugin} plugin - The plugin whose configuration is to be saved.
    * @param {PlatformConfig} config - The configuration data to be saved.
    * @param {boolean} [restartRequired] - Indicates whether a restart is required after saving the configuration.
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or returns if an error occurs.
    */
-  async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig, restartRequired: boolean = false): Promise<void> {
+  async saveConfigFromJson(plugin: Plugin, config: PlatformConfig, restartRequired: boolean = false): Promise<void> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
     if (!config.name || !config.type || config.name !== plugin.name) {
@@ -955,10 +1153,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * it reads and parses the file, updates the schema's title and description, and logs the process.
    * If the schema file is not found, it logs the event and loads a default schema for the plugin.
    *
-   * @param {RegisteredPlugin} plugin - The plugin whose schema is to be loaded.
+   * @param {Plugin} plugin - The plugin whose schema is to be loaded.
    * @returns {Promise<PlatformSchema>} A promise that resolves to the loaded schema object, or the default schema if the schema file is not found.
    */
-  async loadSchema(plugin: RegisteredPlugin): Promise<PlatformSchema> {
+  async loadSchema(plugin: Plugin): Promise<PlatformSchema> {
     const { promises } = await import('node:fs');
     const schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
     try {
@@ -983,10 +1181,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * metadata such as the plugin's title, description, version, and author. It also defines the
    * properties of the schema, including the plugin's name, type, debug flag, and unregisterOnShutdown flag.
    *
-   * @param {RegisteredPlugin} plugin - The plugin for which the default schema is to be generated.
+   * @param {Plugin} plugin - The plugin for which the default schema is to be generated.
    * @returns {PlatformSchema} The default schema object for the plugin.
    */
-  getDefaultSchema(plugin: RegisteredPlugin): PlatformSchema {
+  getDefaultSchema(plugin: Plugin): PlatformSchema {
     return {
       title: plugin.description,
       description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,

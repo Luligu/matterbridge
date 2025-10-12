@@ -106,13 +106,13 @@ export async function addVirtualDevice(aggregatorEndpoint: Endpoint<AggregatorEn
  * @returns {Promise<void>} A promise that resolves when the virtual devices are added.
  */
 export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
-  if (matterbridge.matterbridgeInformation.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
+  if (matterbridge.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
     matterbridge.log.notice(`Creating virtual devices for Matterbridge server node...`);
-    await addVirtualDevice(aggregatorEndpoint, 'Restart Matterbridge', matterbridge.matterbridgeInformation.virtualMode, async () => {
+    await addVirtualDevice(aggregatorEndpoint, 'Restart Matterbridge', matterbridge.virtualMode, async () => {
       if (matterbridge.restartMode === '') await matterbridge.restartProcess();
       else await matterbridge.shutdownProcess();
     });
-    await addVirtualDevice(aggregatorEndpoint, 'Update Matterbridge', matterbridge.matterbridgeInformation.virtualMode, async () => {
+    await addVirtualDevice(aggregatorEndpoint, 'Update Matterbridge', matterbridge.virtualMode, async () => {
       if (hasParameter('shelly')) {
         const { getShelly } = await import('./shelly.js');
         getShelly('/api/updates/sys/perform', 10 * 1000)
@@ -136,7 +136,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
       }
     });
     if (hasParameter('shelly')) {
-      await addVirtualDevice(aggregatorEndpoint, 'Reboot Matterbridge', matterbridge.matterbridgeInformation.virtualMode, async () => {
+      await addVirtualDevice(aggregatorEndpoint, 'Reboot Matterbridge', matterbridge.virtualMode, async () => {
         const { postShelly } = await import('./shelly.js');
         postShelly('/api/system/reboot', {}, 60 * 1000)
           .then(() => {

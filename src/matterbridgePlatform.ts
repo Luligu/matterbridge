@@ -22,6 +22,9 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgePlatform loaded.\u001B[40;0m');
+
 // Node.js modules
 import path from 'node:path';
 
@@ -103,7 +106,7 @@ export class MatterbridgePlatform {
   /** The name of the platform. Will be set by the loadPlugin() method using the package.json value. */
   name = '';
   /** The type of the platform. Will be set by the extending classes. */
-  type = '';
+  type: 'DynamicPlatform' | 'AccessoryPlatform' | 'AnyPlatform' = 'AnyPlatform';
   /** The version of the platform. Will be set by the loadPlugin() method using the package.json value */
   version = '1.0.0';
 

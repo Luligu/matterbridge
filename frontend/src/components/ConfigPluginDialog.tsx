@@ -68,7 +68,7 @@ import {
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { ApiSelectDevice, ApiSelectDeviceEntity, ApiSelectEntity, isApiResponse, WsMessage } from '../../../src/frontendTypes';
-import { BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
+import { ApiPlugin } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
 // const debug = false;
 const rjsfDebug = false;
@@ -89,7 +89,7 @@ let selectEntities: ApiSelectEntity[] = [];
 export interface ConfigPluginDialogProps {
   open: boolean;
   onClose: () => void;
-  plugin: BaseRegisteredPlugin;
+  plugin: ApiPlugin;
 }
 
 export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialogProps) => {

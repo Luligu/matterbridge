@@ -4,7 +4,7 @@
  * @file cli.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 2.0.1
+ * @version 2.1.1
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -22,18 +22,23 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCLI loaded.\u001B[40;0m');
+
 // Node modules
 import type { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
 import os from 'node:os';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, TimestampFormat, YELLOW } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
+// Cli
+import { cliEmitter, setLastOsCpuUsage, setLastProcessCpuUsage } from './cliEmitter.js';
+import { history, historyIndex, historySize, setHistoryIndex } from './cliHistory.js';
 // Matterbridge
-import { getIntParameter, hasParameter } from './utils/export.js';
+import { getIntParameter, hasParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
-import { cliEmitter, lastCpuUsage, setLastCpuUsage } from './cliEmitter.js';
 
 export let instance: Matterbridge | undefined;
 
@@ -42,12 +47,26 @@ let session: Session | undefined;
 let snapshotInterval: NodeJS.Timeout;
 
 // Cpu and memory check
+const trace = hasParameter('trace');
 let memoryCheckInterval: NodeJS.Timeout;
+const memoryCheckIntervalMs = getIntParameter('memoryinterval') ?? 10 * 1000;
+let memoryPeakResetTimeout: NodeJS.Timeout;
 let prevCpus: os.CpuInfo[];
+let prevProcessCpu: NodeJS.CpuUsage;
+
 let peakCpu = 0;
+let peakProcessCpu = 0;
 let peakRss = 0;
+let peakHeapUsed = 0;
+let peakHeapTotal = 0;
+let peakExternal = 0;
+let peakArrayBuffers = 0;
 
 const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+
+const formatCpuUsage = (percent: number): string => {
+  return `${percent.toFixed(2).padStart(5, ' ')} %`;
+};
 
 const formatMemoryUsage = (bytes: number): string => {
   if (bytes >= 1024 ** 3) {
@@ -77,13 +96,18 @@ const formatOsUpTime = (seconds: number): string => {
 
 /**
  * Starts the CPU and memory check interval.
+ *
+ * @remarks
+ * Debug parameter
+ *
+ * -memoryinterval <milliseconds> can be used to set the interval. Default is 10 seconds.
  */
 async function startCpuMemoryCheck() {
   // const os = await import('node:os');
 
   log.debug(`Cpu memory check started`);
   prevCpus = os.cpus();
-  clearInterval(memoryCheckInterval);
+  prevProcessCpu = process.cpuUsage();
 
   const interval = () => {
     // Get the os uptime
@@ -91,22 +115,42 @@ async function startCpuMemoryCheck() {
     const processUptime = formatOsUpTime(Math.floor(process.uptime()));
     cliEmitter.emit('uptime', systemUptime, processUptime);
 
-    // Get the memory usage
-    const totalMememory = formatMemoryUsage(os.totalmem());
+    // Get the free and total memory
+    const totalMemory = formatMemoryUsage(os.totalmem());
     const freeMemory = formatMemoryUsage(os.freemem());
+
+    // Get the memory usage
     const memoryUsageRaw = process.memoryUsage();
     const rss = formatMemoryUsage(memoryUsageRaw.rss);
     const heapTotal = formatMemoryUsage(memoryUsageRaw.heapTotal);
     const heapUsed = formatMemoryUsage(memoryUsageRaw.heapUsed);
     const external = formatMemoryUsage(memoryUsageRaw.external);
     const arrayBuffers = formatMemoryUsage(memoryUsageRaw.arrayBuffers);
-    if (memoryUsageRaw.rss > peakRss) peakRss = memoryUsageRaw.rss;
-    cliEmitter.emit('memory', totalMememory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
+    if (memoryUsageRaw.rss > peakRss) {
+      if (peakRss && trace) log.debug(`****${RED}${BRIGHT}Rss peak detected.${db} Peak rss from ${CYAN}${formatMemoryUsage(peakRss)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.rss)}${db}`);
+      peakRss = memoryUsageRaw.rss;
+    }
+    if (memoryUsageRaw.heapUsed > peakHeapUsed) {
+      if (peakHeapUsed && trace) log.debug(`****${RED}${BRIGHT}HeapUsed peak detected.${db} Peak heapUsed from ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.heapUsed)}${db}`);
+      peakHeapUsed = memoryUsageRaw.heapUsed;
+    }
+    if (memoryUsageRaw.heapTotal > peakHeapTotal) {
+      if (peakHeapTotal && trace) log.debug(`****${RED}${BRIGHT}HeapTotal peak detected.${db} Peak heapTotal from ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.heapTotal)}${db}`);
+      peakHeapTotal = memoryUsageRaw.heapTotal;
+    }
+    if (memoryUsageRaw.external > peakExternal) {
+      if (peakExternal && trace) log.debug(`****${RED}${BRIGHT}External peak detected.${db} Peak external from ${CYAN}${formatMemoryUsage(peakExternal)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.external)}${db}`);
+      peakExternal = memoryUsageRaw.external;
+    }
+    if (memoryUsageRaw.arrayBuffers > peakArrayBuffers) {
+      if (peakArrayBuffers && trace) log.debug(`****${RED}${BRIGHT}ArrayBuffers peak detected.${db} Peak arrayBuffers from ${CYAN}${formatMemoryUsage(peakArrayBuffers)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.arrayBuffers)}${db}`);
+      peakArrayBuffers = memoryUsageRaw.arrayBuffers;
+    }
+    cliEmitter.emit('memory', totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
 
-    // Get the cpu usage
+    // Get the host cpu usage
     const currCpus = os.cpus();
     // log.debug(`Cpus: ${JSON.stringify(currCpus)}`);
-    let cpuUsageLog: string;
     if (currCpus.length !== prevCpus.length) {
       prevCpus = currCpus; // Reset the previous cpus
       log.debug(`Cpu check length failed, resetting previous cpus`);
@@ -122,39 +166,116 @@ async function startCpuMemoryCheck() {
       totalIdle += idleDiff;
       totalTick += totalDiff;
     });
-    const cpuUsage = 100 - (totalIdle / totalTick) * 100;
-    if (totalTick === 0 || isNaN(cpuUsage) || !isFinite(cpuUsage) || cpuUsage <= 0) {
-      if (lastCpuUsage != 0) log.debug(`Cpu check failed, using previous cpus`);
-      cpuUsageLog = lastCpuUsage.toFixed(2);
+    const osCpuUsage = 100 - (totalIdle / totalTick) * 100;
+    if (totalTick === 0 || isNaN(osCpuUsage) || !isFinite(osCpuUsage) || osCpuUsage <= 0) {
+      log.debug(`Cpu check failed, using previous cpus`);
     } else {
-      cpuUsageLog = cpuUsage.toFixed(2);
-      setLastCpuUsage(cpuUsage);
-      if (lastCpuUsage > peakCpu) peakCpu = lastCpuUsage;
-      cliEmitter.emit('cpu', lastCpuUsage);
+      // istanbul ignore next
+      setLastOsCpuUsage(osCpuUsage);
+      // istanbul ignore next if
+      if (osCpuUsage > peakCpu) {
+        peakCpu = osCpuUsage;
+        if (peakCpu && trace) log.debug(`****${RED}${BRIGHT}Cpu peak detected.${db} Peak cpu from ${CYAN}${formatCpuUsage(peakCpu)}${db} to ${CYAN}${formatCpuUsage(osCpuUsage)}${db}`);
+      }
     }
     prevCpus = currCpus;
 
+    // Get the process cpu usage https://cdn.jsdelivr.net/npm/chart.js
+    const diff = process.cpuUsage(prevProcessCpu);
+    const userMs = diff.user / 1000;
+    const systemMs = diff.system / 1000;
+    const totalMs = userMs + systemMs;
+    const processCpuUsage = Number((((totalMs / memoryCheckIntervalMs) * 100) / currCpus.length).toFixed(2));
+    // istanbul ignore next if
+    if (processCpuUsage > peakProcessCpu) {
+      peakProcessCpu = processCpuUsage;
+      if (peakProcessCpu && trace) log.debug(`****${RED}${BRIGHT}Process cpu peak detected.${db} Peak process cpu from ${CYAN}${formatCpuUsage(peakProcessCpu)}${db} to ${CYAN}${formatCpuUsage(processCpuUsage)}${db}`);
+    }
+    prevProcessCpu = process.cpuUsage();
+    setLastProcessCpuUsage(processCpuUsage);
+
+    cliEmitter.emit('cpu', osCpuUsage, processCpuUsage);
+
+    // Update preallocated history entry in place to avoid per-interval allocations. Keep the same object reference.
+    const entry = history[historyIndex];
+    entry.timestamp = Date.now();
+    entry.cpu = osCpuUsage;
+    entry.peakCpu = peakCpu;
+    entry.processCpu = processCpuUsage;
+    entry.peakProcessCpu = peakProcessCpu;
+    entry.rss = memoryUsageRaw.rss;
+    entry.peakRss = peakRss;
+    entry.heapUsed = memoryUsageRaw.heapUsed;
+    entry.peakHeapUsed = peakHeapUsed;
+    entry.heapTotal = memoryUsageRaw.heapTotal;
+    entry.peakHeapTotal = peakHeapTotal;
+    entry.external = memoryUsageRaw.external;
+    entry.peakExternal = peakExternal;
+    entry.arrayBuffers = memoryUsageRaw.arrayBuffers;
+    entry.peakArrayBuffers = peakArrayBuffers;
+    setHistoryIndex((historyIndex + 1) % historySize);
+
     // Show the cpu and memory usage
-    log.debug(
-      `***${YELLOW}${BRIGHT}Cpu usage:${db} ${CYAN}${cpuUsageLog.padStart(6, ' ')} %${db} ${YELLOW}${BRIGHT}Memory usage:${db} rss ${CYAN}${rss}${db} heapTotal ${CYAN}${heapTotal}${db} heapUsed ${CYAN}${heapUsed}${db} external ${external} arrayBuffers ${arrayBuffers}`,
-    );
+    if (trace)
+      log.debug(
+        `***${YELLOW}${BRIGHT}Host cpu:${db} ` +
+          `${CYAN}${formatCpuUsage(osCpuUsage)}${db} (peak ${formatCpuUsage(peakCpu)}) ` +
+          `${YELLOW}${BRIGHT}Process cpu:${db} ` +
+          `${CYAN}${formatCpuUsage(processCpuUsage)}${db} (peak ${formatCpuUsage(peakProcessCpu)}) ` +
+          `${YELLOW}${BRIGHT}Process memory:${db} ` +
+          `rss ${CYAN}${rss}${db} (peak ${formatMemoryUsage(peakRss)}) ` +
+          `heapUsed ${CYAN}${heapUsed}${db} (peak ${formatMemoryUsage(peakHeapUsed)}) ` +
+          `heapTotal ${CYAN}${heapTotal}${db} (peak ${formatMemoryUsage(peakHeapTotal)}) ` +
+          `external ${CYAN}${external}${db} (peak ${formatMemoryUsage(peakExternal)}) ` +
+          `arrayBuffers ${CYAN}${arrayBuffers}${db} (peak ${formatMemoryUsage(peakArrayBuffers)})`,
+      );
   };
-  interval();
+
   clearInterval(memoryCheckInterval);
-  memoryCheckInterval = setInterval(interval, getIntParameter('memoryinterval') ?? 10 * 1000).unref();
+  memoryCheckInterval = setInterval(interval, memoryCheckIntervalMs).unref();
+
+  clearTimeout(memoryPeakResetTimeout);
+  // istanbul ignore next
+  memoryPeakResetTimeout = setTimeout(
+    () => {
+      if (trace) log.debug(`****${RED}${BRIGHT}Cpu and memory peaks reset after first 5 minutes.${db}`);
+      peakCpu = 0;
+      peakProcessCpu = 0;
+      peakRss = 0;
+      peakHeapUsed = 0;
+      peakHeapTotal = 0;
+    },
+    5 * 60 * 1000,
+  ).unref(); // Reset peaks every 5 minutes
 }
 
 /**
  * Stops the CPU and memory check interval.
  */
 async function stopCpuMemoryCheck() {
-  log.debug(`***Cpu memory check stopped. Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}.`);
+  if (trace) {
+    log.debug(
+      `***Cpu memory check stopped. ` +
+        `Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. ` +
+        `Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}. ` +
+        `Peak heapUsed: ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db}. ` +
+        `Peak heapTotal: ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db}. ` +
+        `Peak external: ${CYAN}${formatMemoryUsage(peakExternal)}${db}. ` +
+        `Peak arrayBuffers: ${CYAN}${formatMemoryUsage(peakArrayBuffers)}${db}.`,
+    );
+  }
   clearInterval(memoryCheckInterval);
+  clearTimeout(memoryPeakResetTimeout);
 }
 
 /**
  * Starts the inspector for heap sampling.
  * This function is called when the -inspect parameter is passed.
+ * The -snapshotinterval parameter can be used to set the heap snapshot interval. Default is undefined. Minimum is 30000 ms.
+ * The snapshot is saved in the heap_profile directory that is created in the current working directory.
+ * The snapshot can be analyzed using vscode or Chrome DevTools or other tools that support heap snapshots.
+ *
+ * @remarks To use the inspector, Node.js must be started with --inspect.
  */
 async function startInspector() {
   const { Session } = await import('node:inspector');
@@ -251,6 +372,9 @@ async function takeHeapSnapshot() {
     return;
   }
 
+  // Trigger a garbage collection before taking the snapshot to reduce noise
+  triggerGarbageCollection();
+
   log.debug(`Taking heap snapshot...`);
 
   const chunks: Buffer[] = [];
@@ -263,12 +387,17 @@ async function takeHeapSnapshot() {
       if (!err) {
         session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
         writeFileSync(filename, Buffer.concat(chunks));
+        chunks.length = 0; // Clear the chunks array
         log.debug(`***Heap sampling snapshot saved to ${CYAN}${filename}${db}`);
+        // Trigger a garbage collection after the snapshot to clean up
         triggerGarbageCollection();
         resolve();
       } else {
         session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
+        chunks.length = 0; // Clear the chunks array
         log.error(`***Failed to take heap snapshot: ${err instanceof Error ? err.message : err}`);
+        // Trigger a garbage collection after the snapshot to clean up
+        triggerGarbageCollection();
         resolve();
       }
     });
@@ -277,11 +406,17 @@ async function takeHeapSnapshot() {
 
 /**
  * Triggers a manual garbage collection.
- * This function is working only if the process is started with --expose-gc.
+ * This function is working only if the process is started with --expose_gc.
+ *
+ * @remarks To check the effect of the garbage collection, add --trace_gc or --trace_gc_verbose.
  */
 function triggerGarbageCollection() {
-  if (typeof global.gc === 'function') {
-    global.gc();
+  if (global.gc && typeof global.gc === 'function') {
+    try {
+      global.gc({ type: 'major', execution: 'sync' });
+    } catch {
+      global.gc();
+    }
     log.debug('Manual garbage collection triggered via global.gc().');
   } else {
     log.debug('Garbage collection is not exposed. Start Node.js with --expose-gc to enable manual GC.');
@@ -321,7 +456,7 @@ async function shutdown() {
 }
 
 /**
- *
+ * Restarts the Matterbridge instance.
  */
 async function restart() {
   log.debug('Received restart event, loading...');
@@ -330,7 +465,7 @@ async function restart() {
 }
 
 /**
- *
+ * Updates the Matterbridge instance.
  */
 async function update() {
   log.debug('Received update event, updating...');
@@ -357,6 +492,22 @@ async function stop() {
 
 /**
  * Main function that initializes the Matterbridge instance and starts the CLI.
+ *
+ * @remarks
+ *
+ * Debug parameters:
+ *
+ * --debug enables debug logging.
+ *
+ * --loader enables loader logging.
+ *
+ * --trace enables cpu and memory logging and history logging on shutdown.
+ *
+ * --memoryinterval <milliseconds> can be used to set the CPU and memory check interval. Default is 10 seconds.
+ *
+ * --inspect enables the inspector for heap sampling.
+ *
+ * --snapshotinterval <milliseconds> can be used to set the heap snapshot interval. Default is undefined. Minimum is 30000 ms.
  */
 async function main() {
   log.debug(`Cli main() started`);

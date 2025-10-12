@@ -10,7 +10,7 @@ import HomeInstallAddPlugins from './HomeInstallAddPlugins';
 import HomePlugins from './HomePlugins';
 import HomeDevices from './HomeDevices';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
-import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
+import { ApiPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 import { MbfPage } from './MbfPage';
 import HomeLogs from './HomeLogs';
 import HomeBrowserRefresh from './HomeBrowserRefresh';
@@ -22,7 +22,7 @@ function Home(): React.JSX.Element {
   // States
   const [systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
-  const [plugins, setPlugins] = useState<BaseRegisteredPlugin[]>([]);
+  const [plugins, setPlugins] = useState<ApiPlugin[]>([]);
   const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins') === 'false' ? false : true); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode') ?? 'devices'); // default devices
   const [changelog, setChangelog] = useState('');

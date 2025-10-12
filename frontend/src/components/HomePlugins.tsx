@@ -21,12 +21,12 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import { StatusIndicator } from './StatusIndicator';
+import MbfTable, { MbfTableColumn } from './MbfTable';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
-import { BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
+import { ApiPlugin, MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { getQRColor } from './getQRColor';
 import { debug } from '../App';
-import MbfTable, { MbfTableColumn } from './MbfTable';
 // const debug = true;
 
 interface HomePluginsProps {
@@ -44,9 +44,9 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
   // States
   const [_systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
-  const [plugins, setPlugins] = useState<BaseRegisteredPlugin[]>([]);
+  const [plugins, setPlugins] = useState<ApiPlugin[]>([]);
 
-  const pluginsColumns: MbfTableColumn<BaseRegisteredPlugin>[] = [
+  const pluginsColumns: MbfTableColumn<ApiPlugin>[] = [
     {
       label: 'Name',
       id: 'name',
@@ -291,9 +291,9 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
     }
   }, [online, sendMessage]);
 
-  const confirmCancelPluginRef = useRef<BaseRegisteredPlugin | null>(null);
+  const confirmCancelPluginRef = useRef<ApiPlugin | null>(null);
 
-  const handleActionWithConfirmCancel = (title: string, message: string, command: string, plugin: BaseRegisteredPlugin) => {
+  const handleActionWithConfirmCancel = (title: string, message: string, command: string, plugin: ApiPlugin) => {
     if (debug) console.log(`handleActionWithConfirmCancel ${command} ${plugin.name}`);
     confirmCancelPluginRef.current = plugin;
     showConfirmCancelDialog(title, message, command, handleConfirm, handleCancel);
@@ -314,27 +314,27 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
     confirmCancelPluginRef.current = null;
   };
 
-  const handleUpdatePlugin = (plugin: BaseRegisteredPlugin) => {
+  const handleUpdatePlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleUpdatePlugin plugin:', plugin.name);
     sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: plugin.name, restart: false } });
   };
 
-  const handleUpdateDevPlugin = (plugin: BaseRegisteredPlugin) => {
+  const handleUpdateDevPlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleUpdateDevPlugin plugin:', plugin.name);
     sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: plugin.name + '@dev', restart: false } });
   };
 
-  const handleRemovePlugin = (plugin: BaseRegisteredPlugin) => {
+  const handleRemovePlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleRemovePlugin plugin:', plugin.name);
     sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/removeplugin', src: 'Frontend', dst: 'Matterbridge', params: { pluginName: plugin.name } });
   };
 
-  const handleRestartPlugin = (plugin: BaseRegisteredPlugin) => {
+  const handleRestartPlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleRestartPlugin plugin:', plugin.name);
     sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/restartplugin', src: 'Frontend', dst: 'Matterbridge', params: { pluginName: plugin.name } });
   };
 
-  const handleEnableDisablePlugin = (plugin: BaseRegisteredPlugin) => {
+  const handleEnableDisablePlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleEnableDisablePlugin plugin:', plugin.name, 'enabled:', plugin.enabled);
     if (plugin.enabled === true) {
       plugin.enabled = false;
@@ -345,31 +345,31 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
     }
   };
 
-  const handleHomepagePlugin = (plugin: BaseRegisteredPlugin) => {
+  const handleHomepagePlugin = (plugin: ApiPlugin) => {
     if (debug) console.log(`handleHomepagePlugin plugin: ${plugin.name} homepage: ${plugin.homepage}`);
     if (plugin.homepage) window.open(plugin.homepage, '_blank');
   };
 
-  const handleSponsorPlugin = (plugin: BaseRegisteredPlugin) => {
+  const handleSponsorPlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleSponsorPlugin plugin:', plugin.name, 'funding:', plugin.funding);
     if (plugin.funding) window.open(plugin.funding, '_blank');
   };
 
-  const handleHelpPlugin = (plugin: BaseRegisteredPlugin) => {
+  const handleHelpPlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleHelpPlugin plugin:', plugin.name, 'help:', plugin.help);
     if (plugin.help) window.open(plugin.help, '_blank');
   };
 
-  const handleChangelogPlugin = (plugin: BaseRegisteredPlugin) => {
+  const handleChangelogPlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleChangelogPlugin plugin:', plugin.name, 'changelog:', plugin.changelog);
     if (plugin.changelog) window.open(plugin.changelog, '_blank');
   };
 
   // ConfigPluginDialog
-  const [selectedPlugin, setSelectedPlugin] = useState<BaseRegisteredPlugin>();
+  const [selectedPlugin, setSelectedPlugin] = useState<ApiPlugin>();
   const [openConfigPluginDialog, setOpenConfigPluginDialog] = useState(false);
 
-  const handleConfigPlugin = (plugin: BaseRegisteredPlugin) => {
+  const handleConfigPlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleConfigPlugin plugin:', plugin.name);
     sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/select/devices', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
     sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/select/entities', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
@@ -394,7 +394,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       {/* Config plugin dialog */}
       {selectedPlugin && <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin} />}
 
-      <MbfTable<BaseRegisteredPlugin> name='Plugins' columns={pluginsColumns} rows={plugins} footerRight='' footerLeft='' />
+      <MbfTable<ApiPlugin> name='Plugins' columns={pluginsColumns} rows={plugins} footerRight='' footerLeft='' />
     </div>
   );
 }

@@ -282,6 +282,43 @@
       "problemMatcher": []
     },
     {
+      "label": "Test: Workers",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "src/workers/cpuUsage.test.ts",
+        "src/workers/memoryUsage.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Cli",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "src/cli.test.ts",
+        "src/cli.error.test.ts",
+        "src/cli.error2.test.ts",
+        "src/cliEmitter.test.ts",
+        "src/cliHistory.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "type": "npm",
       "script": "lint",
       "problemMatcher": [

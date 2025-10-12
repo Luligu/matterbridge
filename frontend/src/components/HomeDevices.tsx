@@ -19,8 +19,8 @@ import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { getQRColor } from './getQRColor';
 import MbfTable, { MbfTableColumn } from './MbfTable';
-import { ApiDevices, ApiMatterResponse, BaseRegisteredPlugin } from '../../../src/matterbridgeTypes';
-import { ApiSelectDevice, ApiSettingResponse, WsMessageApiResponse } from '../../../src/frontendTypes';
+import { ApiDevice, ApiMatter, ApiPlugin } from '../../../src/matterbridgeTypes';
+import { ApiSelectDevice, ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 import { debug } from '../App';
 // const debug = true;
 
@@ -33,12 +33,12 @@ const getRowKey = (row: MixedApiDevices) => {
   return `${row.pluginName}::${row.serial}`;
 };
 
-interface ExtendedBaseRegisteredPlugin extends Omit<BaseRegisteredPlugin, 'schemaJson' | 'configJson'> {
+interface ExtendedBaseRegisteredPlugin extends Omit<ApiPlugin, 'schemaJson' | 'configJson'> {
   schemaJson: { properties: { whiteList?: { selectFrom?: string } } };
   configJson: { whiteList: string[]; blackList: string[]; postfix?: string };
 }
 
-interface ApiDevicesWithSelected extends ApiDevices {
+interface ApiDevicesWithSelected extends ApiDevice {
   selected?: boolean;
 }
 
@@ -58,7 +58,7 @@ interface MixedApiDevices {
   reachable?: boolean;
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
   cluster?: string;
-  matter?: ApiMatterResponse;
+  matter?: ApiMatter;
   selected?: boolean;
 }
 
@@ -87,7 +87,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // States
   const [restart, setRestart] = useState(false); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
   const [loading, setLoading] = useState(true); // Loading state, used in the footer sx. Set to false when all plugins are loaded.
-  const [settings, setSettings] = useState<ApiSettingResponse | null>(null); // Settings from /api/settings response
+  const [settings, setSettings] = useState<ApiSettings | null>(null); // Settings from /api/settings response
   const [plugins, setPlugins] = useState<ExtendedBaseRegisteredPlugin[]>([]);
   const [devices, setDevices] = useState<ApiDevicesWithSelected[]>([]);
   const [selectDevices, setSelectDevices] = useState<ApiSelectDevicesWithSelected[]>([]);

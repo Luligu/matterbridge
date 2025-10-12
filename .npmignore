@@ -42,7 +42,8 @@ vite.config.*
 # Package specific directories and files that should be ignored
 docker
 systemd
-heap_profile
+heap_profiles
+heap_snapshots
 crypto
 docs
 STYLEGUIDE.md

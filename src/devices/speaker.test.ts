@@ -1,49 +1,27 @@
 // src/speaker.test.ts
 // Tests the Speaker device with simple constructor parameters (no options object).
 
-const MATTER_PORT = 6032; // distinct port
+const MATTER_PORT = 6032;
 const NAME = 'Speaker';
 const HOMEDIR = path.join('jest', NAME);
 
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger } from 'node-ansi-logger';
-// matter.js
 import { Endpoint, ServerNode } from '@matter/main';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { OnOff, LevelControl } from '@matter/main/clusters';
 
 // helpers
-import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { Speaker } from './speaker.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation(() => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
+// Setup the Matter test environment
 createTestEnvironment(HOMEDIR);
+
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let server: ServerNode<ServerNode.RootEndpoint>;

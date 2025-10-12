@@ -68,6 +68,13 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
     }));
   };
 
+  const handleProcessCpuUpdate = (processCpuUsage: number) => {
+    setLocalSystemInfo((prev) => ({
+      ...prev,
+      processCpuUsage: processCpuUsage.toFixed(2) + ' %',
+    }));
+  };
+
   const handleUptimeUpdate = (systemUptime: string, processUptime: string) => {
     setLocalSystemInfo((prev) => ({
       ...prev,
@@ -85,6 +92,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
       } else if (msg.method === 'cpu_update' && msg.response && msg.response.cpuUsage) {
         if (debug) console.log('SystemInfoTable received cpu_update', msg);
         handleCpuUpdate(msg.response.cpuUsage);
+        handleProcessCpuUpdate(msg.response.processCpuUsage);
       } else if (msg.method === 'uptime_update' && msg.response && msg.response.systemUptime && msg.response.processUptime) {
         if (debug) console.log('SystemInfoTable received uptime_update', msg);
         handleUptimeUpdate(msg.response.systemUptime, msg.response.processUptime);
@@ -119,7 +127,25 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
               .filter(([_key, value]) => value !== undefined && value !== '')
               .map(([key, value], index) => (
                 <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
-                  <td style={{ border: 'none', borderCollapse: 'collapse' }}>{key}</td>
+                  <td style={{ border: 'none', borderCollapse: 'collapse' }}>
+                    {key
+                      .replace('interfaceName', 'Interface name')
+                      .replace('macAddress', 'Mac address')
+                      .replace('ipv4Address', 'IPv4 address')
+                      .replace('ipv6Address', 'IPv6 address')
+                      .replace('nodeVersion', 'Node version')
+                      .replace('hostname', 'Hostname')
+                      .replace('user', 'User')
+                      .replace('osType', 'Os')
+                      .replace('osPlatform', 'Platform')
+                      .replace('freeMemory', 'Memory')
+                      .replace('systemUptime', 'System uptime')
+                      .replace('processUptime', 'Process uptime')
+                      .replace('cpuUsage', 'Host CPU')
+                      .replace('processCpuUsage', 'Process CPU')
+                      .replace('rss', 'Rss')
+                      .replace('heapUsed', 'Heap')}
+                  </td>
                   <td style={{ border: 'none', borderCollapse: 'collapse' }}>
                     <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={24} />
                   </td>

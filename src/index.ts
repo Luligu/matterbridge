@@ -3,7 +3,7 @@
  * @file index.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.0.7
+ * @version 1.0.9
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -21,12 +21,8 @@
  * limitations under the License.
  */
 
-// AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-
-// Matterbridge
-import { Matterbridge } from './matterbridge.js';
-import { hasParameter } from './utils/commandLine.js';
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mIndex loaded.\u001B[40;0m');
 
 // Matterbridge
 export * from './matterbridge.js';
@@ -39,18 +35,3 @@ export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export { addVirtualDevice } from './helpers.js';
-
-const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
-
-/**
- * Main function to load the Matterbridge instance.
- */
-async function main() {
-  log.debug('***Matterbridge.loadInstance() called');
-  await Matterbridge.loadInstance();
-  log.debug('***Matterbridge.loadInstance() exited');
-}
-
-main().catch((error) => {
-  log.error(`Matterbridge.loadInstance() failed with error: ${error instanceof Error ? error.message : error}`);
-});

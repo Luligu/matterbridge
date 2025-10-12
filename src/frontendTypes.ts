@@ -22,14 +22,14 @@
  * limitations under the License.
  */
 
-import { EndpointNumber } from '@matter/main';
+import type { EndpointNumber } from '@matter/main';
 
 import type { PlatformConfig } from './matterbridgePlatform.js';
-import type { ApiClustersResponse, ApiDevices, ApiMatterResponse, BaseRegisteredPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
+import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
 export type RefreshRequiredChanged = 'settings' | 'plugins' | 'devices' | 'matter';
 
-export interface ApiSettingResponse {
+export interface ApiSettings {
   matterbridgeInformation: MatterbridgeInformation;
   systemInformation: SystemInformation;
 }
@@ -301,6 +301,14 @@ export interface WsMessageApiFactoryResetResponse extends WsMessageSuccessApiRes
   method: '/api/factoryreset';
 }
 
+export interface WsMessageApiGenerateHistoryPageRequest extends WsMessageBaseApiRequest {
+  method: '/api/generatehistorypage';
+}
+export interface WsMessageApiGenerateHistoryPageResponse extends WsMessageSuccessApiResponse {
+  method: '/api/generatehistorypage';
+  success: true;
+}
+
 export interface WsMessageApiMatterRequest extends WsMessageBaseApiRequest {
   method: '/api/matter';
   params: {
@@ -314,7 +322,7 @@ export interface WsMessageApiMatterRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiMatterResponse extends WsMessageSuccessApiResponse {
   method: '/api/matter';
-  response: ApiMatterResponse;
+  response: ApiMatter;
 }
 
 export interface WsMessageApiSettingsRequest extends WsMessageBaseApiRequest {
@@ -322,7 +330,7 @@ export interface WsMessageApiSettingsRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiSettingsResponse extends WsMessageSuccessApiResponse {
   method: '/api/settings';
-  response: ApiSettingResponse;
+  response: ApiSettings;
 }
 
 export interface WsMessageApiPluginsRequest extends WsMessageBaseApiRequest {
@@ -330,7 +338,7 @@ export interface WsMessageApiPluginsRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiPluginsResponse extends WsMessageSuccessApiResponse {
   method: '/api/plugins';
-  response: BaseRegisteredPlugin[];
+  response: ApiPlugin[];
 }
 
 export interface WsMessageApiDevicesRequest extends WsMessageBaseApiRequest {
@@ -341,7 +349,7 @@ export interface WsMessageApiDevicesRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiDevicesResponse extends WsMessageSuccessApiResponse {
   method: '/api/devices';
-  response: ApiDevices[];
+  response: ApiDevice[];
 }
 
 export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
@@ -353,7 +361,7 @@ export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
 }
 export interface WsMessageApiClustersResponse extends WsMessageSuccessApiResponse {
   method: '/api/clusters';
-  response: ApiClustersResponse;
+  response: ApiClusters;
 }
 
 export interface WsMessageApiSelectDevicesRequest extends WsMessageBaseApiRequest {
@@ -435,7 +443,7 @@ export interface WsMessageApiRefreshRequired extends WsMessageSuccessApiResponse
   method: 'refresh_required';
   response: {
     changed: RefreshRequiredChanged;
-    matter?: ApiMatterResponse;
+    matter?: ApiMatter;
   };
 }
 
@@ -457,6 +465,7 @@ export interface WsMessageApiCpuUpdate extends WsMessageSuccessApiResponse {
   method: 'cpu_update';
   response: {
     cpuUsage: number;
+    processCpuUsage: number;
   };
 }
 
@@ -562,6 +571,7 @@ export type WsMessageApiRequest =
   | WsMessageApiUnregisterRequest
   | WsMessageApiResetRequest
   | WsMessageApiFactoryResetRequest
+  | WsMessageApiGenerateHistoryPageRequest
   | WsMessageApiMatterRequest
   | WsMessageApiSettingsRequest
   | WsMessageApiPluginsRequest
@@ -599,6 +609,7 @@ export type WsMessageApiResponse =
   | WsMessageApiUnregisterResponse
   | WsMessageApiResetResponse
   | WsMessageApiFactoryResetResponse
+  | WsMessageApiGenerateHistoryPageResponse
   | WsMessageApiMatterResponse
   | WsMessageApiSettingsResponse
   | WsMessageApiPluginsResponse

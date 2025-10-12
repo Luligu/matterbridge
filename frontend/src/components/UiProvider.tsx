@@ -31,7 +31,7 @@ export interface UiContextType {
   closeSnackbarMessage: (message: string) => void;
   closeSnackbar: (key?: SnackbarKey | undefined) => void;
   showConfirmCancelDialog: (title: string, message: string, command: string, handleConfirm: (command: string) => void, handleCancel: (command: string) => void) => void;
-  showInstallProgress: (packageName: string) => void;
+  showInstallProgress: (title: string, command: string, packageName: string) => void;
   exitInstallProgressSuccess: () => void;
   exitInstallProgressError: () => void;
   hideInstallProgress: () => void;
@@ -143,13 +143,17 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
 
   // ******************************** InstallProgressDialog ********************************
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
+  const [installTitle, setInstallTitle] = useState('');
+  const [installCommand, setInstallCommand] = useState('');
   const [installPackageName, setInstallPackageName] = useState('');
   const [installOutput, setInstallOutput] = useState('');
 
-  const showInstallProgress = useCallback((packageName: string) => {
-    if (debug) console.log(`UiProvider show install progress for package ${packageName}`);
+  const showInstallProgress = useCallback((title: string, command: string, packageName: string) => {
+    if (debug) console.log(`UiProvider show install progress for package ${title}`);
+    setInstallTitle(title);
+    setInstallCommand(command);
     setInstallPackageName(packageName);
-    setInstallOutput(`Starting installation of ${packageName}...\n`);
+    // setInstallOutput(`Starting installation of ${packageName}...\n`);
     setInstallDialogOpen(true);
   }, []);
 
@@ -160,12 +164,12 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
 
   const exitInstallProgressSuccess = useCallback(() => {
     if (debug) console.log(`UiProvider exitInstallProgressSuccess: package ${installPackageName}`);
-    setInstallOutput((prevOutput) => prevOutput + `Successfully installed ${installPackageName}\n`);
+    // setInstallOutput((prevOutput) => prevOutput + `Successfully installed ${installPackageName}\n`);
   }, [installPackageName]);
 
   const exitInstallProgressError = useCallback(() => {
     if (debug) console.log(`UiProvider exitInstallProgressError: package ${installPackageName}`);
-    setInstallOutput((prevOutput) => prevOutput + `Failed to install ${installPackageName}\n`);
+    // setInstallOutput((prevOutput) => prevOutput + `Failed to install ${installPackageName}\n`);
   }, [installPackageName]);
 
   const hideInstallProgress = useCallback(() => {
@@ -216,7 +220,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   return (
     <UiContext.Provider value={contextValue}>
       <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
-      <InstallProgressDialog open={installDialogOpen} packageName={installPackageName} output={installOutput} onClose={handleInstallClose} />
+      <InstallProgressDialog open={installDialogOpen} title={installTitle} _command={installCommand} _packageName={installPackageName} output={installOutput} onClose={handleInstallClose} />
       {children}
     </UiContext.Provider>
   );

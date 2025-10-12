@@ -18,10 +18,12 @@ temp/
 *.log
 
 # Package specific directories and files that should be ignored
-heap_profile
+heap_profiles
+heap_snapshots
 TODO.md
 crypto
 docs/Matter specifications/
 STYLEGUIDE.md
 workers/
 matter.ts
+history.html

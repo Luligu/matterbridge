@@ -200,7 +200,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
           // Send to InstallProgressDialog if it's an install log
           if (msg.response.level === 'spawn') {
-            if (msg.response.name === 'Matterbridge:spawn-init') showInstallProgress(msg.response.message);
+            if (msg.response.name === 'Matterbridge:spawn-init') showInstallProgress(msg.response.message, '', '');
             else if (msg.response.name === 'Matterbridge:spawn-exit-success') exitInstallProgressSuccess();
             else if (msg.response.name === 'Matterbridge:spawn-exit-error') exitInstallProgressError();
             else addInstallProgress(msg.response.message + '\n');

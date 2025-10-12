@@ -23,16 +23,17 @@
  */
 
 // NodeStorage and AnsiLogger modules
-import { NodeStorage } from 'node-persist-manager';
-import { LogLevel } from 'node-ansi-logger';
+import type { NodeStorage } from 'node-persist-manager';
+import type { LogLevel } from 'node-ansi-logger';
 // @matter
-import { FabricIndex, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
-import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
+import type { FabricIndex, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
+import type { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
+import type { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
 
 // Matterbridge
-import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import type { Matterbridge } from './matterbridge.js';
+import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Default colors
 export const plg = '\u001B[38;5;33m';
@@ -44,9 +45,42 @@ export const MATTERBRIDGE_LOGGER_FILE = 'matterbridge.log';
 export const MATTER_LOGGER_FILE = 'matter.log';
 export const NODE_STORAGE_DIR = 'storage';
 export const MATTER_STORAGE_NAME = 'matterstorage';
+export const MATTERBRIDGE_DIAGNOSTIC_FILE = 'diagnostic.log';
+export const MATTERBRIDGE_HISTORY_FILE = 'history.html';
+
+export type MaybePromise<T> = T | Promise<T>;
+
+export type SharedMatterbridge = Readonly<
+  Pick<
+    Matterbridge,
+    | 'systemInformation'
+    | 'homeDirectory'
+    | 'rootDirectory'
+    | 'matterbridgeDirectory'
+    | 'matterbridgePluginDirectory'
+    | 'matterbridgeCertDirectory'
+    | 'globalModulesDirectory'
+    | 'matterbridgeVersion'
+    | 'matterbridgeLatestVersion'
+    | 'matterbridgeDevVersion'
+    | 'frontendVersion'
+    | 'bridgeMode'
+    | 'restartMode'
+    | 'virtualMode'
+    | 'profile'
+    | 'fileLogger'
+    | 'matterFileLogger'
+    | 'mdnsInterface'
+    | 'ipv4Address'
+    | 'ipv6Address'
+    | 'port'
+    | 'discriminator'
+    | 'passcode'
+  >
+>;
 
 // Define an interface for storing the plugins
-export interface RegisteredPlugin extends BaseRegisteredPlugin {
+export interface Plugin extends ApiPlugin {
   nodeContext?: NodeStorage;
   storageContext?: StorageContext;
   serverNode?: ServerNode<ServerNode.RootEndpoint>;
@@ -57,13 +91,7 @@ export interface RegisteredPlugin extends BaseRegisteredPlugin {
 }
 
 // Simplified interface for saving the plugins in node storage
-export interface BaseRegisteredPlugin {
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  path: string;
-  type: string;
+export interface ApiPlugin extends StoragePlugin {
   latestVersion?: string;
   devVersion?: string;
   homepage?: string;
@@ -72,7 +100,6 @@ export interface BaseRegisteredPlugin {
   funding?: string;
   locked?: boolean;
   error?: boolean;
-  enabled?: boolean;
   loaded?: boolean;
   started?: boolean;
   configured?: boolean;
@@ -83,27 +110,42 @@ export interface BaseRegisteredPlugin {
   schemaJson?: PlatformSchema;
   hasWhiteList?: boolean;
   hasBlackList?: boolean;
-  matter?: ApiMatterResponse;
+  matter?: ApiMatter;
+}
+
+export interface StoragePlugin {
+  name: string;
+  path: string;
+  type: 'DynamicPlatform' | 'AccessoryPlatform' | 'AnyPlatform';
+  version: string;
+  description: string;
+  author: string;
+  enabled: boolean;
 }
 
 // Define an interface for storing the system information
 export interface SystemInformation {
+  // Network properties
   interfaceName: string;
   macAddress: string;
   ipv4Address: string;
   ipv6Address: string;
+  // Node.js properties
   nodeVersion: string;
+  // Fixed properties
   hostname: string;
   user: string;
   osType: string;
   osRelease: string;
   osPlatform: string;
   osArch: string;
+  // Variable properties
   totalMemory: string;
   freeMemory: string;
   systemUptime: string;
   processUptime: string;
   cpuUsage: string;
+  processCpuUsage: string;
   rss: string;
   heapTotal: string;
   heapUsed: string;
@@ -120,15 +162,15 @@ export interface MatterbridgeInformation {
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
   matterbridgeDevVersion: string;
-  frontendVersion?: string;
+  frontendVersion: string;
   bridgeMode: string;
   restartMode: string;
   virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
+  profile: string | undefined;
   readOnly: boolean;
   shellyBoard: boolean;
   shellySysUpdate: boolean;
   shellyMainUpdate: boolean;
-  profile?: string;
   loggerLevel: LogLevel;
   fileLogger: boolean;
   matterLoggerLevel: number;
@@ -165,7 +207,7 @@ export interface SanitizedSession {
   numberOfActiveSubscriptions: number;
 }
 
-export interface ApiDevices {
+export interface ApiDevice {
   pluginName: string;
   type: string;
   endpoint: EndpointNumber | undefined;
@@ -177,10 +219,10 @@ export interface ApiDevices {
   reachable: boolean;
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
   cluster: string;
-  matter?: ApiMatterResponse;
+  matter?: ApiMatter;
 }
 
-export interface ApiMatterResponse {
+export interface ApiMatter {
   id: string;
   online: boolean;
   commissioned: boolean;
@@ -194,7 +236,7 @@ export interface ApiMatterResponse {
   serialNumber: string | undefined;
 }
 
-export interface ApiClustersResponse {
+export interface ApiClusters {
   plugin: string;
   deviceName: string;
   serialNumber: string;
@@ -203,10 +245,10 @@ export interface ApiClustersResponse {
   /** Endpoint id */
   id: string;
   deviceTypes: number[];
-  clusters: ApiClusters[];
+  clusters: Cluster[];
 }
 
-export interface ApiClusters {
+export interface Cluster {
   /** Endpoint number > string */
   endpoint: string;
   /** Endpoint number */

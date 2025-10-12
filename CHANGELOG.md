@@ -23,6 +23,46 @@ Advantages:
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 
+## [3.3.1] - 2025-10-12
+
+### Breaking Changes
+
+- [frontend]: When a plugin is first installed, it will not be anymore started to allow to configure it before restarting.
+- [index]: Removed old plugin api compatibility since it was changed one year ago.
+
+### Added
+
+- [network]: Added getInterfaceDetails() function.
+- [network]: Added getInterfaceName() function.
+- [network]: Optimized code.
+- [matterbridge]: Added SharedMatterbridge readonly type.
+- [thread]: Added BroadcastServer to frontend, plugins and devices.
+- [cli]: Added cpu and memory history to cli.
+- [cli]: Added cpu and memory peaks history to cli.
+- [cli]: Added host cpu and process cpu to cli.
+- [frontend]: Added process cpu to SystemInformation.
+- [frontend]: Added under 'View' menu the item 'Matterbridge diagnostic log'. It shows the complete matter server nodes. The page is static and data are embedded so it can be sent for debug.
+- [frontend]: Added under 'View' menu the item 'Matterbridge system history'. It shows the graph page of the last 12h of host cpu, process cpu and memory usage (rss, heap used, heap total with peaks). The page is static and data are embedded so it can be sent for debug.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [matterbridge]: Removed matterbridgeInformation. It will be recreated when the frontend requires it.
+- [frontend]: Bumped `frontend` version to 3.2.1.
+- [frontend]: Refactored InstallProgressDialog.
+- [spawn]: Refactored spawnCommand for compatibility with InstallProgressDialog.
+- [matter.js]: Bumped `matter.js` to 0.15.5. Thanks matter.js!
+- [backend]: Optimized imports.
+- [cli]: Bumped `cli` version to 2.1.0.
+
+### Fixed
+
+- [frontend]: Fixed matter log on file not setting correctly.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.0] - 2025-10-03
 
 ### Development Breaking Changes Notice
@@ -97,8 +137,6 @@ In this phase (matterbridge `3.4.x`) all plugins will not build and will not run
 
 - [package]: Updated dependencies.
 - [frontend]: General improvements and small bug fixes.
-
-### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
