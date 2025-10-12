@@ -261,6 +261,7 @@ export interface MatterbridgeEndpointCommands {
   resetCondition: HandlerFunction;
 }
 
+
 export interface SerializedMatterbridgeEndpoint {
   pluginName: string;
   deviceName: string;
@@ -275,6 +276,22 @@ export interface SerializedMatterbridgeEndpoint {
   endpointName: string;
   clusterServersId: ClusterId[];
 }
+
+const supportedPresets = [
+  PresetType.Comfort,
+  PresetType.Eco,
+  PresetType.Away,
+  PresetType.Sleep,
+];
+
+// Mapping des presets vers leurs handles
+const presetHandles = {
+  [PresetType.Comfort]: 1,
+  [PresetType.Eco]: 2,
+  [PresetType.Away]: 3,
+  [PresetType.Sleep]: 4,
+};
+
 
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
