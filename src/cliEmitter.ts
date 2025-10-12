@@ -4,7 +4,7 @@
  * @file cliEmitter.ts
  * @author Luca Liguori
  * @created 2025-07-04
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -43,7 +43,7 @@ export let lastProcessCpuUsage = 0;
 /**
  * Sets the last os CPU usage.
  *
- * @param {number} val - The CPU usage percentage to set.
+ * @param {number} val - The os CPU usage percentage to set.
  * @returns {void}
  */
 export function setLastOsCpuUsage(val: number): void {

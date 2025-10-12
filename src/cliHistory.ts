@@ -28,8 +28,8 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-// History for 6h at 1 sample each 10 seconds = 2160 entries
-export const historySize: number = 2160;
+// History for 12h at 1 sample each 10 seconds = 4320 entries
+export const historySize: number = 4320;
 
 export let historyIndex: number = 0;
 
@@ -134,10 +134,10 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
   const peakRss = Math.max(...normalizedHistory.map((entry) => entry.peakRss ?? entry.rss));
   const peakHeapUsed = Math.max(...normalizedHistory.map((entry) => entry.peakHeapUsed ?? entry.heapUsed));
   const peakHeapTotal = Math.max(...normalizedHistory.map((entry) => entry.peakHeapTotal ?? entry.heapTotal));
+  const peakExternal = Math.max(...normalizedHistory.map((entry) => entry.peakExternal ?? entry.external));
+  const peakArrayBuffers = Math.max(...normalizedHistory.map((entry) => entry.peakArrayBuffers ?? entry.arrayBuffers));
   const firstTimestamp = normalizedHistory[0]?.timestamp ?? Date.now();
   const lastTimestamp = normalizedHistory[normalizedHistory.length - 1]?.timestamp ?? Date.now();
-
-  const historySanitised = JSON.stringify(normalizedHistory).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
 
   const summary = {
     entries: normalizedHistory.length,
@@ -147,9 +147,9 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
     peakRss,
     peakHeapUsed,
     peakHeapTotal,
+    peakExternal,
+    peakArrayBuffers,
   };
-
-  const summarySanitised = JSON.stringify(summary).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -359,8 +359,8 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
     </div>
 
     <script type="module">
-      const HISTORY_DATA = ${historySanitised};
-      const SUMMARY_DATA = ${summarySanitised};
+      const HISTORY_DATA = ${JSON.stringify(normalizedHistory)};
+      const SUMMARY_DATA = ${JSON.stringify(summary)};
       let cleanup = () => {};
 
       const summaryContainer = document.getElementById('summary');
@@ -371,7 +371,9 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
         { label: 'Process CPU Peak', value: SUMMARY_DATA.peakProcessCpu.toFixed(2) + ' %' },
         { label: 'RSS Peak', value: formatBytes(SUMMARY_DATA.peakRss) },
         { label: 'Heap Used Peak', value: formatBytes(SUMMARY_DATA.peakHeapUsed) },
-        { label: 'Heap Total Peak', value: formatBytes(SUMMARY_DATA.peakHeapTotal) }
+        { label: 'Heap Total Peak', value: formatBytes(SUMMARY_DATA.peakHeapTotal) },
+        { label: 'External Peak', value: formatBytes(SUMMARY_DATA.peakExternal) },
+        { label: 'Array Buffers Peak', value: formatBytes(SUMMARY_DATA.peakArrayBuffers) }
       ];
 
       summaryEntries.forEach(function (itemData) {
@@ -414,7 +416,7 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
       const cpuPeakValue = HISTORY_DATA.reduce(function (acc, entry) {
         return Math.max(acc, Number.isFinite(entry.peakCpu) ? entry.peakCpu : 0, Number.isFinite(entry.cpu) ? entry.cpu : 0);
       }, 0);
-      const cpuPadding = cpuPeakValue <= 10 ? 2 : cpuPeakValue * 0.1;
+      const cpuMaxYAxis = cpuPeakValue > 0 ? cpuPeakValue * 1.05 : undefined;
 
       const processCpuPeakValue = HISTORY_DATA.reduce(function (acc, entry) {
         return Math.max(
@@ -423,7 +425,33 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
           Number.isFinite(entry.processCpu) ? entry.processCpu : 0
         );
       }, 0);
-      const processCpuPadding = processCpuPeakValue <= 10 ? 2 : processCpuPeakValue * 0.1;
+      const processCpuMaxYAxis = processCpuPeakValue > 0 ? processCpuPeakValue * 1.05 : undefined;
+      const useProcessCpuDecimals = (processCpuMaxYAxis ?? 0) <= 3;
+
+      // Compute memory chart dynamic minimum Y as (min observed MB) - 10%
+      const memoryMinMb = HISTORY_DATA.reduce(function (acc, entry) {
+        const values = [entry.rss, entry.heapTotal, entry.heapUsed].map(bytesToMb);
+        const finiteValues = values.filter(function (v) { return Number.isFinite(v); });
+        const minEntry = finiteValues.length ? Math.min.apply(Math, finiteValues) : acc;
+        return Math.min(acc, minEntry);
+      }, Number.POSITIVE_INFINITY);
+      const memoryMinYAxis = Number.isFinite(memoryMinMb) && memoryMinMb > 0 ? Math.max(0, memoryMinMb - memoryMinMb * 0.1) : 0;
+
+      // Compute memory chart dynamic maximum Y as (max observed MB including peaks) + 5%
+      const memoryMaxMb = HISTORY_DATA.reduce(function (acc, entry) {
+        const values = [
+          entry.rss,
+          entry.heapTotal,
+          entry.heapUsed,
+          entry.peakRss,
+          entry.peakHeapTotal,
+          entry.peakHeapUsed
+        ].map(bytesToMb);
+        const finiteValues = values.filter(function (v) { return Number.isFinite(v); });
+        const maxEntry = finiteValues.length ? Math.max.apply(Math, finiteValues) : acc;
+        return Math.max(acc, maxEntry);
+      }, 0);
+      const memoryMaxYAxis = Number.isFinite(memoryMaxMb) && memoryMaxMb > 0 ? memoryMaxMb * 1.05 : undefined;
 
         renderCharts();
 
@@ -452,7 +480,7 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
               }
             ],
             minY: 0,
-            maxY: cpuPeakValue + cpuPadding,
+            maxY: cpuMaxYAxis,
             yFormatter: function (value) {
               return value.toFixed(0) + ' %';
             }
@@ -485,9 +513,9 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
               }
             ],
             minY: 0,
-            maxY: processCpuPeakValue + processCpuPadding,
+            maxY: processCpuMaxYAxis,
             yFormatter: function (value) {
-              return value.toFixed(0) + ' %';
+              return value.toFixed(useProcessCpuDecimals ? 1 : 0) + ' %';
             }
           });
 
@@ -511,7 +539,8 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
                 color: '#f472b6'
               }
             ],
-            minY: 0,
+            minY: memoryMinYAxis,
+            maxY: memoryMaxYAxis,
             yFormatter: function (value) {
               return value.toFixed(0) + ' MB';
             }

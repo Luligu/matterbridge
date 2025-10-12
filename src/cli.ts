@@ -4,7 +4,7 @@
  * @file cli.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 2.1.0
+ * @version 2.1.1
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -109,8 +109,6 @@ async function startCpuMemoryCheck() {
   prevCpus = os.cpus();
   prevProcessCpu = process.cpuUsage();
 
-  clearInterval(memoryCheckInterval);
-
   const interval = () => {
     // Get the os uptime
     const systemUptime = formatOsUpTime(Math.floor(os.uptime()));
@@ -211,6 +209,10 @@ async function startCpuMemoryCheck() {
     entry.peakHeapUsed = peakHeapUsed;
     entry.heapTotal = memoryUsageRaw.heapTotal;
     entry.peakHeapTotal = peakHeapTotal;
+    entry.external = memoryUsageRaw.external;
+    entry.peakExternal = peakExternal;
+    entry.arrayBuffers = memoryUsageRaw.arrayBuffers;
+    entry.peakArrayBuffers = peakArrayBuffers;
     setHistoryIndex((historyIndex + 1) % historySize);
 
     // Show the cpu and memory usage
@@ -442,7 +444,7 @@ async function shutdown() {
 }
 
 /**
- *
+ * Restarts the Matterbridge instance.
  */
 async function restart() {
   log.debug('Received restart event, loading...');
@@ -451,7 +453,7 @@ async function restart() {
 }
 
 /**
- *
+ * Updates the Matterbridge instance.
  */
 async function update() {
   log.debug('Received update event, updating...');
