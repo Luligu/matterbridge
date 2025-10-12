@@ -23,6 +23,16 @@ Advantages:
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 
+## [3.3.3] - Not released
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.2] - 2025-10-13
 
 ### Fixed
@@ -94,11 +104,15 @@ This change, necessary to achieve plugin isolation, will require all plugins to 
 - require matterbridge 3.3.0:
 
 ```typescript
-    if (this.verifyMatterbridgeVersion === undefined || typeof this.verifyMatterbridgeVersion !== 'function' || !this.verifyMatterbridgeVersion('3.3.0')) {
-      throw new Error(
-        `This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`,
-      );
-    }
+if (
+  this.verifyMatterbridgeVersion === undefined ||
+  typeof this.verifyMatterbridgeVersion !== "function" ||
+  !this.verifyMatterbridgeVersion("3.3.0")
+) {
+  throw new Error(
+    `This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`
+  );
+}
 ```
 
 - check that you are not using any matterbridge calls directly (this should not be the case).
@@ -118,8 +132,8 @@ export type PlatformMatterbridge = {
   readonly matterbridgeVersion: string;
   readonly matterbridgeLatestVersion: string;
   readonly matterbridgeDevVersion: string;
-  readonly bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
-  readonly restartMode: 'service' | 'docker' | '';
+  readonly bridgeMode: "bridge" | "childbridge" | "controller" | "";
+  readonly restartMode: "service" | "docker" | "";
   readonly aggregatorVendorId: VendorId;
   readonly aggregatorVendorName: string;
   readonly aggregatorProductId: number;
