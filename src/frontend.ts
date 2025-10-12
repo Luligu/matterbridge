@@ -1317,7 +1317,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
       } else if (data.method === '/api/install') {
-        if (isValidString(data.params.packageName, 14) && isValidBoolean(data.params.restart)) {
+        if (isValidString(data.params.packageName, 12) && isValidBoolean(data.params.restart)) {
           this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
           this.server.request({ type: 'plugins_install', src: this.server.name, dst: 'plugins', params: { packageName: data.params.packageName } });
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
@@ -1325,7 +1325,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/install' });
         }
       } else if (data.method === '/api/uninstall') {
-        if (isValidString(data.params.packageName, 14)) {
+        if (isValidString(data.params.packageName, 12)) {
           this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
           this.server.request({ type: 'plugins_uninstall', src: this.server.name, dst: 'plugins', params: { packageName: data.params.packageName } });
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
