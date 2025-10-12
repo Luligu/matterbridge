@@ -1926,7 +1926,12 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
-    });
+      // Thermostat.Feature.Presets
+      supportedPresets: supportedPresets,
+      numberOfPresets: supportedPresets.length,
+      selectedPreset: PresetType.None,
+      activePresetHandle: 0,
+   });
     return this;
   }
 
