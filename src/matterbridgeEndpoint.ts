@@ -291,7 +291,6 @@ const presetHandles = {
   [PresetType.Sleep]: 4,
 };
 
-
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
@@ -1947,7 +1946,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       numberOfPresets: supportedPresets.length,
       selectedPreset: PresetType.None,
       activePresetHandle: 0,
-   });
+    });
     return this;
   }
 
