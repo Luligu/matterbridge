@@ -23,6 +23,16 @@ Advantages:
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 
+## [3.3.2] - 2025-10-13
+
+### Fixed
+
+- [frontend]: Fixed update to latest.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.1] - 2025-10-12
 
 ### Breaking Changes

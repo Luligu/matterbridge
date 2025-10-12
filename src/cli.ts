@@ -415,6 +415,7 @@ function triggerGarbageCollection() {
     try {
       global.gc({ type: 'major', execution: 'sync' });
     } catch {
+      // istanbul ignore next
       global.gc();
     }
     log.debug('Manual garbage collection triggered via global.gc().');
