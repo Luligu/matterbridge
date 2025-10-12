@@ -1944,7 +1944,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Thermostat.Feature.Presets
       // supportedPresets: supportedPresets,
       numberOfPresets: supportedPresets.length,
-      type ExtendedThermostatSettings = Partial<ThermostatSettings> & {
       selectedPreset?: PresetType;
       activePresetHandle: new Uint8Array([0]),
     });
