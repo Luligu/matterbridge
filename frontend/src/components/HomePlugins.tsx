@@ -11,9 +11,9 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import PublishedWithChanges from '@mui/icons-material/PublishedWithChanges';
 import UnpublishedOutlinedIcon from '@mui/icons-material/UnpublishedOutlined';
-import DeleteForever from '@mui/icons-material/DeleteForever';
+import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
 import QrCode2 from '@mui/icons-material/QrCode2';
-import Settings from '@mui/icons-material/Settings';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 
@@ -53,7 +53,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       id: 'name',
       required: true,
       render: (value, rowKey, plugin, _column) => (
-        <Tooltip title='Open the plugin homepage'>
+        <Tooltip title={`Plugin path ${plugin.path}`}>
           <span style={{ cursor: 'pointer' }} onClick={() => handleHomepagePlugin(plugin)}>
             {plugin.name}
           </span>
@@ -139,7 +139,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
           )}
           <Tooltip title='Plugin config' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
             <IconButton disabled={plugin.restartRequired === true} style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleConfigPlugin(plugin)} size='small'>
-              <Settings />
+              <SettingsOutlinedIcon />
             </IconButton>
           </Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly && (
@@ -151,7 +151,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
                 }}
                 size='small'
               >
-                <DeleteForever />
+                <DeleteForeverOutlinedIcon />
               </IconButton>
             </Tooltip>
           )}
