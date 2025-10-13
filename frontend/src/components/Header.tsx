@@ -331,8 +331,9 @@ function Header() {
 
   useEffect(() => {
     if (online) {
-      if (debug) console.log('Header sending /api/settings requests');
+      if (debug) console.log('Header sending /api/settings and /api/checkupdates requests');
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/checkupdates', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
   }, [online, sendMessage]);
 
@@ -361,7 +362,7 @@ function Header() {
         </nav>
       </div>
       <div className='sub-header'>
-        {!settings.matterbridgeInformation.readOnly && update && (
+        {/*!settings.matterbridgeInformation.readOnly && update && (
           <Tooltip title='New Matterbridge version available, click to install'>
             <span className='status-warning' onClick={handleUpdateClick}>
               Update to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
@@ -374,11 +375,11 @@ function Header() {
               Update to new dev v.{settings.matterbridgeInformation.matterbridgeDevVersion.split('-dev-')[0]}
             </span>
           </Tooltip>
-        )}
+        )*/}
         {!settings.matterbridgeInformation.readOnly && (
           <Tooltip title='Matterbridge version, click to see the changelog'>
             <span className='status-information' onClick={handleChangelogClick}>
-              v.{settings.matterbridgeInformation.matterbridgeVersion}
+              v.{settings.matterbridgeInformation.matterbridgeVersion.split('-dev-')[0] + (settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? '@dev' : '')}
             </span>
           </Tooltip>
         )}
@@ -442,9 +443,16 @@ function Header() {
             <AnnouncementOutlinedIcon />
           </IconButton>
         </Tooltip>
-        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && (
+        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && update && (
           <Tooltip title='Update matterbridge to latest version'>
             <IconButton style={{ color: update ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateClick}>
+              <SystemUpdateAltIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && updateDev && (
+          <Tooltip title='Update matterbridge to latest dev version'>
+            <IconButton style={{ color: updateDev ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateDevClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
