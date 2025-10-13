@@ -276,6 +276,12 @@ export interface SerializedMatterbridgeEndpoint {
   clusterServersId: ClusterId[];
 }
 
+export enum PresetType {
+  Comfort = 0,
+  Eco = 1,
+  Away = 2,
+  Sleep = 3,
+}
 const myPreset: Thermostat.Preset = {
   presetHandle: new Uint8Array([1, 2, 3]), // ou null pour un nouveau
   presetScenario: Thermostat.PresetScenario.Occupied,
