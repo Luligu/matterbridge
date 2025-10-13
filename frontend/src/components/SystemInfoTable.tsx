@@ -158,14 +158,4 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   );
 }
 
-/**
- * System Information Table
- * Displays system information in a table format.
- *
- * Props:
- * - systemInfo: SystemInformation object containing system details.
- * - compact: boolean indicating whether to display compact information.
- *
- * The component listens for WebSocket messages to update memory, CPU, and uptime information in real-time.
- */
 export default memo(SystemInfoTable);
