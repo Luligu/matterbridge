@@ -444,14 +444,14 @@ function Header() {
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && update && (
-          <Tooltip title='Update matterbridge to latest version'>
+          <Tooltip title={`Update matterbridge to latest version v.${settings.matterbridgeInformation.matterbridgeLatestVersion}`}>
             <IconButton style={{ color: update ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
         )}
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && updateDev && (
-          <Tooltip title='Update matterbridge to latest dev version'>
+          <Tooltip title={`Update matterbridge to latest dev version v.${settings.matterbridgeInformation.matterbridgeDevVersion}`}>
             <IconButton style={{ color: updateDev ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateDevClick}>
               <SystemUpdateAltIcon />
             </IconButton>
