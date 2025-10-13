@@ -32,12 +32,14 @@ export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' |
 // Base message structure with id, src and dst
 type BaseWorkerMessageRequest = {
   id?: number;
+  timestamp?: number;
   src: WorkerSrcType;
   dst: WorkerDstType;
 };
 
 type BaseWorkerMessageResponse = {
-  id: number;
+  id?: number;
+  timestamp?: number;
   src: WorkerSrcType;
   dst: WorkerDstType;
 };

@@ -78,36 +78,36 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
-    if (!this.server.isWorkerRequest(msg, msg.type)) return;
-    if (!msg.id || (msg.dst !== 'all' && msg.dst !== 'plugins')) return;
-    this.log.debug(`**Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
-    switch (msg.type) {
-      case 'plugins_length':
-        this.server.respond({ ...msg, id: msg.id, response: { length: this.length } });
-        break;
-      case 'plugins_size':
-        this.server.respond({ ...msg, id: msg.id, response: { size: this.size } });
-        break;
-      case 'plugins_has':
-        this.server.respond({ ...msg, id: msg.id, response: { has: this.has(msg.params.name) } });
-        break;
-      case 'plugins_get':
-        this.server.respond({ ...msg, id: msg.id, response: { plugin: this.get(msg.params.name) } });
-        break;
-      case 'plugins_set':
-        this.server.respond({ ...msg, id: msg.id, response: { plugin: this.set(msg.params.plugin) } });
-        break;
-      case 'plugins_baseArray':
-        this.server.respond({ ...msg, id: msg.id, response: { plugins: this.baseArray() } });
-        break;
-      case 'plugins_install':
-        this.server.respond({ ...msg, id: msg.id, response: { packageName: msg.params.packageName, success: await this.install(msg.params.packageName) } });
-        break;
-      case 'plugins_uninstall':
-        this.server.respond({ ...msg, id: msg.id, response: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
-        break;
-      default:
-        this.log.warn(`Unknown broadcast message ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'plugins')) {
+      this.log.debug(`**Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        case 'plugins_length':
+          this.server.respond({ ...msg, response: { length: this.length } });
+          break;
+        case 'plugins_size':
+          this.server.respond({ ...msg, response: { size: this.size } });
+          break;
+        case 'plugins_has':
+          this.server.respond({ ...msg, response: { has: this.has(msg.params.name) } });
+          break;
+        case 'plugins_get':
+          this.server.respond({ ...msg, response: { plugin: this.get(msg.params.name) } });
+          break;
+        case 'plugins_set':
+          this.server.respond({ ...msg, response: { plugin: this.set(msg.params.plugin) } });
+          break;
+        case 'plugins_baseArray':
+          this.server.respond({ ...msg, response: { plugins: this.baseArray() } });
+          break;
+        case 'plugins_install':
+          this.server.respond({ ...msg, response: { packageName: msg.params.packageName, success: await this.install(msg.params.packageName) } });
+          break;
+        case 'plugins_uninstall':
+          this.server.respond({ ...msg, response: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
+          break;
+        default:
+          this.log.warn(`Unknown broadcast message ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+      }
     }
   }
 

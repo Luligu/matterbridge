@@ -101,17 +101,16 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   private async msgHandler(msg: WorkerMessage) {
-    if (this.server.isWorkerRequest(msg, msg.type)) {
-      if (!msg.id || (msg.dst !== 'all' && msg.dst !== 'frontend')) return;
+    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'frontend')) {
       this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'frontend_start':
           await this.start(msg.params.port);
-          this.server.respond({ ...msg, id: msg.id, response: { success: true } });
+          this.server.respond({ ...msg, response: { success: true } });
           break;
         case 'frontend_stop':
           await this.stop();
-          this.server.respond({ ...msg, id: msg.id, response: { success: true } });
+          this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
           this.log.warn(`Unknown broadcast request ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
