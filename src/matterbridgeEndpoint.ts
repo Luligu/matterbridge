@@ -276,21 +276,41 @@ export interface SerializedMatterbridgeEndpoint {
   clusterServersId: ClusterId[];
 }
 
-export enum PresetType {
+const myPreset1: Thermostat.Preset = {
+  presetHandle: new Uint8Array([0]),
+  presetScenario: Thermostat.PresetScenario.Occupied,
+  name: 'Confort',
+  coolingSetpoint: 2200,
+  heatingSetpoint: 2000,
+  builtIn: true,
+};
+const myPreset2: Thermostat.Preset = {
+  presetHandle: new Uint8Array([1]),
+  presetScenario: Thermostat.PresetScenario.Unoccupied,
+  name: 'Away',
+  coolingSetpoint: 2600,
+  heatingSetpoint: 1800,
+  builtIn: true,
+};
+// Presets list
+const presets_lists = [myPreset1, myPreset2];
+
+/* export enum PresetType {
   Comfort = 0,
   Eco = 1,
   Away = 2,
   Sleep = 3,
 }
-const myPreset: Thermostat.Preset = {
-  presetHandle: new Uint8Array([1, 2, 3]), // ou null pour un nouveau
-  presetScenario: Thermostat.PresetScenario.Occupied,
-  name: 'Confort',
-  coolingSetpoint: 2200,
-  heatingSetpoint: 2000,
-  builtIn: false,
-};
-const supportedPresets = [PresetType.Comfort, PresetType.Eco, PresetType.Away, PresetType.Sleep];
+
+const supportedPresets = [PresetType.Comfort, PresetType.Eco, PresetType.Away, PresetType.Sleep]; */
+
+// Mapping des presets vers leurs handles
+/* const presetHandles = {
+  [PresetType.Comfort]: 1,
+  [PresetType.Eco]: 2,
+  [PresetType.Away]: 3,
+  [PresetType.Sleep]: 4,
+}; */
 
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
@@ -1927,6 +1947,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     unoccupiedHeatingSetpoint: number | undefined = undefined,
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
+    // presets: [typeof Thermostat.PresetsComponent.attributes.presetTypes],
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       localTemperature: localTemperature * 100,
@@ -1943,9 +1964,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
       // Thermostat.Feature.Presets
-      numberOfPresets: supportedPresets.length,
+      numberOfPresets: 10,
       activePresetHandle: new Uint8Array([0]),
-      presets: [myPreset],
+      presets: presets_lists,
+      // presets: presets,
     });
     return this;
   }
