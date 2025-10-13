@@ -276,6 +276,15 @@ export interface SerializedMatterbridgeEndpoint {
   clusterServersId: ClusterId[];
 }
 
+const myPreset: Thermostat.Preset = {
+  presetHandle: new Uint8Array([1, 2, 3]), // ou null pour un nouveau
+  presetScenario: Thermostat.PresetScenario.Occupied,
+  name: 'Confort',
+  coolingSetpoint: 2200,
+  heatingSetpoint: 2000,
+  builtIn: false,
+};
+
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
@@ -1926,6 +1935,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+      // Thermostat.Feature.Presets
+      numberOfPresets: supportedPresets.length,
+      activePresetHandle: new Uint8Array([0]),
+      presets: [myPreset],
     });
     return this;
   }
