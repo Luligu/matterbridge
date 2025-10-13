@@ -284,6 +284,7 @@ const myPreset: Thermostat.Preset = {
   heatingSetpoint: 2000,
   builtIn: false,
 };
+const supportedPresets = [PresetType.Comfort, PresetType.Eco, PresetType.Away, PresetType.Sleep];
 
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
