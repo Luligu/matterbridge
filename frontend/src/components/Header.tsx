@@ -377,20 +377,13 @@ function Header() {
           </Tooltip>
         )*/}
         {!settings.matterbridgeInformation.readOnly && (
-          <Tooltip title='Matterbridge version, click to see the changelog'>
+          <Tooltip title={`Matterbridge v.${settings.matterbridgeInformation.matterbridgeVersion}, click to see the changelog`}>
             <span className='status-information' onClick={handleChangelogClick}>
               v.{settings.matterbridgeInformation.matterbridgeVersion.split('-dev-')[0] + (settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? '@dev' : '')}
             </span>
           </Tooltip>
         )}
         {settings.matterbridgeInformation.shellyBoard && <img src='Shelly.svg' alt='Shelly Icon' style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '30px' }} />}
-        {/*settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.xxxmatterbridgeVersion &&
-          <Tooltip title="Matterbridge version">
-            <span style={{ fontSize: '12px', color: 'var(--main-icon-color)' }} onClick={handleChangelogClick}>
-              v.{settings.matterbridgeInformation.matterbridgeVersion}
-            </span>
-          </Tooltip>
-        */}
         {settings.matterbridgeInformation.bridgeMode !== '' && settings.matterbridgeInformation.readOnly === false ? (
           <Tooltip title='Bridge mode'>
             <span className='status-information' style={{ cursor: 'default' }}>

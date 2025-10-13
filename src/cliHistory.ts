@@ -152,10 +152,12 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
   };
 
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="google" content="notranslate" />
+    <meta http-equiv="Content-Language" content="en" />
     <title>${escapeHtml(pageTitle)}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

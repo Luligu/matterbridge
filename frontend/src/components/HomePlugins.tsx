@@ -7,14 +7,15 @@ import Tooltip from '@mui/material/Tooltip';
 
 // @mui/icons-material
 import Favorite from '@mui/icons-material/Favorite';
-import Help from '@mui/icons-material/Help';
-import Announcement from '@mui/icons-material/Announcement';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import PublishedWithChanges from '@mui/icons-material/PublishedWithChanges';
-import Unpublished from '@mui/icons-material/Unpublished';
+import UnpublishedOutlinedIcon from '@mui/icons-material/UnpublishedOutlined';
 import DeleteForever from '@mui/icons-material/DeleteForever';
 import QrCode2 from '@mui/icons-material/QrCode2';
 import Settings from '@mui/icons-material/Settings';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -75,7 +76,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       id: 'version',
       render: (value, rowKey, plugin, _column) => (
         <>
-          {plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
+          {/*plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
             <Tooltip title='New plugin stable version available, click to install'>
               <span className='status-warning' style={{ marginRight: '10px' }} onClick={() => handleUpdatePlugin(plugin)}>
                 Update to v.{plugin.latestVersion}
@@ -88,9 +89,9 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
                 Update to new dev v.{plugin.devVersion.split('-dev-')[0]}
               </span>
             </Tooltip>
-          )}
-          <Tooltip title='Plugin version'>
-            <span>{plugin.version}</span>
+          )*/}
+          <Tooltip title={`Plugin v.${plugin.version}`}>
+            <span>{plugin.version.split('-dev-')[0] + (plugin.version.includes('-dev-') ? '@dev' : '')}</span>
           </Tooltip>
         </>
       ),
@@ -163,7 +164,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
                 }}
                 size='small'
               >
-                <Unpublished />
+                <UnpublishedOutlinedIcon />
               </IconButton>
             </Tooltip>
           ) : (
@@ -179,15 +180,29 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
             <></>
           )}
           <Tooltip title='Open the plugin help' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-            <IconButton style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleHelpPlugin(plugin)} size='small'>
-              <Help />
+            <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleHelpPlugin(plugin)} size='small'>
+              <HelpOutlineIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title='Open the plugin version history' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-            <IconButton style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleChangelogPlugin(plugin)} size='small'>
-              <Announcement />
+            <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleChangelogPlugin(plugin)} size='small'>
+              <AnnouncementOutlinedIcon />
             </IconButton>
           </Tooltip>
+          {plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
+            <Tooltip title='Update the plugin to the latest version' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton style={{ color: 'var(--primary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleUpdatePlugin(plugin)} size='small'>
+                <SystemUpdateAltIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {plugin.version.includes('-dev-') && plugin.devVersion !== undefined && plugin.devVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
+            <Tooltip title='Update the plugin to the latest dev version' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton style={{ color: 'var(--primary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleUpdateDevPlugin(plugin)} size='small'>
+                <SystemUpdateAltIcon />
+              </IconButton>
+            </Tooltip>
+          )}
           {matterbridgeInfo && !matterbridgeInfo.readOnly && (
             <Tooltip title='Sponsor the plugin' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: '#b6409c' }} onClick={() => handleSponsorPlugin(plugin)} size='small'>
