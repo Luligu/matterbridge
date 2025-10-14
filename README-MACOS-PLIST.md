@@ -116,6 +116,7 @@ sudo plutil -convert xml1 /Library/LaunchDaemons/matterbridge.plist
 - bootstrap matterbridge and enable it
 
 ```bash
+sudo rm -f /var/log/matterbridge.log /var/log/matterbridge.err
 sudo launchctl bootstrap system /Library/LaunchDaemons/matterbridge.plist
 sudo launchctl enable system/matterbridge
 ```
@@ -205,7 +206,7 @@ sudo EDITOR=nano visudo
 Add (or edit) this line anywhere in the file:
 
 ```
-Defaults timestamp_timeout=60
+Defaults        timestamp_timeout = 60
 ```
 
 Save and validate syntax:
