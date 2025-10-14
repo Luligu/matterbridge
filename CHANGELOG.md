@@ -25,9 +25,20 @@ Advantages:
 
 ## [3.3.3] - Not released
 
+### Added
+
+- [thread]: Added timestamp to WorkerMessage.
+- [macOS]: Added the [plist configuration guide](README-MACOS-PLIST.md).
+
 ### Changed
 
 - [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to 3.2.2.
+- [frontend]: Added update check on start.
+- [frontend]: Added icon to update dev in the Header and removed the yellow badges.
+- [frontend]: Added icon to update plugin latest and dev and removed the yellow badges.
+- [frontend]: Added plugin Path in the Name Tooltip.
+- [history]: Added external and array buffers to the history chart.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
