@@ -125,7 +125,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "npx shx rm -rf tsconfig.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json node_modules/* node_modules/.[!.]* node_modules/..?*",
-    "reset": "npm run clean && npm install && npm run build && npm link && shx chmod +x bin/matterbridge.js bin/mb_mdns.js bin/mb_coap.js && npx jest --clearCache",
+    "reset": "npm run clean && npm install && npm run build && (npm link || sudo npm link) && shx chmod +x bin/matterbridge.js bin/mb_mdns.js bin/mb_coap.js && npx jest --clearCache",
     "git:status": "git status && git branch -vv && git diff dev origin/dev && git stash list",
     "git:remote": "git remote -v && git remote show origin",
     "git:hardreset:main": "git fetch origin && git checkout main && git reset --hard origin/main",
