@@ -377,8 +377,8 @@ function Header() {
           </Tooltip>
         )*/}
         {!settings.matterbridgeInformation.readOnly && (
-          <Tooltip title={`Matterbridge v.${settings.matterbridgeInformation.matterbridgeVersion}, click to see the changelog`}>
-            <span className='status-information' onClick={handleChangelogClick}>
+          <Tooltip title={`Matterbridge v.${settings.matterbridgeInformation.matterbridgeVersion}`}>
+            <span className='status-information' style={{ cursor: 'default' }}>
               v.{settings.matterbridgeInformation.matterbridgeVersion.split('-dev-')[0] + (settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? '@dev' : '')}
             </span>
           </Tooltip>
