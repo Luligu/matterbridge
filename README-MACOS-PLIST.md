@@ -30,6 +30,34 @@ sudo rm -f /var/log/matterbridge.log /var/log/matterbridge.err
 sudo npm uninstall matterbridge -g
 ```
 
+### Verify node setup
+
+```bash
+node -v
+npm -v
+```
+
+It should output something like:
+
+```
+v22.20.0
+10.9.3
+```
+
+### Check node path
+
+```bash
+which node
+```
+
+It should output something like:
+
+```
+/usr/local/bin/node
+```
+
+In this case you will need in the step below to replace **_MYNODEPATH_** with /usr/local/bin
+
 ### First create the Matterbridge directories
 
 This will create the required directories if they don't exist and install matterbridge in the matterbridge global node_modules directory
@@ -48,13 +76,13 @@ sudo NPM_CONFIG_PREFIX=/usr/local/etc/matterbridge/.npm-global npm install -g ma
 
 ### Then create a system launchctl configuration file for Matterbridge
 
-Create a launchctl configuration file for Matterbridge
+- create a launchctl configuration file for Matterbridge
 
 ```bash
 sudo nano /Library/LaunchDaemons/matterbridge.plist
 ```
 
-Add the following to this file:
+- add the following to the file, replacing **_MYNODEPATH_** with the path found in the step before:
 
 ```
 <?xml version="1.0" encoding="UTF-8"?>
@@ -64,7 +92,7 @@ Add the following to this file:
         <key>EnvironmentVariables</key>
         <dict>
                 <key>PATH</key>
-                <string>/usr/local/etc/matterbridge/.npm-global/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin</string>
+                <string>/usr/local/etc/matterbridge/.npm-global/bin:MYNODEPATH</string>
                 <key>NPM_CONFIG_PREFIX</key>
                 <string>/usr/local/etc/matterbridge/.npm-global</string>
                 <key>HOME</key>
@@ -95,8 +123,6 @@ Add the following to this file:
 </dict>
 </plist>
 ```
-
-If you modify matterbridge.plist after, then save it and
 
 - stop matterbridge
 
