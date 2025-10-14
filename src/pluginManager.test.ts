@@ -45,7 +45,7 @@ const pluginsConfigureSpy = jest.spyOn(PluginManager.prototype, 'configure');
 const pluginsShutdownSpy = jest.spyOn(PluginManager.prototype, 'shutdown');
 
 import { execSync } from 'node:child_process';
-import { promises as fs } from 'node:fs';
+import { promises as fs, writeFileSync, unlinkSync, existsSync, accessSync } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -67,8 +67,63 @@ setupTest(NAME, false);
 describe('PluginManager', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
+  let useSudo = false;
 
-  beforeAll(async () => {});
+  async function needsSudo() {
+    try {
+      const prefix = execSync('npm config get prefix', { encoding: 'utf8' }).trim();
+      const testFile = `${prefix}/.npm-perm-test-${Date.now()}`;
+      try {
+        writeFileSync(testFile, 'test');
+        unlinkSync(testFile);
+        return false; // writable → no sudo needed
+      } catch {
+        return process.platform !== 'win32'; // on Windows there's no sudo anyway
+      }
+    } catch {
+      // Fallback if npm is broken or inaccessible
+      return process.platform !== 'win32';
+    }
+  }
+
+  function needsSudoFast(): boolean {
+    const { NPM_CONFIG_PREFIX, PREFIX, HOME } = process.env;
+    const platform = process.platform;
+
+    // Windows: never needs sudo
+    if (platform === 'win32') return false;
+
+    // CI or root environments never need sudo
+    if (process.env.CI || process.getuid?.() === 0 || process.geteuid?.() === 0) return false;
+
+    // If user explicitly set a prefix, assume it's writable
+    const prefix = NPM_CONFIG_PREFIX || PREFIX;
+    if (prefix && prefix.startsWith(HOME || '')) return false;
+
+    // macOS/Linux defaults:
+    //   - /usr/local (needs sudo)
+    //   - ~/.npm-global (user-writable)
+    //   - $HOME/.asdf, $HOME/.nvm (user-writable)
+    const likelyGlobalPrefixes = ['/usr/local', '/usr', '/opt/homebrew', '/opt/local'];
+
+    if (prefix && likelyGlobalPrefixes.some((p) => prefix.startsWith(p))) return true;
+
+    if (prefix && existsSync(prefix)) {
+      try {
+        accessSync(prefix, fs.constants.W_OK);
+        return false;
+      } catch {
+        return true;
+      }
+    }
+
+    // Heuristic fallback: safe default → needs sudo
+    return true;
+  }
+
+  beforeAll(async () => {
+    useSudo = needsSudoFast(); // await needsSudo();
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -734,8 +789,8 @@ describe('PluginManager', () => {
   });
 
   test('install example plugins', async () => {
-    execSync('npm install -g matterbridge-example-accessory-platform --omit=dev');
-    execSync('npm install -g matterbridge-example-dynamic-platform --omit=dev');
+    execSync(useSudo ? 'sudo ' : '' + 'npm install -g matterbridge-example-accessory-platform --omit=dev');
+    execSync(useSudo ? 'sudo ' : '' + 'npm install -g matterbridge-example-dynamic-platform --omit=dev');
     expect(plugins.length).toBe(0);
   }, 60000);
 
@@ -1396,8 +1451,8 @@ describe('PluginManager', () => {
   });
 
   test('uninstall example plugins', async () => {
-    execSync('npm uninstall -g matterbridge-example-accessory-platform --omit=dev');
-    execSync('npm uninstall -g matterbridge-example-dynamic-platform --omit=dev');
+    execSync(useSudo ? 'sudo ' : '' + 'npm uninstall -g matterbridge-example-accessory-platform --omit=dev');
+    execSync(useSudo ? 'sudo ' : '' + 'npm uninstall -g matterbridge-example-dynamic-platform --omit=dev');
     expect(plugins.length).toBe(2);
   }, 60000);
 
