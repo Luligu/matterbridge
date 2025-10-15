@@ -276,7 +276,6 @@ export interface SerializedMatterbridgeEndpoint {
   clusterServersId: ClusterId[];
 }
 
-
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
