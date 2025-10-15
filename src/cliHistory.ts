@@ -27,6 +27,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 
 // History for 8h at 1 sample each 10 seconds = 2880 entries
 export const historySize: number = 2880;
@@ -95,6 +96,10 @@ export type GenerateHistoryPageOptions = {
    * Defaults to `Matterbridge CPU & Memory History`.
    */
   pageTitle?: string;
+  /**
+   * Hostname shown in the generated page and browser tab.
+   */
+  hostname?: string;
 };
 
 /**
@@ -106,6 +111,7 @@ export type GenerateHistoryPageOptions = {
  */
 export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): string | undefined {
   const pageTitle = options.pageTitle ?? 'Matterbridge CPU & Memory History';
+  const hostname = options.hostname ?? os.hostname();
   const outputPath = path.resolve(options.outputPath ?? path.join(process.cwd(), 'history.html'));
 
   const bufferLength = history.length;
@@ -183,7 +189,7 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
       }
       h1 {
         margin-top: 0;
-        font-size: clamp(1.6rem, 2.2vw, 2.3rem);
+        font-size: clamp(1.4rem, 1.8vw, 2.0rem);
         font-weight: 700;
         color: var(--accent);
       }
@@ -313,7 +319,8 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
     <div class="container">
       <header>
         <h1>${escapeHtml(pageTitle)}</h1>
-        <p>Generated ${new Date().toLocaleString()}</p>
+        <p>Hostname: ${escapeHtml(hostname)}</p>
+        <p>Generated: ${new Date().toLocaleString()}</p>
       </header>
 
       <section class="card">

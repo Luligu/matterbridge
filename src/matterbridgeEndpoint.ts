@@ -1861,10 +1861,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     outdoorTemperature: number | null | undefined = undefined,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
+      // Common attributes
       localTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
-      systemMode: Thermostat.SystemMode.Auto,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+      systemMode: Thermostat.SystemMode.Auto,
       // Thermostat.Feature.Heating
       occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
       minHeatSetpointLimit: minHeatSetpointLimit * 100,
@@ -1913,10 +1914,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     outdoorTemperature: number | null | undefined = undefined,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
+      // Common attributes
       localTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
-      systemMode: Thermostat.SystemMode.Heat,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
+      systemMode: Thermostat.SystemMode.Heat,
       // Thermostat.Feature.Heating
       occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
       minHeatSetpointLimit: minHeatSetpointLimit * 100,
@@ -1955,10 +1957,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     outdoorTemperature: number | null | undefined = undefined,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
+      // Common attributes
       localTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
-      systemMode: Thermostat.SystemMode.Cool,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
+      systemMode: Thermostat.SystemMode.Cool,
       // Thermostat.Feature.Cooling
       occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
       minCoolSetpointLimit: minCoolSetpointLimit * 100,
