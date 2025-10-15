@@ -25,7 +25,7 @@
 // @matter
 import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, ServerNode, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
 import { DeviceClassification } from '@matter/main/model';
-import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
+import { ClusterType, getClusterNameById, Semtag } from '@matter/main/types';
 // @matter clusters
 import { Descriptor } from '@matter/main/clusters/descriptor';
 import { PowerSource } from '@matter/main/clusters/power-source';
@@ -132,6 +132,9 @@ import {
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
   getDefaultOccupancySensingClusterServer,
+  getDefaultElectricalEnergyMeasurementClusterServer,
+  getDefaultElectricalPowerMeasurementClusterServer,
+  getApparentElectricalPowerMeasurementClusterServer,
   lowercaseFirstLetter,
   updateAttribute,
   getClusterId,
@@ -2778,18 +2781,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
-    this.behaviors.require(ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy), {
-      accuracy: {
-        measurementType: MeasurementType.ElectricalEnergy,
-        measured: true,
-        minMeasuredValue: Number.MIN_SAFE_INTEGER,
-        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-      },
-      cumulativeEnergyReset: null,
-      cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
-      cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
-    });
+    this.behaviors.require(
+      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      getDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported),
+    );
     return this;
   }
 
@@ -2803,44 +2798,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null): this {
-    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), {
-      powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
-      numberOfMeasurementTypes: 4,
-      accuracy: [
-        {
-          measurementType: MeasurementType.Voltage,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-        {
-          measurementType: MeasurementType.ActiveCurrent,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-        {
-          measurementType: MeasurementType.ActivePower,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-        {
-          measurementType: MeasurementType.Frequency,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-      ],
-      voltage: voltage,
-      activeCurrent: current,
-      activePower: power,
-      frequency: frequency,
-    });
+    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), getDefaultElectricalPowerMeasurementClusterServer(voltage, current, power, frequency));
     return this;
   }
 
@@ -2853,45 +2811,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} frequency - The frequency value in millihertz.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultElectricalActivePowerMeasurementClusterServer(voltage: number | bigint | null = null, apparentCurrent: number | bigint | null = null, apparentPower: number | bigint | null = null, frequency: number | bigint | null = null): this {
-    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), {
-      powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
-      numberOfMeasurementTypes: 4,
-      accuracy: [
-        {
-          measurementType: MeasurementType.Voltage,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-        {
-          measurementType: MeasurementType.ApparentCurrent,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-        {
-          measurementType: MeasurementType.ApparentPower,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-        {
-          measurementType: MeasurementType.Frequency,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-      ],
-      voltage: voltage,
-      apparentCurrent: apparentCurrent,
-      apparentPower: apparentPower,
-      frequency: frequency,
-    });
+  createApparentElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, apparentCurrent: number | bigint | null = null, apparentPower: number | bigint | null = null, frequency: number | bigint | null = null): this {
+    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), getApparentElectricalPowerMeasurementClusterServer(voltage, apparentCurrent, apparentPower, frequency));
     return this;
   }
 
