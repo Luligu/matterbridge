@@ -164,6 +164,14 @@ function Header() {
       logMessage('Matterbridge', `Loading diagnostic log...`);
       showSnackbarMessage('Loading diagnostic log...', 5);
       window.open('./api/view-diagnostic', '_blank', 'noopener,noreferrer');
+    } else if (value === 'download-diagnostic') {
+      logMessage('Matterbridge', `Downloading diagnostic log...`);
+      showSnackbarMessage('Downloading diagnostic log...', 5);
+      window.location.href = './api/download-diagnostic';
+    } else if (value === 'view-history') {
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/viewhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
+    } else if (value === 'download-history') {
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/downloadhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'view-shellylog') {
       logMessage('Matterbridge', `Loading shelly system log...`);
       showSnackbarMessage('Loading shelly system log...', 5);
@@ -212,8 +220,6 @@ function Header() {
       handleShutdownClick();
     } else if (value === 'reboot') {
       handleRebootClick();
-    } else if (value === 'history') {
-      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/generatehistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'create-backup') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/create-backup', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'unregister') {
@@ -314,9 +320,12 @@ function Header() {
               }
             : null,
         );
-      } else if (msg.method === '/api/generatehistorypage' && msg.id === uniqueId.current && msg.success === true) {
-        if (debug) console.log('Header received /api/generatehistorypage success');
+      } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success === true) {
+        if (debug) console.log('Header received /api/viewhistorypage success');
         window.open(`./api/viewhistory`, '_blank', 'noopener,noreferrer');
+      } else if (msg.method === '/api/downloadhistorypage' && msg.id === uniqueId.current && msg.success === true) {
+        if (debug) console.log('Header received /api/downloadhistorypage success');
+        window.location.href = `./api/downloadhistory`;
       }
     };
 
@@ -592,7 +601,7 @@ function Header() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleMenuCloseConfirm('history');
+                handleMenuCloseConfirm('view-history');
                 handleViewMenuClose();
               }}
             >
@@ -689,6 +698,28 @@ function Header() {
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
               <ListItemText primary='Matter log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleMenuCloseConfirm('download-diagnostic');
+                handleDownloadMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Matterbridge diagnostic log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleMenuCloseConfirm('download-history');
+                handleDownloadMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Matterbridge system history' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
 
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (

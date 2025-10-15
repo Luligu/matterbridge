@@ -29,6 +29,7 @@ Advantages:
 
 - [thread]: Added timestamp to WorkerMessage.
 - [macOS]: Added the [plist configuration guide](README-MACOS-PLIST.md).
+- [frontend]: Added download diagnostic and download history to Download menu.
 
 ### Changed
 

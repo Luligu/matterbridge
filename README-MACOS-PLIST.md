@@ -199,8 +199,8 @@ sudo tail -n 1000 -f /var/log/matterbridge.log /var/log/matterbridge.err
 
 ```bash
 sudo tee /etc/newsyslog.d/matterbridge.conf <<'EOF'
-/var/log/matterbridge.log  root:wheel 640  5  102400  5  Z
-/var/log/matterbridge.err  root:wheel 640  5  102400  5  Z
+/var/log/matterbridge.log  root:wheel 640  5  102400  5  ZC
+/var/log/matterbridge.err  root:wheel 640  5  102400  5  ZC
 EOF
 sudo newsyslog -v
 ```

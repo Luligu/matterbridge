@@ -542,44 +542,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to view the diagnostic.log
     this.expressApp.get('/api/view-diagnostic', async (req, res) => {
       this.log.debug('The frontend sent /api/view-diagnostic');
-
-      const serverNodes: ServerNode<ServerNode.RootEndpoint>[] = [];
-      // istanbul ignore else
-      if (this.matterbridge.bridgeMode === 'bridge') {
-        if (this.matterbridge.serverNode) serverNodes.push(this.matterbridge.serverNode);
-      } else if (this.matterbridge.bridgeMode === 'childbridge') {
-        for (const plugin of this.matterbridge.plugins.array()) {
-          if (plugin.serverNode) serverNodes.push(plugin.serverNode);
-        }
-      }
-      // istanbul ignore next
-      for (const device of this.matterbridge.devices.array()) {
-        if (device.serverNode) serverNodes.push(device.serverNode);
-      }
-      const fs = await import('node:fs');
-      if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE))) fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE));
-      const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
-      diagnosticDestination.write = async (text: string, _message: Diagnostic.Message) => {
-        await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
-      };
-      Logger.destinations.diagnostic = diagnosticDestination;
-      if (!diagnosticDestination.context) {
-        diagnosticDestination.context = Diagnostic.Context();
-      }
-      diagnosticDestination.context.run(() =>
-        diagnosticDestination.add(
-          Diagnostic.message({
-            now: Time.now(),
-            facility: 'Server nodes:',
-            level: MatterLogLevel.INFO,
-            prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',
-            values: [...serverNodes],
-          }),
-        ),
-      );
-      delete Logger.destinations.diagnostic;
-      await wait(500); // Wait for the log to be written
-
+      await this.generateDiagnostic();
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
@@ -591,6 +554,28 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // istanbul ignore next
         res.status(500).send('Error reading diagnostic log file.');
       }
+    });
+
+    // Endpoint to view the diagnostic.log
+    this.expressApp.get('/api/download-diagnostic', async (req, res) => {
+      this.log.debug(`The frontend sent /api/download-diagnostic`);
+      await this.generateDiagnostic();
+      try {
+        const fs = await import('node:fs');
+        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), fs.constants.F_OK);
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), data, 'utf-8');
+      } catch (error) {
+        this.log.debug(`Error in /api/download-diagnostic: ${error instanceof Error ? error.message : error}`);
+      }
+      res.type('text/plain');
+      res.download(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), MATTERBRIDGE_DIAGNOSTIC_FILE, (error) => {
+        /* istanbul ignore if */
+        if (error) {
+          this.log.error(`Error downloading file ${MATTERBRIDGE_DIAGNOSTIC_FILE}: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the diagnostic log file');
+        }
+      });
     });
 
     // Endpoint to view the history.html
@@ -605,6 +590,27 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.error(`Error reading history log file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
         res.status(500).send('Error reading history log file. Please create the history log before loading it.');
       }
+    });
+
+    // Endpoint to view the diagnostic.log
+    this.expressApp.get('/api/downloadhistory', async (req, res) => {
+      this.log.debug(`The frontend sent /api/downloadhistory`);
+      try {
+        const fs = await import('node:fs');
+        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), fs.constants.F_OK);
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'utf8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), data, 'utf-8');
+      } catch (error) {
+        this.log.debug(`Error in /api/downloadhistory: ${error instanceof Error ? error.message : error}`);
+      }
+      res.type('text/plain');
+      res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
+        /* istanbul ignore if */
+        if (error) {
+          this.log.error(`Error downloading file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the history log file');
+        }
+      });
     });
 
     // Endpoint to view the shelly log
@@ -1263,6 +1269,46 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     return { plugin: endpoint.plugin, deviceName: endpoint.deviceName, serialNumber: endpoint.serialNumber, number: endpoint.number, id: endpoint.id, deviceTypes, clusters };
   }
 
+  private async generateDiagnostic(): Promise<void> {
+    this.log.debug('Generating diagnostic...');
+    const serverNodes: ServerNode<ServerNode.RootEndpoint>[] = [];
+    // istanbul ignore else
+    if (this.matterbridge.bridgeMode === 'bridge') {
+      if (this.matterbridge.serverNode) serverNodes.push(this.matterbridge.serverNode);
+    } else if (this.matterbridge.bridgeMode === 'childbridge') {
+      for (const plugin of this.matterbridge.plugins.array()) {
+        if (plugin.serverNode) serverNodes.push(plugin.serverNode);
+      }
+    }
+    // istanbul ignore next
+    for (const device of this.matterbridge.devices.array()) {
+      if (device.serverNode) serverNodes.push(device.serverNode);
+    }
+    const fs = await import('node:fs');
+    if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE))) fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE));
+    const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
+    diagnosticDestination.write = async (text: string, _message: Diagnostic.Message) => {
+      await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
+    };
+    Logger.destinations.diagnostic = diagnosticDestination;
+    if (!diagnosticDestination.context) {
+      diagnosticDestination.context = Diagnostic.Context();
+    }
+    diagnosticDestination.context.run(() =>
+      diagnosticDestination.add(
+        Diagnostic.message({
+          now: Time.now(),
+          facility: 'Server nodes:',
+          level: MatterLogLevel.INFO,
+          prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',
+          values: [...serverNodes],
+        }),
+      ),
+    );
+    delete Logger.destinations.diagnostic;
+    await wait(500); // Wait for the log to be written
+  }
+
   /**
    * Handles incoming websocket api request messages from the Matterbridge frontend.
    *
@@ -1532,7 +1578,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendSnackbarMessage('Factory reset of matterbridge...', 10);
         await this.matterbridge.shutdownProcessAndFactoryReset();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-      } else if (data.method === '/api/generatehistorypage') {
+      } else if (data.method === '/api/viewhistorypage') {
+        generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge on ${this.matterbridge.systemInformation.hostname} Cpu & Memory History` });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/downloadhistorypage') {
         generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge on ${this.matterbridge.systemInformation.hostname} Cpu & Memory History` });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/matter') {
