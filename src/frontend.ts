@@ -556,7 +556,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
     });
 
-    // Endpoint to view the diagnostic.log
+    // Endpoint to download the diagnostic.log
     this.expressApp.get('/api/download-diagnostic', async (req, res) => {
       this.log.debug(`The frontend sent /api/download-diagnostic`);
       await this.generateDiagnostic();
@@ -587,12 +587,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/html');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error reading history log file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
-        res.status(500).send('Error reading history log file. Please create the history log before loading it.');
+        this.log.error(`Error in /api/viewhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading history file.');
       }
     });
 
-    // Endpoint to view the diagnostic.log
+    // Endpoint to download the history.html
     this.expressApp.get('/api/downloadhistory', async (req, res) => {
       this.log.debug(`The frontend sent /api/downloadhistory`);
       try {
@@ -600,17 +600,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), fs.constants.F_OK);
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'utf8');
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), data, 'utf-8');
+        res.type('text/plain');
+        res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
+          /* istanbul ignore if */
+          if (error) {
+            this.log.error(`Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+            res.status(500).send('Error downloading history file');
+          }
+        });
       } catch (error) {
-        this.log.debug(`Error in /api/downloadhistory: ${error instanceof Error ? error.message : error}`);
+        this.log.error(`Error in /api/downloadhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading history file.');
       }
-      res.type('text/plain');
-      res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
-        /* istanbul ignore if */
-        if (error) {
-          this.log.error(`Error downloading file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading the history log file');
-        }
-      });
     });
 
     // Endpoint to view the shelly log

@@ -347,7 +347,19 @@ describe('Matterbridge frontend express with http', () => {
     expect(typeof response.body).toBe('string');
   }, 30000);
 
+  test('GET /api/download-diagnostic', async () => {
+    const response = await makeRequest('/api/download-diagnostic', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+  }, 30000);
+
   test('GET /api/viewhistory', async () => {
+    try {
+      await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE));
+    } catch (error) {
+      /* Ignore if the file does not exist */
+    }
     let response = await makeRequest('/api/viewhistory', 'GET');
     expect(response.status).toBe(500);
 
@@ -355,6 +367,23 @@ describe('Matterbridge frontend express with http', () => {
     response = await makeRequest('/api/viewhistory', 'GET');
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
+    await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE));
+  }, 30000);
+
+  test('GET /api/downloadhistory', async () => {
+    try {
+      await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE));
+    } catch (error) {
+      /* Ignore if the file does not exist */
+    }
+    let response = await makeRequest('/api/downloadhistory', 'GET');
+    expect(response.status).toBe(500);
+
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'any data', 'utf8');
+    response = await makeRequest('/api/downloadhistory', 'GET');
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('string');
+    await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE));
   }, 30000);
 
   test('GET /api/shellyviewsystemlog error', async () => {
