@@ -196,6 +196,7 @@ export interface MatterbridgeEndpointCommands {
 
   // Thermostat
   setpointRaiseLower: HandlerFunction;
+  setActivePresetRequest: HandlerFunction;
 
   // Fan Control
   step: HandlerFunction;
