@@ -1866,6 +1866,15 @@ export class MatterbridgeEndpoint extends Endpoint {
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
       systemMode: Thermostat.SystemMode.Auto,
+      thermostatRunningState: {
+        heat: false,
+        cool: false,
+        fan: false,
+        heatStage2: false,
+        coolStage2: false,
+        fanStage2: false,
+        fanStage3: false,
+      },
       // Thermostat.Feature.Heating
       occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
       minHeatSetpointLimit: minHeatSetpointLimit * 100,
@@ -1919,6 +1928,15 @@ export class MatterbridgeEndpoint extends Endpoint {
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
       systemMode: Thermostat.SystemMode.Heat,
+      thermostatRunningState: {
+        heat: false,
+        cool: false,
+        fan: false,
+        heatStage2: false,
+        coolStage2: false,
+        fanStage2: false,
+        fanStage3: false,
+      },
       // Thermostat.Feature.Heating
       occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
       minHeatSetpointLimit: minHeatSetpointLimit * 100,
@@ -1962,6 +1980,15 @@ export class MatterbridgeEndpoint extends Endpoint {
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
       systemMode: Thermostat.SystemMode.Cool,
+      thermostatRunningState: {
+        heat: false,
+        cool: false,
+        fan: false,
+        heatStage2: false,
+        coolStage2: false,
+        fanStage2: false,
+        fanStage3: false,
+      },
       // Thermostat.Feature.Cooling
       occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
       minCoolSetpointLimit: minCoolSetpointLimit * 100,
