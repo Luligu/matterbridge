@@ -395,8 +395,14 @@ describe('Matterbridge frontend', () => {
     expect(msg.success).toBe(true);
   });
 
-  test('Websocket API send /api/generatehistorypage', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/generatehistorypage', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/generatehistorypage', params: {} });
+  test('Websocket API send /api/viewhistorypage', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/viewhistorypage', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/viewhistorypage', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/downloadhistorypage', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/downloadhistorypage', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/downloadhistorypage', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
     expect(msg.success).toBe(true);
   });

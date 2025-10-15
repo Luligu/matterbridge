@@ -31,7 +31,8 @@ Advantages:
 - [macOS]: Added the [plist configuration guide](README-MACOS-PLIST.md).
 - [frontend]: Added download diagnostic and download history to Download menu.
 - [frontend]: Added icon to open the cpu and memory usage in System Information panel.
-- [thermostat]: Added thermostatRunningState. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/410).
+- [thermostat]: Added thermostatRunningState attribute. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/410).
+- [ElectricalPowerMeasurement]: Added createApparentElectricalPowerMeasurementClusterServer cluster helper. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/411).
 
 ### Changed
 
