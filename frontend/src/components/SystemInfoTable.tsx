@@ -5,8 +5,9 @@ import { memo, useContext, useEffect, useRef, useState } from 'react';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 
-// @mui/icons-material
-import AutoGraphIcon from '@mui/icons-material/AutoGraph';
+// @mdi/js
+import Icon from '@mdi/react';
+import { mdiChartTimelineVariantShimmer } from '@mdi/js';
 
 // Backend
 import { SystemInformation } from '../../../src/matterbridgeTypes';
@@ -134,11 +135,11 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
       <MbfWindowHeader>
         <MbfWindowHeaderText>System Information</MbfWindowHeaderText>
         <MbfWindowIcons onClose={() => setClosed(true)}>
-          <Tooltip title='Open the cpu and memory usage page'>
-            <IconButton style={{ color: 'var(--primary-color)', margin: '0', padding: '0' }} onClick={handleViewHistory}>
-              <AutoGraphIcon />
-            </IconButton>
-          </Tooltip>
+          <IconButton size='small' sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }} onClick={handleViewHistory}>
+            <Tooltip title='Open the cpu and memory usage page' arrow>
+              <Icon path={mdiChartTimelineVariantShimmer} size='22px' />
+            </Tooltip>
+          </IconButton>
         </MbfWindowIcons>
       </MbfWindowHeader>
       <div className='MbfWindowDivTable'>
