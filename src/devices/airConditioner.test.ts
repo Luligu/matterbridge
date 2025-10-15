@@ -82,6 +82,15 @@ describe('Matterbridge ' + NAME, () => {
       occupiedHeatingSetpoint: 2100,
       systemMode: 1,
       thermostatRunningMode: 0,
+      'thermostatRunningState': {
+        'cool': false,
+        'coolStage2': false,
+        'fan': false,
+        'fanStage2': false,
+        'fanStage3': false,
+        'heat': false,
+        'heatStage2': false,
+      },
     });
     expect(custom.getClusterServerOptions(ThermostatUserInterfaceConfiguration.Cluster.id)).toEqual({ keypadLockout: 0, scheduleProgrammingVisibility: 0, temperatureDisplayMode: 0 });
     expect(custom.getClusterServerOptions(FanControl.Cluster.id)).toEqual({ fanMode: 0, fanModeSequence: 2, percentSetting: 40, percentCurrent: 0 });

@@ -566,6 +566,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), data, 'utf-8');
       } catch (error) {
+        // istanbul ignore next
         this.log.debug(`Error in /api/download-diagnostic: ${error instanceof Error ? error.message : error}`);
       }
       res.type('text/plain');
