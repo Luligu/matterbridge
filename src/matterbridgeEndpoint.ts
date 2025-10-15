@@ -1908,6 +1908,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
    * @param {number | undefined} [activePresetHandle] - The active preset handle. Defaults to undefined.
    * @param {Thermostat.Preset[] | null | undefined} [presetsList] - The list of thermostat presets. Defaults to undefined.
+   * @param {Thermostat.PresetType[] | null | undefined} [presetTypes] - The list of thermostat preset types. Defaults to undefined.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPresetsThermostatClusterServer(
@@ -1925,6 +1926,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     outdoorTemperature: number | null | undefined = undefined,
     activePresetHandle: number | undefined = undefined,
     presetsList: Thermostat.Preset[] | null | undefined = undefined,
+    presetTypes: Thermostat.PresetType[] | null | undefined = undefined,
   ): this {
     this.behaviors.require(
       MatterbridgeThermostatServer.with(
@@ -1962,6 +1964,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         numberOfPresets: presetsList?.length ?? 0,
         activePresetHandle: activePresetHandle !== undefined ? new Uint8Array([activePresetHandle]) : null,
         presets: presetsList ?? [],
+        presetTypes: presetTypes ?? [],
       },
     );
     return this;
