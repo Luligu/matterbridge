@@ -195,7 +195,7 @@ sudo launchctl disable system/matterbridge
 sudo tail -n 1000 -f /var/log/matterbridge.log /var/log/matterbridge.err
 ```
 
-### Automatically rotate logs (every 5 days or at 100 MB, keep 5 compressed backups)
+### Optional: automatically rotate logs (every 5 days or at 100 MB, keep 5 compressed backups)
 
 ```bash
 sudo tee /etc/newsyslog.d/matterbridge.conf <<'EOF'

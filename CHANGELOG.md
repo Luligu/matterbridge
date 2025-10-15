@@ -30,6 +30,7 @@ Advantages:
 - [thread]: Added timestamp to WorkerMessage.
 - [macOS]: Added the [plist configuration guide](README-MACOS-PLIST.md).
 - [frontend]: Added download diagnostic and download history to Download menu.
+- [frontend]: Added icon to open the cpu and memory usage in System Information panel.
 
 ### Changed
 
