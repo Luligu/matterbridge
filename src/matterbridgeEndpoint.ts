@@ -276,41 +276,6 @@ export interface SerializedMatterbridgeEndpoint {
   clusterServersId: ClusterId[];
 }
 
-const myPreset1: Thermostat.Preset = {
-  presetHandle: new Uint8Array([0]),
-  presetScenario: Thermostat.PresetScenario.Occupied,
-  name: 'Confort',
-  coolingSetpoint: 2200,
-  heatingSetpoint: 2000,
-  builtIn: true,
-};
-const myPreset2: Thermostat.Preset = {
-  presetHandle: new Uint8Array([1]),
-  presetScenario: Thermostat.PresetScenario.Unoccupied,
-  name: 'Away',
-  coolingSetpoint: 2600,
-  heatingSetpoint: 1800,
-  builtIn: true,
-};
-// Presets list
-const presets_lists = [myPreset1, myPreset2];
-
-/* export enum PresetType {
-  Comfort = 0,
-  Eco = 1,
-  Away = 2,
-  Sleep = 3,
-}
-
-const supportedPresets = [PresetType.Comfort, PresetType.Eco, PresetType.Away, PresetType.Sleep]; */
-
-// Mapping des presets vers leurs handles
-/* const presetHandles = {
-  [PresetType.Comfort]: 1,
-  [PresetType.Eco]: 2,
-  [PresetType.Away]: 3,
-  [PresetType.Sleep]: 4,
-}; */
 
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
@@ -1937,6 +1902,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | undefined} [unoccupiedHeatingSetpoint] - The unoccupied heating setpoint value in degrees Celsius. Defaults to 19° (it will be ignored if occupied is not provided).
    * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
+   * @param {Thermostat.Preset[] | null | undefined} [presetsList] - The list of thermostat presets. Defaults to undefined.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultHeatingThermostatClusterServer(
@@ -1947,7 +1913,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     unoccupiedHeatingSetpoint: number | undefined = undefined,
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
-    // presets: [typeof Thermostat.PresetsComponent.attributes.presetTypes],
+    presetsList: Thermostat.Preset[] | null | undefined = undefined,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       localTemperature: localTemperature * 100,
@@ -1966,8 +1932,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Thermostat.Feature.Presets
       numberOfPresets: 10,
       activePresetHandle: new Uint8Array([0]),
-      presets: presets_lists,
-      // presets: presets,
+      presets: presetsList ?? [],
     });
     return this;
   }
