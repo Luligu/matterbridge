@@ -199,6 +199,7 @@ export interface MatterbridgeEndpointCommands {
 
   // Thermostat
   setpointRaiseLower: HandlerFunction;
+  setActivePresetRequest: HandlerFunction;
 
   // Fan Control
   step: HandlerFunction;
@@ -2711,13 +2712,16 @@ export class MatterbridgeEndpoint extends Endpoint {
     absMaxPower: number = 0,
   ): this {
     this.behaviors.require(MatterbridgeDeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
-      forecast: null, // A null value indicates that there is no forecast currently available
-      powerAdjustmentCapability: null, // A null value indicates that no power adjustment is currently possible, and nor is any adjustment currently active
       esaType, // Fixed attribute
       esaCanGenerate, // Fixed attribute
       esaState,
       absMinPower,
       absMaxPower,
+      // PowerAdjustment feature (commands: powerAdjustRequest and cancelPowerAdjustRequest events: powerAdjustStart and powerAdjustEnd)
+      powerAdjustmentCapability: null, // A null value indicates that no power adjustment is currently possible, and nor is any adjustment currently active
+      optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
+      // PowerForecastReporting
+      forecast: null, // A null value indicates that there is no forecast currently available
     });
     return this;
   }

@@ -33,6 +33,8 @@ Advantages:
 - [frontend]: Added icon to open the cpu and memory usage in System Information panel.
 - [thermostat]: Added thermostatRunningState attribute. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/410).
 - [ElectricalPowerMeasurement]: Added createApparentElectricalPowerMeasurementClusterServer cluster helper. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/411).
+- [DeviceEnergyManagementMode]: Added logic to set optOutState. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/34).
+- [Thermostat]: Added provisional support for setActivePresetRequest. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/38).
 
 ### Changed
 
