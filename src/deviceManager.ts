@@ -30,6 +30,7 @@ import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { type ApiDevice, dev } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
+import { hasParameter } from './utils/commandLine.js';
 
 /**
  * Manages Matterbridge devices.
@@ -43,7 +44,7 @@ export class DeviceManager {
    * Creates an instance of DeviceManager.
    */
   constructor() {
-    this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
+    this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge device manager starting...');
     this.server = new BroadcastServer('devices', this.log);
     this.server.on('broadcast_message', this.msgHandler.bind(this));

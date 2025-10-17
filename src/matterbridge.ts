@@ -1563,7 +1563,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.initialized = false;
       this.emit('cleanup_completed');
     } else {
-      if (!this.initialized) this.log.debug('Cleanup with instance not initialized...');
+      if (!this.initialized) {
+        this.log.debug('Cleanup with instance not initialized...');
+        this.frontend.destroy();
+        this.plugins.destroy();
+        this.devices.destroy();
+      }
       if (this.hasCleanupStarted) this.log.debug('Cleanup already started...');
     }
   }
