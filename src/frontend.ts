@@ -1773,6 +1773,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               } else if (data.params.value === 'Fatal') {
                 Logger.level = MatterLogLevel.FATAL;
               }
+
+              // Set the global logger callback for the WebSocketServer to the common minimum logLevel
+              let callbackLogLevel = LogLevel.NOTICE;
+              if (this.matterbridge.getLogLevel() === LogLevel.INFO || Logger.level === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
+              if (this.matterbridge.getLogLevel() === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
+              AnsiLogger.setGlobalCallbackLevel(callbackLogLevel);
+              this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
+
               await this.matterbridge.nodeContext?.set('matterLogLevel', Logger.level);
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
             }
