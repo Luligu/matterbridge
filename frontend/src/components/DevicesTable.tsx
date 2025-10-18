@@ -157,7 +157,7 @@ function DevicesTable({ filter }: { filter: string }) {
           if (debug) console.warn(`DevicesTable updater cluster ${msg.response.cluster}.${msg.response.attribute} for device "${updateDevice.name}" serial "${updateDevice.serial}" not found in clusters`);
           return;
         }
-        updatedCluster.attributeValue = String(msg.response.value);
+        updatedCluster.attributeValue = typeof msg.response.value === 'object' ? JSON.stringify(msg.response.value, undefined, 1).replaceAll('"', '') : String(msg.response.value);
         updatedCluster.attributeLocalValue = msg.response.value;
         setClusters([...clusters]);
         if (debug) console.log(`DevicesTable updated attribute ${updatedCluster.clusterName}.${updatedCluster.attributeName} for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);

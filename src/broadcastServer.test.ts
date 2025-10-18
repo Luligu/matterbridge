@@ -52,8 +52,8 @@ describe('BroadcastServer', () => {
 
   test('type guards: isWorkerRequest and isWorkerResponse', () => {
     // Prepare messages with proper BaseMessage structure
-    const requestMsg = { id: 123456, type: 'jest', src: 'frontend', dst: 'manager' };
-    const responseMsg = { id: 123456, type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'Alice', age: 30 } };
+    const requestMsg = { id: 123456, timestamp: 0, type: 'jest', src: 'frontend', dst: 'manager' };
+    const responseMsg = { id: 123456, timestamp: 0, type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'Alice', age: 30 } };
 
     const isReq = server.isWorkerRequest(requestMsg, 'jest');
     const isRes = server.isWorkerResponse(responseMsg, 'jest');
@@ -99,7 +99,7 @@ describe('BroadcastServer', () => {
 
   test('respond: should broadcast a valid response message', async () => {
     const postMessageSpy = jest.spyOn((server as any).broadcastChannel, 'postMessage');
-    const responseMsg = { id: 654321, type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'Bob', age: 42 } } as const;
+    const responseMsg = { id: 654321, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'Bob', age: 42 } } as const;
     server.respond(responseMsg);
     expect(postMessageSpy).toHaveBeenCalledWith(responseMsg);
     postMessageSpy.mockRestore();
@@ -133,13 +133,24 @@ describe('BroadcastServer', () => {
 
   test('fetch: should resolve with correct response', async () => {
     const requestMsg = { id: 111111, type: 'jest', src: 'frontend', dst: 'manager' } as const;
-    const responseMsg = { id: 111111, type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'Test', age: 99 } } as const;
+    const responseMsg = { id: 111111, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'Test', age: 99 } } as const;
     setTimeout(() => {
       // Simulate receiving the response
       (server as any).broadcastChannel.onmessage({ data: responseMsg });
     }, 10);
     const result = await server.fetch(requestMsg);
     expect(result).toEqual(responseMsg);
+  });
+
+  test('fetch: should resolve with correct response without id', async () => {
+    const requestMsg = { type: 'jest', src: 'frontend', dst: 'manager' } as const;
+    const responseMsg = { type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'Test', age: 99 } } as const;
+    setTimeout(() => {
+      // Simulate receiving the response
+      (server as any).broadcastChannel.onmessage({ data: { ...responseMsg, id: (requestMsg as any).id, timestamp: Date.now() } });
+    }, 10);
+    const result = await server.fetch(requestMsg);
+    expect(result).toEqual({ ...responseMsg, id: expect.any(Number), timestamp: expect.any(Number) });
   });
 
   test('fetch: should resolve with correct response from another thread', async () => {
@@ -154,7 +165,7 @@ describe('BroadcastServer', () => {
     const testServer = new BroadcastServer('manager', log, NAME);
     const result = await testServer.fetch({ id: 123456, type: 'jest', src: 'frontend', dst: 'manager' });
     testServer.close();
-    expect(result).toEqual({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'Alice', age: 30 } });
+    expect(result).toEqual({ id: 123456, timestamp: expect.anything(), type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'Alice', age: 30 } });
 
     server.off('broadcast_message', handler);
   });
@@ -194,8 +205,8 @@ describe('BroadcastServer', () => {
   test('fetch: should handle multiple fetches independently', async () => {
     const req1 = { id: 444444, type: 'jest', src: 'frontend', dst: 'manager' } as const;
     const req2 = { id: 555555, type: 'jest', src: 'frontend', dst: 'manager' } as const;
-    const res1 = { id: 444444, type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'A', age: 1 } } as const;
-    const res2 = { id: 555555, type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'B', age: 2 } } as const;
+    const res1 = { id: 444444, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'A', age: 1 } } as const;
+    const res2 = { id: 555555, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'frontend', response: { name: 'B', age: 2 } } as const;
     setTimeout(() => {
       (server as any).broadcastChannel.onmessage({ data: res2 });
       (server as any).broadcastChannel.onmessage({ data: res1 });

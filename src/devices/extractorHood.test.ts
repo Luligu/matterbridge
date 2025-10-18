@@ -24,36 +24,15 @@ import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand, invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeActivatedCarbonFilterMonitoringServer, MatterbridgeHepaFilterMonitoringServer } from '../matterbridgeBehaviors.js';
 import { wait } from '../utils/wait.js';
-import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, loggerLogSpy, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { ExtractorHood } from './extractorHood.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-// Setup the matter and test environment
+// Setup the Matter test environment
 createTestEnvironment(HOMEDIR);
+
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let server: ServerNode<ServerNode.RootEndpoint>;
@@ -121,8 +100,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.has(MatterbridgeHepaFilterMonitoringServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(HepaFilterMonitoringServer).commands.has('resetCondition')).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeHepaFilterMonitoringServer).commands.has('resetCondition')).toBeTruthy();
-    expect((device.state['hepaFilterMonitoring'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['hepaFilterMonitoring'] as any).generatedCommandList).toEqual([]);
+    expect((device as any).state['hepaFilterMonitoring'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['hepaFilterMonitoring'].generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(device, 'hepaFilterMonitoring', 'resetCondition', {}); // Reset condition
     await wait(100); // Wait for the device to be ready
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${device.id}.${device.number})`);
@@ -134,8 +113,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.has(MatterbridgeActivatedCarbonFilterMonitoringServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(ActivatedCarbonFilterMonitoringServer).commands.has('resetCondition')).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeActivatedCarbonFilterMonitoringServer).commands.has('resetCondition')).toBeTruthy();
-    expect((device.state['activatedCarbonFilterMonitoring'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['activatedCarbonFilterMonitoring'] as any).generatedCommandList).toEqual([]);
+    expect((device as any).state['activatedCarbonFilterMonitoring'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['activatedCarbonFilterMonitoring'].generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(device, 'activatedCarbonFilterMonitoring', 'resetCondition', {}); // Reset condition
     await wait(100); // Wait for the device to be ready
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${device.id}.${device.number})`);

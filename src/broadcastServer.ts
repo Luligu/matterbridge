@@ -87,7 +87,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {msg is WorkerRequest<T>} True if the message is a request of the specified type.
    */
   isWorkerRequest<T extends WorkerMessageType>(msg: unknown, type: T): msg is WorkerRequest<T> {
-    return typeof msg === 'object' && msg !== null && 'id' in msg && 'type' in msg && msg.type === type && !('response' in msg) && 'src' in msg && 'dst' in msg;
+    return typeof msg === 'object' && msg !== null && 'id' in msg && 'timestamp' in msg && 'type' in msg && msg.type === type && !('response' in msg) && 'src' in msg && 'dst' in msg;
   }
 
   /**
@@ -98,7 +98,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {msg is WorkerResponse<T>} True if the message is a response of the specified type.
    */
   isWorkerResponse<T extends WorkerMessageType>(msg: unknown, type: T): msg is WorkerResponse<T> {
-    return typeof msg === 'object' && msg !== null && 'id' in msg && 'type' in msg && msg.type === type && 'response' in msg && 'src' in msg && 'dst' in msg;
+    return typeof msg === 'object' && msg !== null && 'id' in msg && 'timestamp' in msg && 'type' in msg && msg.type === type && 'response' in msg && 'src' in msg && 'dst' in msg;
   }
 
   /**
@@ -123,6 +123,9 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     if (message.id === undefined) {
       message.id = this.getUniqueId();
     }
+    if (message.timestamp === undefined) {
+      message.timestamp = Date.now();
+    }
     if (!this.isWorkerRequest(message, message.type)) {
       this.log.error(`Invalid request message format for broadcast: ${debugStringify(message)}`);
       return;
@@ -138,6 +141,9 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {void}
    */
   respond<T extends WorkerMessageType>(message: WorkerResponse<T>): void {
+    if (message.timestamp === undefined) {
+      message.timestamp = Date.now();
+    }
     if (!this.isWorkerResponse(message, message.type)) {
       this.log.error(`Invalid response message format for broadcast: ${debugStringify(message)}`);
       return;
@@ -154,6 +160,12 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {Promise<WorkerResponse<T>>} A promise that resolves with the response from the worker or rejects on timeout.
    */
   async fetch<T extends WorkerMessageType>(message: WorkerRequest<T>): Promise<WorkerResponse<T>> {
+    if (message.id === undefined) {
+      message.id = this.getUniqueId();
+    }
+    if (message.timestamp === undefined) {
+      message.timestamp = Date.now();
+    }
     this.log.debug(`*Fetching message: ${debugStringify(message)}`);
 
     return new Promise<WorkerResponse<T>>((resolve, reject) => {

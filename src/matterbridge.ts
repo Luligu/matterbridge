@@ -63,7 +63,7 @@ import { BasicInformationServer } from '@matter/main/behaviors/basic-information
 import { getParameter, getIntParameter, hasParameter } from './utils/commandLine.js';
 import { copyDirectory } from './utils/copyDirectory.js';
 import { createDirectory } from './utils/createDirectory.js';
-import { isValidString, parseVersionString, isValidNumber } from './utils/isvalid.js';
+import { isValidString, parseVersionString, isValidNumber, isValidObject } from './utils/isvalid.js';
 import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
 import { withTimeout, waiter, wait } from './utils/wait.js';
 import { ApiMatter, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, MaybePromise, NODE_STORAGE_DIR, plg, Plugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
@@ -1563,7 +1563,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.initialized = false;
       this.emit('cleanup_completed');
     } else {
-      if (!this.initialized) this.log.debug('Cleanup with instance not initialized...');
+      if (!this.initialized) {
+        this.log.debug('Cleanup with instance not initialized...');
+        this.frontend.destroy();
+        this.plugins.destroy();
+        this.devices.destroy();
+      }
       if (this.hasCleanupStarted) this.log.debug('Cleanup already started...');
     }
   }
@@ -2613,6 +2618,8 @@ const commissioningController = new CommissioningController({
       { cluster: 'Thermostat', attribute: 'occupiedCoolingSetpoint' },
       { cluster: 'Thermostat', attribute: 'occupiedHeatingSetpoint' },
       { cluster: 'Thermostat', attribute: 'systemMode' },
+      { cluster: 'Thermostat', attribute: 'thermostatRunningMode' },
+      { cluster: 'Thermostat', attribute: 'thermostatRunningState' },
       { cluster: 'WindowCovering', attribute: 'operationalStatus' },
       { cluster: 'WindowCovering', attribute: 'currentPositionLiftPercent100ths' },
       { cluster: 'DoorLock', attribute: 'lockState' },
@@ -2642,7 +2649,7 @@ const commissioningController = new CommissioningController({
       if (device.hasAttributeServer(sub.cluster, sub.attribute)) {
         this.log.debug(`Subscribing to endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
         await device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
-          this.log.debug(`Bridged endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`);
+          this.log.debug(`Bridged endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`);
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, device.id, sub.cluster, sub.attribute, value);
         });
@@ -2651,7 +2658,7 @@ const commissioningController = new CommissioningController({
         if (child.hasAttributeServer(sub.cluster, sub.attribute)) {
           this.log.debug(`Subscribing to child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
           await child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
-            this.log.debug(`Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`);
+            this.log.debug(`Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, child.number, child.id, sub.cluster, sub.attribute, value);
           });

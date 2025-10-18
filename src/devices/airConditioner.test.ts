@@ -15,36 +15,15 @@ import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { Identify, OnOff, PowerSource, Thermostat, ThermostatUserInterfaceConfiguration, FanControl, ThermostatCluster } from '@matter/main/clusters';
 
 // Matterbridge helpers
-import { addDevice, createTestEnvironment, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { AirConditioner } from './airConditioner.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Toggle for local debug of this test
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-// Initialize test environment (persistent storage path isolation)
+// Setup the Matter test environment
 createTestEnvironment(HOMEDIR);
+
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let server: ServerNode<ServerNode.RootEndpoint>;
@@ -103,6 +82,15 @@ describe('Matterbridge ' + NAME, () => {
       occupiedHeatingSetpoint: 2100,
       systemMode: 1,
       thermostatRunningMode: 0,
+      thermostatRunningState: {
+        cool: false,
+        coolStage2: false,
+        fan: false,
+        fanStage2: false,
+        fanStage3: false,
+        heat: false,
+        heatStage2: false,
+      },
     });
     expect(custom.getClusterServerOptions(ThermostatUserInterfaceConfiguration.Cluster.id)).toEqual({ keypadLockout: 0, scheduleProgrammingVisibility: 0, temperatureDisplayMode: 0 });
     expect(custom.getClusterServerOptions(FanControl.Cluster.id)).toEqual({ fanMode: 0, fanModeSequence: 2, percentSetting: 40, percentCurrent: 0 });
@@ -139,6 +127,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'maxCoolSetpointLimit')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'systemMode')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'thermostatRunningMode')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'thermostatRunningState')).toBe(true);
     // Default values (scaled by 100 for temperatures)
     expect(device.getAttribute(Thermostat.Cluster.id, 'localTemperature')).toBe(2300);
     expect(device.getAttribute(Thermostat.Cluster.id, 'occupiedHeatingSetpoint')).toBe(2100);
@@ -150,6 +139,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(Thermostat.Cluster.id, 'maxCoolSetpointLimit')).toBe(5000);
     expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(1);
     expect(device.getAttribute(Thermostat.Cluster.id, 'thermostatRunningMode')).toBe(0);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'thermostatRunningState')).toEqual({
+      cool: false,
+      coolStage2: false,
+      fan: false,
+      fanStage2: false,
+      fanStage3: false,
+      heat: false,
+      heatStage2: false,
+    });
   });
 
   test('thermostat UI configuration attributes check', async () => {

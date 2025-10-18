@@ -18,38 +18,17 @@ import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/main/
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, createTestEnvironment, deleteDevice, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, createTestEnvironment, deleteDevice, loggerLogSpy, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { LaundryDryer } from './laundryDryer.js';
 import { MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';
 import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-// Setup the matter and test environment
+// Setup the Matter test environment
 createTestEnvironment(HOMEDIR);
+
+// Setup the test environment
+setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let server: ServerNode<ServerNode.RootEndpoint>;
@@ -123,8 +102,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.has(MatterbridgeLaundryWasherModeServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(LaundryWasherModeServer).commands.has('changeToMode')).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeLaundryWasherModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((device.state['laundryWasherMode'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['laundryWasherMode'] as any).generatedCommandList).toEqual([1]);
+    expect((device as any).state['laundryWasherMode'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['laundryWasherMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'onOff', 'off', {}); // Dead Front state
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
@@ -142,8 +121,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.has(MatterbridgeLevelTemperatureControlServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(TemperatureControlServer).commands.has('setTemperature')).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeLevelTemperatureControlServer).commands.has('setTemperature')).toBeTruthy();
-    expect((device.state['temperatureControl'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['temperatureControl'] as any).generatedCommandList).toEqual([]);
+    expect((device as any).state['temperatureControl'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['temperatureControl'].generatedCommandList).toEqual([]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperatureLevel: 100 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLevelTemperatureControlServer: setTemperature called with invalid targetTemperatureLevel 100`);
@@ -182,8 +161,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.has(MatterbridgeNumberTemperatureControlServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(TemperatureControlServer).commands.has('setTemperature')).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeNumberTemperatureControlServer).commands.has('setTemperature')).toBeTruthy();
-    expect((device.state['temperatureControl'] as any).acceptedCommandList).toEqual([0]);
-    expect((device.state['temperatureControl'] as any).generatedCommandList).toEqual([]);
+    expect((device as any).state['temperatureControl'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['temperatureControl'].generatedCommandList).toEqual([]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperature: 3 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature 3`);

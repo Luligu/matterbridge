@@ -30,6 +30,7 @@ import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { type ApiDevice, dev } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
+import { hasParameter } from './utils/commandLine.js';
 
 /**
  * Manages Matterbridge devices.
@@ -43,7 +44,7 @@ export class DeviceManager {
    * Creates an instance of DeviceManager.
    */
   constructor() {
-    this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
+    this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge device manager starting...');
     this.server = new BroadcastServer('devices', this.log);
     this.server.on('broadcast_message', this.msgHandler.bind(this));
@@ -55,34 +56,34 @@ export class DeviceManager {
   }
 
   private async msgHandler(msg: WorkerMessage) {
-    if (!this.server.isWorkerRequest(msg, msg.type)) return;
-    if (!msg.id || (msg.dst !== 'all' && msg.dst !== 'devices')) return;
-    this.log.debug(`**Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
-    switch (msg.type) {
-      case 'devices_length':
-        this.server.respond({ ...msg, id: msg.id, response: { length: this.length } });
-        break;
-      case 'devices_size':
-        this.server.respond({ ...msg, id: msg.id, response: { size: this.size } });
-        break;
-      case 'devices_has':
-        this.server.respond({ ...msg, id: msg.id, response: { has: this.has(msg.params.uniqueId) } });
-        break;
-      case 'devices_get':
-        this.server.respond({ ...msg, id: msg.id, response: { device: this.get(msg.params.uniqueId) as ApiDevice | undefined } });
-        break;
-      case 'devices_set':
-        this.server.respond({ ...msg, id: msg.id, response: { device: this.set(msg.params.device as unknown as MatterbridgeEndpoint) as unknown as ApiDevice } });
-        break;
-      case 'devices_remove':
-        this.server.respond({ ...msg, id: msg.id, response: { success: this.remove(msg.params.device as unknown as MatterbridgeEndpoint) } });
-        break;
-      case 'devices_clear':
-        this.clear();
-        this.server.respond({ ...msg, id: msg.id, response: { success: true } });
-        break;
-      default:
-        this.log.warn(`Unknown broadcast message ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'devices')) {
+      this.log.debug(`**Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        case 'devices_length':
+          this.server.respond({ ...msg, response: { length: this.length } });
+          break;
+        case 'devices_size':
+          this.server.respond({ ...msg, response: { size: this.size } });
+          break;
+        case 'devices_has':
+          this.server.respond({ ...msg, response: { has: this.has(msg.params.uniqueId) } });
+          break;
+        case 'devices_get':
+          this.server.respond({ ...msg, response: { device: this.get(msg.params.uniqueId) as ApiDevice | undefined } });
+          break;
+        case 'devices_set':
+          this.server.respond({ ...msg, response: { device: this.set(msg.params.device as unknown as MatterbridgeEndpoint) as unknown as ApiDevice } });
+          break;
+        case 'devices_remove':
+          this.server.respond({ ...msg, response: { success: this.remove(msg.params.device as unknown as MatterbridgeEndpoint) } });
+          break;
+        case 'devices_clear':
+          this.clear();
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        default:
+          this.log.warn(`Unknown broadcast message ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+      }
     }
   }
 

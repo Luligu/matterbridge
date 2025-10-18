@@ -92,7 +92,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({ logName: 'Frontend', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.logNameColor = '\x1b[38;5;97m';
-    this.server = new BroadcastServer('plugins', this.log);
+    this.server = new BroadcastServer('frontend', this.log);
     this.server.on('broadcast_message', this.msgHandler.bind(this));
   }
 
@@ -101,17 +101,16 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   private async msgHandler(msg: WorkerMessage) {
-    if (this.server.isWorkerRequest(msg, msg.type)) {
-      if (!msg.id || (msg.dst !== 'all' && msg.dst !== 'frontend')) return;
+    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'frontend')) {
       this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'frontend_start':
           await this.start(msg.params.port);
-          this.server.respond({ ...msg, id: msg.id, response: { success: true } });
+          this.server.respond({ ...msg, response: { success: true } });
           break;
         case 'frontend_stop':
           await this.stop();
-          this.server.respond({ ...msg, id: msg.id, response: { success: true } });
+          this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
           this.log.warn(`Unknown broadcast request ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
@@ -543,44 +542,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to view the diagnostic.log
     this.expressApp.get('/api/view-diagnostic', async (req, res) => {
       this.log.debug('The frontend sent /api/view-diagnostic');
-
-      const serverNodes: ServerNode<ServerNode.RootEndpoint>[] = [];
-      // istanbul ignore else
-      if (this.matterbridge.bridgeMode === 'bridge') {
-        if (this.matterbridge.serverNode) serverNodes.push(this.matterbridge.serverNode);
-      } else if (this.matterbridge.bridgeMode === 'childbridge') {
-        for (const plugin of this.matterbridge.plugins.array()) {
-          if (plugin.serverNode) serverNodes.push(plugin.serverNode);
-        }
-      }
-      // istanbul ignore next
-      for (const device of this.matterbridge.devices.array()) {
-        if (device.serverNode) serverNodes.push(device.serverNode);
-      }
-      const fs = await import('node:fs');
-      if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE))) fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE));
-      const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
-      diagnosticDestination.write = async (text: string, _message: Diagnostic.Message) => {
-        await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
-      };
-      Logger.destinations.diagnostic = diagnosticDestination;
-      if (!diagnosticDestination.context) {
-        diagnosticDestination.context = Diagnostic.Context();
-      }
-      diagnosticDestination.context.run(() =>
-        diagnosticDestination.add(
-          Diagnostic.message({
-            now: Time.now(),
-            facility: 'Server nodes:',
-            level: MatterLogLevel.INFO,
-            prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',
-            values: [...serverNodes],
-          }),
-        ),
-      );
-      delete Logger.destinations.diagnostic;
-      await wait(500); // Wait for the log to be written
-
+      await this.generateDiagnostic();
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
@@ -594,6 +556,29 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
     });
 
+    // Endpoint to download the diagnostic.log
+    this.expressApp.get('/api/download-diagnostic', async (req, res) => {
+      this.log.debug(`The frontend sent /api/download-diagnostic`);
+      await this.generateDiagnostic();
+      try {
+        const fs = await import('node:fs');
+        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), fs.constants.F_OK);
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), data, 'utf-8');
+      } catch (error) {
+        // istanbul ignore next
+        this.log.debug(`Error in /api/download-diagnostic: ${error instanceof Error ? error.message : error}`);
+      }
+      res.type('text/plain');
+      res.download(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), MATTERBRIDGE_DIAGNOSTIC_FILE, (error) => {
+        /* istanbul ignore if */
+        if (error) {
+          this.log.error(`Error downloading file ${MATTERBRIDGE_DIAGNOSTIC_FILE}: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the diagnostic log file');
+        }
+      });
+    });
+
     // Endpoint to view the history.html
     this.expressApp.get('/api/viewhistory', async (req, res) => {
       this.log.debug('The frontend sent /api/viewhistory');
@@ -603,8 +588,30 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/html');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error reading history log file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
-        res.status(500).send('Error reading history log file. Please create the history log before loading it.');
+        this.log.error(`Error in /api/viewhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading history file.');
+      }
+    });
+
+    // Endpoint to download the history.html
+    this.expressApp.get('/api/downloadhistory', async (req, res) => {
+      this.log.debug(`The frontend sent /api/downloadhistory`);
+      try {
+        const fs = await import('node:fs');
+        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), fs.constants.F_OK);
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'utf8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), data, 'utf-8');
+        res.type('text/plain');
+        res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
+          /* istanbul ignore if */
+          if (error) {
+            this.log.error(`Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+            res.status(500).send('Error downloading history file');
+          }
+        });
+      } catch (error) {
+        this.log.error(`Error in /api/downloadhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading history file.');
       }
     });
 
@@ -1264,6 +1271,46 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     return { plugin: endpoint.plugin, deviceName: endpoint.deviceName, serialNumber: endpoint.serialNumber, number: endpoint.number, id: endpoint.id, deviceTypes, clusters };
   }
 
+  private async generateDiagnostic(): Promise<void> {
+    this.log.debug('Generating diagnostic...');
+    const serverNodes: ServerNode<ServerNode.RootEndpoint>[] = [];
+    // istanbul ignore else
+    if (this.matterbridge.bridgeMode === 'bridge') {
+      if (this.matterbridge.serverNode) serverNodes.push(this.matterbridge.serverNode);
+    } else if (this.matterbridge.bridgeMode === 'childbridge') {
+      for (const plugin of this.matterbridge.plugins.array()) {
+        if (plugin.serverNode) serverNodes.push(plugin.serverNode);
+      }
+    }
+    // istanbul ignore next
+    for (const device of this.matterbridge.devices.array()) {
+      if (device.serverNode) serverNodes.push(device.serverNode);
+    }
+    const fs = await import('node:fs');
+    if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE))) fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE));
+    const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
+    diagnosticDestination.write = async (text: string, _message: Diagnostic.Message) => {
+      await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
+    };
+    Logger.destinations.diagnostic = diagnosticDestination;
+    if (!diagnosticDestination.context) {
+      diagnosticDestination.context = Diagnostic.Context();
+    }
+    diagnosticDestination.context.run(() =>
+      diagnosticDestination.add(
+        Diagnostic.message({
+          now: Time.now(),
+          facility: 'Server nodes:',
+          level: MatterLogLevel.INFO,
+          prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',
+          values: [...serverNodes],
+        }),
+      ),
+    );
+    delete Logger.destinations.diagnostic;
+    await wait(500); // Wait for the log to be written
+  }
+
   /**
    * Handles incoming websocket api request messages from the Matterbridge frontend.
    *
@@ -1533,8 +1580,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendSnackbarMessage('Factory reset of matterbridge...', 10);
         await this.matterbridge.shutdownProcessAndFactoryReset();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-      } else if (data.method === '/api/generatehistorypage') {
-        generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge on ${this.matterbridge.systemInformation.hostname} Cpu & Memory History` });
+      } else if (data.method === '/api/viewhistorypage') {
+        generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge Cpu & Memory History` });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/downloadhistorypage') {
+        generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge Cpu & Memory History` });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/matter') {
         const localData = data;
@@ -1723,6 +1773,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               } else if (data.params.value === 'Fatal') {
                 Logger.level = MatterLogLevel.FATAL;
               }
+
+              // Set the global logger callback for the WebSocketServer to the common minimum logLevel
+              let callbackLogLevel = LogLevel.NOTICE;
+              if (this.matterbridge.getLogLevel() === LogLevel.INFO || Logger.level === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
+              if (this.matterbridge.getLogLevel() === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
+              AnsiLogger.setGlobalCallbackLevel(callbackLogLevel);
+              this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
+
               await this.matterbridge.nodeContext?.set('matterLogLevel', Logger.level);
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
             }

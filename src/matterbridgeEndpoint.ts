@@ -25,7 +25,7 @@
 // @matter
 import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, ServerNode, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
 import { DeviceClassification } from '@matter/main/model';
-import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
+import { ClusterType, getClusterNameById, Semtag } from '@matter/main/types';
 // @matter clusters
 import { Descriptor } from '@matter/main/clusters/descriptor';
 import { PowerSource } from '@matter/main/clusters/power-source';
@@ -132,6 +132,9 @@ import {
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
   getDefaultOccupancySensingClusterServer,
+  getDefaultElectricalEnergyMeasurementClusterServer,
+  getDefaultElectricalPowerMeasurementClusterServer,
+  getApparentElectricalPowerMeasurementClusterServer,
   lowercaseFirstLetter,
   updateAttribute,
   getClusterId,
@@ -196,6 +199,7 @@ export interface MatterbridgeEndpointCommands {
 
   // Thermostat
   setpointRaiseLower: HandlerFunction;
+  setActivePresetRequest: HandlerFunction;
 
   // Fan Control
   step: HandlerFunction;
@@ -1861,10 +1865,20 @@ export class MatterbridgeEndpoint extends Endpoint {
     outdoorTemperature: number | null | undefined = undefined,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
+      // Common attributes
       localTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
-      systemMode: Thermostat.SystemMode.Auto,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+      systemMode: Thermostat.SystemMode.Auto,
+      thermostatRunningState: {
+        heat: false,
+        cool: false,
+        fan: false,
+        heatStage2: false,
+        coolStage2: false,
+        fanStage2: false,
+        fanStage3: false,
+      },
       // Thermostat.Feature.Heating
       occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
       minHeatSetpointLimit: minHeatSetpointLimit * 100,
@@ -1913,10 +1927,20 @@ export class MatterbridgeEndpoint extends Endpoint {
     outdoorTemperature: number | null | undefined = undefined,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
+      // Common attributes
       localTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
-      systemMode: Thermostat.SystemMode.Heat,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
+      systemMode: Thermostat.SystemMode.Heat,
+      thermostatRunningState: {
+        heat: false,
+        cool: false,
+        fan: false,
+        heatStage2: false,
+        coolStage2: false,
+        fanStage2: false,
+        fanStage3: false,
+      },
       // Thermostat.Feature.Heating
       occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
       minHeatSetpointLimit: minHeatSetpointLimit * 100,
@@ -1955,10 +1979,20 @@ export class MatterbridgeEndpoint extends Endpoint {
     outdoorTemperature: number | null | undefined = undefined,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
+      // Common attributes
       localTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
-      systemMode: Thermostat.SystemMode.Cool,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
+      systemMode: Thermostat.SystemMode.Cool,
+      thermostatRunningState: {
+        heat: false,
+        cool: false,
+        fan: false,
+        heatStage2: false,
+        coolStage2: false,
+        fanStage2: false,
+        fanStage3: false,
+      },
       // Thermostat.Feature.Cooling
       occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
       minCoolSetpointLimit: minCoolSetpointLimit * 100,
@@ -2678,13 +2712,16 @@ export class MatterbridgeEndpoint extends Endpoint {
     absMaxPower: number = 0,
   ): this {
     this.behaviors.require(MatterbridgeDeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
-      forecast: null, // A null value indicates that there is no forecast currently available
-      powerAdjustmentCapability: null, // A null value indicates that no power adjustment is currently possible, and nor is any adjustment currently active
       esaType, // Fixed attribute
       esaCanGenerate, // Fixed attribute
       esaState,
       absMinPower,
       absMaxPower,
+      // PowerAdjustment feature (commands: powerAdjustRequest and cancelPowerAdjustRequest events: powerAdjustStart and powerAdjustEnd)
+      powerAdjustmentCapability: null, // A null value indicates that no power adjustment is currently possible, and nor is any adjustment currently active
+      optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
+      // PowerForecastReporting
+      forecast: null, // A null value indicates that there is no forecast currently available
     });
     return this;
   }
@@ -2748,18 +2785,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
-    this.behaviors.require(ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy), {
-      accuracy: {
-        measurementType: MeasurementType.ElectricalEnergy,
-        measured: true,
-        minMeasuredValue: Number.MIN_SAFE_INTEGER,
-        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-      },
-      cumulativeEnergyReset: null,
-      cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
-      cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
-    });
+    this.behaviors.require(
+      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      getDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported),
+    );
     return this;
   }
 
@@ -2773,44 +2802,21 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null): this {
-    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), {
-      powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
-      numberOfMeasurementTypes: 4,
-      accuracy: [
-        {
-          measurementType: MeasurementType.Voltage,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-        {
-          measurementType: MeasurementType.ActiveCurrent,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-        {
-          measurementType: MeasurementType.ActivePower,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-        {
-          measurementType: MeasurementType.Frequency,
-          measured: true,
-          minMeasuredValue: Number.MIN_SAFE_INTEGER,
-          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
-        },
-      ],
-      voltage: voltage,
-      activeCurrent: current,
-      activePower: power,
-      frequency: frequency,
-    });
+    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), getDefaultElectricalPowerMeasurementClusterServer(voltage, current, power, frequency));
+    return this;
+  }
+
+  /**
+   * Creates a default Electrical Apparent Power Measurement Cluster Server with features AlternatingCurrent.
+   *
+   * @param {number} voltage - The voltage value in millivolts.
+   * @param {number} apparentCurrent - The current value in milliamperes.
+   * @param {number} apparentPower - The apparent power value in millivoltamperes.
+   * @param {number} frequency - The frequency value in millihertz.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createApparentElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, apparentCurrent: number | bigint | null = null, apparentPower: number | bigint | null = null, frequency: number | bigint | null = null): this {
+    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), getApparentElectricalPowerMeasurementClusterServer(voltage, apparentCurrent, apparentPower, frequency));
     return this;
   }
 

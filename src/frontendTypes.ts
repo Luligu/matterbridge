@@ -301,11 +301,19 @@ export interface WsMessageApiFactoryResetResponse extends WsMessageSuccessApiRes
   method: '/api/factoryreset';
 }
 
-export interface WsMessageApiGenerateHistoryPageRequest extends WsMessageBaseApiRequest {
-  method: '/api/generatehistorypage';
+export interface WsMessageApiViewHistoryPageRequest extends WsMessageBaseApiRequest {
+  method: '/api/viewhistorypage';
 }
-export interface WsMessageApiGenerateHistoryPageResponse extends WsMessageSuccessApiResponse {
-  method: '/api/generatehistorypage';
+export interface WsMessageApiViewHistoryPageResponse extends WsMessageSuccessApiResponse {
+  method: '/api/viewhistorypage';
+  success: true;
+}
+
+export interface WsMessageApiDownloadHistoryPageRequest extends WsMessageBaseApiRequest {
+  method: '/api/downloadhistorypage';
+}
+export interface WsMessageApiDownloadHistoryPageResponse extends WsMessageSuccessApiResponse {
+  method: '/api/downloadhistorypage';
   success: true;
 }
 
@@ -571,7 +579,8 @@ export type WsMessageApiRequest =
   | WsMessageApiUnregisterRequest
   | WsMessageApiResetRequest
   | WsMessageApiFactoryResetRequest
-  | WsMessageApiGenerateHistoryPageRequest
+  | WsMessageApiViewHistoryPageRequest
+  | WsMessageApiDownloadHistoryPageRequest
   | WsMessageApiMatterRequest
   | WsMessageApiSettingsRequest
   | WsMessageApiPluginsRequest
@@ -609,7 +618,8 @@ export type WsMessageApiResponse =
   | WsMessageApiUnregisterResponse
   | WsMessageApiResetResponse
   | WsMessageApiFactoryResetResponse
-  | WsMessageApiGenerateHistoryPageResponse
+  | WsMessageApiViewHistoryPageResponse
+  | WsMessageApiDownloadHistoryPageResponse
   | WsMessageApiMatterResponse
   | WsMessageApiSettingsResponse
   | WsMessageApiPluginsResponse

@@ -164,6 +164,14 @@ function Header() {
       logMessage('Matterbridge', `Loading diagnostic log...`);
       showSnackbarMessage('Loading diagnostic log...', 5);
       window.open('./api/view-diagnostic', '_blank', 'noopener,noreferrer');
+    } else if (value === 'download-diagnostic') {
+      logMessage('Matterbridge', `Downloading diagnostic log...`);
+      showSnackbarMessage('Downloading diagnostic log...', 5);
+      window.location.href = './api/download-diagnostic';
+    } else if (value === 'view-history') {
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/viewhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
+    } else if (value === 'download-history') {
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/downloadhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'view-shellylog') {
       logMessage('Matterbridge', `Loading shelly system log...`);
       showSnackbarMessage('Loading shelly system log...', 5);
@@ -212,8 +220,6 @@ function Header() {
       handleShutdownClick();
     } else if (value === 'reboot') {
       handleRebootClick();
-    } else if (value === 'history') {
-      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/generatehistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'create-backup') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/create-backup', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'unregister') {
@@ -314,9 +320,12 @@ function Header() {
               }
             : null,
         );
-      } else if (msg.method === '/api/generatehistorypage' && msg.id === uniqueId.current && msg.success === true) {
-        if (debug) console.log('Header received /api/generatehistorypage success');
+      } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success === true) {
+        if (debug) console.log('Header received /api/viewhistorypage success');
         window.open(`./api/viewhistory`, '_blank', 'noopener,noreferrer');
+      } else if (msg.method === '/api/downloadhistorypage' && msg.id === uniqueId.current && msg.success === true) {
+        if (debug) console.log('Header received /api/downloadhistorypage success');
+        window.location.href = `./api/downloadhistory`;
       }
     };
 
@@ -331,8 +340,9 @@ function Header() {
 
   useEffect(() => {
     if (online) {
-      if (debug) console.log('Header sending /api/settings requests');
+      if (debug) console.log('Header sending /api/settings and /api/checkupdates requests');
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/checkupdates', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
   }, [online, sendMessage]);
 
@@ -361,7 +371,7 @@ function Header() {
         </nav>
       </div>
       <div className='sub-header'>
-        {!settings.matterbridgeInformation.readOnly && update && (
+        {/*!settings.matterbridgeInformation.readOnly && update && (
           <Tooltip title='New Matterbridge version available, click to install'>
             <span className='status-warning' onClick={handleUpdateClick}>
               Update to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
@@ -374,22 +384,15 @@ function Header() {
               Update to new dev v.{settings.matterbridgeInformation.matterbridgeDevVersion.split('-dev-')[0]}
             </span>
           </Tooltip>
-        )}
+        )*/}
         {!settings.matterbridgeInformation.readOnly && (
-          <Tooltip title='Matterbridge version, click to see the changelog'>
-            <span className='status-information' onClick={handleChangelogClick}>
-              v.{settings.matterbridgeInformation.matterbridgeVersion}
+          <Tooltip title={`Matterbridge v.${settings.matterbridgeInformation.matterbridgeVersion}`}>
+            <span className='status-information' style={{ cursor: 'default' }}>
+              v.{settings.matterbridgeInformation.matterbridgeVersion.split('-dev-')[0] + (settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? '@dev' : '')}
             </span>
           </Tooltip>
         )}
         {settings.matterbridgeInformation.shellyBoard && <img src='Shelly.svg' alt='Shelly Icon' style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '30px' }} />}
-        {/*settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.xxxmatterbridgeVersion &&
-          <Tooltip title="Matterbridge version">
-            <span style={{ fontSize: '12px', color: 'var(--main-icon-color)' }} onClick={handleChangelogClick}>
-              v.{settings.matterbridgeInformation.matterbridgeVersion}
-            </span>
-          </Tooltip>
-        */}
         {settings.matterbridgeInformation.bridgeMode !== '' && settings.matterbridgeInformation.readOnly === false ? (
           <Tooltip title='Bridge mode'>
             <span className='status-information' style={{ cursor: 'default' }}>
@@ -442,9 +445,16 @@ function Header() {
             <AnnouncementOutlinedIcon />
           </IconButton>
         </Tooltip>
-        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && (
-          <Tooltip title='Update matterbridge to latest version'>
+        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && update && (
+          <Tooltip title={`Update matterbridge to latest version v.${settings.matterbridgeInformation.matterbridgeLatestVersion}`}>
             <IconButton style={{ color: update ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateClick}>
+              <SystemUpdateAltIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && updateDev && (
+          <Tooltip title={`Update matterbridge to latest dev version v.${settings.matterbridgeInformation.matterbridgeDevVersion}`}>
+            <IconButton style={{ color: updateDev ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateDevClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
@@ -591,7 +601,7 @@ function Header() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleMenuCloseConfirm('history');
+                handleMenuCloseConfirm('view-history');
                 handleViewMenuClose();
               }}
             >
@@ -688,6 +698,28 @@ function Header() {
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
               <ListItemText primary='Matter log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleMenuCloseConfirm('download-diagnostic');
+                handleDownloadMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Matterbridge diagnostic log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleMenuCloseConfirm('download-history');
+                handleDownloadMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Matterbridge system history' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
 
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (

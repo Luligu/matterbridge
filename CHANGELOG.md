@@ -23,6 +23,33 @@ Advantages:
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 
+## [3.3.3] - 2025-10-18
+
+### Added
+
+- [thread]: Added timestamp to WorkerMessage.
+- [macOS]: Added the [plist configuration guide](README-MACOS-PLIST.md).
+- [frontend]: Added download diagnostic and download history to Download menu.
+- [frontend]: Added icon to open the cpu and memory usage in System Information panel.
+- [thermostat]: Added thermostatRunningState attribute. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/410).
+- [ElectricalPowerMeasurement]: Added createApparentElectricalPowerMeasurementClusterServer cluster helper. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/411).
+- [DeviceEnergyManagementMode]: Added logic to set optOutState. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/34).
+- [Thermostat]: Added provisional support for setActivePresetRequest. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/38).
+
+### Changed
+
+- [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to 3.2.2.
+- [frontend]: Added update check on start.
+- [frontend]: Added icon to update dev in the Header and removed the yellow badges.
+- [frontend]: Added icon to update plugin latest and dev and removed the yellow badges.
+- [frontend]: Added plugin Path in the Name Tooltip.
+- [history]: Added external and array buffers to the history chart.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.2] - 2025-10-13
 
 ### Fixed
@@ -94,11 +121,15 @@ This change, necessary to achieve plugin isolation, will require all plugins to 
 - require matterbridge 3.3.0:
 
 ```typescript
-    if (this.verifyMatterbridgeVersion === undefined || typeof this.verifyMatterbridgeVersion !== 'function' || !this.verifyMatterbridgeVersion('3.3.0')) {
-      throw new Error(
-        `This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`,
-      );
-    }
+if (
+  this.verifyMatterbridgeVersion === undefined ||
+  typeof this.verifyMatterbridgeVersion !== "function" ||
+  !this.verifyMatterbridgeVersion("3.3.0")
+) {
+  throw new Error(
+    `This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`
+  );
+}
 ```
 
 - check that you are not using any matterbridge calls directly (this should not be the case).
@@ -118,8 +149,8 @@ export type PlatformMatterbridge = {
   readonly matterbridgeVersion: string;
   readonly matterbridgeLatestVersion: string;
   readonly matterbridgeDevVersion: string;
-  readonly bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
-  readonly restartMode: 'service' | 'docker' | '';
+  readonly bridgeMode: "bridge" | "childbridge" | "controller" | "";
+  readonly restartMode: "service" | "docker" | "";
   readonly aggregatorVendorId: VendorId;
   readonly aggregatorVendorName: string;
   readonly aggregatorProductId: number;

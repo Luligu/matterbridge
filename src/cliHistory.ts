@@ -4,7 +4,7 @@
  * @file cliHistory.ts
  * @author Luca Liguori
  * @created 2025-10-09
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -27,9 +27,10 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 
-// History for 12h at 1 sample each 10 seconds = 4320 entries
-export const historySize: number = 4320;
+// History for 8h at 1 sample each 10 seconds = 2880 entries
+export const historySize: number = 2880;
 
 export let historyIndex: number = 0;
 
@@ -95,6 +96,10 @@ export type GenerateHistoryPageOptions = {
    * Defaults to `Matterbridge CPU & Memory History`.
    */
   pageTitle?: string;
+  /**
+   * Hostname shown in the generated page and browser tab.
+   */
+  hostname?: string;
 };
 
 /**
@@ -106,6 +111,7 @@ export type GenerateHistoryPageOptions = {
  */
 export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): string | undefined {
   const pageTitle = options.pageTitle ?? 'Matterbridge CPU & Memory History';
+  const hostname = options.hostname ?? os.hostname();
   const outputPath = path.resolve(options.outputPath ?? path.join(process.cwd(), 'history.html'));
 
   const bufferLength = history.length;
@@ -152,10 +158,12 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
   };
 
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="google" content="notranslate" />
+    <meta http-equiv="Content-Language" content="en" />
     <title>${escapeHtml(pageTitle)}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -181,7 +189,7 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
       }
       h1 {
         margin-top: 0;
-        font-size: clamp(1.6rem, 2.2vw, 2.3rem);
+        font-size: clamp(1.4rem, 1.8vw, 2.0rem);
         font-weight: 700;
         color: var(--accent);
       }
@@ -311,7 +319,8 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
     <div class="container">
       <header>
         <h1>${escapeHtml(pageTitle)}</h1>
-        <p>Generated ${new Date().toLocaleString()}</p>
+        <p>Hostname: ${escapeHtml(hostname)}</p>
+        <p>Generated: ${new Date().toLocaleString()}</p>
       </header>
 
       <section class="card">
@@ -331,6 +340,11 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
       <section class="card">
         <h2>Memory Usage (MB)</h2>
         <canvas id="memoryChart"></canvas>
+      </section>
+
+      <section class="card">
+        <h2>External and Array Buffers (MB)</h2>
+        <canvas id="extArrayChart"></canvas>
       </section>
 
       <section class="card">
@@ -453,6 +467,31 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
       }, 0);
       const memoryMaxYAxis = Number.isFinite(memoryMaxMb) && memoryMaxMb > 0 ? memoryMaxMb * 1.05 : undefined;
 
+      // Compute External/ArrayBuffers chart dynamic min/max
+      const extArrayMinMb = HISTORY_DATA.reduce(function (acc, entry) {
+        const values = [entry.external, entry.arrayBuffers].map(bytesToMb);
+        const finiteValues = values.filter(function (v) { return Number.isFinite(v); });
+        const minEntry = finiteValues.length ? Math.min.apply(Math, finiteValues) : acc;
+        return Math.min(acc, minEntry);
+      }, Number.POSITIVE_INFINITY);
+
+      const extArrayMinYAxis = Number.isFinite(extArrayMinMb) && extArrayMinMb > 0
+        ? Math.max(0, extArrayMinMb - extArrayMinMb * 0.1)
+        : 0;
+
+      const extArrayMaxMb = HISTORY_DATA.reduce(function (acc, entry) {
+        const values = [
+          entry.external,
+          entry.arrayBuffers,
+          entry.peakExternal,
+          entry.peakArrayBuffers,
+        ].map(bytesToMb);
+        const finiteValues = values.filter(function (v) { return Number.isFinite(v); });
+        const maxEntry = finiteValues.length ? Math.max.apply(Math, finiteValues) : acc;
+        return Math.max(acc, maxEntry);
+      }, 0);
+      const extArrayMaxYAxis = Number.isFinite(extArrayMaxMb) && extArrayMaxMb > 0 ? extArrayMaxMb * 1.05 : undefined;
+
       renderCharts();
 
       function renderCharts() {
@@ -468,7 +507,14 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
                   return Number.isFinite(entry.cpu) ? Number(entry.cpu.toFixed(2)) : 0;
                 }),
                 color: '#38bdf8',
-                fill: 'rgba(56, 189, 248, 0.18)'
+                fill: 'rgba(56, 189, 248, 0.18)',
+                markPeaks: true,
+                markerPeakValues: HISTORY_DATA.map(function (entry) {
+                  if (Number.isFinite(entry.peakCpu)) return entry.peakCpu;
+                  if (Number.isFinite(entry.cpu)) return entry.cpu;
+                  return Number.NEGATIVE_INFINITY;
+                }),
+                markerRadius: 2.5
               },
               {
                 label: 'Host Peak CPU %',
@@ -495,7 +541,14 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
                   return Number.isFinite(entry.processCpu) ? Number(entry.processCpu.toFixed(2)) : 0;
                 }),
                 color: '#a855f7',
-                fill: 'rgba(168, 85, 247, 0.18)'
+                fill: 'rgba(168, 85, 247, 0.18)',
+                markPeaks: true,
+                markerPeakValues: HISTORY_DATA.map(function (entry) {
+                  if (Number.isFinite(entry.peakProcessCpu)) return entry.peakProcessCpu;
+                  if (Number.isFinite(entry.processCpu)) return entry.processCpu;
+                  return Number.NEGATIVE_INFINITY;
+                }),
+                markerRadius: 2.5
               },
               {
                 label: 'Process Peak CPU %',
@@ -526,21 +579,79 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
                 label: 'RSS (MB)',
                 values: HISTORY_DATA.map(function (entry) { return bytesToMb(entry.rss); }),
                 color: '#34d399',
-                fill: 'rgba(52, 211, 153, 0.18)'
+                fill: 'rgba(52, 211, 153, 0.18)',
+                markPeaks: true,
+                markerPeakValues: HISTORY_DATA.map(function (entry) {
+                  if (Number.isFinite(entry.peakRss)) return entry.peakRss;
+                  if (Number.isFinite(entry.rss)) return entry.rss;
+                  return Number.NEGATIVE_INFINITY;
+                }),
+                markerRadius: 2.5
               },
               {
                 label: 'Heap Total (MB)',
                 values: HISTORY_DATA.map(function (entry) { return bytesToMb(entry.heapTotal); }),
-                color: '#fb923c'
+                color: '#fb923c',
+                markPeaks: true,
+                markerPeakValues: HISTORY_DATA.map(function (entry) {
+                  if (Number.isFinite(entry.peakHeapTotal)) return entry.peakHeapTotal;
+                  if (Number.isFinite(entry.heapTotal)) return entry.heapTotal;
+                  return Number.NEGATIVE_INFINITY;
+                }),
+                markerRadius: 2.5
               },
               {
                 label: 'Heap Used (MB)',
                 values: HISTORY_DATA.map(function (entry) { return bytesToMb(entry.heapUsed); }),
-                color: '#f472b6'
+                color: '#f472b6',
+                markPeaks: true,
+                markerPeakValues: HISTORY_DATA.map(function (entry) {
+                  if (Number.isFinite(entry.peakHeapUsed)) return entry.peakHeapUsed;
+                  if (Number.isFinite(entry.heapUsed)) return entry.heapUsed;
+                  return Number.NEGATIVE_INFINITY;
+                }),
+                markerRadius: 2.5
               }
             ],
             minY: memoryMinYAxis,
             maxY: memoryMaxYAxis,
+            yFormatter: function (value) {
+              return value.toFixed(0) + ' MB';
+            }
+          });
+
+          // External and Array Buffers chart
+          renderLineChart('extArrayChart', {
+            labels: labels,
+            datasets: [
+              {
+                label: 'External (MB)',
+                values: HISTORY_DATA.map(function (entry) { return bytesToMb(entry.external); }),
+                color: '#60a5fa',
+                fill: 'rgba(96, 165, 250, 0.18)',
+                markPeaks: true,
+                markerPeakValues: HISTORY_DATA.map(function (entry) {
+                  if (Number.isFinite(entry.peakExternal)) return entry.peakExternal;
+                  if (Number.isFinite(entry.external)) return entry.external;
+                  return Number.NEGATIVE_INFINITY;
+                }),
+                markerRadius: 2.5
+              },
+              {
+                label: 'Array Buffers (MB)',
+                values: HISTORY_DATA.map(function (entry) { return bytesToMb(entry.arrayBuffers); }),
+                color: '#22d3ee',
+                markPeaks: true,
+                markerPeakValues: HISTORY_DATA.map(function (entry) {
+                  if (Number.isFinite(entry.peakArrayBuffers)) return entry.peakArrayBuffers;
+                  if (Number.isFinite(entry.arrayBuffers)) return entry.arrayBuffers;
+                  return Number.NEGATIVE_INFINITY;
+                }),
+                markerRadius: 2.5
+              }
+            ],
+            minY: extArrayMinYAxis,
+            maxY: extArrayMaxYAxis,
             yFormatter: function (value) {
               return value.toFixed(0) + ' MB';
             }
@@ -716,6 +827,29 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
           });
           ctx.stroke();
           ctx.setLineDash([]);
+
+          // Draw new-peak markers if enabled
+          if (dataset.markPeaks) {
+            let runningMax = -Infinity;
+            const radius = Number.isFinite(dataset.markerRadius) ? dataset.markerRadius : 2.5;
+            ctx.save();
+            ctx.fillStyle = dataset.markerColor || dataset.color;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.lineWidth = 1;
+            const peakSeries = Array.isArray(dataset.markerPeakValues) ? dataset.markerPeakValues : dataset.values;
+            peakSeries.forEach(function (value, idx) {
+              if (!Number.isFinite(value)) return;
+              if (value > runningMax) {
+                runningMax = value;
+                const p = points[idx];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+              }
+            });
+            ctx.restore();
+          }
         });
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
