@@ -2007,7 +2007,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default thermostat cluster server with features **Heating**, **Cooling** and **AutoMode**.
+   * Creates a default thermostat cluster server with features **Heating**, **Cooling**, **AutoMode** and **Presets**.
    *
    * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
    * - When the outdoorTemperature parameter is provided (either null or a number), the outdoorTemperature attribute is also added (defaults to undefined).
