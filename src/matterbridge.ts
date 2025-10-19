@@ -705,7 +705,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     );
 
     // Check node version and throw error
-    const minNodeVersion = 18;
+    const minNodeVersion = 20;
     const nodeVersion = process.versions.node;
     const versionMajor = parseInt(nodeVersion.split('.')[0]);
     if (versionMajor < minNodeVersion) {
@@ -743,8 +743,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       --filelogger             enable the matterbridge file logger (matterbridge.log)
       --matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
       --matterfilelogger       enable the matter.js file logger (matter.log)
-      --reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
-      --factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
       --list:                  list the registered plugins
       --loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
       --logstorage:            log the node storage
@@ -758,7 +756,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       --vendorName:            override the default vendorName "Matterbridge"
       --productId:             override the default productId 0x8000
       --productName:           override the default productName "Matterbridge aggregator"
-      --service:               enable the service mode (used in the systemctl configuration file)
+      --service:               enable the service mode (used in the systemctl configuration file and launchctl plist)
       --docker:                enable the docker mode (used in the docker image)
       --homedir:               override the home directory (default: os.homedir())
       --add [plugin path]:     register the plugin from the given absolute or relative path
@@ -769,6 +767,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       --enable [plugin name]:  enable the globally installed plugin with the given name
       --disable [plugin path]: disable the plugin from the given absolute or relative path
       --disable [plugin name]: disable the globally installed plugin with the given name
+      --factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
+      --reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       --reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
       --reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!${rs}`);
       this.shutdown = true;
@@ -864,15 +864,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (this.aggregatorSerialNumber && this.aggregatorUniqueId && this.matterStorageService) {
         const storageManager = await this.matterStorageService.open('Matterbridge');
         const storageContext = storageManager?.createContext('persist');
-        if (this.aggregatorSerialNumber) await storageContext?.set('serialNumber', this.aggregatorSerialNumber);
-        if (this.aggregatorUniqueId) await storageContext?.set('uniqueId', this.aggregatorUniqueId);
+        await storageContext?.set('serialNumber', this.aggregatorSerialNumber);
+        await storageContext?.set('uniqueId', this.aggregatorUniqueId);
       }
     } catch (error) {
       this.log.fatal(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
       throw new Error(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
     }
 
-    // Clear the matterbridge context if the reset parameter is set
+    // Clear the matterbridge context if the reset parameter is set (bridge mode)
     if (hasParameter('reset') && getParameter('reset') === undefined) {
       this.initialized = true;
       await this.shutdownProcessAndReset();
@@ -880,7 +880,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       return;
     }
 
-    // Clear matterbridge plugin context if the reset parameter is set
+    // Clear matterbridge plugin context if the reset parameter is set (childbridge mode)
     if (hasParameter('reset') && getParameter('reset') !== undefined) {
       this.log.debug(`Reset plugin ${getParameter('reset')}`);
       const plugin = this.plugins.get(getParameter('reset') as string);

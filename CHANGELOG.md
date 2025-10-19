@@ -39,7 +39,11 @@ Advantages:
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
-## [3.3.3] - 2025-10-18
+## [3.3.3] - Not released
+
+### Breaking Changes
+
+- [nodejs]: Matterbridge will not start if the node.js version is less then 20.x.x.
 
 ### Added
 
