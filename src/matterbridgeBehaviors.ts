@@ -28,28 +28,29 @@
 // @matter
 import { Behavior, MaybePromise, NamedHandler } from '@matter/main';
 // @matter clusters
-import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
-import { ColorControl } from '@matter/main/clusters/color-control';
-import { FanControl } from '@matter/main/clusters/fan-control';
-import { Identify } from '@matter/main/clusters/identify';
-import { LevelControl } from '@matter/main/clusters/level-control';
-import { WindowCovering } from '@matter/main/clusters/window-covering';
-import { Thermostat } from '@matter/main/clusters/thermostat';
-import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
-import { ModeSelect } from '@matter/main/clusters/mode-select';
-import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
-import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
-import { OperationalState } from '@matter/main/clusters/operational-state';
-import { ModeBase } from '@matter/main/clusters/mode-base';
-import { ServiceArea } from '@matter/main/clusters/service-area';
-import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import { ColorControl } from '@matter/types/clusters/color-control';
+import { FanControl } from '@matter/types/clusters/fan-control';
+import { Identify } from '@matter/types/clusters/identify';
+import { LevelControl } from '@matter/types/clusters/level-control';
+import { WindowCovering } from '@matter/types/clusters/window-covering';
+import { Thermostat } from '@matter/types/clusters/thermostat';
+import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
+import { ModeSelect } from '@matter/types/clusters/mode-select';
+import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { ModeBase } from '@matter/types/clusters/mode-base';
+import { ServiceArea } from '@matter/types/clusters/service-area';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
+import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
 import { OnOffServer } from '@matter/main/behaviors/on-off';
 import { LevelControlServer } from '@matter/main/behaviors/level-control';
 import { ColorControlServer } from '@matter/main/behaviors/color-control';
 import { MovementDirection, MovementType, WindowCoveringServer } from '@matter/main/behaviors/window-covering';
+import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
 import { DoorLockServer } from '@matter/main/behaviors/door-lock';
 import { FanControlServer } from '@matter/main/behaviors/fan-control';
 import { ThermostatServer } from '@matter/main/behaviors/thermostat';
@@ -63,9 +64,9 @@ import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-ener
 import { DeviceEnergyManagementModeServer } from '@matter/main/behaviors/device-energy-management-mode';
 import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
-
 // AnsiLogger module
-import { AnsiLogger } from './logger/export.js';
+import { AnsiLogger } from 'node-ansi-logger';
+
 // MatterbridgeEndpoint
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
 
@@ -414,6 +415,45 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
   }
 }
 
+// istanbul ignore next
+export class MatterbridgePresetThermostatServer extends ThermostatServer.with(Thermostat.Feature.Presets, Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
+  override setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('setpointRaiseLower', { request, cluster: ThermostatServer.id, attributes: this.state, endpoint: this.endpoint });
+
+    const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
+    device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
+    if (this.state.occupiedHeatingSetpoint !== undefined) device.log.debug(`- current occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint / 100}`);
+    if (this.state.occupiedCoolingSetpoint !== undefined) device.log.debug(`- current occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint / 100}`);
+
+    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Heat || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedHeatingSetpoint !== undefined) {
+      const setpoint = this.state.occupiedHeatingSetpoint / 100 + request.amount / 10;
+      this.state.occupiedHeatingSetpoint = setpoint * 100;
+      device.log.debug(`Set occupiedHeatingSetpoint to ${setpoint}`);
+    }
+
+    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Cool || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedCoolingSetpoint !== undefined) {
+      const setpoint = this.state.occupiedCoolingSetpoint / 100 + request.amount / 10;
+      this.state.occupiedCoolingSetpoint = setpoint * 100;
+      device.log.debug(`Set occupiedCoolingSetpoint to ${setpoint}`);
+    }
+
+    // setpointRaiseLower is not implemented in matter.js
+    // super.setpointRaiseLower(request);
+  }
+
+  override setActivePresetRequest(request: Thermostat.SetActivePresetRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting preset to ${request.presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('setActivePresetRequest', { request, cluster: ThermostatServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${request.presetHandle}`);
+
+    // setActivePresetRequest is not implemented in matter.js
+    // super.setActivePresetRequest(request);
+  }
+}
+
 export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level) {
   override open(request: ValveConfigurationAndControl.OpenRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -597,8 +637,8 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
   }
 }
 
-export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManagementServer {
-  powerAdjustRequest(request: DeviceEnergyManagement.PowerAdjustRequest): MaybePromise {
+export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment) {
+  override powerAdjustRequest(request: DeviceEnergyManagement.PowerAdjustRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Adjusting power to ${request.power} duration ${request.duration} cause ${request.cause} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('powerAdjustRequest', { request, cluster: DeviceEnergyManagementServer.id, attributes: this.state, endpoint: this.endpoint });
@@ -607,7 +647,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     // powerAdjustRequest is not implemented in matter.js
     // return super.powerAdjustRequest();
   }
-  cancelPowerAdjustRequest(): MaybePromise {
+  override cancelPowerAdjustRequest(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Cancelling power adjustment (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('cancelPowerAdjustRequest', { cluster: DeviceEnergyManagementServer.id, attributes: this.state, endpoint: this.endpoint });
@@ -629,6 +669,14 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
     this.state.currentMode = request.newMode;
+    // The implementation is responsible for setting the device accordingly with the new mode if this logic is not enough
+    if (supported.modeTags.find((tag) => tag.value === DeviceEnergyManagementMode.ModeTag.NoOptimization)) {
+      if (this.endpoint.behaviors.has(DeviceEnergyManagementServer))
+        this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), { optOutState: DeviceEnergyManagement.OptOutState.OptOut });
+    } else {
+      if (this.endpoint.behaviors.has(DeviceEnergyManagementServer))
+        this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), { optOutState: DeviceEnergyManagement.OptOutState.NoOptOut });
+    }
     device.log.debug(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
     return super.changeToMode(request);
     // return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };

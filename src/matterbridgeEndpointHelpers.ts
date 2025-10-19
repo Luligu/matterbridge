@@ -29,7 +29,7 @@ import { createHash } from 'node:crypto';
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
 // @matter
 import { ActionContext, Behavior, ClusterBehavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
-import { ClusterType, getClusterNameById } from '@matter/main/types';
+import { ClusterType, getClusterNameById, MeasurementType } from '@matter/main/types';
 // @matter clusters
 import { PowerSource } from '@matter/main/clusters/power-source';
 import { UserLabel } from '@matter/main/clusters/user-label';
@@ -937,5 +937,127 @@ export function getDefaultOccupancySensingClusterServer(occupied = false, holdTi
     pirUnoccupiedToOccupiedDelay: holdTime,
     holdTime,
     holdTimeLimits: { holdTimeMin, holdTimeMax, holdTimeDefault: holdTime },
+  });
+}
+
+/**
+ * Get the default Electrical Energy Measurement Cluster Server options with features ImportedEnergy, ExportedEnergy, and CumulativeEnergy.
+ *
+ * @param {number} energyImported - The total consumption value in mW/h.
+ * @param {number} energyExported - The total production value in mW/h.
+ * @returns {Behavior.Options<ElectricalEnergyMeasurementServer>} - The default options for the Electrical Energy Measurement Cluster Server.
+ */
+export function getDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null) {
+  return optionsFor(ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy), {
+    accuracy: {
+      measurementType: MeasurementType.ElectricalEnergy,
+      measured: true,
+      minMeasuredValue: Number.MIN_SAFE_INTEGER,
+      maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+      accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+    },
+    cumulativeEnergyReset: null,
+    cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
+    cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
+  });
+}
+
+/**
+ * Get the default Electrical Power Measurement Cluster Server options with features AlternatingCurrent.
+ *
+ * @param {number} voltage - The voltage value in millivolts.
+ * @param {number} current - The current value in milliamperes.
+ * @param {number} power - The power value in milliwatts.
+ * @param {number} frequency - The frequency value in millihertz.
+ * @returns {Behavior.Options<ElectricalPowerMeasurementServer>} - The default options for the Electrical Power Measurement Cluster Server.
+ */
+export function getDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null) {
+  return optionsFor(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), {
+    powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
+    numberOfMeasurementTypes: 4,
+    accuracy: [
+      {
+        measurementType: MeasurementType.Voltage,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+      {
+        measurementType: MeasurementType.ActiveCurrent,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+      {
+        measurementType: MeasurementType.ActivePower,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+      {
+        measurementType: MeasurementType.Frequency,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+    ],
+    voltage: voltage,
+    activeCurrent: current,
+    activePower: power,
+    frequency: frequency,
+  });
+}
+
+/**
+ * Get the default Electrical Apparent Power Measurement Cluster Server with features AlternatingCurrent.
+ *
+ * @param {number} voltage - The voltage value in millivolts.
+ * @param {number} apparentCurrent - The current value in milliamperes.
+ * @param {number} apparentPower - The apparent power value in millivoltamperes.
+ * @param {number} frequency - The frequency value in millihertz.
+ * @returns {Behavior.Options<ElectricalPowerMeasurementServer>} - The default options for the Electrical Apparent Power Measurement Cluster Server.
+ */
+export function getApparentElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, apparentCurrent: number | bigint | null = null, apparentPower: number | bigint | null = null, frequency: number | bigint | null = null) {
+  return optionsFor(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), {
+    powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
+    numberOfMeasurementTypes: 4,
+    accuracy: [
+      {
+        measurementType: MeasurementType.Voltage,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+      {
+        measurementType: MeasurementType.ApparentCurrent,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+      {
+        measurementType: MeasurementType.ApparentPower,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+      {
+        measurementType: MeasurementType.Frequency,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+    ],
+    voltage: voltage,
+    apparentCurrent: apparentCurrent,
+    apparentPower: apparentPower,
+    frequency: frequency,
   });
 }

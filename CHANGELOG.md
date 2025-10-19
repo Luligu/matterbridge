@@ -23,11 +23,28 @@ Advantages:
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 
-## [3.3.3] - Not released
+## [3.3.3] - 2025-10-18
+
+### Added
+
+- [thread]: Added timestamp to WorkerMessage.
+- [macOS]: Added the [plist configuration guide](README-MACOS-PLIST.md).
+- [frontend]: Added download diagnostic and download history to Download menu.
+- [frontend]: Added icon to open the cpu and memory usage in System Information panel.
+- [thermostat]: Added thermostatRunningState attribute. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/410).
+- [ElectricalPowerMeasurement]: Added createApparentElectricalPowerMeasurementClusterServer cluster helper. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/411).
+- [DeviceEnergyManagementMode]: Added logic to set optOutState. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/34).
+- [Thermostat]: Added provisional support for setActivePresetRequest. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/38).
 
 ### Changed
 
 - [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to 3.2.2.
+- [frontend]: Added update check on start.
+- [frontend]: Added icon to update dev in the Header and removed the yellow badges.
+- [frontend]: Added icon to update plugin latest and dev and removed the yellow badges.
+- [frontend]: Added plugin Path in the Name Tooltip.
+- [history]: Added external and array buffers to the history chart.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

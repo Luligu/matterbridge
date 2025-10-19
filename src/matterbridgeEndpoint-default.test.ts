@@ -1328,6 +1328,28 @@ describe('Matterbridge ' + NAME, () => {
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('energy measurements for electricalSensor apparent', async () => {
+    const device = new MatterbridgeEndpoint([electricalSensor], { uniqueStorageKey: 'ApparentElectricalSensor' });
+    expect(device).toBeDefined();
+    device.createDefaultPowerTopologyClusterServer();
+    device.createDefaultElectricalEnergyMeasurementClusterServer();
+    device.createApparentElectricalPowerMeasurementClusterServer();
+    expect(device.hasClusterServer(PowerTopology.Cluster.id)).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.Cluster.id, 'cumulativeEnergyReset')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.Cluster.id, 'cumulativeEnergyImported')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.Cluster.id, 'cumulativeEnergyExported')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalPowerMeasurement.Cluster.id, 'voltage')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalPowerMeasurement.Cluster.id, 'apparentCurrent')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalPowerMeasurement.Cluster.id, 'apparentPower')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalPowerMeasurement.Cluster.id, 'frequency')).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(ElectricalEnergyMeasurement.Cluster.id, 'cumulativeEnergyImported')).toBe(null);
+    expect(device.getAttribute(ElectricalPowerMeasurement.Cluster.id, 'voltage')).toBe(null);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
   test('createDefaultTemperatureMeasurementClusterServer', async () => {
     const device = new MatterbridgeEndpoint(temperatureSensor, { uniqueStorageKey: 'TemperatureSensor' });
     expect(device).toBeDefined();

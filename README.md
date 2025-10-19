@@ -84,7 +84,7 @@ Since Matter is designed as "a universal IPv6-based communication protocol for s
 
 Avoid using VLAN and firewall blocking the communications between the controllers and Matterbridge.
 
-To pair matterbridge, you need a matter enabled controller (Apple Home, Smart Things, Google Home, Alexa, Hose Assistant etc.).
+To pair matterbridge, you need a matter enabled controller (Apple Home, Smart Things, Google Home, Alexa, Home Assistant etc.).
 
 ## Installation
 
@@ -172,6 +172,10 @@ Config editor:
 
 [Service configurations](README-SERVICE.md)
 
+### Run matterbridge as a system service with launchctl (macOS only)
+
+[Launchctl configurations](README-MACOS-PLIST.md)
+
 ### Run matterbridge with docker and docker compose
 
 [Docker configurations](README-DOCKER.md)
@@ -179,10 +183,6 @@ Config editor:
 ### Run matterbridge with podman
 
 [Podman configurations](README-PODMAN.md)
-
-### Run matterbridge as a service on macOS with mb-service (by [Michael Ahern](https://github.com/michaelahern))
-
-[Matterbridge Service Command for macOS](https://github.com/michaelahern/mb-service)
 
 ### Run matterbridge with nginx
 

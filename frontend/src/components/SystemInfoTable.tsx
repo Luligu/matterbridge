@@ -1,6 +1,14 @@
 // React
 import { memo, useContext, useEffect, useRef, useState } from 'react';
 
+// @mui/material
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
+
+// @mdi/js
+import Icon from '@mdi/react';
+import { mdiChartTimelineVariantShimmer } from '@mdi/js';
+
 // Backend
 import { SystemInformation } from '../../../src/matterbridgeTypes';
 
@@ -14,7 +22,7 @@ import { debug } from '../App';
 
 function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformation; compact: boolean }) {
   // WebSocket context
-  const { addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
+  const { addListener, removeListener, getUniqueId, sendMessage } = useContext(WebSocketContext);
 
   // Local states
   const [localSystemInfo, setLocalSystemInfo] = useState(systemInfo);
@@ -83,6 +91,11 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
     }));
   };
 
+  const handleViewHistory = () => {
+    if (debug) console.log('SystemInfoTable handleViewHistory clicked');
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/viewhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
+  };
+
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (debug) console.log('SystemInfoTable received WebSocket Message:', msg);
@@ -96,6 +109,9 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
       } else if (msg.method === 'uptime_update' && msg.response && msg.response.systemUptime && msg.response.processUptime) {
         if (debug) console.log('SystemInfoTable received uptime_update', msg);
         handleUptimeUpdate(msg.response.systemUptime, msg.response.processUptime);
+      } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success === true) {
+        if (debug) console.log('SystemInfoTable received /api/viewhistorypage success');
+        window.open(`./api/viewhistory`, '_blank', 'noopener,noreferrer');
       }
     };
 
@@ -118,7 +134,13 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
     <MbfWindow style={{ flex: '0 1 auto', width: '302px', minWidth: '302px' }}>
       <MbfWindowHeader>
         <MbfWindowHeaderText>System Information</MbfWindowHeaderText>
-        <MbfWindowIcons onClose={() => setClosed(true)} />
+        <MbfWindowIcons onClose={() => setClosed(true)}>
+          <IconButton size='small' sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }} onClick={handleViewHistory}>
+            <Tooltip title='Open the cpu and memory usage page' arrow>
+              <Icon path={mdiChartTimelineVariantShimmer} size='22px' />
+            </Tooltip>
+          </IconButton>
+        </MbfWindowIcons>
       </MbfWindowHeader>
       <div className='MbfWindowDivTable'>
         <table style={{ border: 'none', borderCollapse: 'collapse' }}>
@@ -158,14 +180,4 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   );
 }
 
-/**
- * System Information Table
- * Displays system information in a table format.
- *
- * Props:
- * - systemInfo: SystemInformation object containing system details.
- * - compact: boolean indicating whether to display compact information.
- *
- * The component listens for WebSocket messages to update memory, CPU, and uptime information in real-time.
- */
 export default memo(SystemInfoTable);

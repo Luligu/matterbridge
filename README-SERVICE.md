@@ -169,7 +169,7 @@ sudo systemctl restart systemd-journald
 Run the following command to verify if you can install Matterbridge globally without being prompted for a password:
 
 ```bash
-sudo npm install -g matterbridge
+sudo npm install -g matterbridge --omit=dev
 ```
 
 If you are not prompted for a password, no further action is required.
@@ -209,4 +209,10 @@ save the file and reload the settings with:
 ```bash
 sudo chmod 0440 /etc/sudoers.d/matterbridge
 sudo visudo -c
+```
+
+Verify if you can install Matterbridge globally without being prompted for a password:
+
+```bash
+sudo npm install -g matterbridge --omit=dev
 ```

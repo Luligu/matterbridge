@@ -66,8 +66,8 @@ export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
 export type PlatformMatterbridge = Matterbridge & {
   readonly systemInformation: SystemInformation;
-  readonly homeDirectory: string;
   readonly rootDirectory: string;
+  readonly homeDirectory: string;
   readonly matterbridgeDirectory: string;
   readonly matterbridgePluginDirectory: string;
   readonly globalModulesDirectory: string;

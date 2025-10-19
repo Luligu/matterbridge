@@ -94,7 +94,7 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
           <li ref={endOfMessagesRef} style={{ padding: 0, margin: 0 }} />
         </ul>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ justifyContent: 'center' }}>
         {onInstall && (
           <Button variant='contained' onClick={onInstall}>
             Install

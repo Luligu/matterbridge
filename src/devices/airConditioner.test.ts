@@ -82,6 +82,15 @@ describe('Matterbridge ' + NAME, () => {
       occupiedHeatingSetpoint: 2100,
       systemMode: 1,
       thermostatRunningMode: 0,
+      thermostatRunningState: {
+        cool: false,
+        coolStage2: false,
+        fan: false,
+        fanStage2: false,
+        fanStage3: false,
+        heat: false,
+        heatStage2: false,
+      },
     });
     expect(custom.getClusterServerOptions(ThermostatUserInterfaceConfiguration.Cluster.id)).toEqual({ keypadLockout: 0, scheduleProgrammingVisibility: 0, temperatureDisplayMode: 0 });
     expect(custom.getClusterServerOptions(FanControl.Cluster.id)).toEqual({ fanMode: 0, fanModeSequence: 2, percentSetting: 40, percentCurrent: 0 });
@@ -118,6 +127,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'maxCoolSetpointLimit')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'systemMode')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'thermostatRunningMode')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'thermostatRunningState')).toBe(true);
     // Default values (scaled by 100 for temperatures)
     expect(device.getAttribute(Thermostat.Cluster.id, 'localTemperature')).toBe(2300);
     expect(device.getAttribute(Thermostat.Cluster.id, 'occupiedHeatingSetpoint')).toBe(2100);
@@ -129,6 +139,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(Thermostat.Cluster.id, 'maxCoolSetpointLimit')).toBe(5000);
     expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(1);
     expect(device.getAttribute(Thermostat.Cluster.id, 'thermostatRunningMode')).toBe(0);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'thermostatRunningState')).toEqual({
+      cool: false,
+      coolStage2: false,
+      fan: false,
+      fanStage2: false,
+      fanStage3: false,
+      heat: false,
+      heatStage2: false,
+    });
   });
 
   test('thermostat UI configuration attributes check', async () => {

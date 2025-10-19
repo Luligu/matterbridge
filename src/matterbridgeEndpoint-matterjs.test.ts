@@ -156,11 +156,11 @@ describe('Matterbridge ' + NAME, () => {
     matterbridge.matterbridgePluginDirectory = path.join(HOMEDIR, 'Matterbridge');
 
     // Setup matter environment
-    matterbridge.environment.vars.set('log.level', MatterLogLevel.INFO);
-    matterbridge.environment.vars.set('log.format', MatterLogFormat.ANSI);
-    matterbridge.environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
-    matterbridge.environment.vars.set('runtime.signals', false);
-    matterbridge.environment.vars.set('runtime.exitcode', false);
+    (matterbridge as any).environment.vars.set('log.level', MatterLogLevel.INFO);
+    (matterbridge as any).environment.vars.set('log.format', MatterLogFormat.ANSI);
+    (matterbridge as any).environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
+    (matterbridge as any).environment.vars.set('runtime.signals', false);
+    (matterbridge as any).environment.vars.set('runtime.exitcode', false);
     await (matterbridge as any).startMatterStorage();
   }, 30000);
 
@@ -198,7 +198,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a context for server node', async () => {
-    expect(matterbridge.environment.vars.get('path.root')).toBe(path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
+    expect((matterbridge as any).environment.vars.get('path.root')).toBe(path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
     context = await (matterbridge as any).createServerNodeContext('Matterbridge', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
     expect(context).toBeDefined();
   });
@@ -1277,6 +1277,10 @@ describe('Matterbridge ' + NAME, () => {
     await invokeBehaviorCommand(evse, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${evse.id}.${evse.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(evse, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 2 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 2 (endpoint ${evse.id}.${evse.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 2 => Device Energy Management`);
   });
 
   test('invoke MatterbridgeEnergyEvseServer commands', async () => {
