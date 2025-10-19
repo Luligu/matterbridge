@@ -27,11 +27,12 @@ Advantages:
 
 ### Breaking Changes
 
-- [nodejs]: Matterbridge will not start if the node.js version is less then 20.x.x.
+- [nodejs]: Matterbridge will not start if the Node.js version is less then 20.x.x.
 
 ### Added
 
 - [frontend]: Added debounce to MatterSettings.
+- [cli]: Bumped `cli` version to 3.0.0 with backport of Traker and Inspector from thread module.
 
 ### Changed
 

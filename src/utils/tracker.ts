@@ -80,9 +80,10 @@ interface TrackerEvents {
 
 export class Tracker extends EventEmitter<TrackerEvents> {
   private trackerInterval?: NodeJS.Timeout;
-  private historyIndex = 0;
-  private readonly historySize = 1000;
-  private readonly history: TrackerSnapshot[] = Array.from(
+  static historyIndex = 0;
+  // History for 8h at 1 sample each 10 seconds = 2880 entries
+  static readonly historySize = 2880;
+  static readonly history: TrackerSnapshot[] = Array.from(
     { length: this.historySize },
     () =>
       ({
@@ -224,10 +225,10 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       }
 
       // Get current history entry in circular buffer
-      const entry = this.history[this.historyIndex];
+      const entry = Tracker.history[Tracker.historyIndex];
 
       // Get previous history entry in circular buffer
-      const prevEntry = this.history[(this.historyIndex + this.historySize - 1) % this.historySize];
+      const prevEntry = Tracker.history[(Tracker.historyIndex + Tracker.historySize - 1) % Tracker.historySize];
 
       // Set the timestamp
       entry.timestamp = Date.now();
@@ -301,7 +302,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       }
 
       // Move to next history index of circular buffer
-      this.historyIndex = (this.historyIndex + 1) % this.historySize;
+      Tracker.historyIndex = (Tracker.historyIndex + 1) % Tracker.historySize;
     }, sampleIntervalMs);
     this.log.debug(`Tracker started`);
   }
@@ -310,14 +311,14 @@ export class Tracker extends EventEmitter<TrackerEvents> {
    * Reset peak values to the currently stored values
    */
   resetPeaks() {
-    const prevHistoryIndex = (this.historyIndex + this.historySize - 1) % this.historySize;
-    this.history[prevHistoryIndex].peakOsCpu = 0;
-    this.history[prevHistoryIndex].peakProcessCpu = 0;
-    this.history[prevHistoryIndex].peakRss = 0;
-    this.history[prevHistoryIndex].peakHeapUsed = 0;
-    this.history[prevHistoryIndex].peakHeapTotal = 0;
-    this.history[prevHistoryIndex].peakExternal = 0;
-    this.history[prevHistoryIndex].peakArrayBuffers = 0;
+    const prevHistoryIndex = (Tracker.historyIndex + Tracker.historySize - 1) % Tracker.historySize;
+    Tracker.history[prevHistoryIndex].peakOsCpu = 0;
+    Tracker.history[prevHistoryIndex].peakProcessCpu = 0;
+    Tracker.history[prevHistoryIndex].peakRss = 0;
+    Tracker.history[prevHistoryIndex].peakHeapUsed = 0;
+    Tracker.history[prevHistoryIndex].peakHeapTotal = 0;
+    Tracker.history[prevHistoryIndex].peakExternal = 0;
+    Tracker.history[prevHistoryIndex].peakArrayBuffers = 0;
     if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Peaks reset at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
     this.emit('reset_peaks_done');
   }
@@ -364,9 +365,9 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       this.log.debug(`Tracker history for ${YELLOW}${BRIGHT}${this.name}:${RESET}`);
       this.log.debug('Timestamp            Host cpu            Process cpu         Rss                   Heap Used             Heap Total            External              ArrayBuffers');
       //              10/10/2025, 20:52:12   4.76 % (  4.76 %)   0.16 % (  0.16 %)  38.45 MB ( 38.45 MB)   3.75 MB (  3.75 MB)   5.29 MB (  5.29 MB)   1.66 MB (  1.66 MB)  10.25 KB ( 10.25 KB)
-      for (let i = 0; i < this.historySize; i++) {
-        const index = (this.historyIndex + i) % this.historySize;
-        const entry = this.history[index];
+      for (let i = 0; i < Tracker.historySize; i++) {
+        const index = (Tracker.historyIndex + i) % Tracker.historySize;
+        const entry = Tracker.history[index];
         if (entry.timestamp === 0) continue;
         this.log.debug(
           `${this.formatTimeStamp(entry.timestamp)} ` +
