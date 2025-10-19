@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-import { isValidNumber } from './export.js';
+import { isValidNumber } from './isvalid.js';
 
 /**
  * Checks if a command-line parameter is present.
@@ -35,6 +35,18 @@ export function hasParameter(name: string): boolean {
   let markerIncluded = commandArguments.includes(`-${name}`);
   if (!markerIncluded) markerIncluded = commandArguments.includes(`--${name}`);
   return markerIncluded;
+}
+
+/**
+ * Checks if any of the provided command-line parameters are present.
+ *
+ * @param {string[]} params - The names of the parameters to check.
+ * @returns {boolean} True if any of the parameters are present, otherwise false.
+ */
+export function hasAnyParameter(...params: string[]): boolean {
+  return params.some((param) => {
+    return hasParameter(param);
+  });
 }
 
 /**
