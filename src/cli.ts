@@ -4,7 +4,7 @@
  * @file cli.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 2.1.1
+ * @version 3.0.0
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -22,406 +22,96 @@
  * limitations under the License.
  */
 
-// eslint-disable-next-line no-console
+/* eslint-disable no-console */
+/* eslint-disable n/no-process-exit */
+
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCLI loaded.\u001B[40;0m');
 
-// Node modules
-import type { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
-import os from 'node:os';
-import { inspect } from 'node:util';
-
 // AnsiLogger module
-import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, TimestampFormat, YELLOW } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // Cli
-import { cliEmitter, setLastOsCpuUsage, setLastProcessCpuUsage } from './cliEmitter.js';
-import { history, historyIndex, historySize, setHistoryIndex } from './cliHistory.js';
+import { cliEmitter } from './cliEmitter.js';
 // Matterbridge
-import { getIntParameter, hasParameter } from './utils/commandLine.js';
+import { hasParameter, hasAnyParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
+import { inspectError } from './utils/error.js';
+import { Tracker, TrackerSnapshot } from './utils/tracker.js';
+import { Inspector } from './utils/inspector.js';
 
 export let instance: Matterbridge | undefined;
-
-// Inspectop
-let session: Session | undefined;
-let snapshotInterval: NodeJS.Timeout;
-
-// Cpu and memory check
-const trace = hasParameter('trace');
-let memoryCheckInterval: NodeJS.Timeout;
-const memoryCheckIntervalMs = getIntParameter('memoryinterval') ?? 10 * 1000;
-let memoryPeakResetTimeout: NodeJS.Timeout;
-let prevCpus: os.CpuInfo[];
-let prevProcessCpu: NodeJS.CpuUsage;
-
-let peakCpu = 0;
-let peakProcessCpu = 0;
-let peakRss = 0;
-let peakHeapUsed = 0;
-let peakHeapTotal = 0;
-let peakExternal = 0;
-let peakArrayBuffers = 0;
+export const tracker = new Tracker('Cli', true, true);
+export const inspector = new Inspector('Cli', true, true);
 
 const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
-const formatCpuUsage = (percent: number): string => {
-  return `${percent.toFixed(2).padStart(5, ' ')} %`;
-};
-
-const formatMemoryUsage = (bytes: number): string => {
-  if (bytes >= 1024 ** 3) {
-    return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
-  } else if (bytes >= 1024 ** 2) {
-    return `${(bytes / 1024 ** 2).toFixed(2)} MB`;
-  } else {
-    return `${(bytes / 1024).toFixed(2)} KB`;
-  }
-};
-
-const formatOsUpTime = (seconds: number): string => {
-  if (seconds >= 86400) {
-    const days = Math.floor(seconds / 86400);
-    return `${days} day${days !== 1 ? 's' : ''}`;
-  }
-  if (seconds >= 3600) {
-    const hours = Math.floor(seconds / 3600);
-    return `${hours} hour${hours !== 1 ? 's' : ''}`;
-  }
-  if (seconds >= 60) {
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-  }
-  return `${seconds} second${seconds !== 1 ? 's' : ''}`;
-};
-
 /**
- * Starts the CPU and memory check interval.
- *
- * @remarks
- * Debug parameter
- *
- * -memoryinterval <milliseconds> can be used to set the interval. Default is 10 seconds.
+ * Starts the CPU and memory tracker.
  */
-async function startCpuMemoryCheck() {
-  // const os = await import('node:os');
+function startCpuMemoryCheck() {
+  log.debug(`Cpu memory check starting...`);
+  tracker.start();
+  tracker.on('uptime', (os: number, process: number) => {
+    cliEmitter.emit('uptime', tracker.formatOsUpTime(Math.floor(os)), tracker.formatOsUpTime(Math.floor(process)));
+  });
+  tracker.on('snapshot', (snapshot: TrackerSnapshot) => {
+    cliEmitter.emit(
+      'memory',
+      tracker.formatBytes(snapshot.totalMemory),
+      tracker.formatBytes(snapshot.freeMemory),
+      tracker.formatBytes(snapshot.rss),
+      tracker.formatBytes(snapshot.heapTotal),
+      tracker.formatBytes(snapshot.heapUsed),
+      tracker.formatBytes(snapshot.external),
+      tracker.formatBytes(snapshot.arrayBuffers),
+    );
 
+    cliEmitter.emit('cpu', snapshot.osCpu, snapshot.processCpu);
+  });
   log.debug(`Cpu memory check started`);
-  prevCpus = os.cpus();
-  prevProcessCpu = process.cpuUsage();
-
-  const interval = () => {
-    // Get the os uptime
-    const systemUptime = formatOsUpTime(Math.floor(os.uptime()));
-    const processUptime = formatOsUpTime(Math.floor(process.uptime()));
-    cliEmitter.emit('uptime', systemUptime, processUptime);
-
-    // Get the free and total memory
-    const totalMemory = formatMemoryUsage(os.totalmem());
-    const freeMemory = formatMemoryUsage(os.freemem());
-
-    // Get the memory usage
-    const memoryUsageRaw = process.memoryUsage();
-    const rss = formatMemoryUsage(memoryUsageRaw.rss);
-    const heapTotal = formatMemoryUsage(memoryUsageRaw.heapTotal);
-    const heapUsed = formatMemoryUsage(memoryUsageRaw.heapUsed);
-    const external = formatMemoryUsage(memoryUsageRaw.external);
-    const arrayBuffers = formatMemoryUsage(memoryUsageRaw.arrayBuffers);
-    if (memoryUsageRaw.rss > peakRss) {
-      if (peakRss && trace) log.debug(`****${RED}${BRIGHT}Rss peak detected.${db} Peak rss from ${CYAN}${formatMemoryUsage(peakRss)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.rss)}${db}`);
-      peakRss = memoryUsageRaw.rss;
-    }
-    if (memoryUsageRaw.heapUsed > peakHeapUsed) {
-      if (peakHeapUsed && trace) log.debug(`****${RED}${BRIGHT}HeapUsed peak detected.${db} Peak heapUsed from ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.heapUsed)}${db}`);
-      peakHeapUsed = memoryUsageRaw.heapUsed;
-    }
-    if (memoryUsageRaw.heapTotal > peakHeapTotal) {
-      if (peakHeapTotal && trace) log.debug(`****${RED}${BRIGHT}HeapTotal peak detected.${db} Peak heapTotal from ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.heapTotal)}${db}`);
-      peakHeapTotal = memoryUsageRaw.heapTotal;
-    }
-    if (memoryUsageRaw.external > peakExternal) {
-      if (peakExternal && trace) log.debug(`****${RED}${BRIGHT}External peak detected.${db} Peak external from ${CYAN}${formatMemoryUsage(peakExternal)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.external)}${db}`);
-      peakExternal = memoryUsageRaw.external;
-    }
-    if (memoryUsageRaw.arrayBuffers > peakArrayBuffers) {
-      if (peakArrayBuffers && trace) log.debug(`****${RED}${BRIGHT}ArrayBuffers peak detected.${db} Peak arrayBuffers from ${CYAN}${formatMemoryUsage(peakArrayBuffers)}${db} to ${CYAN}${formatMemoryUsage(memoryUsageRaw.arrayBuffers)}${db}`);
-      peakArrayBuffers = memoryUsageRaw.arrayBuffers;
-    }
-    cliEmitter.emit('memory', totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
-
-    // Get the host cpu usage
-    const currCpus = os.cpus();
-    // log.debug(`Cpus: ${JSON.stringify(currCpus)}`);
-    if (currCpus.length !== prevCpus.length) {
-      prevCpus = currCpus; // Reset the previous cpus
-      log.debug(`Cpu check length failed, resetting previous cpus`);
-      return;
-    }
-    let totalIdle = 0,
-      totalTick = 0;
-
-    prevCpus.forEach((prevCpu, i) => {
-      const currCpu = currCpus[i];
-      const idleDiff = currCpu.times.idle - prevCpu.times.idle;
-      const totalDiff = (Object.keys(currCpu.times) as (keyof typeof currCpu.times)[]).reduce((acc, key) => acc + (currCpu.times[key] - prevCpu.times[key]), 0);
-      totalIdle += idleDiff;
-      totalTick += totalDiff;
-    });
-    const osCpuUsage = 100 - (totalIdle / totalTick) * 100;
-    if (totalTick === 0 || isNaN(osCpuUsage) || !isFinite(osCpuUsage) || osCpuUsage <= 0) {
-      log.debug(`Cpu check failed, using previous cpus`);
-    } else {
-      // istanbul ignore next
-      setLastOsCpuUsage(osCpuUsage);
-      // istanbul ignore next if
-      if (osCpuUsage > peakCpu) {
-        peakCpu = osCpuUsage;
-        if (peakCpu && trace) log.debug(`****${RED}${BRIGHT}Cpu peak detected.${db} Peak cpu from ${CYAN}${formatCpuUsage(peakCpu)}${db} to ${CYAN}${formatCpuUsage(osCpuUsage)}${db}`);
-      }
-    }
-    prevCpus = currCpus;
-
-    // Get the process cpu usage https://cdn.jsdelivr.net/npm/chart.js
-    const diff = process.cpuUsage(prevProcessCpu);
-    const userMs = diff.user / 1000;
-    const systemMs = diff.system / 1000;
-    const totalMs = userMs + systemMs;
-    const processCpuUsage = Number((((totalMs / memoryCheckIntervalMs) * 100) / currCpus.length).toFixed(2));
-    // istanbul ignore next if
-    if (processCpuUsage > peakProcessCpu) {
-      peakProcessCpu = processCpuUsage;
-      if (peakProcessCpu && trace) log.debug(`****${RED}${BRIGHT}Process cpu peak detected.${db} Peak process cpu from ${CYAN}${formatCpuUsage(peakProcessCpu)}${db} to ${CYAN}${formatCpuUsage(processCpuUsage)}${db}`);
-    }
-    prevProcessCpu = process.cpuUsage();
-    setLastProcessCpuUsage(processCpuUsage);
-
-    cliEmitter.emit('cpu', osCpuUsage, processCpuUsage);
-
-    // Update preallocated history entry in place to avoid per-interval allocations. Keep the same object reference.
-    const entry = history[historyIndex];
-    entry.timestamp = Date.now();
-    entry.cpu = osCpuUsage;
-    entry.peakCpu = peakCpu;
-    entry.processCpu = processCpuUsage;
-    entry.peakProcessCpu = peakProcessCpu;
-    entry.rss = memoryUsageRaw.rss;
-    entry.peakRss = peakRss;
-    entry.heapUsed = memoryUsageRaw.heapUsed;
-    entry.peakHeapUsed = peakHeapUsed;
-    entry.heapTotal = memoryUsageRaw.heapTotal;
-    entry.peakHeapTotal = peakHeapTotal;
-    entry.external = memoryUsageRaw.external;
-    entry.peakExternal = peakExternal;
-    entry.arrayBuffers = memoryUsageRaw.arrayBuffers;
-    entry.peakArrayBuffers = peakArrayBuffers;
-    setHistoryIndex((historyIndex + 1) % historySize);
-
-    // Show the cpu and memory usage
-    if (trace)
-      log.debug(
-        `***${YELLOW}${BRIGHT}Host cpu:${db} ` +
-          `${CYAN}${formatCpuUsage(osCpuUsage)}${db} (peak ${formatCpuUsage(peakCpu)}) ` +
-          `${YELLOW}${BRIGHT}Process cpu:${db} ` +
-          `${CYAN}${formatCpuUsage(processCpuUsage)}${db} (peak ${formatCpuUsage(peakProcessCpu)}) ` +
-          `${YELLOW}${BRIGHT}Process memory:${db} ` +
-          `rss ${CYAN}${rss}${db} (peak ${formatMemoryUsage(peakRss)}) ` +
-          `heapUsed ${CYAN}${heapUsed}${db} (peak ${formatMemoryUsage(peakHeapUsed)}) ` +
-          `heapTotal ${CYAN}${heapTotal}${db} (peak ${formatMemoryUsage(peakHeapTotal)}) ` +
-          `external ${CYAN}${external}${db} (peak ${formatMemoryUsage(peakExternal)}) ` +
-          `arrayBuffers ${CYAN}${arrayBuffers}${db} (peak ${formatMemoryUsage(peakArrayBuffers)})`,
-      );
-  };
-
-  clearInterval(memoryCheckInterval);
-  memoryCheckInterval = setInterval(interval, memoryCheckIntervalMs).unref();
-
-  clearTimeout(memoryPeakResetTimeout);
-  // istanbul ignore next
-  memoryPeakResetTimeout = setTimeout(
-    () => {
-      if (trace) log.debug(`****${RED}${BRIGHT}Cpu and memory peaks reset after first 5 minutes.${db}`);
-      peakCpu = 0;
-      peakProcessCpu = 0;
-      peakRss = 0;
-      peakHeapUsed = 0;
-      peakHeapTotal = 0;
-    },
-    5 * 60 * 1000,
-  ).unref(); // Reset peaks every 5 minutes
 }
 
 /**
- * Stops the CPU and memory check interval.
+ * Stops the CPU and memory tracker.
  */
-async function stopCpuMemoryCheck() {
-  if (trace) {
-    log.debug(
-      `***Cpu memory check stopped. ` +
-        `Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. ` +
-        `Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}. ` +
-        `Peak heapUsed: ${CYAN}${formatMemoryUsage(peakHeapUsed)}${db}. ` +
-        `Peak heapTotal: ${CYAN}${formatMemoryUsage(peakHeapTotal)}${db}. ` +
-        `Peak external: ${CYAN}${formatMemoryUsage(peakExternal)}${db}. ` +
-        `Peak arrayBuffers: ${CYAN}${formatMemoryUsage(peakArrayBuffers)}${db}.`,
-    );
-  }
-  clearInterval(memoryCheckInterval);
-  clearTimeout(memoryPeakResetTimeout);
+function stopCpuMemoryCheck() {
+  log.debug(`Cpu memory check stopping...`);
+  tracker.stop();
+  tracker.removeAllListeners();
+  log.debug(`Cpu memory check stopped`);
 }
 
 /**
  * Starts the inspector for heap sampling.
  * This function is called when the -inspect parameter is passed.
- * The -snapshotinterval parameter can be used to set the heap snapshot interval. Default is undefined. Minimum is 30000 ms.
- * The snapshot is saved in the heap_profile directory that is created in the current working directory.
- * The snapshot can be analyzed using vscode or Chrome DevTools or other tools that support heap snapshots.
- *
- * @remarks To use the inspector, Node.js must be started with --inspect.
  */
 async function startInspector() {
-  const { Session } = await import('node:inspector');
-  const { mkdirSync } = await import('node:fs');
-
-  log.debug(`***Starting heap sampling...`);
-
-  // Create the heap snapshots directory if it doesn't exist
-  mkdirSync('heap_profile', { recursive: true });
-
-  try {
-    session = new Session();
-    session.connect();
-    await new Promise<void>((resolve, reject) => {
-      session?.post('HeapProfiler.startSampling', (err) => (err ? reject(err) : resolve()));
-    });
-    log.debug(`***Started heap sampling`);
-
-    // Set an interval to take heap snapshots
-    const interval = getIntParameter('snapshotinterval');
-    if (interval && interval >= 30000) {
-      log.debug(`***Started heap snapshot interval of ${CYAN}${interval}${db} ms`);
-      clearInterval(snapshotInterval);
-      snapshotInterval = setInterval(async () => {
-        log.debug(`Run heap snapshot interval`);
-        await takeHeapSnapshot();
-      }, interval).unref();
-    }
-  } catch (err) {
-    log.error(`***Failed to start heap sampling: ${err instanceof Error ? err.message : err}`);
-    session?.disconnect();
-    session = undefined;
-    return;
-  }
+  await inspector.start();
 }
 
 /**
- * Stops the heap sampling and saves the profile to a file.
- * This function is called when the inspector is stopped.
+ * Stops the heap sampling and saves the profile.
+ * This function is called when the -inspect parameter is passed.
  */
 async function stopInspector() {
-  const { writeFileSync } = await import('node:fs');
-  const path = await import('node:path');
-
-  log.debug(`***Stopping heap sampling...`);
-
-  if (snapshotInterval) {
-    log.debug(`***Clearing heap snapshot interval...`);
-    // Clear the snapshot interval if it exists
-    clearInterval(snapshotInterval);
-    // Take a final heap snapshot before stopping
-    await takeHeapSnapshot();
-  }
-
-  if (!session) {
-    log.error('***No active inspector session.');
-    return;
-  }
-
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await new Promise<any>((resolve, reject) => {
-      session?.post('HeapProfiler.stopSampling', (err, result) => (err ? reject(err) : resolve(result)));
-    });
-
-    const profile = JSON.stringify(result.profile);
-    const filename = path.join('heap_profile', `Heap-profile-${new Date().toISOString().replace(/[:]/g, '-')}.heapprofile`);
-    writeFileSync(filename, profile);
-
-    log.debug(`***Heap sampling profile saved to ${CYAN}${filename}${db}`);
-  } catch (err) {
-    log.error(`***Failed to stop heap sampling: ${err instanceof Error ? err.message : err}`);
-  } finally {
-    session.disconnect();
-    session = undefined;
-    log.debug(`***Stopped heap sampling`);
-  }
+  await inspector.stop();
 }
 
 /**
- * Takes a heap snapshot and saves it to the file name Heap-snapshot-<timestamp>.heapsnapshot.
- * This function is called periodically based on the -snapshotinterval parameter.
- * The -snapshotinterval parameter must at least 30000 ms.
- * The snapshot is saved in the heap_profile directory that is created in the current working directory.
- * The snapshot can be analyzed using vscode or Chrome DevTools or other tools that support heap snapshots.
+ * Takes a heap snapshot
  */
 async function takeHeapSnapshot() {
-  const { writeFileSync } = await import('node:fs');
-  const path = await import('node:path');
-
-  const filename = path.join('heap_profile', `Heap-snapshot-${new Date().toISOString().replace(/[:]/g, '-')}.heapsnapshot`);
-  if (!session) {
-    log.error('No active inspector session.');
-    return;
-  }
-
-  // Trigger a garbage collection before taking the snapshot to reduce noise
-  triggerGarbageCollection();
-
-  log.debug(`Taking heap snapshot...`);
-
-  const chunks: Buffer[] = [];
-  const chunksListener = (notification: InspectorNotification<HeapProfiler.AddHeapSnapshotChunkEventDataType>) => {
-    chunks.push(Buffer.from(notification.params.chunk));
-  };
-  session.on('HeapProfiler.addHeapSnapshotChunk', chunksListener);
-  await new Promise<void>((resolve) => {
-    session?.post('HeapProfiler.takeHeapSnapshot', (err) => {
-      if (!err) {
-        session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
-        writeFileSync(filename, Buffer.concat(chunks));
-        chunks.length = 0; // Clear the chunks array
-        log.debug(`***Heap sampling snapshot saved to ${CYAN}${filename}${db}`);
-        // Trigger a garbage collection after the snapshot to clean up
-        triggerGarbageCollection();
-        resolve();
-      } else {
-        session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
-        chunks.length = 0; // Clear the chunks array
-        log.error(`***Failed to take heap snapshot: ${err instanceof Error ? err.message : err}`);
-        // Trigger a garbage collection after the snapshot to clean up
-        triggerGarbageCollection();
-        resolve();
-      }
-    });
-  });
+  await inspector.takeHeapSnapshot();
 }
 
 /**
  * Triggers a manual garbage collection.
- * This function is working only if the process is started with --expose_gc.
+ * This function is working only if the node process is started with --expose_gc.
  *
- * @remarks To check the effect of the garbage collection, add --trace_gc or --trace_gc_verbose.
+ * @remarks To check the effect of the garbage collection, add also --trace_gc or --trace_gc_verbose.
  */
 function triggerGarbageCollection() {
-  if (global.gc && typeof global.gc === 'function') {
-    try {
-      global.gc({ type: 'major', execution: 'sync' });
-    } catch {
-      // istanbul ignore next
-      global.gc();
-    }
-    log.debug('Manual garbage collection triggered via global.gc().');
-  } else {
-    log.debug('Garbage collection is not exposed. Start Node.js with --expose-gc to enable manual GC.');
-  }
+  inspector.runGarbageCollector();
 }
 
 /**
@@ -429,15 +119,17 @@ function triggerGarbageCollection() {
  */
 function registerHandlers() {
   log.debug('Registering event handlers...');
-  if (instance) instance.on('shutdown', async () => shutdown());
-  if (instance) instance.on('restart', async () => restart());
-  if (instance) instance.on('update', async () => update());
-  if (instance) instance.on('startmemorycheck', async () => start());
-  if (instance) instance.on('stopmemorycheck', async () => stop());
-  if (instance) instance.on('startinspector', async () => startInspector());
-  if (instance) instance.on('stopinspector', async () => stopInspector());
-  if (instance) instance.on('takeheapsnapshot', async () => takeHeapSnapshot());
-  if (instance) instance.on('triggergarbagecollection', async () => triggerGarbageCollection());
+  // istanbul ignore next cause registerHandlers is called only if instance is defined
+  if (!instance) return;
+  instance.on('shutdown', () => shutdown());
+  instance.on('restart', () => restart());
+  instance.on('update', () => update());
+  instance.on('startmemorycheck', () => start());
+  instance.on('stopmemorycheck', () => stop());
+  instance.on('startinspector', () => startInspector());
+  instance.on('stopinspector', () => stopInspector());
+  instance.on('takeheapsnapshot', () => takeHeapSnapshot());
+  instance.on('triggergarbagecollection', () => triggerGarbageCollection());
   log.debug('Registered event handlers');
 }
 
@@ -449,10 +141,10 @@ async function shutdown() {
 
   if (hasParameter('inspect')) await stopInspector();
 
-  await stopCpuMemoryCheck();
+  stopCpuMemoryCheck();
 
   cliEmitter.emit('shutdown');
-  // eslint-disable-next-line n/no-process-exit
+
   process.exit(0);
 }
 
@@ -478,17 +170,17 @@ async function update() {
 /**
  * Starts the CPU and memory check when the -startmemorycheck parameter is passed.
  */
-async function start() {
+function start() {
   log.debug('Received start memory check event');
-  await startCpuMemoryCheck();
+  startCpuMemoryCheck();
 }
 
 /**
  * Stops the CPU and memory check when the -stopmemorycheck parameter is passed.
  */
-async function stop() {
+function stop() {
   log.debug('Received stop memory check event');
-  await stopCpuMemoryCheck();
+  stopCpuMemoryCheck();
 }
 
 /**
@@ -500,11 +192,9 @@ async function stop() {
  *
  * --debug enables debug logging.
  *
+ * --verbose enables verbose logging.
+ *
  * --loader enables loader logging.
- *
- * --trace enables cpu and memory logging and history logging on shutdown.
- *
- * --memoryinterval <milliseconds> can be used to set the CPU and memory check interval. Default is 10 seconds.
  *
  * --inspect enables the inspector for heap sampling.
  *
@@ -513,7 +203,7 @@ async function stop() {
 async function main() {
   log.debug(`Cli main() started`);
 
-  await startCpuMemoryCheck();
+  startCpuMemoryCheck();
 
   if (hasParameter('inspect')) await startInspector();
 
@@ -529,13 +219,82 @@ async function main() {
   } else {
     registerHandlers();
     cliEmitter.emit('ready');
+    log.debug(`Cli main() ready`);
   }
 }
 
-// Run the main function
-process.title = 'matterbridge';
+if (hasAnyParameter('help', 'h')) help();
+
+if (hasAnyParameter('version', 'v')) await version();
+
 main().catch((error) => {
-  const errorMessage = error instanceof Error ? error.message : error;
-  const errorInspect = inspect(error, { depth: 10 });
-  log.error(`Matterbridge.loadInstance() failed with error: ${errorMessage}\nstack: ${errorInspect}`);
+  inspectError(log, 'Matterbridge.loadInstance() failed with error', error);
+  shutdown();
 });
+
+/**
+ * Displays the version.
+ */
+async function version(): Promise<void> {
+  // Dynamic JSON import (Node >= 20) with import attributes
+  const { default: pkg } = await import('../package.json', { with: { type: 'json' } });
+  console.log(`Matterbridge version ${pkg.version}`);
+  process.exit(0);
+}
+
+/**
+ * Displays the help.
+ */
+function help(): void {
+  console.log(`
+  Usage: matterbridge [options] [command] 
+
+    Commands:
+      --help:                  show the help
+      --version:               show the version
+      --add [plugin path]:     register the plugin from the given absolute or relative path
+      --add [plugin name]:     register the globally installed plugin with the given name
+      --remove [plugin path]:  remove the plugin from the given absolute or relative path
+      --remove [plugin name]:  remove the globally installed plugin with the given name
+      --enable [plugin path]:  enable the plugin from the given absolute or relative path
+      --enable [plugin name]:  enable the globally installed plugin with the given name
+      --disable [plugin path]: disable the plugin from the given absolute or relative path
+      --disable [plugin name]: disable the globally installed plugin with the given name
+
+    Reset Commands:
+      --reset:                 remove the commissioning for Matterbridge (bridge mode and childbridge mode). Shutdown Matterbridge before using it!
+      --reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
+      --reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!
+      --factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
+
+    Options:
+      --bridge:                start Matterbridge in bridge mode
+      --childbridge:           start Matterbridge in childbridge mode
+      --port [port]:           start the matter commissioning server on the given port (default 5540)
+      --mdnsinterface [name]:  set the interface to use for the matter server mdnsInterface (default all interfaces)
+      --ipv4address [address]: set the ipv4 interface address to use for the matter server listener (default all addresses)
+      --ipv6address [address]: set the ipv6 interface address to use for the matter server listener (default all addresses)
+      --frontend [port]:       start the frontend on the given port (default 8283)
+      --logger:                set the matterbridge logger level: debug | info | notice | warn | error | fatal (default info)
+      --filelogger:            enable the matterbridge file logger (matterbridge.log)
+      --matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
+      --matterfilelogger:      enable the matter.js file logger (matter.log)
+      --list:                  list the registered plugins
+      --loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
+      --logstorage:            log the node storage
+      --sudo:                  force the use of sudo to install or update packages if the internal logic fails
+      --nosudo:                force not to use sudo to install or update packages if the internal logic fails
+      --norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted
+      --novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
+      --ssl:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
+      --mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https)
+      --vendorId:              override the default vendorId 0xfff1
+      --vendorName:            override the default vendorName "Matterbridge"
+      --productId:             override the default productId 0x8000
+      --productName:           override the default productName "Matterbridge aggregator"
+      --service:               enable the service mode (used in the linux systemctl configuration file and macOS launchctl plist)
+      --docker:                enable the docker mode (used in the docker image)
+      --homedir:               override the home directory (default the os homedir)
+  `);
+  process.exit(0);
+}

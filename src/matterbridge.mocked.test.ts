@@ -463,9 +463,9 @@ describe('Matterbridge mocked', () => {
     // Test throw error for unsupported Node version
     const originalNodeVersion = process.versions.node;
     Object.defineProperty(process.versions, 'node', {
-      get: () => '16.0.0',
+      get: () => '18.0.0',
     });
-    await expect((matterbridge as any).initialize()).rejects.toThrow(`Node version 16 is not supported. Please upgrade to 18 or above.`);
+    await expect((matterbridge as any).initialize()).rejects.toThrow(`Node version 18 is not supported. Please upgrade to 20 or above.`);
     Object.defineProperty(process.versions, 'node', {
       get: () => originalNodeVersion,
     });
@@ -713,14 +713,10 @@ describe('Matterbridge mocked', () => {
     // const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
     expect(matterbridge.plugins.length).toBe(6);
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-help'];
     matterbridge.shutdown = false;
     matterbridge.aggregatorSerialNumber = 'xxxx';
     matterbridge.aggregatorUniqueId = 'yyyy';
     matterbridge.matterStorageService = { open: jest.fn().mockImplementation(async () => Promise.resolve()) } as any; // Mock the matterStorageService to avoid errors
-    await (matterbridge as any).parseCommandLine();
-    expect(matterbridge.shutdown).toBe(true);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Usage: matterbridge [options]'));
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-list'];
     matterbridge.shutdown = false;
@@ -878,7 +874,7 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() cleanup()', async () => {
     process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
-    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' } as any);
     const plugin = matterbridge.plugins.get('matterbridge-mock1');
     expect(plugin).toBeDefined();
     if (!plugin) return;
@@ -925,9 +921,9 @@ describe('Matterbridge mocked', () => {
     process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     matterbridge.plugins.clear();
-    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' } as any);
+    matterbridge.plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' } as any);
+    matterbridge.plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' } as any);
     const plugin1 = matterbridge.plugins.get('matterbridge-mock1');
     expect(plugin1).toBeDefined();
     if (!plugin1) return;
@@ -1018,12 +1014,66 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).initialize();
     matterbridge.plugins.clear();
     // prettier-ignore-start
-    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'AccessoryPlatform', version: '1.0.0', registeredDevices: 0, description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'AccessoryPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'AccessoryPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock4', path: './src/mock/plugin4/package.json', type: 'DynamicPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock5', path: './src/mock/plugin5/package.json', type: 'DynamicPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
-    matterbridge.plugins.set({ name: 'matterbridge-mock6', path: './src/mock/plugin6/package.json', type: 'DynamicPlatform', version: '1.0.0', registeredDevices: 1, description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock1',
+      path: './src/mock/plugin1/package.json',
+      type: 'AccessoryPlatform',
+      version: '1.0.0',
+      registeredDevices: 0,
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    } as any);
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock2',
+      path: './src/mock/plugin2/package.json',
+      type: 'AccessoryPlatform',
+      version: '1.0.0',
+      registeredDevices: 1,
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    } as any);
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock3',
+      path: './src/mock/plugin3/package.json',
+      type: 'AccessoryPlatform',
+      version: '1.0.0',
+      registeredDevices: 1,
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    } as any);
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock4',
+      path: './src/mock/plugin4/package.json',
+      type: 'DynamicPlatform',
+      version: '1.0.0',
+      registeredDevices: 1,
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    } as any);
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock5',
+      path: './src/mock/plugin5/package.json',
+      type: 'DynamicPlatform',
+      version: '1.0.0',
+      registeredDevices: 1,
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    } as any);
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock6',
+      path: './src/mock/plugin6/package.json',
+      type: 'DynamicPlatform',
+      version: '1.0.0',
+      registeredDevices: 1,
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    } as any);
     // prettier-ignore-end
     const plugin1 = matterbridge.plugins.get('matterbridge-mock1') as Plugin;
     plugin1.enabled = true;

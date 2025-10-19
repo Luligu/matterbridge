@@ -29,9 +29,9 @@ import { EventEmitter } from 'node:events';
 
 interface CliEvents {
   shutdown: [];
-  cpu: [number, number];
-  memory: [string, string, string, string, string, string, string];
-  uptime: [string, string];
+  cpu: [cpuUsage: number, processCpuUsage: number];
+  memory: [totalMememory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string];
+  uptime: [systemUptime: string, processUptime: string];
   ready: [];
 }
 

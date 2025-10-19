@@ -521,29 +521,6 @@ describe('Matterbridge', () => {
       // setDebug(false);
     }, 10000);
 
-    test('matterbridge -help', async () => {
-      expect((matterbridge as any).initialized).toBe(true);
-      expect((matterbridge as any).hasCleanupStarted).toBe(false);
-      expect((matterbridge as any).shutdown).toBe(false);
-
-      const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve as () => void);
-        const interval = setInterval(() => {
-          if (matterbridge.shutdown) {
-            clearInterval(interval);
-            resolve(0);
-          }
-        }, 100);
-      });
-
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-help'];
-      await (matterbridge as any).parseCommandLine();
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Usage: matterbridge [options]'));
-      await shutdownPromise;
-      matterbridge.shutdown = false;
-      matterbridge.removeAllListeners('shutdown');
-    });
-
     test('matterbridge -list', async () => {
       expect((matterbridge as any).initialized).toBe(true);
       expect((matterbridge as any).hasCleanupStarted).toBe(false);

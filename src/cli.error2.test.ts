@@ -2,8 +2,6 @@
 const NAME = 'CliError2';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', './cli.js', '-memorycheck', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
-
 import path from 'node:path/posix';
 
 import { jest } from '@jest/globals';
@@ -11,15 +9,39 @@ import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { Inspector } from './utils/inspector.js';
+import { Tracker } from './utils/tracker.js';
 
 const loadInstance = jest.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
-  // console.log('mockImplementation of Matterbridge.loadInstance() called');
   return undefined as never; // Simulate an error by returning undefined
 });
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
-  // console.log('mockImplementation of process.exit() called');
   return undefined as never; // Prevent actual exit during tests
+});
+
+const startTrackerSpy = jest.spyOn(Tracker.prototype, 'start').mockImplementation(function () {
+  return;
+});
+
+const stopTrackerSpy = jest.spyOn(Tracker.prototype, 'stop').mockImplementation(function () {
+  return;
+});
+
+const startInspectorSpy = jest.spyOn(Inspector.prototype, 'start').mockImplementation(async function () {
+  return Promise.resolve();
+});
+
+const stopInspectorSpy = jest.spyOn(Inspector.prototype, 'stop').mockImplementation(async function () {
+  return Promise.resolve();
+});
+
+const takeHeapSnapshotSpy = jest.spyOn(Inspector.prototype, 'takeHeapSnapshot').mockImplementation(async function () {
+  return Promise.resolve();
+});
+
+const runGarbageCollectionSpy = jest.spyOn(Inspector.prototype, 'runGarbageCollector').mockImplementation(async function () {
+  return Promise.resolve();
 });
 
 // Setup the test environment
@@ -37,7 +59,7 @@ describe('Matterbridge', () => {
   });
 
   it('should start matterbridge and return undefined', async () => {
-    // Dynamically import the cli module
+    process.argv = ['node', './cli.js', '-frontend', '0', '-logger', 'debug', '-matterlogger', 'debug'];
     const cli = await import('./cli.js');
     await new Promise((resolve) => setTimeout(resolve, 100));
     expect(cli.instance).toBeUndefined();
