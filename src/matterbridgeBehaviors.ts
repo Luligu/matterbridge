@@ -403,16 +403,6 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
     // setpointRaiseLower is not implemented in matter.js
     // super.setpointRaiseLower(request);
   }
-
-  setActivePreset(request: Thermostat.SetActivePresetRequest): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    // device.log.info(`Setting active preset to ${request.preset} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.log.info(`Setting active preset to (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // device.commandHandler.executeHandler('setActivePreset', { request, cluster: ThermostatServer.id, attributes: this.state, endpoint: this.endpoint });
-    device.log.debug(`MatterbridgeThermostatServer: setActivePreset called with preset: `);
-    // this.state.activePresetHandle = request.preset;
-    // super.setActivePreset(request);
-  }
 }
 
 // istanbul ignore next
