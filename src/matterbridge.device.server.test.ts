@@ -130,7 +130,7 @@ describe('Matterbridge Device serverMode=server', () => {
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
+    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
   }, 60000);
 
   test('Restart initialize() with -bridge', async () => {
@@ -216,8 +216,8 @@ describe('Matterbridge Device serverMode=server', () => {
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Servernodedevice MdnsService`);
+    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
+    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Servernodedevice MdnsService`);
 
     expect(stopServerNodeSpy).toHaveBeenCalledTimes(2);
   }, 60000);

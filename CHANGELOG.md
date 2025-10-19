@@ -23,6 +23,22 @@ Advantages:
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 
+## [3.3.4] - Not released
+
+### Added
+
+- [frontend]: Added debounce to MatterSettings.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [matter]: Bumped `matter.js` version to 0.15.6. Thanks matter.js!
+- [frontend]: Bumped `frontend` version to 3.2.3.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.3] - 2025-10-18
 
 ### Added

@@ -55,7 +55,7 @@ import {
   Crypto,
   Diagnostic,
 } from '@matter/main';
-import { DeviceCertification, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
+import { DeviceCertification, ExposedFabricInformation, FabricAction, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
 
@@ -260,7 +260,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Call cleanup() and dispose MdnsService.
+   * Call cleanup() and dispose MdnsService. Will be removed since matter.js 0.15.6 dispose MdnsService.
    *
    * @param {number} [timeout] - The timeout duration to wait for the cleanup to complete in milliseconds. Default is 1000.
    * @param {number} [pause] - The pause duration after the cleanup in milliseconds. Default is 250.
@@ -270,6 +270,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   async destroyInstance(timeout: number = 1000, pause: number = 250) {
     this.log.info(`Destroy instance...`);
     // Save server nodes to close
+    /*
     const servers: ServerNode<ServerNode.RootEndpoint>[] = [];
     if (this.bridgeMode === 'bridge') {
       if (this.serverNode) servers.push(this.serverNode);
@@ -284,22 +285,25 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         if (device.mode === 'server' && device.serverNode) servers.push(device.serverNode);
       }
     }
+    */
     // Let any already‐queued microtasks run first
-    await Promise.resolve();
+    // await Promise.resolve();
     // Wait for the cleanup to finish
-    await wait(pause, 'destroyInstance start', true);
+    // await wait(pause, 'destroyInstance start', true);
     // Cleanup
     await this.cleanup('destroying instance...', false, timeout);
     // Close servers mdns service
+    /*
     this.log.info(`Dispose ${servers.length} MdnsService...`);
     for (const server of servers) {
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      // await server.env.get(MdnsService)[Symbol.asyncDispose]();
       this.log.info(`Closed ${server.id} MdnsService`);
     }
+    */
     // Let any already‐queued microtasks run first
-    await Promise.resolve();
+    // await Promise.resolve();
     // Wait for the cleanup to finish
-    await wait(pause, 'destroyInstance stop', true);
+    if (pause) await wait(pause, 'destroyInstance stop', true);
   }
 
   /**
