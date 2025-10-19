@@ -340,6 +340,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       });
     }
 
+    // Load the stored password
+    /*
+    let storedPassword = '';
+    try {
+      if (!this.matterbridge.nodeContext) throw new Error('nodeContext not found');
+      storedPassword = await this.matterbridge.nodeContext.get('password', '');
+    } catch (error) {
+      inspectError(this.log, 'Error getting password', error);
+      return;
+    }
+    */
+
     // Create a WebSocket server and attach it to the http or https server
     const ws = await import('ws');
 
@@ -348,6 +360,19 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     this.webSocketServer.on('connection', (ws, request) => {
       const clientIp = request.socket.remoteAddress;
+
+      /*
+      if (storedPassword !== '') {
+        // Check for the password in the query parameters
+        const url = new URL(request.url ?? '', `http://${request.headers.host}`);
+        const password = url.searchParams.get('password');
+        if (password !== storedPassword) {
+          this.log.error(`WebSocket client "${clientIp}" failed authentication: ${storedPassword}-${password}`);
+          // ws.close();
+          // return;
+        }
+      }
+      */
 
       // Set the global logger callback for the WebSocketServer
       let callbackLogLevel = LogLevel.NOTICE;
