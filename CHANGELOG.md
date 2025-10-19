@@ -25,6 +25,10 @@ Advantages:
 
 ## [3.3.4] - Not released
 
+### Breaking Changes
+
+- [nodejs]: Matterbridge will not start if the node.js version is less then 20.x.x.
+
 ### Added
 
 - [frontend]: Added debounce to MatterSettings.
@@ -39,11 +43,7 @@ Advantages:
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
-## [3.3.3] - Not released
-
-### Breaking Changes
-
-- [nodejs]: Matterbridge will not start if the node.js version is less then 20.x.x.
+## [3.3.3] - 2025-10-18
 
 ### Added
 
