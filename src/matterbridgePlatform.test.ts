@@ -12,7 +12,7 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { AnsiLogger, CYAN, db, er, LogLevel, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
-import { Descriptor } from '@matter/main/clusters/descriptor';
+import { Descriptor } from '@matter/types/clusters/descriptor';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';

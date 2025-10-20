@@ -25,7 +25,7 @@
 /* eslint-disable no-console */
 /* eslint-disable n/no-process-exit */
 
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCLI loaded.\u001B[40;0m');
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli loaded.\u001B[40;0m');
 
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
@@ -33,15 +33,15 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 // Cli
 import { cliEmitter } from './cliEmitter.js';
 // Matterbridge
-import { hasParameter, hasAnyParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
+import { hasParameter, hasAnyParameter } from './utils/commandLine.js';
 import { inspectError } from './utils/error.js';
 import { Tracker, TrackerSnapshot } from './utils/tracker.js';
 import { Inspector } from './utils/inspector.js';
 
 export let instance: Matterbridge | undefined;
-export const tracker = new Tracker('Cli', true, true);
-export const inspector = new Inspector('Cli', true, true);
+export const tracker = new Tracker('Cli', false, false);
+export const inspector = new Inspector('Cli', false, false);
 
 const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 

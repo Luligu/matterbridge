@@ -31,7 +31,7 @@ import { WebSocket } from 'ws';
 const { Matterbridge } = await import('./matterbridge.ts');
 const { Frontend } = await import('./frontend.ts');
 import { Lifecycle } from '@matter/general';
-import { PowerSource } from '@matter/main/clusters/power-source';
+import { PowerSource } from '@matter/types/clusters/power-source';
 
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';

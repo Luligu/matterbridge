@@ -32,9 +32,9 @@ process.argv = [
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { Environment } from '@matter/main';
+import { Environment } from '@matter/general';
 import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
-import { BridgedDeviceBasicInformationServer, PressureMeasurementServer } from '@matter/main/behaviors';
+import { BridgedDeviceBasicInformationServer, PressureMeasurementServer } from '@matter/node/behaviors';
 
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';

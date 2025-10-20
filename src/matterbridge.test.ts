@@ -9,11 +9,13 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { FabricId, FabricIndex, NodeId, SessionsBehavior, VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
-import { ExposedFabricInformation } from '@matter/main/protocol';
-import { AnsiLogger, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
+import { LogLevel as MatterLogLevel, Logger } from '@matter/general';
+import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types';
+import { SessionsBehavior } from '@matter/node';
+import { ExposedFabricInformation } from '@matter/protocol';
+import { LogLevel, nf } from 'node-ansi-logger';
 
-import { getParameter, hasParameter } from './utils/export.js';
+import { getParameter, hasParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
 import { plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

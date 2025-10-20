@@ -9,10 +9,13 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
-// matter.js clusters
-import { Endpoint, ServerNode } from '@matter/main';
-import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { Identify, OnOff, PowerSource, Thermostat, ThermostatUserInterfaceConfiguration, FanControl, ThermostatCluster } from '@matter/main/clusters';
+// @matter
+import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/general';
+import { DeviceTypeId, VendorId } from '@matter/types';
+import { MdnsService } from '@matter/protocol';
+import { ServerNode, Endpoint } from '@matter/node';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { Identify, OnOff, PowerSource, Thermostat, ThermostatUserInterfaceConfiguration, FanControl, ThermostatCluster } from '@matter/types/clusters';
 
 // Matterbridge helpers
 import { addDevice, createTestEnvironment, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';

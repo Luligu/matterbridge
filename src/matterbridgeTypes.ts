@@ -26,9 +26,11 @@
 import type { NodeStorage } from 'node-persist-manager';
 import type { LogLevel } from 'node-ansi-logger';
 // @matter
-import type { FabricIndex, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
-import type { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import type { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
+import type { ServerNode, Endpoint as EndpointNode } from '@matter/node';
+import type { StorageContext } from '@matter/general';
+import type { FabricIndex, VendorId, EndpointNumber } from '@matter/types';
+import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import type { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
 
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';

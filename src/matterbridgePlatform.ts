@@ -29,10 +29,11 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 import path from 'node:path';
 
 // Matter
-import { Endpoint, EndpointNumber, VendorId } from '@matter/main';
-import { Descriptor } from '@matter/main/clusters/descriptor';
-import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
-import { AggregatorEndpoint } from '@matter/main/endpoints';
+import { Endpoint } from '@matter/node';
+import { EndpointNumber, VendorId } from '@matter/types/datatype';
+import { Descriptor } from '@matter/types/clusters/descriptor';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 // Node AnsiLogger module
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module

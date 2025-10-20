@@ -22,12 +22,12 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/main';
-import { OperationalState } from '@matter/main/clusters/operational-state';
-import { MicrowaveOvenMode } from '@matter/main/clusters/microwave-oven-mode';
-import { MicrowaveOvenControl } from '@matter/main/clusters/microwave-oven-control';
-import { MicrowaveOvenControlServer } from '@matter/main/behaviors/microwave-oven-control';
-import { MicrowaveOvenModeServer } from '@matter/main/behaviors/microwave-oven-mode';
+import { MaybePromise } from '@matter/general';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { MicrowaveOvenMode } from '@matter/types/clusters/microwave-oven-mode';
+import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
+import { MicrowaveOvenControlServer } from '@matter/node/behaviors/microwave-oven-control';
+import { MicrowaveOvenModeServer } from '@matter/node/behaviors/microwave-oven-mode';
 
 // Matterbridge
 import { microwaveOven, powerSource } from '../matterbridgeDeviceTypes.js';

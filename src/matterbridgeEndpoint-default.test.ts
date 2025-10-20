@@ -9,7 +9,7 @@ process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { Lifecycle } from '@matter/main';
+import { Lifecycle } from '@matter/general';
 import {
   AirQuality,
   BasicInformation,
@@ -49,7 +49,7 @@ import {
   FixedLabel,
   DeviceEnergyManagement,
   DeviceEnergyManagementMode,
-} from '@matter/main/clusters';
+} from '@matter/types/clusters';
 import {
   AirQualityServer,
   BooleanStateServer,

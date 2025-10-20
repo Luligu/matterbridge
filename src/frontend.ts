@@ -39,11 +39,13 @@ import type { WebSocketServer } from 'ws';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt, wr } from 'node-ansi-logger';
 // @matter
-import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle, ServerNode, LogDestination, Diagnostic, Time, FabricIndex, EndpointNumber } from '@matter/main';
-import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
-import { PowerSource } from '@matter/main/clusters/power-source';
-import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/main/protocol';
-import { CommissioningOptions } from '@matter/main/types';
+import { ServerNode } from '@matter/node';
+import { Logger, Diagnostic, LogDestination, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/general';
+import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
+import { EndpointNumber, FabricIndex } from '@matter/types/datatype';
+import { CommissioningOptions } from '@matter/types/commissioning';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { PowerSource } from '@matter/types/clusters/power-source';
 
 // Matterbridge
 import type { Cluster, ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, Plugin } from './matterbridgeTypes.js';
@@ -1324,7 +1326,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     diagnosticDestination.context.run(() =>
       diagnosticDestination.add(
         Diagnostic.message({
-          now: Time.now(),
+          now: new Date(),
           facility: 'Server nodes:',
           level: MatterLogLevel.INFO,
           prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',

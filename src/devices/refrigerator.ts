@@ -22,12 +22,12 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/main';
+import { MaybePromise } from '@matter/general';
 import { Semtag } from '@matter/types';
-import { ModeBase } from '@matter/main/clusters/mode-base';
-import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
-import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/main/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
-import { RefrigeratorAlarmServer } from '@matter/main/behaviors/refrigerator-alarm';
+import { ModeBase } from '@matter/types/clusters/mode-base';
+import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
+import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
+import { RefrigeratorAlarmServer } from '@matter/node/behaviors/refrigerator-alarm';
 
 // Matterbridge
 import { powerSource, refrigerator, temperatureControlledCabinetCooler } from '../matterbridgeDeviceTypes.js';

@@ -62,7 +62,8 @@ import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 // import { Matterbridge } from './matterbridge.js';
 const { Matterbridge } = await import('./matterbridge.js');
-import { VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
+import { LogLevel as MatterLogLevel, Logger } from '@matter/general';
+import { VendorId } from '@matter/types';
 
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

@@ -22,8 +22,8 @@
  */
 
 // Imports from @matter
-import { ActionContext } from '@matter/main';
-import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
+import { ActionContext } from '@matter/node';
+import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 
 // Matterbridge
 import { extractorHood, powerSource } from '../matterbridgeDeviceTypes.js';

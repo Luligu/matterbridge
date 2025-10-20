@@ -8,16 +8,19 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
-// matter.js
-import { Endpoint, ServerNode } from '@matter/main';
-import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { Identify } from '@matter/main/clusters/identify';
-import { PowerSource } from '@matter/main/clusters/power-source';
-import { ActivatedCarbonFilterMonitoring } from '@matter/main/clusters/activated-carbon-filter-monitoring';
-import { HepaFilterMonitoring } from '@matter/main/clusters/hepa-filter-monitoring';
-import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
-import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
-import { FanControl } from '@matter/main/clusters';
+// @matter
+import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/general';
+import { DeviceTypeId, VendorId } from '@matter/types';
+import { MdnsService } from '@matter/protocol';
+import { ServerNode, Endpoint, PositionTag } from '@matter/node';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { Identify } from '@matter/types/clusters/identify';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
+import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
+import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
+import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-monitoring';
+import { FanControl } from '@matter/types/clusters';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';

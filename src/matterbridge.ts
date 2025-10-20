@@ -37,27 +37,13 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, deb
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
-import {
-  DeviceTypeId,
-  Endpoint,
-  Logger,
-  LogLevel as MatterLogLevel,
-  LogFormat as MatterLogFormat,
-  VendorId,
-  StorageContext,
-  StorageManager,
-  StorageService,
-  Environment,
-  ServerNode,
-  SessionsBehavior,
-  UINT32_MAX,
-  UINT16_MAX,
-  Crypto,
-  Diagnostic,
-} from '@matter/main';
-import { DeviceCertification, ExposedFabricInformation, FabricAction, PaseClient } from '@matter/main/protocol';
-import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
+import '@matter/nodejs';
+import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
+import { Logger, Diagnostic, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, UINT32_MAX, UINT16_MAX, Crypto, Environment, StorageContext, StorageManager, StorageService } from '@matter/general';
+import { DeviceTypeId, VendorId } from '@matter/types';
+import { DeviceCertification, ExposedFabricInformation, FabricAction, PaseClient } from '@matter/protocol';
+import { AggregatorEndpoint } from '@matter/node/endpoints';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter } from './utils/commandLine.js';

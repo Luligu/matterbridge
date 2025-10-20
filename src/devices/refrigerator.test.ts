@@ -8,11 +8,14 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
-// matter.js
-import { Endpoint, ServerNode, PositionTag } from '@matter/main';
-import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/main/behaviors';
-import { Identify, OnOff, PowerSource, RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters';
+// @matter
+import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/general';
+import { DeviceTypeId, VendorId } from '@matter/types';
+import { MdnsService } from '@matter/protocol';
+import { ServerNode, Endpoint, PositionTag } from '@matter/node';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors';
+import { Identify, OnOff, PowerSource, RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';

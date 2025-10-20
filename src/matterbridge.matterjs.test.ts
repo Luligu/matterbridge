@@ -10,8 +10,9 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { LogLevel } from 'node-ansi-logger';
-import { Environment, FabricIndex } from '@matter/main';
-import { FabricAction } from '@matter/main/protocol';
+import { Environment } from '@matter/general';
+import { FabricIndex } from '@matter/types';
+import { FabricAction } from '@matter/protocol';
 
 import { Matterbridge } from './matterbridge.js';
 import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';

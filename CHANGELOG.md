@@ -37,6 +37,7 @@ Advantages:
 ### Changed
 
 - [package]: Updated dependencies.
+- [package]: Optimized @matter imports.
 - [matter]: Bumped `matter.js` version to 0.15.6. Thanks matter.js!
 - [frontend]: Bumped `frontend` version to 3.2.3.
 

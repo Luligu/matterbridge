@@ -34,8 +34,8 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
-import { Environment } from '@matter/main';
-import { BasicInformationServer } from '@matter/main/behaviors';
+import { Environment } from '@matter/general';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';

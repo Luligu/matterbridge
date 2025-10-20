@@ -25,12 +25,16 @@ import { rmSync } from 'node:fs';
 import { inspect } from 'node:util';
 import path from 'node:path';
 
-// Imports from Matterbridge
 import { jest } from '@jest/globals';
-import { DeviceTypeId, Endpoint, Environment, ServerNode, ServerNodeStore, VendorId, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Lifecycle } from '@matter/main';
-import { AggregatorEndpoint, RootEndpoint } from '@matter/main/endpoints';
-import { MdnsService } from '@matter/main/protocol';
 import { AnsiLogger } from 'node-ansi-logger';
+// @matter
+import '@matter/nodejs';
+import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Lifecycle } from '@matter/general';
+import { DeviceTypeId, VendorId } from '@matter/types';
+import { MdnsService } from '@matter/protocol';
+import { ServerNode, Endpoint, ServerNodeStore } from '@matter/node';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { RootEndpoint } from '@matter/node/endpoints/root';
 
 // Imports from a plugin
 /*

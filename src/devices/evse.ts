@@ -23,12 +23,13 @@
  */
 
 // @matter
-import { MaybePromise } from '@matter/main';
-import { EnergyEvseServer } from '@matter/main/behaviors/energy-evse';
-import { EnergyEvseModeServer } from '@matter/main/behaviors/energy-evse-mode';
-import { EnergyEvse, EnergyEvseMode } from '@matter/main/clusters';
-import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
-import { ModeBase } from '@matter/main/clusters/mode-base';
+import { MaybePromise } from '@matter/general';
+import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
+import { EnergyEvse } from '@matter/types/clusters/energy-evse';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { ModeBase } from '@matter/types/clusters/mode-base';
+import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
+import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';

@@ -22,12 +22,12 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/main';
-import { OperationalState } from '@matter/main/clusters/operational-state';
-import { ModeBase } from '@matter/main/clusters/mode-base';
-import { DishwasherModeServer } from '@matter/main/behaviors/dishwasher-mode';
-import { DishwasherAlarmServer } from '@matter/main/behaviors/dishwasher-alarm';
-import { DishwasherMode } from '@matter/main/clusters/dishwasher-mode';
+import { MaybePromise } from '@matter/general';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { ModeBase } from '@matter/types/clusters/mode-base';
+import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
+import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
+import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
 
 // Matterbridge
 import { dishwasher, powerSource } from '../matterbridgeDeviceTypes.js';

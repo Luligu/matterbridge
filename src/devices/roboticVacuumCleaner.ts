@@ -22,17 +22,18 @@
  */
 
 // Matter.js
-import { AreaNamespaceTag, MaybePromise } from '@matter/main';
-import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
-import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
-import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
-import { PowerSource } from '@matter/main/clusters/power-source';
-import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
-import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
-import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
-import { ServiceArea } from '@matter/main/clusters/service-area';
-import { ModeBase } from '@matter/main/clusters/mode-base';
-import { OperationalState } from '@matter/main/clusters/operational-state';
+import { AreaNamespaceTag } from '@matter/node';
+import { MaybePromise } from '@matter/general';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
+import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
+import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
+import { ServiceArea } from '@matter/types/clusters/service-area';
+import { ModeBase } from '@matter/types/clusters/mode-base';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { RvcRunModeServer } from '@matter/node/behaviors/rvc-run-mode';
+import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
+import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';

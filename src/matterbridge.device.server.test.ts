@@ -9,7 +9,7 @@ process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { Environment } from '@matter/main';
+import { Environment } from '@matter/general';
 import { db, LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';

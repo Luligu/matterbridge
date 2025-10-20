@@ -26,7 +26,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 // @matter
-import { Behavior, MaybePromise, NamedHandler } from '@matter/main';
+import { MaybePromise, NamedHandler } from '@matter/general';
+import { Behavior } from '@matter/node';
 // @matter clusters
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -45,25 +46,25 @@ import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-man
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 // @matter behaviors
-import { IdentifyServer } from '@matter/main/behaviors/identify';
-import { OnOffServer } from '@matter/main/behaviors/on-off';
-import { LevelControlServer } from '@matter/main/behaviors/level-control';
-import { ColorControlServer } from '@matter/main/behaviors/color-control';
-import { MovementDirection, MovementType, WindowCoveringServer } from '@matter/main/behaviors/window-covering';
-import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
-import { DoorLockServer } from '@matter/main/behaviors/door-lock';
-import { FanControlServer } from '@matter/main/behaviors/fan-control';
-import { ThermostatServer } from '@matter/main/behaviors/thermostat';
-import { ValveConfigurationAndControlServer } from '@matter/main/behaviors/valve-configuration-and-control';
-import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
-import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
-import { SwitchServer } from '@matter/main/behaviors/switch';
-import { OperationalStateServer } from '@matter/main/behaviors/operational-state';
-import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
-import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
-import { DeviceEnergyManagementModeServer } from '@matter/main/behaviors/device-energy-management-mode';
-import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
-import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
+import { IdentifyServer } from '@matter/node/behaviors/identify';
+import { OnOffServer } from '@matter/node/behaviors/on-off';
+import { LevelControlServer } from '@matter/node/behaviors/level-control';
+import { ColorControlServer } from '@matter/node/behaviors/color-control';
+import { MovementDirection, MovementType, WindowCoveringServer } from '@matter/node/behaviors/window-covering';
+import { BooleanStateConfigurationServer } from '@matter/node/behaviors/boolean-state-configuration';
+import { DoorLockServer } from '@matter/node/behaviors/door-lock';
+import { FanControlServer } from '@matter/node/behaviors/fan-control';
+import { ThermostatServer } from '@matter/node/behaviors/thermostat';
+import { ValveConfigurationAndControlServer } from '@matter/node/behaviors/valve-configuration-and-control';
+import { ModeSelectServer } from '@matter/node/behaviors/mode-select';
+import { SmokeCoAlarmServer } from '@matter/node/behaviors/smoke-co-alarm';
+import { SwitchServer } from '@matter/node/behaviors/switch';
+import { OperationalStateServer } from '@matter/node/behaviors/operational-state';
+import { ServiceAreaServer } from '@matter/node/behaviors/service-area';
+import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
+import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
+import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-monitoring';
+import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
 // AnsiLogger module
 import { AnsiLogger } from 'node-ansi-logger';
 
