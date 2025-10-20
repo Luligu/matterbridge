@@ -31,6 +31,8 @@ import EventEmitter from 'node:events';
 
 import { AnsiLogger, LogLevel, TimestampFormat, BRIGHT, CYAN, RESET, YELLOW, db, RED } from 'node-ansi-logger';
 
+import { formatPercent, formatBytes, formatTimeStamp } from './format.js';
+
 // Memory snapshot focusing on cpu and rss, heapUsed, heapTotal, external and arrayBuffers plus peak values
 export type TrackerSnapshot = {
   timestamp: number;
@@ -150,62 +152,6 @@ export class Tracker extends EventEmitter<TrackerEvents> {
   }
 
   /**
-   * Format a timestamp into a human-readable string.
-   *
-   * @param {number} timestamp - The timestamp in milliseconds since the Unix epoch.
-   * @returns {string} - The formatted timestamp.
-   */
-  formatTimeStamp(timestamp: number): string {
-    return `${new Date(timestamp).toLocaleString()}`;
-  }
-
-  /**
-   * Format the OS uptime into a human-readable string.
-   *
-   * @param {number} seconds - The uptime in seconds.
-   * @returns {string} - The formatted uptime.
-   */
-  formatOsUpTime(seconds: number): string {
-    if (seconds >= 86400) {
-      const days = Math.floor(seconds / 86400);
-      return `${days} day${days !== 1 ? 's' : ''}`;
-    }
-    if (seconds >= 3600) {
-      const hours = Math.floor(seconds / 3600);
-      return `${hours} hour${hours !== 1 ? 's' : ''}`;
-    }
-    if (seconds >= 60) {
-      const minutes = Math.floor(seconds / 60);
-      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-    }
-    return `${seconds} second${seconds !== 1 ? 's' : ''}`;
-  }
-
-  /**
-   * Format a percentage into a human-readable string.
-   *
-   * @param {number} percent - The percentage value.
-   * @returns {string} - The formatted percentage.
-   */
-  formatPercent(percent: number): string {
-    return `${percent.toFixed(2)} %`;
-  }
-
-  /**
-   * Format bytes into a human-readable string.
-   *
-   * @param {number} bytes - The number of bytes.
-   * @returns {string} - The formatted byte string.
-   */
-  formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const idx = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-    const value = bytes / Math.pow(1024, idx);
-    return `${value.toFixed(2)} ${units[idx]}`;
-  }
-
-  /**
    * Start tracking cpu and memory usage with a given interval in ms
    *
    * @param {number} sampleIntervalMs Sample interval in milliseconds. Default is 10000 (10 seconds).
@@ -290,14 +236,14 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       // Debug output
       if (this.debug) {
         this.log.debug(
-          `Time: ${this.formatTimeStamp(entry.timestamp)} ` +
-            `os ${CYAN}${BRIGHT}${this.formatPercent(entry.osCpu)}${RESET}${db} (${entry.peakOsCpu > prevEntry.peakOsCpu ? RED : ''}${this.formatPercent(entry.peakOsCpu)}${db}) ` +
-            `process ${CYAN}${BRIGHT}${this.formatPercent(entry.processCpu)}${RESET}${db} (${entry.peakProcessCpu > prevEntry.peakProcessCpu ? RED : ''}${this.formatPercent(entry.peakProcessCpu)}${db}) ` +
-            `rss: ${CYAN}${BRIGHT}${this.formatBytes(entry.rss)}${RESET}${db} (${entry.peakRss > prevEntry.peakRss ? RED : ''}${this.formatBytes(entry.peakRss)}${db}) ` +
-            `heapUsed: ${CYAN}${BRIGHT}${this.formatBytes(entry.heapUsed)}${RESET}${db} (${entry.peakHeapUsed > prevEntry.peakHeapUsed ? RED : ''}${this.formatBytes(entry.peakHeapUsed)}${db}) ` +
-            `heapTotal: ${CYAN}${BRIGHT}${this.formatBytes(entry.heapTotal)}${RESET}${db} (${entry.peakHeapTotal > prevEntry.peakHeapTotal ? RED : ''}${this.formatBytes(entry.peakHeapTotal)}${db}) ` +
-            `external: ${CYAN}${BRIGHT}${this.formatBytes(entry.external)}${RESET}${db} (${entry.peakExternal > prevEntry.peakExternal ? RED : ''}${this.formatBytes(entry.peakExternal)}${db}) ` +
-            `arrayBuffers: ${CYAN}${BRIGHT}${this.formatBytes(entry.arrayBuffers)}${RESET}${db} (${entry.peakArrayBuffers > prevEntry.peakArrayBuffers ? RED : ''}${this.formatBytes(entry.peakArrayBuffers)}${db})`,
+          `Time: ${formatTimeStamp(entry.timestamp)} ` +
+            `os ${CYAN}${BRIGHT}${formatPercent(entry.osCpu)}${RESET}${db} (${entry.peakOsCpu > prevEntry.peakOsCpu ? RED : ''}${formatPercent(entry.peakOsCpu)}${db}) ` +
+            `process ${CYAN}${BRIGHT}${formatPercent(entry.processCpu)}${RESET}${db} (${entry.peakProcessCpu > prevEntry.peakProcessCpu ? RED : ''}${formatPercent(entry.peakProcessCpu)}${db}) ` +
+            `rss: ${CYAN}${BRIGHT}${formatBytes(entry.rss)}${RESET}${db} (${entry.peakRss > prevEntry.peakRss ? RED : ''}${formatBytes(entry.peakRss)}${db}) ` +
+            `heapUsed: ${CYAN}${BRIGHT}${formatBytes(entry.heapUsed)}${RESET}${db} (${entry.peakHeapUsed > prevEntry.peakHeapUsed ? RED : ''}${formatBytes(entry.peakHeapUsed)}${db}) ` +
+            `heapTotal: ${CYAN}${BRIGHT}${formatBytes(entry.heapTotal)}${RESET}${db} (${entry.peakHeapTotal > prevEntry.peakHeapTotal ? RED : ''}${formatBytes(entry.peakHeapTotal)}${db}) ` +
+            `external: ${CYAN}${BRIGHT}${formatBytes(entry.external)}${RESET}${db} (${entry.peakExternal > prevEntry.peakExternal ? RED : ''}${formatBytes(entry.peakExternal)}${db}) ` +
+            `arrayBuffers: ${CYAN}${BRIGHT}${formatBytes(entry.arrayBuffers)}${RESET}${db} (${entry.peakArrayBuffers > prevEntry.peakArrayBuffers ? RED : ''}${formatBytes(entry.peakArrayBuffers)}${db})`,
         );
       }
 
@@ -370,14 +316,14 @@ export class Tracker extends EventEmitter<TrackerEvents> {
         const entry = Tracker.history[index];
         if (entry.timestamp === 0) continue;
         this.log.debug(
-          `${this.formatTimeStamp(entry.timestamp)} ` +
-            `${CYAN}${BRIGHT}${this.formatPercent(entry.osCpu).padStart(8)}${RESET} (${this.formatPercent(entry.peakOsCpu).padStart(8)}) ` +
-            `${CYAN}${BRIGHT}${this.formatPercent(entry.processCpu).padStart(8)}${RESET} (${this.formatPercent(entry.peakProcessCpu).padStart(8)}) ` +
-            `${CYAN}${BRIGHT}${this.formatBytes(entry.rss).padStart(9)}${RESET} (${this.formatBytes(entry.peakRss).padStart(9)}) ` +
-            `${CYAN}${BRIGHT}${this.formatBytes(entry.heapUsed).padStart(9)}${RESET} (${this.formatBytes(entry.peakHeapUsed).padStart(9)}) ` +
-            `${CYAN}${BRIGHT}${this.formatBytes(entry.heapTotal).padStart(9)}${RESET} (${this.formatBytes(entry.peakHeapTotal).padStart(9)}) ` +
-            `${CYAN}${BRIGHT}${this.formatBytes(entry.external).padStart(9)}${RESET} (${this.formatBytes(entry.peakExternal).padStart(9)}) ` +
-            `${CYAN}${BRIGHT}${this.formatBytes(entry.arrayBuffers).padStart(9)}${RESET} (${this.formatBytes(entry.peakArrayBuffers).padStart(9)})`,
+          `${formatTimeStamp(entry.timestamp)} ` +
+            `${CYAN}${BRIGHT}${formatPercent(entry.osCpu).padStart(8)}${RESET} (${formatPercent(entry.peakOsCpu).padStart(8)}) ` +
+            `${CYAN}${BRIGHT}${formatPercent(entry.processCpu).padStart(8)}${RESET} (${formatPercent(entry.peakProcessCpu).padStart(8)}) ` +
+            `${CYAN}${BRIGHT}${formatBytes(entry.rss).padStart(9)}${RESET} (${formatBytes(entry.peakRss).padStart(9)}) ` +
+            `${CYAN}${BRIGHT}${formatBytes(entry.heapUsed).padStart(9)}${RESET} (${formatBytes(entry.peakHeapUsed).padStart(9)}) ` +
+            `${CYAN}${BRIGHT}${formatBytes(entry.heapTotal).padStart(9)}${RESET} (${formatBytes(entry.peakHeapTotal).padStart(9)}) ` +
+            `${CYAN}${BRIGHT}${formatBytes(entry.external).padStart(9)}${RESET} (${formatBytes(entry.peakExternal).padStart(9)}) ` +
+            `${CYAN}${BRIGHT}${formatBytes(entry.arrayBuffers).padStart(9)}${RESET} (${formatBytes(entry.peakArrayBuffers).padStart(9)})`,
         );
       }
     }

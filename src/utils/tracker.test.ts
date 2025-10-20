@@ -50,25 +50,6 @@ describe('Tracker', () => {
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Tracker loaded'));
   });
 
-  test('format helpers follow expected behavior', async () => {
-    const { Tracker } = await import('./tracker.js');
-    const tracker = new Tracker('FormatTester');
-
-    expect(tracker.formatTimeStamp(0)).toBe(new Date(0).toLocaleString());
-
-    expect(tracker.formatOsUpTime(172_800)).toBe('2 days');
-    expect(tracker.formatOsUpTime(7_200)).toBe('2 hours');
-    expect(tracker.formatOsUpTime(150)).toBe('2 minutes');
-    expect(tracker.formatOsUpTime(45)).toBe('45 seconds');
-
-    expect(tracker.formatPercent(12.3456)).toBe('12.35 %');
-
-    expect(tracker.formatBytes(0)).toBe('0 B');
-    expect(tracker.formatBytes(1)).toBe('1.00 B');
-    expect(tracker.formatBytes(1024)).toBe('1.00 KB');
-    expect(tracker.formatBytes(1_048_576)).toBe('1.00 MB');
-  });
-
   test('verbose mode queries system info when debug enabled', async () => {
     process.argv.push('--verbose', '--debug');
     const spyCpus = jest.spyOn(os, 'cpus');

@@ -59,7 +59,7 @@ import { createZip } from './utils/createZip.js';
 import { hasParameter } from './utils/commandLine.js';
 import { withTimeout, wait } from './utils/wait.js';
 import { inspectError } from './utils/error.js';
-import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
+import { formatBytes, formatUptime, formatPercent } from './utils/format.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
 import { generateHistoryPage } from './cliHistory.js';
@@ -482,11 +482,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       // Memory usage from process
       const memoryUsageRaw = process.memoryUsage();
       const memoryUsage = {
-        rss: formatMemoryUsage(memoryUsageRaw.rss),
-        heapTotal: formatMemoryUsage(memoryUsageRaw.heapTotal),
-        heapUsed: formatMemoryUsage(memoryUsageRaw.heapUsed),
-        external: formatMemoryUsage(memoryUsageRaw.external),
-        arrayBuffers: formatMemoryUsage(memoryUsageRaw.arrayBuffers),
+        rss: formatBytes(memoryUsageRaw.rss),
+        heapTotal: formatBytes(memoryUsageRaw.heapTotal),
+        heapUsed: formatBytes(memoryUsageRaw.heapUsed),
+        external: formatBytes(memoryUsageRaw.external),
+        arrayBuffers: formatBytes(memoryUsageRaw.arrayBuffers),
       };
 
       // V8 heap statistics
@@ -495,15 +495,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       const heapSpacesRaw = v8.getHeapSpaceStatistics();
 
       // Format heapStats
-      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, formatMemoryUsage(value as number)]));
+      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, formatBytes(value as number)]));
 
       // Format heapSpaces
       const heapSpaces = heapSpacesRaw.map((space) => ({
         ...space,
-        space_size: formatMemoryUsage(space.space_size),
-        space_used_size: formatMemoryUsage(space.space_used_size),
-        space_available_size: formatMemoryUsage(space.space_available_size),
-        physical_space_size: formatMemoryUsage(space.physical_space_size),
+        space_size: formatBytes(space.space_size),
+        space_used_size: formatBytes(space.space_used_size),
+        space_available_size: formatBytes(space.space_available_size),
+        physical_space_size: formatBytes(space.physical_space_size),
       }));
 
       const { createRequire } = await import('node:module');
@@ -945,15 +945,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   private async getApiSettings(): Promise<ApiSettings> {
     // Update the variable system information properties
-    this.matterbridge.systemInformation.totalMemory = formatMemoryUsage(os.totalmem());
-    this.matterbridge.systemInformation.freeMemory = formatMemoryUsage(os.freemem());
-    this.matterbridge.systemInformation.systemUptime = formatOsUpTime(os.uptime());
-    this.matterbridge.systemInformation.processUptime = formatOsUpTime(Math.floor(process.uptime()));
-    this.matterbridge.systemInformation.cpuUsage = lastOsCpuUsage.toFixed(2) + ' %';
-    this.matterbridge.systemInformation.processCpuUsage = lastProcessCpuUsage.toFixed(2) + ' %';
-    this.matterbridge.systemInformation.rss = formatMemoryUsage(process.memoryUsage().rss);
-    this.matterbridge.systemInformation.heapTotal = formatMemoryUsage(process.memoryUsage().heapTotal);
-    this.matterbridge.systemInformation.heapUsed = formatMemoryUsage(process.memoryUsage().heapUsed);
+    this.matterbridge.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.matterbridge.systemInformation.freeMemory = formatBytes(os.freemem());
+    this.matterbridge.systemInformation.systemUptime = formatUptime(os.uptime());
+    this.matterbridge.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
+    this.matterbridge.systemInformation.cpuUsage = formatPercent(lastOsCpuUsage);
+    this.matterbridge.systemInformation.processCpuUsage = formatPercent(lastProcessCpuUsage);
+    this.matterbridge.systemInformation.rss = formatBytes(process.memoryUsage().rss);
+    this.matterbridge.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
+    this.matterbridge.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
 
     // Create the matterbridge information
     const info: MatterbridgeInformation = {

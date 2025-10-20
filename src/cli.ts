@@ -38,6 +38,7 @@ import { hasParameter, hasAnyParameter } from './utils/commandLine.js';
 import { inspectError } from './utils/error.js';
 import { Tracker, TrackerSnapshot } from './utils/tracker.js';
 import { Inspector } from './utils/inspector.js';
+import { formatBytes, formatUptime } from './utils/format.js';
 
 export let instance: Matterbridge | undefined;
 export const tracker = new Tracker('Cli', false, false);
@@ -52,18 +53,18 @@ function startCpuMemoryCheck() {
   log.debug(`Cpu memory check starting...`);
   tracker.start();
   tracker.on('uptime', (os: number, process: number) => {
-    cliEmitter.emit('uptime', tracker.formatOsUpTime(Math.floor(os)), tracker.formatOsUpTime(Math.floor(process)));
+    cliEmitter.emit('uptime', formatUptime(Math.floor(os)), formatUptime(Math.floor(process)));
   });
   tracker.on('snapshot', (snapshot: TrackerSnapshot) => {
     cliEmitter.emit(
       'memory',
-      tracker.formatBytes(snapshot.totalMemory),
-      tracker.formatBytes(snapshot.freeMemory),
-      tracker.formatBytes(snapshot.rss),
-      tracker.formatBytes(snapshot.heapTotal),
-      tracker.formatBytes(snapshot.heapUsed),
-      tracker.formatBytes(snapshot.external),
-      tracker.formatBytes(snapshot.arrayBuffers),
+      formatBytes(snapshot.totalMemory),
+      formatBytes(snapshot.freeMemory),
+      formatBytes(snapshot.rss),
+      formatBytes(snapshot.heapTotal),
+      formatBytes(snapshot.heapUsed),
+      formatBytes(snapshot.external),
+      formatBytes(snapshot.arrayBuffers),
     );
 
     cliEmitter.emit('cpu', snapshot.osCpu, snapshot.processCpu);

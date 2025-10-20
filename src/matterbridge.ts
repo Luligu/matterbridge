@@ -50,7 +50,7 @@ import { getParameter, getIntParameter, hasParameter } from './utils/commandLine
 import { copyDirectory } from './utils/copyDirectory.js';
 import { createDirectory } from './utils/createDirectory.js';
 import { isValidString, parseVersionString, isValidNumber, isValidObject } from './utils/isvalid.js';
-import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
+import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
 import { withTimeout, waiter, wait } from './utils/wait.js';
 import { ApiMatter, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, MaybePromise, NODE_STORAGE_DIR, plg, Plugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
@@ -1043,14 +1043,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.systemInformation.osRelease = os.release(); // Kernel version
     this.systemInformation.osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
     this.systemInformation.osArch = os.arch(); // "x64", "arm", etc.
-    this.systemInformation.totalMemory = formatMemoryUsage(os.totalmem());
-    this.systemInformation.freeMemory = formatMemoryUsage(os.freemem());
-    this.systemInformation.systemUptime = formatOsUpTime(os.uptime());
-    this.systemInformation.processUptime = formatOsUpTime(Math.floor(process.uptime()));
-    this.systemInformation.cpuUsage = '0.00 %';
-    this.systemInformation.rss = formatMemoryUsage(process.memoryUsage().rss);
-    this.systemInformation.heapTotal = formatMemoryUsage(process.memoryUsage().heapTotal);
-    this.systemInformation.heapUsed = formatMemoryUsage(process.memoryUsage().heapUsed);
+    this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.freeMemory = formatBytes(os.freemem());
+    this.systemInformation.systemUptime = formatUptime(os.uptime());
+    this.systemInformation.processUptime = formatUptime(process.uptime());
+    this.systemInformation.cpuUsage = formatPercent(0);
+    this.systemInformation.processCpuUsage = formatPercent(0);
+    this.systemInformation.rss = formatBytes(process.memoryUsage().rss);
+    this.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
+    this.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
 
     // Log the system information
     this.log.debug('Host System Information:');

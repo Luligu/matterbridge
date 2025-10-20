@@ -59,20 +59,7 @@ import { ClientRequest, IncomingMessage } from 'node:http';
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, BLUE, nf } from 'node-ansi-logger';
 
-import {
-  getIpv4InterfaceAddress,
-  getIpv6InterfaceAddress,
-  getMacAddress,
-  logInterfaces,
-  resolveHostname,
-  getNpmPackageVersion,
-  getGlobalNodeModules,
-  getGitHubUpdate,
-  formatOsUpTime,
-  formatMemoryUsage,
-  getInterfaceName,
-  getInterfaceDetails,
-} from './network.js';
+import { getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname, getGlobalNodeModules, getInterfaceName, getInterfaceDetails } from './network.js';
 
 jest.useFakeTimers();
 
@@ -215,25 +202,5 @@ describe('getGlobalNodeModules()', () => {
       return {} as ChildProcess;
     });
     await expect(getGlobalNodeModules()).rejects.toThrow('fail');
-  });
-});
-
-describe('formatMemoryUsage() and formatOsUpTime()', () => {
-  test('Frontend formatMemoryUsage', () => {
-    // Test the formatMemoryUsage  functionality
-    expect(formatMemoryUsage(1024 ** 3)).toBe('1.00 GB');
-    expect(formatMemoryUsage(1024 ** 2)).toBe('1.00 MB');
-    expect(formatMemoryUsage(3000)).toBe('2.93 KB');
-  });
-
-  test('Frontend formatOsUpTime', () => {
-    // Test the formatOsUpTime functionality
-    expect(formatOsUpTime(123456)).toBe('1 day');
-    expect(formatOsUpTime(3800)).toBe('1 hour');
-    expect(formatOsUpTime(3600)).toBe('1 hour');
-    expect(formatOsUpTime(65)).toBe('1 minute');
-    expect(formatOsUpTime(60)).toBe('1 minute');
-    expect(formatOsUpTime(30)).toBe('30 seconds');
-    expect(formatOsUpTime(0)).toBe('0 seconds');
   });
 });
