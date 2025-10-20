@@ -33,6 +33,7 @@ Advantages:
 
 - [frontend]: Added debounce to MatterSettings.
 - [cli]: Bumped `cli` version to 3.0.0 with backport of Traker and Inspector from thread module.
+- [powerSource]: Added MatterbridgePowerSourceServer that initialize the enpointList of the PowerSource cluster.
 
 ### Changed
 

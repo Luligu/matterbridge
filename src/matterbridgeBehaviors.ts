@@ -25,6 +25,8 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+// AnsiLogger module
+import { AnsiLogger } from 'node-ansi-logger';
 // @matter
 import { MaybePromise, NamedHandler } from '@matter/general';
 import { Behavior } from '@matter/node';
@@ -65,11 +67,10 @@ import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-ener
 import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
 import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
-// AnsiLogger module
-import { AnsiLogger } from 'node-ansi-logger';
 
 // MatterbridgeEndpoint
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
+import { PowerSourceServer } from './matter/behaviors.js';
 
 export class MatterbridgeServer extends Behavior {
   static override readonly id = 'matterbridge';
@@ -85,6 +86,17 @@ export namespace MatterbridgeServer {
   export class State {
     log!: AnsiLogger;
     commandHandler!: NamedHandler<MatterbridgeEndpointCommands>;
+  }
+}
+
+export class MatterbridgePowerSourceServer extends PowerSourceServer {
+  override initialize() {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Initializing MatterbridgePowerSourceServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.state.endpointList = [this.endpoint.number];
+    for (const endpoint of this.endpoint.parts) {
+      this.state.endpointList.push(endpoint.number);
+    }
   }
 }
 

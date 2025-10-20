@@ -111,6 +111,8 @@ import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 
 export enum DeviceClasses {
+  /** 1.1.5. Device Type Class Conditions */
+
   /** Node device type. */
   Node = 'Node',
 
@@ -140,16 +142,21 @@ export enum DeviceClasses {
    */
   Dynamic = 'Dynamic',
 
+  /** The device type is composed of 2 or more device types. */
+  Composed = 'Composed',
+
+  /** 1.1.6. Endpoint Type Class Conditions */
+
   /** There exists a client application cluster on the endpoint. */
   Client = 'Client',
 
   /** There exists a server application cluster on the endpoint. */
   Server = 'Server',
 
-  /** The device type is composed of 2 or more device types. */
-  Composed = 'Composed',
-
-  /** The endpoint and at least one of its sibling endpoints have an overlap in application device type(s). */
+  /** The endpoint and at least one of its sibling endpoints have an overlap in application device type(s),
+   * as defined in the "Disambiguation" section in the System Model specification. This condition triggers
+   * requirements for providing additional information about the endpoints in order to disambiguate
+   * between the endpoints (see "Disambiguation" section in the System Model specification). */
   Duplicate = 'Duplicate',
 
   /**
@@ -331,9 +338,9 @@ export const OTAProvider = DeviceTypeDefinition({
     attribute SHALL indicate a list of all endpoints representing the functionality of the bridged
     device, including the endpoints supporting the application device types, i.e. the full-family
     pattern defined in the System Model specification.
-  ◦ One Endpoint: Both the Bridged Node and one or more application device types are sup
-    ported on the same endpoint (following application device type rules). Endpoint composi
-    tion SHALL conform to the application device type(s) definition
+  ◦ One Endpoint: Both the Bridged Node and one or more application device types are supported 
+    on the same endpoint (following application device type rules). Endpoint composition 
+    SHALL conform to the application device type(s) definition
  */
 export const bridgedNode = DeviceTypeDefinition({
   name: 'MA-bridgedNode',
@@ -377,7 +384,9 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
   optionalServerClusters: [DeviceEnergyManagementMode.Cluster.id],
 });
 
-// Chapter 4. Lightning device types
+/** Chapter 3. Application Device Types */
+
+/** Chapter 4. Lighting device types */
 
 /**
  * Element Requirements:

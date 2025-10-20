@@ -64,7 +64,6 @@ import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 // @matter behaviors
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { GroupsServer } from '@matter/node/behaviors/groups';
 import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
@@ -119,6 +118,7 @@ import {
   MatterbridgeActivatedCarbonFilterMonitoringServer,
   MatterbridgeHepaFilterMonitoringServer,
   MatterbridgeEnhancedColorControlServer,
+  MatterbridgePowerSourceServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -1010,12 +1010,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - wiredCurrentType: The type of wired current is a fixed attribute that indicates the type of wired current used by the power source (AC or DC).
    */
   createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac): this {
-    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Wired), {
+    this.behaviors.require(MatterbridgePowerSourceServer.with(PowerSource.Feature.Wired), {
       // Base attributes
       status: PowerSource.PowerSourceStatus.Active,
       order: 0,
       description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
-      endpointList: [],
+      endpointList: [], // Will be filled by the MatterbridgePowerSourceServer
       // Wired feature attributes
       wiredCurrentType,
     });
@@ -1048,12 +1048,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     batQuantity: number = 1,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.UserReplaceable,
   ): this {
-    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable), {
+    this.behaviors.require(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable), {
       // Base attributes
       status: PowerSource.PowerSourceStatus.Active,
       order: 0,
       description: 'Primary battery',
-      endpointList: [],
+      endpointList: [], // Will be filled by the MatterbridgePowerSourceServer
       // Battery feature attributes
       batVoltage,
       batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
@@ -1088,12 +1088,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     batVoltage: number = 1500,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
   ): this {
-    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
+    this.behaviors.require(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
       // Base attributes
       status: PowerSource.PowerSourceStatus.Active,
       order: 0,
       description: 'Primary battery',
-      endpointList: [],
+      endpointList: [], // Will be filled by the MatterbridgePowerSourceServer
       // Battery feature attributes
       batVoltage,
       batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
