@@ -789,8 +789,8 @@ describe('PluginManager', () => {
   });
 
   test('install example plugins', async () => {
-    execSync(useSudo ? 'sudo ' : '' + 'npm install -g matterbridge-example-accessory-platform --omit=dev');
-    execSync(useSudo ? 'sudo ' : '' + 'npm install -g matterbridge-example-dynamic-platform --omit=dev');
+    execSync((useSudo ? 'sudo ' : '') + 'npm install -g matterbridge-example-accessory-platform --omit=dev');
+    execSync((useSudo ? 'sudo ' : '') + 'npm install -g matterbridge-example-dynamic-platform --omit=dev');
     expect(plugins.length).toBe(0);
   }, 60000);
 
@@ -1451,8 +1451,8 @@ describe('PluginManager', () => {
   });
 
   test('uninstall example plugins', async () => {
-    execSync(useSudo ? 'sudo ' : '' + 'npm uninstall -g matterbridge-example-accessory-platform --omit=dev');
-    execSync(useSudo ? 'sudo ' : '' + 'npm uninstall -g matterbridge-example-dynamic-platform --omit=dev');
+    execSync((useSudo ? 'sudo ' : '') + 'npm uninstall -g matterbridge-example-accessory-platform --omit=dev');
+    execSync((useSudo ? 'sudo ' : '') + 'npm uninstall -g matterbridge-example-dynamic-platform --omit=dev');
     expect(plugins.length).toBe(2);
   }, 60000);
 

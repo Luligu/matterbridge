@@ -28,9 +28,10 @@ This will create the required directories if they don't exist
 
 ```bash
 cd ~
-mkdir -p ./Matterbridge
-mkdir -p ./.matterbridge
-sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
+mkdir -p ~/Matterbridge
+mkdir -p ~/.matterbridge
+mkdir -p ~/.mattercert
+sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert
 ```
 
 ### Then create a systemctl configuration file for Matterbridge
