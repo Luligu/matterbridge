@@ -2093,7 +2093,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
       absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
       absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
-      piCoolingDemand: piCoolingDemand !== undefined ? piCoolingDemand : 0,
+      piCoolingDemand: piCoolingDemand !== undefined ? Math.max(0, Math.min(100, piCoolingDemand)) : 0,
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
