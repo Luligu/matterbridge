@@ -2052,7 +2052,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         Thermostat.Feature.Cooling,
         Thermostat.Feature.AutoMode,
         ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : []),
-        ...(presetsList !== undefined ? [Thermostat.Feature.Presets] : []),
+        ...(presetsList !== undefined || presetTypes !== undefined ? [Thermostat.Feature.Presets] : []),
       ),
       {
         localTemperature: localTemperature * 100,
