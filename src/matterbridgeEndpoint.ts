@@ -1931,6 +1931,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
    * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
+   * @param {number | undefined} [piHeatingDemand] - The heating demand value. Defaults to undefined (it will be ignored).
+   * @param {number | undefined} [piCoolingDemand] - The cooling demand value. Defaults to undefined (it will be ignored).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultThermostatClusterServer(
@@ -1946,6 +1948,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     unoccupiedCoolingSetpoint: number | undefined = undefined,
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
+    piHeatingDemand: number | undefined = undefined,
+    piCoolingDemand: number | undefined = undefined,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
@@ -1968,12 +1972,14 @@ export class MatterbridgeEndpoint extends Endpoint {
       maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
       absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
       absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+      piHeatingDemand: piHeatingDemand !== undefined ? piHeatingDemand : 0,
       // Thermostat.Feature.Cooling
       occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
       minCoolSetpointLimit: minCoolSetpointLimit * 100,
       maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
       absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
       absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+      piCoolingDemand: piCoolingDemand !== undefined ? piCoolingDemand : 0,
       // Thermostat.Feature.AutoMode
       minSetpointDeadBand: minSetpointDeadBand * 100,
       thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
@@ -1998,6 +2004,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | undefined} [unoccupiedHeatingSetpoint] - The unoccupied heating setpoint value in degrees Celsius. Defaults to 19° (it will be ignored if occupied is not provided).
    * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
+   * @param {number | undefined} [piHeatingDemand] - The heating demand value. Defaults to undefined (it will be ignored).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultHeatingThermostatClusterServer(
@@ -2008,6 +2015,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     unoccupiedHeatingSetpoint: number | undefined = undefined,
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
+    piHeatingDemand: number | undefined = undefined,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
@@ -2030,6 +2038,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
       absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
       absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+      piHeatingDemand: piHeatingDemand !== undefined ? piHeatingDemand : 0,
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
@@ -2050,6 +2059,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
    * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
+   * @param {number | undefined} [piCoolingDemand] - The cooling demand value. Defaults to undefined (it will be ignored).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultCoolingThermostatClusterServer(
@@ -2060,6 +2070,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     unoccupiedCoolingSetpoint: number | undefined = undefined,
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
+    piCoolingDemand: number | undefined = undefined,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
@@ -2082,6 +2093,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
       absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
       absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+      piCoolingDemand: piCoolingDemand !== undefined ? piCoolingDemand : 0,
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
