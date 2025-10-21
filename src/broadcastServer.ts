@@ -128,7 +128,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @param {WorkerRequest<T>} message - The typed request message to broadcast.
    * @returns {void}
    */
-  request<T extends WorkerMessageType>(message: WorkerRequest<T>): void {
+  request<M extends WorkerRequest<WorkerMessageType>>(message: M): void {
     if (message.id === undefined) {
       message.id = this.getUniqueId();
     }
@@ -149,7 +149,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @param {WorkerResponse<T>} message - The typed response message to broadcast.
    * @returns {void}
    */
-  respond<T extends WorkerMessageType>(message: WorkerResponse<T>): void {
+  respond<M extends WorkerResponse<WorkerMessageType>>(message: M): void {
     if (message.timestamp === undefined) {
       message.timestamp = Date.now();
     }
@@ -168,7 +168,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @param {WorkerRequest<T>} message - The typed request message to broadcast.
    * @returns {Promise<WorkerResponse<T>>} A promise that resolves with the response from the worker or rejects on timeout.
    */
-  async fetch<T extends WorkerMessageType>(message: WorkerRequest<T>): Promise<WorkerResponse<T>> {
+  async fetch<M extends WorkerRequest<WorkerMessageType>>(message: M): Promise<WorkerResponse<M['type']>> {
     if (message.id === undefined) {
       message.id = this.getUniqueId();
     }
@@ -177,7 +177,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     }
     this.log.debug(`*Fetching message: ${debugStringify(message)}`);
 
-    return new Promise<WorkerResponse<T>>((resolve, reject) => {
+    return new Promise<WorkerResponse<M['type']>>((resolve, reject) => {
       const responseHandler = (msg: WorkerMessage) => {
         if (this.isWorkerResponse(msg, message.type) && msg.id === message.id) {
           clearTimeout(timeoutId);
