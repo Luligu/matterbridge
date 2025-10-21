@@ -1979,7 +1979,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
       absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
       absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
-      piCoolingDemand: piCoolingDemand !== undefined ? piCoolingDemand : 0,
+      piCoolingDemand: piCoolingDemand !== undefined ? Math.max(0, Math.min(100, piCoolingDemand)) : 0,
       // Thermostat.Feature.AutoMode
       minSetpointDeadBand: minSetpointDeadBand * 100,
       thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
