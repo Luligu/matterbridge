@@ -2079,7 +2079,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
         ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
         // Thermostat.Feature.Presets
-        numberOfPresets: presetsList?.length ?? 0,
+        numberOfPresets: Array.isArray(presetsList) ? presetsList.length : 0,
         activePresetHandle: activePresetHandle !== undefined ? new Uint8Array([activePresetHandle]) : null,
         presets: presetsList ?? [],
         presetTypes: presetTypes ?? [],
