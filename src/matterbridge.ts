@@ -37,11 +37,11 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, deb
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
-import '@matter/nodejs';
-import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
+import '@matter/nodejs'; // Set up Node.js environment for matter.js
 import { Logger, Diagnostic, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, UINT32_MAX, UINT16_MAX, Crypto, Environment, StorageContext, StorageManager, StorageService } from '@matter/general';
-import { DeviceTypeId, VendorId } from '@matter/types';
 import { DeviceCertification, ExposedFabricInformation, FabricAction, PaseClient } from '@matter/protocol';
+import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
+import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 
@@ -59,6 +59,8 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevices } from './helpers.js';
+import { BroadcastServer } from './broadcastServer.js';
+import { WorkerMessage } from './broadcastServerTypes.js';
 
 /**
  * Represents the Matterbridge events.
@@ -89,17 +91,21 @@ interface MatterbridgeEvents {
 export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Matterbridge system information */
   public systemInformation: SystemInformation = {
+    // Network properties
     interfaceName: '',
     macAddress: '',
     ipv4Address: '',
     ipv6Address: '',
+    // Node.js properties
     nodeVersion: '',
+    // Fixed system properties
     hostname: '',
     user: '',
     osType: '',
     osRelease: '',
     osPlatform: '',
     osArch: '',
+    // Cpu and memory properties
     totalMemory: '',
     freeMemory: '',
     systemUptime: '',
@@ -218,10 +224,32 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Advertising nodes map: time advertising started keyed by storeId */
   advertisingNodes = new Map<string, number>();
 
+  /** Broadcast server */
+  private server: BroadcastServer;
+
   /** We load asyncronously so is private */
   protected constructor() {
     super();
     this.log.logNameColor = '\x1b[38;5;115m';
+    this.server = new BroadcastServer('matterbridge', this.log);
+    this.server.on('broadcast_message', this.msgHandler.bind(this));
+  }
+
+  private async msgHandler(msg: WorkerMessage) {
+    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'frontend')) {
+      this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        default:
+          this.log.warn(`Unknown broadcast request ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+      }
+    }
+    if (this.server.isWorkerResponse(msg, msg.type)) {
+      this.log.debug(`**Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        default:
+          this.log.warn(`Unknown broadcast response ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+      }
+    }
   }
 
   //* ************************************************************************************************************************************ */
@@ -1415,6 +1443,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Close PluginManager and DeviceManager
       this.plugins.destroy();
       this.devices.destroy();
+
+      // Stop thread messaging server
+      this.server.close();
 
       // Close the matterbridge node storage and context
       if (this.nodeStorage && this.nodeContext) {
