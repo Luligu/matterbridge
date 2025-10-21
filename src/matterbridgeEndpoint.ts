@@ -1931,7 +1931,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
    * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
-   * @param {number | undefined} [piCoolingDemand] - The cooling demand value. Defaults to undefined (it will be ignored).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultThermostatClusterServer(
@@ -1947,7 +1946,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     unoccupiedCoolingSetpoint: number | undefined = undefined,
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
-    // piCoolingDemand removed from constructor signature; attribute preserved and defaulted to undefined
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
@@ -2055,7 +2053,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
    * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
-   * @param {number | undefined} [piCoolingDemand] - The cooling demand value. Defaults to undefined (it will be ignored).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultCoolingThermostatClusterServer(
@@ -2066,7 +2063,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     unoccupiedCoolingSetpoint: number | undefined = undefined,
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
-    // piCoolingDemand removed from constructor signature; attribute preserved and defaulted to undefined
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
