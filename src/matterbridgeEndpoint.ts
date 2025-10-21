@@ -2038,7 +2038,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
       absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
       absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
-      piHeatingDemand: piHeatingDemand !== undefined ? piHeatingDemand : 0,
+      piHeatingDemand: piHeatingDemand !== undefined ? Math.max(0, Math.min(100, piHeatingDemand)) : 0,
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
