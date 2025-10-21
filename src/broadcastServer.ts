@@ -114,6 +114,15 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   }
 
   /**
+   * Broadcast a message to all workers.
+   *
+   * @param {WorkerMessage} message - The message to broadcast.
+   */
+  broadcast(message: WorkerMessage) {
+    this.broadcastChannel.postMessage(message);
+  }
+
+  /**
    * Broadcast a request message to all workers.
    *
    * @param {WorkerRequest<T>} message - The typed request message to broadcast.
