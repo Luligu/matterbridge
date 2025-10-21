@@ -14,6 +14,10 @@ The project will evolve to a multi-threaded architecture (the CLI will become th
 
 - matterbridge;
 - frontend;
+- plugins;
+- devices;
+- check_updates;
+- npm_install;
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
@@ -43,6 +47,7 @@ Advantages:
 - [endpoint]: Optimized memory requirements.
 - [matter]: Bumped `matter.js` version to 0.15.6. Thanks matter.js!
 - [frontend]: Bumped `frontend` version to 3.2.3.
+- [thread]: Bumped `BroadcastServer` version to 1.0.1.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

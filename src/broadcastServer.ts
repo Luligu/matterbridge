@@ -4,7 +4,7 @@
  * @file broadcastServer.ts
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.

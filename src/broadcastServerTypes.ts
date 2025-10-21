@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+import { LogLevel } from 'node-ansi-logger';
+
 import { RefreshRequiredChanged } from './frontendTypes.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import type { ApiDevice, ApiMatter, ApiPlugin, Plugin } from './matterbridgeTypes.js';
@@ -58,6 +60,10 @@ export type WorkerMessage = {
 
 type WorkerMessageMap = {
   'jest': { request: { type: 'jest' }; response: { type: 'jest'; response: { name: string; age: number } } };
+
+  // Logger general methods
+  'get_log_level': { request: { type: 'get_log_level' }; response: { type: 'get_log_level'; response: { success: boolean; level: LogLevel } } };
+  'set_log_level': { request: { type: 'set_log_level'; params: { level: LogLevel } }; response: { type: 'set_log_level'; response: { success: boolean; level: LogLevel } } };
 
   // Frontend methods
   'frontend_start': {

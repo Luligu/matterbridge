@@ -108,6 +108,9 @@ describe('Matterbridge', () => {
       await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'matterbridge', params: {} } as any); // valid
       await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all', response: { success: false } } as any);
       await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all', response: { success: true } } as any);
+
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'matterbridge' } as any);
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'matterbridge', params: { level: LogLevel.DEBUG } } as any);
     });
 
     test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {

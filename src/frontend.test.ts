@@ -117,10 +117,10 @@ describe('Matterbridge frontend', () => {
 
     expect((frontend as any).server).toBeInstanceOf(BroadcastServer);
 
-    (frontend as any).msgHandler({ type: 'jest', src: 'manager', dst: 'frontend' } as any); // no id
-    (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
-    (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend' } as any); // valid
-    (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
+    await (frontend as any).msgHandler({ type: 'jest', src: 'manager', dst: 'frontend' } as any); // no id
+    await (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
+    await (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend' } as any); // valid
+    await (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
     for (const type of ['frontend_start', 'frontend_stop'] as const) {
       await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', params: { port: 3000 } } as any);
     }

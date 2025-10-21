@@ -228,7 +228,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private server: BroadcastServer;
 
   /** We load asyncronously so is private */
-  protected constructor() {
+  private constructor() {
     super();
     this.log.logNameColor = '\x1b[38;5;115m';
     this.server = new BroadcastServer('matterbridge', this.log);
@@ -239,6 +239,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
       this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
+        case 'get_log_level':
+          this.server.respond({ ...msg, response: { success: true, level: this.log.logLevel } });
+          break;
+        case 'set_log_level':
+          this.log.logLevel = msg.params.level;
+          this.server.respond({ ...msg, response: { success: true, level: this.log.logLevel } });
+          break;
         default:
           this.log.warn(`Unknown broadcast request ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
       }
@@ -1168,9 +1175,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * Set the logger logLevel for the Matterbridge classes and call onChangeLoggerLevel() for each plugin.
    *
    * @param {LogLevel} logLevel The logger logLevel to set.
-   * @returns {Promise<void>} A promise that resolves when the logLevel has been set.
+   * @returns {Promise<LogLevel>} A promise that resolves when the logLevel has been set.
    */
-  async setLogLevel(logLevel: LogLevel): Promise<void> {
+  async setLogLevel(logLevel: LogLevel): Promise<LogLevel> {
     this.log.logLevel = logLevel;
     this.frontend.logLevel = logLevel;
     MatterbridgeEndpoint.logLevel = logLevel;
@@ -1187,6 +1194,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (logLevel === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
     AnsiLogger.setGlobalCallbackLevel(callbackLogLevel);
     this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
+    return logLevel;
   }
 
   /**

@@ -149,10 +149,10 @@ describe('PluginManager', () => {
     broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
     await (plugins as any).msgHandler({} as any);
 
-    (plugins as any).msgHandler({ type: 'jest', src: 'frontend', dst: 'plugins' } as any); // no id
-    (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'unknown' } as any); // unknown dst
-    (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'plugins' } as any); // valid
-    (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'all' } as any); // valid
+    await (plugins as any).msgHandler({ type: 'jest', src: 'frontend', dst: 'plugins' } as any); // no id
+    await (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'unknown' } as any); // unknown dst
+    await (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'plugins' } as any); // valid
+    await (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'all' } as any); // valid
     for (const type of [
       'plugins_length',
       'plugins_size',
