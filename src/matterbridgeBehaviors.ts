@@ -30,6 +30,7 @@ import { AnsiLogger } from 'node-ansi-logger';
 // @matter
 import { MaybePromise, NamedHandler } from '@matter/general';
 import { Behavior } from '@matter/node';
+import { EndpointNumber } from '@matter/types/datatype';
 // @matter clusters
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -67,10 +68,10 @@ import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-ener
 import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
 import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
+import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 
 // MatterbridgeEndpoint
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
-import { PowerSourceServer } from './matter/behaviors.js';
 
 export class MatterbridgeServer extends Behavior {
   static override readonly id = 'matterbridge';
@@ -94,9 +95,17 @@ export class MatterbridgePowerSourceServer extends PowerSourceServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Initializing MatterbridgePowerSourceServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     this.state.endpointList = [this.endpoint.number];
-    for (const endpoint of this.endpoint.parts) {
-      this.state.endpointList.push(endpoint.number);
-    }
+    this.endpoint.construction.onSuccess(() => {
+      device.log.debug(`MatterbridgePowerSourceServer: endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber} construction completed`);
+      const endpointList: EndpointNumber[] = [this.endpoint.number];
+      for (const endpoint of this.endpoint.parts) {
+        if (endpoint.lifecycle.isReady) {
+          endpointList.push(endpoint.number);
+        }
+      }
+      this.endpoint.setStateOf(PowerSourceServer, { endpointList });
+      device.log.debug(`MatterbridgePowerSourceServer: endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber} construction completed with endpointList: ${endpointList.join(', ')}`);
+    });
   }
 }
 

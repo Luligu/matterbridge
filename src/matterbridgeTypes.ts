@@ -134,14 +134,14 @@ export interface SystemInformation {
   ipv6Address: string;
   // Node.js properties
   nodeVersion: string;
-  // Fixed properties
+  // Fixed system properties
   hostname: string;
   user: string;
   osType: string;
   osRelease: string;
   osPlatform: string;
   osArch: string;
-  // Variable properties
+  // Cpu and memory properties
   totalMemory: string;
   freeMemory: string;
   systemUptime: string;

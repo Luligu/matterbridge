@@ -26,11 +26,11 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mFrontend loaded.\u001B[40;0m');
 
 // Node modules
-import type { Server as HttpServer } from 'node:http';
-import type { Server as HttpsServer, ServerOptions as HttpsServerOptions } from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import EventEmitter from 'node:events';
+import type { Server as HttpServer } from 'node:http';
+import type { Server as HttpsServer, ServerOptions as HttpsServerOptions } from 'node:https';
 
 // Third-party modules
 import type { Express } from 'express';
@@ -39,7 +39,7 @@ import type { WebSocketServer } from 'ws';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt, wr } from 'node-ansi-logger';
 // @matter
-import { ServerNode } from '@matter/node';
+import type { ServerNode } from '@matter/node';
 import { Logger, Diagnostic, LogDestination, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/general';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
 import { EndpointNumber, FabricIndex } from '@matter/types/datatype';

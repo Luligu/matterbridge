@@ -34,11 +34,13 @@ Advantages:
 - [frontend]: Added debounce to MatterSettings.
 - [cli]: Bumped `cli` version to 3.0.0 with backport of Traker and Inspector from thread module.
 - [powerSource]: Added MatterbridgePowerSourceServer that initialize the enpointList of the PowerSource cluster.
+- [thread]: Added BroadcastServer to Matterbridge.
 
 ### Changed
 
 - [package]: Updated dependencies.
 - [package]: Optimized @matter imports.
+- [endpoint]: Optimized memory requirements.
 - [matter]: Bumped `matter.js` version to 0.15.6. Thanks matter.js!
 - [frontend]: Bumped `frontend` version to 3.2.3.
 

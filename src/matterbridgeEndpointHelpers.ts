@@ -31,8 +31,8 @@ import { createHash } from 'node:crypto';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
 // @matter
-import { ActionContext, Behavior, ClusterBehavior, Endpoint } from '@matter/node';
 import { Lifecycle } from '@matter/general';
+import { ActionContext, Behavior, ClusterBehavior, Endpoint } from '@matter/node';
 import { ClusterId } from '@matter/types/datatype';
 import { MeasurementType } from '@matter/types/globals';
 import { ClusterType, getClusterNameById } from '@matter/types/cluster';
@@ -114,7 +114,9 @@ import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@ma
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 
 // Matterbridge
-import { deepCopy, deepEqual, isValidArray } from './utils/export.js';
+import { deepCopy } from './utils/deepCopy.js';
+import { deepEqual } from './utils/deepEqual.js';
+import { isValidArray } from './utils/isvalid.js';
 import { MatterbridgeEndpoint, MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
 import {
   MatterbridgeIdentifyServer,
@@ -131,6 +133,8 @@ import {
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeOperationalStateServer,
   MatterbridgeDeviceEnergyManagementModeServer,
+  MatterbridgePowerSourceServer,
+  MatterbridgeDeviceEnergyManagementServer,
 } from './matterbridgeBehaviors.js';
 
 /**
@@ -797,152 +801,114 @@ export async function triggerEvent(
   return true;
 }
 
+/** Utility Cluster Helpers */
+
 /**
- * Get the default OperationalState Cluster Server.
+ * Get the default power source wired cluster server options.
  *
- * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state id.
- *
- * @returns {Behavior.Options<MatterbridgeOperationalStateServer>} - The default options for the OperationalState cluster server.
+ * @param {PowerSource.WiredCurrentType} wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
+ * @returns {Behavior.Options<PowerSourceClusterServer>} The options for the power source wired cluster server.
  *
  * @remarks
- * This method adds a cluster server with a default operational state configuration:
- * - { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
- * - { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
- * - { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
- * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
+ * - order: The order of the power source is a persisted attribute that indicates the order in which the power sources are used.
+ * - description: The description of the power source is a fixed attribute that describes the power source type.
+ * - wiredCurrentType: The type of wired current is a fixed attribute that indicates the type of wired current used by the power source (AC or DC).
  */
-export function getDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped) {
-  return optionsFor(MatterbridgeOperationalStateServer, {
-    phaseList: [],
-    currentPhase: null,
-    countdownTime: null,
-    operationalStateList: [
-      { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
-      { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
-      { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
-      { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
-    ],
-    operationalState,
-    operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+export function getDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
+  return optionsFor(MatterbridgePowerSourceServer.with(PowerSource.Feature.Wired), {
+    // Base attributes
+    status: PowerSource.PowerSourceStatus.Active,
+    order: 0,
+    description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
+    endpointList: [], // Will be filled by the MatterbridgePowerSourceServer
+    // Wired feature attributes
+    wiredCurrentType,
   });
 }
 
 /**
- * Get the default TemperatureMeasurement cluster server options.
+ * Get the default power source replaceable battery cluster server options.
  *
- * @param {number | null} measuredValue - The measured value of the temperature x 100.
- * @param {number | null} minMeasuredValue - The minimum measured value of the temperature x 100.
- * @param {number | null} maxMeasuredValue - The maximum measured value of the temperature x 100.
- * @returns {Behavior.Options<MatterbridgeTemperatureMeasurementServer>} - The default options for the TemperatureMeasurement cluster server.
+ * @param {number} batPercentRemaining - The remaining battery percentage (default: 100).
+ * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+ * @param {number} batVoltage - The battery voltage (default: 1500).
+ * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
+ * @param {number} batQuantity - The quantity of the battery (default: 1).
+ * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
+ * @returns {Behavior.Options<PowerSourceClusterServer>} The options for the power source replaceable battery cluster server.
+ *
+ * @remarks
+ * - order: The order of the power source is a persisted attribute that indicates the order in which the power sources are used.
+ * - description: The description of the power source is a fixed attribute that describes the power source type.
+ * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
+ * - batReplacementDescription: The description of the battery replacement is a fixed attribute that describes the battery type.
+ * - batQuantity: The quantity of the battery is a fixed attribute that indicates how many batteries are present in the device.
  */
-export function getDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
-  return optionsFor(TemperatureMeasurementServer, {
-    measuredValue,
-    minMeasuredValue,
-    maxMeasuredValue,
-    tolerance: 0,
+export function getDefaultPowerSourceReplaceableBatteryClusterServer(
+  batPercentRemaining: number = 100,
+  batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
+  batVoltage: number = 1500,
+  batReplacementDescription: string = 'Battery type',
+  batQuantity: number = 1,
+  batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.UserReplaceable,
+) {
+  return optionsFor(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable), {
+    // Base attributes
+    status: PowerSource.PowerSourceStatus.Active,
+    order: 0,
+    description: 'Primary battery',
+    endpointList: [], // Will be filled by the MatterbridgePowerSourceServer
+    // Battery feature attributes
+    batVoltage,
+    batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
+    batChargeLevel,
+    batReplacementNeeded: false,
+    batReplaceability,
+    activeBatFaults: undefined,
+    // Replaceable feature attributes
+    batReplacementDescription,
+    batQuantity,
   });
 }
 
 /**
- * Get the default RelativeHumidityMeasurement cluster server options.
+ * Creates a default power source rechargeable battery cluster server.
  *
- * @param {number | null} measuredValue - The measured value of the relative humidity x 100.
- * @param {number | null} minMeasuredValue - The minimum measured value of the relative humidity x 100.
- * @param {number | null} maxMeasuredValue - The maximum measured value of the relative humidity x 100.
- * @returns {Behavior.Options<MatterbridgeRelativeHumidityMeasurementServer>} - The default options for the RelativeHumidityMeasurement cluster server.
+ * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100).
+ * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+ * @param {number} [batVoltage] - The battery voltage in mV (default: 1500).
+ * @param {PowerSource.BatReplaceability} [batReplaceability] - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
+ * @returns {Behavior.Options<PowerSourceClusterServer>} The options for the power source rechargeable battery cluster server.
+ *
+ * @remarks
+ * - order: The order of the power source is a persisted attribute that indicates the order in which the power sources are used.
+ * - description: The description of the power source is a fixed attribute that describes the power source type.
+ * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
  */
-export function getDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
-  return optionsFor(RelativeHumidityMeasurementServer, {
-    measuredValue,
-    minMeasuredValue,
-    maxMeasuredValue,
-    tolerance: 0,
-  });
-}
-
-/**
- * Get the default PressureMeasurement cluster server options.
- *
- * @param {number | null} measuredValue - The measured value for the pressure in kPa x 10.
- * @param {number | null} minMeasuredValue - The minimum measured value for the pressure in kPa x 10.
- * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure in kPa x 10.
- * @returns {Behavior.Options<MatterbridgePressureMeasurementServer>} - The default options for the PressureMeasurement cluster server.
- */
-export function getDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
-  return optionsFor(PressureMeasurementServer, {
-    measuredValue,
-    minMeasuredValue,
-    maxMeasuredValue,
-    tolerance: 0,
-  });
-}
-
-/**
- * Get the default IlluminanceMeasurement cluster server options.
- *
- * @param {number | null} measuredValue - The measured value of illuminance.
- * @param {number | null} minMeasuredValue - The minimum measured value of illuminance.
- * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
- *
- * @returns {Behavior.Options<MatterbridgeIlluminanceMeasurementServer>} - The default options for the IlluminanceMeasurement cluster server.
- *
- * @remarks The default value for the illuminance measurement is null.
- * This attribute SHALL indicate the illuminance in Lux (symbol lx) as follows:
- * •  MeasuredValue = 10,000 x log10(illuminance) + 1,
- *    where 1 lx <= illuminance <= 3.576 Mlx, corresponding to a MeasuredValue in the range 1 to 0xFFFE.
- * • 0 indicates a value of illuminance that is too low to be measured
- * • null indicates that the illuminance measurement is invalid.
- */
-export function getDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
-  return optionsFor(IlluminanceMeasurementServer, {
-    measuredValue,
-    minMeasuredValue,
-    maxMeasuredValue,
-    tolerance: 0,
-  });
-}
-
-/**
- * Get the default FlowMeasurement cluster server options.
- *
- * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h.
- * @param {number | null} minMeasuredValue - The minimum measured value of the flow in 10 x m3/h.
- * @param {number | null} maxMeasuredValue - The maximum measured value of the flow in 10 x m3/h.
- * @returns {Behavior.Options<MatterbridgeFlowMeasurementServer>} - The default options for the FlowMeasurement cluster server.
- */
-export function getDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
-  return optionsFor(FlowMeasurementServer, {
-    measuredValue,
-    minMeasuredValue,
-    maxMeasuredValue,
-    tolerance: 0,
-  });
-}
-
-/**
- * Get the default OccupancySensing cluster server options.
- *
- * @param {boolean} occupied - A boolean indicating whether the occupancy is occupied or not. Default is false.
- * @param {number} holdTime - The hold time in seconds. Default is 30.
- * @param {number} holdTimeMin - The minimum hold time in seconds. Default is 1.
- * @param {number} holdTimeMax - The maximum hold time in seconds. Default is 300.
- * @returns {Behavior.Options<MatterbridgeOccupancySensingServer>} - The default options for the OccupancySensing cluster server.
- *
- * @remarks The default value for the occupancy sensor type is PIR.
- * Servers SHALL set these attributes for backward compatibility with clients implementing a cluster revision <= 4 as
- * described in OccupancySensorType and OccupancySensorTypeBitmap Attributes.
- * This replaces the 9 legacy attributes PIROccupiedToUnoccupiedDelay through PhysicalContactUnoccupiedToOccupiedThreshold.
- */
-export function getDefaultOccupancySensingClusterServer(occupied = false, holdTime = 30, holdTimeMin = 1, holdTimeMax = 300) {
-  return optionsFor(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), {
-    occupancy: { occupied },
-    occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
-    occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
-    pirOccupiedToUnoccupiedDelay: holdTime,
-    pirUnoccupiedToOccupiedDelay: holdTime,
-    holdTime,
-    holdTimeLimits: { holdTimeMin, holdTimeMax, holdTimeDefault: holdTime },
+export function getDefaultPowerSourceRechargeableBatteryClusterServer(
+  batPercentRemaining: number = 100,
+  batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
+  batVoltage: number = 1500,
+  batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
+) {
+  return optionsFor(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
+    // Base attributes
+    status: PowerSource.PowerSourceStatus.Active,
+    order: 0,
+    description: 'Primary battery',
+    endpointList: [], // Will be filled by the MatterbridgePowerSourceServer
+    // Battery feature attributes
+    batVoltage,
+    batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
+    batTimeRemaining: null, // Indicates the estimated time in seconds before the battery will no longer be able to provide power to the Node
+    batChargeLevel,
+    batReplacementNeeded: false,
+    batReplaceability,
+    batPresent: true,
+    activeBatFaults: [],
+    // Rechargeable feature attributes
+    batChargeState: PowerSource.BatChargeState.IsNotCharging,
+    batFunctionalWhileCharging: true,
   });
 }
 
@@ -1065,5 +1031,233 @@ export function getApparentElectricalPowerMeasurementClusterServer(voltage: numb
     apparentCurrent: apparentCurrent,
     apparentPower: apparentPower,
     frequency: frequency,
+  });
+}
+
+/**
+ * Get the default Device Energy Management Cluster Server with feature PowerForecastReporting and with the specified ESA type, ESA canGenerate, ESA state, and power limits.
+ *
+ * @param {DeviceEnergyManagement.EsaType} [esaType] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
+ * @param {boolean} [esaCanGenerate] - Indicates if the ESA can generate energy. Defaults to `false`.
+ * @param {DeviceEnergyManagement.EsaState} [esaState] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
+ * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+ * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+ * @returns {Behavior.Options<DeviceEnergyManagementClusterServer>} - The default options for the Device Energy Management Cluster Server.
+ *
+ * @remarks
+ * - The forecast attribute is set to null, indicating that there is no forecast currently available.
+ * - The ESA type and canGenerate attributes are fixed and cannot be changed after creation.
+ * - The ESA state is set to Online by default.
+ * - The absolute minimum and maximum power attributes are set to 0 by default.
+ * - For example, a battery storage inverter that can charge its battery at a maximum power of 2000W and can
+ * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
+ */
+export function getDefaultDeviceEnergyManagementClusterServer(
+  esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other,
+  esaCanGenerate: boolean = false,
+  esaState: DeviceEnergyManagement.EsaState = DeviceEnergyManagement.EsaState.Online,
+  absMinPower: number = 0,
+  absMaxPower: number = 0,
+) {
+  return optionsFor(MatterbridgeDeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
+    esaType, // Fixed attribute
+    esaCanGenerate, // Fixed attribute
+    esaState,
+    absMinPower,
+    absMaxPower,
+    // PowerAdjustment feature (commands: powerAdjustRequest and cancelPowerAdjustRequest events: powerAdjustStart and powerAdjustEnd)
+    powerAdjustmentCapability: null, // A null value indicates that no power adjustment is currently possible, and nor is any adjustment currently active
+    optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
+    // PowerForecastReporting
+    forecast: null, // A null value indicates that there is no forecast currently available
+  });
+}
+
+/**
+ * Get the default EnergyManagementMode Cluster Server.
+ *
+ * @param {number} [currentMode] - The current mode of the EnergyManagementMode cluster. Defaults to mode 1 (DeviceEnergyManagementMode.ModeTag.NoOptimization).
+ * @param {EnergyManagementMode.ModeOption[]} [supportedModes] - The supported modes for the DeviceEnergyManagementMode cluster. The attribute is fixed and defaults to a predefined set of cluster modes.
+ * @returns {Behavior.Options<DeviceEnergyManagementModeClusterServer>} - The default options for the Device Energy Management Mode cluster server.
+ *
+ * @remarks
+ * A few examples of Device Energy Management modes and their mode tags are provided below.
+ *  - For the "No Energy Management (Forecast reporting only)" mode, tags: 0x4000 (NoOptimization).
+ *  - For the "Device Energy Management" mode, tags: 0x4001 (DeviceOptimization).
+ *  - For the "Home Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization).
+ *  - For the "Grid Energy Management" mode, tags: 0x4003 (GridOptimization).
+ *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
+ */
+export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]) {
+  return optionsFor(MatterbridgeDeviceEnergyManagementModeServer, {
+    supportedModes: supportedModes ?? [
+      { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.NoOptimization }] },
+      {
+        label: 'Device Energy Management',
+        mode: 2,
+        modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }],
+      },
+      {
+        label: 'Home Energy Management',
+        mode: 3,
+        modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }],
+      },
+      { label: 'Grid Energy Managemen', mode: 4, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }] },
+      {
+        label: 'Full Energy Management',
+        mode: 5,
+        modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }, { value: DeviceEnergyManagementMode.ModeTag.GridOptimization }],
+      },
+    ], // Fixed attribute
+    currentMode: currentMode ?? 1,
+  });
+}
+
+/** Application Cluster Helpers */
+
+/**
+ * Get the default OperationalState Cluster Server.
+ *
+ * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state id.
+ * @returns {Behavior.Options<MatterbridgeOperationalStateServer>} - The default options for the OperationalState cluster server.
+ *
+ * @remarks
+ * This method adds a cluster server with a default operational state configuration:
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
+ * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
+ */
+export function getDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped) {
+  return optionsFor(MatterbridgeOperationalStateServer, {
+    phaseList: [],
+    currentPhase: null,
+    countdownTime: null,
+    operationalStateList: [
+      { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
+      { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
+      { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
+      { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
+    ],
+    operationalState,
+    operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+  });
+}
+
+/**
+ * Get the default TemperatureMeasurement cluster server options.
+ *
+ * @param {number | null} measuredValue - The measured value of the temperature x 100.
+ * @param {number | null} minMeasuredValue - The minimum measured value of the temperature x 100.
+ * @param {number | null} maxMeasuredValue - The maximum measured value of the temperature x 100.
+ * @returns {Behavior.Options<MatterbridgeTemperatureMeasurementServer>} - The default options for the TemperatureMeasurement cluster server.
+ */
+export function getDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+  return optionsFor(TemperatureMeasurementServer, {
+    measuredValue,
+    minMeasuredValue,
+    maxMeasuredValue,
+    tolerance: 0,
+  });
+}
+
+/**
+ * Get the default RelativeHumidityMeasurement cluster server options.
+ *
+ * @param {number | null} measuredValue - The measured value of the relative humidity x 100.
+ * @param {number | null} minMeasuredValue - The minimum measured value of the relative humidity x 100.
+ * @param {number | null} maxMeasuredValue - The maximum measured value of the relative humidity x 100.
+ * @returns {Behavior.Options<MatterbridgeRelativeHumidityMeasurementServer>} - The default options for the RelativeHumidityMeasurement cluster server.
+ */
+export function getDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+  return optionsFor(RelativeHumidityMeasurementServer, {
+    measuredValue,
+    minMeasuredValue,
+    maxMeasuredValue,
+    tolerance: 0,
+  });
+}
+
+/**
+ * Get the default PressureMeasurement cluster server options.
+ *
+ * @param {number | null} measuredValue - The measured value for the pressure in kPa x 10.
+ * @param {number | null} minMeasuredValue - The minimum measured value for the pressure in kPa x 10.
+ * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure in kPa x 10.
+ * @returns {Behavior.Options<MatterbridgePressureMeasurementServer>} - The default options for the PressureMeasurement cluster server.
+ */
+export function getDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+  return optionsFor(PressureMeasurementServer, {
+    measuredValue,
+    minMeasuredValue,
+    maxMeasuredValue,
+    tolerance: 0,
+  });
+}
+
+/**
+ * Get the default IlluminanceMeasurement cluster server options.
+ *
+ * @param {number | null} measuredValue - The measured value of illuminance.
+ * @param {number | null} minMeasuredValue - The minimum measured value of illuminance.
+ * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
+ * @returns {Behavior.Options<MatterbridgeIlluminanceMeasurementServer>} - The default options for the IlluminanceMeasurement cluster server.
+ *
+ * @remarks The default value for the illuminance measurement is null.
+ * This attribute SHALL indicate the illuminance in Lux (symbol lx) as follows:
+ * •  MeasuredValue = 10,000 x log10(illuminance) + 1,
+ *    where 1 lx <= illuminance <= 3.576 Mlx, corresponding to a MeasuredValue in the range 1 to 0xFFFE.
+ * • 0 indicates a value of illuminance that is too low to be measured
+ * • null indicates that the illuminance measurement is invalid.
+ */
+export function getDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+  return optionsFor(IlluminanceMeasurementServer, {
+    measuredValue,
+    minMeasuredValue,
+    maxMeasuredValue,
+    tolerance: 0,
+  });
+}
+
+/**
+ * Get the default FlowMeasurement cluster server options.
+ *
+ * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h.
+ * @param {number | null} minMeasuredValue - The minimum measured value of the flow in 10 x m3/h.
+ * @param {number | null} maxMeasuredValue - The maximum measured value of the flow in 10 x m3/h.
+ * @returns {Behavior.Options<MatterbridgeFlowMeasurementServer>} - The default options for the FlowMeasurement cluster server.
+ */
+export function getDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+  return optionsFor(FlowMeasurementServer, {
+    measuredValue,
+    minMeasuredValue,
+    maxMeasuredValue,
+    tolerance: 0,
+  });
+}
+
+/**
+ * Get the default OccupancySensing cluster server options.
+ *
+ * @param {boolean} occupied - A boolean indicating whether the occupancy is occupied or not. Default is false.
+ * @param {number} holdTime - The hold time in seconds. Default is 30.
+ * @param {number} holdTimeMin - The minimum hold time in seconds. Default is 1.
+ * @param {number} holdTimeMax - The maximum hold time in seconds. Default is 300.
+ * @returns {Behavior.Options<MatterbridgeOccupancySensingServer>} - The default options for the OccupancySensing cluster server.
+ *
+ * @remarks The default value for the occupancy sensor type is PIR.
+ * Servers SHALL set these attributes for backward compatibility with clients implementing a cluster revision <= 4 as
+ * described in OccupancySensorType and OccupancySensorTypeBitmap Attributes.
+ * This replaces the 9 legacy attributes PIROccupiedToUnoccupiedDelay through PhysicalContactUnoccupiedToOccupiedThreshold.
+ */
+export function getDefaultOccupancySensingClusterServer(occupied = false, holdTime = 30, holdTimeMin = 1, holdTimeMax = 300) {
+  return optionsFor(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), {
+    occupancy: { occupied },
+    occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
+    occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
+    pirOccupiedToUnoccupiedDelay: holdTime,
+    pirUnoccupiedToOccupiedDelay: holdTime,
+    holdTime,
+    holdTimeLimits: { holdTimeMin, holdTimeMax, holdTimeDefault: holdTime },
   });
 }

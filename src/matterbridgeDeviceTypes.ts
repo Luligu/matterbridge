@@ -22,8 +22,12 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeDeviceTypes loaded.\u001B[40;0m');
+
 // @matter
-import { Semtag, ClusterId, DeviceTypeId, EndpointNumber } from '@matter/types';
+import { Semtag } from '@matter/types/globals';
+import { ClusterId, DeviceTypeId, EndpointNumber } from '@matter/types/datatype';
 // @matter clusters
 import { AccountLogin } from '@matter/types/clusters/account-login';
 import { Actions } from '@matter/types/clusters/actions';
@@ -153,10 +157,12 @@ export enum DeviceClasses {
   /** There exists a server application cluster on the endpoint. */
   Server = 'Server',
 
-  /** The endpoint and at least one of its sibling endpoints have an overlap in application device type(s),
+  /**
+   * The endpoint and at least one of its sibling endpoints have an overlap in application device type(s),
    * as defined in the "Disambiguation" section in the System Model specification. This condition triggers
    * requirements for providing additional information about the endpoints in order to disambiguate
-   * between the endpoints (see "Disambiguation" section in the System Model specification). */
+   * between the endpoints (see "Disambiguation" section in the System Model specification).
+   */
   Duplicate = 'Duplicate',
 
   /**
@@ -340,7 +346,7 @@ export const OTAProvider = DeviceTypeDefinition({
     pattern defined in the System Model specification.
   ◦ One Endpoint: Both the Bridged Node and one or more application device types are supported 
     on the same endpoint (following application device type rules). Endpoint composition 
-    SHALL conform to the application device type(s) definition
+    SHALL conform to the application device type(s) definition.
  */
 export const bridgedNode = DeviceTypeDefinition({
   name: 'MA-bridgedNode',
