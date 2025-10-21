@@ -20,6 +20,17 @@ import { Matterbridge } from './matterbridge.js';
 import { plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { BroadcastServer } from './broadcastServer.js';
+
+// Mock BroadcastServer methods
+const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
+const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
+const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
+const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
+const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
+  return Promise.resolve(undefined) as any;
+});
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -80,6 +91,23 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).initialized).toBeFalsy();
       expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
       expect((Matterbridge as any).instance).toBeDefined(); // Instance is still defined cause cleanup() is not called when initialized is false
+    });
+
+    test('broadcast handler', async () => {
+      broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
+      await (matterbridge as any).msgHandler({} as any);
+      broadcastServerIsWorkerResponseSpy.mockImplementationOnce(() => false);
+      await (matterbridge as any).msgHandler({} as any);
+
+      expect((matterbridge as any).server).toBeInstanceOf(BroadcastServer);
+
+      await (matterbridge as any).msgHandler({ type: 'jest', src: 'manager', dst: 'matterbridge' } as any); // no id
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'matterbridge' } as any); // valid
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'matterbridge', params: {} } as any); // valid
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all', response: { success: false } } as any);
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all', response: { success: true } } as any);
     });
 
     test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
@@ -478,6 +506,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).plugins.log.logLevel).toBe(LogLevel.INFO);
       expect((matterbridge as any).devices.log.logLevel).toBe(LogLevel.INFO);
       expect(MatterbridgeEndpoint.logLevel).toBe(LogLevel.INFO);
+      expect(matterbridge.getLogLevel()).toBe(LogLevel.INFO);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocketServer logger global callback set to ${LogLevel.INFO}`);
     });
 
@@ -488,6 +517,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).plugins.log.logLevel).toBe(LogLevel.DEBUG);
       expect((matterbridge as any).devices.log.logLevel).toBe(LogLevel.DEBUG);
       expect(MatterbridgeEndpoint.logLevel).toBe(LogLevel.DEBUG);
+      expect(matterbridge.getLogLevel()).toBe(LogLevel.DEBUG);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocketServer logger global callback set to ${LogLevel.DEBUG}`);
     });
 
