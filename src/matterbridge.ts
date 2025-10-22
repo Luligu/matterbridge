@@ -240,11 +240,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
-          this.server.respond({ ...msg, response: { success: true, level: this.log.logLevel } });
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
           break;
         case 'set_log_level':
-          this.log.logLevel = msg.params.level;
-          this.server.respond({ ...msg, response: { success: true, level: this.log.logLevel } });
+          this.log.logLevel = msg.params.logLevel;
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
           break;
         default:
           this.log.warn(`Unknown broadcast request ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);

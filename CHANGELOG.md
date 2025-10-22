@@ -37,8 +37,9 @@ Advantages:
 
 - [frontend]: Added debounce to MatterSettings.
 - [cli]: Bumped `cli` version to 3.0.0 with backport of Traker and Inspector from thread module.
-- [powerSource]: Added MatterbridgePowerSourceServer that initialize the enpointList of the PowerSource cluster.
+- [powerSource]: Added MatterbridgePowerSourceServer. It initializes the enpointList of the PowerSource cluster.
 - [thread]: Added BroadcastServer to Matterbridge.
+- [service]: Added configuration [guide](README-SERVICE-LOCAL.md) to run matterbridge as a daemon with systemctl (Linux only) and with local global node_modules (no sudo required).
 
 ### Changed
 
