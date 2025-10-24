@@ -18,12 +18,16 @@ const { getShelly, postShelly } = await import('./shelly.js');
 
 import path from 'node:path';
 
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Logger } from '@matter/main';
-import { AggregatorEndpoint, RootEndpoint } from '@matter/main/endpoints';
-import { BridgedDeviceBasicInformationServer, OnOffServer } from '@matter/main/behaviors';
-import { MdnsService } from '@matter/main/protocol';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { jest } from '@jest/globals';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+// @matter
+import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Logger } from '@matter/general';
+import { DeviceTypeId, VendorId } from '@matter/types';
+import { MdnsService } from '@matter/protocol';
+import { ServerNode, Endpoint, PositionTag } from '@matter/node';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { BridgedDeviceBasicInformationServer, OnOffServer } from '@matter/node/behaviors';
+import { RootEndpoint } from '@matter/node/endpoints/root';
 
 import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
@@ -176,14 +180,14 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('should not add the virtual devices', async () => {
-    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'disabled';
+    mockMatterbridge.virtualMode = 'disabled';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
     expect(aggregator.parts.size).toBe(1);
   });
 
   test('add all the light virtual devices', async () => {
-    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'light';
+    mockMatterbridge.virtualMode = 'light';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
     expect(aggregator.parts.has('TestDevice:light')).toBeTruthy();
@@ -194,7 +198,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the outlet virtual devices', async () => {
-    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'outlet';
+    mockMatterbridge.virtualMode = 'outlet';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
     expect(aggregator.parts.has('UpdateMatterbridge:outlet')).toBeTruthy();
@@ -204,7 +208,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the switch virtual devices', async () => {
-    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'switch';
+    mockMatterbridge.virtualMode = 'switch';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
     expect(aggregator.parts.has('UpdateMatterbridge:switch')).toBeTruthy();
@@ -214,7 +218,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the mounted-switch virtual devices', async () => {
-    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'mounted_switch';
+    mockMatterbridge.virtualMode = 'mounted_switch';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
     expect(aggregator.parts.has('UpdateMatterbridge:mounted_switch')).toBeTruthy();
@@ -283,7 +287,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the virtual devices with shelly parameter', async () => {
-    mockMatterbridge.virtualMode = mockMatterbridge.matterbridgeInformation.virtualMode = 'light';
+    mockMatterbridge.virtualMode = 'light';
     const restartDevice = aggregator.parts.get('RestartMatterbridge:light');
     await restartDevice?.delete();
     const updateDevice = aggregator.parts.get('UpdateMatterbridge:light');

@@ -11,7 +11,8 @@ process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { Lifecycle, EndpointNumber, ActionContext } from '@matter/main';
+import { Lifecycle } from '@matter/general';
+import { EndpointNumber } from '@matter/types';
 import {
   BooleanState,
   BooleanStateCluster,
@@ -30,7 +31,7 @@ import {
   TemperatureMeasurement,
   Thermostat,
   UserLabel,
-} from '@matter/main/clusters';
+} from '@matter/types/clusters';
 import {
   BooleanStateBehavior,
   BooleanStateServer,
@@ -52,6 +53,7 @@ import {
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
+import { ActionContext } from '@matter/node';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

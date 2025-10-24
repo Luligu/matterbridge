@@ -11,7 +11,7 @@ import Button from '@mui/material/Button';
 
 // @mdi/js
 import Icon from '@mdi/react';
-import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForever } from '@mdi/js';
+import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForeverOutline } from '@mdi/js';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -235,7 +235,7 @@ function QRDiv({ id }: QRDivProps) {
                 <p className="status-blue" style={{ margin: '0px', padding: '3px 10px', width: '200px', fontSize: '14px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
                 <Tooltip title="Remove the fabric. You will also need to remove it from the controller." arrow>
                   <IconButton aria-label="remove the fabric" size="small" onClick={() => showConfirmCancelDialog('Remove fabric','Are you sure you want to remove this fabric? You will also need to remove it from the controller.', 'RemoveFabric', () => handleRemoveFabric(fabric.fabricIndex), () => { })} sx={{ ...iconBtnSx, padding: '2px' }}>
-                    <Icon path={mdiDeleteForever} size={1} />
+                    <Icon path={mdiDeleteForeverOutline} size={1} />
                   </IconButton>
                 </Tooltip>
               </div>

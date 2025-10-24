@@ -1,5 +1,5 @@
 // React
-import { useState, useEffect, useContext, useRef, memo } from 'react';
+import { useState, useEffect, useContext, useRef, memo, useMemo } from 'react';
 
 // @mui/material
 import Radio from '@mui/material/Radio';
@@ -22,6 +22,7 @@ import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
 import { MbfWindow } from './MbfWindow';
 import { MbfPage } from './MbfPage';
+import { createDebouncer } from '../utils/createDebouncer';
 import { debug } from '../App';
 // const debug = true;
 
@@ -289,6 +290,13 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
 
   // Refs
   const uniqueId = useRef(getUniqueId());
+  // Debouncers
+  const mdnsDebounce = useMemo(() => createDebouncer(1000), []);
+  const ipv4Debounce = useMemo(() => createDebouncer(1000), []);
+  const ipv6Debounce = useMemo(() => createDebouncer(1000), []);
+  const matterPortDebounce = useMemo(() => createDebouncer(1000), []);
+  const discriminatorDebounce = useMemo(() => createDebouncer(1000), []);
+  const passcodeDebounce = useMemo(() => createDebouncer(1000), []);
 
   useEffect(() => {
     if (!matterbridgeInfo) return;
@@ -301,6 +309,14 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
     setMatterDiscriminator(matterbridgeInfo.matterDiscriminator ? matterbridgeInfo.matterDiscriminator.toString() : '');
     setMatterPasscode(matterbridgeInfo.matterPasscode ? matterbridgeInfo.matterPasscode.toString() : '');
   }, [matterbridgeInfo]);
+
+  // Cleanup debounce timers on unmount
+  useEffect(() => () => mdnsDebounce.cancel(), [mdnsDebounce]);
+  useEffect(() => () => ipv4Debounce.cancel(), [ipv4Debounce]);
+  useEffect(() => () => ipv6Debounce.cancel(), [ipv6Debounce]);
+  useEffect(() => () => matterPortDebounce.cancel(), [matterPortDebounce]);
+  useEffect(() => () => discriminatorDebounce.cancel(), [discriminatorDebounce]);
+  useEffect(() => () => passcodeDebounce.cancel(), [passcodeDebounce]);
 
   // Define a function to handle change debug level
   const handleChangeMjLoggerLevel = (event: SelectChangeEvent) => {
@@ -319,43 +335,67 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
   // Define a function to handle change mdnsInterface
   const handleChangeMdnsInterface = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleChangeMdnsInterface called with value:', event.target.value);
-    setmdnsInterface(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmdnsinterface', value: event.target.value } });
+    const value = event.target.value;
+    setmdnsInterface(value);
+    mdnsDebounce(() => {
+      if (debug) console.log('debounced sendMessage setmdnsinterface with value:', value);
+      sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmdnsinterface', value } });
+    });
   };
 
   // Define a function to handle change mdnsInterface
   const handleChangeIpv4Address = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleChangeIpv4Address called with value:', event.target.value);
-    setIpv4Address(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setipv4address', value: event.target.value } });
+    const value = event.target.value;
+    setIpv4Address(value);
+    ipv4Debounce(() => {
+      if (debug) console.log('debounced sendMessage setipv4address with value:', value);
+      sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setipv4address', value } });
+    });
   };
 
   // Define a function to handle change mdnsInterface
   const handleChangeIpv6Address = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleChangeIpv6Address called with value:', event.target.value);
-    setIpv6Address(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setipv6address', value: event.target.value } });
+    const value = event.target.value;
+    setIpv6Address(value);
+    ipv6Debounce(() => {
+      if (debug) console.log('debounced sendMessage setipv6address with value:', value);
+      sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setipv6address', value } });
+    });
   };
 
   // Define a function to handle change matterPort
   const handleChangeMatterPort = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleChangeMatterPort called with value:', event.target.value);
-    setMatterPort(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmatterport', value: event.target.value } });
+    const value = event.target.value;
+    setMatterPort(value);
+    matterPortDebounce(() => {
+      if (debug) console.log('debounced sendMessage setmatterport with value:', value);
+      sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmatterport', value } });
+    });
   };
 
   // Define a function to handle change matterDiscriminator
   const handleChangeMatterDiscriminator = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleChangeMatterDiscriminator called with value:', event.target.value);
-    setMatterDiscriminator(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmatterdiscriminator', value: event.target.value } });
+    const value = event.target.value;
+    setMatterDiscriminator(value);
+    discriminatorDebounce(() => {
+      if (debug) console.log('debounced sendMessage setmatterdiscriminator with value:', value);
+      sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmatterdiscriminator', value } });
+    });
   };
 
   // Define a function to handle change matterPasscode
   const handleChangemMatterPasscode = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleChangemMatterPasscode called with value:', event.target.value);
-    setMatterPasscode(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmatterpasscode', value: event.target.value } });
+    const value = event.target.value;
+    setMatterPasscode(value);
+    passcodeDebounce(() => {
+      if (debug) console.log('debounced sendMessage setmatterpasscode with value:', value);
+      sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmatterpasscode', value } });
+    });
   };
 
   if (!matterbridgeInfo) return null;

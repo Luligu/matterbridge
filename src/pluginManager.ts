@@ -31,7 +31,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, d
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import { ApiPlugin, plg, Plugin, typ } from './matterbridgeTypes.js';
+import { ApiPlugin, plg, Plugin, StoragePlugin, typ } from './matterbridgeTypes.js';
 import { inspectError, logError } from './utils/error.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
@@ -106,7 +106,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           this.server.respond({ ...msg, response: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
           break;
         default:
-          this.log.warn(`Unknown broadcast message ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+          this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }
@@ -255,35 +255,29 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   /**
    * Loads registered plugins from storage.
    *
-   * This method retrieves an array of registered plugins from the storage and converts it
-   * into a map where the plugin names are the keys and the plugin objects are the values.
-   *
-   * @returns {Promise<Plugin[]>} A promise that resolves to an array of registered plugins.
+   * @returns {Promise<StoragePlugin[]>} A promise that resolves to an array of registered plugins.
    */
-  async loadFromStorage(): Promise<Plugin[]> {
+  async loadFromStorage(): Promise<StoragePlugin[]> {
     if (!this.matterbridge.nodeContext) {
       throw new Error('loadFromStorage: node context is not available.');
     }
     // Load the array from storage and convert it to a map
-    const pluginsArray = await this.matterbridge.nodeContext.get<Plugin[]>('plugins', []);
+    const pluginsArray = await this.matterbridge.nodeContext.get<StoragePlugin[]>('plugins', []);
     for (const plugin of pluginsArray) this._plugins.set(plugin.name, plugin);
     return pluginsArray;
   }
 
   /**
-   * Loads registered plugins from storage.
+   * Saves registered plugins to storage.
    *
-   * This method retrieves an array of registered plugins from the storage and converts it
-   * into a map where the plugin names are the keys and the plugin objects are the values.
-   *
-   * @returns {Promise<Plugin[]>} A promise that resolves to an array of registered plugins.
+   * @returns {Promise<number>} A promise that resolves to the number of registered plugins.
    */
   async saveToStorage(): Promise<number> {
     if (!this.matterbridge.nodeContext) {
       throw new Error('loadFromStorage: node context is not available.');
     }
     // Convert the map to an array
-    const plugins: Plugin[] = [];
+    const plugins: StoragePlugin[] = [];
     for (const plugin of this.array()) {
       plugins.push({
         name: plugin.name,
@@ -295,7 +289,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         enabled: plugin.enabled,
       });
     }
-    await this.matterbridge.nodeContext.set<Plugin[]>('plugins', plugins);
+    await this.matterbridge.nodeContext.set<StoragePlugin[]>('plugins', plugins);
     this.log.debug(`Saved ${BLUE}${plugins.length}${db} plugins to storage`);
     return plugins.length;
   }

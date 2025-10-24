@@ -1,4 +1,4 @@
-# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration
+# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with local global node_modules
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -16,22 +16,31 @@
 
 # Advanced configuration
 
-## Run matterbridge as a daemon with systemctl (Linux only)
+## Run matterbridge as a daemon with systemctl (Linux only) with local global node_modules
 
 The easiest way to add systemctl is to use [Matterbridge service cli for linux](https://github.com/Luligu/mb-service-linux).
 
 If your setup is too complex or you prefer to do it manually follow this method. You can still use mb-service to manage systemd after.
 
-### First create the Matterbridge directories
+### First create the Matterbridge directories and set the correct permissions
 
 This will create the required directories if they don't exist
 
 ```bash
 cd ~
-mkdir -p ~/Matterbridge
-mkdir -p ~/.matterbridge
-mkdir -p ~/.mattercert
-sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert
+sudo systemctl stop matterbridge                                                        # ✅ Safe precaution
+mkdir -p ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                     # ✅ Creates all needed dirs
+chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global         # ✅ Ensures ownership
+chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                 # ✅ Secure permissions
+NPM_CONFIG_PREFIX=~/.npm-global npm install matterbridge --omit=dev --verbose --global  # ✅ Install, no sudo
+```
+
+### Then create a system-wide symlink
+
+```bash
+sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge
+which matterbridge
+matterbridge --version
 ```
 
 ### Then create a systemctl configuration file for Matterbridge
@@ -42,20 +51,18 @@ Create a systemctl configuration file for Matterbridge
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
-Add the following to this file, replacing 3 times (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi):
-
-You may need to adapt the configuration to your setup:
-
-- execStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -service
+Add the following to this file, replacing 5 times (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi and Environment="NPM_CONFIG_PREFIX=/home/pi/.npm-global"):
 
 ```
 [Unit]
 Description=matterbridge
-After=network-online.target
+After=network.target
+Wants=network.target
 
 [Service]
 Type=simple
-ExecStart=matterbridge -service
+Environment="NPM_CONFIG_PREFIX=/home/<USER>/.npm-global"
+ExecStart=matterbridge --service --nosudo
 WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit
@@ -67,7 +74,7 @@ Group=<USER>
 WantedBy=multi-user.target
 ```
 
-If you use the frontend with -ssl -frontend 443 and get an error message: "Port 443 requires elevated privileges",
+If you use the frontend with **-ssl** -frontend 443 and get an error message: "Port 443 requires elevated privileges",
 add this:
 
 ```
@@ -75,14 +82,14 @@ add this:
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 ```
 
-If you use the matterbridge-bthome plugin add this:
+If you use the **matterbridge-bthome** plugin add this:
 
 ```
 [Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 ```
 
-If you modify matterbridge.service after, then run:
+Now and if you modify matterbridge.service after, run:
 
 ```bash
 sudo systemctl daemon-reload

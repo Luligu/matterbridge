@@ -9,7 +9,10 @@ import { appendFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 
 import { jest } from '@jest/globals';
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, NamedHandler, Diagnostic, LogDestination, FabricIndex, Time } from '@matter/main';
+import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
+import { StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, Diagnostic, LogDestination, Time, NamedHandler } from '@matter/general';
+import { FabricManager, MdnsService } from '@matter/protocol';
+import { DeviceTypeId, VendorId } from '@matter/types';
 import {
   ColorControl,
   ColorControlCluster,
@@ -26,7 +29,6 @@ import {
   LevelControlCluster,
   OccupancySensing,
   OnOffCluster,
-  OperationalCredentials,
   PowerSource,
   RvcCleanMode,
   RvcOperationalState,
@@ -36,9 +38,9 @@ import {
   Thermostat,
   WaterHeaterManagement,
   WaterHeaterMode,
-} from '@matter/main/clusters';
-import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { FabricManager, MdnsService } from '@matter/main/protocol';
+} from '@matter/types/clusters';
+import { Endpoint, ServerNode } from '@matter/node';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { ContactSensorDevice, OccupancySensorDevice, OccupancySensorDeviceDefinition, OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices';
 import {
   BooleanStateConfigurationServer,
@@ -75,7 +77,6 @@ import {
   WaterHeaterModeServer,
   WindowCoveringServer,
 } from '@matter/node/behaviors';
-import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
 
 import {
   MatterbridgeBooleanStateConfigurationServer,

@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+import { LogLevel } from 'node-ansi-logger';
+
 import { RefreshRequiredChanged } from './frontendTypes.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import type { ApiDevice, ApiMatter, ApiPlugin, Plugin } from './matterbridgeTypes.js';
@@ -29,7 +31,7 @@ import type { ApiDevice, ApiMatter, ApiPlugin, Plugin } from './matterbridgeType
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter';
 export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'all';
 
-// Base message structure with id, src and dst
+/** Base message request structure with id, src and dst */
 type BaseWorkerMessageRequest = {
   id?: number;
   timestamp?: number;
@@ -37,6 +39,7 @@ type BaseWorkerMessageRequest = {
   dst: WorkerDstType;
 };
 
+/** Base message response structure with id, src and dst */
 type BaseWorkerMessageResponse = {
   id?: number;
   timestamp?: number;
@@ -44,7 +47,7 @@ type BaseWorkerMessageResponse = {
   dst: WorkerDstType;
 };
 
-// Extended message map that adds src/dst to all requests and responses
+/** Extended message map that adds src/dst to all requests and responses */
 type ExtendedWorkerMessageMap = {
   [K in keyof WorkerMessageMap]: {
     request: WorkerMessageMap[K]['request'] & BaseWorkerMessageRequest;
@@ -52,12 +55,34 @@ type ExtendedWorkerMessageMap = {
   };
 };
 
+/** Union type of all worker messages (requests and responses) */
 export type WorkerMessage = {
   [K in keyof ExtendedWorkerMessageMap]: ExtendedWorkerMessageMap[K]['request'] | ExtendedWorkerMessageMap[K]['response'];
 }[keyof ExtendedWorkerMessageMap];
 
+/** Map of all worker message types with their request and response structures */
 type WorkerMessageMap = {
   'jest': { request: { type: 'jest' }; response: { type: 'jest'; response: { name: string; age: number } } };
+
+  // Logger general methods
+  'get_log_level': { request: { type: 'get_log_level' }; response: { type: 'get_log_level'; response: { logLevel: LogLevel; success: boolean } } };
+  'set_log_level': { request: { type: 'set_log_level'; params: { logLevel: LogLevel } }; response: { type: 'set_log_level'; response: { logLevel: LogLevel; success: boolean } } };
+
+  // Matterbridge methods
+  'matterbridge_initialize': {
+    request: { type: 'matterbridge_initialize' };
+    response: { type: 'matterbridge_initialize'; response: { success: boolean } };
+  };
+
+  // Matter methods
+  'matter_start': {
+    request: { type: 'matter_start'; params: { storeId: string } };
+    response: { type: 'matter_start'; response: { storeId: string; success: boolean } };
+  };
+  'matter_stop': {
+    request: { type: 'matter_stop'; params: { storeId: string } };
+    response: { type: 'matter_stop'; response: { storeId: string; success: boolean } };
+  };
 
   // Frontend methods
   'frontend_start': {

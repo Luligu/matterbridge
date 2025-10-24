@@ -1,7 +1,7 @@
 // @matter imports
-import { TemperatureControl } from '@matter/main/clusters/temperature-control';
-import { TemperatureControlServer } from '@matter/main/behaviors/temperature-control';
-import { MaybePromise } from '@matter/main';
+import { MaybePromise } from '@matter/general';
+import { TemperatureControl } from '@matter/types/clusters/temperature-control';
+import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
 
 // Matterbridge imports
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';

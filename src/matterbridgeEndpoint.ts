@@ -22,76 +22,82 @@
  * limitations under the License.
  */
 
-// @matter
-import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, ServerNode, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
-import { DeviceClassification } from '@matter/main/model';
-import { ClusterType, getClusterNameById, Semtag } from '@matter/main/types';
-// @matter clusters
-import { Descriptor } from '@matter/main/clusters/descriptor';
-import { PowerSource } from '@matter/main/clusters/power-source';
-import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
-import { Identify } from '@matter/main/clusters/identify';
-import { OnOff } from '@matter/main/clusters/on-off';
-import { LevelControl } from '@matter/main/clusters/level-control';
-import { ColorControl } from '@matter/main/clusters/color-control';
-import { WindowCovering } from '@matter/main/clusters/window-covering';
-import { Thermostat } from '@matter/main/clusters/thermostat';
-import { FanControl } from '@matter/main/clusters/fan-control';
-import { DoorLock } from '@matter/main/clusters/door-lock';
-import { ModeSelect } from '@matter/main/clusters/mode-select';
-import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
-import { PumpConfigurationAndControl } from '@matter/main/clusters/pump-configuration-and-control';
-import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
-import { Switch } from '@matter/main/clusters/switch';
-import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
-import { PowerTopology } from '@matter/main/clusters/power-topology';
-import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
-import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
-import { AirQuality } from '@matter/main/clusters/air-quality';
-import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
-import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
-import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
-import { OperationalState } from '@matter/main/clusters/operational-state';
-import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
-import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
-// @matter behaviors
-import { DescriptorServer } from '@matter/main/behaviors/descriptor';
-import { PowerSourceServer } from '@matter/main/behaviors/power-source';
-import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
-import { GroupsServer } from '@matter/main/behaviors/groups';
-import { ScenesManagementServer } from '@matter/main/behaviors/scenes-management';
-import { PumpConfigurationAndControlServer } from '@matter/main/behaviors/pump-configuration-and-control';
-import { SwitchServer } from '@matter/main/behaviors/switch';
-import { BooleanStateServer } from '@matter/main/behaviors/boolean-state';
-import { PowerTopologyServer } from '@matter/main/behaviors/power-topology';
-import { ElectricalPowerMeasurementServer } from '@matter/main/behaviors/electrical-power-measurement';
-import { ElectricalEnergyMeasurementServer } from '@matter/main/behaviors/electrical-energy-measurement';
-import { TemperatureMeasurementServer } from '@matter/main/behaviors/temperature-measurement';
-import { RelativeHumidityMeasurementServer } from '@matter/main/behaviors/relative-humidity-measurement';
-import { PressureMeasurementServer } from '@matter/main/behaviors/pressure-measurement';
-import { FlowMeasurementServer } from '@matter/main/behaviors/flow-measurement';
-import { IlluminanceMeasurementServer } from '@matter/main/behaviors/illuminance-measurement';
-import { OccupancySensingServer } from '@matter/main/behaviors/occupancy-sensing';
-import { AirQualityServer } from '@matter/main/behaviors/air-quality';
-import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-monoxide-concentration-measurement';
-import { CarbonDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-dioxide-concentration-measurement';
-import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/nitrogen-dioxide-concentration-measurement';
-import { OzoneConcentrationMeasurementServer } from '@matter/main/behaviors/ozone-concentration-measurement';
-import { FormaldehydeConcentrationMeasurementServer } from '@matter/main/behaviors/formaldehyde-concentration-measurement';
-import { Pm1ConcentrationMeasurementServer } from '@matter/main/behaviors/pm1-concentration-measurement';
-import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-concentration-measurement';
-import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
-import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
-import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
-import { FanControlServer } from '@matter/main/behaviors/fan-control';
-import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
-import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpoint loaded.\u001B[40;0m');
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from './logger/export.js';
+import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
+// @matter/general
+import { Lifecycle, NamedHandler, HandlerFunction, AtLeastOne, UINT16_MAX, UINT32_MAX } from '@matter/general';
+// @matter/node
+import { ActionContext, Behavior, Endpoint, EndpointType, MutableEndpoint, ServerNode, SupportedBehaviors } from '@matter/node';
+// @matter/types
+import { ClusterType, getClusterNameById } from '@matter/types/cluster';
+import { EndpointNumber, ClusterId, VendorId } from '@matter/types/datatype';
+import { Semtag } from '@matter/types/globals';
+// @matter clusters
+import { Descriptor } from '@matter/types/clusters/descriptor';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { Identify } from '@matter/types/clusters/identify';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { LevelControl } from '@matter/types/clusters/level-control';
+import { ColorControl } from '@matter/types/clusters/color-control';
+import { WindowCovering } from '@matter/types/clusters/window-covering';
+import { Thermostat } from '@matter/types/clusters/thermostat';
+import { FanControl } from '@matter/types/clusters/fan-control';
+import { DoorLock } from '@matter/types/clusters/door-lock';
+import { ModeSelect } from '@matter/types/clusters/mode-select';
+import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
+import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
+import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { Switch } from '@matter/types/clusters/switch';
+import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import { PowerTopology } from '@matter/types/clusters/power-topology';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { AirQuality } from '@matter/types/clusters/air-quality';
+import { ConcentrationMeasurement } from '@matter/types/clusters/concentration-measurement';
+import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
+import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
+// @matter behaviors
+import { DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
+import { GroupsServer } from '@matter/node/behaviors/groups';
+import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
+import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
+import { SwitchServer } from '@matter/node/behaviors/switch';
+import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
+import { PowerTopologyServer } from '@matter/node/behaviors/power-topology';
+import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
+import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
+import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
+import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
+import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
+import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
+import { AirQualityServer } from '@matter/node/behaviors/air-quality';
+import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-monoxide-concentration-measurement';
+import { CarbonDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-dioxide-concentration-measurement';
+import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
+import { OzoneConcentrationMeasurementServer } from '@matter/node/behaviors/ozone-concentration-measurement';
+import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behaviors/formaldehyde-concentration-measurement';
+import { Pm1ConcentrationMeasurementServer } from '@matter/node/behaviors/pm1-concentration-measurement';
+import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-concentration-measurement';
+import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
+import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { FanControlServer } from '@matter/node/behaviors/fan-control';
+import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
+
 // Matterbridge
 import { DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
-import { isValidNumber, isValidObject, isValidString } from './utils/export.js';
+import { isValidNumber, isValidObject, isValidString } from './utils/isvalid.js';
 import {
   MatterbridgeServer,
   MatterbridgeIdentifyServer,
@@ -114,6 +120,7 @@ import {
   MatterbridgeActivatedCarbonFilterMonitoringServer,
   MatterbridgeHepaFilterMonitoringServer,
   MatterbridgeEnhancedColorControlServer,
+  MatterbridgePowerSourceServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -147,6 +154,11 @@ import {
   invokeBehaviorCommand,
   triggerEvent,
   featuresFor,
+  getDefaultPowerSourceWiredClusterServer,
+  getDefaultPowerSourceReplaceableBatteryClusterServer,
+  getDefaultPowerSourceRechargeableBatteryClusterServer,
+  getDefaultDeviceEnergyManagementClusterServer,
+  getDefaultDeviceEnergyManagementModeClusterServer,
 } from './matterbridgeEndpointHelpers.js';
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
@@ -363,7 +375,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       name: firstDefinition.name.replace('-', '_'),
       deviceType: firstDefinition.code,
       deviceRevision: firstDefinition.revision,
-      deviceClass: firstDefinition.deviceClass.toLowerCase() as unknown as DeviceClassification,
+      // @ts-expect-error we don't import an entire module for DeviceClassification
+      deviceClass: firstDefinition.deviceClass.toLowerCase(),
       requirements: {
         server: {
           mandatory: SupportedBehaviors(...getBehaviourTypesFromClusterServerIds(firstDefinition.requiredServerClusters)),
@@ -992,6 +1005,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     return device;
   }
 
+  /** Utility Cluster Helpers */
+
   /**
    * Creates a default power source wired cluster server.
    *
@@ -1004,15 +1019,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - wiredCurrentType: The type of wired current is a fixed attribute that indicates the type of wired current used by the power source (AC or DC).
    */
   createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac): this {
-    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Wired), {
-      // Base attributes
-      status: PowerSource.PowerSourceStatus.Active,
-      order: 0,
-      description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
-      endpointList: [],
-      // Wired feature attributes
-      wiredCurrentType,
-    });
+    this.behaviors.require(MatterbridgePowerSourceServer.with(PowerSource.Feature.Wired), getDefaultPowerSourceWiredClusterServer(wiredCurrentType));
     return this;
   }
 
@@ -1042,23 +1049,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     batQuantity: number = 1,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.UserReplaceable,
   ): this {
-    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable), {
-      // Base attributes
-      status: PowerSource.PowerSourceStatus.Active,
-      order: 0,
-      description: 'Primary battery',
-      endpointList: [],
-      // Battery feature attributes
-      batVoltage,
-      batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
-      batChargeLevel,
-      batReplacementNeeded: false,
-      batReplaceability,
-      activeBatFaults: undefined,
-      // Replaceable feature attributes
-      batReplacementDescription,
-      batQuantity,
-    });
+    this.behaviors.require(
+      MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable),
+      getDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining, batChargeLevel, batVoltage, batReplacementDescription, batQuantity, batReplaceability),
+    );
     return this;
   }
 
@@ -1082,25 +1076,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     batVoltage: number = 1500,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
   ): this {
-    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
-      // Base attributes
-      status: PowerSource.PowerSourceStatus.Active,
-      order: 0,
-      description: 'Primary battery',
-      endpointList: [],
-      // Battery feature attributes
-      batVoltage,
-      batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
-      batTimeRemaining: null, // Indicates the estimated time in seconds before the battery will no longer be able to provide power to the Node
-      batChargeLevel,
-      batReplacementNeeded: false,
-      batReplaceability,
-      batPresent: true,
-      activeBatFaults: [],
-      // Rechargeable feature attributes
-      batChargeState: PowerSource.BatChargeState.IsNotCharging,
-      batFunctionalWhileCharging: true,
-    });
+    this.behaviors.require(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), getDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining, batChargeLevel, batVoltage, batReplaceability));
     return this;
   }
 
@@ -1215,6 +1191,113 @@ export class MatterbridgeEndpoint extends Endpoint {
     );
     return this;
   }
+
+  /**
+   * Creates a default Power Topology Cluster Server with feature TreeTopology (the endpoint provides or consumes power to/from itself and its child endpoints). Only needed for an electricalSensor device type.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultPowerTopologyClusterServer(): this {
+    this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.TreeTopology));
+    return this;
+  }
+
+  /**
+   * Creates a default Electrical Energy Measurement Cluster Server with features ImportedEnergy, ExportedEnergy, and CumulativeEnergy.
+   *
+   * @param {number} energyImported - The total consumption value in mW/h.
+   * @param {number} energyExported - The total production value in mW/h.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
+    this.behaviors.require(
+      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      getDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported),
+    );
+    return this;
+  }
+
+  /**
+   * Creates a default Electrical Power Measurement Cluster Server with features AlternatingCurrent.
+   *
+   * @param {number} voltage - The voltage value in millivolts.
+   * @param {number} current - The current value in milliamperes.
+   * @param {number} power - The power value in milliwatts.
+   * @param {number} frequency - The frequency value in millihertz.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null): this {
+    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), getDefaultElectricalPowerMeasurementClusterServer(voltage, current, power, frequency));
+    return this;
+  }
+
+  /**
+   * Creates a default Electrical Apparent Power Measurement Cluster Server with features AlternatingCurrent.
+   *
+   * @param {number} voltage - The voltage value in millivolts.
+   * @param {number} apparentCurrent - The current value in milliamperes.
+   * @param {number} apparentPower - The apparent power value in millivoltamperes.
+   * @param {number} frequency - The frequency value in millihertz.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createApparentElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, apparentCurrent: number | bigint | null = null, apparentPower: number | bigint | null = null, frequency: number | bigint | null = null): this {
+    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), getApparentElectricalPowerMeasurementClusterServer(voltage, apparentCurrent, apparentPower, frequency));
+    return this;
+  }
+
+  /**
+   * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting and with the specified ESA type, ESA canGenerate, ESA state, and power limits.
+   *
+   * @param {DeviceEnergyManagement.EsaType} [esaType] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
+   * @param {boolean} [esaCanGenerate] - Indicates if the ESA can generate energy. Defaults to `false`.
+   * @param {DeviceEnergyManagement.EsaState} [esaState] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
+   * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - The forecast attribute is set to null, indicating that there is no forecast currently available.
+   * - The ESA type and canGenerate attributes are fixed and cannot be changed after creation.
+   * - The ESA state is set to Online by default.
+   * - The absolute minimum and maximum power attributes are set to 0 by default.
+   * - For example, a battery storage inverter that can charge its battery at a maximum power of 2000W and can
+   * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
+   */
+  createDefaultDeviceEnergyManagementClusterServer(
+    esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other,
+    esaCanGenerate: boolean = false,
+    esaState: DeviceEnergyManagement.EsaState = DeviceEnergyManagement.EsaState.Online,
+    absMinPower: number = 0,
+    absMaxPower: number = 0,
+  ): this {
+    this.behaviors.require(
+      MatterbridgeDeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment),
+      getDefaultDeviceEnergyManagementClusterServer(esaType, esaCanGenerate, esaState, absMinPower, absMaxPower),
+    );
+    return this;
+  }
+
+  /**
+   * Creates a default EnergyManagementMode Cluster Server.
+   *
+   * @param {number} [currentMode] - The current mode of the EnergyManagementMode cluster. Defaults to mode 1 (DeviceEnergyManagementMode.ModeTag.NoOptimization).
+   * @param {EnergyManagementMode.ModeOption[]} [supportedModes] - The supported modes for the DeviceEnergyManagementMode cluster. The attribute is fixed and defaults to a predefined set of cluster modes.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * A few examples of Device Energy Management modes and their mode tags are provided below.
+   *  - For the "No Energy Management (Forecast reporting only)" mode, tags: 0x4000 (NoOptimization).
+   *  - For the "Device Energy Management" mode, tags: 0x4001 (DeviceOptimization).
+   *  - For the "Home Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization).
+   *  - For the "Grid Energy Management" mode, tags: 0x4003 (GridOptimization).
+   *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
+   */
+  createDefaultDeviceEnergyManagementModeClusterServer(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]): this {
+    this.behaviors.require(MatterbridgeDeviceEnergyManagementModeServer, getDefaultDeviceEnergyManagementModeClusterServer(currentMode, supportedModes));
+    return this;
+  }
+
+  /** Application Cluster Helpers */
 
   /**
    * Creates a default identify cluster server with the specified identify time and type.
@@ -1892,7 +1975,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
       absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
       // Thermostat.Feature.AutoMode
-      minSetpointDeadBand: minSetpointDeadBand * 100,
+      minSetpointDeadBand: minSetpointDeadBand * 10,
       thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
@@ -2683,140 +2766,6 @@ export class MatterbridgeEndpoint extends Endpoint {
         sensorFault: { generalFault: sensorFault },
       },
     );
-    return this;
-  }
-
-  /**
-   * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting and with the specified ESA type, ESA canGenerate, ESA state, and power limits.
-   *
-   * @param {DeviceEnergyManagement.EsaType} [esaType] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
-   * @param {boolean} [esaCanGenerate] - Indicates if the ESA can generate energy. Defaults to `false`.
-   * @param {DeviceEnergyManagement.EsaState} [esaState] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
-   * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
-   * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   *
-   * @remarks
-   * - The forecast attribute is set to null, indicating that there is no forecast currently available.
-   * - The ESA type and canGenerate attributes are fixed and cannot be changed after creation.
-   * - The ESA state is set to Online by default.
-   * - The absolute minimum and maximum power attributes are set to 0 by default.
-   * - For example, a battery storage inverter that can charge its battery at a maximum power of 2000W and can
-   * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
-   */
-  createDefaultDeviceEnergyManagementClusterServer(
-    esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other,
-    esaCanGenerate: boolean = false,
-    esaState: DeviceEnergyManagement.EsaState = DeviceEnergyManagement.EsaState.Online,
-    absMinPower: number = 0,
-    absMaxPower: number = 0,
-  ): this {
-    this.behaviors.require(MatterbridgeDeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
-      esaType, // Fixed attribute
-      esaCanGenerate, // Fixed attribute
-      esaState,
-      absMinPower,
-      absMaxPower,
-      // PowerAdjustment feature (commands: powerAdjustRequest and cancelPowerAdjustRequest events: powerAdjustStart and powerAdjustEnd)
-      powerAdjustmentCapability: null, // A null value indicates that no power adjustment is currently possible, and nor is any adjustment currently active
-      optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
-      // PowerForecastReporting
-      forecast: null, // A null value indicates that there is no forecast currently available
-    });
-    return this;
-  }
-
-  /**
-   * Creates a default EnergyManagementMode Cluster Server.
-   *
-   * @param {number} [currentMode] - The current mode of the EnergyManagementMode cluster. Defaults to mode 1 (DeviceEnergyManagementMode.ModeTag.NoOptimization).
-   * @param {EnergyManagementMode.ModeOption[]} [supportedModes] - The supported modes for the DeviceEnergyManagementMode cluster. The attribute is fixed and defaults to a predefined set of cluster modes.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   *
-   * @remarks
-   * A few examples of Device Energy Management modes and their mode tags are provided below.
-   *  - For the "No Energy Management (Forecast reporting only)" mode, tags: 0x4000 (NoOptimization).
-   *  - For the "Device Energy Management" mode, tags: 0x4001 (DeviceOptimization).
-   *  - For the "Home Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization).
-   *  - For the "Grid Energy Management" mode, tags: 0x4003 (GridOptimization).
-   *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
-   */
-  createDefaultDeviceEnergyManagementModeClusterServer(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]): this {
-    this.behaviors.require(MatterbridgeDeviceEnergyManagementModeServer, {
-      supportedModes: supportedModes ?? [
-        { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.NoOptimization }] },
-        {
-          label: 'Device Energy Management',
-          mode: 2,
-          modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }],
-        },
-        {
-          label: 'Home Energy Management',
-          mode: 3,
-          modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }],
-        },
-        { label: 'Grid Energy Managemen', mode: 4, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }] },
-        {
-          label: 'Full Energy Management',
-          mode: 5,
-          modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }, { value: DeviceEnergyManagementMode.ModeTag.GridOptimization }],
-        },
-      ], // Fixed attribute
-      currentMode: currentMode ?? 1,
-    });
-    return this;
-  }
-
-  /**
-   * Creates a default Power Topology Cluster Server with feature TreeTopology (the endpoint provides or consumes power to/from itself and its child endpoints). Only needed for an electricalSensor device type.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultPowerTopologyClusterServer(): this {
-    this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.TreeTopology));
-    return this;
-  }
-
-  /**
-   * Creates a default Electrical Energy Measurement Cluster Server with features ImportedEnergy, ExportedEnergy, and CumulativeEnergy.
-   *
-   * @param {number} energyImported - The total consumption value in mW/h.
-   * @param {number} energyExported - The total production value in mW/h.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
-    this.behaviors.require(
-      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
-      getDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported),
-    );
-    return this;
-  }
-
-  /**
-   * Creates a default Electrical Power Measurement Cluster Server with features AlternatingCurrent.
-   *
-   * @param {number} voltage - The voltage value in millivolts.
-   * @param {number} current - The current value in milliamperes.
-   * @param {number} power - The power value in milliwatts.
-   * @param {number} frequency - The frequency value in millihertz.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null): this {
-    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), getDefaultElectricalPowerMeasurementClusterServer(voltage, current, power, frequency));
-    return this;
-  }
-
-  /**
-   * Creates a default Electrical Apparent Power Measurement Cluster Server with features AlternatingCurrent.
-   *
-   * @param {number} voltage - The voltage value in millivolts.
-   * @param {number} apparentCurrent - The current value in milliamperes.
-   * @param {number} apparentPower - The apparent power value in millivoltamperes.
-   * @param {number} frequency - The frequency value in millihertz.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createApparentElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, apparentCurrent: number | bigint | null = null, apparentPower: number | bigint | null = null, frequency: number | bigint | null = null): this {
-    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), getApparentElectricalPowerMeasurementClusterServer(voltage, apparentCurrent, apparentPower, frequency));
     return this;
   }
 

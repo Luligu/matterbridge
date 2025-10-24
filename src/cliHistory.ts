@@ -29,61 +29,7 @@ import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-// History for 8h at 1 sample each 10 seconds = 2880 entries
-export const historySize: number = 2880;
-
-export let historyIndex: number = 0;
-
-/**
- * Sets the history index.
- *
- * @param {number} index - The new history index.
- */
-export function setHistoryIndex(index: number) {
-  if (!Number.isFinite(index) || !Number.isSafeInteger(index)) {
-    throw new TypeError('historyIndex must be a finite, safe integer.');
-  }
-  if (index < 0 || index >= historySize) {
-    throw new RangeError(`historyIndex must be between 0 and ${historySize - 1}.`);
-  }
-  historyIndex = index;
-}
-
-export type HistoryEntry = {
-  timestamp: number;
-  cpu: number;
-  peakCpu: number;
-  processCpu: number;
-  peakProcessCpu: number;
-  rss: number;
-  peakRss: number;
-  heapUsed: number;
-  peakHeapUsed: number;
-  heapTotal: number;
-  peakHeapTotal: number;
-  external: number;
-  peakExternal: number;
-  arrayBuffers: number;
-  peakArrayBuffers: number;
-};
-
-export const history: HistoryEntry[] = Array.from({ length: historySize }, () => ({
-  timestamp: 0,
-  cpu: 0,
-  peakCpu: 0,
-  processCpu: 0,
-  peakProcessCpu: 0,
-  rss: 0,
-  peakRss: 0,
-  heapUsed: 0,
-  peakHeapUsed: 0,
-  heapTotal: 0,
-  peakHeapTotal: 0,
-  external: 0,
-  peakExternal: 0,
-  arrayBuffers: 0,
-  peakArrayBuffers: 0,
-}));
+import { Tracker, TrackerSnapshot } from './utils/tracker.js';
 
 export type GenerateHistoryPageOptions = {
   /**
@@ -114,19 +60,11 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
   const hostname = options.hostname ?? os.hostname();
   const outputPath = path.resolve(options.outputPath ?? path.join(process.cwd(), 'history.html'));
 
-  const bufferLength = history.length;
+  const normalizedHistory: TrackerSnapshot[] = [];
 
-  if (bufferLength === 0) {
-    return undefined;
-  }
-
-  const startIndex = ((Math.trunc(historyIndex) % bufferLength) + bufferLength) % bufferLength;
-
-  const normalizedHistory: HistoryEntry[] = [];
-
-  for (let offset = 0; offset < bufferLength; offset += 1) {
-    const index = (startIndex + offset) % bufferLength;
-    const entry = history[index];
+  for (let offset = 0; offset < Tracker.historySize; offset += 1) {
+    const index = (Tracker.historyIndex + offset) % Tracker.historySize;
+    const entry = Tracker.history[index];
     if (!entry || entry.timestamp === 0) continue;
     normalizedHistory.push(entry);
   }
@@ -135,7 +73,7 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
     return undefined;
   }
 
-  const peakCpu = Math.max(...normalizedHistory.map((entry) => entry.peakCpu ?? entry.cpu));
+  const peakOsCpu = Math.max(...normalizedHistory.map((entry) => entry.peakOsCpu ?? entry.osCpu));
   const peakProcessCpu = Math.max(...normalizedHistory.map((entry) => entry.peakProcessCpu ?? entry.processCpu));
   const peakRss = Math.max(...normalizedHistory.map((entry) => entry.peakRss ?? entry.rss));
   const peakHeapUsed = Math.max(...normalizedHistory.map((entry) => entry.peakHeapUsed ?? entry.heapUsed));
@@ -148,7 +86,7 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
   const summary = {
     entries: normalizedHistory.length,
     timeRange: `${new Date(firstTimestamp).toLocaleString()} → ${new Date(lastTimestamp).toLocaleString()}`,
-    peakCpu,
+    peakOsCpu,
     peakProcessCpu,
     peakRss,
     peakHeapUsed,
@@ -381,7 +319,7 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
       const summaryEntries = [
         { label: 'Samples', value: SUMMARY_DATA.entries.toLocaleString() },
         { label: 'Time Range', value: SUMMARY_DATA.timeRange },
-        { label: 'Host CPU Peak', value: SUMMARY_DATA.peakCpu.toFixed(2) + ' %' },
+        { label: 'Host CPU Peak', value: SUMMARY_DATA.peakOsCpu.toFixed(2) + ' %' },
         { label: 'Process CPU Peak', value: SUMMARY_DATA.peakProcessCpu.toFixed(2) + ' %' },
         { label: 'RSS Peak', value: formatBytes(SUMMARY_DATA.peakRss) },
         { label: 'Heap Used Peak', value: formatBytes(SUMMARY_DATA.peakHeapUsed) },
@@ -402,8 +340,8 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
         const row = document.createElement('tr');
         const cells = [
           new Date(entry.timestamp).toLocaleString(),
-          entry.cpu.toFixed(2),
-          entry.peakCpu.toFixed(2),
+          entry.osCpu.toFixed(2),
+          entry.peakOsCpu.toFixed(2),
           (Number.isFinite(entry.processCpu) ? entry.processCpu : 0).toFixed(2),
           (
             Number.isFinite(entry.peakProcessCpu)
@@ -428,16 +366,12 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
       });
 
       const cpuPeakValue = HISTORY_DATA.reduce(function (acc, entry) {
-        return Math.max(acc, Number.isFinite(entry.peakCpu) ? entry.peakCpu : 0, Number.isFinite(entry.cpu) ? entry.cpu : 0);
+        return Math.max(acc, Number.isFinite(entry.peakOsCpu) ? entry.peakOsCpu : 0, Number.isFinite(entry.osCpu) ? entry.osCpu : 0);
       }, 0);
       const cpuMaxYAxis = cpuPeakValue > 0 ? cpuPeakValue * 1.05 : undefined;
 
       const processCpuPeakValue = HISTORY_DATA.reduce(function (acc, entry) {
-        return Math.max(
-          acc,
-          Number.isFinite(entry.peakProcessCpu) ? entry.peakProcessCpu : 0,
-          Number.isFinite(entry.processCpu) ? entry.processCpu : 0
-        );
+        return Math.max(acc, Number.isFinite(entry.peakProcessCpu) ? entry.peakProcessCpu : 0, Number.isFinite(entry.processCpu) ? entry.processCpu : 0);
       }, 0);
       const processCpuMaxYAxis = processCpuPeakValue > 0 ? processCpuPeakValue * 1.05 : undefined;
       const useProcessCpuDecimals = (processCpuMaxYAxis ?? 0) <= 3;
@@ -504,14 +438,14 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
               {
                 label: 'Host CPU %',
                 values: HISTORY_DATA.map(function (entry) {
-                  return Number.isFinite(entry.cpu) ? Number(entry.cpu.toFixed(2)) : 0;
+                  return Number.isFinite(entry.osCpu) ? Number(entry.osCpu.toFixed(2)) : 0;
                 }),
                 color: '#38bdf8',
                 fill: 'rgba(56, 189, 248, 0.18)',
                 markPeaks: true,
                 markerPeakValues: HISTORY_DATA.map(function (entry) {
-                  if (Number.isFinite(entry.peakCpu)) return entry.peakCpu;
-                  if (Number.isFinite(entry.cpu)) return entry.cpu;
+                  if (Number.isFinite(entry.peakOsCpu)) return entry.peakOsCpu;
+                  if (Number.isFinite(entry.osCpu)) return entry.osCpu;
                   return Number.NEGATIVE_INFINITY;
                 }),
                 markerRadius: 2.5
@@ -519,7 +453,7 @@ export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): s
               {
                 label: 'Host Peak CPU %',
                 values: HISTORY_DATA.map(function (entry) {
-                  return Number.isFinite(entry.peakCpu) ? Number(entry.peakCpu.toFixed(2)) : 0;
+                  return Number.isFinite(entry.peakOsCpu) ? Number(entry.peakOsCpu.toFixed(2)) : 0;
                 }),
                 color: '#facc15',
                 dashed: [6, 4]

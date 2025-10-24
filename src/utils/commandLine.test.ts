@@ -1,7 +1,7 @@
 // src\utils\commandLine.test.ts
 import { jest } from '@jest/globals';
 
-import { hasParameter, getParameter, getIntParameter, getIntArrayParameter, getStringArrayParameter } from './commandLine.js';
+import { hasParameter, getParameter, getIntParameter, getIntArrayParameter, getStringArrayParameter, hasAnyParameter } from './commandLine.js';
 
 describe('Parameter Functions', () => {
   const ORIGINAL_ARGV = process.argv;
@@ -28,6 +28,22 @@ describe('Parameter Functions', () => {
 
     test('returns false when not present', () => {
       expect(hasParameter('missing')).toBe(false);
+    });
+  });
+
+  describe('hasAnyParameter', () => {
+    test('detects short flag', () => {
+      process.argv = [...process.argv, '-a'];
+      expect(hasAnyParameter('a', 'b')).toBe(true);
+    });
+
+    test('detects long flag', () => {
+      process.argv = [...process.argv, '--verbose'];
+      expect(hasAnyParameter('verbose', 'quiet')).toBe(true);
+    });
+
+    test('returns false when not present', () => {
+      expect(hasAnyParameter('missing', 'alsoMissing')).toBe(false);
     });
   });
 

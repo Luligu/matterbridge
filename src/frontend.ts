@@ -26,24 +26,26 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mFrontend loaded.\u001B[40;0m');
 
 // Node modules
-import type { Server as HttpServer } from 'node:http';
-import type { Server as HttpsServer, ServerOptions as HttpsServerOptions } from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import EventEmitter from 'node:events';
+import type { Server as HttpServer } from 'node:http';
+import type { Server as HttpsServer, ServerOptions as HttpsServerOptions } from 'node:https';
 
 // Third-party modules
 import type { Express } from 'express';
 import type WebSocket from 'ws';
 import type { WebSocketServer } from 'ws';
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt, wr } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt } from 'node-ansi-logger';
 // @matter
-import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle, ServerNode, LogDestination, Diagnostic, Time, FabricIndex, EndpointNumber } from '@matter/main';
-import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
-import { PowerSource } from '@matter/main/clusters/power-source';
-import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/main/protocol';
-import { CommissioningOptions } from '@matter/main/types';
+import type { ServerNode } from '@matter/node';
+import { Logger, Diagnostic, LogDestination, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/general';
+import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
+import { EndpointNumber, FabricIndex } from '@matter/types/datatype';
+import { CommissioningOptions } from '@matter/types/commissioning';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { PowerSource } from '@matter/types/clusters/power-source';
 
 // Matterbridge
 import type { Cluster, ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, Plugin } from './matterbridgeTypes.js';
@@ -57,7 +59,7 @@ import { createZip } from './utils/createZip.js';
 import { hasParameter } from './utils/commandLine.js';
 import { withTimeout, wait } from './utils/wait.js';
 import { inspectError } from './utils/error.js';
-import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
+import { formatBytes, formatUptime, formatPercent } from './utils/format.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
 import { generateHistoryPage } from './cliHistory.js';
@@ -102,7 +104,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'frontend')) {
-      this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'frontend_start':
           await this.start(msg.params.port);
@@ -113,11 +115,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
-          this.log.warn(`Unknown broadcast request ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+          this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
     if (this.server.isWorkerResponse(msg, msg.type)) {
-      this.log.debug(`**Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'plugins_install':
           this.wssSendCloseSnackbarMessage(`Installing package ${msg.response.packageName}...`);
@@ -140,7 +142,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           }
           break;
         default:
-          this.log.warn(`Unknown broadcast response ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+          this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }
@@ -340,6 +342,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       });
     }
 
+    // Load the stored password
+    /*
+    let storedPassword = '';
+    try {
+      if (!this.matterbridge.nodeContext) throw new Error('nodeContext not found');
+      storedPassword = await this.matterbridge.nodeContext.get('password', '');
+    } catch (error) {
+      inspectError(this.log, 'Error getting password', error);
+      return;
+    }
+    */
+
     // Create a WebSocket server and attach it to the http or https server
     const ws = await import('ws');
 
@@ -348,6 +362,19 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     this.webSocketServer.on('connection', (ws, request) => {
       const clientIp = request.socket.remoteAddress;
+
+      /*
+      if (storedPassword !== '') {
+        // Check for the password in the query parameters
+        const url = new URL(request.url ?? '', `http://${request.headers.host}`);
+        const password = url.searchParams.get('password');
+        if (password !== storedPassword) {
+          this.log.error(`WebSocket client "${clientIp}" failed authentication: ${storedPassword}-${password}`);
+          // ws.close();
+          // return;
+        }
+      }
+      */
 
       // Set the global logger callback for the WebSocketServer
       let callbackLogLevel = LogLevel.NOTICE;
@@ -455,11 +482,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       // Memory usage from process
       const memoryUsageRaw = process.memoryUsage();
       const memoryUsage = {
-        rss: formatMemoryUsage(memoryUsageRaw.rss),
-        heapTotal: formatMemoryUsage(memoryUsageRaw.heapTotal),
-        heapUsed: formatMemoryUsage(memoryUsageRaw.heapUsed),
-        external: formatMemoryUsage(memoryUsageRaw.external),
-        arrayBuffers: formatMemoryUsage(memoryUsageRaw.arrayBuffers),
+        rss: formatBytes(memoryUsageRaw.rss),
+        heapTotal: formatBytes(memoryUsageRaw.heapTotal),
+        heapUsed: formatBytes(memoryUsageRaw.heapUsed),
+        external: formatBytes(memoryUsageRaw.external),
+        arrayBuffers: formatBytes(memoryUsageRaw.arrayBuffers),
       };
 
       // V8 heap statistics
@@ -468,15 +495,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       const heapSpacesRaw = v8.getHeapSpaceStatistics();
 
       // Format heapStats
-      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, formatMemoryUsage(value as number)]));
+      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, formatBytes(value as number)]));
 
       // Format heapSpaces
       const heapSpaces = heapSpacesRaw.map((space) => ({
         ...space,
-        space_size: formatMemoryUsage(space.space_size),
-        space_used_size: formatMemoryUsage(space.space_used_size),
-        space_available_size: formatMemoryUsage(space.space_available_size),
-        physical_space_size: formatMemoryUsage(space.physical_space_size),
+        space_size: formatBytes(space.space_size),
+        space_used_size: formatBytes(space.space_used_size),
+        space_available_size: formatBytes(space.space_available_size),
+        physical_space_size: formatBytes(space.physical_space_size),
       }));
 
       const { createRequire } = await import('node:module');
@@ -918,15 +945,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   private async getApiSettings(): Promise<ApiSettings> {
     // Update the variable system information properties
-    this.matterbridge.systemInformation.totalMemory = formatMemoryUsage(os.totalmem());
-    this.matterbridge.systemInformation.freeMemory = formatMemoryUsage(os.freemem());
-    this.matterbridge.systemInformation.systemUptime = formatOsUpTime(os.uptime());
-    this.matterbridge.systemInformation.processUptime = formatOsUpTime(Math.floor(process.uptime()));
-    this.matterbridge.systemInformation.cpuUsage = lastOsCpuUsage.toFixed(2) + ' %';
-    this.matterbridge.systemInformation.processCpuUsage = lastProcessCpuUsage.toFixed(2) + ' %';
-    this.matterbridge.systemInformation.rss = formatMemoryUsage(process.memoryUsage().rss);
-    this.matterbridge.systemInformation.heapTotal = formatMemoryUsage(process.memoryUsage().heapTotal);
-    this.matterbridge.systemInformation.heapUsed = formatMemoryUsage(process.memoryUsage().heapUsed);
+    this.matterbridge.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.matterbridge.systemInformation.freeMemory = formatBytes(os.freemem());
+    this.matterbridge.systemInformation.systemUptime = formatUptime(os.uptime());
+    this.matterbridge.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
+    this.matterbridge.systemInformation.cpuUsage = formatPercent(lastOsCpuUsage);
+    this.matterbridge.systemInformation.processCpuUsage = formatPercent(lastProcessCpuUsage);
+    this.matterbridge.systemInformation.rss = formatBytes(process.memoryUsage().rss);
+    this.matterbridge.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
+    this.matterbridge.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
 
     // Create the matterbridge information
     const info: MatterbridgeInformation = {
@@ -1299,7 +1326,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     diagnosticDestination.context.run(() =>
       diagnosticDestination.add(
         Diagnostic.message({
-          now: Time.now(),
+          now: new Date(),
           facility: 'Server nodes:',
           level: MatterLogLevel.INFO,
           prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',

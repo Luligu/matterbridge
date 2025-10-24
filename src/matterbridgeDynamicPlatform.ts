@@ -22,11 +22,15 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeDynamicPlatform loaded.\u001B[40;0m');
+
+// AnsiLogger module
+import { AnsiLogger } from 'node-ansi-logger';
+
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
-// AnsiLogger module
-import { AnsiLogger } from './logger/export.js';
 
 /**
  * Represents a dynamic platform for Matterbridge.

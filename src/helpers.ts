@@ -23,7 +23,7 @@
  */
 
 // @matter module
-import { OnOff } from '@matter/main/clusters/on-off';
+import { OnOff } from '@matter/types/clusters/on-off';
 import { Endpoint } from '@matter/node';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { OnOffBaseServer } from '@matter/node/behaviors/on-off';

@@ -4,11 +4,17 @@ import path from 'node:path';
 
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 
-import { generateHistoryPage, history, historyIndex, historySize, setHistoryIndex, type HistoryEntry } from './cliHistory.js';
+import { generateHistoryPage } from './cliHistory.js';
+import { Tracker, type TrackerSnapshot } from './utils/tracker.js';
 
-const zeroEntry: HistoryEntry = {
-  cpu: 0,
-  peakCpu: 0,
+const zeroEntry: TrackerSnapshot = {
+  timestamp: 0,
+  freeMemory: 0,
+  peakFreeMemory: 0,
+  totalMemory: 0,
+  peakTotalMemory: 0,
+  osCpu: 0,
+  peakOsCpu: 0,
   processCpu: 0,
   peakProcessCpu: 0,
   rss: 0,
@@ -17,58 +23,55 @@ const zeroEntry: HistoryEntry = {
   peakHeapUsed: 0,
   heapTotal: 0,
   peakHeapTotal: 0,
-  timestamp: 0,
+  external: 0,
+  peakExternal: 0,
+  arrayBuffers: 0,
+  peakArrayBuffers: 0,
 };
 
 const mutatedIndices = new Set<number>();
 
-function configureHistoryEntry(index: number, overrides: Partial<HistoryEntry>) {
-  Object.assign(history[index], zeroEntry, overrides);
+function configureHistoryEntry(index: number, overrides: Partial<TrackerSnapshot>) {
+  Object.assign(Tracker.history[index], zeroEntry, overrides);
   mutatedIndices.add(index);
 }
 
 describe('cliHistory', () => {
   beforeEach(() => {
-    setHistoryIndex(0);
+    Tracker.historyIndex = 0;
   });
 
   afterEach(() => {
     mutatedIndices.forEach((idx) => {
-      Object.assign(history[idx], zeroEntry);
+      Object.assign(Tracker.history[idx], zeroEntry);
     });
     mutatedIndices.clear();
-    setHistoryIndex(0);
+    Tracker.historyIndex = 0;
   });
 
-  describe('setHistoryIndex', () => {
+  describe('historyIndex', () => {
     test('accepts valid indices within bounds', () => {
-      const validIndex = historySize - 1;
-      setHistoryIndex(validIndex);
-      expect(historyIndex).toBe(validIndex);
-    });
-
-    test('throws TypeError for non-finite or non-integer values', () => {
-      expect(() => setHistoryIndex(Number.NaN)).toThrow(TypeError);
-      expect(() => setHistoryIndex(1.5)).toThrow(TypeError);
-      expect(() => setHistoryIndex(Number.MAX_SAFE_INTEGER + 2)).toThrow(TypeError);
-    });
-
-    test('throws RangeError for values outside the buffer length', () => {
-      expect(() => setHistoryIndex(-1)).toThrow(RangeError);
-      expect(() => setHistoryIndex(historySize)).toThrow(RangeError);
+      const validIndex = Tracker.historySize - 1;
+      Tracker.historyIndex = validIndex;
+      expect(Tracker.historyIndex).toBe(validIndex);
     });
   });
 
   describe('generateHistoryPage', () => {
     test('returns undefined when history buffer is empty', () => {
-      const backup = history.slice();
-      history.length = 0;
+      const backup = Tracker.history.slice();
+      // Emulate empty snapshots by zeroing timestamps
+      for (let i = 0; i < Tracker.history.length; i++) {
+        Tracker.history[i].timestamp = 0;
+      }
 
       try {
         const result = generateHistoryPage();
         expect(result).toBeUndefined();
       } finally {
-        history.push(...backup);
+        for (let i = 0; i < backup.length; i++) {
+          Tracker.history[i] = backup[i];
+        }
       }
     });
 
@@ -89,8 +92,8 @@ describe('cliHistory', () => {
     test('writes sanitized HTML when samples exist', () => {
       const now = Date.now();
       configureHistoryEntry(0, {
-        cpu: 10.1234,
-        peakCpu: 15.9876,
+        osCpu: 10.1234,
+        peakOsCpu: 15.9876,
         processCpu: 5.5,
         peakProcessCpu: 6.1,
         rss: 50 * 1024 * 1024,
@@ -102,8 +105,8 @@ describe('cliHistory', () => {
         timestamp: now - 1_000,
       });
       configureHistoryEntry(1, {
-        cpu: 20.4321,
-        peakCpu: 25.6789,
+        osCpu: 20.4321,
+        peakOsCpu: 25.6789,
         processCpu: 10.25,
         peakProcessCpu: 12.75,
         rss: 75 * 1024 * 1024,
@@ -115,7 +118,7 @@ describe('cliHistory', () => {
         timestamp: now,
       });
 
-      setHistoryIndex(1);
+      Tracker.historyIndex = 1;
 
       const pageTitle = '<Title & More>';
       const tempDir = mkdtempSync(path.join(os.tmpdir(), 'cli-history-test-'));

@@ -53,7 +53,8 @@ This will create the required directories in your home directory if they don't e
 cd ~
 mkdir -p ~/Matterbridge
 mkdir -p ~/.matterbridge
-sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge
+mkdir -p ~/.mattercert
+sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert
 ```
 
 You may need to adapt the script to your setup.
@@ -77,6 +78,7 @@ The container must have full access to the host network (needed for mdns and Mat
 sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
+  -v ~/.mattercert:/root/.mattercert \
   --network host --restart always -d luligu/matterbridge:latest
 ```
 
@@ -96,6 +98,7 @@ services:
     volumes:
       - "${HOME}/Matterbridge:/root/Matterbridge"             # Mounts the Matterbridge plugin directory
       - "${HOME}/.matterbridge:/root/.matterbridge"           # Mounts the Matterbridge storage directory
+      - "${HOME}/.mattercert:/root/.mattercert"               # Mounts the Matterbridge certificate directory
 ```
 
 Copy it in the home directory or edit the existing one to add the matterbridge service.

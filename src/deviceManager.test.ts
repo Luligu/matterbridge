@@ -51,10 +51,10 @@ describe('DeviceManager', () => {
     broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
     await (devices as any).msgHandler({} as any);
 
-    (devices as any).msgHandler({ type: 'jest', src: 'frontend', dst: 'devices' } as any); // no id
-    (devices as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'unknown' } as any); // unknown dst
-    (devices as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'devices' } as any); // valid
-    (devices as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'all' } as any); // valid
+    await (devices as any).msgHandler({ type: 'jest', src: 'frontend', dst: 'devices' } as any); // no id
+    await (devices as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'unknown' } as any); // unknown dst
+    await (devices as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'devices' } as any); // valid
+    await (devices as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'all' } as any); // valid
     for (const type of ['jest', 'devices_length', 'devices_size', 'devices_has', 'devices_get', 'devices_set', 'devices_remove', 'devices_clear'] as const) {
       await (devices as any).msgHandler({ id: 123456, type, src: 'frontend', dst: 'all', params: { uniqueId: 'testDevice', device: { uniqueId: 'testDevice' } } } as any);
     }

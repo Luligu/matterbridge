@@ -22,96 +22,101 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeDeviceTypes loaded.\u001B[40;0m');
+
 // @matter
-import { ClusterId, DeviceTypeId, EndpointNumber } from '@matter/main';
-import { Semtag } from '@matter/main/types';
+import { Semtag } from '@matter/types/globals';
+import { ClusterId, DeviceTypeId, EndpointNumber } from '@matter/types/datatype';
 // @matter clusters
-import { AccountLogin } from '@matter/main/clusters/account-login';
-import { Actions } from '@matter/main/clusters/actions';
-import { ActivatedCarbonFilterMonitoring } from '@matter/main/clusters/activated-carbon-filter-monitoring';
-import { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
-import { AirQuality } from '@matter/main/clusters/air-quality';
-import { ApplicationLauncher } from '@matter/main/clusters/application-launcher';
-import { AudioOutput } from '@matter/main/clusters/audio-output';
-import { BooleanState } from '@matter/main/clusters/boolean-state';
-import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
-import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
-import { CarbonDioxideConcentrationMeasurement } from '@matter/main/clusters/carbon-dioxide-concentration-measurement';
-import { CarbonMonoxideConcentrationMeasurement } from '@matter/main/clusters/carbon-monoxide-concentration-measurement';
-import { Channel } from '@matter/main/clusters/channel';
-import { ColorControl } from '@matter/main/clusters/color-control';
-import { CommissionerControl } from '@matter/main/clusters/commissioner-control';
-import { ContentControl } from '@matter/main/clusters/content-control';
-import { ContentLauncher } from '@matter/main/clusters/content-launcher';
-import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
-import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
-import { DishwasherAlarm } from '@matter/main/clusters/dishwasher-alarm';
-import { DishwasherMode } from '@matter/main/clusters/dishwasher-mode';
-import { DoorLock } from '@matter/main/clusters/door-lock';
-import { EcosystemInformation } from '@matter/main/clusters/ecosystem-information';
-import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
-import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
-import { EnergyEvse } from '@matter/main/clusters/energy-evse';
-import { EnergyEvseMode } from '@matter/main/clusters/energy-evse-mode';
-import { EnergyPreference } from '@matter/main/clusters/energy-preference';
-import { FanControl } from '@matter/main/clusters/fan-control';
-import { FlowMeasurement } from '@matter/main/clusters/flow-measurement';
-import { FormaldehydeConcentrationMeasurement } from '@matter/main/clusters/formaldehyde-concentration-measurement';
-import { Groups } from '@matter/main/clusters/groups';
-import { HepaFilterMonitoring } from '@matter/main/clusters/hepa-filter-monitoring';
-import { Identify } from '@matter/main/clusters/identify';
-import { IlluminanceMeasurement } from '@matter/main/clusters/illuminance-measurement';
-import { KeypadInput } from '@matter/main/clusters/keypad-input';
-import { LaundryDryerControls } from '@matter/main/clusters/laundry-dryer-controls';
-import { LaundryWasherControls } from '@matter/main/clusters/laundry-washer-controls';
-import { LaundryWasherMode } from '@matter/main/clusters/laundry-washer-mode';
-import { LevelControl } from '@matter/main/clusters/level-control';
-import { LowPower } from '@matter/main/clusters/low-power';
-import { MediaInput } from '@matter/main/clusters/media-input';
-import { MediaPlayback } from '@matter/main/clusters/media-playback';
-import { Messages } from '@matter/main/clusters/messages';
-import { MicrowaveOvenControl } from '@matter/main/clusters/microwave-oven-control';
-import { MicrowaveOvenMode } from '@matter/main/clusters/microwave-oven-mode';
-import { ModeSelect } from '@matter/main/clusters/mode-select';
-import { NitrogenDioxideConcentrationMeasurement } from '@matter/main/clusters/nitrogen-dioxide-concentration-measurement';
-import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
-import { OnOff } from '@matter/main/clusters/on-off';
-import { OperationalState } from '@matter/main/clusters/operational-state';
-import { OtaSoftwareUpdateProvider } from '@matter/main/clusters/ota-software-update-provider';
-import { OtaSoftwareUpdateRequestor } from '@matter/main/clusters/ota-software-update-requestor';
-import { OvenCavityOperationalState } from '@matter/main/clusters/oven-cavity-operational-state';
-import { OvenMode } from '@matter/main/clusters/oven-mode';
-import { OzoneConcentrationMeasurement } from '@matter/main/clusters/ozone-concentration-measurement';
-import { Pm1ConcentrationMeasurement } from '@matter/main/clusters/pm1-concentration-measurement';
-import { Pm10ConcentrationMeasurement } from '@matter/main/clusters/pm10-concentration-measurement';
-import { Pm25ConcentrationMeasurement } from '@matter/main/clusters/pm25-concentration-measurement';
-import { PowerSource } from '@matter/main/clusters/power-source';
-import { PowerTopology } from '@matter/main/clusters/power-topology';
-import { PressureMeasurement } from '@matter/main/clusters/pressure-measurement';
-import { PumpConfigurationAndControl } from '@matter/main/clusters/pump-configuration-and-control';
-import { RadonConcentrationMeasurement } from '@matter/main/clusters/radon-concentration-measurement';
-import { RefrigeratorAlarm } from '@matter/main/clusters/refrigerator-alarm';
-import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
-import { RelativeHumidityMeasurement } from '@matter/main/clusters/relative-humidity-measurement';
-import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
-import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
-import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
-import { ServiceArea } from '@matter/main/clusters/service-area';
-import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
-import { Switch } from '@matter/main/clusters/switch';
-import { TargetNavigator } from '@matter/main/clusters/target-navigator';
-import { TemperatureControl } from '@matter/main/clusters/temperature-control';
-import { TemperatureMeasurement } from '@matter/main/clusters/temperature-measurement';
-import { Thermostat } from '@matter/main/clusters/thermostat';
-import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
-import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/main/clusters/total-volatile-organic-compounds-concentration-measurement';
-import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
-import { WakeOnLan } from '@matter/main/clusters/wake-on-lan';
-import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
-import { WaterHeaterMode } from '@matter/main/clusters/water-heater-mode';
-import { WindowCovering } from '@matter/main/clusters/window-covering';
+import { AccountLogin } from '@matter/types/clusters/account-login';
+import { Actions } from '@matter/types/clusters/actions';
+import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
+import { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
+import { AirQuality } from '@matter/types/clusters/air-quality';
+import { ApplicationLauncher } from '@matter/types/clusters/application-launcher';
+import { AudioOutput } from '@matter/types/clusters/audio-output';
+import { BooleanState } from '@matter/types/clusters/boolean-state';
+import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { CarbonDioxideConcentrationMeasurement } from '@matter/types/clusters/carbon-dioxide-concentration-measurement';
+import { CarbonMonoxideConcentrationMeasurement } from '@matter/types/clusters/carbon-monoxide-concentration-measurement';
+import { Channel } from '@matter/types/clusters/channel';
+import { ColorControl } from '@matter/types/clusters/color-control';
+import { CommissionerControl } from '@matter/types/clusters/commissioner-control';
+import { ContentControl } from '@matter/types/clusters/content-control';
+import { ContentLauncher } from '@matter/types/clusters/content-launcher';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import { DishwasherAlarm } from '@matter/types/clusters/dishwasher-alarm';
+import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
+import { DoorLock } from '@matter/types/clusters/door-lock';
+import { EcosystemInformation } from '@matter/types/clusters/ecosystem-information';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
+import { EnergyEvse } from '@matter/types/clusters/energy-evse';
+import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
+import { EnergyPreference } from '@matter/types/clusters/energy-preference';
+import { FanControl } from '@matter/types/clusters/fan-control';
+import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
+import { FormaldehydeConcentrationMeasurement } from '@matter/types/clusters/formaldehyde-concentration-measurement';
+import { Groups } from '@matter/types/clusters/groups';
+import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
+import { Identify } from '@matter/types/clusters/identify';
+import { IlluminanceMeasurement } from '@matter/types/clusters/illuminance-measurement';
+import { KeypadInput } from '@matter/types/clusters/keypad-input';
+import { LaundryDryerControls } from '@matter/types/clusters/laundry-dryer-controls';
+import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
+import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
+import { LevelControl } from '@matter/types/clusters/level-control';
+import { LowPower } from '@matter/types/clusters/low-power';
+import { MediaInput } from '@matter/types/clusters/media-input';
+import { MediaPlayback } from '@matter/types/clusters/media-playback';
+import { Messages } from '@matter/types/clusters/messages';
+import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
+import { MicrowaveOvenMode } from '@matter/types/clusters/microwave-oven-mode';
+import { ModeSelect } from '@matter/types/clusters/mode-select';
+import { NitrogenDioxideConcentrationMeasurement } from '@matter/types/clusters/nitrogen-dioxide-concentration-measurement';
+import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { OtaSoftwareUpdateProvider } from '@matter/types/clusters/ota-software-update-provider';
+import { OtaSoftwareUpdateRequestor } from '@matter/types/clusters/ota-software-update-requestor';
+import { OvenCavityOperationalState } from '@matter/types/clusters/oven-cavity-operational-state';
+import { OvenMode } from '@matter/types/clusters/oven-mode';
+import { OzoneConcentrationMeasurement } from '@matter/types/clusters/ozone-concentration-measurement';
+import { Pm1ConcentrationMeasurement } from '@matter/types/clusters/pm1-concentration-measurement';
+import { Pm10ConcentrationMeasurement } from '@matter/types/clusters/pm10-concentration-measurement';
+import { Pm25ConcentrationMeasurement } from '@matter/types/clusters/pm25-concentration-measurement';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { PowerTopology } from '@matter/types/clusters/power-topology';
+import { PressureMeasurement } from '@matter/types/clusters/pressure-measurement';
+import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
+import { RadonConcentrationMeasurement } from '@matter/types/clusters/radon-concentration-measurement';
+import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
+import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
+import { RelativeHumidityMeasurement } from '@matter/types/clusters/relative-humidity-measurement';
+import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
+import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
+import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
+import { ServiceArea } from '@matter/types/clusters/service-area';
+import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { Switch } from '@matter/types/clusters/switch';
+import { TargetNavigator } from '@matter/types/clusters/target-navigator';
+import { TemperatureControl } from '@matter/types/clusters/temperature-control';
+import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
+import { Thermostat } from '@matter/types/clusters/thermostat';
+import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/types/clusters/total-volatile-organic-compounds-concentration-measurement';
+import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
+import { WakeOnLan } from '@matter/types/clusters/wake-on-lan';
+import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
+import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import { WindowCovering } from '@matter/types/clusters/window-covering';
 
 export enum DeviceClasses {
+  /** 1.1.5. Device Type Class Conditions */
+
   /** Node device type. */
   Node = 'Node',
 
@@ -141,16 +146,23 @@ export enum DeviceClasses {
    */
   Dynamic = 'Dynamic',
 
+  /** The device type is composed of 2 or more device types. */
+  Composed = 'Composed',
+
+  /** 1.1.6. Endpoint Type Class Conditions */
+
   /** There exists a client application cluster on the endpoint. */
   Client = 'Client',
 
   /** There exists a server application cluster on the endpoint. */
   Server = 'Server',
 
-  /** The device type is composed of 2 or more device types. */
-  Composed = 'Composed',
-
-  /** The endpoint and at least one of its sibling endpoints have an overlap in application device type(s). */
+  /**
+   * The endpoint and at least one of its sibling endpoints have an overlap in application device type(s),
+   * as defined in the "Disambiguation" section in the System Model specification. This condition triggers
+   * requirements for providing additional information about the endpoints in order to disambiguate
+   * between the endpoints (see "Disambiguation" section in the System Model specification).
+   */
   Duplicate = 'Duplicate',
 
   /**
@@ -332,9 +344,9 @@ export const OTAProvider = DeviceTypeDefinition({
     attribute SHALL indicate a list of all endpoints representing the functionality of the bridged
     device, including the endpoints supporting the application device types, i.e. the full-family
     pattern defined in the System Model specification.
-  ◦ One Endpoint: Both the Bridged Node and one or more application device types are sup
-    ported on the same endpoint (following application device type rules). Endpoint composi
-    tion SHALL conform to the application device type(s) definition
+  ◦ One Endpoint: Both the Bridged Node and one or more application device types are supported 
+    on the same endpoint (following application device type rules). Endpoint composition 
+    SHALL conform to the application device type(s) definition.
  */
 export const bridgedNode = DeviceTypeDefinition({
   name: 'MA-bridgedNode',
@@ -378,7 +390,9 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
   optionalServerClusters: [DeviceEnergyManagementMode.Cluster.id],
 });
 
-// Chapter 4. Lightning device types
+/** Chapter 3. Application Device Types */
+
+/** Chapter 4. Lighting device types */
 
 /**
  * Element Requirements:

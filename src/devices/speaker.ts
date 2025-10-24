@@ -22,7 +22,8 @@
  */
 
 // matter clusters
-import { OnOff, LevelControl } from '@matter/main/clusters';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { LevelControl } from '@matter/types/clusters/level-control';
 
 // matterbridge
 import { speakerDevice } from '../matterbridgeDeviceTypes.js';

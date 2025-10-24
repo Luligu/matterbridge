@@ -22,13 +22,13 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/main';
-import { OperationalState } from '@matter/main/clusters/operational-state';
-import { LaundryWasherControls } from '@matter/main/clusters/laundry-washer-controls';
-import { LaundryWasherMode } from '@matter/main/clusters/laundry-washer-mode';
-import { ModeBase } from '@matter/main/clusters/mode-base';
-import { LaundryWasherModeServer } from '@matter/main/behaviors/laundry-washer-mode';
-import { LaundryWasherControlsServer } from '@matter/main/behaviors/laundry-washer-controls';
+import { MaybePromise } from '@matter/general';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
+import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
+import { ModeBase } from '@matter/types/clusters/mode-base';
+import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
+import { LaundryWasherControlsServer } from '@matter/node/behaviors/laundry-washer-controls';
 
 // Matterbridge
 import { laundryWasher, powerSource } from '../matterbridgeDeviceTypes.js';

@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-import type { EndpointNumber } from '@matter/main';
+import type { EndpointNumber } from '@matter/types';
 
 import type { PlatformConfig } from './matterbridgePlatform.js';
 import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';

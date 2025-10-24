@@ -9,15 +9,28 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { FabricId, FabricIndex, NodeId, SessionsBehavior, VendorId, LogLevel as MatterLogLevel, Logger } from '@matter/main';
-import { ExposedFabricInformation } from '@matter/main/protocol';
-import { AnsiLogger, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
+import { LogLevel as MatterLogLevel, Logger } from '@matter/general';
+import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types';
+import { SessionsBehavior } from '@matter/node';
+import { ExposedFabricInformation } from '@matter/protocol';
+import { LogLevel, nf } from 'node-ansi-logger';
 
-import { getParameter, hasParameter } from './utils/export.js';
+import { getParameter, hasParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
 import { plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { BroadcastServer } from './broadcastServer.js';
+
+// Mock BroadcastServer methods
+const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
+const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
+const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
+const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
+const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
+  return Promise.resolve(undefined) as any;
+});
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -78,6 +91,26 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).initialized).toBeFalsy();
       expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
       expect((Matterbridge as any).instance).toBeDefined(); // Instance is still defined cause cleanup() is not called when initialized is false
+    });
+
+    test('broadcast handler', async () => {
+      broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
+      await (matterbridge as any).msgHandler({} as any);
+      broadcastServerIsWorkerResponseSpy.mockImplementationOnce(() => false);
+      await (matterbridge as any).msgHandler({} as any);
+
+      expect((matterbridge as any).server).toBeInstanceOf(BroadcastServer);
+
+      await (matterbridge as any).msgHandler({ type: 'jest', src: 'manager', dst: 'matterbridge' } as any); // no id
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'matterbridge' } as any); // valid
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'matterbridge', params: {} } as any); // valid
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all', response: { success: false } } as any);
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all', response: { success: true } } as any);
+
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'matterbridge' } as any);
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'matterbridge', params: { level: LogLevel.DEBUG } } as any);
     });
 
     test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
@@ -146,7 +179,7 @@ describe('Matterbridge', () => {
 
       // Destroy the Matterbridge instance
       await matterbridge.destroyInstance(10);
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
+      // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
 
       expect((matterbridge as any).initialized).toBeFalsy();
       expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
@@ -201,7 +234,8 @@ describe('Matterbridge', () => {
     test('destroy instance', async () => {
       // Destroy the Matterbridge instance
       await matterbridge.destroyInstance(10);
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
+      // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
     }, 60000);
   });
 
@@ -475,6 +509,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).plugins.log.logLevel).toBe(LogLevel.INFO);
       expect((matterbridge as any).devices.log.logLevel).toBe(LogLevel.INFO);
       expect(MatterbridgeEndpoint.logLevel).toBe(LogLevel.INFO);
+      expect(matterbridge.getLogLevel()).toBe(LogLevel.INFO);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocketServer logger global callback set to ${LogLevel.INFO}`);
     });
 
@@ -485,6 +520,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).plugins.log.logLevel).toBe(LogLevel.DEBUG);
       expect((matterbridge as any).devices.log.logLevel).toBe(LogLevel.DEBUG);
       expect(MatterbridgeEndpoint.logLevel).toBe(LogLevel.DEBUG);
+      expect(matterbridge.getLogLevel()).toBe(LogLevel.DEBUG);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocketServer logger global callback set to ${LogLevel.DEBUG}`);
     });
 
@@ -519,29 +555,6 @@ describe('Matterbridge', () => {
 
       // setDebug(false);
     }, 10000);
-
-    test('matterbridge -help', async () => {
-      expect((matterbridge as any).initialized).toBe(true);
-      expect((matterbridge as any).hasCleanupStarted).toBe(false);
-      expect((matterbridge as any).shutdown).toBe(false);
-
-      const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve as () => void);
-        const interval = setInterval(() => {
-          if (matterbridge.shutdown) {
-            clearInterval(interval);
-            resolve(0);
-          }
-        }, 100);
-      });
-
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-help'];
-      await (matterbridge as any).parseCommandLine();
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Usage: matterbridge [options]'));
-      await shutdownPromise;
-      matterbridge.shutdown = false;
-      matterbridge.removeAllListeners('shutdown');
-    });
 
     test('matterbridge -list', async () => {
       expect((matterbridge as any).initialized).toBe(true);
@@ -616,7 +629,8 @@ describe('Matterbridge', () => {
     test('destroy instance', async () => {
       // Destroy the Matterbridge instance
       await matterbridge.destroyInstance(10);
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
+      // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
     }, 60000);
 
     test('matterbridge -reset', async () => {

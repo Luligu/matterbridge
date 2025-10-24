@@ -37,34 +37,20 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, deb
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
-import {
-  DeviceTypeId,
-  Endpoint,
-  Logger,
-  LogLevel as MatterLogLevel,
-  LogFormat as MatterLogFormat,
-  VendorId,
-  StorageContext,
-  StorageManager,
-  StorageService,
-  Environment,
-  ServerNode,
-  SessionsBehavior,
-  UINT32_MAX,
-  UINT16_MAX,
-  Crypto,
-  Diagnostic,
-} from '@matter/main';
-import { DeviceCertification, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
-import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
+import '@matter/nodejs'; // Set up Node.js environment for matter.js
+import { Logger, Diagnostic, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, UINT32_MAX, UINT16_MAX, Crypto, Environment, StorageContext, StorageManager, StorageService } from '@matter/general';
+import { DeviceCertification, ExposedFabricInformation, FabricAction, PaseClient } from '@matter/protocol';
+import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
+import { DeviceTypeId, VendorId } from '@matter/types/datatype';
+import { AggregatorEndpoint } from '@matter/node/endpoints';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter } from './utils/commandLine.js';
 import { copyDirectory } from './utils/copyDirectory.js';
 import { createDirectory } from './utils/createDirectory.js';
 import { isValidString, parseVersionString, isValidNumber, isValidObject } from './utils/isvalid.js';
-import { formatMemoryUsage, formatOsUpTime } from './utils/network.js';
+import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
 import { withTimeout, waiter, wait } from './utils/wait.js';
 import { ApiMatter, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, MaybePromise, NODE_STORAGE_DIR, plg, Plugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
@@ -73,6 +59,8 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevices } from './helpers.js';
+import { BroadcastServer } from './broadcastServer.js';
+import { WorkerMessage } from './broadcastServerTypes.js';
 
 /**
  * Represents the Matterbridge events.
@@ -103,17 +91,21 @@ interface MatterbridgeEvents {
 export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Matterbridge system information */
   public systemInformation: SystemInformation = {
+    // Network properties
     interfaceName: '',
     macAddress: '',
     ipv4Address: '',
     ipv6Address: '',
+    // Node.js properties
     nodeVersion: '',
+    // Fixed system properties
     hostname: '',
     user: '',
     osType: '',
     osRelease: '',
     osPlatform: '',
     osArch: '',
+    // Cpu and memory properties
     totalMemory: '',
     freeMemory: '',
     systemUptime: '',
@@ -167,7 +159,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   // Frontend
   public readonly frontend = new Frontend(this);
 
-  /** Matterbridge node storage manager created in matterbridgeDirectory with name 'storage' */
+  /** Matterbridge node storage manager created in the directory 'storage' in matterbridgeDirectory */
   public nodeStorage: NodeStorageManager | undefined;
   /** Matterbridge node context created with name 'matterbridge' */
   public nodeContext: NodeStorage | undefined;
@@ -232,10 +224,39 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Advertising nodes map: time advertising started keyed by storeId */
   advertisingNodes = new Map<string, number>();
 
+  /** Broadcast server */
+  private server: BroadcastServer;
+
   /** We load asyncronously so is private */
-  protected constructor() {
+  private constructor() {
     super();
     this.log.logNameColor = '\x1b[38;5;115m';
+    this.server = new BroadcastServer('matterbridge', this.log);
+    this.server.on('broadcast_message', this.msgHandler.bind(this));
+  }
+
+  private async msgHandler(msg: WorkerMessage) {
+    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+      this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        case 'get_log_level':
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
+        case 'set_log_level':
+          this.log.logLevel = msg.params.logLevel;
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
+        default:
+          this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+      }
+    }
+    if (this.server.isWorkerResponse(msg, msg.type)) {
+      this.log.debug(`**Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        default:
+          this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+      }
+    }
   }
 
   //* ************************************************************************************************************************************ */
@@ -260,7 +281,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Call cleanup() and dispose MdnsService.
+   * Call cleanup() and dispose MdnsService. Will be removed since matter.js 0.15.6 dispose MdnsService.
    *
    * @param {number} [timeout] - The timeout duration to wait for the cleanup to complete in milliseconds. Default is 1000.
    * @param {number} [pause] - The pause duration after the cleanup in milliseconds. Default is 250.
@@ -270,6 +291,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   async destroyInstance(timeout: number = 1000, pause: number = 250) {
     this.log.info(`Destroy instance...`);
     // Save server nodes to close
+    /*
     const servers: ServerNode<ServerNode.RootEndpoint>[] = [];
     if (this.bridgeMode === 'bridge') {
       if (this.serverNode) servers.push(this.serverNode);
@@ -284,22 +306,25 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         if (device.mode === 'server' && device.serverNode) servers.push(device.serverNode);
       }
     }
+    */
     // Let any already‐queued microtasks run first
-    await Promise.resolve();
+    // await Promise.resolve();
     // Wait for the cleanup to finish
-    await wait(pause, 'destroyInstance start', true);
+    // await wait(pause, 'destroyInstance start', true);
     // Cleanup
     await this.cleanup('destroying instance...', false, timeout);
     // Close servers mdns service
+    /*
     this.log.info(`Dispose ${servers.length} MdnsService...`);
     for (const server of servers) {
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      // await server.env.get(MdnsService)[Symbol.asyncDispose]();
       this.log.info(`Closed ${server.id} MdnsService`);
     }
+    */
     // Let any already‐queued microtasks run first
-    await Promise.resolve();
+    // await Promise.resolve();
     // Wait for the cleanup to finish
-    await wait(pause, 'destroyInstance stop', true);
+    if (pause) await wait(pause, 'destroyInstance stop', true);
   }
 
   /**
@@ -701,7 +726,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     );
 
     // Check node version and throw error
-    const minNodeVersion = 18;
+    const minNodeVersion = 20;
     const nodeVersion = process.versions.node;
     const versionMajor = parseInt(nodeVersion.split('.')[0]);
     if (versionMajor < minNodeVersion) {
@@ -724,53 +749,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when the command line arguments have been processed, or the process exits.
    */
   private async parseCommandLine(): Promise<void> {
-    if (hasParameter('help')) {
-      this.log.info(`\nUsage: matterbridge [options]\n
-      Options:
-      --help:                  show the help
-      --bridge:                start Matterbridge in bridge mode
-      --childbridge:           start Matterbridge in childbridge mode
-      --port [port]:           start the commissioning server on the given port (default 5540)
-      --mdnsinterface [name]:  set the interface to use for the matter server mdnsInterface (default all interfaces)
-      --ipv4address [address]: set the ipv4 interface address to use for the matter listener (default all addresses)
-      --ipv6address [address]: set the ipv6 interface address to use for the matter listener (default all addresses)
-      --frontend [port]:       start the frontend on the given port (default 8283)
-      --logger:                set the matterbridge logger level: debug | info | notice | warn | error | fatal (default info)
-      --filelogger             enable the matterbridge file logger (matterbridge.log)
-      --matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
-      --matterfilelogger       enable the matter.js file logger (matter.log)
-      --reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
-      --factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
-      --list:                  list the registered plugins
-      --loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
-      --logstorage:            log the node storage
-      --sudo:                  force the use of sudo to install or update packages if the internal logic fails
-      --nosudo:                force not to use sudo to install or update packages if the internal logic fails
-      --norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted
-      --novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
-      --ssl:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
-      --mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https)
-      --vendorId:              override the default vendorId 0xfff1
-      --vendorName:            override the default vendorName "Matterbridge"
-      --productId:             override the default productId 0x8000
-      --productName:           override the default productName "Matterbridge aggregator"
-      --service:               enable the service mode (used in the systemctl configuration file)
-      --docker:                enable the docker mode (used in the docker image)
-      --homedir:               override the home directory (default: os.homedir())
-      --add [plugin path]:     register the plugin from the given absolute or relative path
-      --add [plugin name]:     register the globally installed plugin with the given name
-      --remove [plugin path]:  remove the plugin from the given absolute or relative path
-      --remove [plugin name]:  remove the globally installed plugin with the given name
-      --enable [plugin path]:  enable the plugin from the given absolute or relative path
-      --enable [plugin name]:  enable the globally installed plugin with the given name
-      --disable [plugin path]: disable the plugin from the given absolute or relative path
-      --disable [plugin name]: disable the globally installed plugin with the given name
-      --reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
-      --reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!${rs}`);
-      this.shutdown = true;
-      return;
-    }
-
     if (hasParameter('list')) {
       this.log.info(`│ Registered plugins (${this.plugins.length})`);
       let index = 0;
@@ -860,15 +838,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (this.aggregatorSerialNumber && this.aggregatorUniqueId && this.matterStorageService) {
         const storageManager = await this.matterStorageService.open('Matterbridge');
         const storageContext = storageManager?.createContext('persist');
-        if (this.aggregatorSerialNumber) await storageContext?.set('serialNumber', this.aggregatorSerialNumber);
-        if (this.aggregatorUniqueId) await storageContext?.set('uniqueId', this.aggregatorUniqueId);
+        await storageContext?.set('serialNumber', this.aggregatorSerialNumber);
+        await storageContext?.set('uniqueId', this.aggregatorUniqueId);
       }
     } catch (error) {
       this.log.fatal(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
       throw new Error(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
     }
 
-    // Clear the matterbridge context if the reset parameter is set
+    // Clear the matterbridge context if the reset parameter is set (bridge mode)
     if (hasParameter('reset') && getParameter('reset') === undefined) {
       this.initialized = true;
       await this.shutdownProcessAndReset();
@@ -876,7 +854,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       return;
     }
 
-    // Clear matterbridge plugin context if the reset parameter is set
+    // Clear matterbridge plugin context if the reset parameter is set (childbridge mode)
     if (hasParameter('reset') && getParameter('reset') !== undefined) {
       this.log.debug(`Reset plugin ${getParameter('reset')}`);
       const plugin = this.plugins.get(getParameter('reset') as string);
@@ -1100,14 +1078,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.systemInformation.osRelease = os.release(); // Kernel version
     this.systemInformation.osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
     this.systemInformation.osArch = os.arch(); // "x64", "arm", etc.
-    this.systemInformation.totalMemory = formatMemoryUsage(os.totalmem());
-    this.systemInformation.freeMemory = formatMemoryUsage(os.freemem());
-    this.systemInformation.systemUptime = formatOsUpTime(os.uptime());
-    this.systemInformation.processUptime = formatOsUpTime(Math.floor(process.uptime()));
-    this.systemInformation.cpuUsage = '0.00 %';
-    this.systemInformation.rss = formatMemoryUsage(process.memoryUsage().rss);
-    this.systemInformation.heapTotal = formatMemoryUsage(process.memoryUsage().heapTotal);
-    this.systemInformation.heapUsed = formatMemoryUsage(process.memoryUsage().heapUsed);
+    this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.freeMemory = formatBytes(os.freemem());
+    this.systemInformation.systemUptime = formatUptime(os.uptime());
+    this.systemInformation.processUptime = formatUptime(process.uptime());
+    this.systemInformation.cpuUsage = formatPercent(0);
+    this.systemInformation.processCpuUsage = formatPercent(0);
+    this.systemInformation.rss = formatBytes(process.memoryUsage().rss);
+    this.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
+    this.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
 
     // Log the system information
     this.log.debug('Host System Information:');
@@ -1196,9 +1175,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * Set the logger logLevel for the Matterbridge classes and call onChangeLoggerLevel() for each plugin.
    *
    * @param {LogLevel} logLevel The logger logLevel to set.
-   * @returns {Promise<void>} A promise that resolves when the logLevel has been set.
+   * @returns {Promise<LogLevel>} A promise that resolves when the logLevel has been set.
    */
-  async setLogLevel(logLevel: LogLevel): Promise<void> {
+  async setLogLevel(logLevel: LogLevel): Promise<LogLevel> {
     this.log.logLevel = logLevel;
     this.frontend.logLevel = logLevel;
     MatterbridgeEndpoint.logLevel = logLevel;
@@ -1215,6 +1194,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (logLevel === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
     AnsiLogger.setGlobalCallbackLevel(callbackLogLevel);
     this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
+    return logLevel;
   }
 
   /**
@@ -1472,15 +1452,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.plugins.destroy();
       this.devices.destroy();
 
+      // Stop thread messaging server
+      this.server.close();
+
       // Close the matterbridge node storage and context
       if (this.nodeStorage && this.nodeContext) {
         /*
-        TODO: Implement serialization of registered devices in edge mode
+        TODO: Implement serialization of registered devices
         this.log.info('Saving registered devices...');
         const serializedRegisteredDevices: SerializedMatterbridgeEndpoint[] = [];
         this.devices.forEach(async (device) => {
           const serializedMatterbridgeDevice = MatterbridgeEndpoint.serialize(device);
-          // this.log.info(`- ${serializedMatterbridgeDevice.deviceName}${rs}\n`, serializedMatterbridgeDevice);
+          this.log.info(`- ${serializedMatterbridgeDevice.deviceName}${rs}\n`, serializedMatterbridgeDevice);
           if (serializedMatterbridgeDevice) serializedRegisteredDevices.push(serializedMatterbridgeDevice);
         });
         await this.nodeContext.set<SerializedMatterbridgeEndpoint[]>('devices', serializedRegisteredDevices);

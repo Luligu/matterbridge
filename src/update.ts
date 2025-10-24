@@ -28,7 +28,6 @@ import { db, debugStringify, nt, wr } from 'node-ansi-logger';
 // Matterbridge module
 import { Matterbridge } from './matterbridge.js';
 import { plg, Plugin } from './matterbridgeTypes.js';
-import { isValidString } from './utils/isvalid.js';
 
 /**
  * Checks for updates for Matterbridge and its plugins.
@@ -72,6 +71,8 @@ export async function checkUpdates(matterbridge: Matterbridge): Promise<void> {
  */
 export async function checkUpdatesAndLog(matterbridge: Matterbridge): Promise<void> {
   const { getGitHubUpdate } = await import('./utils/network.js');
+  const { isValidString } = await import('./utils/isvalid.js');
+
   const branch = matterbridge.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main';
   try {
     const updateJson = await getGitHubUpdate(branch, 'update.json', 5_000);

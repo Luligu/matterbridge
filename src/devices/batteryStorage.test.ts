@@ -8,14 +8,17 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
-// matter.js
-import { Endpoint, ServerNode } from '@matter/main';
-import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { Identify } from '@matter/main/clusters/identify';
-import { PowerSource } from '@matter/main/clusters/power-source';
-import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
-import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
-import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+// @matter
+import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/general';
+import { DeviceTypeId, VendorId } from '@matter/types';
+import { MdnsService } from '@matter/protocol';
+import { ServerNode, Endpoint } from '@matter/node';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { Identify } from '@matter/types/clusters/identify';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';

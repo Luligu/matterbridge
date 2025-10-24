@@ -25,13 +25,13 @@
 // Matterbridge
 
 // Matter.js
-import { MaybePromise } from '@matter/main';
-import { ModeBase } from '@matter/main/clusters/mode-base';
-import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
-import { WaterHeaterMode } from '@matter/main/clusters/water-heater-mode';
-import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
-import { WaterHeaterManagementServer } from '@matter/main/behaviors/water-heater-management';
-import { WaterHeaterModeServer } from '@matter/main/behaviors/water-heater-mode';
+import { MaybePromise } from '@matter/general';
+import { ModeBase } from '@matter/types/clusters/mode-base';
+import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
+import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
+import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
 
 import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
