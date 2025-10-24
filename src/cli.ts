@@ -33,7 +33,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 // Cli
 import { cliEmitter } from './cliEmitter.js';
 // Matterbridge
-import { Matterbridge } from './matterbridge.js';
+import type { Matterbridge } from './matterbridge.js';
 import { hasParameter, hasAnyParameter } from './utils/commandLine.js';
 import { inspectError } from './utils/error.js';
 import { Tracker, TrackerSnapshot } from './utils/tracker.js';
@@ -154,7 +154,10 @@ async function shutdown() {
  */
 async function restart() {
   log.debug('Received restart event, loading...');
+
+  const { Matterbridge } = await import('./matterbridge.js');
   instance = await Matterbridge.loadInstance(true);
+
   registerHandlers();
 }
 
@@ -163,8 +166,11 @@ async function restart() {
  */
 async function update() {
   log.debug('Received update event, updating...');
+
   // TODO: Implement update logic outside of matterbridge
+  const { Matterbridge } = await import('./matterbridge.js');
   instance = await Matterbridge.loadInstance(true);
+
   registerHandlers();
 }
 
@@ -210,6 +216,7 @@ async function main() {
 
   log.debug(`***Matterbridge.loadInstance(true) called`);
 
+  const { Matterbridge } = await import('./matterbridge.js');
   instance = await Matterbridge.loadInstance(true);
 
   log.debug(`***Matterbridge.loadInstance(true) exited`);

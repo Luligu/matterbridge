@@ -26,6 +26,38 @@ Advantages:
 - real concurrency outside the Node.js main loop;
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
+- ability to update the plugin in childbridge mode without restarting matterbridge;
+
+## [3.3.4] - 2025-10-24
+
+### Breaking Changes
+
+- [nodejs]: Matterbridge will not start if the Node.js version is less then 20.x.x.
+
+### Added
+
+- [frontend]: Added debounce to MatterSettings.
+- [cli]: Bumped `cli` version to 3.0.0 with backport of Traker and Inspector from thread module.
+- [powerSource]: Added MatterbridgePowerSourceServer. It initializes the enpointList of the PowerSource cluster.
+- [thread]: Added BroadcastServer to Matterbridge.
+- [service]: Added configuration [guide](README-SERVICE-LOCAL.md) to run matterbridge as a daemon with systemctl (Linux only) and with local global node_modules (no sudo required).
+
+### Changed
+
+- [package]: Updated dependencies.
+- [package]: Optimized @matter imports.
+- [endpoint]: Optimized memory requirements.
+- [matter]: Bumped `matter.js` version to 0.15.6. Thanks matter.js!
+- [frontend]: Bumped `frontend` version to 3.2.3.
+- [thread]: Bumped `BroadcastServer` version to 1.0.1.
+
+### Fixed
+
+- [thrmostat]: Fixed minSetpointDeadBand data type. Thanks Apollon!
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
 
 ## [3.3.4] - Not released
 

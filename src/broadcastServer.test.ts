@@ -70,6 +70,14 @@ describe('BroadcastServer', () => {
     expect(server.isWorkerRequest(invalidMsg, 'jest')).toBe(false);
   });
 
+  test('broadcast: should broadcast a valid request message', async () => {
+    const postMessageSpy = jest.spyOn((server as any).broadcastChannel, 'postMessage');
+    const requestMsg = { id: 654321, type: 'jest', src: 'frontend', dst: 'manager' } as const;
+    server.broadcast(requestMsg);
+    expect(postMessageSpy).toHaveBeenCalledWith(requestMsg);
+    postMessageSpy.mockRestore();
+  });
+
   test('request: should broadcast a valid request message', async () => {
     const postMessageSpy = jest.spyOn((server as any).broadcastChannel, 'postMessage');
     const requestMsg = { id: 654321, type: 'jest', src: 'frontend', dst: 'manager' } as const;

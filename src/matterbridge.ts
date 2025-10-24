@@ -159,7 +159,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   // Frontend
   public readonly frontend = new Frontend(this);
 
-  /** Matterbridge node storage manager created in matterbridgeDirectory with name 'storage' */
+  /** Matterbridge node storage manager created in the directory 'storage' in matterbridgeDirectory */
   public nodeStorage: NodeStorageManager | undefined;
   /** Matterbridge node context created with name 'matterbridge' */
   public nodeContext: NodeStorage | undefined;
@@ -240,21 +240,21 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
-          this.server.respond({ ...msg, response: { success: true, level: this.log.logLevel } });
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
           break;
         case 'set_log_level':
-          this.log.logLevel = msg.params.level;
-          this.server.respond({ ...msg, response: { success: true, level: this.log.logLevel } });
+          this.log.logLevel = msg.params.logLevel;
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
           break;
         default:
-          this.log.warn(`Unknown broadcast request ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+          this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
     if (this.server.isWorkerResponse(msg, msg.type)) {
       this.log.debug(`**Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         default:
-          this.log.warn(`Unknown broadcast response ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+          this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }
@@ -1458,12 +1458,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Close the matterbridge node storage and context
       if (this.nodeStorage && this.nodeContext) {
         /*
-        TODO: Implement serialization of registered devices in edge mode
+        TODO: Implement serialization of registered devices
         this.log.info('Saving registered devices...');
         const serializedRegisteredDevices: SerializedMatterbridgeEndpoint[] = [];
         this.devices.forEach(async (device) => {
           const serializedMatterbridgeDevice = MatterbridgeEndpoint.serialize(device);
-          // this.log.info(`- ${serializedMatterbridgeDevice.deviceName}${rs}\n`, serializedMatterbridgeDevice);
+          this.log.info(`- ${serializedMatterbridgeDevice.deviceName}${rs}\n`, serializedMatterbridgeDevice);
           if (serializedMatterbridgeDevice) serializedRegisteredDevices.push(serializedMatterbridgeDevice);
         });
         await this.nodeContext.set<SerializedMatterbridgeEndpoint[]>('devices', serializedRegisteredDevices);

@@ -37,7 +37,7 @@ import type { Express } from 'express';
 import type WebSocket from 'ws';
 import type { WebSocketServer } from 'ws';
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt, wr } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt } from 'node-ansi-logger';
 // @matter
 import type { ServerNode } from '@matter/node';
 import { Logger, Diagnostic, LogDestination, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/general';
@@ -104,7 +104,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'frontend')) {
-      this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'frontend_start':
           await this.start(msg.params.port);
@@ -115,11 +115,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
-          this.log.warn(`Unknown broadcast request ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+          this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
     if (this.server.isWorkerResponse(msg, msg.type)) {
-      this.log.debug(`**Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'plugins_install':
           this.wssSendCloseSnackbarMessage(`Installing package ${msg.response.packageName}...`);
@@ -142,7 +142,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           }
           break;
         default:
-          this.log.warn(`Unknown broadcast response ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+          this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }

@@ -52,12 +52,15 @@ export const MATTERBRIDGE_HISTORY_FILE = 'history.html';
 
 export type MaybePromise<T> = T | Promise<T>;
 
+/**
+ * A type representing a read-only subset of the Matterbridge properties.
+ */
 export type SharedMatterbridge = Readonly<
   Pick<
     Matterbridge,
     | 'systemInformation'
-    | 'homeDirectory'
     | 'rootDirectory'
+    | 'homeDirectory'
     | 'matterbridgeDirectory'
     | 'matterbridgePluginDirectory'
     | 'matterbridgeCertDirectory'
@@ -81,8 +84,9 @@ export type SharedMatterbridge = Readonly<
   >
 >;
 
-// Define an interface for storing the plugins
+/** Define an interface for matterbridge */
 export interface Plugin extends ApiPlugin {
+  /** Node storage context created in the directory 'storage' in matterbridgeDirectory with the plugin name */
   nodeContext?: NodeStorage;
   storageContext?: StorageContext;
   serverNode?: ServerNode<ServerNode.RootEndpoint>;
@@ -92,7 +96,7 @@ export interface Plugin extends ApiPlugin {
   reachabilityTimeout?: NodeJS.Timeout;
 }
 
-// Simplified interface for saving the plugins in node storage
+/** Define an interface for the frontend */
 export interface ApiPlugin extends StoragePlugin {
   latestVersion?: string;
   devVersion?: string;
@@ -115,6 +119,7 @@ export interface ApiPlugin extends StoragePlugin {
   matter?: ApiMatter;
 }
 
+/** Define an interface for storing the plugin information */
 export interface StoragePlugin {
   name: string;
   path: string;
@@ -125,7 +130,7 @@ export interface StoragePlugin {
   enabled: boolean;
 }
 
-// Define an interface for storing the system information
+/** Define an interface for the system information */
 export interface SystemInformation {
   // Network properties
   interfaceName: string;
@@ -153,10 +158,10 @@ export interface SystemInformation {
   heapUsed: string;
 }
 
-// Define an interface for storing the matterbridge information
+/** Define an interface for the matterbridge information */
 export interface MatterbridgeInformation {
-  homeDirectory: string;
   rootDirectory: string;
+  homeDirectory: string;
   matterbridgeDirectory: string;
   matterbridgePluginDirectory: string;
   matterbridgeCertDirectory: string;
@@ -188,6 +193,7 @@ export interface MatterbridgeInformation {
   updateRequired: boolean;
 }
 
+/** Define an interface for sanitized exposed fabric information suitable for API responses */
 export interface SanitizedExposedFabricInformation {
   fabricIndex: FabricIndex;
   fabricId: string; // bigint > string
@@ -198,6 +204,7 @@ export interface SanitizedExposedFabricInformation {
   label: string;
 }
 
+/** Define an interface for sanitized session information suitable for API responses */
 export interface SanitizedSession {
   name: string;
   nodeId: string;
@@ -209,6 +216,7 @@ export interface SanitizedSession {
   numberOfActiveSubscriptions: number;
 }
 
+/** Define an interface for API device information */
 export interface ApiDevice {
   pluginName: string;
   type: string;
@@ -224,6 +232,7 @@ export interface ApiDevice {
   matter?: ApiMatter;
 }
 
+/** Define an interface for API matter information */
 export interface ApiMatter {
   id: string;
   online: boolean;
@@ -238,6 +247,7 @@ export interface ApiMatter {
   serialNumber: string | undefined;
 }
 
+/** Define an interface for API clusters information */
 export interface ApiClusters {
   plugin: string;
   deviceName: string;
@@ -250,6 +260,7 @@ export interface ApiClusters {
   clusters: Cluster[];
 }
 
+/** Define an interface for Cluster information in ApiClusters */
 export interface Cluster {
   /** Endpoint number > string */
   endpoint: string;

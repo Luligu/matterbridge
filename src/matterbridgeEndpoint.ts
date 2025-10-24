@@ -1977,7 +1977,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
       piCoolingDemand: undefined,
       // Thermostat.Feature.AutoMode
-      minSetpointDeadBand: minSetpointDeadBand * 100,
+      minSetpointDeadBand: minSetpointDeadBand * 10,
       thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),

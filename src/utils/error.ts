@@ -24,7 +24,7 @@
 
 import { inspect } from 'node:util';
 
-import type { AnsiLogger } from 'node-ansi-logger';
+import { RESET, type AnsiLogger } from 'node-ansi-logger';
 
 /**
  * Logs an error message using the provided AnsiLogger instance.
@@ -50,5 +50,5 @@ export function logError(log: AnsiLogger, message: string, error: unknown): void
 export function inspectError(log: AnsiLogger, message: string, error: unknown): void {
   const errorMessage = error instanceof Error ? `${error.message}\n` : '';
   const inspectedError = inspect(error, { depth: 10, colors: true, showHidden: false });
-  log.error(`${message}: ${errorMessage}${inspectedError}`);
+  log.error(`${message}: ${errorMessage}${RESET}${inspectedError}`);
 }
