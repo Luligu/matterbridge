@@ -65,8 +65,8 @@ type WorkerMessageMap = {
   'jest': { request: { type: 'jest' }; response: { type: 'jest'; response: { name: string; age: number } } };
 
   // Logger general methods
-  'get_log_level': { request: { type: 'get_log_level' }; response: { type: 'get_log_level'; response: { success: boolean; logLevel: LogLevel } } };
-  'set_log_level': { request: { type: 'set_log_level'; params: { logLevel: LogLevel } }; response: { type: 'set_log_level'; response: { success: boolean; logLevel: LogLevel } } };
+  'get_log_level': { request: { type: 'get_log_level' }; response: { type: 'get_log_level'; response: { logLevel: LogLevel; success: boolean } } };
+  'set_log_level': { request: { type: 'set_log_level'; params: { logLevel: LogLevel } }; response: { type: 'set_log_level'; response: { logLevel: LogLevel; success: boolean } } };
 
   // Matterbridge methods
   'matterbridge_initialize': {

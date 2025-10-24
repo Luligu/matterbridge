@@ -86,6 +86,7 @@ export type SharedMatterbridge = Readonly<
 
 /** Define an interface for matterbridge */
 export interface Plugin extends ApiPlugin {
+  /** Node storage context created in the directory 'storage' in matterbridgeDirectory with the plugin name */
   nodeContext?: NodeStorage;
   storageContext?: StorageContext;
   serverNode?: ServerNode<ServerNode.RootEndpoint>;

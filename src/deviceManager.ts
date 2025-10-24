@@ -23,7 +23,7 @@
  */
 
 // AnsiLogger module
-import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampFormat, wr } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // Matterbridge
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -82,7 +82,7 @@ export class DeviceManager {
           this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
-          this.log.warn(`Unknown broadcast message ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+          this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }

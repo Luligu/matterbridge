@@ -80,7 +80,7 @@ describe('Matterbridge ' + NAME, () => {
       maxHeatSetpointLimit: 5000,
       minCoolSetpointLimit: 0,
       minHeatSetpointLimit: 0,
-      minSetpointDeadBand: 100,
+      minSetpointDeadBand: 10,
       occupiedCoolingSetpoint: 2500,
       occupiedHeatingSetpoint: 2100,
       systemMode: 1,
@@ -131,11 +131,11 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'systemMode')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'thermostatRunningMode')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'thermostatRunningState')).toBe(true);
-    // Default values (scaled by 100 for temperatures)
+    // Default values (scaled by 100 for temperatures and 10 for minSetpointDeadBand)
     expect(device.getAttribute(Thermostat.Cluster.id, 'localTemperature')).toBe(2300);
     expect(device.getAttribute(Thermostat.Cluster.id, 'occupiedHeatingSetpoint')).toBe(2100);
     expect(device.getAttribute(Thermostat.Cluster.id, 'occupiedCoolingSetpoint')).toBe(2500);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'minSetpointDeadBand')).toBe(100);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'minSetpointDeadBand')).toBe(10);
     expect(device.getAttribute(Thermostat.Cluster.id, 'minHeatSetpointLimit')).toBe(0);
     expect(device.getAttribute(Thermostat.Cluster.id, 'maxHeatSetpointLimit')).toBe(5000);
     expect(device.getAttribute(Thermostat.Cluster.id, 'minCoolSetpointLimit')).toBe(0);

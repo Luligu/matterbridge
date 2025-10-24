@@ -109,7 +109,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    */
   private broadcastMessageHandler(event: MessageEvent): void {
     const data = event.data as WorkerMessage;
-    this.log.debug(`*Received broadcast message: ${debugStringify(data)}`);
+    this.log.debug(`Received broadcast message: ${debugStringify(data)}`);
     this.emit('broadcast_message', data);
   }
 
@@ -139,7 +139,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       this.log.error(`Invalid request message format for broadcast: ${debugStringify(message)}`);
       return;
     }
-    this.log.debug(`*Broadcasting message: ${debugStringify(message)}`);
+    this.log.debug(`Broadcasting request message: ${debugStringify(message)}`);
     this.broadcastChannel.postMessage(message);
   }
 
@@ -157,7 +157,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       this.log.error(`Invalid response message format for broadcast: ${debugStringify(message)}`);
       return;
     }
-    this.log.debug(`*Broadcasting message: ${debugStringify(message)}`);
+    this.log.debug(`Broadcasting response message: ${debugStringify(message)}`);
     this.broadcastChannel.postMessage(message);
   }
 
@@ -167,6 +167,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    *
    * @param {WorkerRequest<T>} message - The typed request message to broadcast.
    * @returns {Promise<WorkerResponse<T>>} A promise that resolves with the response from the worker or rejects on timeout.
+   * @throws {Error} If the fetch operation times out after 100ms.
    */
   async fetch<M extends WorkerRequest<WorkerMessageType>>(message: M): Promise<WorkerResponse<M['type']>> {
     if (message.id === undefined) {
@@ -175,14 +176,14 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     if (message.timestamp === undefined) {
       message.timestamp = Date.now();
     }
-    this.log.debug(`*Fetching message: ${debugStringify(message)}`);
+    this.log.debug(`Fetching message: ${debugStringify(message)}`);
 
     return new Promise<WorkerResponse<M['type']>>((resolve, reject) => {
       const responseHandler = (msg: WorkerMessage) => {
         if (this.isWorkerResponse(msg, message.type) && msg.id === message.id) {
           clearTimeout(timeoutId);
           this.off('broadcast_message', responseHandler);
-          this.log.debug(`*Fetch response: ${debugStringify(msg)}`);
+          this.log.debug(`Fetch response: ${debugStringify(msg)}`);
           resolve(msg);
         }
       };

@@ -106,7 +106,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           this.server.respond({ ...msg, response: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
           break;
         default:
-          this.log.warn(`Unknown broadcast message ${CYAN}${msg.type}${wr} from ${CYAN}${msg.src}${wr}`);
+          this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }

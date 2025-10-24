@@ -26,8 +26,9 @@ Advantages:
 - real concurrency outside the Node.js main loop;
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
+- ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.3.4] - Not released
+## [3.3.4] - 2025-10-24
 
 ### Breaking Changes
 
@@ -49,6 +50,10 @@ Advantages:
 - [matter]: Bumped `matter.js` version to 0.15.6. Thanks matter.js!
 - [frontend]: Bumped `frontend` version to 3.2.3.
 - [thread]: Bumped `BroadcastServer` version to 1.0.1.
+
+### Fixed
+
+- [thrmostat]: Fixed minSetpointDeadBand data type. Thanks Apollon!
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
