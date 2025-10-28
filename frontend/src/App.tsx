@@ -29,6 +29,10 @@ export const toggleDebug = () => {
 };
 export const enableWindows = false;
 export const enableMobile = false;
+export let wssPassword: string | undefined = undefined;
+export const setWssPassword = (password: string) => {
+  wssPassword = password;
+};
 
 export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
   const [password, setPassword] = useState('');
@@ -75,6 +79,7 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
         const { valid } = await response.json();
         if (valid) {
           setLoggedIn(true);
+          if (password !== '') wssPassword = password;
         } else {
           if (password !== '') setErrorMessage('Incorrect password!');
         }

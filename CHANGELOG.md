@@ -30,11 +30,13 @@ Advantages:
 
 ## [3.3.5] - 2025-10-??
 
-- [thread]: Add get_log_level and set_log_level to BroadcastServer.
+- [thread]: Added get_log_level and set_log_level to BroadcastServer.
+- [frontend]: Added password check to WebSocket.
 
 ### Changed
 
 - [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to 3.2.4.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

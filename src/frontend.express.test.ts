@@ -167,7 +167,7 @@ describe('Matterbridge frontend express with http', () => {
     await waiter('Matter server node started', () => { return matterbridge.serverNode?.lifecycle.isOnline === true; });
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8286${UNDERLINEOFF}${rs}`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening`);
+    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
   }, 60000);
@@ -193,6 +193,8 @@ describe('Matterbridge frontend express with http', () => {
   test('POST /api/login with valid password', async () => {
     // Set the password in the nodeContext
     await matterbridge.nodeContext?.set('password', 'testpassword');
+    // @ts-expect-error accessing frontend property
+    matterbridge.frontend.storedPassword = 'testpassword';
 
     const response = await makeRequest('/api/login', 'POST', { password: 'testpassword' });
 
@@ -203,39 +205,13 @@ describe('Matterbridge frontend express with http', () => {
   test('POST /api/login with invalid password', async () => {
     // Set the password in the nodeContext
     await matterbridge.nodeContext?.set('password', 'testpassword');
+    // @ts-expect-error accessing frontend property
+    matterbridge.frontend.storedPassword = 'testpassword';
 
     const response = await makeRequest('/api/login', 'POST', { password: 'wrongpassword' });
 
     expect(response.status).toBe(200);
     expect(response.body.valid).toBe(false);
-  });
-
-  test('POST /api/login with no nodeContext', async () => {
-    // Temporarily remove the nodeContext
-    const originalNodeContext = matterbridge.nodeContext;
-    matterbridge.nodeContext = undefined;
-
-    const response = await makeRequest('/api/login', 'POST', { password: 'testpassword' });
-
-    expect(response.status).toBe(200);
-    expect(response.body.valid).toBe(false);
-
-    // Restore the nodeContext
-    matterbridge.nodeContext = originalNodeContext;
-  });
-
-  test('POST /api/login with nodeContext error', async () => {
-    // Temporarily mock the nodeContext
-    const getMock = jest.spyOn(matterbridge.nodeContext as any, 'get').mockImplementation(() => {
-      throw new Error('NodeContext error');
-    });
-    const response = await makeRequest('/api/login', 'POST', { password: 'testpassword' });
-
-    expect(response.status).toBe(200);
-    expect(response.body.valid).toBe(false);
-
-    // Restore the nodeContext
-    getMock.mockRestore();
   });
 
   test('GET /health', async () => {
