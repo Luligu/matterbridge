@@ -112,6 +112,7 @@ import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
+import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
 
 // Matterbridge
 import { deepCopy } from './utils/deepCopy.js';
@@ -1088,7 +1089,7 @@ export function getDefaultDeviceEnergyManagementClusterServer(
  *  - For the "Grid Energy Management" mode, tags: 0x4003 (GridOptimization).
  *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
  */
-export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]) {
+export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]): Behavior.Options<typeof MatterbridgeDeviceEnergyManagementModeServer> {
   return optionsFor(MatterbridgeDeviceEnergyManagementModeServer, {
     supportedModes: supportedModes ?? [
       { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.NoOptimization }] },
