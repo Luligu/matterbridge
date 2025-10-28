@@ -335,7 +335,7 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   expect(server.lifecycle.isOnline).toBeFalsy();
 
   // stop the mDNS service
-  await server.env.get(MdnsService)[Symbol.asyncDispose]();
+  await server.env.get(MdnsService)?.close();
 
   // Ensure the queue is empty and pause 100ms
   await flushAsync();
