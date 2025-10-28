@@ -1720,7 +1720,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertiseTime: 0, advertising: false } });
         }
         if (data.params.advertise) {
-          await serverNode.env.get(DeviceAdvertiser)?.advertise(true);
+          await serverNode.env.get(DeviceAdvertiser)?.enterOperationalMode();
           this.log.debug(`*Advertising has been sent for node ${data.params.id}`);
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertising: true } });
         }
