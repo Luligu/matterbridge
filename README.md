@@ -172,6 +172,10 @@ Config editor:
 
 [Service configurations](README-SERVICE.md)
 
+or with local global node_modules
+
+[Service configurations with local global node_modules](README-SERVICE-LOCAL.md)
+
 ### Run matterbridge as a system service with launchctl (macOS only)
 
 [Launchctl configurations](README-MACOS-PLIST.md)

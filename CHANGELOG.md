@@ -30,6 +30,8 @@ Advantages:
 
 ## [3.3.5] - 2025-10-??
 
+### Added
+
 - [thread]: Added get_log_level and set_log_level to BroadcastServer.
 - [frontend]: Added password check to WebSocket.
 
@@ -37,6 +39,10 @@ Advantages:
 
 - [package]: Updated dependencies.
 - [frontend]: Bumped `frontend` version to 3.2.4.
+
+### Fixed
+
+- [service]: Fixed systemd configuration with local global node_modules.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

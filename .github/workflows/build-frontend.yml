@@ -58,6 +58,8 @@ jobs:
           npm audit || true
           npm audit fix || true
           npm update || true
+          npm outdated || true
+          npm audit || true
           npm run lint || true
           npm run build || true
           npm run test || true

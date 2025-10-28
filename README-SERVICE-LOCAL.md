@@ -51,7 +51,7 @@ Create a systemctl configuration file for Matterbridge
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
-Add the following to this file, replacing 5 times (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi and Environment="NPM_CONFIG_PREFIX=/home/pi/.npm-global"):
+Add the following to this file, replacing 4 times (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi and Environment="NPM_CONFIG_PREFIX=/home/pi/.npm-global"):
 
 ```
 [Unit]
@@ -170,57 +170,4 @@ save it and run
 
 ```bash
 sudo systemctl restart systemd-journald
-```
-
-## Verify that with your distro you can run sudo npm install -g matterbridge without the password
-
-Run the following command to verify if you can install Matterbridge globally without being prompted for a password:
-
-```bash
-sudo npm install -g matterbridge --omit=dev
-```
-
-If you are not prompted for a password, no further action is required.
-
-If that is not the case, open the sudoers file for editing using visudo
-
-```bash
-sudo visudo
-```
-
-verify the presence of of a line
-
-```
-@includedir /etc/sudoers.d
-```
-
-exit and create a configuration file for sudoers
-
-```bash
-sudo nano /etc/sudoers.d/matterbridge
-```
-
-add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD: ALL)
-
-```
-<USER> ALL=(ALL) NOPASSWD: ALL
-```
-
-or if you prefers to only give access to npm without password try with (e.g. radxa ALL=(ALL) NOPASSWD: /usr/bin/npm)
-
-```
-<USER> ALL=(ALL) NOPASSWD: /usr/bin/npm
-```
-
-save the file and reload the settings with:
-
-```bash
-sudo chmod 0440 /etc/sudoers.d/matterbridge
-sudo visudo -c
-```
-
-Verify if you can install Matterbridge globally without being prompted for a password:
-
-```bash
-sudo npm install -g matterbridge --omit=dev
 ```
