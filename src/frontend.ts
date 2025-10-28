@@ -106,12 +106,43 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'frontend')) {
       this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
+        case 'get_log_level':
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
+        case 'set_log_level':
+          this.log.logLevel = msg.params.logLevel;
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
         case 'frontend_start':
           await this.start(msg.params.port);
           this.server.respond({ ...msg, response: { success: true } });
           break;
         case 'frontend_stop':
           await this.stop();
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_refreshrequired':
+          this.wssSendRefreshRequired(msg.params.changed, { matter: msg.params.matter });
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_restartrequired':
+          this.wssSendRestartRequired(msg.params.snackbar, msg.params.fixed);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_restartnotrequired':
+          this.wssSendRestartNotRequired(msg.params.snackbar);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_updaterequired':
+          this.wssSendUpdateRequired(msg.params.devVersion);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_snackbarmessage':
+          this.wssSendSnackbarMessage(msg.params.message, msg.params.timeout, msg.params.severity);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_attributechanged':
+          this.wssSendAttributeChangedMessage(msg.params.plugin, msg.params.serialNumber, msg.params.uniqueId, msg.params.number, msg.params.id, msg.params.cluster, msg.params.attribute, msg.params.value);
           this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
@@ -121,6 +152,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (this.server.isWorkerResponse(msg, msg.type)) {
       this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
+        case 'get_log_level':
+        case 'set_log_level':
+          break;
         case 'plugins_install':
           this.wssSendCloseSnackbarMessage(`Installing package ${msg.response.packageName}...`);
           if (msg.response.success) {

@@ -153,6 +153,8 @@ describe('PluginManager', () => {
     await (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'unknown' } as any); // unknown dst
     await (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'plugins' } as any); // valid
     await (plugins as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'all' } as any); // valid
+    await (plugins as any).msgHandler({ id: 123456, type: 'get_log_level', src: 'frontend', dst: 'plugins', params: {} } as any);
+    await (plugins as any).msgHandler({ id: 123456, type: 'set_log_level', src: 'frontend', dst: 'plugins', params: { logLevel: LogLevel.DEBUG } } as any);
     for (const type of [
       'plugins_length',
       'plugins_size',

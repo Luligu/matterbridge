@@ -23,6 +23,7 @@
  */
 
 import { LogLevel } from 'node-ansi-logger';
+import { EndpointNumber } from '@matter/types/datatype';
 
 import { RefreshRequiredChanged } from './frontendTypes.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
@@ -93,21 +94,29 @@ type WorkerMessageMap = {
     request: { type: 'frontend_stop' };
     response: { type: 'frontend_stop'; response: { success: boolean } };
   };
-  'frontend_refreshRequired': {
-    request: { type: 'frontend_refreshRequired'; params: { changed: RefreshRequiredChanged; matter: ApiMatter } };
-    response: { type: 'frontend_refreshRequired'; response: { success: boolean } };
+  'frontend_refreshrequired': {
+    request: { type: 'frontend_refreshrequired'; params: { changed: RefreshRequiredChanged; matter: ApiMatter } };
+    response: { type: 'frontend_refreshrequired'; response: { success: boolean } };
   };
-  'frontend_restartRequired': {
-    request: { type: 'frontend_restartRequired'; params: { snackbar: boolean; fixed: boolean } };
-    response: { type: 'frontend_restartRequired'; response: { success: boolean } };
+  'frontend_restartrequired': {
+    request: { type: 'frontend_restartrequired'; params: { snackbar: boolean; fixed: boolean } };
+    response: { type: 'frontend_restartrequired'; response: { success: boolean } };
   };
-  'frontend_restartNotRequired': {
-    request: { type: 'frontend_restartNotRequired'; params: { snackbar: boolean } };
-    response: { type: 'frontend_restartNotRequired'; response: { success: boolean } };
+  'frontend_restartnotrequired': {
+    request: { type: 'frontend_restartnotrequired'; params: { snackbar: boolean } };
+    response: { type: 'frontend_restartnotrequired'; response: { success: boolean } };
   };
-  'frontend_updateRequired': {
-    request: { type: 'frontend_updateRequired'; params: { devVersion: boolean } };
-    response: { type: 'frontend_updateRequired'; response: { success: boolean } };
+  'frontend_updaterequired': {
+    request: { type: 'frontend_updaterequired'; params: { devVersion: boolean } };
+    response: { type: 'frontend_updaterequired'; response: { success: boolean } };
+  };
+  'frontend_snackbarmessage': {
+    request: { type: 'frontend_snackbarmessage'; params: { message: string; timeout?: number; severity?: 'info' | 'success' | 'warning' | 'error' } };
+    response: { type: 'frontend_snackbarmessage'; response: { success: boolean } };
+  };
+  'frontend_attributechanged': {
+    request: { type: 'frontend_attributechanged'; params: { plugin: string; serialNumber: string; uniqueId: string; number: EndpointNumber; id: string; cluster: string; attribute: string; value: number | string | boolean | null } };
+    response: { type: 'frontend_attributechanged'; response: { success: boolean } };
   };
 
   // PluginManager methods
@@ -142,10 +151,6 @@ type WorkerMessageMap = {
   'plugins_baseArray': {
     request: { type: 'plugins_baseArray' };
     response: { type: 'plugins_baseArray'; response: { plugins: ApiPlugin[] } };
-  };
-  'plugins_setLogLevel': {
-    request: { type: 'plugins_setLogLevel'; params: { logLevel: number } };
-    response: { type: 'plugins_setLogLevel'; response: { success: boolean } };
   };
   'plugins_loadFromStorage': {
     request: { type: 'plugins_loadFromStorage' };
@@ -276,10 +281,6 @@ type WorkerMessageMap = {
   'devices_array': {
     request: { type: 'devices_array' };
     response: { type: 'devices_array'; response: { device: ApiDevice[] } };
-  };
-  'devices_setLogLevel': {
-    request: { type: 'devices_setLogLevel'; params: { logLevel: number } };
-    response: { type: 'devices_setLogLevel'; response: { success: boolean } };
   };
 };
 

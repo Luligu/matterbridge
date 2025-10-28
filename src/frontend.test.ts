@@ -121,9 +121,22 @@ describe('Matterbridge frontend', () => {
     await (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
     await (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend' } as any); // valid
     await (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
-    for (const type of ['frontend_start', 'frontend_stop'] as const) {
-      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', params: { port: 3000 } } as any);
-    }
+    await (frontend as any).msgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'frontend', params: {} } as any);
+    await (frontend as any).msgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'frontend', params: { logLevel: LogLevel.DEBUG } } as any);
+    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_start', src: 'manager', dst: 'frontend', params: { port: 3000 } } as any);
+    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_stop', src: 'manager', dst: 'frontend', params: { port: 3000 } } as any);
+    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_refreshrequired', src: 'manager', dst: 'frontend', params: { changed: 'matter', matter: {} } } as any);
+    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_restartrequired', src: 'manager', dst: 'frontend', params: { snackbar: true, fixed: true } } as any);
+    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_restartnotrequired', src: 'manager', dst: 'frontend', params: { snackbar: true } } as any);
+    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_updaterequired', src: 'manager', dst: 'frontend', params: { devVersion: true } } as any);
+    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_snackbarmessage', src: 'manager', dst: 'frontend', params: { message: 'message', timeout: 5, severity: 'info' } } as any);
+    await (frontend as any).msgHandler({
+      id: 123456,
+      type: 'frontend_attributechanged',
+      src: 'manager',
+      dst: 'frontend',
+      params: { plugin: 'test', serialNumber: '1234', uniqueId: 'uniqueId', number: 123, id: 'id', cluster: 'cluster', attribute: 'attribute', value: 'value' },
+    } as any);
     for (const type of ['plugins_install', 'plugins_uninstall'] as const) {
       await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: true, packageName: 'testPlugin' } } as any);
       await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: false, packageName: 'testPlugin' } } as any);

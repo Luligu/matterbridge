@@ -33,6 +33,7 @@ import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { ApiPlugin, plg, Plugin, StoragePlugin, typ } from './matterbridgeTypes.js';
 import { inspectError, logError } from './utils/error.js';
+import { hasParameter } from './utils/commandLine.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
 
@@ -66,7 +67,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   constructor(matterbridge: Matterbridge) {
     super();
     this.matterbridge = matterbridge;
-    this.log = new AnsiLogger({ logName: 'PluginManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.log.logLevel });
+    this.log = new AnsiLogger({ logName: 'PluginManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge plugin manager starting...');
     this.server = new BroadcastServer('plugins', this.log);
     this.server.on('broadcast_message', this.msgHandler.bind(this));
@@ -81,6 +82,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'plugins')) {
       this.log.debug(`**Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
+        case 'get_log_level':
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
+        case 'set_log_level':
+          this.log.logLevel = msg.params.logLevel;
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
         case 'plugins_length':
           this.server.respond({ ...msg, response: { length: this.length } });
           break;

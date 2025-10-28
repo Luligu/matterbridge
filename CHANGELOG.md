@@ -30,6 +30,8 @@ Advantages:
 
 ## [3.3.5] - 2025-10-??
 
+- [thread]: Add get_log_level and set_log_level to BroadcastServer.
+
 ### Changed
 
 - [package]: Updated dependencies.
