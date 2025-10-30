@@ -1,6 +1,6 @@
 // src\utils\colorUtils.test.ts
 
-import { hslColorToRgbColor, kelvinToMired, kelvinToRGB, miredToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor, xyToHsl } from './colorUtils.js';
+import { hslColorToRgbColor, kelvinToMired, kelvinToMireds, kelvinToRGB, miredsToKelvin, miredToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor, xyToHsl } from './colorUtils.js';
 
 /* prettier-ignore */
 const colors = [
@@ -487,24 +487,26 @@ describe('Utils test', () => {
   });
 
   describe('colorTemperature', () => {
-    test('Mired to kelvin', async () => {
-      expect(miredToKelvin(500)).toBe(2000);
-      expect(miredToKelvin(400)).toBe(2500);
-      expect(miredToKelvin(300)).toBe(3333);
-      expect(miredToKelvin(250)).toBe(4000);
-      expect(miredToKelvin(200)).toBe(5000);
-      expect(miredToKelvin(147)).toBe(6803);
+    test('Mireds to kelvin', async () => {
+      expect(miredsToKelvin(500)).toBe(2000);
+      expect(miredsToKelvin(400)).toBe(2500);
+      expect(miredsToKelvin(300)).toBe(3333);
+      expect(miredsToKelvin(250)).toBe(4000);
+      expect(miredsToKelvin(200)).toBe(5000);
+      expect(miredsToKelvin(155)).toBe(6452);
+      expect(miredsToKelvin(147)).toBe(6803);
     });
 
-    test('Kelvin to mired', async () => {
-      expect(kelvinToMired(2000)).toBe(500);
-      expect(kelvinToMired(2500)).toBe(400);
-      expect(kelvinToMired(2700)).toBe(370);
-      expect(kelvinToMired(3000)).toBe(333);
-      expect(kelvinToMired(3333)).toBe(300);
-      expect(kelvinToMired(4000)).toBe(250);
-      expect(kelvinToMired(5000)).toBe(200);
-      expect(kelvinToMired(6803)).toBe(147);
+    test('Kelvin to mireds', async () => {
+      expect(kelvinToMireds(2000)).toBe(500);
+      expect(kelvinToMireds(2500)).toBe(400);
+      expect(kelvinToMireds(2700)).toBe(370);
+      expect(kelvinToMireds(3000)).toBe(333);
+      expect(kelvinToMireds(3333)).toBe(300);
+      expect(kelvinToMireds(4000)).toBe(250);
+      expect(kelvinToMireds(5000)).toBe(200);
+      expect(kelvinToMireds(6500)).toBe(154);
+      expect(kelvinToMireds(6803)).toBe(147);
     });
 
     test('Kelvin to RGB', async () => {

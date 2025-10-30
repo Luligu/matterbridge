@@ -265,6 +265,7 @@ export function xyToHsl(x: number, y: number): HSL {
 export function miredToKelvin(mired: number): number {
   return Math.round(1000000 / mired);
 }
+export const miredsToKelvin = miredToKelvin;
 
 /**
  * Converts kelvin to mireds.
@@ -275,6 +276,7 @@ export function miredToKelvin(mired: number): number {
 export function kelvinToMired(kelvin: number): number {
   return Math.round(1000000 / kelvin);
 }
+export const kelvinToMireds = kelvinToMired;
 
 /**
  * Converts kelvin to RGB color space.
