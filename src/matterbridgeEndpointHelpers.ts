@@ -829,7 +829,7 @@ export function getDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerS
 /**
  * Get the default power source replaceable battery cluster server options.
  *
- * @param {number} batPercentRemaining - The remaining battery percentage (default: 100).
+ * @param {number} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
  * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
  * @param {number} batVoltage - The battery voltage (default: 1500).
  * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
@@ -874,7 +874,7 @@ export function getDefaultPowerSourceReplaceableBatteryClusterServer(
 /**
  * Creates a default power source rechargeable battery cluster server.
  *
- * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100).
+ * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
  * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
  * @param {number} [batVoltage] - The battery voltage in mV (default: 1500).
  * @param {PowerSource.BatReplaceability} [batReplaceability] - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).

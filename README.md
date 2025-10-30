@@ -82,7 +82,7 @@ Since Matter is designed as "a universal IPv6-based communication protocol for s
 
 **Important:** You only need IPv6 on your local network - it doesn't matter if your internet provider doesn't provide IPv6 on the internet side (WAN).
 
-Avoid using VLAN and firewall blocking the communications between the controllers and Matterbridge.
+Avoid using VLAN, VM and firewall blocking the communications between the controllers and Matterbridge.
 
 To pair matterbridge, you need a matter enabled controller (Apple Home, Smart Things, Google Home, Alexa, Home Assistant etc.).
 

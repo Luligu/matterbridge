@@ -30,6 +30,10 @@ Advantages:
 
 ## [3.3.5] - 2025-10-??
 
+### Breaking Changes
+
+- [concentrationMeasurement]: Changed the default unit of measurement to comply with the generally used (and supported by Apple Home). Is is always possible to pass a different unit of measurement.
+
 ### Added
 
 - [thread]: Added get_log_level and set_log_level to BroadcastServer.
