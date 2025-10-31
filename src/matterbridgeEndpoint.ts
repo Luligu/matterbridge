@@ -1026,7 +1026,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source replaceable battery cluster server.
    *
-   * @param {number} batPercentRemaining - The remaining battery percentage (default: 100).
+   * @param {number} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
    * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
    * @param {number} batVoltage - The battery voltage (default: 1500).
    * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
@@ -1059,7 +1059,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source rechargeable battery cluster server.
    *
-   * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100).
+   * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
    * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
    * @param {number} [batVoltage] - The battery voltage in mV (default: 1500).
    * @param {PowerSource.BatReplaceability} [batReplaceability] - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
@@ -2888,17 +2888,18 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
-   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @param {number} [uncertainty] - The uncertainty value (optional).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
+   * Apple Home requires Ugm3 for TotalVolatileOrganicCompoundsConcentrationMeasurement cluster.
    */
   createDefaultTvocMeasurementClusterServer(
     measuredValue: number | null = null,
-    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3,
     measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
     uncertainty?: number,
   ): this {
@@ -2992,16 +2993,17 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Create a default FormaldehydeConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
-   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Mgm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
+   * Apple Home doesn't support FormaldehydeConcentrationMeasurement cluster.
    */
   createDefaultFormaldehydeConcentrationMeasurementClusterServer(
     measuredValue: number | null = null,
-    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Mgm3,
     measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
   ): this {
     this.behaviors.require(FormaldehydeConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -3019,16 +3021,17 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Create a default Pm1ConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
-   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
+   * Apple Home doesn't support Pm1ConcentrationMeasurement cluster.
    */
   createDefaultPm1ConcentrationMeasurementClusterServer(
     measuredValue: number | null = null,
-    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3,
     measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
   ): this {
     this.behaviors.require(Pm1ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -3046,16 +3049,17 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Create a default Pm25ConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
-   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
+   * Apple Home requires Ugm3 for Pm25ConcentrationMeasurement cluster.
    */
   createDefaultPm25ConcentrationMeasurementClusterServer(
     measuredValue: number | null = null,
-    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3,
     measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
   ): this {
     this.behaviors.require(Pm25ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -3073,16 +3077,17 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Create a default Pm10ConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
-   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
+   * Apple Home requires Ugm3 for Pm10ConcentrationMeasurement cluster.
    */
   createDefaultPm10ConcentrationMeasurementClusterServer(
     measuredValue: number | null = null,
-    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3,
     measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
   ): this {
     this.behaviors.require(Pm10ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -3127,16 +3132,17 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Create a default RadonConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
-   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Bqm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * The measurementUnit and the measurementMedium attributes are fixed and cannot be changed after creation.
+   * Apple Home doesn't support RadonConcentrationMeasurement cluster.
    */
   createDefaultRadonConcentrationMeasurementClusterServer(
     measuredValue: number | null = null,
-    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm,
+    measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Bqm3,
     measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
   ): this {
     this.behaviors.require(RadonConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
