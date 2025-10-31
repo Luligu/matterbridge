@@ -71,23 +71,23 @@ export class ExtractorHood extends MatterbridgeEndpoint {
     this.createDefaultActivatedCarbonFilterMonitoringClusterServer(activatedCarbonCondition, activatedCarbonChangeIndication, activatedCarbonInPlaceIndicator, activatedCarbonLastChangedTime, activatedCarbonReplacementProductList);
 
     this.subscribeAttribute('fanControl', 'fanMode', (newValue: number, oldValue: number, context: ActionContext) => {
-      if (context.offline === true) return;
+      // if (context.offline === true) return;
       this.log.info(`Fan control fanMode attribute changed: ${newValue}`);
     });
 
     this.subscribeAttribute('fanControl', 'percentSetting', (newValue: number, oldValue: number, context: ActionContext) => {
-      if (context.offline === true) return;
+      // if (context.offline === true) return;
       this.log.info(`Fan control percentSetting attribute changed: ${newValue}`);
       this.setAttribute('fanControl', 'percentCurrent', newValue, this.log);
     });
 
     this.subscribeAttribute('hepaFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context: ActionContext) => {
-      if (context.offline === true) return;
+      // if (context.offline === true) return;
       this.log.info(`Hepa filter monitoring lastChangedTime attribute changed: ${newValue}`);
     });
 
     this.subscribeAttribute('activatedCarbonFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context: ActionContext) => {
-      if (context.offline === true) return;
+      // if (context.offline === true) return;
       this.log.info(`Activated carbon filter monitoring lastChangedTime attribute changed: ${newValue}`);
     });
   }
