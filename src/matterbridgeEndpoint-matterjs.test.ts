@@ -1319,7 +1319,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
     await server.close();
-    await server.env.get(MdnsService)[Symbol.asyncDispose](); // loadInstance(false) so destroyInstance() does not stop the mDNS service
+    await server.env.get(MdnsService)?.close(); // loadInstance(false) so destroyInstance() does not stop the mDNS service
   });
 
   test('destroy instance', async () => {
