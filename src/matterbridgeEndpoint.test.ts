@@ -903,7 +903,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(59);
+    expect(count).toBe(60);
   });
 
   test('forEachAttribute DishWasher', async () => {
