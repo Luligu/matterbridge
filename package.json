@@ -133,11 +133,16 @@
     "git:hardreset:edge": "git fetch origin && git checkout edge && git reset --hard origin/edge",
     "runMeBeforePublish": "npm run lint && npm run format && npm run build && npm run test",
     "prepublishOnly": "npm pkg delete devDependencies scripts && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* && npm install --omit=dev && npm shrinkwrap",
-    "prepublishOnlyProduction": "npm run cleanBuildProduction && npm pkg delete devDependencies scripts types && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* && npm install --omit=dev && npm shrinkwrap",
-    "npmPack": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm pack && npx shx cp package.json.backup package.json && npx shx rm -rf package.json.backup && npm run reset",
-    "npmPublishTagDev": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag dev && npx shx cp package.json.backup package.json && npx shx rm -rf package.json.backup && npm run reset",
-    "npmPublishTagEdge": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag edge && npx shx cp package.json.backup package.json && npx shx rm -rf package.json.backup && npm run reset",
-    "npmPublishTagLatest": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag latest && npx shx cp package.json.backup package.json && npx shx rm -rf package.json.backup && npm run reset",
+    "prepublishOnlyProduction": "npm run cleanBuildProduction && npm pkg delete devDependencies scripts types && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* && npm i
+nstall --omit=dev && npm shrinkwrap",
+    "npmPack": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm pack && npx shx cp package.json.backup package.json && npx shx rm -rf package.json.bac
+kup && npm run reset",
+    "npmPublishTagDev": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag dev && npx shx cp package.json.backup package.json && npx shx r
+m -rf package.json.backup && npm run reset",
+    "npmPublishTagEdge": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag edge && npx shx cp package.json.backup package.json && npx shx
+ rm -rf package.json.backup && npm run reset",
+    "npmPublishTagLatest": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag latest && npx shx cp package.json.backup package.json && npx
+ shx rm -rf package.json.backup && npm run reset",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm run reset",
     "updateMatter:latest": "npm install --save-exact @matter/main@latest && npm install && npm run reset",
@@ -152,7 +157,7 @@
     "install:prettier": "npm install --save-dev --save-exact prettier eslint-config-prettier eslint-plugin-prettier"
   },
   "dependencies": {
-    "@matter/main": "0.15.6",
+    "@matter/main": "0.16.0-alpha.0-20251029-bd92894d4",
     "archiver": "7.0.1",
     "express": "5.1.0",
     "glob": "11.0.3",
