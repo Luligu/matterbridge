@@ -22,7 +22,7 @@
  */
 
 // Imports from @matter
-import { ActionContext } from '@matter/node';
+// import { ActionContext } from '@matter/node';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 
 // Matterbridge
