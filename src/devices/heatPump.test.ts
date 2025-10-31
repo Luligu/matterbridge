@@ -90,7 +90,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(89);
+    expect(attributes.length).toBe(90);
   });
 
   test('close the server node', async () => {
