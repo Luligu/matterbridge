@@ -267,7 +267,7 @@ describe('Matterbridge ' + NAME, () => {
     fileDestination.context.run(() =>
       fileDestination.add(
         Diagnostic.message({
-          now: Time.now(),
+          now: Time.now,
           facility: 'Server node',
           level: MatterLogLevel.INFO,
           prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',
