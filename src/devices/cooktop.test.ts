@@ -132,7 +132,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(32); // 32 attributes for the surface1 device
+    expect(attributes.length).toBe(33); // 32 attributes for the surface1 device
   });
 
   test('surface2 forEachAttribute', async () => {
@@ -153,7 +153,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(32); // 32 attributes for the surface2 device
+    expect(attributes.length).toBe(33); // 32 attributes for the surface2 device
   });
 
   test('close the server node', async () => {
