@@ -70,6 +70,7 @@ export class ExtractorHood extends MatterbridgeEndpoint {
     this.createDefaultHepaFilterMonitoringClusterServer(hepaCondition, hepaChangeIndication, hepaInPlaceIndicator, hepaLastChangedTime, hepaReplacementProductList);
     this.createDefaultActivatedCarbonFilterMonitoringClusterServer(activatedCarbonCondition, activatedCarbonChangeIndication, activatedCarbonInPlaceIndicator, activatedCarbonLastChangedTime, activatedCarbonReplacementProductList);
 
+    /*
     this.subscribeAttribute('fanControl', 'fanMode', (newValue: number, oldValue: number, context: ActionContext) => {
       // if (context.offline === true) return;
       this.log.info(`Fan control fanMode attribute changed: ${newValue}`);
@@ -90,5 +91,6 @@ export class ExtractorHood extends MatterbridgeEndpoint {
       // if (context.offline === true) return;
       this.log.info(`Activated carbon filter monitoring lastChangedTime attribute changed: ${newValue}`);
     });
+    */
   }
 }
