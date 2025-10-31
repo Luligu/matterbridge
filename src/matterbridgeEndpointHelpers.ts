@@ -112,7 +112,7 @@ import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
-import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
+// import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
 
 // Matterbridge
 import { deepCopy } from './utils/deepCopy.js';
