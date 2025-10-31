@@ -129,7 +129,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(39); // 39 attributes for the oven device
+    expect(attributes.length).toBe(40); // 40 attributes for the oven device
   });
 
   test('cabinet1 forEachAttribute', async () => {
