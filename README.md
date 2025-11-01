@@ -170,9 +170,11 @@ Config editor:
 
 ### Run matterbridge as a daemon with systemctl (Linux only)
 
+Traditional configuration
+
 [Service configurations](README-SERVICE.md)
 
-or with local global node_modules
+or with local global node_modules (no sudo required)
 
 [Service configurations with local global node_modules](README-SERVICE-LOCAL.md)
 
