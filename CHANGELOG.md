@@ -28,6 +28,23 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.3.6] - 2025-11-01
+
+### Changed
+
+- [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to 3.3.0.
+- [frontend]: Updated dependencies.
+- [frontend]: Removed password dialog when running in Ingress.
+
+### Fixed
+
+- [ingress]: Fixed websocket connection from Ingress.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.5] - 2025-10-31
 
 ### Breaking Changes
