@@ -18,9 +18,11 @@
 
 ## Run matterbridge as a daemon with systemctl (Linux only) with local global node_modules
 
-The easiest way to add systemctl is to use [Matterbridge service cli for linux](https://github.com/Luligu/mb-service-linux).
+The advantage of this setup is that the global node_modules are private for matterbridge and sudo is not required.
 
-If your setup is too complex or you prefer to do it manually follow this method. You can still use mb-service to manage systemd after.
+The service runs rootless.
+
+The storage position is compatible with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
 
 ### First create the Matterbridge directories and set the correct permissions
 
@@ -28,19 +30,16 @@ This will create the required directories if they don't exist
 
 ```bash
 cd ~
-sudo systemctl stop matterbridge                                                        # ✅ Safe precaution
+sudo systemctl stop matterbridge                                                        # ✅ Safe precaution if matterbridge was already running with the traditional setup
+sudo npm uninstall matterbridge -g                                                      # ✅ We need to uninstall from the global node_modules
 mkdir -p ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                     # ✅ Creates all needed dirs
 chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global         # ✅ Ensures ownership
 chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                 # ✅ Secure permissions
-NPM_CONFIG_PREFIX=~/.npm-global npm install matterbridge --omit=dev --verbose --global  # ✅ Install, no sudo
-```
-
-### Then create a system-wide symlink
-
-```bash
-sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge
-which matterbridge
-matterbridge --version
+NPM_CONFIG_PREFIX=~/.npm-global npm install matterbridge --omit=dev --verbose --global  # ✅ Install matterbridge in the local global node_modules, no sudo
+sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge        # ✅ Create a link to matterbridge bin
+hash -r                                                                                 # ✅ Clear bash command cache as a precaution
+which matterbridge                                                                      # ✅ Check it
+matterbridge --version                                                                  # ✅ Will output the matterbridge version
 ```
 
 ### Then create a systemctl configuration file for Matterbridge
@@ -51,7 +50,7 @@ Create a systemctl configuration file for Matterbridge
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
-Add the following to this file, replacing 5 times (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi and Environment="NPM_CONFIG_PREFIX=/home/pi/.npm-global"):
+Add the following to this file, **replacing 4 times (!) USER with your user name** (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi and Environment="NPM_CONFIG_PREFIX=/home/pi/.npm-global"):
 
 ```
 [Unit]
@@ -94,6 +93,7 @@ Now and if you modify matterbridge.service after, run:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl restart matterbridge.service
+sudo systemctl status matterbridge.service
 ```
 
 ### Start Matterbridge
@@ -170,57 +170,4 @@ save it and run
 
 ```bash
 sudo systemctl restart systemd-journald
-```
-
-## Verify that with your distro you can run sudo npm install -g matterbridge without the password
-
-Run the following command to verify if you can install Matterbridge globally without being prompted for a password:
-
-```bash
-sudo npm install -g matterbridge --omit=dev
-```
-
-If you are not prompted for a password, no further action is required.
-
-If that is not the case, open the sudoers file for editing using visudo
-
-```bash
-sudo visudo
-```
-
-verify the presence of of a line
-
-```
-@includedir /etc/sudoers.d
-```
-
-exit and create a configuration file for sudoers
-
-```bash
-sudo nano /etc/sudoers.d/matterbridge
-```
-
-add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD: ALL)
-
-```
-<USER> ALL=(ALL) NOPASSWD: ALL
-```
-
-or if you prefers to only give access to npm without password try with (e.g. radxa ALL=(ALL) NOPASSWD: /usr/bin/npm)
-
-```
-<USER> ALL=(ALL) NOPASSWD: /usr/bin/npm
-```
-
-save the file and reload the settings with:
-
-```bash
-sudo chmod 0440 /etc/sudoers.d/matterbridge
-sudo visudo -c
-```
-
-Verify if you can install Matterbridge globally without being prompted for a password:
-
-```bash
-sudo npm install -g matterbridge --omit=dev
 ```

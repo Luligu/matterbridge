@@ -7,7 +7,7 @@ import { WsMessageApiRequest, WsMessageApiResponse, WsMessageErrorApiResponse } 
 
 // Frontend modules
 import { UiContext } from './UiProvider';
-import { debug } from '../App';
+import { debug, wssPassword } from '../App';
 // const debug = true;
 
 // TypeScript interface for log messages
@@ -154,15 +154,16 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   const removeListener = useCallback((listener: (msg: WsMessageApiResponse) => void) => {
     if (debug) console.log(`WebSocket removeListener:`, listener);
-    // listenersRef.current = listenersRef.current.filter(l => l !== listener);
     listenersRef.current = listenersRef.current.filter((l) => l.listener !== listener);
     if (debug) console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
   }, []);
 
   const connectWebSocket = useCallback(() => {
     if (wssHost === '' || wssHost === null || wssHost === undefined) return;
+    const url = new URL('/', wssHost);
+    if (wssPassword) url.searchParams.set('password', wssPassword);
     logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
-    wsRef.current = new WebSocket(wssHost);
+    wsRef.current = new WebSocket(url.toString());
 
     wsRef.current.onmessage = (event) => {
       if (!online) setOnline(true);

@@ -28,6 +28,31 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.3.5] - 2025-10-31
+
+### Breaking Changes
+
+- [concentrationMeasurement]: Changed the default unit of measurement of some concentration measurement clusters to adapt to the generally used (and supported by Apple Home). Is is always possible to pass a different unit of measurement (Tvoc is Ugm3. Formaldehyde is Mgm3. Pm1, Pm2.5 and Pm10 are Ugm3. Ozone is Ugm3. Radon is Bqm3.)
+
+### Added
+
+- [thread]: Added get_log_level and set_log_level to BroadcastServer.
+- [frontend]: Added password check to WebSocket.
+- [service]: Added link to [configuration](README-SERVICE-LOCAL.md) to run matterbridge as a daemon with systemctl (Linux only) and with local global node_modules (no sudo required).
+
+### Changed
+
+- [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to 3.2.4.
+
+### Fixed
+
+- [service]: Fixed systemd [configuration](README-SERVICE-LOCAL.md) with local global node_modules.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.4] - 2025-10-24
 
 ### Breaking Changes

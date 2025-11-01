@@ -23,7 +23,7 @@ import { MatterbridgeInformation, SystemInformation } from '../../../src/matterb
 import { MbfWindow } from './MbfWindow';
 import { MbfPage } from './MbfPage';
 import { createDebouncer } from '../utils/createDebouncer';
-import { debug } from '../App';
+import { debug, setWssPassword } from '../App';
 // const debug = true;
 
 const widthPx = 500;
@@ -113,6 +113,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
   const handleSaveChangePassword = (password: string) => {
     if (debug) console.log('handleSaveChangePassword called with password:', password);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setpassword', value: password } });
+    setWssPassword(password);
   };
 
   useEffect(() => {

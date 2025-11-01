@@ -235,6 +235,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.server.on('broadcast_message', this.msgHandler.bind(this));
   }
 
+  destroy(): void {
+    this.server.close();
+  }
+
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
       this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
@@ -253,6 +257,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (this.server.isWorkerResponse(msg, msg.type)) {
       this.log.debug(`**Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
+        case 'get_log_level':
+        case 'set_log_level':
+          break;
         default:
           this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
@@ -1548,6 +1555,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     } else {
       if (!this.initialized) {
         this.log.debug('Cleanup with instance not initialized...');
+        this.destroy();
         this.frontend.destroy();
         this.plugins.destroy();
         this.devices.destroy();

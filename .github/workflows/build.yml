@@ -70,6 +70,7 @@ jobs:
           npx npm-check-updates -u || true
           npm install || true
           npm outdated || true
+          npm audit || true
           npm run format || true
           npm run lint:fix || true
           npm run build

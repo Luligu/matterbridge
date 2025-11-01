@@ -82,6 +82,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private log: AnsiLogger;
   private port = 8283;
   private listening = false;
+  private storedPassword: string | undefined = undefined;
 
   private expressApp: Express | undefined;
   private httpServer: HttpServer | undefined;
@@ -106,12 +107,43 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'frontend')) {
       this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
+        case 'get_log_level':
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
+        case 'set_log_level':
+          this.log.logLevel = msg.params.logLevel;
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
         case 'frontend_start':
           await this.start(msg.params.port);
           this.server.respond({ ...msg, response: { success: true } });
           break;
         case 'frontend_stop':
           await this.stop();
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_refreshrequired':
+          this.wssSendRefreshRequired(msg.params.changed, { matter: msg.params.matter });
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_restartrequired':
+          this.wssSendRestartRequired(msg.params.snackbar, msg.params.fixed);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_restartnotrequired':
+          this.wssSendRestartNotRequired(msg.params.snackbar);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_updaterequired':
+          this.wssSendUpdateRequired(msg.params.devVersion);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_snackbarmessage':
+          this.wssSendSnackbarMessage(msg.params.message, msg.params.timeout, msg.params.severity);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_attributechanged':
+          this.wssSendAttributeChangedMessage(msg.params.plugin, msg.params.serialNumber, msg.params.uniqueId, msg.params.number, msg.params.id, msg.params.cluster, msg.params.attribute, msg.params.value);
           this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
@@ -121,6 +153,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (this.server.isWorkerResponse(msg, msg.type)) {
       this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
+        case 'get_log_level':
+        case 'set_log_level':
+          break;
         case 'plugins_install':
           this.wssSendCloseSnackbarMessage(`Installing package ${msg.response.packageName}...`);
           if (msg.response.success) {
@@ -153,6 +188,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   async start(port = 8283) {
     this.port = port;
+    this.storedPassword = await this.matterbridge.nodeContext?.get('password', '');
+
     this.log.debug(`Initializing the frontend ${hasParameter('ssl') ? 'https' : 'http'} server on port ${YELLOW}${this.port}${db}`);
 
     // Initialize multer with the upload directory
@@ -194,6 +231,66 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Serve static files from 'frontend/build' directory
     this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'frontend/build')));
 
+    // Create a WebSocket server and attach it to the http or https server
+    this.log.debug(`Creating WebSocketServer...`);
+    const ws = await import('ws');
+    this.webSocketServer = new ws.WebSocketServer({ noServer: true });
+    this.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
+
+    this.webSocketServer.on('connection', (ws, request) => {
+      const clientIp = request.socket.remoteAddress;
+
+      // Set the global logger callback for the WebSocketServer
+      let callbackLogLevel = LogLevel.NOTICE;
+      if (this.matterbridge.getLogLevel() === LogLevel.INFO || Logger.level === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
+      if (this.matterbridge.getLogLevel() === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
+      AnsiLogger.setGlobalCallback(this.wssSendLogMessage.bind(this), callbackLogLevel);
+      this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
+      this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
+
+      ws.on('message', (message) => {
+        this.wsMessageHandler(ws, message);
+      });
+
+      ws.on('ping', () => {
+        this.log.debug('WebSocket client ping');
+        ws.pong();
+      });
+
+      ws.on('pong', () => {
+        this.log.debug('WebSocket client pong');
+      });
+
+      ws.on('close', () => {
+        this.log.info('WebSocket client disconnected');
+        if (this.webSocketServer?.clients.size === 0) {
+          AnsiLogger.setGlobalCallback(undefined);
+          this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
+        }
+      });
+
+      ws.on('error', (error: Error) => {
+        // istanbul ignore next
+        this.log.error(`WebSocket client error: ${error}`);
+      });
+    });
+
+    this.webSocketServer.on('close', () => {
+      this.log.debug(`WebSocketServer closed`);
+    });
+
+    /* With { noServer: true } it never fires
+    this.webSocketServer.on('listening', () => {
+      this.log.info(`The WebSocketServer is listening`);
+      this.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
+    });
+    */
+
+    // istanbul ignore next
+    this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
+      this.log.error(`WebSocketServer error: ${error}`);
+    });
+
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
       const http = await import('node:http');
@@ -221,6 +318,41 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.emit('server_listening', 'http', this.port);
         });
       }
+
+      this.httpServer.on('upgrade', async (req, socket, head) => {
+        try {
+          // Only proceed for real WebSocket upgrades
+          // istanbul ignore next cause is only a safety check
+          if ((req.headers.upgrade || '').toLowerCase() !== 'websocket') {
+            socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
+            return socket.destroy();
+          }
+
+          // Build a URL so we can read ?password=...
+          const url = new URL(req.url ?? '/', `http://${req.headers.host || 'localhost'}`);
+
+          // Validate WebSocket password
+          const password = url.searchParams.get('password') ?? '';
+          if (password !== this.storedPassword) {
+            this.log.error(`WebSocket upgrade error: Invalid password ${password ? '[redacted]' : '(empty)'}`);
+            socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+            return socket.destroy();
+          }
+
+          // Complete the WebSocket handshake
+          this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
+          this.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
+            this.webSocketServer?.emit('connection', ws, req);
+          });
+        } catch (err) {
+          /* istanbul ignore next: only triggered on unexpected internal error */
+          {
+            inspectError(this.log, 'WebSocket upgrade error:', err);
+            socket.write('HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n');
+            socket.destroy();
+          }
+        }
+      });
 
       this.httpServer.on('error', (error: Error) => {
         this.log.error(`Frontend http server error listening on ${this.port}`);
@@ -327,6 +459,41 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         });
       }
 
+      this.httpsServer.on('upgrade', async (req, socket, head) => {
+        try {
+          // Only proceed for real WebSocket upgrades
+          // istanbul ignore next cause is only a safety check
+          if ((req.headers.upgrade || '').toLowerCase() !== 'websocket') {
+            socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
+            return socket.destroy();
+          }
+
+          // Build a URL so we can read ?password=...
+          const url = new URL(req.url ?? '/', `https://${req.headers.host || 'localhost'}`);
+
+          // Validate WebSocket password
+          const password = url.searchParams.get('password') ?? '';
+          if (password !== this.storedPassword) {
+            this.log.error(`WebSocket upgrade error: Invalid password ${password ? '[redacted]' : '(empty)'}`);
+            socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+            return socket.destroy();
+          }
+
+          // Complete the WebSocket handshake
+          this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
+          this.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
+            this.webSocketServer?.emit('connection', ws, req);
+          });
+        } catch (err) {
+          /* istanbul ignore next: only triggered on unexpected internal error */
+          {
+            inspectError(this.log, 'WebSocket upgrade error:', err);
+            socket.write('HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n');
+            socket.destroy();
+          }
+        }
+      });
+
       this.httpsServer.on('error', (error: Error) => {
         this.log.error(`Frontend https server error listening on ${this.port}`);
         switch ((error as NodeJS.ErrnoException).code) {
@@ -341,88 +508,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         return;
       });
     }
-
-    // Load the stored password
-    /*
-    let storedPassword = '';
-    try {
-      if (!this.matterbridge.nodeContext) throw new Error('nodeContext not found');
-      storedPassword = await this.matterbridge.nodeContext.get('password', '');
-    } catch (error) {
-      inspectError(this.log, 'Error getting password', error);
-      return;
-    }
-    */
-
-    // Create a WebSocket server and attach it to the http or https server
-    const ws = await import('ws');
-
-    this.log.debug(`Creating WebSocketServer...`);
-    this.webSocketServer = new ws.WebSocketServer(hasParameter('ssl') ? { server: this.httpsServer } : { server: this.httpServer });
-
-    this.webSocketServer.on('connection', (ws, request) => {
-      const clientIp = request.socket.remoteAddress;
-
-      /*
-      if (storedPassword !== '') {
-        // Check for the password in the query parameters
-        const url = new URL(request.url ?? '', `http://${request.headers.host}`);
-        const password = url.searchParams.get('password');
-        if (password !== storedPassword) {
-          this.log.error(`WebSocket client "${clientIp}" failed authentication: ${storedPassword}-${password}`);
-          // ws.close();
-          // return;
-        }
-      }
-      */
-
-      // Set the global logger callback for the WebSocketServer
-      let callbackLogLevel = LogLevel.NOTICE;
-      if (this.matterbridge.getLogLevel() === LogLevel.INFO || Logger.level === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
-      if (this.matterbridge.getLogLevel() === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
-      AnsiLogger.setGlobalCallback(this.wssSendLogMessage.bind(this), callbackLogLevel);
-      this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
-      this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
-
-      ws.on('message', (message) => {
-        this.wsMessageHandler(ws, message);
-      });
-
-      ws.on('ping', () => {
-        this.log.debug('WebSocket client ping');
-        ws.pong();
-      });
-
-      ws.on('pong', () => {
-        this.log.debug('WebSocket client pong');
-      });
-
-      ws.on('close', () => {
-        this.log.info('WebSocket client disconnected');
-        if (this.webSocketServer?.clients.size === 0) {
-          AnsiLogger.setGlobalCallback(undefined);
-          this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
-        }
-      });
-
-      ws.on('error', (error: Error) => {
-        // istanbul ignore next
-        this.log.error(`WebSocket client error: ${error}`);
-      });
-    });
-
-    this.webSocketServer.on('close', () => {
-      this.log.debug(`WebSocketServer closed`);
-    });
-
-    this.webSocketServer.on('listening', () => {
-      this.log.info(`The WebSocketServer is listening`);
-      this.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
-    });
-
-    this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
-      this.log.error(`WebSocketServer error: ${error}`);
-    });
 
     // Subscribe to cli events
     cliEmitter.removeAllListeners();
@@ -440,24 +525,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // curl -X POST "http://localhost:8283/api/login" -H "Content-Type: application/json" -d "{\"password\":\"Here\"}"
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
       const { password } = req.body;
-      this.log.debug('The frontend sent /api/login', password);
-      if (!this.matterbridge.nodeContext) {
-        this.log.error('/api/login nodeContext not found');
-        res.json({ valid: false });
-        return;
-      }
-      try {
-        const storedPassword = await this.matterbridge.nodeContext.get('password', '');
-        if (storedPassword === '' || password === storedPassword) {
-          this.log.debug('/api/login password valid');
-          res.json({ valid: true });
-        } else {
-          this.log.warn('/api/login error wrong password');
-          res.json({ valid: false });
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
-        this.log.error('/api/login error getting password');
+      this.log.debug(`The frontend sent /api/login with password ${password ? '[redacted]' : '(empty)'}`);
+      if (this.storedPassword === '' || password === this.storedPassword) {
+        this.log.debug('/api/login password valid');
+        res.json({ valid: true });
+      } else {
+        this.log.warn('/api/login error wrong password');
         res.json({ valid: false });
       }
     });
@@ -1743,6 +1816,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           case 'setpassword':
             if (isValidString(data.params.value)) {
               await this.matterbridge.nodeContext?.set('password', data.params.value);
+              this.storedPassword = data.params.value;
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
             }
             break;

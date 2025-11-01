@@ -59,6 +59,13 @@ export class DeviceManager {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'devices')) {
       this.log.debug(`**Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
+        case 'get_log_level':
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
+        case 'set_log_level':
+          this.log.logLevel = msg.params.logLevel;
+          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
         case 'devices_length':
           this.server.respond({ ...msg, response: { length: this.length } });
           break;
