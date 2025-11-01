@@ -160,8 +160,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   const connectWebSocket = useCallback(() => {
     if (wssHost === '' || wssHost === null || wssHost === undefined) return;
-    logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
-    console.log(`WebSocket connecting to: ${wssHost}${wssPassword ? `?password=[redacted]` : ''}`);
+    logMessage('WebSocket', `Connecting ${wssPassword ? `with password` : ''} to WebSocket: ${wssHost}`);
+    if (debug) console.log(`WebSocket connecting to: ${wssHost}${wssPassword ? `?password=[redacted]` : ''}`);
     wsRef.current = new WebSocket(wssHost + (wssPassword ? `?password=${wssPassword}` : ''));
 
     wsRef.current.onmessage = (event) => {
