@@ -7,7 +7,7 @@
  * @version 1.0.0
  * @license Apache-2.0
  *
- * Copyright 2024, 2025, 2026 Luca Liguori.
+ * Copyright 2025, 2026, 2027 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import type { ApiDevice, ApiMatter, ApiPlugin, Plugin } from './matterbridgeType
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter';
 export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'all';
 
-/** Base message request structure with id, src and dst */
+/** Base message request structure with id, timestamp, src and dst */
 type BaseWorkerMessageRequest = {
   id?: number;
   timestamp?: number;
@@ -40,7 +40,7 @@ type BaseWorkerMessageRequest = {
   dst: WorkerDstType;
 };
 
-/** Base message response structure with id, src and dst */
+/** Base message response structure with id, timestamp, src and dst */
 type BaseWorkerMessageResponse = {
   id?: number;
   timestamp?: number;

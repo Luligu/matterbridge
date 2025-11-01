@@ -23,7 +23,7 @@ import { MatterbridgeInformation, SystemInformation } from '../../../src/matterb
 import { MbfWindow } from './MbfWindow';
 import { MbfPage } from './MbfPage';
 import { createDebouncer } from '../utils/createDebouncer';
-import { debug, setWssPassword } from '../App';
+import { debug, ingress, setWssPassword } from '../App';
 // const debug = true;
 
 const widthPx = 500;
@@ -257,11 +257,13 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
               <MenuItem value='mounted_switch'>Mounted Switch</MenuItem>
             </Select>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
-            <Button variant='contained' color='primary' onClick={() => setOpenChangePassword(true)}>
-              Change password
-            </Button>
-          </div>
+          {!ingress && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
+              <Button variant='contained' color='primary' onClick={() => setOpenChangePassword(true)}>
+                Change password
+              </Button>
+            </div>
+          )}
           {matterbridgeInfo.shellyBoard && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
               <Button variant='contained' color='primary' onClick={() => setOpenNetConfig(true)}>
