@@ -229,7 +229,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     */
 
     // Serve static files from 'frontend/build' directory
-    this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'frontend/build')));
+    this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'frontend', 'build')));
 
     // Create a WebSocket server and attach it to the http or https server
     this.log.debug(`Creating WebSocketServer...`);
@@ -380,22 +380,22 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       let httpsServerOptions: HttpsServerOptions = {};
 
       const fs = await import('node:fs');
-      if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'))) {
+      if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12'))) {
         // Load the p12 certificate and the passphrase
         try {
-          pfx = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
-          this.log.info(`Loaded p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12')}`);
+          pfx = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12'));
+          this.log.info(`Loaded p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12')}`);
         } catch (error) {
-          this.log.error(`Error reading p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12')}: ${error}`);
+          this.log.error(`Error reading p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12')}: ${error}`);
           this.emit('server_error', error as Error);
           return;
         }
         try {
-          passphrase = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass'), 'utf8');
+          passphrase = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pass'), 'utf8');
           passphrase = passphrase.trim(); // Ensure no extra characters
-          this.log.info(`Loaded p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass')}`);
+          this.log.info(`Loaded p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pass')}`);
         } catch (error) {
-          this.log.error(`Error reading p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass')}: ${error}`);
+          this.log.error(`Error reading p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pass')}: ${error}`);
           this.emit('server_error', error as Error);
           return;
         }
@@ -403,27 +403,27 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else {
         // Load the SSL certificate, the private key and optionally the CA certificate. If the CA certificate is present, it will be used to create a full chain certificate.
         try {
-          cert = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem'), 'utf8');
-          this.log.info(`Loaded certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}`);
+          cert = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pem'), 'utf8');
+          this.log.info(`Loaded certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pem')}`);
         } catch (error) {
-          this.log.error(`Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}: ${error}`);
+          this.log.error(`Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pem')}: ${error}`);
           this.emit('server_error', error as Error);
           return;
         }
         try {
-          key = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem'), 'utf8');
-          this.log.info(`Loaded key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}`);
+          key = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'key.pem'), 'utf8');
+          this.log.info(`Loaded key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'key.pem')}`);
         } catch (error) {
-          this.log.error(`Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}: ${error}`);
+          this.log.error(`Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'key.pem')}: ${error}`);
           this.emit('server_error', error as Error);
           return;
         }
         try {
-          ca = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8');
+          ca = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'ca.pem'), 'utf8');
           fullChain = `${cert}\n${ca}`;
-          this.log.info(`Loaded CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem')}`);
+          this.log.info(`Loaded CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'ca.pem')}`);
         } catch (error) {
-          this.log.info(`CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem')} not loaded: ${error}`);
+          this.log.info(`CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'ca.pem')} not loaded: ${error}`);
         }
         httpsServerOptions = { cert: fullChain ?? cert, key, ca };
       }
@@ -901,11 +901,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Fallback for routing (must be the last route)
     this.expressApp.use((req, res) => {
-      this.log.debug(`The frontend sent ${req.url} method ${req.method}: sending index.html as fallback`);
-      res.sendFile(path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
+      const filePath = path.join(this.matterbridge.rootDirectory, 'frontend', 'build', 'index.html');
+      this.log.debug(`The frontend sent ${req.url} method ${req.method}: sending ${filePath} as fallback`);
+      res.sendFile(filePath);
     });
 
-    this.log.debug(`Frontend initialized on port ${YELLOW}${this.port}${db} static ${UNDERLINE}${path.join(this.matterbridge.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
+    this.log.debug(`Frontend initialized on port ${YELLOW}${this.port}${db} static ${UNDERLINE}${path.join(this.matterbridge.rootDirectory, 'frontend', 'build')}${UNDERLINEOFF}${rs}`);
   }
 
   async stop() {

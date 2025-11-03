@@ -38,6 +38,7 @@ Advantages:
 
 - [frontend]: Bumped `frontend` version to 3.3.1.
 - [frontend]: Readded password dialog when running in Ingress.
+- [frontend]: Improved route fallback and cross platform path.
 
 ### Fixed
 
