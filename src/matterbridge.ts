@@ -28,7 +28,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // Node.js modules
 import os from 'node:os';
 import path from 'node:path';
-import { promises as fs } from 'node:fs';
+import fs from 'node:fs';
 import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
@@ -61,6 +61,7 @@ import { Frontend } from './frontend.js';
 import { addVirtualDevices } from './helpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
+import { inspectError } from './utils/error.js';
 
 /**
  * Represents the Matterbridge events.
@@ -444,8 +445,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Certificate management
     const pairingFilePath = path.join(this.matterbridgeCertDirectory, 'pairing.json');
     try {
-      await fs.access(pairingFilePath, fs.constants.R_OK);
-      const pairingFileContent = await fs.readFile(pairingFilePath, 'utf8');
+      await fs.promises.access(pairingFilePath, fs.constants.R_OK);
+      const pairingFileContent = await fs.promises.readFile(pairingFilePath, 'utf8');
       const pairingFileJson = JSON.parse(pairingFileContent) as {
         vendorId?: number;
         vendorName?: string;
@@ -695,20 +696,26 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
-      const packageJson = await this.plugins.parse(plugin);
-      if (packageJson === null && !hasParameter('add') && !hasParameter('remove') && !hasParameter('enable') && !hasParameter('disable') && !hasParameter('reset') && !hasParameter('factoryreset')) {
-        // Try to reinstall the plugin from npm (for Docker pull and external plugins)
-        // We don't do this when the add and other parameters are set because we shut down the process after adding the plugin
-        this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
+      // Try to reinstall the plugin from npm (for Docker pull and external plugins)
+      // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
+      if (!fs.existsSync(plugin.path) && !hasParameter('add') && !hasParameter('remove') && !hasParameter('enable') && !hasParameter('disable') && !hasParameter('reset') && !hasParameter('factoryreset')) {
+        this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
         try {
           const { spawnCommand } = await import('./utils/spawn.js');
           await spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose'], 'install', plugin.name);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } catch (error) {
+          inspectError(this.log, `Error installing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`, error);
           plugin.error = true;
           plugin.enabled = false;
-          this.log.error(`Error installing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`, error instanceof Error ? error.message : error);
+          continue;
+        }
+        if ((await this.plugins.parse(plugin)) === null) {
+          this.log.error(`Error parsing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`);
+          plugin.error = true;
+          plugin.enabled = false;
+          continue;
         }
       }
       this.log.debug(`Creating node storage context for plugin  ${plg}${plugin.name}${db}`);
@@ -1151,7 +1158,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Matterbridge version
     this.log.debug(`Reading matterbridge package.json...`);
-    const packageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));
+    const packageJson = JSON.parse(await fs.promises.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));
     this.matterbridgeVersion = this.matterbridgeLatestVersion = this.matterbridgeDevVersion = packageJson.version;
     this.log.debug(`Matterbridge Version: ${this.matterbridgeVersion}`);
 
@@ -1165,7 +1172,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Frontend version
     this.log.debug(`Reading frontend package.json...`);
-    const frontendPackageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'frontend/package.json'), 'utf8'));
+    const frontendPackageJson = JSON.parse(await fs.promises.readFile(path.join(this.rootDirectory, 'frontend/package.json'), 'utf8'));
     this.frontendVersion = frontendPackageJson.version;
     this.log.debug(`Frontend version ${CYAN}${this.frontendVersion}${db}`);
 
@@ -1504,10 +1511,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           // Delete matter storage directory with its subdirectories and backup
           const dir = path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME);
           this.log.info(`Removing matter storage directory: ${dir}`);
-          await fs.rm(dir, { recursive: true });
+          await fs.promises.rm(dir, { recursive: true });
           const backup = path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup');
           this.log.info(`Removing matter storage backup directory: ${backup}`);
-          await fs.rm(backup, { recursive: true });
+          await fs.promises.rm(backup, { recursive: true });
         } catch (error) {
           // istanbul ignore next if
           if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
@@ -1518,10 +1525,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           // Delete matterbridge storage directory with its subdirectories and backup
           const dir = path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR);
           this.log.info(`Removing matterbridge storage directory: ${dir}`);
-          await fs.rm(dir, { recursive: true });
+          await fs.promises.rm(dir, { recursive: true });
           const backup = path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR + '.backup');
           this.log.info(`Removing matterbridge storage backup directory: ${backup}`);
-          await fs.rm(backup, { recursive: true });
+          await fs.promises.rm(backup, { recursive: true });
         } catch (error) {
           // istanbul ignore next if
           if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {

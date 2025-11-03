@@ -34,6 +34,8 @@ Advantages:
 
 ### Added
 
+- [matterbridge]: Added a first check for plugin existence (docker pull) and reinstall it before parsing the plugin.
+
 ### Changed
 
 - [frontend]: Bumped `frontend` version to 3.3.1.

@@ -537,7 +537,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   /**
-   * Loads and parses the plugin package.json and returns it.
+   * Parses the plugin package.json and returns it.
+   * It will also log warnings and errors for missing or invalid fields.
+   * It will return null if critical errors are found.
    *
    * @param {Plugin} plugin - The plugin to load the package from.
    * @returns {Promise<Record<string, string | number | object> | null>} A promise that resolves to the parsed package.json object or null if it could not be parsed.
