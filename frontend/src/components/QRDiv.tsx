@@ -18,7 +18,7 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { ApiMatter } from '../../../src/matterbridgeTypes';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
-import { MbfWindow, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons, MbfWindowText } from './MbfWindow';
+import { MbfWindow, MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons, MbfWindowText } from './MbfWindow';
 import { debug } from '../App';
 // const debug = true; // Debug flag for this component
 
@@ -228,7 +228,7 @@ function QRDiv({ id }: QRDivProps) {
           </MbfWindowIcons>
         </MbfWindowHeader>
         <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</MbfWindowText>
-        <div className="MbfWindowBodyColumn" style={{ paddingTop: '0px' }}>
+        <MbfWindowContent style={{ flexDirection: 'column', flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '0px 0px 10px 0px', gap: '0px' }}>
           {matter.fabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
               <div style={{ marginLeft: '20px', marginBottom: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '20px', alignItems: 'center' }}>
@@ -248,7 +248,7 @@ function QRDiv({ id }: QRDivProps) {
               </p>
             </div>
           ))}
-        </div>
+        </MbfWindowContent>
         <MbfWindowFooter style={{ justifyContent: 'center' }}>
           <MbfWindowFooterText style={{ fontWeight: 'normal' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
         </MbfWindowFooter>

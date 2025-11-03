@@ -901,9 +901,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Fallback for routing (must be the last route)
     this.expressApp.use((req, res) => {
-      const filePath = path.join(this.matterbridge.rootDirectory, 'frontend', 'build', 'index.html');
-      this.log.debug(`The frontend sent ${req.url} method ${req.method}: sending ${filePath} as fallback`);
-      res.sendFile(filePath);
+      const filePath = path.resolve(this.matterbridge.rootDirectory, 'frontend', 'build');
+      this.log.debug(`The frontend sent ${req.url} method ${req.method}: sending index.html in ${filePath} as fallback`);
+      res.sendFile('index.html', { root: filePath });
     });
 
     this.log.debug(`Frontend initialized on port ${YELLOW}${this.port}${db} static ${UNDERLINE}${path.join(this.matterbridge.rootDirectory, 'frontend', 'build')}${UNDERLINEOFF}${rs}`);

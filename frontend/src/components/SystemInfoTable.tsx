@@ -16,7 +16,7 @@ import { SystemInformation } from '../../../src/matterbridgeTypes';
 import { TruncatedText } from './TruncatedText';
 import { WebSocketContext } from './WebSocketProvider';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
-import { MbfWindow, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
+import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { debug } from '../App';
 // const debug = true;
 
@@ -142,7 +142,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
           </IconButton>
         </MbfWindowIcons>
       </MbfWindowHeader>
-      <div className='MbfWindowDivTable'>
+      <MbfWindowContent style={{ flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '0px', gap: '0px' }}>
         <table style={{ border: 'none', borderCollapse: 'collapse' }}>
           <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>
             {Object.entries(localSystemInfo)
@@ -175,7 +175,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
               ))}
           </tbody>
         </table>
-      </div>
+      </MbfWindowContent>
     </MbfWindow>
   );
 }

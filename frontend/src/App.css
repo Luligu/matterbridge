@@ -440,14 +440,12 @@ h3 {
 
 /* Define the style for the main div element */
 .MbfWindowDivTable {
-  display: flex;
-  flex-direction: column;
+  display: block;
   flex: 1 1 auto;
+  overflow: auto;
   margin: -1px;
   padding: 0;
   gap: 0;
-  overflow: auto;
-  display: block;
 }
 
 /* Define the style for an header footer div element with icons */

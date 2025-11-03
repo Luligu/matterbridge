@@ -38,9 +38,10 @@ Advantages:
 
 - [frontend]: Bumped `frontend` version to 3.3.1.
 - [frontend]: Readded password dialog when running in Ingress.
-- [frontend]: Improved route fallback and cross platform path.
 
 ### Fixed
+
+- [frontend]: Fixed route fallback and cross platform path failing randomly with node prefix.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
