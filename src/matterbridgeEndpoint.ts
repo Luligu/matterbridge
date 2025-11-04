@@ -2408,6 +2408,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Special case of inverted bitmap: add also alwaysSet = 2047
       supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: true, passage: true, alwaysSet: 2047 },
       alarmMask: { lockJammed: false, lockFactoryReset: false, lockRadioPowerCycled: false, wrongCodeEntryLimit: false, frontEscutcheonRemoved: false, doorForcedOpen: false },
+      autoRelockTime: 0, // 0=disabled
     });
     return this;
   }
