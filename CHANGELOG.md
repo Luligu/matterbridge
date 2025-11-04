@@ -34,7 +34,7 @@ Advantages:
 
 ### Added
 
-- [matterbridge]: Added a first check for plugin existence (docker pull) and reinstall it before parsing the plugin.
+- [matterbridge]: Added a first check for plugin existence (docker pull or Hass add-on rebuild) and reinstall it before parsing the plugin.
 
 ### Changed
 

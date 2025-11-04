@@ -23,7 +23,7 @@ import { MatterbridgeInformation, SystemInformation } from '../../../src/matterb
 import { MbfWindow } from './MbfWindow';
 import { MbfPage } from './MbfPage';
 import { createDebouncer } from '../utils/createDebouncer';
-import { debug, ingress, setWssPassword } from '../App';
+import { debug, setWssPassword } from '../App';
 // const debug = true;
 
 const widthPx = 500;
@@ -584,26 +584,26 @@ function ReadOnlyTextField({ value, label, width }: { value: string; label: stri
       size='small'
       label={label}
       variant='standard'
-      sx={{ 
-        width: width ? `${width - 20}px` : '400px',            
+      sx={{
+        width: width ? `${width - 20}px` : '400px',
         // idle/blur underline
         '& .MuiInput-underline:before': {
           borderBottomColor: 'var(--main-label-color)',
           borderBottomWidth: '1px',
-          opacity: 0.5, 
+          opacity: 0.5,
         },
         // hover underline (prevent default 2px bump)
         '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
           borderBottomColor: 'var(--main-label-color)',
           borderBottomWidth: '1px',
-          opacity: 0.5, 
+          opacity: 0.5,
         },
         // focused underline (default is 2px; keep it 1px)
         '& .MuiInput-underline.Mui-focused:after': {
           borderBottomColor: 'var(--main-label-color)',
           borderBottomWidth: '1px',
-          opacity: 0.5, 
-        },      
+          opacity: 0.5,
+        },
       }}
       slotProps={{
         input: {
@@ -623,7 +623,6 @@ function ReadOnlyTextField({ value, label, width }: { value: string; label: stri
             },
           },
         },
-
       }}
     />
   );
