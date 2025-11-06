@@ -4,7 +4,7 @@
  * @file broadcastServer.ts
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -31,6 +31,7 @@ import { BroadcastChannel } from 'node:worker_threads';
 import { type AnsiLogger, debugStringify } from 'node-ansi-logger';
 
 import type { WorkerMessage, WorkerMessageType, WorkerRequest, WorkerResponse, WorkerSrcType } from './broadcastServerTypes.js';
+import { hasParameter } from './utils/commandLine.js';
 
 interface BroadcastServerEvents {
   'broadcast_message': [msg: WorkerMessage];
@@ -41,6 +42,8 @@ interface BroadcastServerEvents {
  */
 export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   private readonly broadcastChannel: BroadcastChannel;
+  private readonly debug = hasParameter('debug') || hasParameter('verbose');
+  private readonly verbose = hasParameter('verbose');
 
   /**
    * Creates an instance of BroadcastServer.
@@ -109,7 +112,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    */
   private broadcastMessageHandler(event: MessageEvent): void {
     const data = event.data as WorkerMessage;
-    this.log.debug(`Received broadcast message: ${debugStringify(data)}`);
+    if (this.verbose) this.log.debug(`Received broadcast message: ${debugStringify(data)}`);
     this.emit('broadcast_message', data);
   }
 
@@ -119,6 +122,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @param {WorkerMessage} message - The message to broadcast.
    */
   broadcast(message: WorkerMessage) {
+    if (this.verbose) this.log.debug(`Broadcasting message: ${debugStringify(message)}`);
     this.broadcastChannel.postMessage(message);
   }
 
@@ -139,7 +143,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       this.log.error(`Invalid request message format for broadcast: ${debugStringify(message)}`);
       return;
     }
-    this.log.debug(`Broadcasting request message: ${debugStringify(message)}`);
+    if (this.verbose) this.log.debug(`Broadcasting request message: ${debugStringify(message)}`);
     this.broadcastChannel.postMessage(message);
   }
 
@@ -157,7 +161,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       this.log.error(`Invalid response message format for broadcast: ${debugStringify(message)}`);
       return;
     }
-    this.log.debug(`Broadcasting response message: ${debugStringify(message)}`);
+    if (this.verbose) this.log.debug(`Broadcasting response message: ${debugStringify(message)}`);
     this.broadcastChannel.postMessage(message);
   }
 
@@ -166,24 +170,25 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * It broadcasts a request message and waits for a response with the same id.
    *
    * @param {WorkerRequest<T>} message - The typed request message to broadcast.
+   * @param {number} timeout - The timeout in milliseconds to wait for a response. Default is 100ms.
    * @returns {Promise<WorkerResponse<T>>} A promise that resolves with the response from the worker or rejects on timeout.
    * @throws {Error} If the fetch operation times out after 100ms.
    */
-  async fetch<M extends WorkerRequest<WorkerMessageType>>(message: M): Promise<WorkerResponse<M['type']>> {
+  async fetch<M extends WorkerRequest<WorkerMessageType>>(message: M, timeout: number = 100): Promise<WorkerResponse<M['type']>> {
     if (message.id === undefined) {
       message.id = this.getUniqueId();
     }
     if (message.timestamp === undefined) {
       message.timestamp = Date.now();
     }
-    this.log.debug(`Fetching message: ${debugStringify(message)}`);
+    if (this.verbose) this.log.debug(`Fetching message: ${debugStringify(message)}`);
 
     return new Promise<WorkerResponse<M['type']>>((resolve, reject) => {
       const responseHandler = (msg: WorkerMessage) => {
         if (this.isWorkerResponse(msg, message.type) && msg.id === message.id) {
           clearTimeout(timeoutId);
           this.off('broadcast_message', responseHandler);
-          this.log.debug(`Fetch response: ${debugStringify(msg)}`);
+          if (this.verbose) this.log.debug(`Fetch response: ${debugStringify(msg)}`);
           resolve(msg);
         }
       };
@@ -193,8 +198,8 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
 
       const timeoutId = setTimeout(() => {
         this.off('broadcast_message', responseHandler);
-        reject(new Error(`Fetch timeout after 100ms for message id ${message.id}`));
-      }, 100);
+        reject(new Error(`Fetch timeout after ${timeout}ms for message id ${message.id}`));
+      }, timeout);
     });
   }
 }

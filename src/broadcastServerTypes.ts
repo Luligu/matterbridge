@@ -27,7 +27,7 @@ import { EndpointNumber } from '@matter/types/datatype';
 
 import { RefreshRequiredChanged } from './frontendTypes.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import type { ApiDevice, ApiMatter, ApiPlugin, Plugin } from './matterbridgeTypes.js';
+import type { ApiMatter, ApiPlugin, BaseDevice, Plugin, StoragePlugin } from './matterbridgeTypes.js';
 
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter';
 export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'all';
@@ -144,13 +144,13 @@ type WorkerMessageMap = {
     request: { type: 'plugins_clear' };
     response: { type: 'plugins_clear'; response: { success: boolean } };
   };
-  'plugins_array': {
-    request: { type: 'plugins_array' };
-    response: { type: 'plugins_array'; response: { plugins: ApiPlugin[] } };
+  'plugins_storagepluginarray': {
+    request: { type: 'plugins_storagepluginarray' };
+    response: { type: 'plugins_storagepluginarray'; response: { plugins: StoragePlugin[] } };
   };
-  'plugins_baseArray': {
-    request: { type: 'plugins_baseArray' };
-    response: { type: 'plugins_baseArray'; response: { plugins: ApiPlugin[] } };
+  'plugins_apipluginarray': {
+    request: { type: 'plugins_apipluginarray' };
+    response: { type: 'plugins_apipluginarray'; response: { plugins: ApiPlugin[] } };
   };
   'plugins_loadFromStorage': {
     request: { type: 'plugins_loadFromStorage' };
@@ -213,19 +213,19 @@ type WorkerMessageMap = {
     response: { type: 'plugins_add'; response: { plugin: ApiPlugin | null } };
   };
   'plugins_load': {
-    request: { type: 'plugins_load'; params: { plugin: ApiPlugin; start?: boolean; message?: string; configure?: boolean } };
+    request: { type: 'plugins_load'; params: { plugin: ApiPlugin | string; start?: boolean; message?: string; configure?: boolean } };
     response: { type: 'plugins_load'; response: { platform: unknown | undefined } };
   };
   'plugins_start': {
-    request: { type: 'plugins_start'; params: { plugin: ApiPlugin; message?: string; configure?: boolean } };
+    request: { type: 'plugins_start'; params: { plugin: ApiPlugin | string; message?: string; configure?: boolean } };
     response: { type: 'plugins_start'; response: { plugin: ApiPlugin | undefined } };
   };
   'plugins_configure': {
-    request: { type: 'plugins_configure'; params: { plugin: ApiPlugin } };
+    request: { type: 'plugins_configure'; params: { plugin: ApiPlugin | string } };
     response: { type: 'plugins_configure'; response: { plugin: ApiPlugin | undefined } };
   };
   'plugins_shutdown': {
-    request: { type: 'plugins_shutdown'; params: { plugin: ApiPlugin; reason?: string; removeAllDevices?: boolean; force?: boolean } };
+    request: { type: 'plugins_shutdown'; params: { plugin: ApiPlugin | string; reason?: string; removeAllDevices?: boolean; force?: boolean } };
     response: { type: 'plugins_shutdown'; response: { plugin: ApiPlugin | undefined } };
   };
   'plugins_loadConfig': {
@@ -264,23 +264,23 @@ type WorkerMessageMap = {
   };
   'devices_get': {
     request: { type: 'devices_get'; params: { uniqueId: string } };
-    response: { type: 'devices_get'; response: { device: ApiDevice | undefined } };
+    response: { type: 'devices_get'; response: { device: BaseDevice | undefined } };
   };
   'devices_set': {
-    request: { type: 'devices_set'; params: { device: ApiDevice } };
-    response: { type: 'devices_set'; response: { device: ApiDevice } };
+    request: { type: 'devices_set'; params: { device: BaseDevice } };
+    response: { type: 'devices_set'; response: { device: BaseDevice } };
   };
   'devices_remove': {
-    request: { type: 'devices_remove'; params: { device: ApiDevice } };
+    request: { type: 'devices_remove'; params: { device: BaseDevice } };
     response: { type: 'devices_remove'; response: { success: boolean } };
   };
   'devices_clear': {
     request: { type: 'devices_clear' };
     response: { type: 'devices_clear'; response: { success: boolean } };
   };
-  'devices_array': {
-    request: { type: 'devices_array' };
-    response: { type: 'devices_array'; response: { device: ApiDevice[] } };
+  'devices_basearray': {
+    request: { type: 'devices_basearray'; params: { pluginName?: string } };
+    response: { type: 'devices_basearray'; response: { devices: BaseDevice[] } };
   };
 };
 
