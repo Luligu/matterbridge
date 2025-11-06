@@ -146,7 +146,7 @@
     "install:dependencies": "npm install --save-exact @matter/main archiver express glob multer node-ansi-logger node-persist-manager ws",
     "install:scripts": "npm install --save-dev --save-exact npm-check-updates shx",
     "install:typescript": "npm install --save-dev --save-exact typescript @types/node @types/express @types/ws",
-    "install:eslint": "npm install --save-dev --save-exact @eslint/js typescript-eslint eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-jsdoc",
+    "install:eslint": "npm install --save-dev --save-exact eslint @eslint/js typescript-eslint eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-jsdoc",
     "install:jest": "npm install --save-dev --save-exact jest ts-jest @types/jest @jest/globals eslint-plugin-jest",
     "install:vitest": "npm install --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin",
     "install:prettier": "npm install --save-dev --save-exact prettier eslint-config-prettier eslint-plugin-prettier"
@@ -162,21 +162,21 @@
     "ws": "8.18.3"
   },
   "devDependencies": {
-    "@eslint/js": "9.38.0",
+    "@eslint/js": "9.39.1",
     "@jest/globals": "30.2.0",
     "@types/archiver": "7.0.0",
     "@types/express": "5.0.5",
     "@types/jest": "30.0.0",
     "@types/multer": "2.0.0",
-    "@types/node": "24.9.2",
+    "@types/node": "24.10.0",
     "@types/ws": "8.18.1",
     "@vitest/coverage-v8": "4.0.6",
     "@vitest/eslint-plugin": "1.4.0",
-    "eslint": "9.38.0",
+    "eslint": "9.39.1",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest": "29.0.1",
-    "eslint-plugin-jsdoc": "61.1.11",
+    "eslint-plugin-jsdoc": "61.1.12",
     "eslint-plugin-n": "17.23.1",
     "eslint-plugin-prettier": "5.5.4",
     "eslint-plugin-promise": "7.2.1",
@@ -186,7 +186,7 @@
     "shx": "0.4.0",
     "ts-jest": "29.4.5",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.46.2",
+    "typescript-eslint": "8.46.3",
     "vitest": "4.0.6"
   }
 }
