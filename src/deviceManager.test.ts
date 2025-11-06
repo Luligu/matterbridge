@@ -57,7 +57,7 @@ describe('DeviceManager', () => {
     await (devices as any).msgHandler({ id: 123456, type: 'jest', src: 'frontend', dst: 'all' } as any); // valid
     await (devices as any).msgHandler({ id: 123456, type: 'get_log_level', src: 'frontend', dst: 'devices', params: {} } as any);
     await (devices as any).msgHandler({ id: 123456, type: 'set_log_level', src: 'frontend', dst: 'devices', params: { logLevel: LogLevel.DEBUG } } as any);
-    for (const type of ['jest', 'devices_length', 'devices_size', 'devices_has', 'devices_get', 'devices_set', 'devices_remove', 'devices_clear'] as const) {
+    for (const type of ['jest', 'devices_length', 'devices_size', 'devices_has', 'devices_get', 'devices_set', 'devices_remove', 'devices_clear', 'devices_basearray'] as const) {
       await (devices as any).msgHandler({ id: 123456, type, src: 'frontend', dst: 'all', params: { uniqueId: 'testDevice', device: { uniqueId: 'testDevice' } } } as any);
     }
   });
@@ -67,14 +67,16 @@ describe('DeviceManager', () => {
     expect((devices as any).log.logLevel).toBe(LogLevel.DEBUG);
   });
 
-  test('size returns correct number of devices', () => {
+  test('size returns correct number of devices', async () => {
     expect(devices.size).toBe(0);
     expect(devices.length).toBe(0);
     devices.set({ name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1', uniqueId: 'DeviceUniqueId1' } as unknown as MatterbridgeEndpoint);
     devices.set({ name: 'DeviceType2', serialNumber: 'DeviceSerial2', deviceName: 'Device2', uniqueId: 'DeviceUniqueId2' } as unknown as MatterbridgeEndpoint);
-    devices.set({ name: 'DeviceType3', serialNumber: 'DeviceSerial3', deviceName: 'Device3', uniqueId: 'DeviceUniqueId3' } as unknown as MatterbridgeEndpoint);
+    devices.set({ plugin: 'jest', name: 'DeviceType3', serialNumber: 'DeviceSerial3', deviceName: 'Device3', uniqueId: 'DeviceUniqueId3' } as unknown as MatterbridgeEndpoint);
     expect(devices.size).toBe(3);
     expect(devices.length).toBe(3);
+    await (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_basearray', src: 'frontend', dst: 'devices', params: {} } as any);
+    await (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_basearray', src: 'frontend', dst: 'devices', params: { pluginName: 'jest' } } as any);
   });
 
   test('set without uniqueId to throw', () => {
