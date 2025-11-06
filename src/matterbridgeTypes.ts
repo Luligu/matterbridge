@@ -84,6 +84,8 @@ export type SharedMatterbridge = Readonly<
   >
 >;
 
+export type PluginName = string;
+
 /** Define an interface for matterbridge */
 export interface Plugin extends ApiPlugin {
   /** Node storage context created in the directory 'storage' in matterbridgeDirectory with the plugin name */
@@ -230,6 +232,19 @@ export interface ApiDevice {
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
   cluster: string;
   matter?: ApiMatter;
+}
+
+/** Define an interface for base device information */
+export interface BaseDevice {
+  pluginName: string | undefined;
+  deviceType: number | undefined;
+  number: EndpointNumber | undefined;
+  id: string | undefined;
+  deviceName: string | undefined;
+  serialNumber: string | undefined;
+  uniqueId: string | undefined;
+  productUrl: string;
+  configUrl: string | undefined;
 }
 
 /** Define an interface for API matter information */
