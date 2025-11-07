@@ -79,7 +79,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
-    // istanbul ignore next if
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'plugins')) {
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
@@ -171,6 +170,26 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
               this.server.respond({ ...msg, params: {}, response: { platform: {} } });
             } else {
               this.server.respond({ ...msg, response: { platform } });
+            }
+          }
+          break;
+        case 'plugins_start':
+          {
+            const plugin = await this.start(msg.params.plugin, msg.params.message, msg.params.configure);
+            if (plugin) {
+              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, response: { plugin } });
+            }
+          }
+          break;
+        case 'plugins_configure':
+          {
+            const plugin = await this.configure(msg.params.plugin);
+            if (plugin) {
+              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, response: { plugin } });
             }
           }
           break;
@@ -516,6 +535,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @returns {Promise<boolean>} A promise that resolves to true if the installation was successful, false otherwise.
    */
   async install(packageName: string): Promise<boolean> {
+    this.log.debug(`Installing plugin ${plg}${packageName}${db}...`);
     const { spawnCommand } = await import('./utils/spawn.js');
     try {
       await spawnCommand(this.matterbridge, 'npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName);
@@ -531,9 +551,11 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           await this.matterbridge.shutdownProcess();
         }
       }
+      this.log.debug(`Installed plugin ${plg}${packageName}${db} successfully`);
       return true;
     } catch (error) {
       inspectError(this.log, `Failed to install package ${plg}${packageName}${er}`, error);
+      this.log.debug(`Failed to install plugin ${plg}${packageName}${db}`);
       return false;
     }
   }
@@ -545,6 +567,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @returns {Promise<boolean>} A promise that resolves to true if the uninstallation was successful, false otherwise.
    */
   async uninstall(packageName: string): Promise<boolean> {
+    this.log.debug(`Uninstalling plugin ${plg}${packageName}${db}...`);
     const { spawnCommand } = await import('./utils/spawn.js');
     packageName = packageName.replace(/@.*$/, '');
     if (packageName === 'matterbridge') return false;
@@ -555,9 +578,11 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         await this.remove(packageName);
       }
       await spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', packageName, '--verbose'], 'uninstall', packageName);
+      this.log.debug(`Uninstalled plugin ${plg}${packageName}${db} successfully`);
       return true;
     } catch (error) {
       inspectError(this.log, `Failed to uninstall package ${plg}${packageName}${er}`, error);
+      this.log.debug(`Failed to uninstall plugin ${plg}${packageName}${db}`);
       return false;
     }
   }
