@@ -213,6 +213,85 @@ describe('Multicast', () => {
     expect(mcast).toBeInstanceOf(Multicast);
     expect(mcast.socketType).toBe('udp6');
 
+    /* Global Unicast Address (GUA) example of os.networkInterfaces():
+    {
+      'Wi-Fi': [
+        {
+          address: '2a02:1210:5435:2f00:374c:ad:aa56:a58e',
+          netmask: 'ffff:ffff:ffff:ffff::',
+          family: 'IPv6',
+          mac: 'c4:cb:76:b3:cd:1f',
+          internal: false,
+          cidr: '2a02:1210:5435:2f00:374c:ad:aa56:a58e/64',
+          scopeid: 0
+        },
+        {
+          address: '2a02:1210:5435:2f00:5c16:8f32:1288:1d5a',
+          netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff',
+          family: 'IPv6',
+          mac: 'c4:cb:76:b3:cd:1f',
+          internal: false,
+          cidr: '2a02:1210:5435:2f00:5c16:8f32:1288:1d5a/128',
+          scopeid: 0
+        },
+        {
+          address: 'fe80::5a71:b2f6:7bc8:d00b',
+          netmask: 'ffff:ffff:ffff:ffff::',
+          family: 'IPv6',
+          mac: 'c4:cb:76:b3:cd:1f',
+          internal: false,
+          cidr: 'fe80::5a71:b2f6:7bc8:d00b/64',
+          scopeid: 7
+        },
+        {
+          address: '192.168.1.108',
+          netmask: '255.255.255.0',
+          family: 'IPv4',
+          mac: 'c4:cb:76:b3:cd:1f',
+          internal: false,
+          cidr: '192.168.1.108/24'
+        }
+      ],
+      'Loopback Pseudo-Interface 1': [
+        {
+          address: '::1',
+          netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff',
+          family: 'IPv6',
+          mac: '00:00:00:00:00:00',
+          internal: true,
+          cidr: '::1/128',
+          scopeid: 0
+        },
+        {
+          address: '127.0.0.1',
+          netmask: '255.0.0.0',
+          family: 'IPv4',
+          mac: '00:00:00:00:00:00',
+          internal: true,
+          cidr: '127.0.0.1/8'
+        }
+      ],
+      'vEthernet (Default Switch)': [
+        {
+          address: 'fe80::6bf3:25ee:ad45:aff',
+          netmask: 'ffff:ffff:ffff:ffff::',
+          family: 'IPv6',
+          mac: '00:15:5d:cd:2a:80',
+          internal: false,
+          cidr: 'fe80::6bf3:25ee:ad45:aff/64',
+          scopeid: 34
+        },
+        {
+          address: '172.24.64.1',
+          netmask: '255.255.240.0',
+          family: 'IPv4',
+          mac: '00:15:5d:cd:2a:80',
+          internal: false,
+          cidr: '172.24.64.1/20'
+        }
+      ]
+    }
+    */
     // Mock networkInterfaces to return multiple interfaces, but only one matches the specified name
     const networkInterfacesMock = jest.spyOn(os, 'networkInterfaces').mockReturnValue({
       'eth0': [

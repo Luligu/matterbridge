@@ -28,7 +28,7 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.3.7] - 2025-11-07
+## [3.3.7] - 2025-11-08
 
 ### Breaking Changes
 
@@ -37,7 +37,7 @@ Advantages:
 ### Added
 
 - [matterbridge]: Added a first check for plugin existence (docker pull or Hass add-on rebuild) and reinstall it before parsing the plugin. The error messages have been removed.
-- [service]: Added [configuration](README-SERVICE-OPT.md) to run matterbridge as a daemon with systemctl (Linux only) and with private global node_modules (user matterbridge and no sudo required).
+- [service]: Added [configuration](README-SERVICE-OPT.md) to run matterbridge as a daemon with systemctl (Linux only), private global node_modules, user/group matterbridge and no sudo required.
 
 ### Changed
 

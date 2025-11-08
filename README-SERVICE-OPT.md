@@ -20,14 +20,16 @@
 
 The advantage of this setup is that the global node_modules are private for matterbridge and sudo is not required.
 
-The service runs with user matterbridge and the system has full protection.
+The service runs with group and user matterbridge and the system has full protection.
 
 The storage position is **not compatible** with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
 
 ### 1 - Create the matterbridge user and group
 
 ```bash
+# ✅ Create the matterbridge group
 sudo groupadd --system matterbridge 2>/dev/null || true
+# ✅ Create the matterbridge user
 sudo useradd  --system \
   --home-dir /opt/matterbridge \
   --shell /usr/sbin/nologin \
@@ -42,10 +44,10 @@ This will create the required directories if they don't exist
 ```bash
 cd ~
 # ✅ Safe precaution if matterbridge was already running with the traditional setup
-sudo systemctl stop matterbridge
-# ✅ We need to uninstall from the global node_modules
-sudo npm uninstall matterbridge -g
-# ✅ Creates all needed dirs
+sudo systemctl stop matterbridge 2>/dev/null || true
+# ✅ Safe precaution we need to uninstall from the global node_modules
+sudo npm uninstall matterbridge -g 2>/dev/null || true
+# ✅ Creates all required directories
 sudo mkdir -p /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
 # ✅ Ensures ownership
 sudo chown -R matterbridge:matterbridge /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
@@ -55,7 +57,7 @@ sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbr
 sudo -u matterbridge mkdir -p /opt/matterbridge/.npm-global/bin
 # ✅ Install matterbridge in the private global node_modules
 sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global npm install matterbridge --omit=dev --verbose --global
-# ✅ Create a link to matterbridge bin
+# ✅ Create a link to matterbridge bins
 sudo ln -sf /opt/matterbridge/.npm-global/bin/matterbridge /usr/bin/matterbridge
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_mdns /usr/bin/mb_mdns
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_coap /usr/bin/mb_coap
@@ -69,7 +71,21 @@ matterbridge --version
 
 The storage position is **not compatible** with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
 
-You may want to copy the contents to the new directories.
+If you are migrating from the traditional service setup, before removing the old diretories, you may want to copy the contents of ~/Matterbridge ~/.matterbridge ~/.mattercert to the new directories /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert.
+
+Copy the old diretories content
+
+```bash
+sudo cp -a ~/Matterbridge/. /opt/matterbridge/Matterbridge/
+sudo cp -a ~/.matterbridge/. /opt/matterbridge/.matterbridge/
+sudo cp -a ~/.mattercert/. /opt/matterbridge/.mattercert/
+```
+
+Remove the old diretories
+
+```bash
+sudo rm -rf ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global
+```
 
 ### 3 - Create a systemctl configuration file for Matterbridge
 
