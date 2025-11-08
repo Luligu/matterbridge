@@ -30,11 +30,11 @@ Matterbridge creates a device that can be paired with any ecosystem, such as App
 
 You don't need a hub or a dedicated new machine.
 
-No complex setup: just copy paste the installation scripts.
+No complex setup: just copy paste the installation scripts (available for Docker, Nginx, Linux systemctl and macOS launchctl).
 
 Matterbridge is lightweight and also runs on slow Linux machines with as little as 512MB of memory.
 
-It also runs perfectly on macOS and Windows.
+It runs perfectly on Linux, macOS and Windows.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
@@ -63,6 +63,8 @@ https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge
 ## Press
 
 https://matter-smarthome.de/en/interview/an-alternative-to-the-official-matter-sdk/
+
+https://blog.adafruit.com/2025/11/03/matterbridge-a-matter-plugin-manager/
 
 ## Prerequisites
 

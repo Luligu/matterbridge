@@ -28,6 +28,32 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.3.7] - 2025-11-08
+
+### Breaking Changes
+
+- [frontend]: When a plugin is first added, it will not be anymore started to allow to configure it before restarting.
+
+### Added
+
+- [matterbridge]: Added a first check for plugin existence (docker pull or Hass add-on rebuild) and reinstall it before parsing the plugin. The error messages have been removed.
+- [service]: Added [configuration](README-SERVICE-OPT.md) to run matterbridge as a daemon with systemctl (Linux only), private global node_modules, user/group matterbridge and no sudo required.
+
+### Changed
+
+- [frontend]: Bumped `frontend` version to 3.3.1.
+- [PluginManager]: Bumped `PluginManager` version to 1.3.0.
+- [DeviceManager]: Bumped `DeviceManager` version to 1.1.0.
+- [frontend]: Readded password dialog when running in Ingress.
+
+### Fixed
+
+- [frontend]: Fixed route fallback and cross platform path failing randomly with node prefix.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.6] - 2025-11-01
 
 ### Changed

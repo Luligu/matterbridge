@@ -13,6 +13,14 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { BroadcastServer } from './broadcastServer.js';
 import { flushAsync, setupTest } from './utils/jestHelpers.js';
 
+// Spy on BroadcastServer methods
+const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
+const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse');
+const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler');
+const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request');
+const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond');
+const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch');
+
 // Setup the test environment
 setupTest(NAME, false);
 

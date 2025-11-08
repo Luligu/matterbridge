@@ -88,7 +88,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private httpServer: HttpServer | undefined;
   private httpsServer: HttpsServer | undefined;
   private webSocketServer: WebSocketServer | undefined;
-  private server: BroadcastServer;
+  private readonly server: BroadcastServer;
+  private readonly debug = hasParameter('debug') || hasParameter('verbose');
+  private readonly verbose = hasParameter('verbose');
 
   constructor(matterbridge: Matterbridge) {
     super();
@@ -105,7 +107,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'frontend')) {
-      this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
           this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
@@ -147,11 +149,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
-          this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+          if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
     if (this.server.isWorkerResponse(msg, msg.type)) {
-      this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
         case 'set_log_level':
@@ -177,7 +179,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           }
           break;
         default:
-          this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+          if (this.verbose) this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }
@@ -229,7 +231,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     */
 
     // Serve static files from 'frontend/build' directory
-    this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'frontend/build')));
+    this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'frontend', 'build')));
 
     // Create a WebSocket server and attach it to the http or https server
     this.log.debug(`Creating WebSocketServer...`);
@@ -380,22 +382,22 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       let httpsServerOptions: HttpsServerOptions = {};
 
       const fs = await import('node:fs');
-      if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'))) {
+      if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12'))) {
         // Load the p12 certificate and the passphrase
         try {
-          pfx = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
-          this.log.info(`Loaded p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12')}`);
+          pfx = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12'));
+          this.log.info(`Loaded p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12')}`);
         } catch (error) {
-          this.log.error(`Error reading p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.p12')}: ${error}`);
+          this.log.error(`Error reading p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12')}: ${error}`);
           this.emit('server_error', error as Error);
           return;
         }
         try {
-          passphrase = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass'), 'utf8');
+          passphrase = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pass'), 'utf8');
           passphrase = passphrase.trim(); // Ensure no extra characters
-          this.log.info(`Loaded p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass')}`);
+          this.log.info(`Loaded p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pass')}`);
         } catch (error) {
-          this.log.error(`Error reading p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pass')}: ${error}`);
+          this.log.error(`Error reading p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pass')}: ${error}`);
           this.emit('server_error', error as Error);
           return;
         }
@@ -403,27 +405,27 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else {
         // Load the SSL certificate, the private key and optionally the CA certificate. If the CA certificate is present, it will be used to create a full chain certificate.
         try {
-          cert = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem'), 'utf8');
-          this.log.info(`Loaded certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}`);
+          cert = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pem'), 'utf8');
+          this.log.info(`Loaded certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pem')}`);
         } catch (error) {
-          this.log.error(`Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/cert.pem')}: ${error}`);
+          this.log.error(`Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pem')}: ${error}`);
           this.emit('server_error', error as Error);
           return;
         }
         try {
-          key = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem'), 'utf8');
-          this.log.info(`Loaded key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}`);
+          key = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'key.pem'), 'utf8');
+          this.log.info(`Loaded key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'key.pem')}`);
         } catch (error) {
-          this.log.error(`Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/key.pem')}: ${error}`);
+          this.log.error(`Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'key.pem')}: ${error}`);
           this.emit('server_error', error as Error);
           return;
         }
         try {
-          ca = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8');
+          ca = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'ca.pem'), 'utf8');
           fullChain = `${cert}\n${ca}`;
-          this.log.info(`Loaded CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem')}`);
+          this.log.info(`Loaded CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'ca.pem')}`);
         } catch (error) {
-          this.log.info(`CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs/ca.pem')} not loaded: ${error}`);
+          this.log.info(`CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'ca.pem')} not loaded: ${error}`);
         }
         httpsServerOptions = { cert: fullChain ?? cert, key, ca };
       }
@@ -901,11 +903,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Fallback for routing (must be the last route)
     this.expressApp.use((req, res) => {
-      this.log.debug(`The frontend sent ${req.url} method ${req.method}: sending index.html as fallback`);
-      res.sendFile(path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
+      const filePath = path.resolve(this.matterbridge.rootDirectory, 'frontend', 'build');
+      this.log.debug(`The frontend sent ${req.url} method ${req.method}: sending index.html in ${filePath} as fallback`);
+      res.sendFile('index.html', { root: filePath });
     });
 
-    this.log.debug(`Frontend initialized on port ${YELLOW}${this.port}${db} static ${UNDERLINE}${path.join(this.matterbridge.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
+    this.log.debug(`Frontend initialized on port ${YELLOW}${this.port}${db} static ${UNDERLINE}${path.join(this.matterbridge.rootDirectory, 'frontend', 'build')}${UNDERLINEOFF}${rs}`);
   }
 
   async stop() {
@@ -1486,22 +1489,36 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
           return;
         }
-        data.params.pluginNameOrPath = (data.params.pluginNameOrPath as string).replace(/@.*$/, '');
-        if (this.matterbridge.plugins.has(data.params.pluginNameOrPath)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} already added` });
-          this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} already added`, 10, 'warning');
-          return;
+        this.wssSendSnackbarMessage(`Adding plugin ${data.params.pluginNameOrPath}...`, 5);
+        this.log.debug(`Adding plugin ${data.params.pluginNameOrPath}...`);
+        data.params.pluginNameOrPath = data.params.pluginNameOrPath.replace(/@.*$/, ''); // Remove @version if present
+
+        /*
+        const plugin = (await this.server.fetch({ type: 'plugins_add', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginNameOrPath } }, 5000)).response.plugin;
+        if (plugin) {
+          this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+          await this.server.fetch({ type: 'plugins_load', src: this.server.name, dst: 'plugins', params: { plugin: plugin.name } }, 5000);
+          this.wssSendRestartRequired();
+          this.wssSendRefreshRequired('plugins');
+          this.wssSendRefreshRequired('devices');
+          this.wssSendSnackbarMessage(`Loaded plugin ${localData.params.pluginNameOrPath}`, 5, 'success');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        } else {
+          this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} not added` });
         }
+        */
+
         const plugin = await this.matterbridge.plugins.add(data.params.pluginNameOrPath);
         if (plugin) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
           this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
           this.matterbridge.plugins
-            .load(plugin, true, 'The plugin has been added', true)
+            .load(plugin)
             .then(() => {
               this.wssSendRefreshRequired('plugins');
               this.wssSendRefreshRequired('devices');
-              this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginNameOrPath}`, 5, 'success');
+              this.wssSendSnackbarMessage(`Loaded plugin ${localData.params.pluginNameOrPath}`, 5, 'success');
               return;
             })
             .catch((_error) => {
@@ -1516,9 +1533,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/removeplugin' });
           return;
         }
+        this.wssSendSnackbarMessage(`Removing plugin ${data.params.pluginName}...`, 5);
+        this.log.debug(`Removing plugin ${data.params.pluginName}...`);
+
+        /*
+        await this.server.fetch({ type: 'plugins_shutdown', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName, reason: 'The plugin has been removed.', removeAllDevices: true } }, 5000);
+        await this.server.fetch({ type: 'plugins_remove', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginName } }, 5000);
+        */
+
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true);
         await this.matterbridge.plugins.remove(data.params.pluginName);
+
         this.wssSendSnackbarMessage(`Removed plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');

@@ -28,6 +28,7 @@ import { ApiPlugin, MatterbridgeInformation, SystemInformation } from '../../../
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { getQRColor } from './getQRColor';
 import { debug } from '../App';
+import { MbfWindow } from './MbfWindow';
 // const debug = true;
 
 interface HomePluginsProps {
@@ -405,12 +406,12 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
     return <Connecting />;
   }
   return (
-    <div className='MbfWindowDiv' style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '0 0 auto', overflow: 'hidden' }}>
+    <MbfWindow>
       {/* Config plugin dialog */}
       {selectedPlugin && <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin} />}
 
       <MbfTable<ApiPlugin> name='Plugins' columns={pluginsColumns} rows={plugins} footerRight='' footerLeft='' />
-    </div>
+    </MbfWindow>
   );
 }
 

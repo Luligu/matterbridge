@@ -55,7 +55,7 @@ const pluginsShutdownSpy = jest.spyOn(PluginManager.prototype, 'shutdown');
 
 import os from 'node:os';
 import path from 'node:path';
-import { writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
+import fs, { writeFileSync, unlinkSync, mkdirSync, existsSync, PathLike } from 'node:fs';
 
 import { jest } from '@jest/globals';
 import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
@@ -429,11 +429,15 @@ describe('Matterbridge mocked', () => {
     const parseSpy = jest.spyOn(PluginManager.prototype, 'parse').mockImplementation(async (plugin: Plugin) => {
       return null; // Simulate a plugin that does not return a valid instance
     });
+    const existSpy = jest.spyOn(fs, 'existsSync').mockImplementation((path: PathLike) => {
+      return false; // Simulate a plugin that does not exist
+    });
     spawnCommandMock.mockImplementationOnce((matterbridge: MatterbridgeType, command: string, args: string[]) => {
       return Promise.reject(new Error(`Mocked spawnCommand error for command: ${command} with args: ${args.join(' ')}`));
     });
     await (matterbridge as any).initialize();
-    expect(parseSpy).toHaveBeenCalledTimes(6);
+    expect(existSpy).toHaveBeenCalledTimes(7);
+    expect(parseSpy).toHaveBeenCalledTimes(5);
     expect(spawnCommandMock).toHaveBeenCalledTimes(6);
     await matterbridge.destroyInstance(10, 10);
     parseSpy.mockRestore();

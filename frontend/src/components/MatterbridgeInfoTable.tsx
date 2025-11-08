@@ -6,7 +6,7 @@ import { MatterbridgeInformation } from '../../../src/matterbridgeTypes';
 
 // Frontend
 import { TruncatedText } from './TruncatedText';
-import { MbfWindow, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
+import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { debug } from '../App';
 // const debug = true;
 
@@ -50,7 +50,7 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
         <MbfWindowHeaderText>Matterbridge Information</MbfWindowHeaderText>
         <MbfWindowIcons onClose={() => setClosed(true)} />
       </MbfWindowHeader>
-      <div className='MbfWindowDivTable'>
+      <MbfWindowContent style={{ flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '0px', gap: '0px' }}>
         <table style={{ border: 'none', borderCollapse: 'collapse' }}>
           <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>
             {Object.entries(matterbridgeInfo)
@@ -75,7 +75,7 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
               ))}
           </tbody>
         </table>
-      </div>
+      </MbfWindowContent>
     </MbfWindow>
   );
 }

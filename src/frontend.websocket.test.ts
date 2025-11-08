@@ -44,7 +44,7 @@ import { Frontend } from './frontend.js';
 import { isApiRequest, isApiResponse, isBroadcast, WsMessageApiLog, WsMessageApiMemoryUpdate } from './frontendTypes.ts';
 import { wait, waiter } from './utils/wait.js';
 import { PluginManager } from './pluginManager.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.ts';
+import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
 import { BroadcastServer } from './broadcastServer.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
@@ -617,6 +617,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API /api/addplugin', async () => {
+    // setDebug(true);
     const pluginNameOrPath = path.join('.', 'src', 'mock', 'plugin4');
     const data = await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath } });
     expect(data.error).toBeUndefined();
@@ -631,9 +632,8 @@ describe('Matterbridge frontend', () => {
     await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath: 'matterbridge-mock4' } });
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
   test('Websocket API /api/restartplugin DynamicPlatform', async () => {
+    // setDebug(false);
     stopServerNodeSpy.mockImplementationOnce(async () => {
       return Promise.resolve();
     });
@@ -641,8 +641,6 @@ describe('Matterbridge frontend', () => {
     const plugin = matterbridge.plugins.get(pluginName);
     expect(plugin).toBeDefined();
     if (!plugin) return;
-    await (matterbridge as any).stopServerNode(plugin.serverNode);
-    await plugin.serverNode?.env.get(MdnsService)[Symbol.asyncDispose]();
     plugin.restartRequired = true;
     const data = await waitMessageId(++WS_ID, '/api/restartplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/restartplugin', params: { pluginName } });
     expect(data.error).toBeUndefined();
@@ -657,7 +655,6 @@ describe('Matterbridge frontend', () => {
     // Wrong parameters
     await waitMessageId(++WS_ID, '/api/restartplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/restartplugin', params: { pluginName: '' } });
   });
-  */
 
   test('Websocket API /api/restartplugin AccessoryPlatform', async () => {
     stopServerNodeSpy.mockImplementationOnce(async () => {

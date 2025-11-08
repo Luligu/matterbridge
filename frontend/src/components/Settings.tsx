@@ -23,7 +23,7 @@ import { MatterbridgeInformation, SystemInformation } from '../../../src/matterb
 import { MbfWindow } from './MbfWindow';
 import { MbfPage } from './MbfPage';
 import { createDebouncer } from '../utils/createDebouncer';
-import { debug, ingress, setWssPassword } from '../App';
+import { debug, setWssPassword } from '../App';
 // const debug = true;
 
 const widthPx = 500;
@@ -257,13 +257,11 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
               <MenuItem value='mounted_switch'>Mounted Switch</MenuItem>
             </Select>
           </div>
-          {!ingress && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
-              <Button variant='contained' color='primary' onClick={() => setOpenChangePassword(true)}>
-                Change password
-              </Button>
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
+            <Button variant='contained' color='primary' onClick={() => setOpenChangePassword(true)}>
+              Change password
+            </Button>
+          </div>
           {matterbridgeInfo.shellyBoard && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
               <Button variant='contained' color='primary' onClick={() => setOpenNetConfig(true)}>
@@ -543,8 +541,8 @@ function MatterbridgeInfo({ matterbridgeInfo }: { matterbridgeInfo: Matterbridge
         <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label='Current Version' width={widthPx} />
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label='Latest Version' width={widthPx} />
-          <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label='Home Directory' width={widthPx} />
           <ReadOnlyTextField value={matterbridgeInfo.rootDirectory} label='Root Directory' width={widthPx} />
+          <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label='Home Directory' width={widthPx} />
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgeDirectory} label='Matterbridge Storage Directory' width={widthPx} />
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgePluginDirectory} label='Matterbridge Plugin Directory' width={widthPx} />
           <ReadOnlyTextField value={matterbridgeInfo.globalModulesDirectory} label='Global Module Directory' width={widthPx} />
@@ -586,21 +584,43 @@ function ReadOnlyTextField({ value, label, width }: { value: string; label: stri
       size='small'
       label={label}
       variant='standard'
-      sx={{ width: width ? `${width - 20}px` : '400px' }}
-      InputProps={{
-        readOnly: true,
-        sx: {
-          color: 'var(--div-text-color)',
-          '&:before': { borderBottomColor: 'var(--main-label-color)' },
-          '&:after': { borderBottomColor: 'var(--main-label-color)' },
+      sx={{
+        width: width ? `${width - 20}px` : '400px',
+        // idle/blur underline
+        '& .MuiInput-underline:before': {
+          borderBottomColor: 'var(--main-label-color)',
+          borderBottomWidth: '1px',
+          opacity: 0.5,
+        },
+        // hover underline (prevent default 2px bump)
+        '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+          borderBottomColor: 'var(--main-label-color)',
+          borderBottomWidth: '1px',
+          opacity: 0.5,
+        },
+        // focused underline (default is 2px; keep it 1px)
+        '& .MuiInput-underline.Mui-focused:after': {
+          borderBottomColor: 'var(--main-label-color)',
+          borderBottomWidth: '1px',
+          opacity: 0.5,
         },
       }}
-      InputLabelProps={{
-        sx: {
-          marginTop: '3px',
-          color: 'var(--main-label-color)',
-          '&.Mui-focused': {
+      slotProps={{
+        input: {
+          readOnly: true,
+          sx: {
+            color: 'var(--div-text-color)',
+            '&:before': { borderBottomColor: 'var(--main-label-color)' },
+            '&:after': { borderBottomColor: 'var(--main-label-color)' },
+          },
+        },
+        inputLabel: {
+          sx: {
+            marginTop: '3px',
             color: 'var(--main-label-color)',
+            '&.Mui-focused': {
+              color: 'var(--main-label-color)',
+            },
           },
         },
       }}

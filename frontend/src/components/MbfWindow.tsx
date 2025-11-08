@@ -135,6 +135,34 @@ export function MbfWindowText({ children, style }: MbfWindowTextProps): React.JS
   return <div style={{ ...defaultStyle, ...style }}>{children}</div>;
 }
 
+interface MbfWindowContentProps {
+  children: ReactNode;
+  style?: React.CSSProperties;
+  onDragOver?: React.DragEventHandler<HTMLDivElement>;
+  onDragLeave?: React.DragEventHandler<HTMLDivElement>;
+  onDrop?: React.DragEventHandler<HTMLDivElement>;
+}
+
+export function MbfWindowContent({ children, style, onDragOver, onDragLeave, onDrop }: MbfWindowContentProps): React.JSX.Element {
+  const defaultStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'row',
+    flex: '0 0 auto',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    margin: '0px',
+    padding: '10px',
+    gap: '20px',
+  };
+
+  return (
+    <div style={{ ...defaultStyle, ...style }} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
+      {children}
+    </div>
+  );
+}
+
 interface MbfWindowIconsProps {
   children?: ReactNode;
   style?: React.CSSProperties;

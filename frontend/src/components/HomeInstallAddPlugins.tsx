@@ -17,7 +17,7 @@ import MoreVert from '@mui/icons-material/MoreVert';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-import { MbfWindow, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
+import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { debug } from '../App';
 
 function HomeInstallAddPlugins() {
@@ -147,12 +147,7 @@ function HomeInstallAddPlugins() {
         <MbfWindowHeaderText>Install plugins</MbfWindowHeaderText>
         <MbfWindowIcons onClose={() => setClosed(true)} />
       </MbfWindowHeader>
-      <div
-        style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleFileDrop}
-      >
+      <MbfWindowContent onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleFileDrop}>
         <TextField
           value={pluginName}
           onChange={(event) => {
@@ -202,7 +197,7 @@ function HomeInstallAddPlugins() {
           </Button>
         </Tooltip>
         <input id='file-upload' type='file' accept='.tgz' style={{ display: 'none' }} onChange={handleFileUpload} />
-      </div>
+      </MbfWindowContent>
     </MbfWindow>
   );
 }

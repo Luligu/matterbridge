@@ -22,6 +22,7 @@ import MbfTable, { MbfTableColumn } from './MbfTable';
 import { ApiDevice, ApiMatter, ApiPlugin } from '../../../src/matterbridgeTypes';
 import { ApiSelectDevice, ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 import { debug } from '../App';
+import { MbfWindow } from './MbfWindow';
 // const debug = true;
 
 /**
@@ -384,7 +385,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     return <Connecting />;
   }
   return (
-    <div className='MbfWindowDiv' style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+    <MbfWindow style={{ flex: '1 1 auto' }}>
       <MbfTable
         name='Devices'
         getRowKey={getRowKey}
@@ -393,7 +394,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
         footerLeft={loading ? 'Waiting for the plugins to fully load...' : `Registered devices: ${devices.length.toString()}/${mixedDevices.length.toString()}`}
         footerRight={restart ? 'Restart required' : ''}
       />
-    </div>
+    </MbfWindow>
   );
 }
 

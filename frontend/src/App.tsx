@@ -33,7 +33,7 @@ export let wssPassword: string | undefined = undefined;
 export const setWssPassword = (password: string) => {
   wssPassword = password;
 };
-export let ingress = false;
+export let isIngress = false;
 
 export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
   const [password, setPassword] = useState('');
@@ -142,7 +142,7 @@ function App(): React.JSX.Element {
     baseName="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
   */
   // Check if running in Home Assistant Ingress
-  ingress = window.location.href.includes('/api/hassio_ingress/');
+  isIngress = window.location.href.includes('/api/hassio_ingress/');
   // Set the base name for the BrowserRouter
   const baseName = window.location.pathname.includes('/matterbridge/') ? '/matterbridge' : window.location.href.includes('/api/hassio_ingress/') ? window.location.pathname : '/';
   if (debug) {
