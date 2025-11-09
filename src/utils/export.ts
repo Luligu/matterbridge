@@ -10,3 +10,4 @@ export * from './createZip.js';
 export * from './wait.js';
 export * from './hex.js';
 export * from './error.js';
+export * from './jestHelpers.js';

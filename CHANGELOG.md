@@ -37,6 +37,7 @@ Advantages:
 ### Changed
 
 - [package]: Updated dependencies.
+- [package]: Bumped jestHelpers v.1.0.12.
 
 ### Fixed
 

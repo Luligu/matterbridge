@@ -1344,11 +1344,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    *
    * @param {string} message - The cleanup message.
    * @param {boolean} [restart] - Indicates whether to restart the instance after cleanup. Default is `false`.
-   * @param {number} [timeout] - The timeout duration to wait for the message exchange to complete in milliseconds. Default is 1000.
+   * @param {number} [pause] - The pause in ms to wait for the message exchange to complete in milliseconds. Default is 1000.
    *
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
-  private async cleanup(message: string, restart: boolean = false, timeout: number = 1000): Promise<void> {
+  private async cleanup(message: string, restart: boolean = false, pause: number = 1000): Promise<void> {
     if (this.initialized && !this.hasCleanupStarted) {
       this.emit('cleanup_started');
       this.hasCleanupStarted = true;
@@ -1402,9 +1402,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Stop matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
-      if (timeout > 0) {
-        this.log.debug(`Waiting ${timeout}ms for the MessageExchange to finish...`);
-        await wait(timeout, `Waiting ${timeout}ms for the MessageExchange to finish...`, true);
+      if (pause > 0) {
+        this.log.debug(`Waiting ${pause}ms for the MessageExchange to finish...`);
+        await wait(pause, `Waiting ${pause}ms for the MessageExchange to finish...`, false);
       }
       if (this.bridgeMode === 'bridge') {
         if (this.serverNode) {
@@ -2536,7 +2536,7 @@ const commissioningController = new CommissioningController({
       this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: plugin not found`);
       return;
     }
-    // Register and add the device to the matterbridge aggregator node
+    // Unregister and remove the device from the matterbridge aggregator node
     if (this.bridgeMode === 'bridge') {
       if (!this.aggregatorNode) {
         this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator node not found`);
@@ -2549,6 +2549,7 @@ const commissioningController = new CommissioningController({
       if (plugin.type === 'AccessoryPlatform') {
         // Nothing to do here since the server node has no aggregator node but only the device itself
       } else if (plugin.type === 'DynamicPlatform') {
+        // Unregister and remove the device from the plugin aggregator node
         if (!plugin.aggregatorNode) {
           this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator node not found`);
           return;
