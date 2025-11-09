@@ -33,8 +33,6 @@ describe('Matterbridge accessory platform', () => {
       info: jest.fn((message: string, ...parameters: any[]) => {}),
       debug: jest.fn((message: string, ...parameters: any[]) => {}),
     } as unknown as AnsiLogger,
-    getDevices: jest.fn(() => []),
-    getPlugins: jest.fn(() => []),
     addBridgedEndpoint: jest.fn(async (pluginName: string, device: MatterbridgeEndpoint) => {}),
     removeBridgedEndpoint: jest.fn(async (pluginName: string, device: MatterbridgeEndpoint) => {}),
     removeAllBridgedEndpoints: jest.fn(async (pluginName: string) => {}),

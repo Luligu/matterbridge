@@ -3,9 +3,10 @@
 /* eslint-disable jest/no-conditional-expect */
 
 const NAME = 'MatterbridgePlatform';
+const MATTER_PORT = 7000;
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR];
+process.argv = ['node', 'matterbridge.test.js', '--novirtual', '--frontend', '0', '--homedir', HOMEDIR];
 
 import path from 'node:path';
 
@@ -14,68 +15,54 @@ import { AnsiLogger, CYAN, db, er, LogLevel, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 
-import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { flushAsync, loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { addMatterbridgePlatform, createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, flushAsync, loggerLogSpy, matterbridge, setupTest, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './utils/jestHelpers.js';
+import { Matterbridge } from './matterbridge.js';
+
+jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
+  // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);
+  return Promise.resolve();
+});
+jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
+  // console.log(`Mocked removeBridgedEndpoint: ${pluginName} ${device.name}`);
+  return Promise.resolve();
+});
+jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints').mockImplementation((pluginName: string) => {
+  // console.log(`Mocked removeAllBridgedEndpoint: ${pluginName}`);
+  return Promise.resolve();
+});
 
 // Setup the test environment
 setupTest(NAME, false);
 
 describe('Matterbridge platform', () => {
-  let matterbridge: Matterbridge;
   let platform: MatterbridgePlatform;
 
   beforeAll(async () => {
-    jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
-      // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);
-      return Promise.resolve();
-    });
-    jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
-      // console.log(`Mocked removeBridgedEndpoint: ${pluginName} ${device.name}`);
-      return Promise.resolve();
-    });
-    jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints').mockImplementation((pluginName: string) => {
-      // console.log(`Mocked removeAllBridgedEndpoint: ${pluginName}`);
-      return Promise.resolve();
-    });
+    // Create Matterbridge environment
+    await createMatterbridgeEnvironment(NAME);
+    await startMatterbridgeEnvironment(MATTER_PORT);
   });
 
   afterAll(async () => {
+    // Destroy Matterbridge environment
+    await stopMatterbridgeEnvironment();
+    await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
-  }, 60000);
+  });
 
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
   });
 
-  test('should do a partial mock of AnsiLogger', () => {
-    const log = new AnsiLogger({ logName: 'Mocked log' });
-    expect(log).toBeDefined();
-    log.log(LogLevel.INFO, 'Hello, world!');
-    log.logLevel = LogLevel.DEBUG;
-    expect(log.log).toBeDefined();
-    expect(log.log).toHaveBeenCalled();
-    expect(log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Hello, world!');
-  });
-
-  test('should create an instance of Matterbridge', async () => {
-    // Load the Matterbridge instance
-    matterbridge = await Matterbridge.loadInstance(true);
-    expect(matterbridge).toBeInstanceOf(Matterbridge);
-
-    await new Promise<void>((resolve) => {
-      matterbridge.once('online', (name) => {
-        if (name === 'Matterbridge') resolve();
-      });
-    });
-  }, 60000);
-
   test('should have created an instance of NodeStorageManager', async () => {
     platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+    // Add the platform to the Matterbridge environment
+    addMatterbridgePlatform(platform, 'test');
     expect(platform).toBeDefined();
     expect(platform).toBeInstanceOf(MatterbridgePlatform);
     expect(platform.storage).toBeDefined();
@@ -572,7 +559,7 @@ describe('Matterbridge platform', () => {
 
   test('onConfigure should log a message', async () => {
     await platform.onConfigure();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Configuring platform ');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Configuring platform test');
   });
 
   test('onAction should log a message', async () => {
@@ -593,7 +580,7 @@ describe('Matterbridge platform', () => {
 
   test('onShutdown should log a message', async () => {
     await platform.onShutdown('test reason');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Shutting down platform ', 'test reason');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Shutting down platform test', 'test reason');
   });
 
   test('getDevice should return []', async () => {
@@ -753,19 +740,4 @@ describe('Matterbridge platform', () => {
     expect((platform as any).registeredEndpointsByName.size).toBe(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
   });
-
-  test('destroyInstance()', async () => {
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 10);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
-  }, 60000);
-
-  test('cleanup storage', async () => {
-    process.argv.push('-factoryreset');
-    (matterbridge as any).initialized = true;
-    await (matterbridge as any).parseCommandLine();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
-  }, 60000);
 });
