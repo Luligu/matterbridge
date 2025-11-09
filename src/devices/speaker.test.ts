@@ -1,7 +1,6 @@
 // src/speaker.test.ts
-// Tests the Speaker device with simple constructor parameters (no options object).
 
-const MATTER_PORT = 6032;
+const MATTER_PORT = 8015;
 const NAME = 'Speaker';
 const HOMEDIR = path.join('jest', NAME);
 
@@ -9,27 +8,20 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 // @matter
-import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/general';
-import { DeviceTypeId, VendorId } from '@matter/types';
-import { MdnsService } from '@matter/protocol';
-import { ServerNode, Endpoint, PositionTag } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { OnOff, LevelControl } from '@matter/types/clusters';
 
 // helpers
-import { addDevice, createTestEnvironment, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { Speaker } from './speaker.js';
-
-// Setup the Matter test environment
-createTestEnvironment(HOMEDIR);
 
 // Setup the test environment
 setupTest(NAME, false);
 
+// Setup the Matter test environment
+createTestEnvironment(NAME);
+
 describe('Matterbridge ' + NAME, () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
-  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: Speaker;
 
   beforeEach(async () => {
@@ -41,7 +33,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create and start server node', async () => {
-    [server, aggregator] = await startServerNode(NAME, MATTER_PORT);
+    await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });

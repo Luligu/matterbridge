@@ -1,19 +1,13 @@
 // src/heatPump.test.ts
 
-const MATTER_PORT = 6021;
+const MATTER_PORT = 8007;
 const NAME = 'HeatPump';
 const HOMEDIR = path.join('jest', NAME);
 
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger } from 'node-ansi-logger';
 // @matter
-import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/general';
-import { DeviceTypeId, VendorId } from '@matter/types';
-import { MdnsService } from '@matter/protocol';
-import { ServerNode, Endpoint, PositionTag } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
@@ -22,19 +16,17 @@ import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-man
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { addDevice, createTestEnvironment, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
 
 import { HeatPump } from './heatPump.js';
-
-// Setup the Matter test environment
-createTestEnvironment(HOMEDIR);
 
 // Setup the test environment
 setupTest(NAME, false);
 
+// Setup the Matter test environment
+createTestEnvironment(NAME);
+
 describe('Matterbridge ' + NAME, () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
-  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {});
@@ -52,7 +44,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create and start the server node', async () => {
-    [server, aggregator] = await startServerNode(NAME, MATTER_PORT);
+    await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });

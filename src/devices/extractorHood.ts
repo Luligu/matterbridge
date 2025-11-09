@@ -22,7 +22,6 @@
  */
 
 // Imports from @matter
-import { ActionContext } from '@matter/node';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 
 // Matterbridge
@@ -70,23 +69,23 @@ export class ExtractorHood extends MatterbridgeEndpoint {
     this.createDefaultHepaFilterMonitoringClusterServer(hepaCondition, hepaChangeIndication, hepaInPlaceIndicator, hepaLastChangedTime, hepaReplacementProductList);
     this.createDefaultActivatedCarbonFilterMonitoringClusterServer(activatedCarbonCondition, activatedCarbonChangeIndication, activatedCarbonInPlaceIndicator, activatedCarbonLastChangedTime, activatedCarbonReplacementProductList);
 
-    this.subscribeAttribute('fanControl', 'fanMode', (newValue: number, oldValue: number, context: ActionContext) => {
+    this.subscribeAttribute('fanControl', 'fanMode', (newValue: number, oldValue: number, context) => {
       if (context.offline === true) return;
       this.log.info(`Fan control fanMode attribute changed: ${newValue}`);
     });
 
-    this.subscribeAttribute('fanControl', 'percentSetting', (newValue: number, oldValue: number, context: ActionContext) => {
+    this.subscribeAttribute('fanControl', 'percentSetting', (newValue: number, oldValue: number, context) => {
       if (context.offline === true) return;
       this.log.info(`Fan control percentSetting attribute changed: ${newValue}`);
       this.setAttribute('fanControl', 'percentCurrent', newValue, this.log);
     });
 
-    this.subscribeAttribute('hepaFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context: ActionContext) => {
+    this.subscribeAttribute('hepaFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context) => {
       if (context.offline === true) return;
       this.log.info(`Hepa filter monitoring lastChangedTime attribute changed: ${newValue}`);
     });
 
-    this.subscribeAttribute('activatedCarbonFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context: ActionContext) => {
+    this.subscribeAttribute('activatedCarbonFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context) => {
       if (context.offline === true) return;
       this.log.info(`Activated carbon filter monitoring lastChangedTime attribute changed: ${newValue}`);
     });
