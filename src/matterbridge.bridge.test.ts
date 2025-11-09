@@ -42,7 +42,7 @@ import { PluginManager } from './pluginManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
 import { plg } from './matterbridgeTypes.js';
-import { loggerLogSpy, setupTest, flushAsync } from './utils/jestHelpers.js';
+import { loggerLogSpy, setupTest, flushAsync, destroyInstance, closeMdnsInstance } from './utils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -57,6 +57,8 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   });
 
   afterAll(async () => {
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -194,11 +196,9 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   });
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge, 0, 0);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);
 
   test('Restart initialize() -bridge mode', async () => {
@@ -289,10 +289,8 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   }, 60000);
 
   test('Finally Matterbridge.destroyInstance() -bridge mode', async () => {
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge, 0, 0);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
   }, 60000);
 });

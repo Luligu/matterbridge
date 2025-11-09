@@ -15,7 +15,7 @@ import { db, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { dev, plg } from './matterbridgeTypes.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './utils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -30,6 +30,8 @@ describe('Matterbridge Device serverMode=server', () => {
   });
 
   afterAll(async () => {
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -125,13 +127,10 @@ describe('Matterbridge Device serverMode=server', () => {
   });
 
   test('Matterbridge.destroyInstance()', async () => {
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
-  }, 60000);
+  });
 
   test('Restart initialize() with -bridge', async () => {
     const startServerNodeSpy = jest.spyOn(matterbridge as any, 'startServerNode');
@@ -198,7 +197,7 @@ describe('Matterbridge Device serverMode=server', () => {
     expect(serverDevice.serverNode?.lifecycle.isReady).toBeTruthy();
     expect(serverDevice.serverNode?.lifecycle.isOnline).toBeTruthy();
     expect(serverDevice.serverNode?.lifecycle.isCommissioned).toBeFalsy();
-  }, 60000);
+  });
 
   test('Should log error if createDeviceServerNode fails', async () => {
     jest.spyOn(Matterbridge.prototype as any, 'createDeviceServerNode').mockImplementationOnce(() => {
@@ -211,14 +210,10 @@ describe('Matterbridge Device serverMode=server', () => {
   test('Finally Matterbridge.destroyInstance() with -bridge', async () => {
     const stopServerNodeSpy = jest.spyOn(matterbridge as any, 'stopServerNode');
 
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Servernodedevice MdnsService`);
 
     expect(stopServerNodeSpy).toHaveBeenCalledTimes(2);
-  }, 60000);
+  });
 });
