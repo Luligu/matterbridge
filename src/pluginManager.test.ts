@@ -51,7 +51,7 @@ import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import { plg, Plugin, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { waiter, wait } from './utils/export.js';
-import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Setup the test environment
@@ -132,6 +132,8 @@ describe('PluginManager', () => {
   afterAll(async () => {
     // Close the test server
     testServer.close();
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -1541,9 +1543,8 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('Matterbridge.destroyInstance()', async () => {
-    // plugins.destroy();
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-  }, 60000);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
+  });
 });
