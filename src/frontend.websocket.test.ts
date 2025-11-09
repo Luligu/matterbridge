@@ -44,7 +44,7 @@ import { Frontend } from './frontend.js';
 import { isApiRequest, isApiResponse, isBroadcast, WsMessageApiLog, WsMessageApiMemoryUpdate } from './frontendTypes.ts';
 import { wait, waiter } from './utils/wait.js';
 import { PluginManager } from './pluginManager.js';
-import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
 import { BroadcastServer } from './broadcastServer.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
@@ -100,6 +100,8 @@ describe('Matterbridge frontend', () => {
 
   afterAll(async () => {
     matterbridge.frontend.destroy();
+    // Close mDNS instance
+    // await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -1502,11 +1504,10 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 100);
-
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocket server closed successfully`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
-  }, 60000);
+  });
 });
