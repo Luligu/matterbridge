@@ -7,7 +7,7 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = [
   'node',
-  'frontend.test.js',
+  'frontend.express.test.js',
   '-logger',
   'debug',
   '-matterlogger',

@@ -7,7 +7,7 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = [
   'node',
-  'frontend.test.js',
+  'frontend.websocket.test.js',
   '-frontend',
   FRONTEND_PORT.toString(),
   '-logger',
