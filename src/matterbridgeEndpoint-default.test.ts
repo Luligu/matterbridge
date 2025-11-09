@@ -99,13 +99,13 @@ import {
   waterValve,
 } from './matterbridgeDeviceTypes.js';
 import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.js';
-import { addDevice, assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { addDevice, assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
 
 // Setup the matter and test environment
-createTestEnvironment(HOMEDIR);
+createTestEnvironment(NAME);
 
 describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
@@ -130,6 +130,8 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -1482,7 +1484,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 250);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge);
   });
 });

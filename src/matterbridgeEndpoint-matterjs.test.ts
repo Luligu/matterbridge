@@ -120,13 +120,13 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
-import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, flushAsync, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
 
 // Setup the matter and test environment
-createTestEnvironment(HOMEDIR);
+createTestEnvironment(NAME);
 
 describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
@@ -173,6 +173,8 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -458,7 +460,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.hasClusterServer('Descriptor')).toBeTruthy();
     expect(light.hasClusterServer('descriptor')).toBeTruthy();
     // consoleWarnSpy?.mockRestore();
-    // console.warn(device.behaviors.optionsFor(DescriptorBehavior));
+    console.warn(light.behaviors.optionsFor(DescriptorBehavior));
 
     expect(light.behaviors.supported['identify']).toBeDefined();
     expect(light.behaviors.has(IdentifyBehavior)).toBeTruthy();
@@ -1324,7 +1326,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 250);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge);
   });
 });

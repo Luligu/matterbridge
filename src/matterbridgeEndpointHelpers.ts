@@ -111,7 +111,6 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
-import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 
 // Matterbridge
 import { deepCopy } from './utils/deepCopy.js';
@@ -132,9 +131,9 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeOperationalStateServer,
-  MatterbridgeDeviceEnergyManagementModeServer,
   MatterbridgePowerSourceServer,
   MatterbridgeDeviceEnergyManagementServer,
+  MatterbridgeDeviceEnergyManagementModeServer,
 } from './matterbridgeBehaviors.js';
 
 /**
@@ -302,7 +301,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === Pm10ConcentrationMeasurement.Cluster.id) return Pm10ConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === RadonConcentrationMeasurement.Cluster.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === DeviceEnergyManagement.Cluster.id) return DeviceEnergyManagementServer.with('PowerForecastReporting');
+  if (clusterId === DeviceEnergyManagement.Cluster.id) return MatterbridgeDeviceEnergyManagementServer.with('PowerForecastReporting');
   if (clusterId === DeviceEnergyManagementMode.Cluster.id) return MatterbridgeDeviceEnergyManagementModeServer;
 
   return MatterbridgeIdentifyServer;
