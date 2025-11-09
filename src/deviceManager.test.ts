@@ -46,7 +46,7 @@ describe('DeviceManager', () => {
 
   test('unknown server message type', async () => {
     // @ts-expect-error -- Testing unknown message type
-    expect(await testServer.request({ type: 'devices_unknown', src: testServer.name, dst: 'devices', params: {} })).toBeUndefined();
+    expect(testServer.request({ type: 'devices_unknown', src: testServer.name, dst: 'devices', params: {} })).toBeUndefined();
   });
 
   test('logLevel changes correctly', async () => {
