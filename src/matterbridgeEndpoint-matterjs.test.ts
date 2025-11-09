@@ -460,7 +460,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.hasClusterServer('Descriptor')).toBeTruthy();
     expect(light.hasClusterServer('descriptor')).toBeTruthy();
     // consoleWarnSpy?.mockRestore();
-    console.warn(light.behaviors.optionsFor(DescriptorBehavior));
+    // console.warn(light.behaviors.optionsFor(DescriptorBehavior));
 
     expect(light.behaviors.supported['identify']).toBeDefined();
     expect(light.behaviors.has(IdentifyBehavior)).toBeTruthy();
