@@ -28,6 +28,22 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.3.8] - 2025-11-??
+
+### Breaking Changes
+
+### Added
+
+### Changed
+
+- [package]: Updated dependencies.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.7] - 2025-11-08
 
 ### Breaking Changes
@@ -41,6 +57,7 @@ Advantages:
 
 ### Changed
 
+- [package]: Updated dependencies.
 - [frontend]: Bumped `frontend` version to 3.3.1.
 - [PluginManager]: Bumped `PluginManager` version to 1.3.0.
 - [DeviceManager]: Bumped `DeviceManager` version to 1.1.0.

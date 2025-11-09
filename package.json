@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.3.7",
+  "version": "3.3.8",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -170,8 +170,8 @@
     "@types/multer": "2.0.0",
     "@types/node": "24.10.0",
     "@types/ws": "8.18.1",
-    "@vitest/coverage-v8": "4.0.6",
-    "@vitest/eslint-plugin": "1.4.0",
+    "@vitest/coverage-v8": "4.0.8",
+    "@vitest/eslint-plugin": "1.4.1",
     "eslint": "9.39.1",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
@@ -187,6 +187,6 @@
     "ts-jest": "29.4.5",
     "typescript": "5.9.3",
     "typescript-eslint": "8.46.3",
-    "vitest": "4.0.6"
+    "vitest": "4.0.8"
   }
 }
