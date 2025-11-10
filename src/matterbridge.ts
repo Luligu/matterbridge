@@ -226,7 +226,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   advertisingNodes = new Map<string, number>();
 
   /** Broadcast server */
-  private server: BroadcastServer;
+  private readonly server: BroadcastServer;
+  private readonly debug = hasParameter('debug') || hasParameter('verbose');
+  private readonly verbose = hasParameter('verbose');
 
   /** We load asyncronously so is private */
   private constructor() {
@@ -242,7 +244,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
-      this.log.debug(`**Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
           this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
@@ -252,17 +254,17 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
           break;
         default:
-          this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+          if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
     if (this.server.isWorkerResponse(msg, msg.type)) {
-      this.log.debug(`**Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
         case 'set_log_level':
           break;
         default:
-          this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+          if (this.verbose) this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }

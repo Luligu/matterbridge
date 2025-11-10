@@ -4,7 +4,7 @@
  * @file devices.ts
  * @author Luca Liguori
  * @created 2024-07-26
- * @version 1.0.11
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -27,7 +27,7 @@ import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampForm
 
 // Matterbridge
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { type ApiDevice, dev } from './matterbridgeTypes.js';
+import { type BaseDevice, dev } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
 import { hasParameter } from './utils/commandLine.js';
@@ -38,7 +38,9 @@ import { hasParameter } from './utils/commandLine.js';
 export class DeviceManager {
   private readonly _devices = new Map<string, MatterbridgeEndpoint>();
   private readonly log: AnsiLogger;
-  private server: BroadcastServer;
+  private readonly server: BroadcastServer;
+  private readonly debug = hasParameter('debug') || hasParameter('verbose');
+  private readonly verbose = hasParameter('verbose');
 
   /**
    * Creates an instance of DeviceManager.
@@ -57,7 +59,7 @@ export class DeviceManager {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'devices')) {
-      this.log.debug(`**Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
           this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
@@ -76,10 +78,10 @@ export class DeviceManager {
           this.server.respond({ ...msg, response: { has: this.has(msg.params.uniqueId) } });
           break;
         case 'devices_get':
-          this.server.respond({ ...msg, response: { device: this.get(msg.params.uniqueId) as ApiDevice | undefined } });
+          this.server.respond({ ...msg, response: { device: this.get(msg.params.uniqueId) as BaseDevice | undefined } });
           break;
         case 'devices_set':
-          this.server.respond({ ...msg, response: { device: this.set(msg.params.device as unknown as MatterbridgeEndpoint) as unknown as ApiDevice } });
+          this.server.respond({ ...msg, response: { device: this.set(msg.params.device as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
           break;
         case 'devices_remove':
           this.server.respond({ ...msg, response: { success: this.remove(msg.params.device as unknown as MatterbridgeEndpoint) } });
@@ -88,8 +90,11 @@ export class DeviceManager {
           this.clear();
           this.server.respond({ ...msg, response: { success: true } });
           break;
+        case 'devices_basearray':
+          this.server.respond({ ...msg, response: { devices: this.baseArray(msg.params.pluginName) } });
+          break;
         default:
-          this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+          if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }
@@ -167,6 +172,26 @@ export class DeviceManager {
   }
 
   /**
+   * Converts a MatterbridgeEndpoint to a BaseDevice.
+   *
+   * @param {MatterbridgeEndpoint} device The MatterbridgeEndpoint to convert.
+   * @returns {BaseDevice} The converted BaseDevice.
+   */
+  private toBaseDevice(device: MatterbridgeEndpoint): BaseDevice {
+    return {
+      pluginName: device.plugin,
+      deviceType: device.deviceType,
+      number: device.maybeNumber,
+      id: device.maybeId,
+      deviceName: device.deviceName,
+      serialNumber: device.serialNumber,
+      uniqueId: device.uniqueId,
+      productUrl: device.productUrl,
+      configUrl: device.configUrl,
+    };
+  }
+
+  /**
    * Gets an array of all devices.
    *
    * @returns {MatterbridgeEndpoint[]} An array of all devices.
@@ -176,37 +201,20 @@ export class DeviceManager {
   }
 
   /**
-   * Gets an array of all devices suitable for serialization.
+   * Gets a base array of all devices suitable for serialization.
    *
-   * @param {string} [pluginName] - Optional plugin name to filter devices (not used currently).
-   * @returns {ApiDevices[]} An array of all devices.
+   * @param {string} [pluginName] - Optional plugin name to filter devices.
+   * @returns {ApiDevices[]} A base array of all devices.
    */
-  /*
-  baseArray(pluginName?: string): ApiDevices[] {
-    const devices: ApiDevices[] = [];
-    for (const device of this.matterbridge.devices.array()) {
+  baseArray(pluginName?: string): BaseDevice[] {
+    const devices: BaseDevice[] = [];
+    for (const device of this._devices.values()) {
       // Filter by pluginName if provided
       if (pluginName && pluginName !== device.plugin) continue;
-      // Check if the device has the required properties
-      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
-      devices.push({
-        pluginName: device.plugin,
-        type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
-        endpoint: device.number,
-        name: device.deviceName,
-        serial: device.serialNumber,
-        productUrl: device.productUrl,
-        configUrl: device.configUrl,
-        uniqueId: device.uniqueId,
-        reachable: this.getReachability(device),
-        powerSource: this.getPowerSource(device),
-        matter: device.mode === 'server' && device.serverNode ? this.matterbridge.getServerNodeData(device.serverNode) : undefined,
-        cluster: this.getClusterTextFromDevice(device),
-      });
+      devices.push(this.toBaseDevice(device));
     }
     return devices;
   }
-  */
 
   /**
    * Iterates over all devices.

@@ -18,9 +18,9 @@
 
 ## Run matterbridge as a daemon with systemctl (Linux only) with local global node_modules
 
-The advantage of this setup is that the global node_modules are private for matterbridge and sudo is not required.
+The advantage of this setup is that the global node_modules are private for the user and sudo is not required.
 
-The service runs rootless.
+The service runs rootless like the current user.
 
 The storage position is compatible with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
 
@@ -37,6 +37,8 @@ chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global 
 chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                 # ✅ Secure permissions
 NPM_CONFIG_PREFIX=~/.npm-global npm install matterbridge --omit=dev --verbose --global  # ✅ Install matterbridge in the local global node_modules, no sudo
 sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge        # ✅ Create a link to matterbridge bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb_mdns /usr/local/bin/mb_mdns                  # ✅ Create a link to mb_mdns bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb_coap /usr/local/bin/mb_coap                  # ✅ Create a link to mb_coap bin
 hash -r                                                                                 # ✅ Clear bash command cache as a precaution
 which matterbridge                                                                      # ✅ Check it
 matterbridge --version                                                                  # ✅ Will output the matterbridge version

@@ -88,7 +88,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private httpServer: HttpServer | undefined;
   private httpsServer: HttpsServer | undefined;
   private webSocketServer: WebSocketServer | undefined;
-  private server: BroadcastServer;
+  private readonly server: BroadcastServer;
+  private readonly debug = hasParameter('debug') || hasParameter('verbose');
+  private readonly verbose = hasParameter('verbose');
 
   constructor(matterbridge: Matterbridge) {
     super();
@@ -105,7 +107,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'frontend')) {
-      this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
           this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
@@ -147,11 +149,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
-          this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+          if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
     if (this.server.isWorkerResponse(msg, msg.type)) {
-      this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
         case 'set_log_level':
@@ -177,7 +179,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           }
           break;
         default:
-          this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+          if (this.verbose) this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }
@@ -1487,22 +1489,36 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
           return;
         }
-        data.params.pluginNameOrPath = (data.params.pluginNameOrPath as string).replace(/@.*$/, '');
-        if (this.matterbridge.plugins.has(data.params.pluginNameOrPath)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} already added` });
-          this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} already added`, 10, 'warning');
-          return;
+        this.wssSendSnackbarMessage(`Adding plugin ${data.params.pluginNameOrPath}...`, 5);
+        this.log.debug(`Adding plugin ${data.params.pluginNameOrPath}...`);
+        data.params.pluginNameOrPath = data.params.pluginNameOrPath.replace(/@.*$/, ''); // Remove @version if present
+
+        /*
+        const plugin = (await this.server.fetch({ type: 'plugins_add', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginNameOrPath } }, 5000)).response.plugin;
+        if (plugin) {
+          this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+          await this.server.fetch({ type: 'plugins_load', src: this.server.name, dst: 'plugins', params: { plugin: plugin.name } }, 5000);
+          this.wssSendRestartRequired();
+          this.wssSendRefreshRequired('plugins');
+          this.wssSendRefreshRequired('devices');
+          this.wssSendSnackbarMessage(`Loaded plugin ${localData.params.pluginNameOrPath}`, 5, 'success');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        } else {
+          this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} not added` });
         }
+        */
+
         const plugin = await this.matterbridge.plugins.add(data.params.pluginNameOrPath);
         if (plugin) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
           this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
           this.matterbridge.plugins
-            .load(plugin, true, 'The plugin has been added', true)
+            .load(plugin)
             .then(() => {
               this.wssSendRefreshRequired('plugins');
               this.wssSendRefreshRequired('devices');
-              this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginNameOrPath}`, 5, 'success');
+              this.wssSendSnackbarMessage(`Loaded plugin ${localData.params.pluginNameOrPath}`, 5, 'success');
               return;
             })
             .catch((_error) => {
@@ -1517,9 +1533,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/removeplugin' });
           return;
         }
+        this.wssSendSnackbarMessage(`Removing plugin ${data.params.pluginName}...`, 5);
+        this.log.debug(`Removing plugin ${data.params.pluginName}...`);
+
+        /*
+        await this.server.fetch({ type: 'plugins_shutdown', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName, reason: 'The plugin has been removed.', removeAllDevices: true } }, 5000);
+        await this.server.fetch({ type: 'plugins_remove', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginName } }, 5000);
+        */
+
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true);
         await this.matterbridge.plugins.remove(data.params.pluginName);
+
         this.wssSendSnackbarMessage(`Removed plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');

@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.2.0
+ * @version 1.3.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -31,7 +31,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, d
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import { ApiPlugin, plg, Plugin, StoragePlugin, typ } from './matterbridgeTypes.js';
+import { ApiPlugin, plg, Plugin, PluginName, StoragePlugin, typ } from './matterbridgeTypes.js';
 import { inspectError, logError } from './utils/error.js';
 import { hasParameter } from './utils/commandLine.js';
 import { BroadcastServer } from './broadcastServer.js';
@@ -54,19 +54,19 @@ interface PluginManagerEvents {
  * Manages Matterbridge plugins.
  */
 export class PluginManager extends EventEmitter<PluginManagerEvents> {
-  private _plugins = new Map<string, Plugin>();
-  private matterbridge: Matterbridge;
-  private log: AnsiLogger;
-  private server: BroadcastServer;
+  private readonly _plugins = new Map<string, Plugin>();
+  private readonly log: AnsiLogger;
+  private readonly server: BroadcastServer;
+  private readonly debug = hasParameter('debug') || hasParameter('verbose');
+  private readonly verbose = hasParameter('verbose');
 
   /**
    * Creates an instance of PluginManager.
    *
    * @param {Matterbridge} matterbridge - The Matterbridge instance.
    */
-  constructor(matterbridge: Matterbridge) {
+  constructor(private readonly matterbridge: Matterbridge) {
     super();
-    this.matterbridge = matterbridge;
     this.log = new AnsiLogger({ logName: 'PluginManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge plugin manager starting...');
     this.server = new BroadcastServer('plugins', this.log);
@@ -80,7 +80,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
     if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'plugins')) {
-      this.log.debug(`**Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
           this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
@@ -99,13 +99,23 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           this.server.respond({ ...msg, response: { has: this.has(msg.params.name) } });
           break;
         case 'plugins_get':
-          this.server.respond({ ...msg, response: { plugin: this.get(msg.params.name) } });
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, response: { plugin: undefined } });
+            }
+          }
           break;
         case 'plugins_set':
           this.server.respond({ ...msg, response: { plugin: this.set(msg.params.plugin) } });
           break;
-        case 'plugins_baseArray':
-          this.server.respond({ ...msg, response: { plugins: this.baseArray() } });
+        case 'plugins_storagepluginarray':
+          this.server.respond({ ...msg, response: { plugins: this.storagePluginArray() } });
+          break;
+        case 'plugins_apipluginarray':
+          this.server.respond({ ...msg, response: { plugins: this.apiPluginArray() } });
           break;
         case 'plugins_install':
           this.server.respond({ ...msg, response: { packageName: msg.params.packageName, success: await this.install(msg.params.packageName) } });
@@ -113,8 +123,88 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         case 'plugins_uninstall':
           this.server.respond({ ...msg, response: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
           break;
+        case 'plugins_add':
+          {
+            const plugin = await this.add(msg.params.nameOrPath);
+            if (plugin) {
+              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, response: { plugin } });
+            }
+          }
+          break;
+        case 'plugins_remove':
+          {
+            const plugin = await this.remove(msg.params.nameOrPath);
+            if (plugin) {
+              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, response: { plugin } });
+            }
+          }
+          break;
+        case 'plugins_enable':
+          {
+            const plugin = await this.enable(msg.params.nameOrPath);
+            if (plugin) {
+              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, response: { plugin } });
+            }
+          }
+          break;
+        case 'plugins_disable':
+          {
+            const plugin = await this.disable(msg.params.nameOrPath);
+            if (plugin) {
+              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, response: { plugin } });
+            }
+          }
+          break;
+        case 'plugins_load':
+          {
+            const platform = await this.load(msg.params.plugin);
+            if (platform) {
+              this.server.respond({ ...msg, params: {}, response: { platform: {} } });
+            } else {
+              this.server.respond({ ...msg, response: { platform } });
+            }
+          }
+          break;
+        case 'plugins_start':
+          {
+            const plugin = await this.start(msg.params.plugin, msg.params.message, msg.params.configure);
+            if (plugin) {
+              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, response: { plugin } });
+            }
+          }
+          break;
+        case 'plugins_configure':
+          {
+            const plugin = await this.configure(msg.params.plugin);
+            if (plugin) {
+              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, response: { plugin } });
+            }
+          }
+          break;
+        case 'plugins_shutdown':
+          {
+            const plugin = await this.shutdown(msg.params.plugin, msg.params.reason, msg.params.removeAllDevices, msg.params.force);
+            if (plugin) {
+              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, response: { plugin } });
+            }
+          }
+          break;
         default:
-          this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+          if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }
@@ -176,6 +266,60 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   /**
+   * Converts a plugin or API plugin to a storage plugin.
+   *
+   * @param {Plugin | ApiPlugin} plugin - The plugin or API plugin to convert.
+   * @returns {StoragePlugin} The converted storage plugin.
+   */
+  private toStoragePlugin(plugin: Plugin | ApiPlugin): StoragePlugin {
+    return {
+      name: plugin.name,
+      path: plugin.path,
+      type: plugin.type,
+      version: plugin.version,
+      description: plugin.description,
+      author: plugin.author,
+      enabled: plugin.enabled,
+    };
+  }
+
+  /**
+   * Converts a plugin to an API plugin.
+   *
+   * @param {Plugin} plugin - The plugin to convert.
+   * @returns {ApiPlugin} The converted API plugin.
+   */
+  private toApiPlugin(plugin: Plugin): ApiPlugin {
+    return {
+      name: plugin.name,
+      version: plugin.version,
+      description: plugin.description,
+      author: plugin.author,
+      path: plugin.path,
+      type: plugin.type,
+      latestVersion: plugin.latestVersion,
+      devVersion: plugin.devVersion,
+      homepage: plugin.homepage,
+      help: plugin.help,
+      changelog: plugin.changelog,
+      funding: plugin.funding,
+      locked: plugin.locked,
+      error: plugin.error,
+      enabled: plugin.enabled,
+      loaded: plugin.loaded,
+      started: plugin.started,
+      configured: plugin.configured,
+      restartRequired: plugin.restartRequired,
+      registeredDevices: plugin.registeredDevices,
+      configJson: plugin.configJson,
+      schemaJson: plugin.schemaJson,
+      hasWhiteList: plugin.hasWhiteList,
+      hasBlackList: plugin.hasBlackList,
+      matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
+    };
+  }
+
+  /**
    * Gets an array of all plugins.
    *
    * @returns {Plugin[]} An array of all plugins.
@@ -185,42 +329,29 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   /**
-   * Gets an array of all plugins suitable for serialization.
+   * Gets a StoragePlugin array of all plugins suitable for serialization.
+   *
+   * @returns {StoragePlugin[]} An array of all plugins.
+   */
+  storagePluginArray(): StoragePlugin[] {
+    const storagePlugins: StoragePlugin[] = [];
+    for (const plugin of this._plugins.values()) {
+      storagePlugins.push(this.toStoragePlugin(plugin));
+    }
+    return storagePlugins;
+  }
+
+  /**
+   * Gets an ApiPlugin array of all plugins suitable for serialization.
    *
    * @returns {ApiPlugin[]} An array of all plugins.
    */
-  baseArray(): ApiPlugin[] {
-    const basePlugins: ApiPlugin[] = [];
+  apiPluginArray(): ApiPlugin[] {
+    const apiPlugins: ApiPlugin[] = [];
     for (const plugin of this._plugins.values()) {
-      basePlugins.push({
-        name: plugin.name,
-        version: plugin.version,
-        description: plugin.description,
-        author: plugin.author,
-        path: plugin.path,
-        type: plugin.type,
-        latestVersion: plugin.latestVersion,
-        devVersion: plugin.devVersion,
-        homepage: plugin.homepage,
-        help: plugin.help,
-        changelog: plugin.changelog,
-        funding: plugin.funding,
-        locked: plugin.locked,
-        error: plugin.error,
-        enabled: plugin.enabled,
-        loaded: plugin.loaded,
-        started: plugin.started,
-        configured: plugin.configured,
-        restartRequired: plugin.restartRequired,
-        registeredDevices: plugin.registeredDevices,
-        configJson: plugin.configJson,
-        schemaJson: plugin.schemaJson,
-        hasWhiteList: plugin.hasWhiteList,
-        hasBlackList: plugin.hasBlackList,
-        matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
-      });
+      apiPlugins.push(this.toApiPlugin(plugin));
     }
-    return basePlugins;
+    return apiPlugins;
   }
 
   /**
@@ -404,12 +535,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @returns {Promise<boolean>} A promise that resolves to true if the installation was successful, false otherwise.
    */
   async install(packageName: string): Promise<boolean> {
+    this.log.debug(`Installing plugin ${plg}${packageName}${db}...`);
     const { spawnCommand } = await import('./utils/spawn.js');
     try {
       await spawnCommand(this.matterbridge, 'npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName);
       this.matterbridge.restartRequired = true;
       this.matterbridge.fixedRestartRequired = true;
-      packageName = packageName.replace(/@.*$/, '');
+      packageName = packageName.replace(/@.*$/, ''); // Remove @version if present
       if (packageName !== 'matterbridge') {
         if (!this.has(packageName)) await this.add(packageName);
         const plugin = this.get(packageName);
@@ -419,9 +551,11 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           await this.matterbridge.shutdownProcess();
         }
       }
+      this.log.debug(`Installed plugin ${plg}${packageName}${db} successfully`);
       return true;
     } catch (error) {
       inspectError(this.log, `Failed to install package ${plg}${packageName}${er}`, error);
+      this.log.debug(`Failed to install plugin ${plg}${packageName}${db}`);
       return false;
     }
   }
@@ -433,6 +567,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @returns {Promise<boolean>} A promise that resolves to true if the uninstallation was successful, false otherwise.
    */
   async uninstall(packageName: string): Promise<boolean> {
+    this.log.debug(`Uninstalling plugin ${plg}${packageName}${db}...`);
     const { spawnCommand } = await import('./utils/spawn.js');
     packageName = packageName.replace(/@.*$/, '');
     if (packageName === 'matterbridge') return false;
@@ -443,9 +578,11 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         await this.remove(packageName);
       }
       await spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', packageName, '--verbose'], 'uninstall', packageName);
+      this.log.debug(`Uninstalled plugin ${plg}${packageName}${db} successfully`);
       return true;
     } catch (error) {
       inspectError(this.log, `Failed to uninstall package ${plg}${packageName}${er}`, error);
+      this.log.debug(`Failed to uninstall plugin ${plg}${packageName}${db}`);
       return false;
     }
   }
@@ -541,11 +678,19 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * It will also log warnings and errors for missing or invalid fields.
    * It will return null if critical errors are found.
    *
-   * @param {Plugin} plugin - The plugin to load the package from.
+   * @param {Plugin | PluginName} plugin - The plugin to load the package from.
    * @returns {Promise<Record<string, string | number | object> | null>} A promise that resolves to the parsed package.json object or null if it could not be parsed.
    */
-  async parse(plugin: Plugin): Promise<Record<string, string | number | object> | null> {
+  async parse(plugin: Plugin | PluginName): Promise<Record<string, string | number | object> | null> {
     const { promises } = await import('node:fs');
+    if (typeof plugin === 'string') {
+      const p = this._plugins.get(plugin);
+      if (!p) {
+        this.log.error(`Plugin ${plg}${plugin}${er} not found`);
+        return null;
+      }
+      plugin = p;
+    }
     try {
       this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${db}`);
       const packageJson = JSON.parse(await promises.readFile(plugin.path, 'utf8'));
@@ -665,14 +810,14 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   /**
-   * Enables a plugin by its name or path.
+   * Disables a plugin by its name or path.
    *
-   * This method enables a plugin by setting its `enabled` property to `true` and saving the updated
+   * This method disables a plugin by setting its `enabled` property to `false` and saving the updated
    * plugin information to storage. It first checks if the plugin is already registered in the `_plugins` map.
-   * If not, it attempts to resolve the plugin's `package.json` file to retrieve its name and enable it.
+   * If not, it attempts to resolve the plugin's `package.json` file to retrieve its name and disable it.
    *
    * @param {string} nameOrPath - The name or path of the plugin to enable.
-   * @returns {Promise<Plugin | null>} A promise that resolves to the enabled plugin object, or null if the plugin could not be enabled.
+   * @returns {Promise<Plugin | null>} A promise that resolves to the disabled plugin object, or null if the plugin could not be disabled.
    */
   async disable(nameOrPath: string): Promise<Plugin | null> {
     const { promises } = await import('node:fs');
@@ -804,15 +949,23 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   /**
    * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
    *
-   * @param {Plugin} plugin - The plugin to load.
+   * @param {Plugin | PluginName} plugin - The plugin to load.
    * @param {boolean} start - Optional flag indicating whether to start the plugin after loading. Default is false.
    * @param {string} message - Optional message to pass to the plugin when starting.
    * @param {boolean} configure - Optional flag indicating whether to configure the plugin after loading. Default is false.
    * @returns {Promise<MatterbridgePlatform | undefined>} A Promise that resolves to the loaded MatterbridgePlatform instance or undefined.
    */
-  async load(plugin: Plugin, start: boolean = false, message: string = '', configure: boolean = false): Promise<MatterbridgePlatform | undefined> {
+  async load(plugin: Plugin | PluginName, start: boolean = false, message: string = '', configure: boolean = false): Promise<MatterbridgePlatform | undefined> {
     const { promises } = await import('node:fs');
     const { default: path } = await import('node:path');
+    if (typeof plugin === 'string') {
+      const p = this._plugins.get(plugin);
+      if (!p) {
+        this.log.error(`Plugin ${plg}${plugin}${er} not found`);
+        return undefined;
+      }
+      plugin = p;
+    }
     if (!plugin.enabled) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not enabled`);
       return undefined;
@@ -892,12 +1045,20 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   /**
    * Starts a plugin.
    *
-   * @param {Plugin} plugin - The plugin to start.
+   * @param {Plugin | PluginName} plugin - The plugin to start.
    * @param {string} [message] - Optional message to pass to the plugin's onStart method.
    * @param {boolean} [configure] - Indicates whether to configure the plugin after starting (default false).
    * @returns {Promise<Plugin | undefined>} A promise that resolves when the plugin is started successfully, or rejects with an error if starting the plugin fails.
    */
-  async start(plugin: Plugin, message?: string, configure: boolean = false): Promise<Plugin | undefined> {
+  async start(plugin: Plugin | PluginName, message?: string, configure: boolean = false): Promise<Plugin | undefined> {
+    if (typeof plugin === 'string') {
+      const p = this._plugins.get(plugin);
+      if (!p) {
+        this.log.error(`Plugin ${plg}${plugin}${er} not found`);
+        return undefined;
+      }
+      plugin = p;
+    }
     if (!plugin.loaded) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded`);
       return undefined;
@@ -929,10 +1090,18 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   /**
    * Configures a plugin.
    *
-   * @param {Plugin} plugin - The plugin to configure.
+   * @param {Plugin | PluginName} plugin - The plugin to configure.
    * @returns {Promise<Plugin | undefined>} A promise that resolves when the plugin is configured successfully, or rejects with an error if configuration fails.
    */
-  async configure(plugin: Plugin): Promise<Plugin | undefined> {
+  async configure(plugin: Plugin | PluginName): Promise<Plugin | undefined> {
+    if (typeof plugin === 'string') {
+      const p = this._plugins.get(plugin);
+      if (!p) {
+        this.log.error(`Plugin ${plg}${plugin}${er} not found`);
+        return undefined;
+      }
+      plugin = p;
+    }
     if (!plugin.loaded) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded`);
       return undefined;
@@ -969,13 +1138,21 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * This method shuts down a plugin by calling its `onShutdown` method and resetting its state.
    * It logs the shutdown process and optionally removes all devices associated with the plugin.
    *
-   * @param {Plugin} plugin - The plugin to shut down.
+   * @param {Plugin | PluginName} plugin - The plugin to shut down.
    * @param {string} [reason] - The reason for shutting down the plugin.
    * @param {boolean} [removeAllDevices] - Whether to remove all devices associated with the plugin.
    * @param {boolean} [force] - Whether to force the shutdown even if the plugin is not loaded or started.
    * @returns {Promise<Plugin | undefined>} A promise that resolves to the shut down plugin object, or undefined if the shutdown failed.
    */
-  async shutdown(plugin: Plugin, reason?: string, removeAllDevices: boolean = false, force: boolean = false): Promise<Plugin | undefined> {
+  async shutdown(plugin: Plugin | PluginName, reason?: string, removeAllDevices: boolean = false, force: boolean = false): Promise<Plugin | undefined> {
+    if (typeof plugin === 'string') {
+      const p = this._plugins.get(plugin);
+      if (!p) {
+        this.log.error(`Plugin ${plg}${plugin}${er} not found`);
+        return undefined;
+      }
+      plugin = p;
+    }
     this.log.debug(`Shutting down plugin ${plg}${plugin.name}${db}`);
     if (!plugin.loaded) {
       this.log.debug(`Plugin ${plg}${plugin.name}${db} not loaded`);
