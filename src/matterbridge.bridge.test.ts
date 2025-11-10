@@ -249,7 +249,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     let i = 1;
     for (const plugin of plugins) {
       if (i >= 4) break;
-      const device = new MatterbridgeEndpoint(pressureSensor, { uniqueStorageKey: 'pressureSensor' + i })
+      const device = new MatterbridgeEndpoint(pressureSensor, { id: 'pressureSensor' + i })
         .createDefaultBridgedDeviceBasicInformationClusterServer('Pressure sensor ' + i, '0x123456789', 0xfff1, 'Matterbridge', 'PressureSensor')
         .addRequiredClusterServers();
       expect(device).toBeDefined();

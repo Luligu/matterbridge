@@ -10,7 +10,7 @@ class MockPlatform extends MatterbridgeAccessoryPlatform {
   async onStart(reason) {
     await this.ready;
     this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);
-    const device = new MatterbridgeEndpoint(humiditySensor, { uniqueStorageKey: 'HumiditySensorPlugin5' })
+    const device = new MatterbridgeEndpoint(humiditySensor, { id: 'HumiditySensorPlugin5' })
       .createDefaultBasicInformationClusterServer('HumiditySensor plugin 5', '0x123456789', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge HumiditySensor')
       .addRequiredClusterServers();
     await this.registerDevice(device);

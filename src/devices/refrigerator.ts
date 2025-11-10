@@ -51,7 +51,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * - Use `addCabinet` to add one or more cabinets to the refrigerator.
    */
   constructor(name: string, serial: string) {
-    super([refrigerator, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([refrigerator, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Refrigerator');
     this.createDefaultPowerSourceWiredClusterServer();

@@ -10,7 +10,7 @@ class MockPlatform extends MatterbridgeAccessoryPlatform {
   async onStart(reason) {
     await this.ready;
     this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);
-    const device = new MatterbridgeEndpoint(pressureSensor, { uniqueStorageKey: 'ServerNodeDevice', mode: 'server' })
+    const device = new MatterbridgeEndpoint(pressureSensor, { id: 'ServerNodeDevice', mode: 'server' })
       .createDefaultBasicInformationClusterServer('Server node device', '0x123456789', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Server Node Device')
       .addRequiredClusterServers();
     await this.registerDevice(device);

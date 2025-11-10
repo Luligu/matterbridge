@@ -47,7 +47,7 @@ export class Cooktop extends MatterbridgeEndpoint {
    * - Use `addSurface` to add one or more surfaces to the cooktop.
    */
   constructor(name: string, serial: string) {
-    super([cooktop, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([cooktop, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Cooktop');
     this.createDefaultPowerSourceWiredClusterServer();

@@ -142,7 +142,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     if (!plugin) return;
     plugin.type = 'AccessoryPlatform';
     plugin.serverNode = {} as any;
-    await matterbridge.addBridgedEndpoint('matterbridge-mock4', new MatterbridgeEndpoint(pressureSensor, { uniqueStorageKey: 'invalidDevice' }));
+    await matterbridge.addBridgedEndpoint('matterbridge-mock4', new MatterbridgeEndpoint(pressureSensor, { id: 'invalidDevice' }));
     expect(await plugins.remove('./src/mock/plugin4')).not.toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Only one device is allowed per AccessoryPlatform plugin.`));
 
@@ -160,7 +160,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     if (!plugin) return;
     plugin.type = 'AccessoryPlatform';
     plugin.serverNode = { add: jest.fn() } as any;
-    await matterbridge.addBridgedEndpoint('matterbridge-mock4', { mode: 'matter', uniqueId: '123', uniqueStorageKey: 'invalidDevice' } as any);
+    await matterbridge.addBridgedEndpoint('matterbridge-mock4', { mode: 'matter', uniqueId: '123', id: 'invalidDevice' } as any);
     expect(await plugins.remove('./src/mock/plugin4')).not.toBeNull();
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Only one device is allowed per AccessoryPlatform plugin.`));
     matterbridge.devices.clear();
@@ -179,7 +179,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     if (!plugin) return;
     plugin.type = 'DynamicPlatform';
     plugin.serverNode = { add: jest.fn() } as any;
-    await matterbridge.addBridgedEndpoint('matterbridge-mock1', { mode: 'matter', uniqueId: '123', uniqueStorageKey: 'invalidDevice' } as any);
+    await matterbridge.addBridgedEndpoint('matterbridge-mock1', { mode: 'matter', uniqueId: '123', id: 'invalidDevice' } as any);
     expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Only one device is allowed per AccessoryPlatform plugin.`));
 

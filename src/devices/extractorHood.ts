@@ -61,7 +61,7 @@ export class ExtractorHood extends MatterbridgeEndpoint {
     activatedCarbonLastChangedTime: number | null | undefined = null,
     activatedCarbonReplacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
   ) {
-    super([extractorHood, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([extractorHood, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Extractor Hood');
     this.createDefaultPowerSourceWiredClusterServer();

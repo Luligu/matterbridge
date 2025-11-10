@@ -62,7 +62,7 @@ export class Speaker extends MatterbridgeEndpoint {
     if (volume < 1) volume = 1;
     if (volume > 254) volume = 254;
 
-    super([speakerDevice], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([speakerDevice], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Speaker');
     // On/Off used for mute state (TRUE => unmuted) - using no features
     this.createOnOffClusterServer(!muted);

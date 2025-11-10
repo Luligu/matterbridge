@@ -399,7 +399,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('should check checkNotLatinCharacters', async () => {
-    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'nonLatin' }, true);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'nonLatin' }, true);
     testDevice.createDefaultBasicInformationClusterServer('nonLatin조명', 'serial012345', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     testDevice.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
@@ -425,7 +425,7 @@ describe('Matterbridge platform', () => {
   test('checkEndpointNumbers should not validate without uniqueId', async () => {
     const context = await platform.storage?.createStorage('endpointNumbers');
     await context?.set('endpointMap', []);
-    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.uniqueId = 'test';
     (platform as any).registeredEndpointsByUniqueId.set(testDevice.uniqueId, testDevice);
     testDevice.uniqueId = undefined;
@@ -437,7 +437,7 @@ describe('Matterbridge platform', () => {
   test('checkEndpointNumbers should not be empty', async () => {
     const context = await platform.storage?.createStorage('endpointNumbers');
     await context?.set('endpointMap', []);
-    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     testDevice.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
@@ -454,7 +454,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('checkEndpointNumbers should check the testDevice', async () => {
-    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     testDevice.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
@@ -466,7 +466,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('checkEndpointNumbers should not check the testDevice', async () => {
-    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     testDevice.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
@@ -478,7 +478,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('checkEndpointNumbers should not check the testDevice without uniqueId', async () => {
-    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     testDevice.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
@@ -490,7 +490,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('checkEndpointNumbers should check the testDevice with child endpoints', async () => {
-    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     testDevice.addRequiredClusterServers();
     const child1 = testDevice.addChildDeviceType('child1', temperatureSensor, undefined, true);
@@ -516,7 +516,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('checkEndpointNumbers should validate the testDevice with child endpoints', async () => {
-    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     testDevice.addRequiredClusterServers();
     const child1 = testDevice.addChildDeviceType('child1', [temperatureSensor], undefined, true);
@@ -537,7 +537,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('checkEndpointNumbers should not validate the testDevice with child endpoints', async () => {
-    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     testDevice.addRequiredClusterServers();
     const child1 = testDevice.addChildDeviceType('child1', [temperatureSensor], undefined, true);
