@@ -37,9 +37,8 @@ import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
 import { wait, waiter } from './utils/wait.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
-import {} from './frontendTypes.ts';
-import { BroadcastServer } from './broadcastServer.ts';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 // Mock BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);

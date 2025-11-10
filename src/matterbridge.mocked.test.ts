@@ -70,7 +70,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { plg, Plugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { getParameter } from './utils/commandLine.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './utils/jestHelpers.ts';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

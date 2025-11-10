@@ -18,7 +18,7 @@ import { Descriptor } from '@matter/types/clusters/descriptor';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { addMatterbridgePlatform, createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, flushAsync, loggerLogSpy, matterbridge, setupTest, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './utils/jestHelpers.js';
+import { addMatterbridgePlatform, createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, flushAsync, loggerLogSpy, matterbridge, setupTest, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
 
 jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {

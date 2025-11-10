@@ -16,7 +16,7 @@ import { Identify, OnOff, OperationalState, OvenCavityOperationalState, OvenMode
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from './oven.js';
 

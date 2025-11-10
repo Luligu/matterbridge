@@ -13,7 +13,7 @@ import { AnsiLogger } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { setupTest } from './utils/jestHelpers.js';
+import { setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

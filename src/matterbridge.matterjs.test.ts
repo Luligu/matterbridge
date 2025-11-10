@@ -15,7 +15,7 @@ import { FabricIndex } from '@matter/types';
 import { FabricAction } from '@matter/protocol';
 
 import { Matterbridge } from './matterbridge.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

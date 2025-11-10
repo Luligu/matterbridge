@@ -8,7 +8,7 @@ import { jest } from '@jest/globals';
 import { LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 import { Inspector } from './utils/inspector.js';
 import { Tracker } from './utils/tracker.js';
 

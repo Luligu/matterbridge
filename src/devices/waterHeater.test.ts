@@ -16,7 +16,7 @@ import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } 
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeThermostatServer } from '../matterbridgeBehaviors.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.js';
 

@@ -5,7 +5,7 @@ const NAME = 'CreateZipMocked';
 import { jest } from '@jest/globals';
 import { LogLevel } from 'node-ansi-logger';
 
-import { loggerLogSpy, setupTest } from './jestHelpers.ts';
+import { loggerLogSpy, setupTest } from '../jestutils/jestHelpers.js';
 
 // Mock all external dependencies before importing the module under test
 const mockCreateWriteStream = jest.fn();

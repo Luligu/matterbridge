@@ -41,11 +41,11 @@ import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matte
 import { plg, Plugin } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Frontend } from './frontend.js';
-import { isApiRequest, isApiResponse, isBroadcast, WsMessageApiLog, WsMessageApiMemoryUpdate } from './frontendTypes.ts';
+import { isApiRequest, isApiResponse, isBroadcast, WsMessageApiLog, WsMessageApiMemoryUpdate } from './frontendTypes.js';
 import { wait, waiter } from './utils/wait.js';
 import { PluginManager } from './pluginManager.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
-import { BroadcastServer } from './broadcastServer.ts';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),

@@ -21,9 +21,9 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { Matterbridge } from '../matterbridge.js';
+import { setupTest } from '../jestutils/jestHelpers.js';
 
 import { spawnCommand } from './spawn.js';
-import { setupTest } from './jestHelpers.js';
 
 setupTest('SpawnCommand');
 

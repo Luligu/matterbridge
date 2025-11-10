@@ -120,7 +120,7 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
-import { assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, flushAsync, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

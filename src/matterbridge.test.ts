@@ -19,7 +19,7 @@ import { getParameter, hasParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
 import { plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Mock BroadcastServer methods

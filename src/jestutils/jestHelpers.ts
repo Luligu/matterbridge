@@ -72,7 +72,7 @@ export let log: AnsiLogger;
  *
  * @example
  * ```typescript
- * import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, loggerLogSpy, setDebug, setupTest } from './jestHelpers.js';
+ * import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
  *
  * // Setup the test environment
  * setupTest(NAME, false);
@@ -248,22 +248,31 @@ export async function startMatterbridgeEnvironment(port: number = 5540): Promise
 }
 
 /**
- * Add a matterbridge platform for testing.
+ * Add a matterbridge platform to the plugins for testing.
  *
  * @param {MatterbridgePlatform} platform The platform to add.
  * @param {string} name The platform name.
  *
  * @example
  * ```typescript
+ * platform = new Platform(...);
  * // Add the platform to the Matterbridge environment
  * addMatterbridgePlatform(platform, 'matterbridge-test');
  * ```
  */
 export function addMatterbridgePlatform(platform: MatterbridgePlatform, name: string): void {
   expect(platform).toBeDefined();
-
+  expect(name).toBeDefined();
   // @ts-expect-error accessing private member for testing
-  matterbridge.plugins._plugins.set(name, {});
+  matterbridge.plugins._plugins.set(name, {
+    name,
+    path: './',
+    type: platform.type,
+    version: platform.version,
+    description: 'Plugin ' + name,
+    author: 'Unknown',
+    enabled: true,
+  });
   platform['name'] = name;
 }
 
@@ -325,24 +334,11 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
 export async function destroyMatterbridgeEnvironment(cleanupPause: number = 10, destroyPause: number = 250): Promise<void> {
   // Destroy a matterbridge instance
   await destroyInstance(matterbridge, cleanupPause, destroyPause);
-  /*
-  // Cleanup the Matterbridge instance
-  // @ts-expect-error - accessing private member for testing
-  await matterbridge.cleanup('destroying instance...', false, cleanupPause);
-
-  // Pause before destroying the instance
-  if (destroyPause > 0) await flushAsync(undefined, undefined, destroyPause);
-  */
 
   // Close the mDNS service
   await closeMdnsInstance(matterbridge);
-  /*
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mdns = environment.get(MdnsService) as any;
-  if (mdns && mdns[Symbol.asyncDispose] && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
-  if (mdns && mdns.close && typeof mdns.close === 'function') await mdns.close();
-  */
 
+  // Reset the singleton instance
   // @ts-expect-error - accessing private member for testing
   Matterbridge.instance = undefined;
 }

@@ -99,7 +99,7 @@ import {
   waterValve,
 } from './matterbridgeDeviceTypes.js';
 import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.js';
-import { addDevice, assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { addDevice, assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

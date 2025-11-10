@@ -16,7 +16,7 @@ import { Identify, MicrowaveOvenControl, MicrowaveOvenMode, OnOff, OperationalSt
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { wait } from '../utils/export.js';
-import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from './microwaveOven.js';
 

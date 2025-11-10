@@ -11,7 +11,7 @@ import { jest } from '@jest/globals';
 import { OnOff, LevelControl } from '@matter/types/clusters';
 
 // helpers
-import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { Speaker } from './speaker.js';
 

@@ -33,7 +33,7 @@ import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Matterbridge } from './matterbridge.js';
-import { consoleLogSpy, setupTest } from './utils/jestHelpers.js';
+import { consoleLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

@@ -78,7 +78,7 @@ import {
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
-import { addDevice, assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { addDevice, assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

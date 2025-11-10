@@ -9,7 +9,7 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 
 // Matterbridge
-import { aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

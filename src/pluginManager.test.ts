@@ -51,7 +51,7 @@ import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import { plg, Plugin, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { waiter, wait } from './utils/export.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Setup the test environment

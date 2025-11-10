@@ -16,7 +16,7 @@ import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-man
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { HeatPump } from './heatPump.js';
 

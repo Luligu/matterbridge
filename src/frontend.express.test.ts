@@ -37,7 +37,7 @@ import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { MATTER_LOGGER_FILE, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 

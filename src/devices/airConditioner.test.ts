@@ -11,7 +11,7 @@ import { jest } from '@jest/globals';
 import { Identify, OnOff, PowerSource, Thermostat, ThermostatUserInterfaceConfiguration, FanControl, ThermostatCluster } from '@matter/types/clusters';
 
 // Matterbridge helpers
-import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { AirConditioner } from './airConditioner.js';
 

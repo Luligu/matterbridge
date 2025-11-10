@@ -51,7 +51,7 @@ describe('Error logger', () => {
     logError(mockLogger, testMessage, testError);
 
     expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError.message}\nStack:\n${testError.stack}`);
+    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError.message} \nStack: \n${testError.stack}`);
   });
 
   it('should log error message with non-Error value', () => {
@@ -112,7 +112,7 @@ describe('Error logger', () => {
     logError(mockLogger, testMessage, testError);
 
     expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError.message}\nStack:\n${testError.stack}`);
+    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError.message} \nStack: \n${testError.stack}`);
   });
 
   it('should handle Error instance without stack trace', () => {
@@ -123,7 +123,7 @@ describe('Error logger', () => {
     logError(mockLogger, testMessage, testError);
 
     expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError.message}\nStack:\n${testError.stack}`);
+    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError.message} \nStack: \n${testError.stack}`);
   });
 
   describe('inspectError', () => {

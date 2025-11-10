@@ -11,7 +11,7 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
-import { flushAsync, setupTest } from './utils/jestHelpers.js';
+import { flushAsync, setupTest } from './jestutils/jestHelpers.js';
 
 // Spy on BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest');

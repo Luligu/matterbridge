@@ -4,7 +4,7 @@ const NAME = 'CopyDirectory';
 
 import { jest } from '@jest/globals';
 
-import { setupTest } from './jestHelpers.js';
+import { setupTest } from '../jestutils/jestHelpers.js';
 
 // Prepare fake implementations
 const fakeMkdir: jest.MockedFunction<(path: string, options: { recursive: boolean }) => Promise<void>> = jest.fn();

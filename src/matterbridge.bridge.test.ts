@@ -42,7 +42,7 @@ import { PluginManager } from './pluginManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
 import { plg } from './matterbridgeTypes.js';
-import { loggerLogSpy, setupTest, flushAsync, destroyInstance, closeMdnsInstance } from './utils/jestHelpers.js';
+import { loggerLogSpy, setupTest, flushAsync, destroyInstance, closeMdnsInstance } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

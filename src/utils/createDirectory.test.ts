@@ -8,8 +8,9 @@ import fs from 'node:fs';
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
+import { loggerLogSpy, setupTest } from '../jestutils/jestHelpers.js';
+
 import { createDirectory } from './createDirectory.js';
-import { loggerLogSpy, setupTest } from './jestHelpers.js';
 
 const log = new AnsiLogger({ logName: 'CreateDirectory', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 

@@ -16,7 +16,7 @@ import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, Servic
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviors.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 
