@@ -71,7 +71,7 @@ import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/ac
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 
 // MatterbridgeEndpoint
-import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
+import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
 
 export class MatterbridgeServer extends Behavior {
   static override readonly id = 'matterbridge';
