@@ -28,7 +28,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // AnsiLogger module
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
 // @matter/general
-import { Lifecycle, NamedHandler, HandlerFunction, AtLeastOne, UINT16_MAX, UINT32_MAX } from '@matter/general';
+import { Lifecycle, NamedHandler, AtLeastOne, UINT16_MAX, UINT32_MAX } from '@matter/general';
 // @matter/node
 import { ActionContext, Behavior, Endpoint, EndpointType, MutableEndpoint, ServerNode, SupportedBehaviors } from '@matter/node';
 // @matter/types
@@ -96,7 +96,8 @@ import { FanControlServer } from '@matter/node/behaviors/fan-control';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
 
 // Matterbridge
-import { DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
+import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
+import { CommandHandlerFunction, MatterbridgeEndpointCommands, MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
 import { isValidNumber, isValidObject, isValidString } from './utils/isvalid.js';
 import {
   MatterbridgeServer,
@@ -160,137 +161,6 @@ import {
   getDefaultDeviceEnergyManagementClusterServer,
   getDefaultDeviceEnergyManagementModeClusterServer,
 } from './matterbridgeEndpointHelpers.js';
-
-export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CommandHandlerData = { request: Record<string, any>; cluster: string; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint };
-export type CommandHandlerFunction = (data: CommandHandlerData) => void | Promise<void>;
-
-export interface MatterbridgeEndpointCommands {
-  // Identify
-  identify: HandlerFunction;
-  triggerEffect: HandlerFunction;
-
-  // On/Off
-  on: HandlerFunction;
-  off: HandlerFunction;
-  toggle: HandlerFunction;
-  offWithEffect: HandlerFunction;
-
-  // Level Control
-  moveToLevel: HandlerFunction;
-  moveToLevelWithOnOff: HandlerFunction;
-
-  // Color Control
-  moveToColor: HandlerFunction;
-  moveColor: HandlerFunction;
-  stepColor: HandlerFunction;
-  moveToHue: HandlerFunction;
-  moveHue: HandlerFunction;
-  stepHue: HandlerFunction;
-  enhancedMoveToHue: HandlerFunction;
-  enhancedMoveHue: HandlerFunction;
-  enhancedStepHue: HandlerFunction;
-  moveToSaturation: HandlerFunction;
-  moveSaturation: HandlerFunction;
-  stepSaturation: HandlerFunction;
-  moveToHueAndSaturation: HandlerFunction;
-  enhancedMoveToHueAndSaturation: HandlerFunction;
-  moveToColorTemperature: HandlerFunction;
-
-  // Window Covering
-  upOrOpen: HandlerFunction;
-  downOrClose: HandlerFunction;
-  stopMotion: HandlerFunction;
-  goToLiftPercentage: HandlerFunction;
-  goToTiltPercentage: HandlerFunction;
-
-  // Door Lock
-  lockDoor: HandlerFunction;
-  unlockDoor: HandlerFunction;
-
-  // Thermostat
-  setpointRaiseLower: HandlerFunction;
-  setActivePresetRequest: HandlerFunction;
-
-  // Fan Control
-  step: HandlerFunction;
-
-  // Mode Select
-  changeToMode: HandlerFunction;
-
-  // Valve Configuration and Control
-  open: HandlerFunction;
-  close: HandlerFunction;
-
-  // Boolean State Configuration
-  suppressAlarm: HandlerFunction;
-  enableDisableAlarm: HandlerFunction;
-
-  // Smoke and CO Alarm
-  selfTestRequest: HandlerFunction;
-
-  // Thread Network Diagnostics
-  resetCounts: HandlerFunction;
-
-  // Time Synchronization
-  setUtcTime: HandlerFunction;
-  setTimeZone: HandlerFunction;
-  setDstOffset: HandlerFunction;
-
-  // Device Energy Management
-  pauseRequest: HandlerFunction;
-  resumeRequest: HandlerFunction;
-
-  // Operational State
-  pause: HandlerFunction;
-  stop: HandlerFunction;
-  start: HandlerFunction;
-  resume: HandlerFunction;
-
-  // Rvc Operational State
-  goHome: HandlerFunction;
-
-  // Rvc Service Area
-  selectAreas: HandlerFunction;
-
-  // Water Heater Management
-  boost: HandlerFunction;
-  cancelBoost: HandlerFunction;
-
-  // Energy Evse
-  enableCharging: HandlerFunction;
-  disable: HandlerFunction;
-
-  // Device Energy Management
-  powerAdjustRequest: HandlerFunction;
-  cancelPowerAdjustRequest: HandlerFunction;
-
-  // Temperature Control
-  setTemperature: HandlerFunction;
-
-  // Microwave Oven Control
-  setCookingParameters: HandlerFunction;
-  addMoreTime: HandlerFunction;
-
-  // Resource Monitoring
-  resetCondition: HandlerFunction;
-}
-
-export interface SerializedMatterbridgeEndpoint {
-  pluginName: string;
-  deviceName: string;
-  serialNumber: string;
-  uniqueId: string;
-  productId?: number;
-  productName?: string;
-  vendorId?: number;
-  vendorName?: string;
-  deviceTypes: DeviceTypeDefinition[];
-  endpoint: EndpointNumber | undefined;
-  endpointName: string;
-  clusterServersId: ClusterId[];
-}
 
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
@@ -430,7 +300,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
     // Create the logger
-    this.log = new AnsiLogger({ logName: options.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
+    this.log = new AnsiLogger({ logName: this.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} mode: ${CYAN}${this.mode}${db} id: ${CYAN}${optionsV8.id}${db} number: ${CYAN}${optionsV8.number}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
@@ -819,9 +689,9 @@ export class MatterbridgeEndpoint extends Endpoint {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
         }
-        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName, endpointId: options.endpointId, tagList: options.tagList }, debug);
+        child = new MatterbridgeEndpoint(definition, { id: endpointName, number: options.number, tagList: options.tagList }, debug);
       } else {
-        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName, endpointId: options.endpointId }, debug);
+        child = new MatterbridgeEndpoint(definition, { id: endpointName, number: options.number }, debug);
       }
     }
 
@@ -872,9 +742,9 @@ export class MatterbridgeEndpoint extends Endpoint {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
         }
-        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName, endpointId: options.endpointId, tagList: options.tagList }, debug);
+        child = new MatterbridgeEndpoint(definition, { id: endpointName, number: options.number, tagList: options.tagList }, debug);
       } else {
-        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName, endpointId: options.endpointId }, debug);
+        child = new MatterbridgeEndpoint(definition, { id: endpointName, number: options.number }, debug);
       }
     }
     if (Array.isArray(definition)) {
@@ -951,7 +821,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {SerializedMatterbridgeEndpoint | undefined} The serialized Matterbridge device object.
    */
   static serialize(device: MatterbridgeEndpoint): SerializedMatterbridgeEndpoint | undefined {
-    if (!device.serialNumber || !device.deviceName || !device.uniqueId) return;
+    if (!device.serialNumber || !device.deviceName || !device.uniqueId || !device.maybeId || !device.maybeNumber) return;
     const serialized: SerializedMatterbridgeEndpoint = {
       pluginName: device.plugin ?? '',
       deviceName: device.deviceName,
@@ -962,8 +832,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       vendorId: device.vendorId,
       vendorName: device.vendorName,
       deviceTypes: Array.from(device.deviceTypes.values()),
-      endpoint: device.maybeNumber,
-      endpointName: device.maybeId ?? device.deviceName,
+      id: device.id,
+      number: device.number,
       clusterServersId: [],
     };
     Object.keys(device.behaviors.supported).forEach((behaviorName) => {
@@ -981,7 +851,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {MatterbridgeEndpoint | undefined} The deserialized Matterbridge device.
    */
   static deserialize(serializedDevice: SerializedMatterbridgeEndpoint): MatterbridgeEndpoint | undefined {
-    const device = new MatterbridgeEndpoint(serializedDevice.deviceTypes as AtLeastOne<DeviceTypeDefinition>, { uniqueStorageKey: serializedDevice.endpointName, endpointId: serializedDevice.endpoint }, false);
+    const device = new MatterbridgeEndpoint(serializedDevice.deviceTypes as AtLeastOne<DeviceTypeDefinition>, { id: serializedDevice.id, number: serializedDevice.number }, false);
     device.plugin = serializedDevice.pluginName;
     device.deviceName = serializedDevice.deviceName;
     device.serialNumber = serializedDevice.serialNumber;
