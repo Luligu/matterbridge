@@ -25,7 +25,7 @@ import { rmSync } from 'node:fs';
 import { inspect } from 'node:util';
 import path from 'node:path';
 
-import { jest } from '@jest/globals';
+import type { jest } from '@jest/globals';
 // Imports from Matterbridge
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, Lifecycle } from '@matter/general';
@@ -52,9 +52,9 @@ export let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 export let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 export let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
 
-export const addBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint');
-export const removeBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint');
-export const removeAllBridgedEndpointsSpy = jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints');
+export let addBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addBridgedEndpoint>;
+export let removeBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeBridgedEndpoint>;
+export let removeAllBridgedEndpointsSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeAllBridgedEndpoints>;
 
 export let matterbridge: Matterbridge;
 export let environment: Environment;
@@ -79,7 +79,7 @@ export let log: AnsiLogger;
  *
  * ```
  */
-export function setupTest(name: string, debug: boolean = false): void {
+export async function setupTest(name: string, debug: boolean = false): Promise<void> {
   expect(name).toBeDefined();
   expect(typeof name).toBe('string');
   expect(name.length).toBeGreaterThanOrEqual(4);
@@ -87,6 +87,7 @@ export function setupTest(name: string, debug: boolean = false): void {
   // Cleanup any existing home directory
   rmSync(path.join('jest', name), { recursive: true, force: true });
 
+  const { jest } = await import('@jest/globals');
   if (debug) {
     loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
     consoleLogSpy = jest.spyOn(console, 'log');
@@ -102,6 +103,9 @@ export function setupTest(name: string, debug: boolean = false): void {
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   }
+  addBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint');
+  removeBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint');
+  removeAllBridgedEndpointsSpy = jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints');
 }
 
 /**
@@ -120,7 +124,8 @@ export function setupTest(name: string, debug: boolean = false): void {
  * setDebug(false);
  * ```
  */
-export function setDebug(debug: boolean): void {
+export async function setDebug(debug: boolean): Promise<void> {
+  const { jest } = await import('@jest/globals');
   if (debug) {
     loggerLogSpy.mockRestore();
     consoleLogSpy.mockRestore();

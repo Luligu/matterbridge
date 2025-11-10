@@ -1,7 +1,5 @@
 import { jest } from '@jest/globals';
-import { Environment } from '@matter/general';
 import { Endpoint, ServerNode } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints';
 
 import { Matterbridge } from '../matterbridge.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
@@ -20,6 +18,7 @@ import {
   createTestEnvironment,
   deleteDevice,
   destroyMatterbridgeEnvironment,
+  environment,
   flushAsync,
   loggerLogSpy,
   matterbridge,
@@ -50,7 +49,7 @@ describe('Matterbridge instance', () => {
   });
 
   test('should setup debug mode false as default', async () => {
-    setupTest('JestHelpers');
+    await setupTest('JestHelpers');
     expect(loggerLogSpy).toBeDefined();
     expect(consoleLogSpy).toBeDefined();
     expect(consoleDebugSpy).toBeDefined();
@@ -60,7 +59,7 @@ describe('Matterbridge instance', () => {
   });
 
   test('should setup debug mode false', async () => {
-    setupTest('JestHelpers', false);
+    await setupTest('JestHelpers', false);
     expect(loggerLogSpy).toBeDefined();
     expect(consoleLogSpy).toBeDefined();
     expect(consoleDebugSpy).toBeDefined();
@@ -70,7 +69,7 @@ describe('Matterbridge instance', () => {
   });
 
   test('should setup debug mode true', async () => {
-    setupTest('JestHelpers', true);
+    await setupTest('JestHelpers', true);
     expect(loggerLogSpy).toBeDefined();
     expect(consoleLogSpy).toBeDefined();
     expect(consoleDebugSpy).toBeDefined();
@@ -80,7 +79,7 @@ describe('Matterbridge instance', () => {
   });
 
   test('should set debug mode', async () => {
-    setDebug(true);
+    await setDebug(true);
     expect(loggerLogSpy).toBeDefined();
     expect(consoleLogSpy).toBeDefined();
     expect(consoleDebugSpy).toBeDefined();
@@ -97,7 +96,7 @@ describe('Matterbridge instance', () => {
   });
 
   test('should start a Matterbridge instance', async () => {
-    await startMatterbridgeEnvironment();
+    await startMatterbridgeEnvironment(6000);
     expect(server).toBeDefined();
     expect(server).toBeInstanceOf(ServerNode);
     expect(aggregator).toBeDefined();
@@ -106,7 +105,7 @@ describe('Matterbridge instance', () => {
   });
 
   test('should add a Matterbridge platform', async () => {
-    const platform = {} as any;
+    const platform = { type: 'Any', version: '1.0.0' } as any;
     addMatterbridgePlatform(platform, 'JestHelpersPlatform');
     expect(platform.name).toBe('JestHelpersPlatform');
   });
@@ -126,9 +125,6 @@ describe('Matterbridge instance', () => {
 });
 
 describe('Matter.js instance', () => {
-  let environment: Environment;
-  let server: ServerNode<ServerNode.RootEndpoint>;
-  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {});
@@ -157,12 +153,12 @@ describe('Matter.js instance', () => {
   });
 
   test('should create a matter.js environment', async () => {
-    environment = createTestEnvironment('JestHelpers');
+    createTestEnvironment('JestHelpers');
     expect(environment).toBeDefined();
   });
 
   test('should start a matter.js server node', async () => {
-    [server, aggregator] = await startServerNode('JestHelpers', 6000);
+    await startServerNode('JestHelpers', 6000);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });

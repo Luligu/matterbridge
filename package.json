@@ -66,6 +66,10 @@
       "import": "./dist/utils/export.js",
       "types": "./dist/utils/export.d.ts"
     },
+    "./jestutils": {
+      "import": "./dist/jestutils/export.js",
+      "types": "./dist/jestutils/export.d.ts"
+    },
     "./logger": {
       "import": "./dist/logger/export.js",
       "types": "./dist/logger/export.d.ts"
