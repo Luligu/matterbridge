@@ -389,26 +389,26 @@ export async function invokeBehaviorCommand(
  */
 export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, newValue: unknown, oldValue: unknown): Promise<boolean> {
   const event = attribute + '$Changed';
-  const clusterName = getBehavior(endpoint, cluster)?.id;
-  if (!clusterName) {
+  const behaviorId = getBehavior(endpoint, cluster)?.id;
+  if (!behaviorId) {
     endpoint.log.error(`invokeSubscribeHandler ${hk}${event}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
     return false;
   }
 
   if (endpoint.construction.status !== Lifecycle.Status.Active) {
-    endpoint.log.error(`invokeSubscribeHandler ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    endpoint.log.error(`invokeSubscribeHandler ${hk}${behaviorId}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
     return false;
   }
 
   const events = endpoint.events as Record<string, Record<string, unknown>>;
-  if (!(clusterName in events) || !(event in events[clusterName])) {
-    endpoint.log.error(`invokeSubscribeHandler ${hk}${event}${er} error: cluster ${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+  if (!(behaviorId in events) || !(event in events[behaviorId])) {
+    endpoint.log.error(`invokeSubscribeHandler ${hk}${event}${er} error: cluster ${behaviorId} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
     return false;
   }
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  await endpoint.act((agent) => agent[clusterName].events[event].emit(newValue, oldValue, { ...agent.context, offline: false }));
+  await endpoint.act((agent) => agent[behaviorId].events[event].emit(newValue, oldValue, { ...agent.context, offline: false }));
   return true;
 }
 
