@@ -228,7 +228,7 @@ describe('Matterbridge ' + NAME, () => {
     ];
     let n = 1000;
     for (const name of nonLatinNames) {
-      const device = new MatterbridgeEndpoint(onOffOutlet, { id: name, endpointId: EndpointNumber(n++) });
+      const device = new MatterbridgeEndpoint(onOffOutlet, { id: name, number: EndpointNumber(n++) });
       expect(device).toBeDefined();
       expect(device.id).toBe(generateUniqueId(name));
       await add(device);
@@ -294,7 +294,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('constructor with id', async () => {
     const deviceType = onOffLight;
-    const device = new MatterbridgeEndpoint(deviceType, { id: 'OnOffLight1', id: 'OnOffLight1bis' });
+    const device = new MatterbridgeEndpoint(deviceType, { id: 'OnOffLight1bis' });
     expect(device).toBeDefined();
     expect(device.id).toBe('OnOffLight1bis');
     expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
@@ -314,7 +314,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('constructor with number', async () => {
     const deviceType = onOffLight;
-    const device = new MatterbridgeEndpoint(deviceType, { id: 'OnOffLight1ter', endpointId: EndpointNumber(5000), number: EndpointNumber(6000) });
+    const device = new MatterbridgeEndpoint(deviceType, { id: 'OnOffLight1ter', number: EndpointNumber(6000) });
     expect(device).toBeDefined();
     expect(device.id).toBe('OnOffLight1ter');
     expect(device.number).toBe(6000);
@@ -376,7 +376,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('serialize and deserialize', async () => {
-    const device = new MatterbridgeEndpoint([onOffLight, bridgedNode, powerSource], { id: 'OnOffLight4', endpointId: EndpointNumber(100) });
+    const device = new MatterbridgeEndpoint([onOffLight, bridgedNode, powerSource], { id: 'OnOffLight4', number: EndpointNumber(100) });
     expect(device).toBeDefined();
     device
       .createDefaultIdentifyClusterServer()
@@ -1040,7 +1040,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add contact child to OnOffOutletWithSensors', async () => {
-    const childEndpoint = device.addChildDeviceType('contactChild-1', contactSensor, { endpointId: EndpointNumber(35) });
+    const childEndpoint = device.addChildDeviceType('contactChild-1', contactSensor, { number: EndpointNumber(35) });
     expect(childEndpoint).toBeDefined();
     childEndpoint.createDefaultIdentifyClusterServer();
     childEndpoint.createDefaultBooleanStateClusterServer(false);
@@ -1125,7 +1125,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('addChildDeviceType to OnOffOutletWithSensors with lifecycle installed', async () => {
-    const childEndpoint = device.addChildDeviceType('contactChild-2', contactSensor, { endpointId: EndpointNumber(36) });
+    const childEndpoint = device.addChildDeviceType('contactChild-2', contactSensor, { number: EndpointNumber(36) });
     childEndpoint.addRequiredClusterServers();
     await Promise.all([childEndpoint.lifecycle.ready, childEndpoint.construction.ready]); // We need to wait for the lifecycle to be ready since we cannot await the construction
     expect(device.getChildEndpointByName('contactChild-2')).toBeDefined();
@@ -1133,7 +1133,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('addChildDeviceType to OnOffOutletWithSensors with lifecycle installed and taglist', async () => {
-    const childEndpoint = device.addChildDeviceType('contactChild-2bis', contactSensor, { endpointId: EndpointNumber(46), tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const childEndpoint = device.addChildDeviceType('contactChild-2bis', contactSensor, { number: EndpointNumber(46), tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     childEndpoint.addRequiredClusterServers();
     await Promise.all([childEndpoint.lifecycle.ready, childEndpoint.construction.ready]); // We need to wait for the lifecycle to be ready since we cannot await the construction
     expect(device.getChildEndpointByName('contactChild-2bis')).toBeDefined();
@@ -1146,14 +1146,14 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('addChildDeviceTypeWithClusterServer to OnOffOutletWithSensors with lifecycle installed', async () => {
-    const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3', contactSensor, [BooleanState.Cluster.id], { endpointId: EndpointNumber(37) });
+    const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3', contactSensor, [BooleanState.Cluster.id], { number: EndpointNumber(37) });
     await Promise.all([childEndpoint.lifecycle.ready, childEndpoint.construction.ready]); // We need to wait for the lifecycle to be ready since we cannot await the construction
     expect(device.getChildEndpointByName('contactChild-3')).toBeDefined();
     expect(device.getChildEndpoint(EndpointNumber(37))).toBeDefined();
   });
 
   test('addChildDeviceTypeWithClusterServer to OnOffOutletWithSensors with lifecycle installed and taglist', async () => {
-    const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3bis', contactSensor, [BooleanState.Cluster.id], { endpointId: EndpointNumber(47), tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3bis', contactSensor, [BooleanState.Cluster.id], { number: EndpointNumber(47), tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     await Promise.all([childEndpoint.lifecycle.ready, childEndpoint.construction.ready]); // We need to wait for the lifecycle to be ready since we cannot await the construction
     expect(device.getChildEndpointByName('contactChild-3bis')).toBeDefined();
     expect(device.getChildEndpoint(EndpointNumber(47))).toBeDefined();
