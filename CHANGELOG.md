@@ -37,6 +37,7 @@ Advantages:
 - [endpoint]: Added matterbridgeEndpointTypes.
 - [devices]: Added tests for device types and their revision changes.
 - [clusters]: Added test for clusters and their revision changes.
+- [chip]: Added fetch script to download zcl data from connectedhomeip.
 
 ### Changed
 
