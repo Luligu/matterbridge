@@ -104,7 +104,7 @@ const getClusterRevision = (entry: any): number | undefined => entry?.Cluster?.r
 await setupTest(NAME, false);
 
 describe('Matter clusters revision (guard against upstream changes)', () => {
-  // Hard-coded expected revisions (current as of @matter/main 0.15.6)
+  // Hard-coded expected revisions (current as of @matter/main 0.15.6 > Matter specs v1.4.1)
   const cases: Array<[string, any, number]> = [
     ['AccountLogin', AccountLogin, 2],
     ['Actions', Actions, 1],
