@@ -38,13 +38,14 @@ Advantages:
 - [devices]: Added tests for device types and their revision changes.
 - [clusters]: Added test for clusters and their revision changes.
 - [chip]: Added fetch script to download zcl data from connectedhomeip.
+- [endpoint]: Added createDefaultPowerSourceBatteryClusterServer().
 
 ### Changed
 
 - [package]: Updated dependencies.
 - [package]: Bumped jestHelpers v.1.0.12.
-- [endpoint]: Change long deprecated uniqueStorageKey with id.
-- [endpoint]: Change long deprecated endpointId with number.
+- [endpoint]: Changed long deprecated uniqueStorageKey with id.
+- [endpoint]: Changed long deprecated endpointId with number.
 
 ### Fixed
 

@@ -99,7 +99,7 @@ import {
   waterValve,
 } from './matterbridgeDeviceTypes.js';
 import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.js';
-import { addDevice, assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { addDevice, assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -1280,6 +1280,27 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(PowerSource.Cluster.id, 'description')).toBe('AC Power');
     expect(device.getAttribute(PowerSource.Cluster.id, 'status')).toBe(PowerSource.PowerSourceStatus.Active);
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('power source battery', async () => {
+    const device = new MatterbridgeEndpoint([powerSource], { id: 'PowerSourceBattery' });
+    expect(device).toBeDefined();
+    device.createDefaultPowerSourceBatteryClusterServer();
+    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBe(true);
+
+    // Test endpointList with child device
+    const temp = device.addChildDeviceType('temperature', temperatureSensor);
+    temp.createDefaultTemperatureMeasurementClusterServer(2200);
+
+    await add(device);
+
+    expect(device.getAttribute(PowerSource.Cluster.id, 'description')).toBe('Primary battery');
+    expect(device.getAttribute(PowerSource.Cluster.id, 'status')).toBe(PowerSource.PowerSourceStatus.Active);
+    expect(device.getAttribute(PowerSource.Cluster.id, 'batVoltage')).toBe(null);
+    expect(device.getAttribute(PowerSource.Cluster.id, 'batPercentRemaining')).toBe(null);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
+
+    await flushAsync();
   });
 
   test('power source replaceable', async () => {

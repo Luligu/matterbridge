@@ -827,6 +827,41 @@ export function getDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerS
 }
 
 /**
+ * Get the default power source battery cluster server options.
+ *
+ * @param {null | number} batPercentRemaining - The remaining battery percentage (default: null). The attribute is in the range 0-200.
+ * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+ * @param {null | number} batVoltage - The battery voltage (default: null).
+ * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
+ * @returns {Behavior.Options<PowerSourceClusterServer>} The options for the power source replaceable battery cluster server.
+ *
+ * @remarks
+ * - order: The order of the power source is a persisted attribute that indicates the order in which the power sources are used.
+ * - description: The description of the power source is a fixed attribute that describes the power source type.
+ * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
+ */
+export function getDefaultPowerSourceBatteryClusterServer(
+  batPercentRemaining: null | number = null,
+  batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
+  batVoltage: null | number = null,
+  batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
+) {
+  return optionsFor(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery), {
+    // Base attributes
+    status: PowerSource.PowerSourceStatus.Active,
+    order: 0,
+    description: 'Primary battery',
+    endpointList: [], // Will be filled by the MatterbridgePowerSourceServer
+    // Battery feature attributes
+    batVoltage,
+    batPercentRemaining: batPercentRemaining !== null ? Math.min(Math.max(batPercentRemaining * 2, 0), 200) : null,
+    batChargeLevel,
+    batReplacementNeeded: false,
+    batReplaceability,
+  });
+}
+
+/**
  * Get the default power source replaceable battery cluster server options.
  *
  * @param {number} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
@@ -834,7 +869,7 @@ export function getDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerS
  * @param {number} batVoltage - The battery voltage (default: 1500).
  * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
  * @param {number} batQuantity - The quantity of the battery (default: 1).
- * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
+ * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.UserReplaceable).
  * @returns {Behavior.Options<PowerSourceClusterServer>} The options for the power source replaceable battery cluster server.
  *
  * @remarks
