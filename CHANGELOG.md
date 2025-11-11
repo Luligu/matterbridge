@@ -34,10 +34,15 @@ Advantages:
 
 ### Added
 
+- [endpoint]: Added matterbridgeEndpointTypes.
+- [devices]: Add tests for Matterbridge device types and their revision changes.
+
 ### Changed
 
 - [package]: Updated dependencies.
 - [package]: Bumped jestHelpers v.1.0.12.
+- [endpoint]: Change long deprecated uniqueStorageKey with id.
+- [endpoint]: Change long deprecated endpointId with number.
 
 ### Fixed
 

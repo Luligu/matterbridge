@@ -1004,8 +1004,8 @@ export const refrigerator = DeviceTypeDefinition({
   code: 0x70,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id, RefrigeratorAlarm.Cluster.id],
-  optionalServerClusters: [],
+  requiredServerClusters: [],
+  optionalServerClusters: [Identify.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id, RefrigeratorAlarm.Cluster.id],
 });
 
 /**
@@ -1115,8 +1115,8 @@ export const cookSurface = DeviceTypeDefinition({
   code: 0x77,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [TemperatureControl.Cluster.id, TemperatureMeasurement.Cluster.id],
-  optionalServerClusters: [OnOff.Cluster.id],
+  requiredServerClusters: [],
+  optionalServerClusters: [TemperatureControl.Cluster.id, TemperatureMeasurement.Cluster.id, OnOff.Cluster.id],
 });
 
 /**
@@ -1154,8 +1154,8 @@ export const oven = DeviceTypeDefinition({
   code: 0x7b,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id],
-  optionalServerClusters: [],
+  requiredServerClusters: [],
+  optionalServerClusters: [Identify.Cluster.id],
 });
 
 /**
