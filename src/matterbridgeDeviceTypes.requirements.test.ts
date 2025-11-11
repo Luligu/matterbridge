@@ -1,6 +1,6 @@
-// src/matterbridgeDeviceTypes.clusters.test.ts
+// src/matterbridgeDeviceTypes.requirements.test.ts
 
-const NAME = 'MatterbridgeDevicetypesClusters';
+const NAME = 'MatterbridgeDevicetypesRequirements';
 const HOMEDIR = path.join('jest', NAME);
 
 import path from 'node:path';

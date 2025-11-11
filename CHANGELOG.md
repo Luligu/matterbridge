@@ -35,7 +35,8 @@ Advantages:
 ### Added
 
 - [endpoint]: Added matterbridgeEndpointTypes.
-- [devices]: Add tests for Matterbridge device types and their revision changes.
+- [devices]: Added tests for device types and their revision changes.
+- [clusters]: Added test for clusters and their revision changes.
 
 ### Changed
 
