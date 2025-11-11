@@ -9,7 +9,7 @@ const HOMEDIR = path.join('jest', NAME);
  */
 
 // Import all clusters referenced in matterbridgeDeviceTypes.ts
-import path from 'node:path/win32';
+import path from 'node:path';
 
 import { AccountLogin } from '@matter/types/clusters/account-login';
 import { Actions } from '@matter/types/clusters/actions';

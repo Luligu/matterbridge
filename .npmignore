@@ -40,6 +40,7 @@ vite.config.*
 *.log
 
 # Package specific directories and files that should be ignored
+chip
 docker
 systemd
 heap_profile
