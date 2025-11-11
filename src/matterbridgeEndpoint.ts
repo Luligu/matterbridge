@@ -262,31 +262,42 @@ export class MatterbridgeEndpoint extends Endpoint {
     };
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
-    // Check if the uniqueStorageKey is valid
+    // Check if the options.id is valid
+    // TODO: matter.js 0.16.0
+    /*
     if (options.uniqueStorageKey && checkNotLatinCharacters(options.uniqueStorageKey)) {
       options.uniqueStorageKey = generateUniqueId(options.uniqueStorageKey);
     }
+    */
     if (options.id && checkNotLatinCharacters(options.id)) {
       options.id = generateUniqueId(options.id);
     }
 
     // Convert the options to an Endpoint.Options
     const optionsV8 = {
-      id: options.uniqueStorageKey?.replace(/[ .]/g, ''),
-      number: options.endpointId,
+      // TODO: matter.js 0.16.0
+      // id: options.uniqueStorageKey?.replace(/[ .]/g, ''),
+      // number: options.endpointId,
+      id: options.id?.replace(/[ .]/g, ''),
+      number: options.number,
       descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
     // Override the deprecated uniqueStorageKey && endpointId with id and number if provided
+    // TODO: matter.js 0.16.0
+    /*
     if (options.id !== undefined) {
       optionsV8.id = options.id.replace(/[ .]/g, '');
     }
     if (options.number !== undefined) {
       optionsV8.number = options.number;
     }
+    */
     super(endpointV8, optionsV8);
 
     this.mode = options.mode;
-    this.uniqueStorageKey = options.id ? options.id : options.uniqueStorageKey;
+    // TODO: matter.js 0.16.0
+    // this.uniqueStorageKey = options.id ? options.id : options.uniqueStorageKey;
+    this.uniqueStorageKey = options.id;
     this.name = firstDefinition.name;
     this.deviceType = firstDefinition.code;
     this.tagList = options.tagList;

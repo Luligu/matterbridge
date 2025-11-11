@@ -38,7 +38,7 @@ Advantages:
 - [devices]: Added tests for device types and their revision changes.
 - [clusters]: Added test for clusters and their revision changes.
 - [chip]: Added fetch script to download zcl data from connectedhomeip.
-- [endpoint]: Added createDefaultPowerSourceBatteryClusterServer().
+- [endpoint]: Added createDefaultPowerSourceBatteryClusterServer(). Add Power Source cluster for a generic battery device.
 
 ### Changed
 

@@ -40,7 +40,7 @@ import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-de
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
 // Matterbridge
-import { Matterbridge } from './matterbridge.js';
+// import { Matterbridge } from './matterbridge.js';
 import { Frontend } from './frontend.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
@@ -65,7 +65,8 @@ export type PlatformSchemaValue = string | number | boolean | bigint | object | 
 /** Platform schema type. */
 export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
-export type PlatformMatterbridge = Matterbridge & {
+// TODO: matter.js 0.16.0
+export type PlatformMatterbridge = /* Matterbridge &*/ {
   readonly systemInformation: SystemInformation;
   readonly rootDirectory: string;
   readonly homeDirectory: string;

@@ -290,6 +290,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     return Matterbridge.instance;
   }
 
+  // TODO: matter.js 0.16.0
   /**
    * Call cleanup() and dispose MdnsService. Will be removed since matter.js 0.15.6 dispose MdnsService.
    *
@@ -298,7 +299,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    *
    * @deprecated This method is deprecated and is ONLY used for jest tests.
    */
-  async destroyInstance(timeout: number = 1000, pause: number = 250) {
+  async _destroyInstance(timeout: number = 1000, pause: number = 250) {
     this.log.info(`Destroy instance...`);
     // Save server nodes to close
     /*
@@ -317,10 +318,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
     }
     */
-    // Let any already‐queued microtasks run first
-    // await Promise.resolve();
-    // Wait for the cleanup to finish
-    // await wait(pause, 'destroyInstance start', true);
     // Cleanup
     await this.cleanup('destroying instance...', false, timeout);
     // Close servers mdns service
@@ -331,8 +328,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.info(`Closed ${server.id} MdnsService`);
     }
     */
-    // Let any already‐queued microtasks run first
-    // await Promise.resolve();
     // Wait for the cleanup to finish
     if (pause) await wait(pause, 'destroyInstance stop', true);
   }
