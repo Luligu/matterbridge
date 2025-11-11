@@ -1,6 +1,7 @@
 // src/matterbridgeDeviceTypes.clusters.test.ts
-// Verifies that required/optional server cluster lists in Matterbridge device type definitions
-// align with mandatory/optional behaviors declared in Matter.js device/endpoint definitions.
+
+const NAME = 'MatterbridgeDevicetypesClusters';
+const HOMEDIR = path.join('jest', NAME);
 
 import path from 'node:path';
 
@@ -85,8 +86,6 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { setupTest } from './jestutils/jestHelpers.js';
 
-const NAME = 'MatterbridgeDevicetypesClusters';
-const HOMEDIR = path.join('jest', NAME);
 await setupTest(NAME, false);
 
 function extractClusterIds(behaviorRecord: Record<string, any>): number[] {
