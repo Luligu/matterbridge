@@ -599,6 +599,18 @@ describe('Matterbridge platform', () => {
     await flushAsync();
   });
 
+  test('getSchema', async () => {
+    const originalName = platform.name;
+    platform.name = 'unknown';
+    expect(() => platform.getSchema()).toThrow('Plugin unknown not found');
+
+    (matterbridge.plugins as any)._plugins.set('unknown', { name: 'unknown', type: 'type', version: '1.0.0', schemaJson: {}, debug: false, unregisterOnShutdown: false } as any);
+    expect(() => platform.getSchema()).not.toThrow();
+    (matterbridge.plugins as any)._plugins.delete('unknown');
+    platform.name = originalName;
+    await flushAsync();
+  });
+
   test('setSchema', async () => {
     const originalName = platform.name;
     platform.name = 'unknown';

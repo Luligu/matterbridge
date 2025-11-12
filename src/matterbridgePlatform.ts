@@ -311,6 +311,20 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Get the platform schema for the config editor. This will retrieve the schema from the Matterbridge plugin manager.
+   *
+   * @returns {PlatformSchema} The platform schema.
+   */
+  getSchema(): PlatformSchema {
+    // TODO: replace with a message to the plugins thread
+    const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
+    if (!plugin || !isValidObject(plugin.schemaJson)) {
+      throw new Error(`Plugin ${this.name} not found`);
+    }
+    return plugin.schemaJson;
+  }
+
+  /**
    * Set the platform schema for the config editor. This will update the schema in the Matterbridge plugin manager but will not change the schema file.
    *
    * @param {PlatformSchema} [schema] - The platform schema to set.
