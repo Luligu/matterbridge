@@ -381,12 +381,12 @@ export class MatterbridgePlatform {
    * @param { 'light' | 'outlet' | 'switch' | 'mounted_switch' } type - The type of the virtual device.
    * @param { () => Promise<void> } callback - The callback to call when the virtual device is turned on.
    *
-   * @returns {Promise<void>} A promise that resolves when the virtual device is registered.
+   * @returns {Promise<boolean>} A promise that resolves to true if the virtual device was successfully registered, false otherwise.
    *
    * @remarks
    * The virtual devices don't show up in the device list of the frontend.
    */
-  async registerVirtualDevice(name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<void> {
+  async registerVirtualDevice(name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<boolean> {
     let aggregator: Endpoint<AggregatorEndpoint> | undefined;
     // TODO: replace with a message to the matterbridge thread
     if (this.matterbridge.bridgeMode === 'bridge') {
@@ -397,11 +397,14 @@ export class MatterbridgePlatform {
     if (aggregator) {
       if (aggregator.parts.has(name.replaceAll(' ', '') + ':' + type)) {
         this.log.warn(`Virtual device ${name} already registered. Please use a different name.`);
+        return false;
       } else {
         await addVirtualDevice(aggregator, name.slice(0, 32), type, callback);
         this.log.info(`Virtual device ${name} created.`);
+        return true;
       }
     }
+    return false;
   }
 
   /**

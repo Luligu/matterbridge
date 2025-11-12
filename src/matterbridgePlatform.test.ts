@@ -629,17 +629,22 @@ describe('Matterbridge platform', () => {
 
   test('registerVirtualDevice', async () => {
     async function testCallback(): Promise<void> {}
-    expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBeUndefined();
+    expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(true);
     expect(matterbridge.aggregatorNode?.parts.has('Virtual' + ':' + 'switch')).toBeTruthy();
 
     jest.spyOn(matterbridge.plugins, 'get').mockReturnValueOnce({ name: platform.name, type: 'type', version: '1.0.0', aggregatorNode: matterbridge.aggregatorNode } as any);
     matterbridge.bridgeMode = 'childbridge';
-    expect(await platform.registerVirtualDevice('VirtualChildbridge', 'switch', testCallback)).toBeUndefined();
+    expect(await platform.registerVirtualDevice('VirtualChildbridge', 'switch', testCallback)).toBe(true);
     matterbridge.bridgeMode = 'bridge';
     expect(matterbridge.aggregatorNode?.parts.has('VirtualChildbridge' + ':' + 'switch')).toBeTruthy();
 
-    expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBeUndefined();
+    expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(false);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Virtual device Virtual already registered. Please use a different name.`);
+
+    const savedAggregatorNode = matterbridge.aggregatorNode;
+    matterbridge.aggregatorNode = undefined;
+    expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(false);
+    matterbridge.aggregatorNode = savedAggregatorNode;
   });
 
   test('registerDevice calls matterbridge.addBridgedEndpoint with correct parameters', async () => {
