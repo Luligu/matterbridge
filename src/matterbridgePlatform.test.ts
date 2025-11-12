@@ -587,13 +587,25 @@ describe('Matterbridge platform', () => {
     expect(platform.getDevices()).toEqual([]);
   });
 
-  test('saveConfig should throw', async () => {
+  test('saveConfig', async () => {
     const originalName = platform.name;
     platform.name = 'unknown';
     expect(() => platform.saveConfig(platform.config)).toThrow('Plugin unknown not found');
 
     (matterbridge.plugins as any)._plugins.set('unknown', { name: 'unknown', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false } as any);
     expect(() => platform.saveConfig(platform.config)).not.toThrow();
+    (matterbridge.plugins as any)._plugins.delete('unknown');
+    platform.name = originalName;
+    await flushAsync();
+  });
+
+  test('setSchema', async () => {
+    const originalName = platform.name;
+    platform.name = 'unknown';
+    expect(() => platform.setSchema(platform.config)).toThrow('Plugin unknown not found');
+
+    (matterbridge.plugins as any)._plugins.set('unknown', { name: 'unknown', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false } as any);
+    expect(() => platform.setSchema(platform.config)).not.toThrow();
     (matterbridge.plugins as any)._plugins.delete('unknown');
     platform.name = originalName;
     await flushAsync();

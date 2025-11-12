@@ -302,12 +302,27 @@ export class MatterbridgePlatform {
    * @returns {void}
    */
   saveConfig(config: PlatformConfig): void {
-    // TODO: replace with a message to the matterbridge thread
+    // TODO: replace with a message to the plugins thread
     const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
     if (!plugin) {
       throw new Error(`Plugin ${this.name} not found`);
     }
     (this.matterbridge as InternalPlatformMatterbridge).plugins.saveConfigFromJson(plugin, config); // No await as it's not necessary to wait
+  }
+
+  /**
+   * Set the platform schema for the config editor. This will update the schema in the Matterbridge plugin manager but will not change the schema file.
+   *
+   * @param {PlatformSchema} [schema] - The platform schema to set.
+   * @returns {void}
+   */
+  setSchema(schema: PlatformSchema): void {
+    // TODO: replace with a message to the plugins thread
+    const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
+    if (!plugin) {
+      throw new Error(`Plugin ${this.name} not found`);
+    }
+    plugin.schemaJson = schema;
   }
 
   /**
