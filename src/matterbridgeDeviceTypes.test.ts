@@ -101,146 +101,112 @@ describe('Matterbridge device types', () => {
     jest.restoreAllMocks();
   });
 
-  test('check utility device types revision changes', async () => {
-    expect(rootNode.revision).toBe(endpoints.RootEndpointDefinition.deviceRevision);
-    expect(powerSource.revision).toBe(endpoints.PowerSourceEndpointDefinition.deviceRevision);
-    expect(OTARequestor.revision).toBe(endpoints.OtaRequestorEndpointDefinition.deviceRevision);
-    expect(OTAProvider.revision).toBe(endpoints.OtaProviderEndpointDefinition.deviceRevision);
-    expect(bridgedNode.revision).toBe(endpoints.BridgedNodeEndpointDefinition.deviceRevision);
-    expect(electricalSensor.revision).toBe(endpoints.ElectricalSensorEndpointDefinition.deviceRevision);
-    expect(deviceEnergyManagement.revision).toBe(endpoints.DeviceEnergyManagementEndpointDefinition.deviceRevision);
-  });
+  const expectWithLog = (label: string, actual: unknown, expected: unknown) => {
+    if (actual !== expected) {
+      // Provide a helpful diff on failure to ease Matter spec migration
+      // eslint-disable-next-line no-console
+      console.error(`Discrepancy in ${label}: actual=${String(actual)} expected=${String(expected)}`);
+    }
+    expect(actual).toBe(expected);
+  };
 
-  test('check application device types revision changes', async () => {
+  type DevEntry = {
+    name: string;
+    device: { revision: number; code: number };
+    def: { deviceRevision: number; deviceType: number };
+  };
+
+  const entries: DevEntry[] = [
+    // Utility device types (endpoints) - revision only
+    { name: 'rootNode', device: rootNode, def: endpoints.RootEndpointDefinition },
+    { name: 'powerSource', device: powerSource, def: endpoints.PowerSourceEndpointDefinition },
+    { name: 'OTARequestor', device: OTARequestor, def: endpoints.OtaRequestorEndpointDefinition },
+    { name: 'OTAProvider', device: OTAProvider, def: endpoints.OtaProviderEndpointDefinition },
+    { name: 'bridgedNode', device: bridgedNode, def: endpoints.BridgedNodeEndpointDefinition },
+    { name: 'electricalSensor', device: electricalSensor, def: endpoints.ElectricalSensorEndpointDefinition },
+    { name: 'deviceEnergyManagement', device: deviceEnergyManagement, def: endpoints.DeviceEnergyManagementEndpointDefinition },
+
     // Lighting
-    expect(onOffLight.revision).toBe(devices.OnOffLightDeviceDefinition.deviceRevision);
-    expect(onOffLight.code).toBe(devices.OnOffLightDeviceDefinition.deviceType);
-    expect(dimmableLight.revision).toBe(devices.DimmableLightDeviceDefinition.deviceRevision);
-    expect(dimmableLight.code).toBe(devices.DimmableLightDeviceDefinition.deviceType);
-    expect(colorTemperatureLight.revision).toBe(devices.ColorTemperatureLightDeviceDefinition.deviceRevision);
-    expect(colorTemperatureLight.code).toBe(devices.ColorTemperatureLightDeviceDefinition.deviceType);
-    expect(extendedColorLight.revision).toBe(devices.ExtendedColorLightDeviceDefinition.deviceRevision);
-    expect(extendedColorLight.code).toBe(devices.ExtendedColorLightDeviceDefinition.deviceType);
+    { name: 'onOffLight', device: onOffLight, def: devices.OnOffLightDeviceDefinition },
+    { name: 'dimmableLight', device: dimmableLight, def: devices.DimmableLightDeviceDefinition },
+    { name: 'colorTemperatureLight', device: colorTemperatureLight, def: devices.ColorTemperatureLightDeviceDefinition },
+    { name: 'extendedColorLight', device: extendedColorLight, def: devices.ExtendedColorLightDeviceDefinition },
 
-    // Smart plugs / outlets / mounted controls
-    expect(onOffOutlet.revision).toBe(devices.OnOffPlugInUnitDeviceDefinition.deviceRevision);
-    expect(onOffOutlet.code).toBe(devices.OnOffPlugInUnitDeviceDefinition.deviceType);
-    expect(dimmableOutlet.revision).toBe(devices.DimmablePlugInUnitDeviceDefinition.deviceRevision);
-    expect(dimmableOutlet.code).toBe(devices.DimmablePlugInUnitDeviceDefinition.deviceType);
-    expect(onOffMountedSwitch.revision).toBe(devices.MountedOnOffControlDeviceDefinition.deviceRevision);
-    expect(onOffMountedSwitch.code).toBe(devices.MountedOnOffControlDeviceDefinition.deviceType);
-    expect(dimmableMountedSwitch.revision).toBe(devices.MountedDimmableLoadControlDeviceDefinition.deviceRevision);
-    expect(dimmableMountedSwitch.code).toBe(devices.MountedDimmableLoadControlDeviceDefinition.deviceType);
-    expect(pumpDevice.revision).toBe(devices.PumpDeviceDefinition.deviceRevision);
-    expect(pumpDevice.code).toBe(devices.PumpDeviceDefinition.deviceType);
-    expect(waterValve.revision).toBe(devices.WaterValveDeviceDefinition.deviceRevision);
-    expect(waterValve.code).toBe(devices.WaterValveDeviceDefinition.deviceType);
+    // Smart plugs / actuators
+    { name: 'onOffOutlet', device: onOffOutlet, def: devices.OnOffPlugInUnitDeviceDefinition },
+    { name: 'dimmableOutlet', device: dimmableOutlet, def: devices.DimmablePlugInUnitDeviceDefinition },
+    { name: 'onOffMountedSwitch', device: onOffMountedSwitch, def: devices.MountedOnOffControlDeviceDefinition },
+    { name: 'dimmableMountedSwitch', device: dimmableMountedSwitch, def: devices.MountedDimmableLoadControlDeviceDefinition },
+    { name: 'pumpDevice', device: pumpDevice, def: devices.PumpDeviceDefinition },
+    { name: 'waterValve', device: waterValve, def: devices.WaterValveDeviceDefinition },
 
-    // Switches and controls
-    expect(onOffSwitch.revision).toBe(devices.OnOffLightSwitchDeviceDefinition.deviceRevision);
-    expect(onOffSwitch.code).toBe(devices.OnOffLightSwitchDeviceDefinition.deviceType);
-    expect(dimmableSwitch.revision).toBe(devices.DimmerSwitchDeviceDefinition.deviceRevision);
-    expect(dimmableSwitch.code).toBe(devices.DimmerSwitchDeviceDefinition.deviceType);
-    expect(colorTemperatureSwitch.revision).toBe(devices.ColorDimmerSwitchDeviceDefinition.deviceRevision);
-    expect(colorTemperatureSwitch.code).toBe(devices.ColorDimmerSwitchDeviceDefinition.deviceType);
-    expect(genericSwitch.revision).toBe(devices.GenericSwitchDeviceDefinition.deviceRevision);
-    expect(genericSwitch.code).toBe(devices.GenericSwitchDeviceDefinition.deviceType);
+    // Switches and Controls
+    { name: 'onOffSwitch', device: onOffSwitch, def: devices.OnOffLightSwitchDeviceDefinition },
+    { name: 'dimmableSwitch', device: dimmableSwitch, def: devices.DimmerSwitchDeviceDefinition },
+    { name: 'colorTemperatureSwitch', device: colorTemperatureSwitch, def: devices.ColorDimmerSwitchDeviceDefinition },
+    { name: 'genericSwitch', device: genericSwitch, def: devices.GenericSwitchDeviceDefinition },
 
     // Sensors
-    expect(contactSensor.revision).toBe(devices.ContactSensorDeviceDefinition.deviceRevision);
-    expect(contactSensor.code).toBe(devices.ContactSensorDeviceDefinition.deviceType);
-    expect(lightSensor.revision).toBe(devices.LightSensorDeviceDefinition.deviceRevision);
-    expect(lightSensor.code).toBe(devices.LightSensorDeviceDefinition.deviceType);
-    expect(occupancySensor.revision).toBe(devices.OccupancySensorDeviceDefinition.deviceRevision);
-    expect(occupancySensor.code).toBe(devices.OccupancySensorDeviceDefinition.deviceType);
-    expect(temperatureSensor.revision).toBe(devices.TemperatureSensorDeviceDefinition.deviceRevision);
-    expect(temperatureSensor.code).toBe(devices.TemperatureSensorDeviceDefinition.deviceType);
-    expect(pressureSensor.revision).toBe(devices.PressureSensorDeviceDefinition.deviceRevision);
-    expect(pressureSensor.code).toBe(devices.PressureSensorDeviceDefinition.deviceType);
-    expect(flowSensor.revision).toBe(devices.FlowSensorDeviceDefinition.deviceRevision);
-    expect(flowSensor.code).toBe(devices.FlowSensorDeviceDefinition.deviceType);
-    expect(humiditySensor.revision).toBe(devices.HumiditySensorDeviceDefinition.deviceRevision);
-    expect(humiditySensor.code).toBe(devices.HumiditySensorDeviceDefinition.deviceType);
-    expect(smokeCoAlarm.revision).toBe(devices.SmokeCoAlarmDeviceDefinition.deviceRevision);
-    expect(smokeCoAlarm.code).toBe(devices.SmokeCoAlarmDeviceDefinition.deviceType);
-    expect(airQualitySensor.revision).toBe(devices.AirQualitySensorDeviceDefinition.deviceRevision);
-    expect(airQualitySensor.code).toBe(devices.AirQualitySensorDeviceDefinition.deviceType);
-    expect(waterFreezeDetector.revision).toBe(devices.WaterFreezeDetectorDeviceDefinition.deviceRevision);
-    expect(waterFreezeDetector.code).toBe(devices.WaterFreezeDetectorDeviceDefinition.deviceType);
-    expect(waterLeakDetector.revision).toBe(devices.WaterLeakDetectorDeviceDefinition.deviceRevision);
-    expect(waterLeakDetector.code).toBe(devices.WaterLeakDetectorDeviceDefinition.deviceType);
-    expect(rainSensor.revision).toBe(devices.RainSensorDeviceDefinition.deviceRevision);
-    expect(rainSensor.code).toBe(devices.RainSensorDeviceDefinition.deviceType);
+    { name: 'contactSensor', device: contactSensor, def: devices.ContactSensorDeviceDefinition },
+    { name: 'lightSensor', device: lightSensor, def: devices.LightSensorDeviceDefinition },
+    { name: 'occupancySensor', device: occupancySensor, def: devices.OccupancySensorDeviceDefinition },
+    { name: 'temperatureSensor', device: temperatureSensor, def: devices.TemperatureSensorDeviceDefinition },
+    { name: 'pressureSensor', device: pressureSensor, def: devices.PressureSensorDeviceDefinition },
+    { name: 'flowSensor', device: flowSensor, def: devices.FlowSensorDeviceDefinition },
+    { name: 'humiditySensor', device: humiditySensor, def: devices.HumiditySensorDeviceDefinition },
+    { name: 'smokeCoAlarm', device: smokeCoAlarm, def: devices.SmokeCoAlarmDeviceDefinition },
+    { name: 'airQualitySensor', device: airQualitySensor, def: devices.AirQualitySensorDeviceDefinition },
+    { name: 'waterFreezeDetector', device: waterFreezeDetector, def: devices.WaterFreezeDetectorDeviceDefinition },
+    { name: 'waterLeakDetector', device: waterLeakDetector, def: devices.WaterLeakDetectorDeviceDefinition },
+    { name: 'rainSensor', device: rainSensor, def: devices.RainSensorDeviceDefinition },
 
     // Closures
-    expect(doorLockDevice.revision).toBe(devices.DoorLockDeviceDefinition.deviceRevision);
-    expect(doorLockDevice.code).toBe(devices.DoorLockDeviceDefinition.deviceType);
-    expect(coverDevice.revision).toBe(devices.WindowCoveringDeviceDefinition.deviceRevision);
-    expect(coverDevice.code).toBe(devices.WindowCoveringDeviceDefinition.deviceType);
+    { name: 'doorLockDevice', device: doorLockDevice, def: devices.DoorLockDeviceDefinition },
+    { name: 'coverDevice', device: coverDevice, def: devices.WindowCoveringDeviceDefinition },
 
     // HVAC
-    expect(thermostatDevice.revision).toBe(devices.ThermostatDeviceDefinition.deviceRevision);
-    expect(thermostatDevice.code).toBe(devices.ThermostatDeviceDefinition.deviceType);
-    expect(fanDevice.revision).toBe(devices.FanDeviceDefinition.deviceRevision);
-    expect(fanDevice.code).toBe(devices.FanDeviceDefinition.deviceType);
-    expect(airPurifier.revision).toBe(devices.AirPurifierDeviceDefinition.deviceRevision);
-    expect(airPurifier.code).toBe(devices.AirPurifierDeviceDefinition.deviceType);
+    { name: 'thermostatDevice', device: thermostatDevice, def: devices.ThermostatDeviceDefinition },
+    { name: 'fanDevice', device: fanDevice, def: devices.FanDeviceDefinition },
+    { name: 'airPurifier', device: airPurifier, def: devices.AirPurifierDeviceDefinition },
 
-    // Media / entertainment
-    expect(basicVideoPlayer.revision).toBe(devices.BasicVideoPlayerDeviceDefinition.deviceRevision);
-    expect(basicVideoPlayer.code).toBe(devices.BasicVideoPlayerDeviceDefinition.deviceType);
-    expect(castingVideoPlayer.revision).toBe(devices.CastingVideoPlayerDeviceDefinition.deviceRevision);
-    expect(castingVideoPlayer.code).toBe(devices.CastingVideoPlayerDeviceDefinition.deviceType);
-    expect(speakerDevice.revision).toBe(devices.SpeakerDeviceDefinition.deviceRevision);
-    expect(speakerDevice.code).toBe(devices.SpeakerDeviceDefinition.deviceType);
+    // Media
+    { name: 'basicVideoPlayer', device: basicVideoPlayer, def: devices.BasicVideoPlayerDeviceDefinition },
+    { name: 'castingVideoPlayer', device: castingVideoPlayer, def: devices.CastingVideoPlayerDeviceDefinition },
+    { name: 'speakerDevice', device: speakerDevice, def: devices.SpeakerDeviceDefinition },
 
     // Generic Device Types
-    expect(modeSelect.revision).toBe(devices.ModeSelectDeviceDefinition.deviceRevision);
-    expect(modeSelect.code).toBe(devices.ModeSelectDeviceDefinition.deviceType);
-    expect(aggregator.revision).toBe(endpoints.AggregatorEndpointDefinition.deviceRevision);
-    expect(aggregator.code).toBe(endpoints.AggregatorEndpointDefinition.deviceType);
-    expect(bridge.revision).toBe(endpoints.AggregatorEndpointDefinition.deviceRevision);
-    expect(bridge.code).toBe(endpoints.AggregatorEndpointDefinition.deviceType);
-    expect(bridge).toBe(aggregator);
+    { name: 'modeSelect', device: modeSelect, def: devices.ModeSelectDeviceDefinition },
+    { name: 'aggregator', device: aggregator, def: endpoints.AggregatorEndpointDefinition },
+    { name: 'bridge', device: bridge, def: endpoints.AggregatorEndpointDefinition },
 
     // Appliances & complex devices
-    expect(roboticVacuumCleaner.revision).toBe(devices.RoboticVacuumCleanerDeviceDefinition.deviceRevision);
-    expect(roboticVacuumCleaner.code).toBe(devices.RoboticVacuumCleanerDeviceDefinition.deviceType);
-    expect(laundryWasher.revision).toBe(devices.LaundryWasherDeviceDefinition.deviceRevision);
-    expect(laundryWasher.code).toBe(devices.LaundryWasherDeviceDefinition.deviceType);
-    expect(refrigerator.revision).toBe(devices.RefrigeratorDeviceDefinition.deviceRevision);
-    expect(refrigerator.code).toBe(devices.RefrigeratorDeviceDefinition.deviceType);
-    expect(airConditioner.revision).toBe(devices.RoomAirConditionerDeviceDefinition.deviceRevision);
-    expect(airConditioner.code).toBe(devices.RoomAirConditionerDeviceDefinition.deviceType);
-    expect(temperatureControlledCabinetCooler.revision).toBe(devices.TemperatureControlledCabinetDeviceDefinition.deviceRevision);
-    expect(temperatureControlledCabinetCooler.code).toBe(devices.TemperatureControlledCabinetDeviceDefinition.deviceType);
-    expect(temperatureControlledCabinetHeater.revision).toBe(devices.TemperatureControlledCabinetDeviceDefinition.deviceRevision);
-    expect(temperatureControlledCabinetHeater.code).toBe(devices.TemperatureControlledCabinetDeviceDefinition.deviceType);
-    expect(dishwasher.revision).toBe(devices.DishwasherDeviceDefinition.deviceRevision);
-    expect(dishwasher.code).toBe(devices.DishwasherDeviceDefinition.deviceType);
-    expect(laundryDryer.revision).toBe(devices.LaundryDryerDeviceDefinition.deviceRevision);
-    expect(laundryDryer.code).toBe(devices.LaundryDryerDeviceDefinition.deviceType);
-    expect(cookSurface.revision).toBe(devices.CookSurfaceDeviceDefinition.deviceRevision);
-    expect(cookSurface.code).toBe(devices.CookSurfaceDeviceDefinition.deviceType);
-    expect(cooktop.revision).toBe(devices.CooktopDeviceDefinition.deviceRevision);
-    expect(cooktop.code).toBe(devices.CooktopDeviceDefinition.deviceType);
-    expect(oven.revision).toBe(devices.OvenDeviceDefinition.deviceRevision);
-    expect(oven.code).toBe(devices.OvenDeviceDefinition.deviceType);
-    expect(extractorHood.revision).toBe(devices.ExtractorHoodDeviceDefinition.deviceRevision);
-    expect(extractorHood.code).toBe(devices.ExtractorHoodDeviceDefinition.deviceType);
-    expect(microwaveOven.revision).toBe(devices.MicrowaveOvenDeviceDefinition.deviceRevision);
-    expect(microwaveOven.code).toBe(devices.MicrowaveOvenDeviceDefinition.deviceType);
+    { name: 'roboticVacuumCleaner', device: roboticVacuumCleaner, def: devices.RoboticVacuumCleanerDeviceDefinition },
+    { name: 'laundryWasher', device: laundryWasher, def: devices.LaundryWasherDeviceDefinition },
+    { name: 'refrigerator', device: refrigerator, def: devices.RefrigeratorDeviceDefinition },
+    { name: 'airConditioner', device: airConditioner, def: devices.RoomAirConditionerDeviceDefinition },
+    { name: 'temperatureControlledCabinetCooler', device: temperatureControlledCabinetCooler, def: devices.TemperatureControlledCabinetDeviceDefinition },
+    { name: 'temperatureControlledCabinetHeater', device: temperatureControlledCabinetHeater, def: devices.TemperatureControlledCabinetDeviceDefinition },
+    { name: 'dishwasher', device: dishwasher, def: devices.DishwasherDeviceDefinition },
+    { name: 'laundryDryer', device: laundryDryer, def: devices.LaundryDryerDeviceDefinition },
+    { name: 'cookSurface', device: cookSurface, def: devices.CookSurfaceDeviceDefinition },
+    { name: 'cooktop', device: cooktop, def: devices.CooktopDeviceDefinition },
+    { name: 'oven', device: oven, def: devices.OvenDeviceDefinition },
+    { name: 'extractorHood', device: extractorHood, def: devices.ExtractorHoodDeviceDefinition },
+    { name: 'microwaveOven', device: microwaveOven, def: devices.MicrowaveOvenDeviceDefinition },
 
     // Energy & environment
-    expect(evse.revision).toBe(devices.EnergyEvseDeviceDefinition.deviceRevision);
-    expect(evse.code).toBe(devices.EnergyEvseDeviceDefinition.deviceType);
-    expect(waterHeater.revision).toBe(devices.WaterHeaterDeviceDefinition.deviceRevision);
-    expect(waterHeater.code).toBe(devices.WaterHeaterDeviceDefinition.deviceType);
-    expect(solarPower.revision).toBe(devices.SolarPowerDeviceDefinition.deviceRevision);
-    expect(solarPower.code).toBe(devices.SolarPowerDeviceDefinition.deviceType);
-    expect(batteryStorage.revision).toBe(devices.BatteryStorageDeviceDefinition.deviceRevision);
-    expect(batteryStorage.code).toBe(devices.BatteryStorageDeviceDefinition.deviceType);
-    expect(heatPump.revision).toBe(devices.HeatPumpDeviceDefinition.deviceRevision);
-    expect(heatPump.code).toBe(devices.HeatPumpDeviceDefinition.deviceType);
-  });
+    { name: 'evse', device: evse, def: devices.EnergyEvseDeviceDefinition },
+    { name: 'waterHeater', device: waterHeater, def: devices.WaterHeaterDeviceDefinition },
+    { name: 'solarPower', device: solarPower, def: devices.SolarPowerDeviceDefinition },
+    { name: 'batteryStorage', device: batteryStorage, def: devices.BatteryStorageDeviceDefinition },
+    { name: 'heatPump', device: heatPump, def: devices.HeatPumpDeviceDefinition },
+  ];
+
+  for (const { name, device, def } of entries) {
+    test(`${name} code 0x${device.code.toString(16)} revision ${device.revision} >>> ${def.deviceRevision}`, () => {
+      expect.hasAssertions();
+      expectWithLog(`${name}.revision`, device.revision, def.deviceRevision);
+      expectWithLog(`${name}.code`, device.code, def.deviceType);
+    });
+  }
 });
