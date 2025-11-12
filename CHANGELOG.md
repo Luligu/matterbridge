@@ -47,8 +47,9 @@ Advantages:
 
 - [package]: Updated dependencies.
 - [package]: Bumped jestHelpers v.1.0.12.
-- [endpoint]: Changed long deprecated uniqueStorageKey with id.
-- [endpoint]: Changed long deprecated endpointId with number.
+- [endpoint]: Changed long deprecated uniqueStorageKey with id in MatterbridgeEndpointOptions.
+- [endpoint]: Changed long deprecated endpointId with number in MatterbridgeEndpointOptions.
+- [endpoint]: Added property originalId in MatterbridgeEndpoint to store the original id passed in MatterbridgeEndpointOptions (since it can be changed for matter.js storage compatibility).
 
 ### Fixed
 
