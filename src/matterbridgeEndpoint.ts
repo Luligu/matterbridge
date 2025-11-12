@@ -202,16 +202,17 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersion: number | undefined = undefined;
   hardwareVersionString: string | undefined = undefined;
   productUrl = 'https://www.npmjs.com/package/matterbridge';
-
-  /** The name of the first device type of the endpoint (old api compatibility) */
-  name: string | undefined = undefined;
-  /** The code of the first device type of the endpoint (old api compatibility) */
-  deviceType: number | undefined = undefined;
-  /** The original id (with spaces and .) of the endpoint (old api compatibility) */
-  uniqueStorageKey: string | undefined = undefined;
+  /** The tagList of the descriptor cluster of the MatterbridgeEndpoint */
   tagList?: Semtag[] = undefined;
+  /** The original id (with spaces and .) of the MatterbridgeEndpoint constructor options */
+  originalId: string | undefined = undefined;
 
-  /** Maps the DeviceTypeDefinitions with their code */
+  /** The name of the first device type of the MatterbridgeEndpoint */
+  name: string | undefined = undefined;
+  /** The code of the first device type of the MatterbridgeEndpoint */
+  deviceType: number | undefined = undefined;
+
+  /** Maps the DeviceTypeDefinitions of the MatterbridgeEndpoint keyed by their code */
   readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
 
   /** Command handler for the MatterbridgeEndpoint commands */
@@ -227,6 +228,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false) {
     let deviceTypeList: { deviceType: number; revision: number }[] = [];
+    const originalId = options.id;
 
     // Get the first DeviceTypeDefinition
     let firstDefinition: DeviceTypeDefinition;
@@ -276,28 +278,17 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Convert the options to an Endpoint.Options
     const optionsV8 = {
       // TODO: matter.js 0.16.0
-      // id: options.uniqueStorageKey?.replace(/[ .]/g, ''),
-      // number: options.endpointId,
+      // id: options.id?.replace(/[ .]/g, '') || options.uniqueStorageKey?.replace(/[ .]/g, ''),
+      // number: options.number || options.endpointId,
       id: options.id?.replace(/[ .]/g, ''),
       number: options.number,
       descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
-    // Override the deprecated uniqueStorageKey && endpointId with id and number if provided
-    // TODO: matter.js 0.16.0
-    /*
-    if (options.id !== undefined) {
-      optionsV8.id = options.id.replace(/[ .]/g, '');
-    }
-    if (options.number !== undefined) {
-      optionsV8.number = options.number;
-    }
-    */
+
     super(endpointV8, optionsV8);
 
     this.mode = options.mode;
-    // TODO: matter.js 0.16.0
-    // this.uniqueStorageKey = options.id ? options.id : options.uniqueStorageKey;
-    this.uniqueStorageKey = options.id;
+    this.originalId = originalId;
     this.name = firstDefinition.name;
     this.deviceType = firstDefinition.code;
     this.tagList = options.tagList;
@@ -311,8 +302,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     // console.log('MatterbridgeEndpoint.endpointV8', endpointV8);
     // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
-    // Create the logger
-    this.log = new AnsiLogger({ logName: this.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
+    // Create the logger. Temporarly uses the originalId if available or 'MatterbridgeEndpoint' as fallback. The logName will be set by createDefaultBasicInformationClusterServer() and createDefaultBridgedDeviceBasicInformationClusterServer() with deviceName.
+    this.log = new AnsiLogger({ logName: this.originalId ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} mode: ${CYAN}${this.mode}${db} id: ${CYAN}${optionsV8.id}${db} number: ${CYAN}${optionsV8.number}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
