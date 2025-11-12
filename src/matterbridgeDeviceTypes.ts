@@ -112,6 +112,7 @@ import { WakeOnLan } from '@matter/types/clusters/wake-on-lan';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
+import { ScenesManagement } from '@matter/types/clusters/scenes-management';
 
 export enum DeviceClasses {
   /** 1.1.5. Device Type Class Conditions */
@@ -279,7 +280,7 @@ export const bridgedNode = DeviceTypeDefinition({
   code: 0x0013,
   deviceClass: DeviceClasses.Utility,
   revision: 3,
-  requiredServerClusters: [BridgedDeviceBasicInformation.Cluster.id],
+  requiredServerClusters: [BridgedDeviceBasicInformation.Cluster.id], // omitted PowerSourceConfiguration cause is deprecated
   optionalServerClusters: [PowerSource.Cluster.id, EcosystemInformation.Cluster.id, AdministratorCommissioning.Cluster.id],
 });
 
@@ -555,7 +556,7 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
   code: 0x0105,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
   optionalServerClusters: [Groups.Cluster.id /* , ScenesManagement.Cluster.id*/],
 });
 
@@ -707,7 +708,7 @@ export const doorLockDevice = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, DoorLock.Cluster.id],
-  optionalServerClusters: [],
+  optionalServerClusters: [ScenesManagement.Cluster.id, Groups.Cluster.id],
 });
 
 export const coverDevice = DeviceTypeDefinition({
@@ -1031,14 +1032,7 @@ export const airConditioner = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
-  optionalServerClusters: [
-    Groups.Cluster.id,
-    /* ScenesManagement.Cluster.id,*/
-    FanControl.Cluster.id,
-    ThermostatUserInterfaceConfiguration.Cluster.id,
-    TemperatureMeasurement.Cluster.id,
-    RelativeHumidityMeasurement.Cluster.id,
-  ],
+  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id, FanControl.Cluster.id, ThermostatUserInterfaceConfiguration.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
 });
 
 /**

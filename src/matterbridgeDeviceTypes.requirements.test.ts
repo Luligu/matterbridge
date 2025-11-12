@@ -86,7 +86,7 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { setupTest } from './jestutils/jestHelpers.js';
 
-await setupTest(NAME, false);
+await setupTest(NAME, true);
 
 function extractClusterIds(behaviorRecord: Record<string, any>): number[] {
   return Object.values(behaviorRecord)
@@ -237,16 +237,14 @@ describe('Matterbridge device cluster mappings', () => {
       // Optional clusters: subset unless we choose equality mode
       const optModeSubset = OPTIONAL_SUBSET_MODE || subsetOptional;
       const optionalOk = optModeSubset ? isSubset(mbOptional, optionalSet) : setEquals(mbOptional, optionalSet);
+      // const optionalOk = setEquals(mbOptional, optionalSet);
       if (!optionalOk) {
         failures.push(`${name}: optional mismatch -> mb=[${[...mbOptional].join(',')}] md=[${[...optionalSet].join(',')}]`);
       }
 
       // Ensure no overlap between required and optional in Matterbridge definition
-      // Overlap check only when not in subset-only mode (to allow transitional modelling)
-      if (!SUBSET_ONLY) {
-        for (const id of mbRequired) {
-          if (mbOptional.has(id)) failures.push(`${name}: cluster ${id} listed in both required and optional`);
-        }
+      for (const id of mbRequired) {
+        if (mbOptional.has(id)) failures.push(`${name}: cluster ${id} listed in both required and optional`);
       }
     }
 
@@ -259,7 +257,7 @@ describe('Matterbridge device cluster mappings', () => {
       'onOffSwitch: optional mismatch -> mb=[4] md=[]', // Client clusters as server clusters
       'dimmableSwitch: required mismatch -> mb=[3,6,8] md=[3]', // Client clusters as server clusters
       'dimmableSwitch: optional mismatch -> mb=[4] md=[]', // Client clusters as server clusters
-      'colorTemperatureSwitch: required mismatch -> mb=[3,4,6,8,768] md=[3]', // Client clusters as server clusters
+      'colorTemperatureSwitch: required mismatch -> mb=[3,6,8,768] md=[3]', // Client clusters as server clusters
       'colorTemperatureSwitch: optional mismatch -> mb=[4] md=[]', // Client clusters as server clusters
       'temperatureControlledCabinetCooler: required mismatch -> mb=[86,82] md=[86]', // Double device type to account for heater/cooler
       'temperatureControlledCabinetHeater: required mismatch -> mb=[86,73,72] md=[86]', // Double device type to account for heater/cooler
