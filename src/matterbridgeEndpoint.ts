@@ -206,7 +206,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   tagList?: Semtag[] = undefined;
   /** The original id (with spaces and .) of the MatterbridgeEndpoint constructor options */
   originalId: string | undefined = undefined;
-
+  // TODO: matter.js 0.16.0 remove uniqueStorageKey
+  /** The original id (with spaces and .) of the endpoint (old api compatibility) */
+  uniqueStorageKey: string | undefined = undefined;
   /** The name of the first device type of the MatterbridgeEndpoint */
   name: string | undefined = undefined;
   /** The code of the first device type of the MatterbridgeEndpoint */
@@ -265,29 +267,30 @@ export class MatterbridgeEndpoint extends Endpoint {
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
     // Check if the options.id is valid
-    // TODO: matter.js 0.16.0
-    /*
+    // TODO: matter.js 0.16.0 remove uniqueStorageKey
+    // istanbul ignore next if branch cause it will be removed
     if (options.uniqueStorageKey && checkNotLatinCharacters(options.uniqueStorageKey)) {
       options.uniqueStorageKey = generateUniqueId(options.uniqueStorageKey);
     }
-    */
     if (options.id && checkNotLatinCharacters(options.id)) {
       options.id = generateUniqueId(options.id);
     }
 
     // Convert the options to an Endpoint.Options
     const optionsV8 = {
-      // TODO: matter.js 0.16.0
-      // id: options.id?.replace(/[ .]/g, '') || options.uniqueStorageKey?.replace(/[ .]/g, ''),
-      // number: options.number || options.endpointId,
-      id: options.id?.replace(/[ .]/g, ''),
-      number: options.number,
+      // TODO: matter.js 0.16.0 remove uniqueStorageKey
+      id: options.id?.replace(/[ .]/g, '') || options.uniqueStorageKey?.replace(/[ .]/g, ''),
+      number: options.number || options.endpointId,
+      // id: options.id?.replace(/[ .]/g, ''),
+      // number: options.number,
       descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
 
     super(endpointV8, optionsV8);
 
     this.mode = options.mode;
+    // TODO: matter.js 0.16.0 remove uniqueStorageKey
+    this.uniqueStorageKey = options.id ?? options.uniqueStorageKey;
     this.originalId = originalId;
     this.name = firstDefinition.name;
     this.deviceType = firstDefinition.code;
@@ -303,7 +306,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
     // Create the logger. Temporarly uses the originalId if available or 'MatterbridgeEndpoint' as fallback. The logName will be set by createDefaultBasicInformationClusterServer() and createDefaultBridgedDeviceBasicInformationClusterServer() with deviceName.
-    this.log = new AnsiLogger({ logName: this.originalId ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
+    // TODO: matter.js 0.16.0 remove uniqueStorageKey
+    this.log = new AnsiLogger({ logName: this.originalId ?? this.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} mode: ${CYAN}${this.mode}${db} id: ${CYAN}${optionsV8.id}${db} number: ${CYAN}${optionsV8.number}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );

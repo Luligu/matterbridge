@@ -178,7 +178,7 @@ export interface SerializedMatterbridgeEndpoint {
  *  - id?: string. It is the unique storage key for the endpoint.
  *  - number?: EndpointNumber. It is the endpoint number for the endpoint.
  */
-export interface MatterbridgeEndpointOptions /* extends EndpointOptions*/ {
+export interface MatterbridgeEndpointOptions extends EndpointOptions {
   /**
    *  The semantic tags array for the endpoint.
    *  The tagList is used to disambiguate the sibling child endpoints (9.2.3. Disambiguation rule).
