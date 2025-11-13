@@ -28,9 +28,17 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.3.8] - 2025-11-??
+## [3.3.8] - 2025-11-14
 
-### Breaking Changes
+### Development Breaking Changes
+
+This will be the last release with the following long deprecated elements:
+
+- [platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.0.0).
+- [endpoint]: uniqueStorageKey instead of id in MatterbridgeEndpointOptions (deprecated since months).
+- [endpoint]: endpointId instead of number in MatterbridgeEndpointOptions (deprecated since months).
+
+So please update your plugin.
 
 ### Added
 
