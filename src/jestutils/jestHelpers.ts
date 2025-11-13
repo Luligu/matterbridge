@@ -27,7 +27,7 @@ import path from 'node:path';
 
 import type { jest } from '@jest/globals';
 // Imports from Matterbridge
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, Lifecycle } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
@@ -188,7 +188,7 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
   matterbridge.matterbridgePluginDirectory = path.join('jest', name, 'Matterbridge');
   matterbridge.matterbridgeCertDirectory = path.join('jest', name, '.mattercert');
   matterbridge.log.logLevel = LogLevel.DEBUG;
-  log = matterbridge.log;
+  log = new AnsiLogger({ logName: 'Plugin platform', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Setup matter environment
   // @ts-expect-error - access to private member for testing
@@ -266,32 +266,40 @@ export async function startMatterbridgeEnvironment(port: number = 5540): Promise
 }
 
 /**
- * Add a matterbridge platform to the plugins for testing.
+ * Add a matterbridge platform for testing.
  *
  * @param {MatterbridgePlatform} platform The platform to add.
- * @param {string} name The platform name.
+ * @param {string} [name] Optional name of the platform.
  *
  * @example
  * ```typescript
- * platform = new Platform(...);
+ * platform = new Platform(matterbridge, log, config);
  * // Add the platform to the Matterbridge environment
- * addMatterbridgePlatform(platform, 'matterbridge-test');
+ * addMatterbridgePlatform(platform);
  * ```
  */
-export function addMatterbridgePlatform(platform: MatterbridgePlatform, name: string): void {
+export function addMatterbridgePlatform(platform: MatterbridgePlatform, name?: string): void {
+  if (name) platform.config.name = name;
   expect(platform).toBeDefined();
-  expect(name).toBeDefined();
+  expect(platform.config.name).toBeDefined();
+  expect(platform.config.type).toBeDefined();
+  expect(platform.type).toBeDefined();
+  expect(platform.config.version).toBeDefined();
+  expect(platform.version).toBeDefined();
+  expect(platform.config.debug).toBeDefined();
+  expect(platform.config.unregisterOnShutdown).toBeDefined();
+
   // @ts-expect-error accessing private member for testing
-  matterbridge.plugins._plugins.set(name, {
-    name,
+  matterbridge.plugins._plugins.set(platform.config.name, {
+    name: platform.config.name,
     path: './',
     type: platform.type,
     version: platform.version,
-    description: 'Plugin ' + name,
+    description: 'Plugin ' + platform.config.name,
     author: 'Unknown',
     enabled: true,
   });
-  platform['name'] = name;
+  platform['name'] = platform.config.name;
 }
 
 /**

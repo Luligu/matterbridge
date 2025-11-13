@@ -105,7 +105,7 @@ describe('Matterbridge instance', () => {
   });
 
   test('should add a Matterbridge platform', async () => {
-    const platform = { type: 'Any', version: '1.0.0' } as any;
+    const platform = { name: 'JestHelpersPlatform', type: 'Any', version: '1.0.0', config: { name: 'JestHelpersPlatform', type: 'Any', version: '1.0.0', debug: false, unregisterOnShutdown: false } } as any;
     addMatterbridgePlatform(platform, 'JestHelpersPlatform');
     expect(platform.name).toBe('JestHelpersPlatform');
   });
