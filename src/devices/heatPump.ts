@@ -60,14 +60,10 @@ export class HeatPump extends MatterbridgeEndpoint {
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
-    super(
-      [heatPump, powerSource, electricalSensor, deviceEnergyManagement],
-      {
-        tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Grid.namespaceId, tag: PowerSourceTag.Grid.tag, label: null }],
-        id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
-      },
-      true,
-    );
+    super([heatPump, powerSource, electricalSensor, deviceEnergyManagement], {
+      tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Grid.namespaceId, tag: PowerSourceTag.Grid.tag, label: null }],
+      id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+    });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Heat Pump')
       .createDefaultPowerSourceWiredClusterServer()

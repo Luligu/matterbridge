@@ -100,7 +100,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
     supportedTemperatureLevels: string[] = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
     currentTemperature: number = 1000, // Default to 10.00 degrees Celsius
   ): MatterbridgeEndpoint {
-    const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetCooler, { tagList }, true);
+    const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetCooler, { tagList });
     cabinet.log.logName = name;
     cabinet.createDefaultIdentifyClusterServer();
     createLevelTemperatureControlClusterServer(cabinet, selectedTemperatureLevel, supportedTemperatureLevels);

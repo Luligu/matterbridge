@@ -52,7 +52,7 @@ export class Oven extends MatterbridgeEndpoint {
    * - Use `addCabinet` to add one or more cabinets to the oven.
    */
   constructor(name: string, serial: string) {
-    super([oven, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([oven, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Oven');
     this.createDefaultPowerSourceWiredClusterServer();
