@@ -399,7 +399,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   getClusterServerOptions(cluster: Behavior.Type | ClusterType | ClusterId | string): Record<string, boolean | number | bigint | string | object | null> | undefined {
     const behavior = getBehavior(this, cluster);
     if (!behavior) return undefined;
-    return this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
+    return this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null> | undefined;
   }
 
   /**
