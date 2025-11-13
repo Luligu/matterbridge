@@ -50,6 +50,7 @@ Advantages:
 - [endpoint]: Changed long deprecated uniqueStorageKey with id in MatterbridgeEndpointOptions.
 - [endpoint]: Changed long deprecated endpointId with number in MatterbridgeEndpointOptions.
 - [endpoint]: Added property originalId in MatterbridgeEndpoint to store the original id passed in MatterbridgeEndpointOptions (since it can be changed for matter.js storage compatibility).
+- [endpoint]: Changed logger level of single device classes.
 
 ### Fixed
 

@@ -219,8 +219,8 @@ export const rootNode = DeviceTypeDefinition({
   code: 0x0016,
   deviceClass: DeviceClasses.Node,
   revision: 3,
-  requiredServerClusters: [], // Intentionally left empty
-  optionalServerClusters: [], // Intentionally left empty
+  requiredServerClusters: [], // Intentionally left empty to avoid imports
+  optionalServerClusters: [], // Intentionally left empty to avoid imports
 });
 
 export const powerSource = DeviceTypeDefinition({
@@ -516,7 +516,7 @@ export const pumpDevice = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [OnOff.Cluster.id, PumpConfigurationAndControl.Cluster.id, Identify.Cluster.id],
-  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id, */ TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
 });
 
 export const waterValve = DeviceTypeDefinition({
@@ -530,34 +530,34 @@ export const waterValve = DeviceTypeDefinition({
 
 // Chapter 6. Switches and Controls device types
 
-// Custom device types without client clusters (not working in Alexa)
+// Custom device types with server cluster instead of client clusters (not working in Alexa)
 export const onOffSwitch = DeviceTypeDefinition({
   name: 'MA-onoffswitch',
   code: 0x0103,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id /* , ScenesManagement.Cluster.id*/],
+  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
 });
 
-// Custom device types without client clusters (not working in Alexa)
+// Custom device types with server cluster instead of client clusters (not working in Alexa)
 export const dimmableSwitch = DeviceTypeDefinition({
   name: 'MA-dimmableswitch',
   code: 0x0104,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id /* , ScenesManagement.Cluster.id*/],
+  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
 });
 
-// Custom device types without client clusters (not working in Alexa)
+// Custom device types with server cluster instead of client clusters (not working in Alexa)
 export const colorTemperatureSwitch = DeviceTypeDefinition({
   name: 'MA-colortemperatureswitch',
   code: 0x0105,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id /* , ScenesManagement.Cluster.id*/],
+  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
 });
 
 export const genericSwitch = DeviceTypeDefinition({
