@@ -290,48 +290,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     return Matterbridge.instance;
   }
 
-  // TODO: matter.js 0.16.0
-  /**
-   * Call cleanup() and dispose MdnsService. Will be removed since matter.js 0.15.6 dispose MdnsService.
-   *
-   * @param {number} [timeout] - The timeout duration to wait for the cleanup to complete in milliseconds. Default is 1000.
-   * @param {number} [pause] - The pause duration after the cleanup in milliseconds. Default is 250.
-   *
-   * @deprecated This method is deprecated and is ONLY used for jest tests.
-   */
-  async _destroyInstance(timeout: number = 1000, pause: number = 250) {
-    this.log.info(`Destroy instance...`);
-    // Save server nodes to close
-    /*
-    const servers: ServerNode<ServerNode.RootEndpoint>[] = [];
-    if (this.bridgeMode === 'bridge') {
-      if (this.serverNode) servers.push(this.serverNode);
-    }
-    if (this.bridgeMode === 'childbridge' && this.plugins !== undefined) {
-      for (const plugin of this.plugins.array()) {
-        if (plugin.serverNode) servers.push(plugin.serverNode);
-      }
-    }
-    if (this.devices !== undefined) {
-      for (const device of this.devices.array()) {
-        if (device.mode === 'server' && device.serverNode) servers.push(device.serverNode);
-      }
-    }
-    */
-    // Cleanup
-    await this.cleanup('destroying instance...', false, timeout);
-    // Close servers mdns service
-    /*
-    this.log.info(`Dispose ${servers.length} MdnsService...`);
-    for (const server of servers) {
-      // await server.env.get(MdnsService)[Symbol.asyncDispose]();
-      this.log.info(`Closed ${server.id} MdnsService`);
-    }
-    */
-    // Wait for the cleanup to finish
-    if (pause) await wait(pause, 'destroyInstance stop', true);
-  }
-
   /**
    * Initializes the Matterbridge application.
    *
