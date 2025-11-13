@@ -129,9 +129,9 @@ export class MatterbridgePlatform {
   /** The ready promise for the platform, which resolves when the platform is fully initialized (including context and selects). */
   ready: Promise<void>;
 
-  /** Registered MatterbridgeEndpoint Map keyed by uniqueId */
+  /** Registered MatterbridgeEndpoint map keyed by uniqueId */
   private readonly registeredEndpointsByUniqueId = new Map<string, MatterbridgeEndpoint>();
-  /** Registered MatterbridgeEndpoint Map keyed by deviceName */
+  /** Registered MatterbridgeEndpoint map keyed by deviceName */
   private readonly registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>();
 
   /**
@@ -143,7 +143,7 @@ export class MatterbridgePlatform {
    * @param {AnsiLogger} log - The logger instance.
    * @param {PlatformConfig} config - The platform configuration.
    */
-  constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
+  protected constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
     this.matterbridge = matterbridge;
     this.log = log;
     this.config = config;
