@@ -178,7 +178,7 @@ export interface SerializedMatterbridgeEndpoint {
  *  - id?: string. It is the unique storage key for the endpoint.
  *  - number?: EndpointNumber. It is the endpoint number for the endpoint.
  */
-export interface MatterbridgeEndpointOptions extends EndpointOptions {
+export interface MatterbridgeEndpointOptions {
   /**
    *  The semantic tags array for the endpoint.
    *  The tagList is used to disambiguate the sibling child endpoints (9.2.3. Disambiguation rule).
@@ -216,6 +216,19 @@ export interface MatterbridgeEndpointOptions extends EndpointOptions {
    * If provided, the endpoint will be created with the specified endpoint number.
    */
   number?: EndpointNumber;
+
+  /**
+   * Old API compatibility replaced by number.
+   *
+   * @deprecated Use `number` instead.
+   */
+  endpointId?: EndpointNumber;
+  /**
+   * Old API compatibility replaced by id.
+   *
+   * @deprecated Use `id` instead.
+   */
+  uniqueStorageKey?: string;
 }
 
 // TODO: matter.js 0.16.0
