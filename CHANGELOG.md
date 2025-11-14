@@ -36,19 +36,39 @@ Advantages:
 - [platform]: Removed Matterbridge in the platform constructor (deprecated since 3.0.0).
 - [endpoint]: Removed uniqueStorageKey in MatterbridgeEndpointOptions (deprecated since months).
 - [endpoint]: Removed endpointId in MatterbridgeEndpointOptions (deprecated since months).
+- [Oven]: The addCabinet() of Oven class has been updated to support TemperatureNumber.
+- [Refrigerator]: The addCabinet() of Refrigerator class has been updated to support TemperatureNumber.
+
+### Changed device types in Matter 1.4.2
+
+- [onOffMountedSwitch]: Updated onOffOutlet and onOffMountedSwitch: when using the mounted device types add as well the outlet device types on the same endpoint as subset device type.
+- [dimmableMountedSwitch]: Updated dimmableOutlet and dimmableMountedSwitch: when using the mounted device types add as well the outlet device types on the same endpoint as subset device type.
+- [coverDevice]: Updated coverDevice: removed Scene Management cluster.
+- [roboticVacuumCleaner]: Updated roboticVacuumCleaner: OperationCompletion event for RVC Operational State cluster is now mandatory (TODO: check behavior).
+- [laundryWasher]: Updated laundryWasher: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [laundryDryer]: Updated laundryDryer: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [dishwasher]: Updated dishwasher: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [refrigerator]: Updated refrigerator: Temperature Controlled Cabinet with Cooler condition.
+- [microwaveOven]: Updated microwaveOven: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [cookSurface]: Updated cookSurface: TemperatureLevel is the only valid temperature control mode.
+- [temperatureControlledCabinetCooler]: Updated temperatureControlledCabinetCooler: TemperatureNumber is the only valid temperature control mode.
+- [temperatureControlledCabinetHeater]: Updated temperatureControlledCabinetHeater: TemperatureNumber is the only valid temperature control mode and OperationCompletion event for Oven Cavity Operational State cluster is now mandatory (TODO: check behavior).
+
+### Changed clusters in Matter 1.4.2
+
+- [BridgedDeviceBasicInformation]: Revision 5 - ConfigurationVersion attribute added as P O.
+- [DoorLock]: Revision 9 - Removed AlarmMask attribute.
+- [ElectricalPowerMeasurement]: Revision 2 - Changed reactive and apparent power fields to use new data types. Revision 3 - Changed range of apparent current field to allow negative apparent current.
+- [FanControl]: Revision 5 - Clarified attribute usage, added conformance column.
+- [Thermostat]: Revision 9 - Removed AlarmMask attribute and AlarmCodeBitmap Type.
+- [Identify]: Revision 6 - Added Q quality for IdentifyTime attribute.
+- [WindowCovering]: Revision 6 - Marked AbsolutePosition feature and associated elements provisional.
+- [RvcCleanMode]: Revision 4 - Add VacuumThenMop cleaning mode.
+- [RvcOperationalState]: Revision 4 - Add several operational states and errors.
+- [ServiceArea]: Revision 2 - Rename InitialTimeEstimate to EstimatedTime.
 
 ### Changed
 
-- [matter]: Updated onOffOutlet, dimmableOutlet, onOffMountedSwitch and dimmableMountedSwitch: when using the mounted device types add as well the outlet device types on the same endpoint as subset device type.
-- [matter]: Updated coverDevice: removed Scene Management cluster.
-- [matter]: Updated roboticVacuumCleaner: OperationCompletion event for RVC Operational State cluster is now mandatory (TODO: check behavior).
-- [matter]: Updated laundryWasher: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
-- [matter]: Updated laundryDryer: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
-- [matter]: Updated dishwasher: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
-- [matter]: Updated microwaveOven: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
-- [matter]: Updated cookSurface: TemperatureLevel is the only valid temperature control mode (TODO: update class).
-- [matter]: Updated temperatureControlledCabinetCooler: TemperatureNumber is the only valid temperature control mode (TODO: update class).
-- [matter]: Updated temperatureControlledCabinetHeater: TemperatureNumber is the only valid temperature control mode (TODO: update class) and OperationCompletion event for Oven Cavity Operational State cluster is now mandatory (TODO: check behavior).
 - [package]: Updated dependencies.
 
 ## [3.3.8] - 2025-11-15
