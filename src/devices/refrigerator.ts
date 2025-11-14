@@ -34,7 +34,7 @@ import { powerSource, refrigerator, temperatureControlledCabinetCooler } from '.
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 
-import { createLevelTemperatureControlClusterServer } from './temperatureControl.js';
+import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 export class Refrigerator extends MatterbridgeEndpoint {
   /**
@@ -65,9 +65,11 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * @param {Semtag[]} tagList - The tagList associated with the cabinet.
    * @param {number} currentMode - The current mode of the cabinet. Defaults to 1 (which corresponds to 'Auto').
    * @param {RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[]} supportedModes - The supported modes for the cabinet. Defaults to 'Auto', 'RapidCool', and 'RapidFreeze'.
-   * @param {number} selectedTemperatureLevel - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 2 (which corresponds to 'Level 3').
-   * @param {string[]} supportedTemperatureLevels - The list of supported temperature levels for the cabinet. Defaults to ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'].
-   * @param {number} currentTemperature - The current temperature of the cabinet in degrees Celsius. Defaults to 1000 (which corresponds to 10.00 degrees Celsius).
+   * @param {number} temperatureSetpoint - The temperature setpoint * 100. Defaults to 10 * 100 (which corresponds to 10°C).
+   * @param {number} minTemperature - The minimum temperature * 100. Defaults to 5 * 100 (which corresponds to 5°C). Fixed attribute.
+   * @param {number} maxTemperature - The maximum temperature * 100. Defaults to 20 * 100 (which corresponds to 20°C). Fixed attribute.
+   * @param {number} [step] - The step size for temperature changes. Defaults to 1 * 100 (which corresponds to 1°C). Fixed attribute.
+   * @param {number} currentTemperature - The current temperature of the cabinet in degrees Celsius. Defaults to 10 * 100 (which corresponds to 10.00 degrees Celsius).
    *
    * @returns {MatterbridgeEndpoint} The MatterbridgeEndpoint instance representing the cabinet.
    *
@@ -96,14 +98,16 @@ export class Refrigerator extends MatterbridgeEndpoint {
       { label: 'RapidCool', mode: 2, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.RapidCool }] },
       { label: 'RapidFreeze', mode: 3, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.RapidFreeze }] },
     ],
-    selectedTemperatureLevel: number = 2,
-    supportedTemperatureLevels: string[] = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
-    currentTemperature: number = 1000, // Default to 10.00 degrees Celsius
+    temperatureSetpoint: number = 10 * 100,
+    minTemperature: number = 5 * 100,
+    maxTemperature: number = 20 * 100,
+    step: number = 1 * 100,
+    currentTemperature: number = 10 * 100, // Default to 10.00 degrees Celsius
   ): MatterbridgeEndpoint {
     const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetCooler, { tagList });
     cabinet.log.logName = name;
     cabinet.createDefaultIdentifyClusterServer();
-    createLevelTemperatureControlClusterServer(cabinet, selectedTemperatureLevel, supportedTemperatureLevels);
+    createNumberTemperatureControlClusterServer(cabinet, temperatureSetpoint, minTemperature, maxTemperature, step);
     this.createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(cabinet, currentMode, supportedModes);
     this.createDefaultRefrigeratorAlarmClusterServer(cabinet, false);
     cabinet.createDefaultTemperatureMeasurementClusterServer(currentTemperature);
