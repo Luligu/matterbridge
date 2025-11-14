@@ -50,7 +50,6 @@ import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { SystemInformation } from './matterbridgeTypes.js';
 import { addVirtualDevice } from './helpers.js';
-import { Matterbridge } from './matterbridge.js';
 
 // Platform types
 
@@ -66,8 +65,7 @@ export type PlatformSchemaValue = string | number | boolean | bigint | object | 
 /** Platform schema type. */
 export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
-// TODO: matter.js 0.16.0 remove Matterbridge
-export type PlatformMatterbridge = Matterbridge & {
+export type PlatformMatterbridge = {
   readonly systemInformation: SystemInformation;
   readonly rootDirectory: string;
   readonly homeDirectory: string;

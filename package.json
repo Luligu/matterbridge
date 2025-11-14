@@ -157,7 +157,7 @@
     "install:prettier": "npm install --save-dev --save-exact prettier eslint-config-prettier eslint-plugin-prettier"
   },
   "dependencies": {
-    "@matter/main": "0.15.6",
+    "@matter/main": "0.16.0-alpha.0-20251112-dba1973d5",
     "archiver": "7.0.1",
     "express": "5.1.0",
     "glob": "11.0.3",
