@@ -1013,6 +1013,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
 /**
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
+ * Operational State Event OperationCompletion
  */
 export const laundryWasher = DeviceTypeDefinition({
   name: 'MA-laundrywasher',
@@ -1073,6 +1074,9 @@ export const airConditioner = DeviceTypeDefinition({
  * range, or similar device.
  * Conditions:
  * Cooler The device has cooling functionality.
+ *
+ * Cluster Restrictions:
+ * TemperatureNumber is the only valid temperature control mode
  */
 export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetcooler',
@@ -1091,6 +1095,10 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
  * range, or similar device.
  * Conditions:
  * Heater The device has heating functionality.
+ *
+ * Cluster Restrictions:
+ * TemperatureNumber is the only valid temperature control mode
+ * OperationCompletion event for Oven Cavity Operational State cluster
  */
 export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetheater',
@@ -1104,6 +1112,7 @@ export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
 /**
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
+ * Operational State Event OperationCompletion
  */
 export const dishwasher = DeviceTypeDefinition({
   name: 'MA-dishwasher',
@@ -1117,6 +1126,7 @@ export const dishwasher = DeviceTypeDefinition({
 /**
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
+ * Operational State Event OperationCompletion
  */
 export const laundryDryer = DeviceTypeDefinition({
   name: 'MA-laundrydryer',
@@ -1133,6 +1143,7 @@ export const laundryDryer = DeviceTypeDefinition({
  *
  * Cluster Restrictions:
  * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements.
+ * TemperatureLevel is the only valid temperature control mode.
  */
 export const cookSurface = DeviceTypeDefinition({
   name: 'MA-cooksurface',
@@ -1208,6 +1219,8 @@ export const extractorHood = DeviceTypeDefinition({
  * A Microwave Oven is a device which at a minimum is capable of being started and stopped and of setting a power level.
  * A Microwave Oven MAY also support additional capabilities via endpoint composition.
  *
+ * Element Requirements:
+ * Operational State Event OperationCompletion
  */
 export const microwaveOven = DeviceTypeDefinition({
   name: 'MA-microwaveoven',
