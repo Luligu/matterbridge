@@ -1027,9 +1027,10 @@ export const laundryWasher = DeviceTypeDefinition({
 /**
  * A refrigerator represents a device that contains one or more cabinets that are capable of chilling or freezing food.
  * A Refrigerator SHALL be composed of at least one endpoint with the Temperature Controlled Cabinet device type.
+ * A Refrigerator SHALL have the Cooler condition applied to at least one endpoint containing the Temperature Control Cluster.
  *
  * Device Type Requirements:
- * 0x0071 Temperature Controlled Cabinet
+ * 0x0071 Temperature Controlled Cabinet with Cooler condition
  */
 export const refrigerator = DeviceTypeDefinition({
   name: 'MA-refrigerator',
@@ -1072,6 +1073,7 @@ export const airConditioner = DeviceTypeDefinition({
  * chilling or freezing food, for example as part of a refrigerator, freezer, wine chiller, or other similar
  * device. Equally, such a cabinet may be warming or heating food, for example as part of an oven,
  * range, or similar device.
+ *
  * Conditions:
  * Cooler The device has cooling functionality.
  *
@@ -1093,6 +1095,7 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
  * chilling or freezing food, for example as part of a refrigerator, freezer, wine chiller, or other similar
  * device. Equally, such a cabinet may be warming or heating food, for example as part of an oven,
  * range, or similar device.
+ *
  * Conditions:
  * Heater The device has heating functionality.
  *
@@ -1142,8 +1145,8 @@ export const laundryDryer = DeviceTypeDefinition({
  * SHALL only be used when composed as part of another device type (cooktop).
  *
  * Cluster Restrictions:
- * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements.
- * TemperatureLevel is the only valid temperature control mode.
+ * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements. OnOff Cluster is optional.
+ * The TemperatureLevel feature is the only valid temperature control feature.
  */
 export const cookSurface = DeviceTypeDefinition({
   name: 'MA-cooksurface',
@@ -1182,7 +1185,7 @@ export const cooktop = DeviceTypeDefinition({
  * An Oven SHALL have the Heater condition applied to at least one endpoint containing the Temperature Control Cluster.
  * Device Type Requirements:
  * - 0x0071 Temperature Controlled Cabinet min 1
- * - 0x0078 Cooktop
+ * - 0x0078 Cooktop max 1 Optional
  */
 export const oven = DeviceTypeDefinition({
   name: 'MA-oven',
