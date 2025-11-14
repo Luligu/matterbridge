@@ -28,6 +28,29 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.4.0] - 2025-11-22
+
+### Breaking Changes
+
+- [matter]: This release brings the upgrade to matter 1.4.2 and matter.js 0.16.0.
+- [platform]: Removed Matterbridge in the platform constructor (deprecated since 3.0.0).
+- [endpoint]: Removed uniqueStorageKey in MatterbridgeEndpointOptions (deprecated since months).
+- [endpoint]: Removed endpointId in MatterbridgeEndpointOptions (deprecated since months).
+
+### Changed
+
+- [matter]: Updated onOffOutlet, dimmableOutlet, onOffMountedSwitch and dimmableMountedSwitch: when using the mounted device types add as well the outlet device types on the same endpoint as subset device type.
+- [matter]: Updated coverDevice: removed Scene Management cluster.
+- [matter]: Updated roboticVacuumCleaner: OperationCompletion event for RVC Operational State cluster is now mandatory (TODO: check behavior).
+- [matter]: Updated laundryWasher: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [matter]: Updated laundryDryer: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [matter]: Updated dishwasher: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [matter]: Updated microwaveOven: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [matter]: Updated cookSurface: TemperatureLevel is the only valid temperature control mode (TODO: update class).
+- [matter]: Updated temperatureControlledCabinetCooler: TemperatureNumber is the only valid temperature control mode (TODO: update class).
+- [matter]: Updated temperatureControlledCabinetHeater: TemperatureNumber is the only valid temperature control mode (TODO: update class) and OperationCompletion event for Oven Cavity Operational State cluster is now mandatory (TODO: check behavior).
+- [package]: Updated dependencies.
+
 ## [3.3.8] - 2025-11-15
 
 ### Development Breaking Changes

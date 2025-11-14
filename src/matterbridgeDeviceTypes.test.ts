@@ -88,7 +88,7 @@ import {
 import { setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
-await setupTest(NAME, false);
+await setupTest(NAME, true);
 
 describe('Matterbridge device types', () => {
   beforeEach(() => {

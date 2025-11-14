@@ -101,7 +101,7 @@ import { setupTest } from './jestutils/jestHelpers.js';
 // Helper to read a cluster's revision across variations in @matter/types exports
 const getClusterRevision = (entry: any): number | undefined => entry?.Cluster?.revision ?? entry?.Base?.revision ?? entry?.Complete?.revision ?? entry?.CompleteInstance?.revision;
 
-await setupTest(NAME, false);
+await setupTest(NAME, true);
 
 describe('Matter clusters revision (guard against upstream changes)', () => {
   // Hard-coded expected revisions (current as of @matter/main 0.15.6 > Matter specs v1.4.1)
