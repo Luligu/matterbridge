@@ -28,7 +28,7 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.3.8] - 2025-11-14
+## [3.3.8] - 2025-11-15
 
 ### Development Breaking Changes
 
@@ -59,8 +59,6 @@ So please update your plugin.
 - [endpoint]: Changed long deprecated endpointId with number in MatterbridgeEndpointOptions.
 - [endpoint]: Added property originalId in MatterbridgeEndpoint to store the original id passed in MatterbridgeEndpointOptions (since it can be changed for matter.js storage compatibility).
 - [endpoint]: Changed logger level of single device classes.
-
-### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
