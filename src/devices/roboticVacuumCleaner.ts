@@ -128,6 +128,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
         { label: 'Vacuum', mode: 1, modeTags: [{ value: RvcCleanMode.ModeTag.Vacuum }] },
         { label: 'Mop', mode: 2, modeTags: [{ value: RvcCleanMode.ModeTag.Mop }] },
         { label: 'DeepClean', mode: 3, modeTags: [{ value: RvcCleanMode.ModeTag.DeepClean }] },
+        { label: 'VacuumThenMop', mode: 4, modeTags: [{ value: RvcCleanMode.ModeTag.VacuumThenMop }] },
       ],
       currentMode: currentMode ?? 1,
     });
