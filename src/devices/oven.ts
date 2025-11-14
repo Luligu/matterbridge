@@ -35,7 +35,7 @@ import { oven, powerSource, temperatureControlledCabinetHeater } from '../matter
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 
-import { createLevelTemperatureControlClusterServer } from './temperatureControl.js';
+import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 export class Oven extends MatterbridgeEndpoint {
   /**
@@ -66,8 +66,11 @@ export class Oven extends MatterbridgeEndpoint {
    * @param {Semtag[]} tagList - The tagList associated with the cabinet.
    * @param {number} currentMode - The current mode of the cabinet. Defaults to 2 (which corresponds to 'Convection').
    * @param {OvenMode.ModeOption[]} supportedModes - The supported modes of the cabinet. Defaults to a set of common oven modes.
-   * @param {number} selectedTemperatureLevel - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
-   * @param {string[]} supportedTemperatureLevels - The list of supported temperature levels for the cabinet. Defaults to ['Defrost', '180°', '190°', '200°', '250°', '300°'].
+   * @param {number} temperatureSetpoint - The temperature setpoint * 100. Defaults to 200 * 100 (which corresponds to 200°C).
+   * @param {number} minTemperature - The minimum temperature * 100. Defaults to 30 * 100 (which corresponds to 30°C). Fixed attribute.
+   * @param {number} maxTemperature - The maximum temperature * 100. Defaults to 300 * 100 (which corresponds to 300°C). Fixed attribute.
+   * @param {number} [step] - The step size for temperature changes. Defaults to 10 * 100 (which corresponds to 10°C). Fixed attribute.
+   * @param {number} currentTemperature - The current temperature of the cabinet in degrees Celsius. Defaults to 200 * 100 (which corresponds to 200.00 degrees Celsius).
    * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state of the cabinet. Defaults to Stopped.
    * @param {number} [currentPhase] - Optional: the current phase of the cabinet.
    * @param {string[]} [phaseList] - Optional: the list of phases for the cabinet.
@@ -94,8 +97,11 @@ export class Oven extends MatterbridgeEndpoint {
       { label: 'Proofing', mode: 9, modeTags: [{ value: OvenMode.ModeTag.Proofing }] },
       { label: 'Steam', mode: 10, modeTags: [{ value: OvenMode.ModeTag.Steam }] },
     ],
-    selectedTemperatureLevel: number = 1,
-    supportedTemperatureLevels: string[] = ['Defrost', '180°', '190°', '200°', '250°', '300°'],
+    temperatureSetpoint: number = 200 * 100, // Defaults to 200.00 degrees Celsius
+    minTemperature: number = 30 * 100, // Defaults to 30.00 degrees Celsius
+    maxTemperature: number = 300 * 100, // Defaults to 300.00 degrees Celsius
+    step: number = 10 * 100, // Defaults to 10.00 degrees Celsius
+    currentTemperature: number = 200 * 100, // Default to 200.00 degrees Celsius
     operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped,
     currentPhase?: number,
     phaseList?: string[],
@@ -103,8 +109,8 @@ export class Oven extends MatterbridgeEndpoint {
     const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetHeater, { tagList }, true);
     cabinet.log.logName = name;
     cabinet.createDefaultIdentifyClusterServer();
-    createLevelTemperatureControlClusterServer(cabinet, selectedTemperatureLevel, supportedTemperatureLevels);
-    cabinet.createDefaultTemperatureMeasurementClusterServer(2000);
+    createNumberTemperatureControlClusterServer(cabinet, temperatureSetpoint, minTemperature, maxTemperature, step);
+    cabinet.createDefaultTemperatureMeasurementClusterServer(currentTemperature);
     this.createDefaultOvenModeClusterServer(cabinet, currentMode, supportedModes);
     this.createDefaultOvenCavityOperationalStateClusterServer(cabinet, operationalState, currentPhase, phaseList);
     return cabinet;
