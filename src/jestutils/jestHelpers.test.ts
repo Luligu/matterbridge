@@ -3,7 +3,7 @@ import { Endpoint, ServerNode } from '@matter/node';
 
 import { Matterbridge } from '../matterbridge.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { onOffOutlet } from '../matterbridgeDeviceTypes.js';
+import { bridge, onOffOutlet } from '../matterbridgeDeviceTypes.js';
 
 import {
   addDevice,
@@ -125,9 +125,12 @@ describe('Matterbridge instance', () => {
 });
 
 describe('Matter.js instance', () => {
-  let device: MatterbridgeEndpoint;
+  let deviceServer: MatterbridgeEndpoint;
+  let deviceAggregator: MatterbridgeEndpoint;
 
-  beforeAll(async () => {});
+  beforeAll(async () => {
+    await setDebug(true);
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -142,30 +145,38 @@ describe('Matter.js instance', () => {
   });
 
   test('should set debug mode', async () => {
-    setDebug(true);
+    await setDebug(true);
     expect(loggerLogSpy).toBeDefined();
     expect(consoleLogSpy).toBeDefined();
     expect(consoleDebugSpy).toBeDefined();
     expect(consoleInfoSpy).toBeDefined();
     expect(consoleWarnSpy).toBeDefined();
     expect(consoleErrorSpy).toBeDefined();
-    setDebug(false);
+    await setDebug(false);
   });
 
   test('should create a matter.js environment', async () => {
+    await setDebug(true);
     createTestEnvironment('JestHelpers');
     expect(environment).toBeDefined();
   });
 
   test('should start a matter.js server node', async () => {
-    await startServerNode('JestHelpers', 6000);
+    await startServerNode('JestHelpers', 10000, bridge.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
 
   test('should add a device to a matter.js server node', async () => {
-    device = new MatterbridgeEndpoint(onOffOutlet, { id: 'outlet1' });
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    deviceServer = new MatterbridgeEndpoint(onOffOutlet, { id: 'outlet1' });
+    deviceServer.addRequiredClusterServers();
+    expect(await addDevice(server, deviceServer)).toBeTruthy();
+  });
+
+  test('should add a device to a matter.js aggregator node', async () => {
+    deviceAggregator = new MatterbridgeEndpoint(onOffOutlet, { id: 'outlet2' });
+    deviceAggregator.addRequiredClusterServers();
+    expect(await addDevice(aggregator, deviceAggregator)).toBeTruthy();
   });
 
   test('should flushAsync', async () => {
@@ -177,7 +188,11 @@ describe('Matter.js instance', () => {
   });
 
   test('should delete a device from a matter.js server node', async () => {
-    expect(await deleteDevice(aggregator, device)).toBeTruthy();
+    expect(await deleteDevice(server, deviceServer)).toBeTruthy();
+  });
+
+  test('should delete a device from a matter.js aggregator node', async () => {
+    expect(await deleteDevice(aggregator, deviceAggregator)).toBeTruthy();
   });
 
   test('should stop a matter.js server node', async () => {

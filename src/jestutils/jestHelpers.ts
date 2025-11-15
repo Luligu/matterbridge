@@ -27,7 +27,7 @@ import path from 'node:path';
 
 import type { jest } from '@jest/globals';
 // Imports from Matterbridge
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, er, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, Lifecycle } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
@@ -520,18 +520,23 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
  *
  * @param {string} name Name of the server (used for logging and product description).
  * @param {number} port TCP port to listen on.
+ * @param {DeviceTypeId} deviceType Device type identifier for the server node.
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
  */
-export async function startServerNode(name: string, port: number): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+export async function startServerNode(name: string, port: number, deviceType: DeviceTypeId = RootEndpoint.deviceType): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+  const { randomBytes } = await import('node:crypto');
+  const random = randomBytes(8).toString('hex');
+
   // Create the server node
   server = await ServerNode.create({
     id: name + 'ServerNode',
 
     environment,
 
+    // Provide Node announcement settings
     productDescription: {
       name: name + 'ServerNode',
-      deviceType: DeviceTypeId(RootEndpoint.deviceType),
+      deviceType: DeviceTypeId(deviceType),
       vendorId: VendorId(0xfff1),
       productId: 0x8000,
     },
@@ -546,10 +551,20 @@ export async function startServerNode(name: string, port: number): Promise<[Serv
       hardwareVersion: 1,
       softwareVersion: 1,
       reachable: true,
+      serialNumber: 'SN' + random,
+      uniqueId: 'UI' + random,
     },
 
+    // Provide Network relevant configuration like the port
     network: {
+      listeningAddressIpv4: undefined,
+      listeningAddressIpv6: undefined,
       port,
+    },
+
+    // Provide the certificate for the device
+    operationalCredentials: {
+      certification: undefined,
     },
   });
   expect(server).toBeDefined();
@@ -591,7 +606,7 @@ export async function startServerNode(name: string, port: number): Promise<[Serv
   expect(aggregator.lifecycle.hasId).toBeTruthy();
   expect(aggregator.lifecycle.hasNumber).toBeTruthy();
 
-  // Ensure the queue is empty and pause 100ms
+  // Ensure the queue is empty and pause 250ms
   await flushAsync();
 
   return [server, aggregator];
@@ -649,8 +664,7 @@ export async function addDevice(owner: ServerNode<ServerNode.RootEndpoint> | End
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : error;
     const errorInspect = inspect(error, { depth: 10 });
-    // eslint-disable-next-line no-console
-    console.error(`Error adding device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}\nstack: ${errorInspect}`);
+    process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
     return false;
   }
   expect(owner.parts.has(device)).toBeTruthy();
@@ -685,8 +699,7 @@ export async function deleteDevice(owner: ServerNode<ServerNode.RootEndpoint> | 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : error;
     const errorInspect = inspect(error, { depth: 10 });
-    // eslint-disable-next-line no-console
-    console.error(`Error deleting device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}\nstack: ${errorInspect}`);
+    process.stderr.write(`${er}Error deleting device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
     return false;
   }
   expect(owner.parts.has(device)).toBeFalsy();
