@@ -11,12 +11,14 @@ import { jest } from '@jest/globals';
 import { Identify, OnOff, PowerSource, Thermostat, ThermostatUserInterfaceConfiguration, FanControl, ThermostatCluster } from '@matter/types/clusters';
 
 // Matterbridge helpers
-import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, server, setDebug, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import { featuresFor } from '../matterbridgeEndpointHelpers.js';
+import { airConditioner } from '../matterbridgeDeviceTypes.js';
 
 import { AirConditioner } from './airConditioner.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 // Setup the Matter test environment
 createTestEnvironment(NAME);
@@ -37,7 +39,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT);
+    await startServerNode(NAME, MATTER_PORT, airConditioner.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
@@ -49,11 +51,28 @@ describe('Matterbridge ' + NAME, () => {
 
     // Cluster servers existence
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+    expect(featuresFor(device, 'Identify')).toEqual({});
     expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+    expect(featuresFor(device, 'PowerSource')).toEqual({ 'battery': false, 'rechargeable': false, 'replaceable': false, 'wired': true });
     expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy(); // Dead Front On/Off cluster
+    expect(featuresFor(device, 'OnOff')).toEqual({ 'deadFrontBehavior': true, 'lighting': false, 'offOnly': false }); // Dead Front On/Off cluster
     expect(device.hasClusterServer(Thermostat.Cluster.id)).toBeTruthy();
+    expect(featuresFor(device, 'Thermostat')).toEqual({
+      'autoMode': true,
+      'cooling': true,
+      'heating': true,
+      'localTemperatureNotExposed': false,
+      'matterScheduleConfiguration': false,
+      'occupancy': false,
+      'presets': false,
+      'scheduleConfiguration': false,
+      'setback': false,
+    });
     expect(device.hasClusterServer(ThermostatUserInterfaceConfiguration.Cluster.id)).toBeTruthy();
+    expect(featuresFor(device, 'ThermostatUserInterfaceConfiguration')).toEqual({});
     expect(device.hasClusterServer(FanControl.Cluster.id)).toBeTruthy();
+    expect(featuresFor(device, 'FanControl')).toEqual({ 'airflowDirection': false, 'auto': true, 'multiSpeed': false, 'rocking': false, 'step': true, 'wind': false });
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'onOff', 'thermostat', 'thermostatUserInterfaceConfiguration', 'fanControl']);
   });
 
   test('create an air conditioner device (custom options)', async () => {
@@ -88,10 +107,13 @@ describe('Matterbridge ' + NAME, () => {
     });
     expect(custom.getClusterServerOptions(ThermostatUserInterfaceConfiguration.Cluster.id)).toEqual({ keypadLockout: 0, scheduleProgrammingVisibility: 0, temperatureDisplayMode: 0 });
     expect(custom.getClusterServerOptions(FanControl.Cluster.id)).toEqual({ fanMode: 0, fanModeSequence: 2, percentSetting: 40, percentCurrent: 0 });
+    expect(await addDevice(server, custom)).toBeTruthy();
+    expect(custom.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'onOff', 'thermostat', 'thermostatUserInterfaceConfiguration', 'fanControl']);
   });
 
   test('add air conditioner to server', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'onOff', 'thermostat', 'thermostatUserInterfaceConfiguration', 'fanControl']);
   });
 
   test('fan control attributes check', async () => {
