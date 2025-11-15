@@ -16,7 +16,7 @@ import { addDevice, aggregator, createTestEnvironment, server, setupTest, startS
 import { Speaker } from './speaker.js';
 
 // Setup the test environment
-setupTest(NAME, true);
+setupTest(NAME, false);
 
 // Setup the Matter test environment
 createTestEnvironment(NAME);
