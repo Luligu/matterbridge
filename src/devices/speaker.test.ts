@@ -16,7 +16,7 @@ import { addDevice, aggregator, createTestEnvironment, server, setupTest, startS
 import { Speaker } from './speaker.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+setupTest(NAME, true);
 
 // Setup the Matter test environment
 createTestEnvironment(NAME);
@@ -114,8 +114,8 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('device forEachAttribute', async () => {
-    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
-    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number }[] = [];
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId) => {
       expect(clusterName).toBeDefined();
       expect(typeof clusterName).toBe('string');
 
@@ -129,9 +129,179 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       expect(typeof attributeId).toBe('number');
       expect(attributeId).toBeGreaterThanOrEqual(0);
-      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      attributes.push({ clusterName, clusterId, attributeName, attributeId });
     });
     expect(attributes.length).toBe(28);
+    expect(attributes).toEqual([
+      {
+        'attributeId': 65533,
+        'attributeName': 'clusterRevision',
+        'clusterId': 29,
+        'clusterName': 'descriptor',
+      },
+      {
+        'attributeId': 65532,
+        'attributeName': 'featureMap',
+        'clusterId': 29,
+        'clusterName': 'descriptor',
+      },
+      {
+        'attributeId': 0,
+        'attributeName': 'deviceTypeList',
+        'clusterId': 29,
+        'clusterName': 'descriptor',
+      },
+      {
+        'attributeId': 1,
+        'attributeName': 'serverList',
+        'clusterId': 29,
+        'clusterName': 'descriptor',
+      },
+      {
+        'attributeId': 2,
+        'attributeName': 'clientList',
+        'clusterId': 29,
+        'clusterName': 'descriptor',
+      },
+      {
+        'attributeId': 3,
+        'attributeName': 'partsList',
+        'clusterId': 29,
+        'clusterName': 'descriptor',
+      },
+      {
+        'attributeId': 65531,
+        'attributeName': 'attributeList',
+        'clusterId': 29,
+        'clusterName': 'descriptor',
+      },
+      {
+        'attributeId': 65529,
+        'attributeName': 'acceptedCommandList',
+        'clusterId': 29,
+        'clusterName': 'descriptor',
+      },
+      {
+        'attributeId': 65528,
+        'attributeName': 'generatedCommandList',
+        'clusterId': 29,
+        'clusterName': 'descriptor',
+      },
+      {
+        'attributeId': 65533,
+        'attributeName': 'clusterRevision',
+        'clusterId': 6,
+        'clusterName': 'onOff',
+      },
+      {
+        'attributeId': 65532,
+        'attributeName': 'featureMap',
+        'clusterId': 6,
+        'clusterName': 'onOff',
+      },
+      {
+        'attributeId': 0,
+        'attributeName': 'onOff',
+        'clusterId': 6,
+        'clusterName': 'onOff',
+      },
+      {
+        'attributeId': 65531,
+        'attributeName': 'attributeList',
+        'clusterId': 6,
+        'clusterName': 'onOff',
+      },
+      {
+        'attributeId': 65529,
+        'attributeName': 'acceptedCommandList',
+        'clusterId': 6,
+        'clusterName': 'onOff',
+      },
+      {
+        'attributeId': 65528,
+        'attributeName': 'generatedCommandList',
+        'clusterId': 6,
+        'clusterName': 'onOff',
+      },
+      {
+        'attributeId': 65533,
+        'attributeName': 'clusterRevision',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 65532,
+        'attributeName': 'featureMap',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 0,
+        'attributeName': 'currentLevel',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 3,
+        'attributeName': 'maxLevel',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 16,
+        'attributeName': 'onOffTransitionTime',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 17,
+        'attributeName': 'onLevel',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 18,
+        'attributeName': 'onTransitionTime',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 19,
+        'attributeName': 'offTransitionTime',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 20,
+        'attributeName': 'defaultMoveRate',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 15,
+        'attributeName': 'options',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 65531,
+        'attributeName': 'attributeList',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 65529,
+        'attributeName': 'acceptedCommandList',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+      {
+        'attributeId': 65528,
+        'attributeName': 'generatedCommandList',
+        'clusterId': 8,
+        'clusterName': 'levelControl',
+      },
+    ]);
   });
 
   test('stop server', async () => {
