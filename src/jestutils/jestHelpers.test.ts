@@ -124,7 +124,7 @@ describe('Matterbridge instance', () => {
     deviceServer.addRequiredClusterServers();
     expect(await addDevice(server, deviceServer)).toBeTruthy();
     const state = deviceServer.state;
-    process.stdout.write(`${NAME} added device to server with state: ${JSON.stringify(state, null, 2)}\n`);
+    // process.stdout.write(`${NAME} added device to server with state: ${JSON.stringify(state, null, 2)}\n`);
     expect(await deleteDevice(server, deviceServer)).toBeTruthy();
   });
 
@@ -133,7 +133,7 @@ describe('Matterbridge instance', () => {
     deviceAggregator.addRequiredClusterServers();
     expect(await addDevice(aggregator, deviceAggregator)).toBeTruthy();
     const state = deviceAggregator.state;
-    process.stdout.write(`${NAME} added device to aggregator with state: ${JSON.stringify(state, null, 2)}\n`);
+    // process.stdout.write(`${NAME} added device to aggregator with state: ${JSON.stringify(state, null, 2)}\n`);
     expect(await deleteDevice(aggregator, deviceAggregator)).toBeTruthy();
   });
 
@@ -219,13 +219,13 @@ describe('Matter.js instance', () => {
 
   test('should delete a device from a matter.js server node', async () => {
     const state = deviceServer.state;
-    process.stdout.write(`${NAME} deleting device from server with state: ${JSON.stringify(state, null, 2)}\n`);
+    // process.stdout.write(`${NAME} deleting device from server with state: ${JSON.stringify(state, null, 2)}\n`);
     expect(await deleteDevice(server, deviceServer)).toBeTruthy();
   });
 
   test('should delete a device from a matter.js aggregator node', async () => {
     const state = deviceAggregator.state;
-    process.stdout.write(`${NAME} deleting device from aggregator with state: ${JSON.stringify(state, null, 2)}\n`);
+    // process.stdout.write(`${NAME} deleting device from aggregator with state: ${JSON.stringify(state, null, 2)}\n`);
     expect(await deleteDevice(aggregator, deviceAggregator)).toBeTruthy();
   });
 
