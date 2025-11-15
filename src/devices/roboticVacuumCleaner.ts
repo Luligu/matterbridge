@@ -201,16 +201,16 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
       phaseList,
       currentPhase,
       operationalStateList: operationalStateList ?? [
-        { operationalStateId: RvcOperationalState.OperationalState.Stopped, operationalStateLabel: 'Stopped' },
-        { operationalStateId: RvcOperationalState.OperationalState.Running, operationalStateLabel: 'Running' },
-        { operationalStateId: RvcOperationalState.OperationalState.Paused, operationalStateLabel: 'Paused' },
-        { operationalStateId: RvcOperationalState.OperationalState.Error, operationalStateLabel: 'Error' },
-        { operationalStateId: RvcOperationalState.OperationalState.SeekingCharger, operationalStateLabel: 'SeekingCharger' }, // Y RVC Pause Compatibility N RVC Resume Compatibility
-        { operationalStateId: RvcOperationalState.OperationalState.Charging, operationalStateLabel: 'Charging' }, // N RVC Pause Compatibility Y RVC Resume Compatibility
-        { operationalStateId: RvcOperationalState.OperationalState.Docked, operationalStateLabel: 'Docked' }, // N RVC Pause Compatibility Y RVC Resume Compatibility
+        { operationalStateId: RvcOperationalState.OperationalState.Stopped },
+        { operationalStateId: RvcOperationalState.OperationalState.Running },
+        { operationalStateId: RvcOperationalState.OperationalState.Paused },
+        { operationalStateId: RvcOperationalState.OperationalState.Error },
+        { operationalStateId: RvcOperationalState.OperationalState.SeekingCharger }, // Y RVC Pause Compatibility N RVC Resume Compatibility
+        { operationalStateId: RvcOperationalState.OperationalState.Charging }, // N RVC Pause Compatibility Y RVC Resume Compatibility
+        { operationalStateId: RvcOperationalState.OperationalState.Docked }, // N RVC Pause Compatibility Y RVC Resume Compatibility
       ],
       operationalState: operationalState ?? RvcOperationalState.OperationalState.Docked,
-      operationalError: operationalError ?? { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' },
+      operationalError: operationalError ?? { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     });
     return this;
   }

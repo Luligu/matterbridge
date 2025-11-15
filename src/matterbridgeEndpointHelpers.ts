@@ -1176,13 +1176,13 @@ export function getDefaultOperationalStateClusterServer(operationalState: Operat
     currentPhase: null,
     countdownTime: null,
     operationalStateList: [
-      { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
-      { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
-      { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
-      { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
+      { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+      { operationalStateId: OperationalState.OperationalStateEnum.Running },
+      { operationalStateId: OperationalState.OperationalStateEnum.Paused },
+      { operationalStateId: OperationalState.OperationalStateEnum.Error },
     ],
     operationalState,
-    operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
   });
 }
 
