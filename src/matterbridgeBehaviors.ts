@@ -537,7 +537,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.debug('MatterbridgeOperationalStateServer initialized: setting operational state to Stopped');
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
-    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     super.initialize(); // Error handling logic is handled in matter.js
   }
 
@@ -547,11 +547,11 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     device.commandHandler.executeHandler('pause', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeOperationalStateServer: pause called setting operational state to Paused');
     this.state.operationalState = OperationalState.OperationalStateEnum.Paused;
-    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     // pause is not implemented in matter.js
     // return super.pause();
     return {
-      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };
   }
 
@@ -561,11 +561,11 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     device.commandHandler.executeHandler('stop', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeOperationalStateServer: stop called setting operational state to Stopped');
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
-    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     // stop is not implemented in matter.js
     // return super.stop();
     return {
-      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };
   }
 
@@ -575,11 +575,11 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     device.commandHandler.executeHandler('start', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeOperationalStateServer: start called setting operational state to Running');
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
-    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     // start is not implemented in matter.js
     // return super.start();
     return {
-      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };
   }
 
@@ -589,11 +589,11 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     device.commandHandler.executeHandler('resume', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeOperationalStateServer: resume called setting operational state to Running');
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
-    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     // resume is not implemented in matter.js
     // return super.resume();
     return {
-      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };
   }
 }
