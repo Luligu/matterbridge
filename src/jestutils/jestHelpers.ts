@@ -31,12 +31,13 @@ import { AnsiLogger, er, LogLevel, rs, TimestampFormat } from 'node-ansi-logger'
 import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, Lifecycle } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
-import { AggregatorEndpoint, RootEndpoint } from '@matter/node/endpoints';
+import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/main/protocol';
 
 import { Matterbridge } from '../matterbridge.js';
 import { MatterbridgePlatform } from '../matterbridgePlatform.js';
 import { MATTER_STORAGE_NAME } from '../matterbridgeTypes.js';
+import { bridge } from '../matterbridgeDeviceTypes.js';
 
 /* Imports from a plugin
 import { AnsiLogger, LogLevel } from 'matterbridge/logger';
@@ -523,7 +524,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
  * @param {DeviceTypeId} deviceType Device type identifier for the server node.
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
  */
-export async function startServerNode(name: string, port: number, deviceType: DeviceTypeId = RootEndpoint.deviceType): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+export async function startServerNode(name: string, port: number, deviceType: DeviceTypeId = bridge.code): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
   const { randomBytes } = await import('node:crypto');
   const random = randomBytes(8).toString('hex');
 
