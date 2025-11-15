@@ -208,7 +208,7 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
  * Retrieves the features for a specific behavior.
  *
  * @param {Endpoint} endpoint - The endpoint to retrieve the features from.
- * @param {string} behavior - The behavior to retrieve the features for.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the features for.
  *
  * @returns {Record<string, boolean | undefined>} The features for the specified behavior.
  *
@@ -217,9 +217,14 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
  *     expect(featuresFor(device, 'powerSource').wired).toBe(true);
  * ```
  */
-export function featuresFor(endpoint: Endpoint, behavior: string): Record<string, boolean | undefined> {
+export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Record<string, boolean | undefined> {
+  const behaviorId = getBehavior(endpoint, cluster)?.id;
+  if (!behaviorId) {
+    endpoint.log?.error(`featuresFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return {};
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (endpoint.behaviors.supported as any)[lowercaseFirstLetter(behavior)]['cluster']['supportedFeatures'];
+  return (endpoint.behaviors.supported as any)[lowercaseFirstLetter(behaviorId)]['cluster']['supportedFeatures'];
 }
 
 /**

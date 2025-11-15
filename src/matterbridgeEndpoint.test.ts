@@ -77,7 +77,7 @@ import {
   temperatureSensor,
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
-import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
+import { checkNotLatinCharacters, featuresFor, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
 import { addDevice, assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
@@ -492,6 +492,34 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer('OnOff', 'onOff')).toBe(true);
     expect(device.hasAttributeServer('onOff', 'onOff')).toBe(true);
     expect(device.hasAttributeServer('onOff', 'none')).toBe(false);
+
+    expect(featuresFor(device, OnOffBehavior)).toEqual({
+      'deadFrontBehavior': false,
+      'lighting': true,
+      'offOnly': false,
+    });
+    expect(featuresFor(device, OnOffServer)).toEqual({
+      'deadFrontBehavior': false,
+      'lighting': true,
+      'offOnly': false,
+    });
+    expect(featuresFor(device, OnOff.Cluster)).toEqual({
+      'deadFrontBehavior': false,
+      'lighting': true,
+      'offOnly': false,
+    });
+    expect(featuresFor(device, OnOff.Cluster.id)).toEqual({
+      'deadFrontBehavior': false,
+      'lighting': true,
+      'offOnly': false,
+    });
+    expect(featuresFor(device, 'onOff')).toEqual({
+      'deadFrontBehavior': false,
+      'lighting': true,
+      'offOnly': false,
+    });
+
+    expect(featuresFor(device, 'unknown')).toEqual({});
 
     await add(device);
   });
