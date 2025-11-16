@@ -26,8 +26,9 @@ import { inspect } from 'node:util';
 import path from 'node:path';
 
 import type { jest } from '@jest/globals';
-// Imports from Matterbridge
-import { AnsiLogger, er, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
+// Imports from node-ansi-logger
+import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+// Imports from @matter
 import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, Lifecycle } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
@@ -35,10 +36,14 @@ import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/main/protocol';
 import { NodeStorageManager } from 'node-persist-manager';
 
+// Imports from Matterbridge
 import { Matterbridge } from '../matterbridge.js';
 import { MatterbridgePlatform } from '../matterbridgePlatform.js';
 import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '../matterbridgeTypes.js';
 import { bridge } from '../matterbridgeDeviceTypes.js';
+import { DeviceManager } from '../deviceManager.js';
+import { PluginManager } from '../pluginManager.js';
+import { Frontend } from '../frontend.js';
 
 /* Imports from a plugin
 import { AnsiLogger, LogLevel } from 'matterbridge/logger';
@@ -65,7 +70,13 @@ export let addBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototy
 export let removeBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeBridgedEndpoint>;
 export let removeAllBridgedEndpointsSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeAllBridgedEndpoints>;
 
+export let NAME: string;
+export let HOMEDIR: string;
 export let matterbridge: Matterbridge;
+export let frontend: Frontend;
+export let plugins: PluginManager;
+export let devices: DeviceManager;
+
 export let environment: Environment;
 export let server: ServerNode<ServerNode.RootEndpoint>;
 export let aggregator: Endpoint<AggregatorEndpoint>;
@@ -92,9 +103,11 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   expect(name).toBeDefined();
   expect(typeof name).toBe('string');
   expect(name.length).toBeGreaterThanOrEqual(4);
+  NAME = name;
+  HOMEDIR = path.join('jest', name);
 
   // Cleanup any existing home directory
-  rmSync(path.join('jest', name), { recursive: true, force: true });
+  rmSync(HOMEDIR, { recursive: true, force: true });
 
   const { jest } = await import('@jest/globals');
   loggerDebugSpy = jest.spyOn(AnsiLogger.prototype, 'debug');
@@ -162,6 +175,106 @@ export async function setDebug(debug: boolean): Promise<void> {
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   }
+}
+
+/**
+ * Start a Matterbridge instance for testing.
+ *
+ * @param {('bridge' | 'childbridge' | 'controller' | '')} bridgeMode The bridge mode to start the Matterbridge instance in.
+ * @param {number} frontendPort The frontend port number.
+ * @param {number} matterPort The matter port number.
+ * @param {number} passcode The passcode number.
+ * @param {number} discriminator The discriminator number.
+ * @returns {Promise<Matterbridge>} The Matterbridge instance.
+ */
+export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '', frontendPort: number, matterPort: number, passcode: number, discriminator: number): Promise<Matterbridge> {
+  process.argv.push(
+    '-novirtual',
+    '-debug',
+    '-verbose',
+    '-logger',
+    'debug',
+    '-matterlogger',
+    'debug',
+    bridgeMode === '' ? '-test' : '-' + bridgeMode,
+    '-homedir',
+    HOMEDIR,
+    '-frontend',
+    frontendPort.toString(),
+    '-port',
+    matterPort.toString(),
+    '-passcode',
+    passcode.toString(),
+    '-discriminator',
+    discriminator.toString(),
+  );
+
+  // Load Matterbridge instance and initialize it
+  matterbridge = await Matterbridge.loadInstance(true);
+  expect(matterbridge).toBeDefined();
+  expect(matterbridge.profile).toBeUndefined();
+  expect(matterbridge.bridgeMode).toBe(bridgeMode);
+
+  // Get the frontend, plugins and devices
+  frontend = matterbridge.frontend;
+  plugins = matterbridge.plugins;
+  plugins.clear();
+  await plugins.saveToStorage();
+  devices = matterbridge.devices;
+  devices.clear();
+
+  // @ts-expect-error - access to private member for testing
+  expect(matterbridge.initialized).toBeTruthy();
+  expect(matterbridge.log).toBeDefined();
+  expect(matterbridge.rootDirectory).not.toBe('');
+  expect(matterbridge.homeDirectory).not.toBe('');
+  expect(matterbridge.matterbridgeDirectory).not.toBe('');
+  expect(matterbridge.matterbridgePluginDirectory).not.toBe('');
+  expect(matterbridge.matterbridgeCertDirectory).not.toBe('');
+  expect(plugins).toBeDefined();
+  expect(plugins.size).toBe(0);
+  expect(devices).toBeDefined();
+  expect(devices.size).toBe(0);
+
+  // @ts-expect-error - access to private member for testing
+  expect(frontend.httpServer).toBeDefined();
+  // @ts-expect-error - access to private member for testing
+  expect(frontend.httpsServer).toBeUndefined();
+  // @ts-expect-error - access to private member for testing
+  expect(frontend.expressApp).toBeDefined();
+  // @ts-expect-error - access to private member for testing
+  expect(frontend.webSocketServer).toBeDefined();
+
+  expect(matterbridge.nodeStorage).toBeDefined();
+  expect(matterbridge.nodeContext).toBeDefined();
+
+  expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
+
+  expect(matterbridge.matterStorageService).toBeDefined();
+  expect(matterbridge.matterStorageManager).toBeDefined();
+  expect(matterbridge.matterbridgeContext).toBeDefined();
+  expect(matterbridge.controllerContext).toBeUndefined();
+
+  expect(matterbridge.serverNode).toBeDefined();
+  expect(matterbridge.aggregatorNode).toBeDefined();
+
+  expect(matterbridge.mdnsInterface).toBe(undefined);
+  expect(matterbridge.port).toBe(matterPort + 1);
+  expect(matterbridge.passcode).toBe(passcode + 1);
+  expect(matterbridge.discriminator).toBe(discriminator + 1);
+
+  await new Promise((resolve) => {
+    matterbridge.once('online', resolve);
+  });
+
+  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
+  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
+  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${frontendPort}${UNDERLINEOFF}${rs}`);
+  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
+  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode`);
+  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval for Matterbridge`);
+
+  return matterbridge;
 }
 
 /**
