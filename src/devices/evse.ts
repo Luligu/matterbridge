@@ -69,7 +69,7 @@ export class Evse extends MatterbridgeEndpoint {
     absMinPower?: number,
     absMaxPower?: number,
   ) {
-    super([evse, powerSource, electricalSensor, deviceEnergyManagement], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([evse, powerSource, electricalSensor, deviceEnergyManagement], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Evse')
       .createDefaultPowerSourceWiredClusterServer()

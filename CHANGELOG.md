@@ -28,6 +28,42 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.3.8] - 2025-11-15
+
+### Development Breaking Changes
+
+This will be the last release with the following long deprecated elements:
+
+- [platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.0.0).
+- [endpoint]: uniqueStorageKey instead of id in MatterbridgeEndpointOptions (deprecated since months).
+- [endpoint]: endpointId instead of number in MatterbridgeEndpointOptions (deprecated since months).
+
+So please update your plugin.
+
+### Added
+
+- [endpoint]: Added matterbridgeEndpointTypes.
+- [devices]: Added tests for device types and their revision changes.
+- [clusters]: Added test for clusters and their revision changes.
+- [chip]: Added fetch script to download zcl data from connectedhomeip.
+- [endpoint]: Added createDefaultPowerSourceBatteryClusterServer(). Add Power Source cluster for a generic battery device.
+- [platform]: Added setSchema() to temporarly set the schema for the config editor.
+- [platform]: Added getSchema() to retrieve the schema from the Matterbridge plugin manager.
+- [platform]: Added return value to registerVirtualDevice().
+
+### Changed
+
+- [package]: Updated dependencies.
+- [package]: Bumped jestHelpers v.1.0.12.
+- [endpoint]: Changed long deprecated uniqueStorageKey with id in MatterbridgeEndpointOptions.
+- [endpoint]: Changed long deprecated endpointId with number in MatterbridgeEndpointOptions.
+- [endpoint]: Added property originalId in MatterbridgeEndpoint to store the original id passed in MatterbridgeEndpointOptions (since it can be changed for matter.js storage compatibility).
+- [endpoint]: Changed logger level of single device classes.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.7] - 2025-11-08
 
 ### Breaking Changes
@@ -41,6 +77,7 @@ Advantages:
 
 ### Changed
 
+- [package]: Updated dependencies.
 - [frontend]: Bumped `frontend` version to 3.3.1.
 - [PluginManager]: Bumped `PluginManager` version to 1.3.0.
 - [DeviceManager]: Bumped `DeviceManager` version to 1.1.0.

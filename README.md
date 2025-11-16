@@ -354,6 +354,10 @@ The plugin uses local connection to Daikin Wifi modules. The plugin does not wor
 
 Matterbridge Roborock Platform Plugin is a dynamic platform plugin for Matterbridge that integrates Roborock vacuums into the Matter ecosystem, enabling control via Apple Home and other Matter-compatible apps.
 
+### [Wyze Robot Vacuum](https://github.com/RMCob/matterbridge-wyze-robovac)
+
+Matterbridge plugin to control and report status of the Wyze S200 Robot Vacuum
+
 ## How to install and add a plugin with the frontend (best option)
 
 Just open the frontend on the link provided in the log, select a plugin and click install.

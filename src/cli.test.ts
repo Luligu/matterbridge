@@ -14,7 +14,7 @@ import { Matterbridge } from './matterbridge.js';
 // eslint-disable-next-line n/no-missing-import
 import { MockMatterbridge } from './mock/mockMatterbridge.js';
 import { cliEmitter } from './cliEmitter.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 import { Inspector } from './utils/inspector.js';
 import { Tracker } from './utils/tracker.js';
 

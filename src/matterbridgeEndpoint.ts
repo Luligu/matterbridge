@@ -28,7 +28,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // AnsiLogger module
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
 // @matter/general
-import { Lifecycle, NamedHandler, HandlerFunction, AtLeastOne, UINT16_MAX, UINT32_MAX } from '@matter/general';
+import { Lifecycle, NamedHandler, AtLeastOne, UINT16_MAX, UINT32_MAX } from '@matter/general';
 // @matter/node
 import { ActionContext, Behavior, Endpoint, EndpointType, MutableEndpoint, ServerNode, SupportedBehaviors } from '@matter/node';
 // @matter/types
@@ -96,7 +96,8 @@ import { FanControlServer } from '@matter/node/behaviors/fan-control';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
 
 // Matterbridge
-import { DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
+import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
+import { CommandHandlerFunction, MatterbridgeEndpointCommands, MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
 import { isValidNumber, isValidObject, isValidString } from './utils/isvalid.js';
 import {
   MatterbridgeServer,
@@ -159,138 +160,8 @@ import {
   getDefaultPowerSourceRechargeableBatteryClusterServer,
   getDefaultDeviceEnergyManagementClusterServer,
   getDefaultDeviceEnergyManagementModeClusterServer,
+  getDefaultPowerSourceBatteryClusterServer,
 } from './matterbridgeEndpointHelpers.js';
-
-export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CommandHandlerData = { request: Record<string, any>; cluster: string; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint };
-export type CommandHandlerFunction = (data: CommandHandlerData) => void | Promise<void>;
-
-export interface MatterbridgeEndpointCommands {
-  // Identify
-  identify: HandlerFunction;
-  triggerEffect: HandlerFunction;
-
-  // On/Off
-  on: HandlerFunction;
-  off: HandlerFunction;
-  toggle: HandlerFunction;
-  offWithEffect: HandlerFunction;
-
-  // Level Control
-  moveToLevel: HandlerFunction;
-  moveToLevelWithOnOff: HandlerFunction;
-
-  // Color Control
-  moveToColor: HandlerFunction;
-  moveColor: HandlerFunction;
-  stepColor: HandlerFunction;
-  moveToHue: HandlerFunction;
-  moveHue: HandlerFunction;
-  stepHue: HandlerFunction;
-  enhancedMoveToHue: HandlerFunction;
-  enhancedMoveHue: HandlerFunction;
-  enhancedStepHue: HandlerFunction;
-  moveToSaturation: HandlerFunction;
-  moveSaturation: HandlerFunction;
-  stepSaturation: HandlerFunction;
-  moveToHueAndSaturation: HandlerFunction;
-  enhancedMoveToHueAndSaturation: HandlerFunction;
-  moveToColorTemperature: HandlerFunction;
-
-  // Window Covering
-  upOrOpen: HandlerFunction;
-  downOrClose: HandlerFunction;
-  stopMotion: HandlerFunction;
-  goToLiftPercentage: HandlerFunction;
-  goToTiltPercentage: HandlerFunction;
-
-  // Door Lock
-  lockDoor: HandlerFunction;
-  unlockDoor: HandlerFunction;
-
-  // Thermostat
-  setpointRaiseLower: HandlerFunction;
-  setActivePresetRequest: HandlerFunction;
-
-  // Fan Control
-  step: HandlerFunction;
-
-  // Mode Select
-  changeToMode: HandlerFunction;
-
-  // Valve Configuration and Control
-  open: HandlerFunction;
-  close: HandlerFunction;
-
-  // Boolean State Configuration
-  suppressAlarm: HandlerFunction;
-  enableDisableAlarm: HandlerFunction;
-
-  // Smoke and CO Alarm
-  selfTestRequest: HandlerFunction;
-
-  // Thread Network Diagnostics
-  resetCounts: HandlerFunction;
-
-  // Time Synchronization
-  setUtcTime: HandlerFunction;
-  setTimeZone: HandlerFunction;
-  setDstOffset: HandlerFunction;
-
-  // Device Energy Management
-  pauseRequest: HandlerFunction;
-  resumeRequest: HandlerFunction;
-
-  // Operational State
-  pause: HandlerFunction;
-  stop: HandlerFunction;
-  start: HandlerFunction;
-  resume: HandlerFunction;
-
-  // Rvc Operational State
-  goHome: HandlerFunction;
-
-  // Rvc Service Area
-  selectAreas: HandlerFunction;
-
-  // Water Heater Management
-  boost: HandlerFunction;
-  cancelBoost: HandlerFunction;
-
-  // Energy Evse
-  enableCharging: HandlerFunction;
-  disable: HandlerFunction;
-
-  // Device Energy Management
-  powerAdjustRequest: HandlerFunction;
-  cancelPowerAdjustRequest: HandlerFunction;
-
-  // Temperature Control
-  setTemperature: HandlerFunction;
-
-  // Microwave Oven Control
-  setCookingParameters: HandlerFunction;
-  addMoreTime: HandlerFunction;
-
-  // Resource Monitoring
-  resetCondition: HandlerFunction;
-}
-
-export interface SerializedMatterbridgeEndpoint {
-  pluginName: string;
-  deviceName: string;
-  serialNumber: string;
-  uniqueId: string;
-  productId?: number;
-  productName?: string;
-  vendorId?: number;
-  vendorName?: string;
-  deviceTypes: DeviceTypeDefinition[];
-  endpoint: EndpointNumber | undefined;
-  endpointName: string;
-  clusterServersId: ClusterId[];
-}
 
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
@@ -331,16 +202,19 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersion: number | undefined = undefined;
   hardwareVersionString: string | undefined = undefined;
   productUrl = 'https://www.npmjs.com/package/matterbridge';
-
-  /** The name of the first device type of the endpoint (old api compatibility) */
-  name: string | undefined = undefined;
-  /** The code of the first device type of the endpoint (old api compatibility) */
-  deviceType: number | undefined = undefined;
+  /** The tagList of the descriptor cluster of the MatterbridgeEndpoint */
+  tagList?: Semtag[] = undefined;
+  /** The original id (with spaces and .) of the MatterbridgeEndpoint constructor options */
+  originalId: string | undefined = undefined;
+  // TODO: matter.js 0.16.0 remove uniqueStorageKey
   /** The original id (with spaces and .) of the endpoint (old api compatibility) */
   uniqueStorageKey: string | undefined = undefined;
-  tagList?: Semtag[] = undefined;
+  /** The name of the first device type of the MatterbridgeEndpoint */
+  name: string | undefined = undefined;
+  /** The code of the first device type of the MatterbridgeEndpoint */
+  deviceType: number | undefined = undefined;
 
-  /** Maps the DeviceTypeDefinitions with their code */
+  /** Maps the DeviceTypeDefinitions of the MatterbridgeEndpoint keyed by their code */
   readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
 
   /** Command handler for the MatterbridgeEndpoint commands */
@@ -356,6 +230,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false) {
     let deviceTypeList: { deviceType: number; revision: number }[] = [];
+    const originalId = options.id;
 
     // Get the first DeviceTypeDefinition
     let firstDefinition: DeviceTypeDefinition;
@@ -391,7 +266,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     };
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
-    // Check if the uniqueStorageKey is valid
+    // Check if the options.id is valid
+    // TODO: matter.js 0.16.0 remove uniqueStorageKey
+    // istanbul ignore next if branch cause it will be removed
     if (options.uniqueStorageKey && checkNotLatinCharacters(options.uniqueStorageKey)) {
       options.uniqueStorageKey = generateUniqueId(options.uniqueStorageKey);
     }
@@ -401,21 +278,20 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     // Convert the options to an Endpoint.Options
     const optionsV8 = {
-      id: options.uniqueStorageKey?.replace(/[ .]/g, ''),
-      number: options.endpointId,
+      // TODO: matter.js 0.16.0 remove uniqueStorageKey
+      id: options.id?.replace(/[ .]/g, '') || options.uniqueStorageKey?.replace(/[ .]/g, ''),
+      number: options.number || options.endpointId,
+      // id: options.id?.replace(/[ .]/g, ''),
+      // number: options.number,
       descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
-    // Override the deprecated uniqueStorageKey && endpointId with id and number if provided
-    if (options.id !== undefined) {
-      optionsV8.id = options.id.replace(/[ .]/g, '');
-    }
-    if (options.number !== undefined) {
-      optionsV8.number = options.number;
-    }
+
     super(endpointV8, optionsV8);
 
     this.mode = options.mode;
-    this.uniqueStorageKey = options.id ? options.id : options.uniqueStorageKey;
+    // TODO: matter.js 0.16.0 remove uniqueStorageKey
+    this.uniqueStorageKey = options.id ?? options.uniqueStorageKey;
+    this.originalId = originalId;
     this.name = firstDefinition.name;
     this.deviceType = firstDefinition.code;
     this.tagList = options.tagList;
@@ -429,8 +305,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     // console.log('MatterbridgeEndpoint.endpointV8', endpointV8);
     // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
-    // Create the logger
-    this.log = new AnsiLogger({ logName: options.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
+    // Create the logger. Temporarly uses the originalId if available or 'MatterbridgeEndpoint' as fallback. The logName will be set by createDefaultBasicInformationClusterServer() and createDefaultBridgedDeviceBasicInformationClusterServer() with deviceName.
+    // TODO: matter.js 0.16.0 remove uniqueStorageKey
+    this.log = new AnsiLogger({ logName: this.originalId ?? this.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} mode: ${CYAN}${this.mode}${db} id: ${CYAN}${optionsV8.id}${db} number: ${CYAN}${optionsV8.number}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
@@ -522,7 +399,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   getClusterServerOptions(cluster: Behavior.Type | ClusterType | ClusterId | string): Record<string, boolean | number | bigint | string | object | null> | undefined {
     const behavior = getBehavior(this, cluster);
     if (!behavior) return undefined;
-    return this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
+    return this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null> | undefined;
   }
 
   /**
@@ -819,9 +696,9 @@ export class MatterbridgeEndpoint extends Endpoint {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
         }
-        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName, endpointId: options.endpointId, tagList: options.tagList }, debug);
+        child = new MatterbridgeEndpoint(definition, { id: endpointName, number: options.number, tagList: options.tagList }, debug);
       } else {
-        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName, endpointId: options.endpointId }, debug);
+        child = new MatterbridgeEndpoint(definition, { id: endpointName, number: options.number }, debug);
       }
     }
 
@@ -872,9 +749,9 @@ export class MatterbridgeEndpoint extends Endpoint {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
         }
-        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName, endpointId: options.endpointId, tagList: options.tagList }, debug);
+        child = new MatterbridgeEndpoint(definition, { id: endpointName, number: options.number, tagList: options.tagList }, debug);
       } else {
-        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName, endpointId: options.endpointId }, debug);
+        child = new MatterbridgeEndpoint(definition, { id: endpointName, number: options.number }, debug);
       }
     }
     if (Array.isArray(definition)) {
@@ -951,7 +828,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {SerializedMatterbridgeEndpoint | undefined} The serialized Matterbridge device object.
    */
   static serialize(device: MatterbridgeEndpoint): SerializedMatterbridgeEndpoint | undefined {
-    if (!device.serialNumber || !device.deviceName || !device.uniqueId) return;
+    if (!device.serialNumber || !device.deviceName || !device.uniqueId || !device.maybeId || !device.maybeNumber) return;
     const serialized: SerializedMatterbridgeEndpoint = {
       pluginName: device.plugin ?? '',
       deviceName: device.deviceName,
@@ -962,8 +839,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       vendorId: device.vendorId,
       vendorName: device.vendorName,
       deviceTypes: Array.from(device.deviceTypes.values()),
-      endpoint: device.maybeNumber,
-      endpointName: device.maybeId ?? device.deviceName,
+      id: device.id,
+      number: device.number,
       clusterServersId: [],
     };
     Object.keys(device.behaviors.supported).forEach((behaviorName) => {
@@ -981,7 +858,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {MatterbridgeEndpoint | undefined} The deserialized Matterbridge device.
    */
   static deserialize(serializedDevice: SerializedMatterbridgeEndpoint): MatterbridgeEndpoint | undefined {
-    const device = new MatterbridgeEndpoint(serializedDevice.deviceTypes as AtLeastOne<DeviceTypeDefinition>, { uniqueStorageKey: serializedDevice.endpointName, endpointId: serializedDevice.endpoint }, false);
+    const device = new MatterbridgeEndpoint(serializedDevice.deviceTypes as AtLeastOne<DeviceTypeDefinition>, { id: serializedDevice.id, number: serializedDevice.number }, false);
     device.plugin = serializedDevice.pluginName;
     device.deviceName = serializedDevice.deviceName;
     device.serialNumber = serializedDevice.serialNumber;
@@ -1024,6 +901,30 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a default power source battery cluster server.
+   *
+   * @param {null | number} batPercentRemaining - The remaining battery percentage (default: null). The attribute is in the range 0-200.
+   * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param {null | number} batVoltage - The battery voltage (default: null).
+   * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - order: The order of the power source is a persisted attribute that indicates the order in which the power sources are used.
+   * - description: The description of the power source is a fixed attribute that describes the power source type.
+   * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
+   */
+  createDefaultPowerSourceBatteryClusterServer(
+    batPercentRemaining: null | number = null,
+    batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
+    batVoltage: null | number = null,
+    batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
+  ): this {
+    this.behaviors.require(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery), getDefaultPowerSourceBatteryClusterServer(batPercentRemaining, batChargeLevel, batVoltage, batReplaceability));
+    return this;
+  }
+
+  /**
    * Creates a default power source replaceable battery cluster server.
    *
    * @param {number} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
@@ -1031,7 +932,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} batVoltage - The battery voltage (default: 1500).
    * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
    * @param {number} batQuantity - The quantity of the battery (default: 1).
-   * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
+   * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.UserReplaceable).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -2407,7 +2308,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       operatingMode: DoorLock.OperatingMode.Normal,
       // Special case of inverted bitmap: add also alwaysSet = 2047
       supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: true, passage: true, alwaysSet: 2047 },
-      alarmMask: { lockJammed: false, lockFactoryReset: false, lockRadioPowerCycled: false, wrongCodeEntryLimit: false, frontEscutcheonRemoved: false, doorForcedOpen: false },
+      autoRelockTime: 0, // 0=disabled
     });
     return this;
   }

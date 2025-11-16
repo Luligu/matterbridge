@@ -10,7 +10,7 @@ class MockPlatform extends MatterbridgeDynamicPlatform {
   async onStart(reason) {
     await this.ready;
     this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);
-    const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLightPlugin3' })
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightPlugin3' })
       .createDefaultBridgedDeviceBasicInformationClusterServer('Light plugin 3', '0x123456789', 0xfff1, 'Matterbridge', 'Matterbridge OnOffLight')
       .addRequiredClusterServers();
     await this.registerDevice(device);

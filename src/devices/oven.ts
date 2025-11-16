@@ -52,7 +52,7 @@ export class Oven extends MatterbridgeEndpoint {
    * - Use `addCabinet` to add one or more cabinets to the oven.
    */
   constructor(name: string, serial: string) {
-    super([oven, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([oven, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Oven');
     this.createDefaultPowerSourceWiredClusterServer();
@@ -154,13 +154,9 @@ export class Oven extends MatterbridgeEndpoint {
     endpoint.behaviors.require(MatterbridgeOvenCavityOperationalStateServer, {
       phaseList: phaseList || null,
       currentPhase: currentPhase || null,
-      operationalStateList: [
-        { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
-        { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
-        { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
-      ],
+      operationalStateList: [{ operationalStateId: OperationalState.OperationalStateEnum.Stopped }, { operationalStateId: OperationalState.OperationalStateEnum.Running }, { operationalStateId: OperationalState.OperationalStateEnum.Error }],
       operationalState,
-      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     });
     return endpoint;
   }
@@ -192,16 +188,16 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info('MatterbridgeOvenCavityOperationalStateServer initialized: setting operational state to Stopped and operational error to No error');
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
-    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
   }
 
   override stop(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeOvenCavityOperationalStateServer: stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called setting operational state to Stopped and operational error to No error`);
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
-    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
-      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     } as OperationalState.OperationalCommandResponse;
   }
 
@@ -209,9 +205,9 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeOvenCavityOperationalStateServer: start (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called setting operational state to Running and operational error to No error`);
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
-    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
-      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     } as OperationalState.OperationalCommandResponse;
   }
 }

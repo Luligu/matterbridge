@@ -162,23 +162,23 @@ sudo systemctl stop matterbridge
 ### Show Matterbridge status
 
 ```bash
-sudo systemctl status matterbridge.service
+sudo systemctl status matterbridge
 ```
 
 ### Enable Matterbridge to start automatically on boot
 
 ```bash
-sudo systemctl enable matterbridge.service
+sudo systemctl enable matterbridge
 ```
 
 ### Disable Matterbridge from starting automatically on boot
 
 ```bash
-sudo systemctl disable matterbridge.service
+sudo systemctl disable matterbridge
 ```
 
 ### View the log of Matterbridge in real time (this will show the log with colors)
 
 ```bash
-sudo journalctl -u matterbridge.service -n 1000 -f --output cat
+sudo journalctl -u matterbridge -n 1000 -f --output cat
 ```

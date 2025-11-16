@@ -35,7 +35,7 @@ import { RESET, type AnsiLogger } from 'node-ansi-logger';
  *                          its message and stack trace will be included in the log.
  */
 export function logError(log: AnsiLogger, message: string, error: unknown): void {
-  log.error(`${message}: ${error instanceof Error ? error.message + '\nStack:\n' + error.stack : error}`);
+  log.error(`${message}: ${error instanceof Error ? error.message + ' \nStack: \n' + error.stack : error}`);
 }
 
 /**
@@ -48,7 +48,7 @@ export function logError(log: AnsiLogger, message: string, error: unknown): void
  * @param {unknown} error - The error object or value to log. Will be inspected with depth 10.
  */
 export function inspectError(log: AnsiLogger, message: string, error: unknown): void {
-  const errorMessage = error instanceof Error ? `${error.message}\n` : '';
+  const errorMessage = error instanceof Error ? `${error.message} \n` : '';
   const inspectedError = inspect(error, { depth: 10, colors: true, showHidden: false });
   log.error(`${message}: ${errorMessage}${RESET}${inspectedError}`);
 }

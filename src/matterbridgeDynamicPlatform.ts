@@ -29,8 +29,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 import { AnsiLogger } from 'node-ansi-logger';
 
 // Matterbridge
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
+import { MatterbridgePlatform, PlatformConfig, PlatformMatterbridge } from './matterbridgePlatform.js';
 
 /**
  * Represents a dynamic platform for Matterbridge.
@@ -41,11 +40,11 @@ export class MatterbridgeDynamicPlatform extends MatterbridgePlatform {
   /**
    * Creates an instance of MatterbridgeDynamicPlatform.
    *
-   * @param {Matterbridge} matterbridge - The Matterbridge instance.
+   * @param {PlatformMatterbridge} matterbridge - The Matterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
    * @param {PlatformConfig} config - The platform configuration.
    */
-  constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
+  constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
     super(matterbridge, log, config);
 
     this.type = 'DynamicPlatform';

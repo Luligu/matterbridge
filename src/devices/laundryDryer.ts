@@ -67,7 +67,7 @@ export class LaundryDryer extends MatterbridgeEndpoint {
     step?: number,
     operationalState?: OperationalState.OperationalStateEnum,
   ) {
-    super([laundryDryer, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([laundryDryer, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Laundry Dryer');
     this.createDefaultPowerSourceWiredClusterServer();

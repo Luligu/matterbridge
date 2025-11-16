@@ -13,7 +13,7 @@ import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { DeviceManager } from './deviceManager.js';
 import { BaseDevice, dev } from './matterbridgeTypes.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Setup the test environment
@@ -46,7 +46,7 @@ describe('DeviceManager', () => {
 
   test('unknown server message type', async () => {
     // @ts-expect-error -- Testing unknown message type
-    expect(await testServer.request({ type: 'devices_unknown', src: testServer.name, dst: 'devices', params: {} })).toBeUndefined();
+    expect(testServer.request({ type: 'devices_unknown', src: testServer.name, dst: 'devices', params: {} })).toBeUndefined();
   });
 
   test('logLevel changes correctly', async () => {

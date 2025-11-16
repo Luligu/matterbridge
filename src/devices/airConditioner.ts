@@ -118,7 +118,7 @@ export class AirConditioner extends MatterbridgeEndpoint {
       percentSetting = 0,
       percentCurrent = 0,
     } = options;
-    super([airConditioner, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([airConditioner, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Air Conditioner');
     this.createDefaultPowerSourceWiredClusterServer();

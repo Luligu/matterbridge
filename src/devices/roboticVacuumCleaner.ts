@@ -77,7 +77,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
     currentArea?: number,
     supportedMaps?: ServiceArea.Map[],
   ) {
-    super([roboticVacuumCleaner, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, mode }, true);
+    super([roboticVacuumCleaner, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, mode });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Robot Vacuum Cleaner')
       .createDefaultPowerSourceRechargeableBatteryClusterServer(80, PowerSource.BatChargeLevel.Ok, 5900)
@@ -201,16 +201,16 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
       phaseList,
       currentPhase,
       operationalStateList: operationalStateList ?? [
-        { operationalStateId: RvcOperationalState.OperationalState.Stopped, operationalStateLabel: 'Stopped' },
-        { operationalStateId: RvcOperationalState.OperationalState.Running, operationalStateLabel: 'Running' },
-        { operationalStateId: RvcOperationalState.OperationalState.Paused, operationalStateLabel: 'Paused' },
-        { operationalStateId: RvcOperationalState.OperationalState.Error, operationalStateLabel: 'Error' },
-        { operationalStateId: RvcOperationalState.OperationalState.SeekingCharger, operationalStateLabel: 'SeekingCharger' }, // Y RVC Pause Compatibility N RVC Resume Compatibility
-        { operationalStateId: RvcOperationalState.OperationalState.Charging, operationalStateLabel: 'Charging' }, // N RVC Pause Compatibility Y RVC Resume Compatibility
-        { operationalStateId: RvcOperationalState.OperationalState.Docked, operationalStateLabel: 'Docked' }, // N RVC Pause Compatibility Y RVC Resume Compatibility
+        { operationalStateId: RvcOperationalState.OperationalState.Stopped },
+        { operationalStateId: RvcOperationalState.OperationalState.Running },
+        { operationalStateId: RvcOperationalState.OperationalState.Paused },
+        { operationalStateId: RvcOperationalState.OperationalState.Error },
+        { operationalStateId: RvcOperationalState.OperationalState.SeekingCharger }, // Y RVC Pause Compatibility N RVC Resume Compatibility
+        { operationalStateId: RvcOperationalState.OperationalState.Charging }, // N RVC Pause Compatibility Y RVC Resume Compatibility
+        { operationalStateId: RvcOperationalState.OperationalState.Docked }, // N RVC Pause Compatibility Y RVC Resume Compatibility
       ],
       operationalState: operationalState ?? RvcOperationalState.OperationalState.Docked,
-      operationalError: operationalError ?? { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' },
+      operationalError: operationalError ?? { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     });
     return this;
   }
@@ -266,9 +266,9 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     device.log.debug('MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle');
     this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
     this.state.operationalState = RvcOperationalState.OperationalState.Paused;
-    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
-      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     } as OperationalState.OperationalCommandResponse;
   }
 
@@ -279,9 +279,9 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     device.log.debug('MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning');
     this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 2; // RvcRunMode.ModeTag.Cleaning
     this.state.operationalState = RvcOperationalState.OperationalState.Running;
-    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
-      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     } as OperationalState.OperationalCommandResponse;
   }
 
@@ -293,9 +293,9 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     device.log.debug('MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle');
     this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
     this.state.operationalState = RvcOperationalState.OperationalState.Docked;
-    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' };
+    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
-      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     } as OperationalState.OperationalCommandResponse;
   }
 }

@@ -53,14 +53,10 @@ export class SolarPower extends MatterbridgeEndpoint {
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
-    super(
-      [solarPower, powerSource, electricalSensor, deviceEnergyManagement],
-      {
-        tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Solar.namespaceId, tag: PowerSourceTag.Solar.tag, label: null }],
-        id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
-      },
-      true,
-    );
+    super([solarPower, powerSource, electricalSensor, deviceEnergyManagement], {
+      tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Solar.namespaceId, tag: PowerSourceTag.Solar.tag, label: null }],
+      id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+    });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Solar Power')
       .createDefaultPowerSourceWiredClusterServer()

@@ -1,19 +1,14 @@
 // src/microwaveOven.test.ts
 
-const MATTER_PORT = 6023;
+const MATTER_PORT = 8010;
 const NAME = 'MicrowaveOven';
 const HOMEDIR = path.join('jest', NAME);
 
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { LogLevel } from 'node-ansi-logger';
 // @matter
-import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/general';
-import { DeviceTypeId, VendorId } from '@matter/types';
-import { MdnsService } from '@matter/protocol';
-import { ServerNode, Endpoint, PositionTag } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { MicrowaveOvenControlServer, MicrowaveOvenModeServer } from '@matter/node/behaviors';
 import { Identify, MicrowaveOvenControl, MicrowaveOvenMode, OnOff, OperationalState, PowerSource } from '@matter/types/clusters';
 
@@ -21,19 +16,17 @@ import { Identify, MicrowaveOvenControl, MicrowaveOvenMode, OnOff, OperationalSt
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { wait } from '../utils/export.js';
-import { addDevice, createTestEnvironment, loggerLogSpy, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from './microwaveOven.js';
-
-// Setup the Matter test environment
-createTestEnvironment(HOMEDIR);
 
 // Setup the test environment
 setupTest(NAME, false);
 
+// Setup the Matter test environment
+createTestEnvironment(NAME);
+
 describe('Matterbridge ' + NAME, () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
-  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {});
@@ -51,7 +44,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create and start the server node', async () => {
-    [server, aggregator] = await startServerNode(NAME, MATTER_PORT);
+    await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });

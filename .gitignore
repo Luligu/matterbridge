@@ -18,6 +18,8 @@ temp/
 *.log
 
 # Package specific directories and files that should be ignored
+chip/
+matterbridgeDeviceTypes.clusters.zcl.revision.test.ts
 heap_profile
 heap_profiles
 heap_snapshots

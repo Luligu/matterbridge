@@ -111,13 +111,13 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
-import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 
 // Matterbridge
 import { deepCopy } from './utils/deepCopy.js';
 import { deepEqual } from './utils/deepEqual.js';
 import { isValidArray } from './utils/isvalid.js';
-import { MatterbridgeEndpoint, MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
 import {
   MatterbridgeIdentifyServer,
   MatterbridgeOnOffServer,
@@ -132,9 +132,9 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeOperationalStateServer,
-  MatterbridgeDeviceEnergyManagementModeServer,
   MatterbridgePowerSourceServer,
   MatterbridgeDeviceEnergyManagementServer,
+  MatterbridgeDeviceEnergyManagementModeServer,
 } from './matterbridgeBehaviors.js';
 
 /**
@@ -208,7 +208,7 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
  * Retrieves the features for a specific behavior.
  *
  * @param {Endpoint} endpoint - The endpoint to retrieve the features from.
- * @param {string} behavior - The behavior to retrieve the features for.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the features for.
  *
  * @returns {Record<string, boolean | undefined>} The features for the specified behavior.
  *
@@ -217,9 +217,14 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
  *     expect(featuresFor(device, 'powerSource').wired).toBe(true);
  * ```
  */
-export function featuresFor(endpoint: Endpoint, behavior: string): Record<string, boolean | undefined> {
+export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Record<string, boolean | undefined> {
+  const behaviorId = getBehavior(endpoint, cluster)?.id;
+  if (!behaviorId) {
+    endpoint.log?.error(`featuresFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return {};
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (endpoint.behaviors.supported as any)[lowercaseFirstLetter(behavior)]['cluster']['supportedFeatures'];
+  return (endpoint.behaviors.supported as any)[lowercaseFirstLetter(behaviorId)]['cluster']['supportedFeatures'];
 }
 
 /**
@@ -302,7 +307,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === Pm10ConcentrationMeasurement.Cluster.id) return Pm10ConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === RadonConcentrationMeasurement.Cluster.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === DeviceEnergyManagement.Cluster.id) return DeviceEnergyManagementServer.with('PowerForecastReporting');
+  if (clusterId === DeviceEnergyManagement.Cluster.id) return MatterbridgeDeviceEnergyManagementServer.with('PowerForecastReporting');
   if (clusterId === DeviceEnergyManagementMode.Cluster.id) return MatterbridgeDeviceEnergyManagementModeServer;
 
   return MatterbridgeIdentifyServer;
@@ -390,26 +395,26 @@ export async function invokeBehaviorCommand(
  */
 export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, newValue: unknown, oldValue: unknown): Promise<boolean> {
   const event = attribute + '$Changed';
-  const clusterName = getBehavior(endpoint, cluster)?.id;
-  if (!clusterName) {
+  const behaviorId = getBehavior(endpoint, cluster)?.id;
+  if (!behaviorId) {
     endpoint.log.error(`invokeSubscribeHandler ${hk}${event}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
     return false;
   }
 
   if (endpoint.construction.status !== Lifecycle.Status.Active) {
-    endpoint.log.error(`invokeSubscribeHandler ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    endpoint.log.error(`invokeSubscribeHandler ${hk}${behaviorId}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
     return false;
   }
 
   const events = endpoint.events as Record<string, Record<string, unknown>>;
-  if (!(clusterName in events) || !(event in events[clusterName])) {
-    endpoint.log.error(`invokeSubscribeHandler ${hk}${event}${er} error: cluster ${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+  if (!(behaviorId in events) || !(event in events[behaviorId])) {
+    endpoint.log.error(`invokeSubscribeHandler ${hk}${event}${er} error: cluster ${behaviorId} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
     return false;
   }
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  await endpoint.act((agent) => agent[clusterName].events[event].emit(newValue, oldValue, { ...agent.context, offline: false }));
+  await endpoint.act((agent) => agent[behaviorId].events[event].emit(newValue, oldValue, { ...agent.context, offline: false }));
   return true;
 }
 
@@ -827,6 +832,41 @@ export function getDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerS
 }
 
 /**
+ * Get the default power source battery cluster server options.
+ *
+ * @param {null | number} batPercentRemaining - The remaining battery percentage (default: null). The attribute is in the range 0-200.
+ * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+ * @param {null | number} batVoltage - The battery voltage (default: null).
+ * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
+ * @returns {Behavior.Options<PowerSourceClusterServer>} The options for the power source replaceable battery cluster server.
+ *
+ * @remarks
+ * - order: The order of the power source is a persisted attribute that indicates the order in which the power sources are used.
+ * - description: The description of the power source is a fixed attribute that describes the power source type.
+ * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
+ */
+export function getDefaultPowerSourceBatteryClusterServer(
+  batPercentRemaining: null | number = null,
+  batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
+  batVoltage: null | number = null,
+  batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
+) {
+  return optionsFor(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery), {
+    // Base attributes
+    status: PowerSource.PowerSourceStatus.Active,
+    order: 0,
+    description: 'Primary battery',
+    endpointList: [], // Will be filled by the MatterbridgePowerSourceServer
+    // Battery feature attributes
+    batVoltage,
+    batPercentRemaining: batPercentRemaining !== null ? Math.min(Math.max(batPercentRemaining * 2, 0), 200) : null,
+    batChargeLevel,
+    batReplacementNeeded: false,
+    batReplaceability,
+  });
+}
+
+/**
  * Get the default power source replaceable battery cluster server options.
  *
  * @param {number} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
@@ -834,7 +874,7 @@ export function getDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerS
  * @param {number} batVoltage - The battery voltage (default: 1500).
  * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
  * @param {number} batQuantity - The quantity of the battery (default: 1).
- * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
+ * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.UserReplaceable).
  * @returns {Behavior.Options<PowerSourceClusterServer>} The options for the power source replaceable battery cluster server.
  *
  * @remarks
@@ -1089,7 +1129,8 @@ export function getDefaultDeviceEnergyManagementClusterServer(
  *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
  */
 export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]) {
-  return optionsFor(MatterbridgeDeviceEnergyManagementModeServer, {
+  // TODO: matter.js 0.16.0
+  return optionsFor(MatterbridgeDeviceEnergyManagementModeServer.with(), {
     supportedModes: supportedModes ?? [
       { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.NoOptimization }] },
       {
@@ -1129,18 +1170,19 @@ export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: 
  * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
  */
 export function getDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped) {
-  return optionsFor(MatterbridgeOperationalStateServer, {
+  // TODO: matter.js 0.16.0
+  return optionsFor(MatterbridgeOperationalStateServer.with(), {
     phaseList: [],
     currentPhase: null,
     countdownTime: null,
     operationalStateList: [
-      { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
-      { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
-      { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
-      { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
+      { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+      { operationalStateId: OperationalState.OperationalStateEnum.Running },
+      { operationalStateId: OperationalState.OperationalStateEnum.Paused },
+      { operationalStateId: OperationalState.OperationalStateEnum.Error },
     ],
     operationalState,
-    operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
   });
 }
 

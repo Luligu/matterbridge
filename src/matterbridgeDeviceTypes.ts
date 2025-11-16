@@ -1,5 +1,5 @@
 /**
- * This file contains the class MatterbridgeDevice.
+ * This file contains the matter device type definitions for MatterbridgeEndpoint.
  *
  * @file matterbridgeDeviceTypes.ts
  * @author Luca Liguori
@@ -26,8 +26,7 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeDeviceTypes loaded.\u001B[40;0m');
 
 // @matter
-import { Semtag } from '@matter/types/globals';
-import { ClusterId, DeviceTypeId, EndpointNumber } from '@matter/types/datatype';
+import { ClusterId, DeviceTypeId } from '@matter/types/datatype';
 // @matter clusters
 import { AccountLogin } from '@matter/types/clusters/account-login';
 import { Actions } from '@matter/types/clusters/actions';
@@ -113,6 +112,7 @@ import { WakeOnLan } from '@matter/types/clusters/wake-on-lan';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
+import { ScenesManagement } from '@matter/types/clusters/scenes-management';
 
 export enum DeviceClasses {
   /** 1.1.5. Device Type Class Conditions */
@@ -212,79 +212,6 @@ export const DeviceTypeDefinition = ({
   optionalClientClusters,
 });
 
-/**
- *  MatterbridgeEndpointOptions interface is used to define the options for a Matterbridge endpoint.
- *
- *  @remarks
- *  - tagList?: Semtag[]. It is used to disambiguate the sibling child endpoints (9.2.3. Disambiguation rule).
- *    - mfgCode: VendorId | null,
- *    - namespaceId: number,
- *    - tag: number,
- *    - label: string | undefined | null
- *  - mode?: 'server' | 'matter'. It is used to activate a special mode for the endpoint.
- *  - id?: string. It is the unique storage key for the endpoint.
- *  - number?: EndpointNumber. It is the endpoint number for the endpoint.
- */
-export interface MatterbridgeEndpointOptions extends EndpointOptions {
-  /**
-   *  The semantic tags array for the endpoint.
-   *  The tagList is used to disambiguate the sibling child endpoints (9.2.3. Disambiguation rule).
-   *  The tagList is used to identify the endpoint and to provide additional information about the endpoint.
-   *
-   *  @remarks
-   *    - mfgCode: VendorId | null,
-   *    - namespaceId: number,
-   *    - tag: number,
-   *    - label: string | undefined | null
-   */
-  tagList?: Semtag[];
-  /**
-   * Activates a special mode for this endpoint.
-   * - 'server': it creates the device server node and add the device as Matter device that needs to be paired individually.
-   *   In this case the Matterbridge bridge mode (bridge or childbridge) is not relevant. The device is independent.
-   *
-   * - 'matter': it adds the device directly to the Matterbridge server node as Matter device alongside the aggregator. In this case the implementation must respect
-   *   the 9.2.3. Disambiguation rule (i.e. use taglist if needed cause the device doesn't have nodeLabel).
-   *   Furthermore the device will be a part of the bridge (i.e. will have the same name and will be in the same room).
-   *   See 9.12.2.2. Native Matter functionality in Bridge.
-   *
-   * @remarks
-   * Always use createDefaultBasicInformationClusterServer() to create the BasicInformation cluster server when using mode 'server' or 'matter'.
-   */
-  mode?: 'server' | 'matter';
-  /**
-   * The unique storage key for the endpoint.
-   * If not provided, a default key will be used.
-   */
-  id?: string;
-  /**
-   * The endpoint number for the endpoint.
-   * If not provided, the endpoint will be created with the next available endpoint number.
-   * If provided, the endpoint will be created with the specified endpoint number.
-   */
-  number?: EndpointNumber;
-}
-
-/**
- *  EndpointOptions interface is used to define the options for an endpoint.
- *
- * @deprecated Use `MatterbridgeEndpointOptions` instead.
- */
-export interface EndpointOptions {
-  /**
-   * Old API compatibility replaced by number.
-   *
-   * @deprecated Use `number` instead.
-   */
-  endpointId?: EndpointNumber;
-  /**
-   * Old API compatibility replaced by id.
-   *
-   * @deprecated Use `id` instead.
-   */
-  uniqueStorageKey?: string;
-}
-
 // Chapter 2. Utility device types
 
 export const rootNode = DeviceTypeDefinition({
@@ -292,8 +219,8 @@ export const rootNode = DeviceTypeDefinition({
   code: 0x0016,
   deviceClass: DeviceClasses.Node,
   revision: 3,
-  requiredServerClusters: [], // Intentionally left empty
-  optionalServerClusters: [], // Intentionally left empty
+  requiredServerClusters: [], // Intentionally left empty to avoid imports
+  optionalServerClusters: [], // Intentionally left empty to avoid imports
 });
 
 export const powerSource = DeviceTypeDefinition({
@@ -353,7 +280,7 @@ export const bridgedNode = DeviceTypeDefinition({
   code: 0x0013,
   deviceClass: DeviceClasses.Utility,
   revision: 3,
-  requiredServerClusters: [BridgedDeviceBasicInformation.Cluster.id],
+  requiredServerClusters: [BridgedDeviceBasicInformation.Cluster.id], // omitted PowerSourceConfiguration cause is deprecated
   optionalServerClusters: [PowerSource.Cluster.id, EcosystemInformation.Cluster.id, AdministratorCommissioning.Cluster.id],
 });
 
@@ -589,7 +516,7 @@ export const pumpDevice = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [OnOff.Cluster.id, PumpConfigurationAndControl.Cluster.id, Identify.Cluster.id],
-  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id, */ TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
 });
 
 export const waterValve = DeviceTypeDefinition({
@@ -603,34 +530,34 @@ export const waterValve = DeviceTypeDefinition({
 
 // Chapter 6. Switches and Controls device types
 
-// Custom device types without client clusters (not working in Alexa)
+// Custom device types with server cluster instead of client clusters (not working in Alexa)
 export const onOffSwitch = DeviceTypeDefinition({
   name: 'MA-onoffswitch',
   code: 0x0103,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id /* , ScenesManagement.Cluster.id*/],
+  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
 });
 
-// Custom device types without client clusters (not working in Alexa)
+// Custom device types with server cluster instead of client clusters (not working in Alexa)
 export const dimmableSwitch = DeviceTypeDefinition({
   name: 'MA-dimmableswitch',
   code: 0x0104,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id /* , ScenesManagement.Cluster.id*/],
+  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
 });
 
-// Custom device types without client clusters (not working in Alexa)
+// Custom device types with server cluster instead of client clusters (not working in Alexa)
 export const colorTemperatureSwitch = DeviceTypeDefinition({
   name: 'MA-colortemperatureswitch',
   code: 0x0105,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id /* , ScenesManagement.Cluster.id*/],
+  requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
 });
 
 export const genericSwitch = DeviceTypeDefinition({
@@ -781,7 +708,7 @@ export const doorLockDevice = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, DoorLock.Cluster.id],
-  optionalServerClusters: [],
+  optionalServerClusters: [ScenesManagement.Cluster.id, Groups.Cluster.id],
 });
 
 export const coverDevice = DeviceTypeDefinition({
@@ -1078,8 +1005,8 @@ export const refrigerator = DeviceTypeDefinition({
   code: 0x70,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id, RefrigeratorAlarm.Cluster.id],
-  optionalServerClusters: [],
+  requiredServerClusters: [],
+  optionalServerClusters: [Identify.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id, RefrigeratorAlarm.Cluster.id],
 });
 
 /**
@@ -1105,14 +1032,7 @@ export const airConditioner = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
-  optionalServerClusters: [
-    Groups.Cluster.id,
-    /* ScenesManagement.Cluster.id,*/
-    FanControl.Cluster.id,
-    ThermostatUserInterfaceConfiguration.Cluster.id,
-    TemperatureMeasurement.Cluster.id,
-    RelativeHumidityMeasurement.Cluster.id,
-  ],
+  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id, FanControl.Cluster.id, ThermostatUserInterfaceConfiguration.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
 });
 
 /**
@@ -1189,8 +1109,8 @@ export const cookSurface = DeviceTypeDefinition({
   code: 0x77,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [TemperatureControl.Cluster.id, TemperatureMeasurement.Cluster.id],
-  optionalServerClusters: [OnOff.Cluster.id],
+  requiredServerClusters: [],
+  optionalServerClusters: [TemperatureControl.Cluster.id, TemperatureMeasurement.Cluster.id, OnOff.Cluster.id],
 });
 
 /**
@@ -1228,8 +1148,8 @@ export const oven = DeviceTypeDefinition({
   code: 0x7b,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id],
-  optionalServerClusters: [],
+  requiredServerClusters: [],
+  optionalServerClusters: [Identify.Cluster.id],
 });
 
 /**

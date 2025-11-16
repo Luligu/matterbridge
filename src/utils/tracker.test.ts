@@ -9,7 +9,7 @@ import os, { type CpuInfo } from 'node:os';
 
 import { jest } from '@jest/globals';
 
-import { consoleLogSpy, setDebug, setupTest } from './jestHelpers.js';
+import { consoleLogSpy, setDebug, setupTest } from '../jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

@@ -1036,7 +1036,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         plugin.error = true;
       }
     } catch (err) {
-      logError(this.log, `Failed to load plugin ${plg}${plugin.name}${er}`, err);
+      inspectError(this.log, `Failed to load plugin ${plg}${plugin.name}${er}`, err);
       plugin.error = true;
     }
     return undefined;

@@ -1,36 +1,29 @@
 // src/cooktop.test.ts
 
-const MATTER_PORT = 6025;
+const MATTER_PORT = 8003;
 const NAME = 'Cooktop';
 const HOMEDIR = path.join('jest', NAME);
 
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger } from 'node-ansi-logger';
 // @matter
-import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/general';
-import { DeviceTypeId, VendorId } from '@matter/types';
-import { MdnsService } from '@matter/protocol';
-import { ServerNode, Endpoint, PositionTag } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { PositionTag } from '@matter/node';
 import { Identify, OnOff, PowerSource, TemperatureControl, TemperatureMeasurement } from '@matter/types/clusters';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { addDevice, createTestEnvironment, setupTest, startServerNode, stopServerNode } from '../utils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { Cooktop } from './cooktop.js';
-
-// Setup the Matter test environment
-createTestEnvironment(HOMEDIR);
 
 // Setup the test environment
 setupTest(NAME, false);
 
+// Setup the Matter test environment
+createTestEnvironment(NAME);
+
 describe('Matterbridge ' + NAME, () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
-  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: Cooktop;
   let surface1: MatterbridgeEndpoint;
   let surface2: MatterbridgeEndpoint;
@@ -52,7 +45,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create and start the server node', async () => {
-    [server, aggregator] = await startServerNode(NAME, MATTER_PORT);
+    await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });

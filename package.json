@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.3.7",
+  "version": "3.3.8",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -66,6 +66,10 @@
       "import": "./dist/utils/export.js",
       "types": "./dist/utils/export.d.ts"
     },
+    "./jestutils": {
+      "import": "./dist/jestutils/export.js",
+      "types": "./dist/jestutils/export.d.ts"
+    },
     "./logger": {
       "import": "./dist/logger/export.js",
       "types": "./dist/logger/export.d.ts"
@@ -104,6 +108,7 @@
     "buildProduction": "tsc --project tsconfig.production.json",
     "cleanBuild": "npx shx rm -rf tsconfig.tsbuildinfo dist && npm run build",
     "cleanBuildProduction": "npx shx rm -rf tsconfig.tsbuildinfo dist && npm run buildProduction",
+    "fetch:chip": "node scripts/fetch-chip.mjs",
     "watch": "tsc --watch",
     "start": "node ./dist/cli.js",
     "start:bridge": "node ./dist/cli.js --bridge",
@@ -170,8 +175,8 @@
     "@types/multer": "2.0.0",
     "@types/node": "24.10.0",
     "@types/ws": "8.18.1",
-    "@vitest/coverage-v8": "4.0.6",
-    "@vitest/eslint-plugin": "1.4.0",
+    "@vitest/coverage-v8": "4.0.8",
+    "@vitest/eslint-plugin": "1.4.1",
     "eslint": "9.39.1",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
@@ -187,6 +192,6 @@
     "ts-jest": "29.4.5",
     "typescript": "5.9.3",
     "typescript-eslint": "8.46.3",
-    "vitest": "4.0.6"
+    "vitest": "4.0.8"
   }
 }

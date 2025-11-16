@@ -15,7 +15,7 @@ import { db, er, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { dev, plg } from './matterbridgeTypes.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -30,6 +30,8 @@ describe('Matterbridge  Device serverMode=matter', () => {
   });
 
   afterAll(async () => {
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -126,13 +128,10 @@ describe('Matterbridge  Device serverMode=matter', () => {
   });
 
   test('Matterbridge.destroyInstance()', async () => {
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
-  }, 60000);
+  });
 
   test('Restart initialize()', async () => {
     expect((matterbridge as any).initialized).toBeFalsy();
@@ -198,13 +197,9 @@ describe('Matterbridge  Device serverMode=matter', () => {
   test('Finally Matterbridge.destroyInstance()', async () => {
     const stopServerNodeSpy = jest.spyOn(matterbridge as any, 'stopServerNode');
 
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
-
     expect(stopServerNodeSpy).toHaveBeenCalledTimes(1);
-  }, 60000);
+  });
 });

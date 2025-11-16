@@ -252,44 +252,6 @@ describe('Multicast', () => {
           cidr: '192.168.1.108/24'
         }
       ],
-      'Loopback Pseudo-Interface 1': [
-        {
-          address: '::1',
-          netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff',
-          family: 'IPv6',
-          mac: '00:00:00:00:00:00',
-          internal: true,
-          cidr: '::1/128',
-          scopeid: 0
-        },
-        {
-          address: '127.0.0.1',
-          netmask: '255.0.0.0',
-          family: 'IPv4',
-          mac: '00:00:00:00:00:00',
-          internal: true,
-          cidr: '127.0.0.1/8'
-        }
-      ],
-      'vEthernet (Default Switch)': [
-        {
-          address: 'fe80::6bf3:25ee:ad45:aff',
-          netmask: 'ffff:ffff:ffff:ffff::',
-          family: 'IPv6',
-          mac: '00:15:5d:cd:2a:80',
-          internal: false,
-          cidr: 'fe80::6bf3:25ee:ad45:aff/64',
-          scopeid: 34
-        },
-        {
-          address: '172.24.64.1',
-          netmask: '255.255.240.0',
-          family: 'IPv4',
-          mac: '00:15:5d:cd:2a:80',
-          internal: false,
-          cidr: '172.24.64.1/20'
-        }
-      ]
     }
     */
     // Mock networkInterfaces to return multiple interfaces, but only one matches the specified name

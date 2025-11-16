@@ -40,7 +40,7 @@ import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-de
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
 // Matterbridge
-import { Matterbridge } from './matterbridge.js';
+// import { Matterbridge } from './matterbridge.js';
 import { Frontend } from './frontend.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
@@ -50,6 +50,7 @@ import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { SystemInformation } from './matterbridgeTypes.js';
 import { addVirtualDevice } from './helpers.js';
+import { Matterbridge } from './matterbridge.js';
 
 // Platform types
 
@@ -65,6 +66,7 @@ export type PlatformSchemaValue = string | number | boolean | bigint | object | 
 /** Platform schema type. */
 export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
+// TODO: matter.js 0.16.0 remove Matterbridge
 export type PlatformMatterbridge = Matterbridge & {
   readonly systemInformation: SystemInformation;
   readonly rootDirectory: string;
@@ -127,9 +129,9 @@ export class MatterbridgePlatform {
   /** The ready promise for the platform, which resolves when the platform is fully initialized (including context and selects). */
   ready: Promise<void>;
 
-  /** Registered MatterbridgeEndpoint Map keyed by uniqueId */
+  /** Registered MatterbridgeEndpoint map keyed by uniqueId */
   private readonly registeredEndpointsByUniqueId = new Map<string, MatterbridgeEndpoint>();
-  /** Registered MatterbridgeEndpoint Map keyed by deviceName */
+  /** Registered MatterbridgeEndpoint map keyed by deviceName */
   private readonly registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>();
 
   /**
@@ -141,7 +143,7 @@ export class MatterbridgePlatform {
    * @param {AnsiLogger} log - The logger instance.
    * @param {PlatformConfig} config - The platform configuration.
    */
-  constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
+  protected constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
     this.matterbridge = matterbridge;
     this.log = log;
     this.config = config;
@@ -301,12 +303,41 @@ export class MatterbridgePlatform {
    * @returns {void}
    */
   saveConfig(config: PlatformConfig): void {
-    // TODO: replace with a message to the matterbridge thread
+    // TODO: replace with a message to the plugins thread
     const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
     if (!plugin) {
       throw new Error(`Plugin ${this.name} not found`);
     }
     (this.matterbridge as InternalPlatformMatterbridge).plugins.saveConfigFromJson(plugin, config); // No await as it's not necessary to wait
+  }
+
+  /**
+   * Get the platform schema for the config editor. This will retrieve the schema from the Matterbridge plugin manager.
+   *
+   * @returns {PlatformSchema} The platform schema.
+   */
+  getSchema(): PlatformSchema {
+    // TODO: replace with a message to the plugins thread
+    const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
+    if (!plugin || !isValidObject(plugin.schemaJson)) {
+      throw new Error(`Plugin ${this.name} not found`);
+    }
+    return plugin.schemaJson;
+  }
+
+  /**
+   * Set the platform schema for the config editor. This will update the schema in the Matterbridge plugin manager but will not change the schema file.
+   *
+   * @param {PlatformSchema} [schema] - The platform schema to set.
+   * @returns {void}
+   */
+  setSchema(schema: PlatformSchema): void {
+    // TODO: replace with a message to the plugins thread
+    const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
+    if (!plugin) {
+      throw new Error(`Plugin ${this.name} not found`);
+    }
+    plugin.schemaJson = schema;
   }
 
   /**
@@ -351,12 +382,12 @@ export class MatterbridgePlatform {
    * @param { 'light' | 'outlet' | 'switch' | 'mounted_switch' } type - The type of the virtual device.
    * @param { () => Promise<void> } callback - The callback to call when the virtual device is turned on.
    *
-   * @returns {Promise<void>} A promise that resolves when the virtual device is registered.
+   * @returns {Promise<boolean>} A promise that resolves to true if the virtual device was successfully registered, false otherwise.
    *
    * @remarks
    * The virtual devices don't show up in the device list of the frontend.
    */
-  async registerVirtualDevice(name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<void> {
+  async registerVirtualDevice(name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<boolean> {
     let aggregator: Endpoint<AggregatorEndpoint> | undefined;
     // TODO: replace with a message to the matterbridge thread
     if (this.matterbridge.bridgeMode === 'bridge') {
@@ -367,11 +398,14 @@ export class MatterbridgePlatform {
     if (aggregator) {
       if (aggregator.parts.has(name.replaceAll(' ', '') + ':' + type)) {
         this.log.warn(`Virtual device ${name} already registered. Please use a different name.`);
+        return false;
       } else {
         await addVirtualDevice(aggregator, name.slice(0, 32), type, callback);
         this.log.info(`Virtual device ${name} created.`);
+        return true;
       }
     }
+    return false;
   }
 
   /**

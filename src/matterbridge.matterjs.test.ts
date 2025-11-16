@@ -15,7 +15,7 @@ import { FabricIndex } from '@matter/types';
 import { FabricAction } from '@matter/protocol';
 
 import { Matterbridge } from './matterbridge.js';
-import { loggerLogSpy, setupTest } from './utils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
@@ -29,6 +29,8 @@ describe('Matterbridge matterjs', () => {
   });
 
   afterAll(async () => {
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -148,14 +150,10 @@ describe('Matterbridge matterjs', () => {
     });
     await Promise.resolve();
 
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10);
-
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing matter node storage...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Matter node storage closed`);
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);
 });

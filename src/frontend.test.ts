@@ -37,9 +37,8 @@ import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
 import { wait, waiter } from './utils/wait.js';
-import { loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.ts';
-import {} from './frontendTypes.ts';
-import { BroadcastServer } from './broadcastServer.ts';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 // Mock BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
@@ -69,6 +68,8 @@ describe('Matterbridge frontend', () => {
 
   afterAll(async () => {
     frontend.destroy();
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -736,9 +737,9 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Matterbridge.destroyInstance()', async () => {
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 100);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
 
     expect(stopSpy).toHaveBeenCalledTimes(1);
     expect((matterbridge as any).frontend.httpServer).toBeUndefined();

@@ -9,8 +9,9 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 
+import { setupTest } from '../jestutils/jestHelpers.js';
+
 import { createZip } from './createZip.js';
-import { setupTest } from './jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);

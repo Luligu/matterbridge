@@ -70,7 +70,7 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
     cookTime: number = 60, // 1 minute
     maxCookTime: number = 3600, // 1 hour
   ) {
-    super([microwaveOven, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([microwaveOven, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Microwave Oven');
     this.createDefaultPowerSourceWiredClusterServer();

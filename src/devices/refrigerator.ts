@@ -51,7 +51,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * - Use `addCabinet` to add one or more cabinets to the refrigerator.
    */
   constructor(name: string, serial: string) {
-    super([refrigerator, powerSource], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([refrigerator, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Refrigerator');
     this.createDefaultPowerSourceWiredClusterServer();
@@ -100,7 +100,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
     supportedTemperatureLevels: string[] = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
     currentTemperature: number = 1000, // Default to 10.00 degrees Celsius
   ): MatterbridgeEndpoint {
-    const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetCooler, { tagList }, true);
+    const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetCooler, { tagList });
     cabinet.log.logName = name;
     cabinet.createDefaultIdentifyClusterServer();
     createLevelTemperatureControlClusterServer(cabinet, selectedTemperatureLevel, supportedTemperatureLevels);

@@ -29,6 +29,7 @@ export * from './matterbridge.js';
 export * from './matterbridgeTypes.js';
 export * from './matterbridgeEndpoint.js';
 export * from './matterbridgeEndpointHelpers.js';
+export * from './matterbridgeEndpointTypes.js';
 export * from './matterbridgeBehaviors.js';
 export * from './matterbridgeDeviceTypes.js';
 export * from './matterbridgePlatform.js';

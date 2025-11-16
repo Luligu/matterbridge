@@ -120,13 +120,13 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
-import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence, flushAsync, loggerLogSpy, setDebug, setupTest } from './utils/jestHelpers.js';
+import { assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
 
 // Setup the matter and test environment
-createTestEnvironment(HOMEDIR);
+createTestEnvironment(NAME);
 
 describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
@@ -173,6 +173,8 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -295,7 +297,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a onOffLight device', async () => {
-    light = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
+    light = new MatterbridgeEndpoint(deviceType, { id: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
     expect(light).toBeDefined();
     expect(light.id).toBe('OnOffLight');
     expect(light.type.name).toBe(deviceType.name.replace('-', '_'));
@@ -306,7 +308,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create an enhanced onOffLight device', async () => {
-    enhancedLight = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'EnhancedOnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
+    enhancedLight = new MatterbridgeEndpoint(deviceType, { id: 'EnhancedOnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
     expect(enhancedLight).toBeDefined();
     expect(enhancedLight.id).toBe('EnhancedOnOffLight');
     expect(enhancedLight.type.name).toBe(deviceType.name.replace('-', '_'));
@@ -317,7 +319,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a cover lift device', async () => {
-    coverLift = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'WindowCoverLift' });
+    coverLift = new MatterbridgeEndpoint(coverDevice, { id: 'WindowCoverLift' });
     coverLift.addRequiredClusterServers();
     expect(coverLift).toBeDefined();
     expect(coverLift.id).toBe('WindowCoverLift');
@@ -325,7 +327,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a cover tilt device', async () => {
-    coverLiftTilt = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'WindowCoverTilt' });
+    coverLiftTilt = new MatterbridgeEndpoint(coverDevice, { id: 'WindowCoverTilt' });
     coverLiftTilt.createDefaultLiftTiltWindowCoveringClusterServer();
     coverLiftTilt.addRequiredClusterServers();
     expect(coverLiftTilt).toBeDefined();
@@ -334,7 +336,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a lock device', async () => {
-    lock = new MatterbridgeEndpoint(doorLockDevice, { uniqueStorageKey: 'DoorLock' });
+    lock = new MatterbridgeEndpoint(doorLockDevice, { id: 'DoorLock' });
     lock.addRequiredClusterServers();
     expect(lock).toBeDefined();
     expect(lock.id).toBe('DoorLock');
@@ -342,7 +344,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a fan device', async () => {
-    fan = new MatterbridgeEndpoint(fanDevice, { uniqueStorageKey: 'Fan' });
+    fan = new MatterbridgeEndpoint(fanDevice, { id: 'Fan' });
     fan.createDefaultActivatedCarbonFilterMonitoringClusterServer();
     fan.createDefaultHepaFilterMonitoringClusterServer();
     fan.addRequiredClusterServers();
@@ -352,7 +354,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a thermostat device', async () => {
-    thermostat = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'Thermostat' });
+    thermostat = new MatterbridgeEndpoint(thermostatDevice, { id: 'Thermostat' });
     thermostat.addRequiredClusterServers();
     expect(thermostat).toBeDefined();
     expect(thermostat.id).toBe('Thermostat');
@@ -360,7 +362,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a valve device', async () => {
-    valve = new MatterbridgeEndpoint(waterValve, { uniqueStorageKey: 'WaterValve' });
+    valve = new MatterbridgeEndpoint(waterValve, { id: 'WaterValve' });
     valve.addRequiredClusterServers();
     expect(valve).toBeDefined();
     expect(valve.id).toBe('WaterValve');
@@ -368,7 +370,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a mode device', async () => {
-    mode = new MatterbridgeEndpoint(modeSelect, { uniqueStorageKey: 'ModeSelect' });
+    mode = new MatterbridgeEndpoint(modeSelect, { id: 'ModeSelect' });
     mode.createDefaultModeSelectClusterServer('Night mode', [
       { label: 'Led ON', mode: 0, semanticTags: [] },
       { label: 'Led OFF', mode: 1, semanticTags: [] },
@@ -379,7 +381,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a smoke device', async () => {
-    smoke = new MatterbridgeEndpoint(smokeCoAlarm, { uniqueStorageKey: 'SmokeSensor' });
+    smoke = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'SmokeSensor' });
     smoke.addRequiredClusterServers();
     expect(smoke).toBeDefined();
     expect(smoke.id).toBe('SmokeSensor');
@@ -387,7 +389,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a water leak device', async () => {
-    leak = new MatterbridgeEndpoint(waterLeakDetector, { uniqueStorageKey: 'LeakSensor' });
+    leak = new MatterbridgeEndpoint(waterLeakDetector, { id: 'LeakSensor' });
     leak.createDefaultBooleanStateConfigurationClusterServer();
     leak.addRequiredClusterServers();
     expect(leak).toBeDefined();
@@ -396,7 +398,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a laundry device', async () => {
-    laundry = new MatterbridgeEndpoint(laundryWasher, { uniqueStorageKey: 'Laundry' });
+    laundry = new MatterbridgeEndpoint(laundryWasher, { id: 'Laundry' });
     laundry.addRequiredClusterServers();
     expect(laundry).toBeDefined();
     expect(laundry.id).toBe('Laundry');
@@ -404,7 +406,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a waterHeater device', async () => {
-    heater = new MatterbridgeEndpoint(waterHeater, { uniqueStorageKey: 'WaterHeater' });
+    heater = new MatterbridgeEndpoint(waterHeater, { id: 'WaterHeater' });
     heater.createDefaultIdentifyClusterServer();
     heater.createDefaultHeatingThermostatClusterServer();
     // heater.addRequiredClusterServers(); // Wait for the PR 304 to finish with the cluster helpers
@@ -458,7 +460,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.hasClusterServer('Descriptor')).toBeTruthy();
     expect(light.hasClusterServer('descriptor')).toBeTruthy();
     // consoleWarnSpy?.mockRestore();
-    // console.warn(device.behaviors.optionsFor(DescriptorBehavior));
+    // console.warn(light.behaviors.optionsFor(DescriptorBehavior));
 
     expect(light.behaviors.supported['identify']).toBeDefined();
     expect(light.behaviors.has(IdentifyBehavior)).toBeTruthy();
@@ -1324,7 +1326,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('destroy instance', async () => {
     expect(matterbridge).toBeDefined();
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance(10, 250);
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge);
   });
 });

@@ -64,7 +64,7 @@ export class BatteryStorage extends MatterbridgeEndpoint {
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
-    super([batteryStorage, electricalSensor, deviceEnergyManagement], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+    super([batteryStorage, electricalSensor, deviceEnergyManagement], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Solar Power')
       .createDefaultPowerTopologyClusterServer()
