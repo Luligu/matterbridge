@@ -162,6 +162,7 @@ import {
   getDefaultDeviceEnergyManagementModeClusterServer,
   getDefaultPowerSourceBatteryClusterServer,
 } from './matterbridgeEndpointHelpers.js';
+import { inspectError } from './utils/error.js';
 
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
@@ -698,10 +699,18 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (alreadyAdded) return child;
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      this.add(child);
+      try {
+        this.add(child);
+      } catch (error) {
+        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
+      }
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
-      this.parts.add(child);
+      try {
+        this.parts.add(child);
+      } catch (error) {
+        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle NOT installed) child endpoint ${CYAN}${endpointName}${db}`, error);
+      }
     }
     return child;
   }
@@ -769,10 +778,18 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (alreadyAdded) return child;
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      this.add(child);
+      try {
+        this.add(child);
+      } catch (error) {
+        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
+      }
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
-      this.parts.add(child);
+      try {
+        this.parts.add(child);
+      } catch (error) {
+        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle NOT installed) child endpoint ${CYAN}${endpointName}${db}`, error);
+      }
     }
     return child;
   }
