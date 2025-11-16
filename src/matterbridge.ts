@@ -2097,8 +2097,10 @@ const commissioningController = new CommissioningController({
       // Required: Give the Node a unique ID which is used to store the state of this node
       id: storeId,
 
+      // Environment to run the server node in
+      environment: this.environment,
+
       // Provide Network relevant configuration like the port
-      // Optional when operating only one device on a host, Default port is 5540
       network: {
         listeningAddressIpv4: this.ipv4Address,
         listeningAddressIpv6: this.ipv6Address,
@@ -2111,21 +2113,18 @@ const commissioningController = new CommissioningController({
       },
 
       // Provide Commissioning relevant settings
-      // Optional for development/testing purposes
       commissioning: {
         passcode,
         discriminator,
       },
 
       // Provide Node announcement settings
-      // Optional: If Ommitted some development defaults are used
       productDescription: {
         name: await storageContext.get<string>('deviceName'),
         deviceType: DeviceTypeId(await storageContext.get<number>('deviceType')),
       },
 
       // Provide defaults for the BasicInformation cluster on the Root endpoint
-      // Optional: If Omitted some development defaults are used
       basicInformation: {
         vendorId: VendorId(await storageContext.get<number>('vendorId')),
         vendorName: await storageContext.get<string>('vendorName'),
