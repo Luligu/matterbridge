@@ -3,7 +3,7 @@
  * @file src/helpers.test.ts
  * @author Luca Liguori
  * @created 2025-09-03
- * @version 1.0.12
+ * @version 1.0.13
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -331,9 +331,6 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
   expect(server.lifecycle.isReady).toBeTruthy();
   expect(server.lifecycle.isOnline).toBeFalsy();
 
-  // stop the mDNS service
-  // await server.env.get(MdnsService)[Symbol.asyncDispose]();
-
   // Stop the matter storage
   // @ts-expect-error - access to private member for testing
   await matterbridge.stopMatterStorage();
@@ -394,10 +391,7 @@ export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: 
  */
 export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<void> {
   // @ts-expect-error - accessing private member for testing
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mdns = matterbridge.environment.get(MdnsService) as any;
-  if (mdns && mdns[Symbol.asyncDispose] && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
-  if (mdns && mdns.close && typeof mdns.close === 'function') await mdns.close();
+  await matterbridge.environment.get(MdnsService).close();
 }
 
 /**
@@ -635,10 +629,7 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   expect(server.lifecycle.isOnline).toBeFalsy();
 
   // stop the mDNS service
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mdns = environment.get(MdnsService) as any;
-  if (mdns && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
-  if (mdns && typeof mdns.close === 'function') await mdns.close();
+  await environment.get(MdnsService).close();
 
   // Ensure the queue is empty and pause 100ms
   await flushAsync();
