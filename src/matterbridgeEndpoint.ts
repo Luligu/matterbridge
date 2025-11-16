@@ -2419,7 +2419,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   createSmokeOnlySmokeCOAlarmClusterServer(smokeState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal): this {
     this.behaviors.require(
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm).enable({
-        events: { smokeAlarm: true, interconnectSmokeAlarm: false, coAlarm: false, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
+        events: { smokeAlarm: true, interconnectSmokeAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
       }),
       {
         smokeState,
@@ -2443,7 +2443,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   createCoOnlySmokeCOAlarmClusterServer(coState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal): this {
     this.behaviors.require(
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.CoAlarm).enable({
-        events: { smokeAlarm: false, interconnectSmokeAlarm: false, coAlarm: true, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
+        events: { coAlarm: true, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
       }),
       {
         coState,
