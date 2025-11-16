@@ -346,6 +346,6 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
     // Stop the mDNS service
-    await server.env.get(MdnsService)[Symbol.asyncDispose]();
+    await server.env.get(MdnsService).close();
   });
 });

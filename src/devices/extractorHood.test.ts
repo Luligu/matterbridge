@@ -88,7 +88,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(64); // ExtractorHood has 64 attributes
+    expect(attributes.length).toBe(65);
   });
 
   test('invoke MatterbridgeHepaFilterMonitoringServer commands', async () => {

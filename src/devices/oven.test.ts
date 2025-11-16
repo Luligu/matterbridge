@@ -76,8 +76,11 @@ describe('Matterbridge ' + NAME, () => {
         { label: 'Clean', mode: 2, modeTags: [{ value: OvenMode.ModeTag.Clean }] },
         { label: 'Steam', mode: 3, modeTags: [{ value: OvenMode.ModeTag.Steam }] },
       ],
-      2,
-      ['180°', '190°', '200°'],
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
       OperationalState.OperationalStateEnum.Running,
       1,
       ['pre-heating', 'pre-heated', 'cooling down'],
@@ -114,7 +117,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(39); // 39 attributes for the oven device
+    expect(attributes.length).toBe(40);
   });
 
   test('cabinet1 forEachAttribute', async () => {
@@ -135,7 +138,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(51); // 51 attributes for the cabinet1 device
+    expect(attributes.length).toBe(54);
   });
 
   test('cabinet2 forEachAttribute', async () => {
@@ -156,7 +159,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(51); // 51 attributes for the cabinet2 device
+    expect(attributes.length).toBe(54);
   });
 
   test('invoke MatterbridgeOvenModeServer commands', async () => {

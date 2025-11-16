@@ -90,6 +90,7 @@ describe('Matterbridge mocked', () => {
   afterEach(async () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge, 10, 10);
+
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);
 

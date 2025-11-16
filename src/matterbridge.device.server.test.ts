@@ -127,12 +127,15 @@ describe('Matterbridge Device serverMode=server', () => {
   });
 
   test('Matterbridge.destroyInstance()', async () => {
+    const stopServerNodeSpy = jest.spyOn(matterbridge as any, 'stopServerNode');
+
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(stopServerNodeSpy).toHaveBeenCalledTimes(1);
   });
 
-  test('Restart initialize() with -bridge', async () => {
+  test('Restart initialize()', async () => {
     const startServerNodeSpy = jest.spyOn(matterbridge as any, 'startServerNode');
 
     expect((matterbridge as any).initialized).toBeFalsy();
@@ -213,7 +216,6 @@ describe('Matterbridge Device serverMode=server', () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-
     expect(stopServerNodeSpy).toHaveBeenCalledTimes(2);
   });
 });

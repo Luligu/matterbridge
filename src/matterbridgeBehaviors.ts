@@ -400,6 +400,13 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
 }
 
 export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  override initialize(_options?: {} | undefined): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Initializing MatterbridgeThermostatServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.state.externalMeasuredIndoorTemperature = this.state.localTemperature ?? undefined; // Temporary workaround until matter.js patches this
+    super.initialize();
+  }
   override setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

@@ -86,7 +86,7 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { setupTest } from './jestutils/jestHelpers.js';
 
-await setupTest(NAME, true);
+await setupTest(NAME, false);
 
 function extractClusterIds(behaviorRecord: Record<string, any>): number[] {
   return Object.values(behaviorRecord)

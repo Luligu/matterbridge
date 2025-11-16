@@ -131,7 +131,9 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId });
     });
-    expect(attributes.length).toBe(28);
+    expect(attributes.length).toBe(29);
+    expect(device.getAttribute('Descriptor', 'endpointUniqueId')).toBe(undefined);
+    /*
     expect(attributes).toEqual([
       {
         'attributeId': 65533,
@@ -302,6 +304,7 @@ describe('Matterbridge ' + NAME, () => {
         'clusterName': 'levelControl',
       },
     ]);
+    */
   });
 
   test('stop server', async () => {

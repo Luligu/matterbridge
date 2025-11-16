@@ -84,7 +84,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(72); // 72 attributes for the dishwasher device
+    expect(attributes.length).toBe(73);
   });
 
   test('invoke MatterbridgeDishwasherModeServer commands', async () => {

@@ -83,7 +83,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge);
+    await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Cleanup with instance not initialized...'));
 
     expect((matterbridge as any).initialized).toBeFalsy();
@@ -167,7 +167,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge);
+    await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
 
     expect((matterbridge as any).initialized).toBeFalsy();
@@ -222,7 +222,7 @@ describe('Matterbridge', () => {
 
   test('destroy instance', async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge);
+    await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
   });
 
