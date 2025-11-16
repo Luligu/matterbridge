@@ -1299,6 +1299,7 @@ export function getDefaultOccupancySensingClusterServer(occupied = false, holdTi
     occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
     pirOccupiedToUnoccupiedDelay: holdTime,
     pirUnoccupiedToOccupiedDelay: holdTime,
+    pirUnoccupiedToOccupiedThreshold: 1,
     holdTime,
     holdTimeLimits: { holdTimeMin, holdTimeMax, holdTimeDefault: holdTime },
   });
