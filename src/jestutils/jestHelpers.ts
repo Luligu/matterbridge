@@ -33,10 +33,11 @@ import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/main/protocol';
+import { NodeStorageManager } from 'node-persist-manager';
 
 import { Matterbridge } from '../matterbridge.js';
 import { MatterbridgePlatform } from '../matterbridgePlatform.js';
-import { MATTER_STORAGE_NAME } from '../matterbridgeTypes.js';
+import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '../matterbridgeTypes.js';
 import { bridge } from '../matterbridgeDeviceTypes.js';
 
 /* Imports from a plugin
@@ -202,7 +203,8 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
 }
 
 /**
- * Start the matterbridge environment
+ * Start the matterbridge environment.
+ * Only node storage, matter storage and the server and aggregator nodes are started.
  *
  * @param {number} port The matter server port.
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} The started server and aggregator.
@@ -215,6 +217,11 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
  * ```
  */
 export async function startMatterbridgeEnvironment(port: number = 5540): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+  // Create the node storage
+  matterbridge.nodeStorage = new NodeStorageManager({ dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+  matterbridge.nodeContext = await matterbridge.nodeStorage.createStorage('matterbridge');
+
+  // Create the matter storage
   // @ts-expect-error - access to private member for testing
   await matterbridge.startMatterStorage();
   expect(matterbridge.matterStorageService).toBeDefined();
@@ -337,6 +344,10 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
   expect(matterbridge.matterStorageService).not.toBeDefined();
   expect(matterbridge.matterStorageManager).not.toBeDefined();
   expect(matterbridge.matterbridgeContext).not.toBeDefined();
+
+  // Stop the node storage
+  await matterbridge.nodeContext?.close();
+  await matterbridge.nodeStorage?.close();
 
   // Ensure the queue is empty and pause
   await flushAsync();
