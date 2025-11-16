@@ -33,11 +33,11 @@ Advantages:
 ### Breaking Changes
 
 - [matter]: This release brings the upgrade to matter 1.4.2 and matter.js 0.16.0.
-- [platform]: Removed Matterbridge in the platform constructor (deprecated since 3.0.0).
+- [platform]: Changed Matterbridge (deprecated since 3.0.0) with PlatformMatterbridge in the platform constructor.
 - [endpoint]: Removed uniqueStorageKey in MatterbridgeEndpointOptions (deprecated since months).
 - [endpoint]: Removed endpointId in MatterbridgeEndpointOptions (deprecated since months).
-- [Oven]: The addCabinet() of Oven class has been updated to support TemperatureNumber.
-- [Refrigerator]: The addCabinet() of Refrigerator class has been updated to support TemperatureNumber.
+- [Oven]: The addCabinet() of Oven class has been updated to support TemperatureNumber (Matter 1.4.2).
+- [Refrigerator]: The addCabinet() of Refrigerator class has been updated to support TemperatureNumber (Matter 1.4.2).
 
 ### Changed device types in Matter 1.4.2
 
