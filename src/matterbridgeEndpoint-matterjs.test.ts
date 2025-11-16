@@ -173,8 +173,6 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
-    // Close mDNS instance
-    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -269,7 +267,7 @@ describe('Matterbridge ' + NAME, () => {
     fileDestination.context.run(() =>
       fileDestination.add(
         Diagnostic.message({
-          now: Time.now(),
+          now: new Date(),
           facility: 'Server node',
           level: MatterLogLevel.INFO,
           prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',
@@ -1055,8 +1053,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
     expect(thermostat.behaviors.has(MatterbridgeThermostatServer)).toBeTruthy();
     expect(thermostat.behaviors.elementsOf(MatterbridgeThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
+    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0, 254]);
+    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([253]);
     await invokeBehaviorCommand(thermostat, 'thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermostat.id}.${thermostat.number})`);
   });
@@ -1132,7 +1130,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(74);
+    expect(count).toBe(75);
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {
@@ -1321,12 +1319,17 @@ describe('Matterbridge ' + NAME, () => {
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
     await server.close();
-    await server.env.get(MdnsService)[Symbol.asyncDispose](); // loadInstance(false) so destroyInstance() does not stop the mDNS service
   });
 
-  test('destroy instance', async () => {
+  test('destroy the Matterbridge instance', async () => {
     expect(matterbridge).toBeDefined();
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
+  });
+
+  test('close the mDNS instance', async () => {
+    expect(matterbridge).toBeDefined();
+    // Close the mDNS instance
+    await closeMdnsInstance(matterbridge);
   });
 });
