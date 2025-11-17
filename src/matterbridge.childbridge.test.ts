@@ -3,9 +3,12 @@
 /* eslint-disable no-console */
 /* eslint-disable jest/no-conditional-expect */
 
-const MATTER_PORT = 6014;
+const MATTER_PORT = 6100;
+const FRONTEND_PORT = 8802;
 const NAME = 'MatterbridgeChildBridge';
 const HOMEDIR = path.join('jest', NAME);
+const PASSCODE = 123456;
+const DISCRIMINATOR = 3860;
 
 process.argv = [
   'node',
@@ -17,7 +20,7 @@ process.argv = [
   'debug',
   '-childbridge',
   '-frontend',
-  '8802',
+  FRONTEND_PORT.toString(),
   '-homedir',
   HOMEDIR,
   '-profile',
@@ -25,9 +28,9 @@ process.argv = [
   '-port',
   MATTER_PORT.toString(),
   '-passcode',
-  '123456',
+  PASSCODE.toString(),
   '-discriminator',
-  '3860',
+  DISCRIMINATOR.toString(),
 ];
 
 import path from 'node:path';
@@ -40,7 +43,7 @@ import { BasicInformationServer } from '@matter/node/behaviors/basic-information
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
 import { PluginManager } from './pluginManager.js';
-import { dev, plg } from './matterbridgeTypes.js';
+import { dev, MATTER_STORAGE_NAME, plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
@@ -70,7 +73,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('JestChildbridge');
     expect(matterbridge.bridgeMode).toBe('childbridge');
-    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, 'matterstorage'));
+    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
 
     // Clear all plugins
     plugins = matterbridge.plugins;
@@ -108,8 +111,8 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
 
     expect((matterbridge as any).mdnsInterface).toBe(undefined);
     expect((matterbridge as any).port).toBe(MATTER_PORT);
-    expect((matterbridge as any).passcode).toBe(123456);
-    expect((matterbridge as any).discriminator).toBe(3860);
+    expect((matterbridge as any).passcode).toBe(PASSCODE);
+    expect((matterbridge as any).discriminator).toBe(DISCRIMINATOR);
 
     await new Promise<void>((resolve) => {
       matterbridge.once('childbridge_started', () => {
@@ -333,8 +336,14 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).initialized).toBeTruthy();
     plugins = (matterbridge as any).plugins;
 
+    await new Promise<void>((resolve) => {
+      matterbridge.once('childbridge_started', () => {
+        resolve();
+      });
+    });
+
     expect(matterbridge.plugins.size).toBe(4);
-    expect(matterbridge.devices.size).toBe(2);
+    expect(matterbridge.devices.size).toBe(4);
 
     await waiter(
       'Matterbridge restarted',
@@ -347,12 +356,11 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
           plugins.array()[3].reachabilityTimeout !== undefined
         );
       },
-      false,
-      10000,
+      true,
+      60000,
       100,
       true,
     );
-    await Promise.resolve();
 
     await waiter(
       'Matter servers online',
@@ -364,12 +372,11 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
           plugins.array()[3].serverNode?.lifecycle.isOnline === true
         );
       },
-      false,
-      10000,
+      true,
+      60000,
       100,
       true,
     );
-    await Promise.resolve();
 
     for (const plugin of plugins) {
       expect(plugin.serverNode).toBeDefined();
@@ -387,7 +394,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
 
     expect(matterbridge.plugins.size).toBe(4);
     expect(matterbridge.devices.size).toBe(4);
-  }, 300000);
+  }, 60000);
 
   test('set reachable -bridge mode', async () => {
     for (const plugin of matterbridge.plugins.array()) {
@@ -420,5 +427,8 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
   });
 });
