@@ -27,8 +27,10 @@ import {
   server,
   setDebug,
   setupTest,
+  startMatterbridge,
   startMatterbridgeEnvironment,
   startServerNode,
+  stopMatterbridge,
   stopMatterbridgeEnvironment,
   stopServerNode,
 } from './jestHelpers.js';
@@ -233,5 +235,35 @@ describe('Matter.js instance', () => {
     await stopServerNode(server);
     expect(server).toBeDefined();
     expect(server).toBeInstanceOf(ServerNode);
+  });
+});
+
+describe('Matterbridge active instance', () => {
+  beforeAll(async () => {
+    await setupTest('MatterbridgeInitialized', true);
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('should start the active Matterbridge instance', async () => {
+    await startMatterbridge('bridge');
+    expect(matterbridge).toBeDefined();
+  });
+
+  test('should stop the active Matterbridge instance', async () => {
+    await stopMatterbridge();
+    expect(matterbridge).toBeDefined();
+    // @ts-expect-error - accessing private member for testing
+    expect(Matterbridge.instance).toBeUndefined();
   });
 });
