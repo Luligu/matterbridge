@@ -1,7 +1,7 @@
 // src\frontend.websocket.test.ts
 
-const MATTER_PORT = 6008;
-const FRONTEND_PORT = 8284;
+const MATTER_PORT = 9002;
+const FRONTEND_PORT = 8286;
 const NAME = 'FrontendWebsocket';
 const HOMEDIR = path.join('jest', NAME);
 
@@ -11,9 +11,10 @@ process.argv = [
   '-frontend',
   FRONTEND_PORT.toString(),
   '-logger',
-  'info',
+  'debug',
   '-matterlogger',
-  'info',
+  'debug',
+  '-debug',
   '-bridge',
   '-homedir',
   HOMEDIR,
@@ -33,19 +34,20 @@ import { jest } from '@jest/globals';
 import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import WebSocket from 'ws';
 import { LogLevel as MatterLogLevel } from '@matter/general';
-import { EndpointNumber } from '@matter/types';
 import { Identify } from '@matter/types/clusters';
+import { EndpointNumber } from '@matter/types/datatype';
 
 import { Matterbridge } from './matterbridge.js';
+import type { Frontend as FrontendType } from './frontend.js';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { plg, Plugin } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Frontend } from './frontend.js';
-import { isApiRequest, isApiResponse, isBroadcast, WsMessageApiLog, WsMessageApiMemoryUpdate } from './frontendTypes.js';
 import { wait, waiter } from './utils/wait.js';
 import { PluginManager } from './pluginManager.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
+import { isApiRequest, isApiResponse, isBroadcast, WsMessageApiLog, WsMessageApiMemoryUpdate } from './frontendTypes.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
@@ -85,46 +87,39 @@ const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').m
 });
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
+let ws: WebSocket;
 let WS_ID = 10050;
+let messageId = 0;
+let messageMethod: string | undefined = '';
+let messageResolve: (value: Record<string, any>) => void;
 
 describe('Matterbridge frontend', () => {
   let matterbridge: Matterbridge;
-  let ws: WebSocket;
+  let frontend: FrontendType;
 
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
   });
 
+  afterEach(async () => {
+    // Clear all mocks
+    jest.clearAllMocks();
+  });
+
   afterAll(async () => {
-    matterbridge.frontend.destroy();
-    // Close mDNS instance
-    // await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  beforeEach(() => {
-    // Clear all mocks
-    jest.clearAllMocks();
-  });
-
-  afterAll(async () => {
-    ws.close();
-  }, 60000);
-
-  let messageId = 0;
-  let messageMethod: string | undefined = '';
-  let messageResolve: (value: Record<string, any>) => void;
-
   const onMessage = (event: WebSocket.MessageEvent) => {
-    // console.log('received message:', event.data);
+    // console.log('Test ws received message:', event.data);
     const data = JSON.parse(event.data as string);
     expect(data).toBeDefined();
     if (data.id === messageId && (messageMethod ? data.method === messageMethod : true)) {
-      messageResolve(data);
+      if (messageResolve) messageResolve(data);
     }
   };
 
@@ -133,14 +128,18 @@ describe('Matterbridge frontend', () => {
       messageId = id;
       messageMethod = method;
       messageResolve = resolve;
-      if (message) ws.send(JSON.stringify(message));
+      if (message) {
+        // console.log('Test ws send message:', JSON.stringify(message));
+        ws.send(JSON.stringify(message));
+      }
     });
   };
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
+    frontend = matterbridge.frontend;
     expect(matterbridge).toBeDefined();
-    expect(matterbridge.profile).toBe('JestFrontendWebsocket');
+    expect(frontend).toBeDefined();
     expect(matterbridge.bridgeMode).toBe('bridge');
     expect((matterbridge as any).initialized).toBe(true);
 
@@ -155,11 +154,19 @@ describe('Matterbridge frontend', () => {
     // prettier-ignore
     await waiter('Matter server node started', () => { return matterbridge.serverNode?.lifecycle.isOnline === true; });
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8284${UNDERLINEOFF}${rs}`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening`);
+    await flushAsync();
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
-  }, 60000);
+  });
+
+  test('Frontend is running on http', async () => {
+    expect((matterbridge as any).frontend.httpServer).toBeDefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect((matterbridge as any).frontend.expressApp).toBeDefined();
+    expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
+  });
 
   test('Add mock plugin 1', async () => {
     await matterbridge.plugins.add('./src/mock/plugin1');
@@ -281,13 +288,14 @@ describe('Matterbridge frontend', () => {
   });
 
   test('create Websocket', async () => {
-    ws = new WebSocket(`ws://localhost:8284`);
+    ws = new WebSocket(`ws://localhost:${FRONTEND_PORT}`);
     expect(ws).toBeDefined();
     // prettier-ignore
-    await waiter('Websocket connected', () => { return ws.readyState === WebSocket.OPEN; });
+    await waiter('Websocket connected', () => { return ws.readyState === WebSocket.OPEN; }, true, 5000, 100, true);
     expect(ws.readyState).toBe(WebSocket.OPEN);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/WebSocketServer client ".*" connected to Matterbridge/));
     ws.addEventListener('message', onMessage);
+    await flushAsync();
   });
 
   test('Websocket API send bad json message', async () => {
@@ -1504,10 +1512,17 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
+    setDebug(true);
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Stopping the frontend...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Frontend app closed successfully`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocket server closed successfully`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Http server closed successfully`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Frontend stopped successfully`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+
+    // Close mDNS instance
+    // await closeMdnsInstance(matterbridge);
   });
 });
