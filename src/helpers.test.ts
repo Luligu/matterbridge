@@ -19,58 +19,39 @@ const { getShelly, postShelly } = await import('./shelly.js');
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-// @matter
-import { LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Logger } from '@matter/general';
-import { DeviceTypeId, VendorId } from '@matter/types';
-import { MdnsService } from '@matter/protocol';
-import { ServerNode, Endpoint, PositionTag } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { Logger } from '@matter/general';
+import { Endpoint } from '@matter/node';
 import { BridgedDeviceBasicInformationServer, OnOffServer } from '@matter/node/behaviors';
-import { RootEndpoint } from '@matter/node/endpoints/root';
 
 import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { aggregator, consoleLogSpy, createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, matterbridge, server, setupTest, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
-import { consoleLogSpy, setupTest } from './jestutils/jestHelpers.js';
+
+const shutdownProcessSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess').mockImplementation(async () => {
+  console.log('Mocked shutdownProcess called');
+  return Promise.resolve();
+});
+const restartProcessSpy = jest.spyOn(Matterbridge.prototype, 'restartProcess').mockImplementation(async () => {
+  console.log('Mocked restartProcess called');
+  return Promise.resolve();
+});
+const updateProcessSpy = jest.spyOn(Matterbridge.prototype, 'updateProcess').mockImplementation(async () => {
+  console.log('Mocked updateProcess called');
+  return Promise.resolve();
+});
 
 // Setup the test environment
 setupTest(NAME, false);
 
 describe('Matterbridge ' + HOMEDIR, () => {
-  const log = new AnsiLogger({ logName: HOMEDIR, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-
-  const environment = Environment.default;
-  let server: ServerNode<ServerNode.RootEndpoint>;
-  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: Endpoint;
 
-  const mockMatterbridge = {
-    matterbridgeVersion: '1.0.0',
-    matterbridgeInformation: { virtualMode: 'disabled' },
-    bridgeMode: 'bridge',
-    restartMode: '',
-    restartProcess: jest.fn(),
-    shutdownProcess: jest.fn(),
-    updateProcess: jest.fn(),
-    log,
-    frontend: {
-      wssSendRefreshRequired: jest.fn(),
-      wssSendUpdateRequired: jest.fn(),
-    },
-    nodeContext: {
-      set: jest.fn(),
-    },
-  } as unknown as Matterbridge;
-
   beforeAll(async () => {
-    // Setup the matter environment
-    environment.vars.set('log.level', MatterLogLevel.DEBUG);
-    environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', HOMEDIR);
-    environment.vars.set('runtime.signals', false);
-    environment.vars.set('runtime.exitcode', false);
+    // Create Matterbridge environment
+    await createMatterbridgeEnvironment(NAME);
+    await startMatterbridgeEnvironment(MATTER_PORT);
   });
 
   beforeEach(async () => {
@@ -81,62 +62,11 @@ describe('Matterbridge ' + HOMEDIR, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
+    // Destroy Matterbridge environment
+    await stopMatterbridgeEnvironment();
+    await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
-  });
-
-  test('create the server node', async () => {
-    // Create the server node
-    server = await ServerNode.create({
-      id: 'HelpersServerNode',
-
-      network: {
-        port: MATTER_PORT,
-      },
-
-      productDescription: {
-        name: 'HelpersServerNode',
-        deviceType: DeviceTypeId(RootEndpoint.deviceType),
-        vendorId: VendorId(0xfff1),
-        productId: 0x8001,
-      },
-
-      // Provide defaults for the BasicInformation cluster on the Root endpoint
-      basicInformation: {
-        vendorId: VendorId(0xfff1),
-        vendorName: 'Matter test',
-        productId: 0x8001,
-        productName: 'Matterbridge',
-        productLabel: 'HelpersServerNode',
-        nodeLabel: 'HelpersServerNode',
-        hardwareVersion: 1,
-        softwareVersion: 1,
-        reachable: true,
-      },
-    });
-    expect(server).toBeDefined();
-  });
-
-  test('create the aggregator', async () => {
-    // Create the aggregator
-    aggregator = new Endpoint(AggregatorEndpoint, { id: 'HelpersAggregator' });
-    expect(aggregator).toBeDefined();
-    expect(aggregator.lifecycle.isReady).toBeFalsy();
-  });
-
-  test('add the aggregator', async () => {
-    // Add the aggregator to the server
-    expect(aggregator).toBeDefined();
-    expect(aggregator.lifecycle.isReady).toBeFalsy();
-    await server.add(aggregator);
-    expect(aggregator.lifecycle.isReady).toBeTruthy();
-  });
-
-  test('start the server node', async () => {
-    // Run the server
-    await server.start();
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeTruthy();
   });
 
   test('log the server node', async () => {
@@ -180,16 +110,16 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('should not add the virtual devices', async () => {
-    mockMatterbridge.virtualMode = 'disabled';
+    matterbridge.virtualMode = 'disabled';
     expect(aggregator).toBeDefined();
-    await addVirtualDevices(mockMatterbridge, aggregator);
+    await addVirtualDevices(matterbridge, aggregator);
     expect(aggregator.parts.size).toBe(1);
   });
 
   test('add all the light virtual devices', async () => {
-    mockMatterbridge.virtualMode = 'light';
+    matterbridge.virtualMode = 'light';
     expect(aggregator).toBeDefined();
-    await addVirtualDevices(mockMatterbridge, aggregator);
+    await addVirtualDevices(matterbridge, aggregator);
     expect(aggregator.parts.has('TestDevice:light')).toBeTruthy();
     expect(aggregator.parts.has('UpdateMatterbridge:light')).toBeTruthy();
     expect(aggregator.parts.has('RestartMatterbridge:light')).toBeTruthy();
@@ -198,9 +128,9 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the outlet virtual devices', async () => {
-    mockMatterbridge.virtualMode = 'outlet';
+    matterbridge.virtualMode = 'outlet';
     expect(aggregator).toBeDefined();
-    await addVirtualDevices(mockMatterbridge, aggregator);
+    await addVirtualDevices(matterbridge, aggregator);
     expect(aggregator.parts.has('UpdateMatterbridge:outlet')).toBeTruthy();
     expect(aggregator.parts.has('RestartMatterbridge:outlet')).toBeTruthy();
     expect(aggregator.parts.has('RebootMatterbridge:outlet')).toBeFalsy();
@@ -208,9 +138,9 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the switch virtual devices', async () => {
-    mockMatterbridge.virtualMode = 'switch';
+    matterbridge.virtualMode = 'switch';
     expect(aggregator).toBeDefined();
-    await addVirtualDevices(mockMatterbridge, aggregator);
+    await addVirtualDevices(matterbridge, aggregator);
     expect(aggregator.parts.has('UpdateMatterbridge:switch')).toBeTruthy();
     expect(aggregator.parts.has('RestartMatterbridge:switch')).toBeTruthy();
     expect(aggregator.parts.has('RebootMatterbridge:switch')).toBeFalsy();
@@ -218,9 +148,9 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add all the mounted-switch virtual devices', async () => {
-    mockMatterbridge.virtualMode = 'mounted_switch';
+    matterbridge.virtualMode = 'mounted_switch';
     expect(aggregator).toBeDefined();
-    await addVirtualDevices(mockMatterbridge, aggregator);
+    await addVirtualDevices(matterbridge, aggregator);
     expect(aggregator.parts.has('UpdateMatterbridge:mounted_switch')).toBeTruthy();
     expect(aggregator.parts.has('RestartMatterbridge:mounted_switch')).toBeTruthy();
     expect(aggregator.parts.has('RebootMatterbridge:mounted_switch')).toBeFalsy();
@@ -244,10 +174,10 @@ describe('Matterbridge ' + HOMEDIR, () => {
       restartDevice.setStateOf(OnOffServer, { onOff: true });
     });
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    expect(mockMatterbridge.restartProcess).toHaveBeenCalled();
+    expect(restartProcessSpy).toHaveBeenCalled();
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
 
-    mockMatterbridge.restartMode = 'service';
+    matterbridge.restartMode = 'service';
     await new Promise<void>((resolve) => {
       const listener = (value: boolean) => {
         if (value === true) {
@@ -259,7 +189,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
       restartDevice.setStateOf(OnOffServer, { onOff: true });
     });
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    expect(mockMatterbridge.shutdownProcess).toHaveBeenCalled();
+    expect(shutdownProcessSpy).toHaveBeenCalled();
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
   });
 
@@ -280,14 +210,14 @@ describe('Matterbridge ' + HOMEDIR, () => {
       updateDevice.setStateOf(OnOffServer, { onOff: true });
     });
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    expect(mockMatterbridge.updateProcess).toHaveBeenCalled();
+    expect(matterbridge.updateProcess).toHaveBeenCalled();
     expect(updateDevice.stateOf(OnOffServer).onOff).toBe(false);
 
     // expect(await invokeBehaviorCommand(updateDevice as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
   });
 
   test('add all the virtual devices with shelly parameter', async () => {
-    mockMatterbridge.virtualMode = 'light';
+    matterbridge.virtualMode = 'light';
     const restartDevice = aggregator.parts.get('RestartMatterbridge:light');
     await restartDevice?.delete();
     const updateDevice = aggregator.parts.get('UpdateMatterbridge:light');
@@ -295,7 +225,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
     process.argv.push('-shelly');
     expect(aggregator).toBeDefined();
-    await addVirtualDevices(mockMatterbridge, aggregator);
+    await addVirtualDevices(matterbridge, aggregator);
     expect(aggregator.parts.has('TestDevice:light')).toBeTruthy();
     expect(aggregator.parts.has('UpdateMatterbridge:light')).toBeTruthy();
     expect(aggregator.parts.has('RestartMatterbridge:light')).toBeTruthy();
@@ -337,15 +267,5 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(await invokeBehaviorCommand(rebootDevice as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     expect(postShelly).toHaveBeenCalledWith('/api/system/reboot', {}, 60 * 1000);
-  });
-
-  test('close server node', async () => {
-    // Close the server
-    expect(server).toBeDefined();
-    await server.close();
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeFalsy();
-    // Stop the mDNS service
-    await server.env.get(MdnsService)[Symbol.asyncDispose]();
   });
 });
