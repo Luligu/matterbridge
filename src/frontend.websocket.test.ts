@@ -627,7 +627,6 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API /api/addplugin', async () => {
-    // setDebug(true);
     const pluginNameOrPath = path.join('.', 'src', 'mock', 'plugin4');
     const data = await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath } });
     expect(data.error).toBeUndefined();
@@ -637,13 +636,13 @@ describe('Matterbridge frontend', () => {
     });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added plugin/));
 
+    // Wrong parameters
     await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath: '' } });
     await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath } });
     await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath: 'matterbridge-mock4' } });
   });
 
   test('Websocket API /api/restartplugin DynamicPlatform', async () => {
-    // setDebug(false);
     stopServerNodeSpy.mockImplementationOnce(async () => {
       return Promise.resolve();
     });
@@ -701,6 +700,7 @@ describe('Matterbridge frontend', () => {
     });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Disabled plugin/));
 
+    // Wrong parameters
     await waitMessageId(++WS_ID, '/api/disableplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/disableplugin', params: { pluginName: '' } });
   });
 
@@ -715,6 +715,7 @@ describe('Matterbridge frontend', () => {
     });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Enabled plugin/));
 
+    // Wrong parameters
     await waitMessageId(++WS_ID, '/api/enableplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/enableplugin', params: { pluginName: '' } });
   });
 
@@ -727,6 +728,7 @@ describe('Matterbridge frontend', () => {
     expect(data.success).toBe(true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Saving config for plugin/));
 
+    // Wrong parameters
     await waitMessageId(++WS_ID, '/api/savepluginconfig', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/savepluginconfig', params: { pluginName: '', formData } });
     await waitMessageId(++WS_ID, '/api/savepluginconfig', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/savepluginconfig', params: { pluginName, formData: {} } });
     await waitMessageId(++WS_ID, '/api/savepluginconfig', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/savepluginconfig', params: { pluginName: 'matterbridge-notvalid', formData } });
@@ -743,6 +745,7 @@ describe('Matterbridge frontend', () => {
     });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Removed plugin/));
 
+    // Wrong parameters
     await waitMessageId(++WS_ID, '/api/removeplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/removeplugin', params: { pluginName: '' } });
   });
 
@@ -752,6 +755,7 @@ describe('Matterbridge frontend', () => {
     expect(data.response).toBeUndefined();
     expect(data.error).toBeDefined();
 
+    // Wrong parameters
     await waitMessageId(++WS_ID, '/api/action', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/action', params: { plugin: 'matterbridge-notvalid', action: 'test' } });
   });
 

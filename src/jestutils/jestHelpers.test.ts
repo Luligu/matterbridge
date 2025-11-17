@@ -240,7 +240,7 @@ describe('Matter.js instance', () => {
 
 describe('Matterbridge active instance', () => {
   beforeAll(async () => {
-    await setupTest('MatterbridgeInitialized', true);
+    await setupTest('MatterbridgeInitialized', false);
   });
 
   beforeEach(() => {
