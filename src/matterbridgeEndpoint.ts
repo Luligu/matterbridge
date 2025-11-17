@@ -702,6 +702,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       try {
         this.add(child);
       } catch (error) {
+        // istanbul ignore next cause is only a safety check
         inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
       }
     } else {
@@ -709,6 +710,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       try {
         this.parts.add(child);
       } catch (error) {
+        // istanbul ignore next cause is only a safety check
         inspectError(this.log, `addChildDeviceType: error adding (with lifecycle NOT installed) child endpoint ${CYAN}${endpointName}${db}`, error);
       }
     }
@@ -781,6 +783,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       try {
         this.add(child);
       } catch (error) {
+        // istanbul ignore next cause is only a safety check
         inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
       }
     } else {
@@ -788,6 +791,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       try {
         this.parts.add(child);
       } catch (error) {
+        // istanbul ignore next cause is only a safety check
         inspectError(this.log, `addChildDeviceType: error adding (with lifecycle NOT installed) child endpoint ${CYAN}${endpointName}${db}`, error);
       }
     }
