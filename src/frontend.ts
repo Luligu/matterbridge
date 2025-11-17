@@ -326,6 +326,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           // Only proceed for real WebSocket upgrades
           // istanbul ignore next cause is only a safety check
           if ((req.headers.upgrade || '').toLowerCase() !== 'websocket') {
+            this.log.error(`WebSocket upgrade error: Invalid upgrade header ${req.headers.upgrade}`);
             socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
             return socket.destroy();
           }
@@ -1435,6 +1436,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.log.debug(`Sending api response message: ${debugStringify(data)}`);
         }
         client.send(JSON.stringify(data));
+      } else {
+        // istanbul ignore next cause is only a safety check
+        this.log.error('Cannot send api response, client not connected');
       }
     };
 
