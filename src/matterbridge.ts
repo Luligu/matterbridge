@@ -907,8 +907,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * This method is responsible for initializing and starting all enabled plugins.
    * It ensures that each plugin is properly loaded and started before the bridge starts.
    *
-   * @param {boolean} [wait] - If true, the method will wait for all plugins to be fully loaded and started before resolving.
-   * @param {boolean} [start] - If true, the method will start the plugins after loading them.
+   * @param {boolean} [wait] - If true, the method will wait for all plugins to be fully loaded and started before resolving. Defaults to false.
+   * @param {boolean} [start] - If true, the method will start the plugins after loading them. Defaults to true.
    * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and started.
    */
   private async startPlugins(wait: boolean = false, start: boolean = true): Promise<void> {
@@ -1545,75 +1545,78 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     await this.startPlugins();
 
-    this.log.debug('Starting start matter interval in bridge mode');
+    this.log.debug('Starting start matter interval in bridge mode...');
     let failCount = 0;
-    this.startMatterInterval = setInterval(async () => {
-      for (const plugin of this.plugins) {
-        if (!plugin.enabled) continue;
-        if (plugin.error) {
-          clearInterval(this.startMatterInterval);
-          this.startMatterInterval = undefined;
-          this.log.debug('Cleared startMatterInterval interval for Matterbridge for plugin in error state');
-          this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
-          this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
-          this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
-          this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} is in error state. Check the logs.`, 0, 'error');
-          return;
-        }
-
-        if (!plugin.loaded || !plugin.started) {
-          this.log.debug(`Waiting (failSafeCount=${failCount}/${this.failCountLimit}) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
-          failCount++;
-          if (failCount > this.failCountLimit) {
-            this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
-            plugin.error = true;
+    this.startMatterInterval = setInterval(
+      async () => {
+        for (const plugin of this.plugins) {
+          if (!plugin.enabled) continue;
+          if (plugin.error) {
+            clearInterval(this.startMatterInterval);
+            this.startMatterInterval = undefined;
+            this.log.debug('Cleared startMatterInterval interval for Matterbridge for plugin in error state');
+            this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
+            this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
+            this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
+            this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} is in error state. Check the logs.`, 0, 'error');
+            return;
           }
-          return;
-        }
-      }
-      clearInterval(this.startMatterInterval);
-      this.startMatterInterval = undefined;
-      this.log.debug('Cleared startMatterInterval interval for Matterbridge');
 
-      // Start the Matter server node
-      this.startServerNode(this.serverNode); // We don't await this, because the server node is started in the background
-
-      // Start the Matter server node of single devices in mode 'server'
-      for (const device of this.devices.array()) {
-        if (device.mode === 'server' && device.serverNode) {
-          this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
-          this.startServerNode(device.serverNode); // We don't await this, because the server node is started in the background
-        }
-      }
-
-      // Configure the plugins
-      this.configureTimeout = setTimeout(async () => {
-        for (const plugin of this.plugins.array()) {
-          if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
-          try {
-            if ((await this.plugins.configure(plugin)) === undefined) {
-              if (plugin.configured !== true) this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} failed to configure. Check the logs.`, 0, 'error');
+          if (!plugin.loaded || !plugin.started) {
+            this.log.debug(`Waiting (failSafeCount=${failCount}/${this.failCountLimit}) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
+            failCount++;
+            if (failCount > this.failCountLimit) {
+              this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
+              plugin.error = true;
             }
-          } catch (error) {
-            plugin.error = true;
-            this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
+            return;
           }
         }
+        clearInterval(this.startMatterInterval);
+        this.startMatterInterval = undefined;
+        this.log.debug('Cleared startMatterInterval interval in bridge mode');
+
+        // Start the Matter server node
+        this.startServerNode(this.serverNode); // We don't await this, because the server node is started in the background
+
+        // Start the Matter server node of single devices in mode 'server'
+        for (const device of this.devices.array()) {
+          if (device.mode === 'server' && device.serverNode) {
+            this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
+            this.startServerNode(device.serverNode); // We don't await this, because the server node is started in the background
+          }
+        }
+
+        // Configure the plugins
+        this.configureTimeout = setTimeout(async () => {
+          for (const plugin of this.plugins.array()) {
+            if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
+            try {
+              if ((await this.plugins.configure(plugin)) === undefined) {
+                if (plugin.configured !== true) this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} failed to configure. Check the logs.`, 0, 'error');
+              }
+            } catch (error) {
+              plugin.error = true;
+              this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
+            }
+          }
+          this.frontend.wssSendRefreshRequired('plugins');
+        }, 30 * 1000).unref();
+
+        // Setting reachability to true
+        this.reachabilityTimeout = setTimeout(() => {
+          this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
+          if (this.aggregatorNode) this.setAggregatorReachability(this.aggregatorNode, true);
+        }, 60 * 1000).unref();
+
+        // Logger.get('LogServerNode').info(this.serverNode);
+        this.emit('bridge_started');
+        this.log.notice('Matterbridge bridge started successfully');
+        this.frontend.wssSendRefreshRequired('settings');
         this.frontend.wssSendRefreshRequired('plugins');
-      }, 30 * 1000).unref();
-
-      // Setting reachability to true
-      this.reachabilityTimeout = setTimeout(() => {
-        this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
-        if (this.aggregatorNode) this.setAggregatorReachability(this.aggregatorNode, true);
-      }, 60 * 1000).unref();
-
-      // Logger.get('LogServerNode').info(this.serverNode);
-      this.emit('bridge_started');
-      this.log.notice('Matterbridge bridge started successfully');
-      this.frontend.wssSendRefreshRequired('settings');
-      this.frontend.wssSendRefreshRequired('plugins');
-    }, this.startMatterIntervalMs);
+      },
+      Number(process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS']) || this.startMatterIntervalMs,
+    );
   }
 
   /**
@@ -1640,97 +1643,100 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Start the Matterbridge in childbridge mode when all plugins are loaded and started
     this.log.debug('Starting start matter interval in childbridge mode...');
     let failCount = 0;
-    this.startMatterInterval = setInterval(async () => {
-      let allStarted = true;
-      for (const plugin of this.plugins.array()) {
-        if (!plugin.enabled) continue;
-        if (plugin.error) {
-          clearInterval(this.startMatterInterval);
-          this.startMatterInterval = undefined;
-          this.log.debug('Cleared startMatterInterval interval for a plugin in error state');
-          this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
-          this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
-          this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
-          this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} is in error state. Check the logs.`, 0, 'error');
-          return;
-        }
-
-        this.log.debug(`Checking plugin ${plg}${plugin.name}${db} to start matter in childbridge mode...`);
-        if (!plugin.loaded || !plugin.started) {
-          allStarted = false;
-          this.log.debug(`Waiting (failSafeCount=${failCount}/${this.failCountLimit}) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
-          failCount++;
-          if (failCount > this.failCountLimit) {
-            this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
-            plugin.error = true;
-          }
-        }
-      }
-      if (!allStarted) return;
-      clearInterval(this.startMatterInterval);
-      this.startMatterInterval = undefined;
-      if (delay > 0) await wait(delay); // Wait for the specified delay to ensure all plugins server nodes are ready
-      this.log.debug('Cleared startMatterInterval interval in childbridge mode');
-
-      // Configure the plugins
-      this.configureTimeout = setTimeout(async () => {
+    this.startMatterInterval = setInterval(
+      async () => {
+        let allStarted = true;
         for (const plugin of this.plugins.array()) {
-          if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
-          try {
-            if ((await this.plugins.configure(plugin)) === undefined) {
-              if (plugin.configured !== true) this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} failed to configure. Check the logs.`, 0, 'error');
+          if (!plugin.enabled) continue;
+          if (plugin.error) {
+            clearInterval(this.startMatterInterval);
+            this.startMatterInterval = undefined;
+            this.log.debug('Cleared startMatterInterval interval for a plugin in error state');
+            this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
+            this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
+            this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
+            this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} is in error state. Check the logs.`, 0, 'error');
+            return;
+          }
+
+          this.log.debug(`Checking plugin ${plg}${plugin.name}${db} to start matter in childbridge mode...`);
+          if (!plugin.loaded || !plugin.started) {
+            allStarted = false;
+            this.log.debug(`Waiting (failSafeCount=${failCount}/${this.failCountLimit}) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
+            failCount++;
+            if (failCount > this.failCountLimit) {
+              this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
+              plugin.error = true;
             }
-          } catch (error) {
-            plugin.error = true;
-            this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
           }
         }
+        if (!allStarted) return;
+        clearInterval(this.startMatterInterval);
+        this.startMatterInterval = undefined;
+        if (delay > 0) await wait(Number(process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS']) || delay); // Wait for the specified delay to ensure all plugins server nodes are ready
+        this.log.debug('Cleared startMatterInterval interval in childbridge mode');
+
+        // Configure the plugins
+        this.configureTimeout = setTimeout(async () => {
+          for (const plugin of this.plugins.array()) {
+            if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
+            try {
+              if ((await this.plugins.configure(plugin)) === undefined) {
+                if (plugin.configured !== true) this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} failed to configure. Check the logs.`, 0, 'error');
+              }
+            } catch (error) {
+              plugin.error = true;
+              this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
+            }
+          }
+          this.frontend.wssSendRefreshRequired('plugins');
+        }, 30 * 1000).unref();
+
+        for (const plugin of this.plugins.array()) {
+          if (!plugin.enabled || plugin.error) continue;
+          if (plugin.type !== 'DynamicPlatform' && (!plugin.registeredDevices || plugin.registeredDevices === 0)) {
+            this.log.error(`Plugin ${plg}${plugin.name}${er} didn't register any devices to Matterbridge. Verify the plugin configuration.`);
+            continue;
+          }
+          // istanbul ignore next if cause is just a safety check
+          if (!plugin.serverNode) {
+            this.log.error(`Server node not found for plugin ${plg}${plugin.name}${er}`);
+            continue;
+          }
+          if (!plugin.storageContext) {
+            this.log.error(`Storage context not found for plugin ${plg}${plugin.name}${er}`);
+            continue;
+          }
+          if (!plugin.nodeContext) {
+            this.log.error(`Node storage context not found for plugin ${plg}${plugin.name}${er}`);
+            continue;
+          }
+          // Start the Matter server node
+          this.startServerNode(plugin.serverNode); // We don't await this, because the server node is started in the background
+
+          // Setting reachability to true
+          plugin.reachabilityTimeout = setTimeout(() => {
+            this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf}`);
+            if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
+          }, 60 * 1000).unref();
+        }
+
+        // Start the Matter server node of single devices in mode 'server'
+        for (const device of this.devices.array()) {
+          if (device.mode === 'server' && device.serverNode) {
+            this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
+            this.startServerNode(device.serverNode); // We don't await this, because the server node is started in the background
+          }
+        }
+
+        // Logger.get('LogServerNode').info(this.serverNode);
+        this.emit('childbridge_started');
+        this.log.notice('Matterbridge childbridge started successfully');
+        this.frontend.wssSendRefreshRequired('settings');
         this.frontend.wssSendRefreshRequired('plugins');
-      }, 30 * 1000).unref();
-
-      for (const plugin of this.plugins.array()) {
-        if (!plugin.enabled || plugin.error) continue;
-        if (plugin.type !== 'DynamicPlatform' && (!plugin.registeredDevices || plugin.registeredDevices === 0)) {
-          this.log.error(`Plugin ${plg}${plugin.name}${er} didn't register any devices to Matterbridge. Verify the plugin configuration.`);
-          continue;
-        }
-        // istanbul ignore next if cause is just a safety check
-        if (!plugin.serverNode) {
-          this.log.error(`Server node not found for plugin ${plg}${plugin.name}${er}`);
-          continue;
-        }
-        if (!plugin.storageContext) {
-          this.log.error(`Storage context not found for plugin ${plg}${plugin.name}${er}`);
-          continue;
-        }
-        if (!plugin.nodeContext) {
-          this.log.error(`Node storage context not found for plugin ${plg}${plugin.name}${er}`);
-          continue;
-        }
-        // Start the Matter server node
-        this.startServerNode(plugin.serverNode); // We don't await this, because the server node is started in the background
-
-        // Setting reachability to true
-        plugin.reachabilityTimeout = setTimeout(() => {
-          this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf}`);
-          if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
-        }, 60 * 1000).unref();
-      }
-
-      // Start the Matter server node of single devices in mode 'server'
-      for (const device of this.devices.array()) {
-        if (device.mode === 'server' && device.serverNode) {
-          this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
-          this.startServerNode(device.serverNode); // We don't await this, because the server node is started in the background
-        }
-      }
-
-      // Logger.get('LogServerNode').info(this.serverNode);
-      this.emit('childbridge_started');
-      this.log.notice('Matterbridge childbridge started successfully');
-      this.frontend.wssSendRefreshRequired('settings');
-      this.frontend.wssSendRefreshRequired('plugins');
-    }, this.startMatterIntervalMs);
+      },
+      Number(process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS']) || this.startMatterIntervalMs,
+    );
   }
 
   /**
