@@ -218,10 +218,7 @@ export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | '
   // Get the frontend, plugins and devices
   frontend = matterbridge.frontend;
   plugins = matterbridge.plugins;
-  plugins.clear();
-  await plugins.saveToStorage();
   devices = matterbridge.devices;
-  devices.clear();
 
   // @ts-expect-error - access to private member for testing
   expect(matterbridge.initialized).toBeTruthy();
