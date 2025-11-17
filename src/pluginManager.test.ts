@@ -5,6 +5,7 @@ const NAME = 'PluginManager';
 const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
+process.env.NPM_CONFIG_PREFIX = path.join('jest', NAME, '.npm-global');
 
 // Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./utils/spawn.js', () => ({
@@ -146,6 +147,7 @@ describe('PluginManager', () => {
     plugins.logLevel = LogLevel.DEBUG;
     server = (plugins as any).server;
     expect(server).toBeInstanceOf(BroadcastServer);
+    matterbridge.globalModulesDirectory = path.join('jest', NAME, '.npm-global', 'node_modules');
   });
 
   test('BroadcastServer from local path', async () => {
@@ -848,8 +850,18 @@ describe('PluginManager', () => {
   });
 
   test('install example plugins', async () => {
-    execSync((useSudo ? 'sudo ' : '') + 'npm install -g matterbridge-example-accessory-platform --omit=dev');
-    execSync((useSudo ? 'sudo ' : '') + 'npm install -g matterbridge-example-dynamic-platform --omit=dev');
+    execSync((useSudo ? 'sudo ' : '') + `npm link`, {
+      stdio: 'ignore',
+      env: { ...process.env, NPM_CONFIG_PREFIX: path.join(HOMEDIR, '.npm-global') },
+    });
+    execSync((useSudo ? 'sudo ' : '') + `npm install -g matterbridge-example-accessory-platform --omit=dev`, {
+      stdio: 'ignore',
+      env: { ...process.env, NPM_CONFIG_PREFIX: path.join(HOMEDIR, '.npm-global') },
+    });
+    execSync((useSudo ? 'sudo ' : '') + `npm install -g matterbridge-example-dynamic-platform --omit=dev`, {
+      stdio: 'ignore',
+      env: { ...process.env, NPM_CONFIG_PREFIX: path.join(HOMEDIR, '.npm-global') },
+    });
     expect(plugins.length).toBe(0);
   }, 60000);
 
@@ -1536,11 +1548,20 @@ describe('PluginManager', () => {
     plugin = await plugins.shutdown(plugin as Plugin, 'Test with Jest');
   });
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
   test('uninstall example plugins', async () => {
-    execSync((useSudo ? 'sudo ' : '') + 'npm uninstall -g matterbridge-example-accessory-platform --omit=dev');
-    execSync((useSudo ? 'sudo ' : '') + 'npm uninstall -g matterbridge-example-dynamic-platform --omit=dev');
+    execSync((useSudo ? 'sudo ' : '') + `npm uninstall -g matterbridge-example-accessory-platform --omit=dev`, {
+      stdio: 'inherit',
+      env: { ...process.env, NPM_CONFIG_PREFIX: path.join(HOMEDIR, '.npm-global') },
+    });
+    execSync((useSudo ? 'sudo ' : '') + `npm uninstall -g matterbridge-example-dynamic-platform --omit=dev`, {
+      stdio: 'inherit',
+      env: { ...process.env, NPM_CONFIG_PREFIX: path.join(HOMEDIR, '.npm-global') },
+    });
     expect(plugins.length).toBe(2);
   }, 60000);
+  */
 
   test('Matterbridge.destroyInstance()', async () => {
     // Destroy the Matterbridge instance

@@ -436,16 +436,16 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   /**
    * Resolves the name of a plugin by loading and parsing its package.json file.
    *
-   * @param {string} pluginPath - The path to the plugin or the path to the plugin's package.json file.
+   * @param {string} nameOrPath - The name of the plugin or the path to the plugin's package.json file.
    * @returns {Promise<string | null>} A promise that resolves to the path of the plugin's package.json file or null if it could not be resolved.
    */
-  async resolve(pluginPath: string): Promise<string | null> {
+  async resolve(nameOrPath: string): Promise<string | null> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
-    if (!pluginPath.endsWith('package.json')) pluginPath = path.join(pluginPath, 'package.json');
+    if (!nameOrPath.endsWith('package.json')) nameOrPath = path.join(nameOrPath, 'package.json');
 
     // Resolve the package.json of the plugin
-    let packageJsonPath = path.resolve(pluginPath);
+    let packageJsonPath = path.resolve(nameOrPath);
     this.log.debug(`Resolving plugin path ${plg}${packageJsonPath}${db}`);
 
     // Check if the package.json file exists
@@ -453,7 +453,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       await promises.access(packageJsonPath);
     } catch {
       this.log.debug(`Package.json not found at ${plg}${packageJsonPath}${db}`);
-      packageJsonPath = path.join(this.matterbridge.globalModulesDirectory, pluginPath);
+      packageJsonPath = path.join(this.matterbridge.globalModulesDirectory, nameOrPath);
       this.log.debug(`Trying at ${plg}${packageJsonPath}${db}`);
     }
     try {
@@ -520,10 +520,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         return null;
       }
 
-      this.log.debug(`Resolved plugin path ${plg}${pluginPath}${db}: ${packageJsonPath}`);
+      this.log.debug(`Resolved plugin path ${plg}${nameOrPath}${db}: ${packageJsonPath}`);
       return packageJsonPath;
     } catch (err) {
-      logError(this.log, `Failed to resolve plugin path ${plg}${pluginPath}${er}`, err);
+      logError(this.log, `Failed to resolve plugin path ${plg}${nameOrPath}${er}`, err);
       return null;
     }
   }
