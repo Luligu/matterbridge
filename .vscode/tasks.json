@@ -74,13 +74,13 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "matterbridge.test.ts",
-        "matterbridge.mocked.test.ts",
-        "matterbridge.matterjs.test.ts",
         "matterbridge.bridge.test.ts",
         "matterbridge.childbridge.test.ts",
         "matterbridge.device.matter.test.ts",
-        "matterbridge.device.server.test.ts"
+        "matterbridge.device.server.test.ts",
+        "matterbridge.matterjs.test.ts",
+        "matterbridge.mocked.test.ts",
+        "matterbridge.test.ts",
       ],
       "group": {
         "kind": "test",
@@ -99,7 +99,9 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "frontend.*.test.ts"
+        "frontend.test.ts",
+        "frontend.express.test.ts",
+        "frontend.websocket.test.ts"
       ],
       "group": {
         "kind": "test",
