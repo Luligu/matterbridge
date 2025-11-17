@@ -3,9 +3,10 @@
 const MATTER_PORT = 6006;
 const NAME = 'PluginManager';
 const HOMEDIR = path.join('jest', NAME);
+const NPM_CONFIG_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-global'));
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
-process.env.NPM_CONFIG_PREFIX = path.join('jest', NAME, '.npm-global');
+process.env.NPM_CONFIG_PREFIX = NPM_CONFIG_PREFIX;
 
 // Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./utils/spawn.js', () => ({
@@ -147,7 +148,7 @@ describe('PluginManager', () => {
     plugins.logLevel = LogLevel.DEBUG;
     server = (plugins as any).server;
     expect(server).toBeInstanceOf(BroadcastServer);
-    matterbridge.globalModulesDirectory = path.join('jest', NAME, '.npm-global', 'node_modules');
+    matterbridge.globalModulesDirectory = path.join(NPM_CONFIG_PREFIX, 'node_modules');
   });
 
   test('BroadcastServer from local path', async () => {
@@ -850,22 +851,28 @@ describe('PluginManager', () => {
   });
 
   test('install example plugins', async () => {
-    execSync((useSudo ? 'sudo ' : '') + `npm link`, {
-      stdio: 'ignore',
-      env: { ...process.env, NPM_CONFIG_PREFIX: path.join(HOMEDIR, '.npm-global') },
+    await setDebug(false);
+    const prefix = path.resolve(path.join(HOMEDIR, '.npm-global'));
+    await fs.mkdir(prefix, { recursive: true });
+    // console.log('Installing with prefix:', prefix);
+    useSudo = false;
+    execSync(`npm install ./ --omit=dev --silent --prefix=${prefix}`, {
+      stdio: 'inherit',
+      env: { ...process.env, NPM_CONFIG_PREFIX: prefix, npm_config_prefix: prefix },
     });
-    execSync((useSudo ? 'sudo ' : '') + `npm install -g matterbridge-example-accessory-platform --omit=dev`, {
-      stdio: 'ignore',
-      env: { ...process.env, NPM_CONFIG_PREFIX: path.join(HOMEDIR, '.npm-global') },
+    execSync(`npm install matterbridge-example-accessory-platform --omit=dev --silent --prefix=${prefix}`, {
+      stdio: 'inherit',
+      env: { ...process.env, NPM_CONFIG_PREFIX: prefix, npm_config_prefix: prefix },
     });
-    execSync((useSudo ? 'sudo ' : '') + `npm install -g matterbridge-example-dynamic-platform --omit=dev`, {
-      stdio: 'ignore',
-      env: { ...process.env, NPM_CONFIG_PREFIX: path.join(HOMEDIR, '.npm-global') },
+    execSync(`npm install matterbridge-example-dynamic-platform --omit=dev --silent --prefix=${prefix}`, {
+      stdio: 'inherit',
+      env: { ...process.env, NPM_CONFIG_PREFIX: prefix, npm_config_prefix: prefix },
     });
     expect(plugins.length).toBe(0);
   }, 60000);
 
   test('add/disable/enable/remove plugin matterbridge-example-accessory-platform', async () => {
+    await setDebug(false);
     expect(plugins.length).toBe(0);
     expect(await plugins.add('matterbridge-example-accessory-platform')).not.toBeNull();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-example-accessory-platform${nf}`);
@@ -891,6 +898,7 @@ describe('PluginManager', () => {
   });
 
   test('save to storage', async () => {
+    await setDebug(false);
     (plugins as any)._plugins.set('matterbridge-mock1', { name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
     (plugins as any)._plugins.set('matterbridge-mock2', { name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
     (plugins as any)._plugins.set('matterbridge-mock3', { name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
