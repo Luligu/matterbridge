@@ -187,7 +187,7 @@ export async function setDebug(debug: boolean): Promise<void> {
  * @param {number} discriminator The discriminator number.
  * @returns {Promise<Matterbridge>} The Matterbridge instance.
  */
-export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '', frontendPort: number, matterPort: number, passcode: number, discriminator: number): Promise<Matterbridge> {
+export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = 'bridge', frontendPort: number = 8283, matterPort: number = 5540, passcode: number = 20252026, discriminator: number = 3840): Promise<Matterbridge> {
   process.argv.push(
     '-novirtual',
     '-debug',
@@ -226,16 +226,21 @@ export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | '
   // @ts-expect-error - access to private member for testing
   expect(matterbridge.initialized).toBeTruthy();
   expect(matterbridge.log).toBeDefined();
-  expect(matterbridge.rootDirectory).not.toBe('');
-  expect(matterbridge.homeDirectory).not.toBe('');
-  expect(matterbridge.matterbridgeDirectory).not.toBe('');
-  expect(matterbridge.matterbridgePluginDirectory).not.toBe('');
-  expect(matterbridge.matterbridgeCertDirectory).not.toBe('');
+  expect(matterbridge.rootDirectory).toBe(path.resolve('./'));
+  expect(matterbridge.homeDirectory).toBe(path.join('jest', NAME));
+  expect(matterbridge.matterbridgeDirectory).toBe(path.join('jest', NAME, '.matterbridge'));
+  expect(matterbridge.matterbridgePluginDirectory).toBe(path.join('jest', NAME, 'Matterbridge'));
+  expect(matterbridge.matterbridgeCertDirectory).toBe(path.join('jest', NAME, '.mattercert'));
+
   expect(plugins).toBeDefined();
   expect(plugins.size).toBe(0);
+
   expect(devices).toBeDefined();
   expect(devices.size).toBe(0);
 
+  expect(frontend).toBeDefined();
+  // @ts-expect-error - access to private member for testing
+  expect(frontend.listening).toBeTruthy();
   // @ts-expect-error - access to private member for testing
   expect(frontend.httpServer).toBeDefined();
   // @ts-expect-error - access to private member for testing
@@ -263,9 +268,25 @@ export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | '
   expect(matterbridge.passcode).toBe(passcode + 1);
   expect(matterbridge.discriminator).toBe(discriminator + 1);
 
-  await new Promise((resolve) => {
-    matterbridge.once('online', resolve);
-  });
+  if (bridgeMode === 'bridge') {
+    const started = new Promise<void>((resolve) => {
+      matterbridge.once('bridge_started', () => {
+        resolve();
+      });
+    });
+    const online = new Promise<void>((resolve) => {
+      matterbridge.once('online', (name) => {
+        if (name === 'Matterbridge') resolve();
+      });
+    });
+    await Promise.all([started, online]);
+  } else if (bridgeMode === 'childbridge') {
+    await new Promise<void>((resolve) => {
+      matterbridge.once('childbridge_started', () => {
+        resolve();
+      });
+    });
+  }
 
   expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
   expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
@@ -275,6 +296,16 @@ export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | '
   expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval for Matterbridge`);
 
   return matterbridge;
+}
+
+/**
+ * Stop the active Matterbridge instance.
+ *
+ * @param {cleanupPause} cleanupPause The pause duration before cleanup.
+ * @param {destroyPause} destroyPause The pause duration before destruction.
+ */
+export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250) {
+  await destroyMatterbridgeEnvironment(cleanupPause, destroyPause);
 }
 
 /**
