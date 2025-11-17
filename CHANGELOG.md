@@ -28,6 +28,24 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.3.9] - Not published
+
+### Development Breaking Changes
+
+Removed the following long deprecated elements:
+
+- [platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.0.0).
+- [endpoint]: uniqueStorageKey instead of id in MatterbridgeEndpointOptions (deprecated since months).
+- [endpoint]: endpointId instead of number in MatterbridgeEndpointOptions (deprecated since months).
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.8] - 2025-11-15
 
 ### Development Breaking Changes
