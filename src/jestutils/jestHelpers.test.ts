@@ -240,7 +240,7 @@ describe('Matter.js instance', () => {
 
 describe('Matterbridge active instance', () => {
   beforeAll(async () => {
-    await setupTest('MatterbridgeInitialized', false);
+    await setupTest('MatterbridgeInitialized', true);
   });
 
   beforeEach(() => {
@@ -255,14 +255,24 @@ describe('Matterbridge active instance', () => {
     jest.restoreAllMocks();
   });
 
-  test('should start the active Matterbridge instance', async () => {
+  test('should start the active Matterbridge instance in bridge mode', async () => {
     await startMatterbridge('bridge');
     expect(matterbridge).toBeDefined();
   });
 
-  test('should stop the active Matterbridge instance', async () => {
+  test('should stop the active Matterbridge instance in bridge mode', async () => {
     await stopMatterbridge();
+    // @ts-expect-error - accessing private member for testing
+    expect(Matterbridge.instance).toBeUndefined();
+  });
+
+  test('should start the active Matterbridge instance in childbridge mode', async () => {
+    await startMatterbridge('childbridge');
     expect(matterbridge).toBeDefined();
+  });
+
+  test('should stop the active Matterbridge instance in childbridge mode', async () => {
+    await stopMatterbridge();
     // @ts-expect-error - accessing private member for testing
     expect(Matterbridge.instance).toBeUndefined();
   });

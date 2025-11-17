@@ -52,6 +52,9 @@ import { RootEndpoint, AggregatorEndpoint } from 'matterbridge/matter/endpoints'
 import { MATTER_STORAGE_NAME, Matterbridge, MatterbridgePlatform } from 'matterbridge';
 */
 
+export const originalProcessArgv = Object.freeze([...process.argv]);
+export const originalProcessEnv = Object.freeze({ ...process.env } as Record<string, string | undefined>);
+
 export let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 export let loggerDebugSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.debug>;
 export let loggerInfoSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.info>;
@@ -185,10 +188,26 @@ export async function setDebug(debug: boolean): Promise<void> {
  * @param {number} matterPort The matter port number.
  * @param {number} passcode The passcode number.
  * @param {number} discriminator The discriminator number.
+ * @param {number} pluginSize The expected number of plugins.
+ * @param {number} devicesSize The expected number of devices.
  * @returns {Promise<Matterbridge>} The Matterbridge instance.
  */
-export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = 'bridge', frontendPort: number = 8283, matterPort: number = 5540, passcode: number = 20252026, discriminator: number = 3840): Promise<Matterbridge> {
+export async function startMatterbridge(
+  bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = 'bridge',
+  frontendPort: number = 8283,
+  matterPort: number = 5540,
+  passcode: number = 20252026,
+  discriminator: number = 3840,
+  pluginSize: number = 0,
+  devicesSize: number = 0,
+): Promise<Matterbridge> {
+  // Set the environment variables
+  process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '100';
+  process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '100';
+  // Setup the process arguments
+  process.argv.length = 0;
   process.argv.push(
+    ...originalProcessArgv,
     '-novirtual',
     '-debug',
     '-verbose',
@@ -230,10 +249,10 @@ export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | '
   expect(matterbridge.matterbridgeCertDirectory).toBe(path.join('jest', NAME, '.mattercert'));
 
   expect(plugins).toBeDefined();
-  expect(plugins.size).toBe(0);
+  expect(plugins.size).toBe(pluginSize);
 
   expect(devices).toBeDefined();
-  expect(devices.size).toBe(0);
+  expect(devices.size).toBe(devicesSize);
 
   expect(frontend).toBeDefined();
   // @ts-expect-error - access to private member for testing
@@ -257,13 +276,15 @@ export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | '
   expect(matterbridge.matterbridgeContext).toBeDefined();
   expect(matterbridge.controllerContext).toBeUndefined();
 
-  expect(matterbridge.serverNode).toBeDefined();
-  expect(matterbridge.aggregatorNode).toBeDefined();
+  if (bridgeMode === 'bridge') {
+    expect(matterbridge.serverNode).toBeDefined();
+    expect(matterbridge.aggregatorNode).toBeDefined();
+  }
 
   expect(matterbridge.mdnsInterface).toBe(undefined);
-  expect(matterbridge.port).toBe(matterPort + 1);
-  expect(matterbridge.passcode).toBe(passcode + 1);
-  expect(matterbridge.discriminator).toBe(discriminator + 1);
+  expect(matterbridge.port).toBe(matterPort + (bridgeMode === 'bridge' ? 1 : 0));
+  expect(matterbridge.passcode).toBe(passcode + (bridgeMode === 'bridge' ? 1 : 0));
+  expect(matterbridge.discriminator).toBe(discriminator + (bridgeMode === 'bridge' ? 1 : 0));
 
   if (bridgeMode === 'bridge') {
     const started = new Promise<void>((resolve) => {
@@ -285,12 +306,18 @@ export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | '
     });
   }
 
-  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
-  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
   expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${frontendPort}${UNDERLINEOFF}${rs}`);
-  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
-  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode`);
-  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval for Matterbridge`);
+  if (bridgeMode === 'bridge') {
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in bridge mode`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Matterbridge bridge started successfully`);
+  } else if (bridgeMode === 'childbridge') {
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in childbridge mode...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in childbridge mode`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Matterbridge childbridge started successfully`);
+  }
 
   return matterbridge;
 }
@@ -298,8 +325,8 @@ export async function startMatterbridge(bridgeMode: 'bridge' | 'childbridge' | '
 /**
  * Stop the active Matterbridge instance.
  *
- * @param {cleanupPause} cleanupPause The pause duration before cleanup.
- * @param {destroyPause} destroyPause The pause duration before destruction.
+ * @param {cleanupPause} cleanupPause The pause duration before cleanup. Default is 10 ms.
+ * @param {destroyPause} destroyPause The pause duration before destruction. Default is 250 ms.
  */
 export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250) {
   await destroyMatterbridgeEnvironment(cleanupPause, destroyPause);
@@ -542,6 +569,7 @@ export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: 
  * @returns {Promise<void>} A promise that resolves when the mDNS instance is closed.
  */
 export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<void> {
+  // TODO: matter.js 0.16.0 - provide close method to close the mDNS service
   // @ts-expect-error - accessing private member for testing
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mdns = matterbridge.environment.get(MdnsService) as any;
@@ -553,6 +581,7 @@ export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<voi
  * Create a matter Environment for testing:
  * - it will remove any existing home directory
  * - setup the matter environment with name, debug logging and ANSI format
+ * - setup the mDNS service in the environment
  *
  * @param {string} name - Name for the environment (jest/name).
  * @returns {Environment} - The default matter environment.
@@ -681,6 +710,7 @@ export async function startServerNode(name: string, port: number, deviceType: De
   server = await ServerNode.create({
     id: name + 'ServerNode',
 
+    // Provide the environment
     environment,
 
     // Provide Node announcement settings
