@@ -10,9 +10,8 @@ import { existsSync } from 'node:fs';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
-import { StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, Diagnostic, LogDestination, Time, NamedHandler } from '@matter/general';
-import { FabricManager, MdnsService } from '@matter/protocol';
-import { DeviceTypeId, VendorId } from '@matter/types';
+import { StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, Diagnostic, LogDestination, NamedHandler } from '@matter/general';
+import { FabricManager } from '@matter/protocol';
 import {
   ColorControl,
   ColorControlCluster,
@@ -39,8 +38,7 @@ import {
   WaterHeaterManagement,
   WaterHeaterMode,
 } from '@matter/types/clusters';
-import { Endpoint, ServerNode } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { Endpoint } from '@matter/node';
 import { ContactSensorDevice, OccupancySensorDevice, OccupancySensorDeviceDefinition, OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices';
 import {
   BooleanStateConfigurationServer,
@@ -98,7 +96,6 @@ import {
   MatterbridgeDeviceEnergyManagementServer,
   MatterbridgeEnhancedColorControlServer,
 } from './matterbridgeBehaviors.js';
-import { Matterbridge } from './matterbridge.js';
 import {
   lightSensor,
   occupancySensor,
@@ -120,19 +117,25 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
-import { assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import {
+  createMatterbridgeEnvironment,
+  createTestEnvironment,
+  destroyMatterbridgeEnvironment,
+  flushAsync,
+  loggerLogSpy,
+  matterbridge,
+  server,
+  setDebug,
+  setupTest,
+  startMatterbridgeEnvironment,
+  stopMatterbridgeEnvironment,
+} from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
 
-// Setup the matter and test environment
-createTestEnvironment(NAME);
-
 describe('Matterbridge ' + NAME, () => {
-  let matterbridge: Matterbridge;
   let context: StorageContext;
-  let server: ServerNode<ServerNode.RootEndpoint>;
-  let aggregator: Endpoint<AggregatorEndpoint>;
   let light: MatterbridgeEndpoint;
   let enhancedLight: MatterbridgeEndpoint;
   let coverLift: MatterbridgeEndpoint;
@@ -150,20 +153,10 @@ describe('Matterbridge ' + NAME, () => {
   let evse: MatterbridgeEndpoint;
 
   beforeAll(async () => {
-    // Create a MatterbridgeEdge instance not initialized
-    matterbridge = await Matterbridge.loadInstance(false);
-    matterbridge.homeDirectory = HOMEDIR;
-    matterbridge.matterbridgeDirectory = path.join(HOMEDIR, '.matterbridge');
-    matterbridge.matterbridgePluginDirectory = path.join(HOMEDIR, 'Matterbridge');
-
-    // Setup matter environment
-    (matterbridge as any).environment.vars.set('log.level', MatterLogLevel.INFO);
-    (matterbridge as any).environment.vars.set('log.format', MatterLogFormat.ANSI);
-    (matterbridge as any).environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
-    (matterbridge as any).environment.vars.set('runtime.signals', false);
-    (matterbridge as any).environment.vars.set('runtime.exitcode', false);
-    await (matterbridge as any).startMatterStorage();
-  }, 30000);
+    // Create Matterbridge environment
+    await createMatterbridgeEnvironment(NAME);
+    await startMatterbridgeEnvironment(MATTER_PORT);
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -173,8 +166,9 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
-    // Close mDNS instance
-    await closeMdnsInstance(matterbridge);
+    // Destroy Matterbridge environment
+    await stopMatterbridgeEnvironment();
+    await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -198,17 +192,6 @@ describe('Matterbridge ' + NAME, () => {
       }),
     );
     Logger.destinations.default.write = originalWrite;
-  });
-
-  test('create a context for server node', async () => {
-    expect((matterbridge as any).environment.vars.get('path.root')).toBe(path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
-    context = await (matterbridge as any).createServerNodeContext('Matterbridge', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-    expect(context).toBeDefined();
-  });
-
-  test('create the server node', async () => {
-    server = await (matterbridge as any).createServerNode(context, MATTER_PORT);
-    expect(server).toBeDefined();
   });
 
   test('log the server node on destination file', async () => {
@@ -269,7 +252,7 @@ describe('Matterbridge ' + NAME, () => {
     fileDestination.context.run(() =>
       fileDestination.add(
         Diagnostic.message({
-          now: Time.now(),
+          now: new Date(),
           facility: 'Server node',
           level: MatterLogLevel.INFO,
           prefix: Logger.nestingLevel ? '⎸'.padEnd(Logger.nestingLevel * 2) : '',
@@ -1303,30 +1286,5 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(evse, 'energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer enableCharging called`);
-  });
-
-  test('ensure all endpoint number persistence is flushed before closing', async () => {
-    expect(server).toBeDefined();
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeTruthy();
-    if (server) {
-      // Ensure all endpoint number persistence is flushed before closing
-      await flushAllEndpointNumberPersistence(server);
-      await assertAllEndpointNumbersPersisted(server);
-    }
-  });
-
-  test('close server node', async () => {
-    expect(server).toBeDefined();
-    expect(server.lifecycle.isReady).toBeTruthy();
-    expect(server.lifecycle.isOnline).toBeTruthy();
-    await server.close();
-    await server.env.get(MdnsService)[Symbol.asyncDispose](); // loadInstance(false) so destroyInstance() does not stop the mDNS service
-  });
-
-  test('destroy instance', async () => {
-    expect(matterbridge).toBeDefined();
-    // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge);
   });
 });

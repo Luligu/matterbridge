@@ -99,27 +99,33 @@ import {
   waterValve,
 } from './matterbridgeDeviceTypes.js';
 import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.js';
-import { addDevice, assertAllEndpointNumbersPersisted, closeMdnsInstance, createTestEnvironment, destroyInstance, flushAllEndpointNumberPersistence, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import {
+  addDevice,
+  aggregator,
+  assertAllEndpointNumbersPersisted,
+  closeMdnsInstance,
+  createMatterbridgeEnvironment,
+  createTestEnvironment,
+  destroyInstance,
+  destroyMatterbridgeEnvironment,
+  flushAllEndpointNumberPersistence,
+  flushAsync,
+  loggerLogSpy,
+  matterbridge,
+  setDebug,
+  setupTest,
+  startMatterbridgeEnvironment,
+  stopMatterbridgeEnvironment,
+} from './jestutils/jestHelpers.js';
 
 // Setup the test environment
-setupTest(NAME, false);
-
-// Setup the matter and test environment
-createTestEnvironment(NAME);
+await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
-  let matterbridge: Matterbridge;
-  let device: MatterbridgeEndpoint;
-
   beforeAll(async () => {
-    // Create a MatterbridgeEdge instance
-    matterbridge = await Matterbridge.loadInstance(true);
-
-    await new Promise<void>((resolve) => {
-      matterbridge.once('online', (name) => {
-        if (name === 'Matterbridge') resolve();
-      });
-    });
+    // Create Matterbridge environment
+    await createMatterbridgeEnvironment(NAME);
+    await startMatterbridgeEnvironment(MATTER_PORT);
   }, 30000);
 
   beforeEach(async () => {
@@ -130,26 +136,17 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
-    // Close mDNS instance
-    await closeMdnsInstance(matterbridge);
+    // Destroy Matterbridge environment
+    await stopMatterbridgeEnvironment();
+    await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
-  });
+  }, 30000);
 
   async function add(device: MatterbridgeEndpoint): Promise<void> {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
-    expect(matterbridge.serverNode).toBeDefined();
-    expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
-    expect(matterbridge.serverNode?.construction.status).toBe(Lifecycle.Status.Active);
-    expect(matterbridge.aggregatorNode).toBeDefined();
-    expect(matterbridge.aggregatorNode?.lifecycle.isReady).toBeTruthy();
-    expect(matterbridge.aggregatorNode?.construction.status).toBe(Lifecycle.Status.Active);
-    expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-    expect(device.lifecycle.isReady).toBeTruthy();
-    expect(device.construction.status).toBe(Lifecycle.Status.Active);
-    if (device.uniqueStorageKey === undefined) return;
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`\x1B[39mMatterbridge.Matterbridge.${device.uniqueStorageKey.replaceAll(' ', '')} \x1B[0mready`));
+    expect(await addDevice(aggregator, device)).toBe(true);
   }
 
   test('capitalizeFirstLetter', async () => {
@@ -1490,22 +1487,5 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(AirQuality.Cluster.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
-  });
-
-  test('ensure all endpoint number persistence is flushed before closing', async () => {
-    expect(matterbridge.serverNode).toBeDefined();
-    expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
-    expect(matterbridge.serverNode?.lifecycle.isOnline).toBeTruthy();
-    if (matterbridge.serverNode) {
-      // Ensure all endpoint number persistence is flushed before closing
-      await flushAllEndpointNumberPersistence(matterbridge.serverNode);
-      await assertAllEndpointNumbersPersisted(matterbridge.serverNode);
-    }
-  });
-
-  test('destroy instance', async () => {
-    expect(matterbridge).toBeDefined();
-    // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge);
   });
 });
