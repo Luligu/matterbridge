@@ -256,7 +256,7 @@ describe('Matterbridge active instance', () => {
   });
 
   test('should start the active Matterbridge instance in bridge mode', async () => {
-    await startMatterbridge('bridge');
+    await startMatterbridge('bridge', 9500, 9600);
     expect(matterbridge).toBeDefined();
   });
 
@@ -267,7 +267,7 @@ describe('Matterbridge active instance', () => {
   });
 
   test('should start the active Matterbridge instance in childbridge mode', async () => {
-    await startMatterbridge('childbridge');
+    await startMatterbridge('childbridge', 9500, 9600);
     expect(matterbridge).toBeDefined();
   });
 
