@@ -567,6 +567,14 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Endpoint numbers check completed.');
   });
 
+  test('wssSendRestartRequired', async () => {
+    expect(platform.wssSendRestartRequired()).toBeUndefined();
+  });
+
+  test('wssSendSnackbarMessage', async () => {
+    expect(platform.wssSendSnackbarMessage('Test message')).toBeUndefined();
+  });
+
   test('onConfigure should log a message', async () => {
     await platform.onConfigure();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Configuring platform test');
@@ -631,14 +639,6 @@ describe('Matterbridge platform', () => {
     (matterbridge.plugins as any)._plugins.delete('unknown');
     platform.name = originalName;
     await flushAsync();
-  });
-
-  test('wssSendRestartRequired', async () => {
-    expect(platform.wssSendRestartRequired()).toBeUndefined();
-  });
-
-  test('wssSendSnackbarMessage', async () => {
-    expect(platform.wssSendSnackbarMessage('Test message')).toBeUndefined();
   });
 
   test('registerVirtualDevice', async () => {
