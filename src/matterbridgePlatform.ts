@@ -351,6 +351,22 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Sends an open snackbar message to all connected clients.
+   *
+   * @param {string} message - The message to send.
+   * @param {number} timeout - The timeout in seconds for the snackbar message. Default is 5 seconds.
+   * @param {'info' | 'warning' | 'error' | 'success'} severity - The severity of the message.
+   * possible values are: 'info', 'warning', 'error', 'success'. Default is 'info'.
+   *
+   * @remarks
+   * If timeout is 0, the snackbar message will be displayed until closed by the user.
+   */
+  wssSendSnackbarMessage(message: string, timeout?: number, severity?: 'error' | 'success' | 'info' | 'warning'): void {
+    // TODO: replace with a message to the frontend thread
+    (this.matterbridge as InternalPlatformMatterbridge).frontend.wssSendSnackbarMessage(message, timeout, severity);
+  }
+
+  /**
    * Retrieves the devices registered with the platform.
    *
    * @returns {MatterbridgeEndpoint[]} The registered devices.

@@ -60,6 +60,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('should have created an instance of NodeStorageManager', async () => {
+    // @ts-expect-error access private constructor
     platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     // Add the platform to the Matterbridge environment
     addMatterbridgePlatform(platform, 'test');
@@ -263,17 +264,20 @@ describe('Matterbridge platform', () => {
 
   it('should not create storage manager without a name', async () => {
     expect(() => {
+      // @ts-expect-error access private constructor
       new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: undefined as any, type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     }).toThrow();
   });
 
   it('should not create storage manager with name empty', async () => {
     expect(() => {
+      // @ts-expect-error access private constructor
       new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: '', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     }).toThrow();
   });
 
   it('should save the select', async () => {
+    // @ts-expect-error access private constructor
     let platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
@@ -296,6 +300,7 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Saving 100 selectEntity...`);
     loggerLogSpy.mockClear();
 
+    // @ts-expect-error access private constructor
     platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
@@ -317,6 +322,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('should clear the selects', async () => {
+    // @ts-expect-error access private constructor
     const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
@@ -334,6 +340,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('should clear the device selects', async () => {
+    // @ts-expect-error access private constructor
     const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
@@ -346,6 +353,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('should clear the entity selects', async () => {
+    // @ts-expect-error access private constructor
     const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
@@ -358,6 +366,7 @@ describe('Matterbridge platform', () => {
   });
 
   it('should update a not existing entity selects', async () => {
+    // @ts-expect-error access private constructor
     const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
@@ -377,6 +386,7 @@ describe('Matterbridge platform', () => {
   });
 
   it('should update an existing entity selects', async () => {
+    // @ts-expect-error access private constructor
     const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await platform.ready;
     expect(platform.storage).toBeDefined();
@@ -625,6 +635,10 @@ describe('Matterbridge platform', () => {
 
   test('wssSendRestartRequired', async () => {
     expect(platform.wssSendRestartRequired()).toBeUndefined();
+  });
+
+  test('wssSendSnackbarMessage', async () => {
+    expect(platform.wssSendSnackbarMessage('Test message')).toBeUndefined();
   });
 
   test('registerVirtualDevice', async () => {
