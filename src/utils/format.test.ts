@@ -3,7 +3,10 @@ import { formatBytes, formatUptime, formatTimeStamp, formatPercent } from './for
 describe('formatTimeStamp(), formatBytes() and formatUptime()', () => {
   test('Frontend formatTimeStamp', () => {
     // Test the formatTimeStamp functionality
-    expect(formatTimeStamp(Date.now())).toBe(new Date(Date.now()).toLocaleString());
+    const testDate = new Date('2023-01-01T12:00:00Z').getTime();
+    expect(formatTimeStamp(testDate)).toBe(new Date(testDate).toLocaleString());
+    const now = Date.now();
+    expect(formatTimeStamp(now)).toBe(new Date(now).toLocaleString());
   });
 
   test('Frontend formatPercent', () => {
