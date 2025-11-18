@@ -82,7 +82,7 @@ describe('Matterbridge mocked', () => {
   let devices: DeviceManager;
 
   beforeEach(async () => {
-    // Reset the process.argv to simulate command line arguments
+    // Reset the process.argv to simulate command line arguments (no frontend no matter server)
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest'];
 
     // Reset the Matterbridge instance
@@ -463,6 +463,7 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).startPlugins();
     expect(resolveSpy).toHaveBeenCalledTimes(6);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('not found or not validated. Disabling it.'));
+    expect(plugins.length).toBe(6);
 
     for (const plugin of matterbridge.plugins) {
       expect(plugin.enabled).toBe(false);
