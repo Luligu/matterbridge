@@ -71,12 +71,15 @@ import { plg, Plugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { getParameter } from './utils/commandLine.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { DeviceManager } from './deviceManager.js';
 
 // Setup the test environment
 setupTest(NAME, false);
 
 describe('Matterbridge mocked', () => {
   let matterbridge: MatterbridgeType;
+  let plugins: PluginManager;
+  let devices: DeviceManager;
 
   beforeEach(async () => {
     // Reset the process.argv to simulate command line arguments
@@ -85,6 +88,8 @@ describe('Matterbridge mocked', () => {
     // Reset the Matterbridge instance
     (Matterbridge as any).instance = undefined;
     matterbridge = await Matterbridge.loadInstance(); // Default to false if no parameter is provided
+    plugins = matterbridge.plugins;
+    devices = matterbridge.devices;
   });
 
   afterEach(async () => {
@@ -416,14 +421,20 @@ describe('Matterbridge mocked', () => {
     expect(await (matterbridge.plugins as any).add('./src/mock/plugin4')).not.toBeNull();
     expect(await (matterbridge.plugins as any).add('./src/mock/plugin5')).not.toBeNull();
     expect(await (matterbridge.plugins as any).add('./src/mock/plugin6')).not.toBeNull();
-    expect((matterbridge.plugins as any).length).toBe(6);
+    expect(plugins.length).toBe(6);
+  });
 
+  test('Matterbridge.initialize() logLevel', async () => {
     // Test set log level for plugins
-    await (matterbridge.plugins as any).load(matterbridge.plugins.array()[0]);
+    await (matterbridge as any).initialize();
+    expect(plugins.length).toBe(6);
+    await plugins.load(plugins.array()[0]);
     matterbridge.setLogLevel(LogLevel.NOTICE);
-    expect((matterbridge.plugins as any).log.logLevel).toBe(LogLevel.NOTICE);
-    expect(matterbridge.plugins.array()[0].platform?.log.logLevel).toBe(LogLevel.NOTICE);
+    expect((plugins as any).log.logLevel).toBe(LogLevel.NOTICE);
+    expect(plugins.array()[0].platform?.log.logLevel).toBe(LogLevel.NOTICE);
+  });
 
+  test('Matterbridge.initialize() reinstall of plugins', async () => {
     // Test reinstall of plugins
     const parseSpy = jest.spyOn(PluginManager.prototype, 'parse').mockImplementation(async (plugin: Plugin | string) => {
       return null; // Simulate a plugin that does not return a valid instance
@@ -435,11 +446,15 @@ describe('Matterbridge mocked', () => {
       return Promise.reject(new Error(`Mocked spawnCommand error for command: ${command} with args: ${args.join(' ')}`));
     });
     await (matterbridge as any).initialize();
+    expect(plugins.length).toBe(6);
     expect(existSpy).toHaveBeenCalledTimes(7);
     expect(parseSpy).toHaveBeenCalledTimes(5);
     expect(spawnCommandMock).toHaveBeenCalledTimes(6);
     parseSpy.mockRestore();
+    existSpy.mockRestore();
+  });
 
+  test('Matterbridge.initialize() startPlugins', async () => {
     // Test startPlugins
     const resolveSpy = jest.spyOn(PluginManager.prototype, 'resolve').mockImplementation(async (pluginPath: string) => {
       return null; // Simulate a plugin that does not return a valid path
@@ -459,9 +474,12 @@ describe('Matterbridge mocked', () => {
     });
     await (matterbridge as any).startPlugins();
     expect(resolveSpy).toHaveBeenCalledTimes(12);
+    expect(plugins.length).toBe(6);
 
     resolveSpy.mockRestore();
+  });
 
+  test('Matterbridge.initialize() node version', async () => {
     // Test throw error for unsupported Node version
     const originalNodeVersion = process.versions.node;
     Object.defineProperty(process.versions, 'node', {
@@ -471,7 +489,6 @@ describe('Matterbridge mocked', () => {
     Object.defineProperty(process.versions, 'node', {
       get: () => originalNodeVersion,
     });
-    expect((matterbridge.plugins as any).length).toBe(6);
   });
 
   test('Matterbridge.initialize() devices', async () => {
