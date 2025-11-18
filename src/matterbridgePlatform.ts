@@ -50,6 +50,8 @@ import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { SystemInformation } from './matterbridgeTypes.js';
 import { addVirtualDevice } from './helpers.js';
+import { hasParameter } from './utils/commandLine.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 // Platform types
 
@@ -132,6 +134,11 @@ export class MatterbridgePlatform {
   /** Registered MatterbridgeEndpoint map keyed by deviceName */
   private readonly registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>();
 
+  /** Broadcast server */
+  readonly #server: BroadcastServer;
+  readonly #debug = hasParameter('debug') || hasParameter('verbose');
+  readonly #verbose = hasParameter('verbose');
+
   /**
    * Creates an instance of the base MatterbridgePlatform.
    * It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
@@ -145,6 +152,10 @@ export class MatterbridgePlatform {
     this.matterbridge = matterbridge;
     this.log = log;
     this.config = config;
+    this.#server = new BroadcastServer('platform', this.log);
+
+    if (this.#debug && !this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name}`);
+    if (this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name} with config:\n${JSON.stringify(this.config, null, 2)}\n`);
 
     // create the NodeStorageManager for the plugin platform
     if (!isValidString(this.config.name, 1)) throw new Error('Platform: the plugin name is missing or invalid.');
@@ -245,6 +256,9 @@ export class MatterbridgePlatform {
     await this.context?.close();
     this.context = undefined;
     await this.storage?.close();
+
+    // Close the broadcast server
+    this.#server.close();
   }
 
   /**
@@ -346,8 +360,8 @@ export class MatterbridgePlatform {
    * @returns {void}
    */
   wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false): void {
-    // TODO: replace with a message to the frontend thread
-    (this.matterbridge as InternalPlatformMatterbridge).frontend.wssSendRestartRequired(snackbar, fixed);
+    this.#server.request({ type: 'frontend_restartrequired', src: 'platform', dst: 'frontend', params: { snackbar, fixed } });
+    // (this.matterbridge as InternalPlatformMatterbridge).frontend.wssSendRestartRequired(snackbar, fixed);
   }
 
   /**
@@ -362,8 +376,8 @@ export class MatterbridgePlatform {
    * If timeout is 0, the snackbar message will be displayed until closed by the user.
    */
   wssSendSnackbarMessage(message: string, timeout?: number, severity?: 'error' | 'success' | 'info' | 'warning'): void {
-    // TODO: replace with a message to the frontend thread
-    (this.matterbridge as InternalPlatformMatterbridge).frontend.wssSendSnackbarMessage(message, timeout, severity);
+    this.#server.request({ type: 'frontend_snackbarmessage', src: 'platform', dst: 'frontend', params: { message, timeout, severity } });
+    // (this.matterbridge as InternalPlatformMatterbridge).frontend.wssSendSnackbarMessage(message, timeout, severity);
   }
 
   /**
