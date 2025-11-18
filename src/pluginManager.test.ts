@@ -5,11 +5,12 @@ const NAME = 'PluginManager';
 const HOMEDIR = path.join('jest', NAME);
 const NPM_CONFIG_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-global'));
 await fs.mkdir(NPM_CONFIG_PREFIX, { recursive: true });
-const NPM_CACHE_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-cache'));
-await fs.mkdir(NPM_CACHE_PREFIX, { recursive: true });
+const NPM_CONFIG_CACHE = path.resolve(path.join(HOMEDIR, '.npm-cache'));
+await fs.mkdir(NPM_CONFIG_CACHE, { recursive: true });
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
-process.env.NPM_CONFIG_PREFIX = NPM_CONFIG_PREFIX;
+process.env.npm_config_prefix = NPM_CONFIG_PREFIX;
+process.env.npm_config_cache = NPM_CONFIG_CACHE;
 
 // Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./utils/spawn.js', () => ({
@@ -857,17 +858,17 @@ describe('PluginManager', () => {
     await setDebug(false);
     // console.log('Installing with prefix:', prefix);
     useSudo = false;
-    execSync(`npm install ./ --omit=dev --silent --cache=${NPM_CACHE_PREFIX} --prefix=${NPM_CONFIG_PREFIX}`, {
+    execSync(`npm install ./ --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
-      env: { ...process.env, NPM_CONFIG_PREFIX: NPM_CONFIG_PREFIX, npm_config_prefix: NPM_CONFIG_PREFIX },
+      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
     });
-    execSync(`npm install matterbridge-example-accessory-platform --omit=dev --silent --cache=${NPM_CACHE_PREFIX} --prefix=${NPM_CONFIG_PREFIX}`, {
+    execSync(`npm install matterbridge-example-accessory-platform --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
-      env: { ...process.env, NPM_CONFIG_PREFIX: NPM_CONFIG_PREFIX, npm_config_prefix: NPM_CONFIG_PREFIX },
+      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
     });
-    execSync(`npm install matterbridge-example-dynamic-platform --omit=dev --silent --cache=${NPM_CACHE_PREFIX} --prefix=${NPM_CONFIG_PREFIX}`, {
+    execSync(`npm install matterbridge-example-dynamic-platform --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
-      env: { ...process.env, NPM_CONFIG_PREFIX: NPM_CONFIG_PREFIX, npm_config_prefix: NPM_CONFIG_PREFIX },
+      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
     });
     expect(plugins.length).toBe(0);
   }, 60000);
@@ -1560,15 +1561,15 @@ describe('PluginManager', () => {
   test('uninstall example plugins', async () => {
     execSync(`npm uninstall matterbridge --silent --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
-      env: { ...process.env, NPM_CONFIG_PREFIX: NPM_CONFIG_PREFIX, npm_config_prefix: NPM_CONFIG_PREFIX },
+      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX },
     });
     execSync(`npm uninstall matterbridge-example-accessory-platform --silent --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
-      env: { ...process.env, NPM_CONFIG_PREFIX: NPM_CONFIG_PREFIX, npm_config_prefix: NPM_CONFIG_PREFIX },
+      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX },
     });
     execSync(`npm uninstall matterbridge-example-dynamic-platform --silent --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
-      env: { ...process.env, NPM_CONFIG_PREFIX: NPM_CONFIG_PREFIX, npm_config_prefix: NPM_CONFIG_PREFIX },
+      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX },
     });
     expect(plugins.length).toBe(2);
   }, 60000);
