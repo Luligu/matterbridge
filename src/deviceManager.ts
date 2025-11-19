@@ -4,7 +4,7 @@
  * @file devices.ts
  * @author Luca Liguori
  * @created 2024-07-26
- * @version 1.1.0
+ * @version 1.1.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -31,6 +31,40 @@ import { type BaseDevice, dev } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
 import { hasParameter } from './utils/commandLine.js';
+
+/**
+ * Converts a MatterbridgeEndpoint to a BaseDevice.
+ *
+ * @param {MatterbridgeEndpoint} device The MatterbridgeEndpoint to convert.
+ * @returns {BaseDevice} The converted BaseDevice.
+ */
+export function toBaseDevice(device: MatterbridgeEndpoint | BaseDevice): BaseDevice {
+  return {
+    // MatterbridgeEndpoint properties
+    mode: device.mode,
+    plugin: device.plugin,
+    configUrl: device.configUrl,
+    deviceName: device.deviceName,
+    serialNumber: device.serialNumber,
+    uniqueId: device.uniqueId,
+    vendorId: device.vendorId,
+    vendorName: device.vendorName,
+    productId: device.productId,
+    productName: device.productName,
+    softwareVersion: device.softwareVersion,
+    softwareVersionString: device.softwareVersionString,
+    hardwareVersion: device.hardwareVersion,
+    hardwareVersionString: device.hardwareVersionString,
+    productUrl: device.productUrl,
+    tagList: device.tagList,
+    originalId: device.originalId,
+    name: device.name,
+    deviceType: device.deviceType,
+    // Endpoint properties
+    number: device.number,
+    id: device.id,
+  };
+}
 
 /**
  * Manages Matterbridge devices.
@@ -78,13 +112,16 @@ export class DeviceManager {
           this.server.respond({ ...msg, response: { has: this.has(msg.params.uniqueId) } });
           break;
         case 'devices_get':
-          this.server.respond({ ...msg, response: { device: this.get(msg.params.uniqueId) as BaseDevice | undefined } });
+          {
+            const endpoint = this.get(msg.params.uniqueId);
+            this.server.respond({ ...msg, response: { device: endpoint ? toBaseDevice(endpoint) : undefined } });
+          }
           break;
         case 'devices_set':
-          this.server.respond({ ...msg, response: { device: this.set(msg.params.device as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
+          this.server.respond({ ...msg, response: { device: this.set(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
           break;
         case 'devices_remove':
-          this.server.respond({ ...msg, response: { success: this.remove(msg.params.device as unknown as MatterbridgeEndpoint) } });
+          this.server.respond({ ...msg, response: { success: this.remove(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) } });
           break;
         case 'devices_clear':
           this.clear();
@@ -178,17 +215,7 @@ export class DeviceManager {
    * @returns {BaseDevice} The converted BaseDevice.
    */
   private toBaseDevice(device: MatterbridgeEndpoint): BaseDevice {
-    return {
-      pluginName: device.plugin,
-      deviceType: device.deviceType,
-      number: device.maybeNumber,
-      id: device.maybeId,
-      deviceName: device.deviceName,
-      serialNumber: device.serialNumber,
-      uniqueId: device.uniqueId,
-      productUrl: device.productUrl,
-      configUrl: device.configUrl,
-    };
+    return toBaseDevice(device);
   }
 
   /**
@@ -208,7 +235,7 @@ export class DeviceManager {
    */
   baseArray(pluginName?: string): BaseDevice[] {
     const devices: BaseDevice[] = [];
-    for (const device of this._devices.values()) {
+    for (const device of Array.from(this._devices.values())) {
       // Filter by pluginName if provided
       if (pluginName && pluginName !== device.plugin) continue;
       devices.push(this.toBaseDevice(device));
