@@ -28,7 +28,7 @@ import type { LogLevel } from 'node-ansi-logger';
 // @matter
 import type { ServerNode, Endpoint as EndpointNode } from '@matter/node';
 import type { StorageContext } from '@matter/general';
-import type { FabricIndex, VendorId, EndpointNumber } from '@matter/types';
+import type { FabricIndex, VendorId, EndpointNumber, Semtag } from '@matter/types';
 import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import type { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
 
@@ -236,15 +236,29 @@ export interface ApiDevice {
 
 /** Define an interface for base device information */
 export interface BaseDevice {
-  pluginName: string | undefined;
-  deviceType: number | undefined;
-  number: EndpointNumber | undefined;
-  id: string | undefined;
+  // MatterbridgeEndpoint properties
+  mode: 'server' | 'matter' | undefined;
+  plugin: string | undefined;
+  configUrl: string | undefined;
   deviceName: string | undefined;
   serialNumber: string | undefined;
   uniqueId: string | undefined;
+  vendorId: number | undefined;
+  vendorName: string | undefined;
+  productId: number | undefined;
+  productName: string | undefined;
+  softwareVersion: number | undefined;
+  softwareVersionString: string | undefined;
+  hardwareVersion: number | undefined;
+  hardwareVersionString: string | undefined;
   productUrl: string;
-  configUrl: string | undefined;
+  tagList: Semtag[] | undefined;
+  originalId: string | undefined;
+  name: string | undefined;
+  deviceType: number | undefined;
+  // Endpoint properties
+  number: EndpointNumber | undefined;
+  id: string | undefined;
 }
 
 /** Define an interface for API matter information */
