@@ -300,6 +300,7 @@
         "--coverage",
         "--maxWorkers=100%",
         "src/broadcastServer.test.ts",
+        "src/matter.test.ts",
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
