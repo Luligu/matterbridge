@@ -24,7 +24,7 @@ const logInterfacesMock = networkModule.logInterfaces as jest.MockedFunction<typ
 
 // Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./utils/spawn.js', () => ({
-  spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
+  spawnCommand: jest.fn((command: string, args: string[]) => {
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
@@ -70,7 +70,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { plg, Plugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { getParameter } from './utils/commandLine.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 import { DeviceManager } from './deviceManager.js';
 
 // Setup the test environment
@@ -110,9 +110,9 @@ describe('Matterbridge mocked', () => {
 
   test('verify mocked spawnCommand', async () => {
     const { spawnCommand } = await import('./utils/spawn.js');
-    const result = await spawnCommand(matterbridge, 'echo', ['Hello, World!'], 'install', 'echo');
+    const result = await spawnCommand('echo', ['Hello, World!'], 'install', 'echo');
     expect(result).toBe(true);
-    expect(spawnCommand).toHaveBeenCalledWith(matterbridge, 'echo', ['Hello, World!'], 'install', 'echo');
+    expect(spawnCommand).toHaveBeenCalledWith('echo', ['Hello, World!'], 'install', 'echo');
   });
 
   test('verify mocked wait', async () => {
@@ -442,14 +442,17 @@ describe('Matterbridge mocked', () => {
     const existSpy = jest.spyOn(fs, 'existsSync').mockImplementation((path: PathLike) => {
       return false; // Simulate a plugin that does not exist
     });
-    spawnCommandMock.mockImplementationOnce((matterbridge: MatterbridgeType, command: string, args: string[]) => {
-      return Promise.reject(new Error(`Mocked spawnCommand error for command: ${command} with args: ${args.join(' ')}`));
+    spawnCommandMock.mockImplementationOnce((command: string, args: string[]) => {
+      return Promise.resolve(false); // Simulate a failed installation
     });
     await (matterbridge as any).initialize();
     expect(plugins.length).toBe(6);
-    expect(existSpy).toHaveBeenCalledTimes(7);
-    expect(parseSpy).toHaveBeenCalledTimes(5);
-    expect(spawnCommandMock).toHaveBeenCalledTimes(6);
+    expect(existSpy).toHaveBeenCalledTimes(6); // Six plugins checked for existence
+    expect(parseSpy).toHaveBeenCalledTimes(5); // One plugin is skipped due to invalid install
+    expect(spawnCommandMock).toHaveBeenCalledTimes(6); // Six plugins attempted to install
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Trying to reinstall it from npm...'));
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error reinstalling plugin'));
+
     parseSpy.mockRestore();
     existSpy.mockRestore();
   });
@@ -847,16 +850,17 @@ describe('Matterbridge mocked', () => {
 
     await matterbridge.updateProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
+    expect(spawnCommandMock).toHaveBeenCalledWith('npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Matterbridge has been updated. Full restart required.'));
     jest.clearAllMocks();
 
     spawnCommandMock.mockImplementationOnce(() => {
-      return Promise.reject(new Error('Mocked spawnCommand error for updateProcess'));
+      return Promise.resolve(false);
     });
     await matterbridge.updateProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error updating matterbridge:'));
+    expect(spawnCommandMock).toHaveBeenCalledWith('npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error updating matterbridge.'));
 
     cleanupSpy.mockRestore();
   });

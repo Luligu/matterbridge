@@ -61,7 +61,6 @@ import { Frontend } from './frontend.js';
 import { addVirtualDevices } from './helpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
-import { inspectError } from './utils/error.js';
 
 /**
  * Represents the Matterbridge events.
@@ -655,13 +654,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
       if (!fs.existsSync(plugin.path) && !hasParameter('add') && !hasParameter('remove') && !hasParameter('enable') && !hasParameter('disable') && !hasParameter('reset') && !hasParameter('factoryreset')) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
-        try {
-          const { spawnCommand } = await import('./utils/spawn.js');
-          await spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose'], 'install', plugin.name);
+        const { spawnCommand } = await import('./utils/spawn.js');
+        if (await spawnCommand('npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose'], 'install', plugin.name)) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
-        } catch (error) {
-          inspectError(this.log, `Error installing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`, error);
+        } else {
+          this.log.error(`Error reinstalling plugin ${plg}${plugin.name}${nf}. The plugin is disabled.`);
           plugin.error = true;
           plugin.enabled = false;
           continue;
@@ -1241,12 +1239,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   async updateProcess(): Promise<void> {
     this.log.info('Updating matterbridge...');
-    try {
-      const { spawnCommand } = await import('./utils/spawn.js');
-      await spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
+    const { spawnCommand } = await import('./utils/spawn.js');
+    if (await spawnCommand('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge')) {
       this.log.info('Matterbridge has been updated. Full restart required.');
-    } catch (error) {
-      this.log.error(`Error updating matterbridge: ${error instanceof Error ? error.message : error}`);
+    } else {
+      this.log.error('Error updating matterbridge.');
     }
     this.frontend.wssSendRestartRequired();
     await this.cleanup('updating...', false);

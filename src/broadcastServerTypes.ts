@@ -29,8 +29,8 @@ import { RefreshRequiredChanged } from './frontendTypes.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, Plugin, StoragePlugin } from './matterbridgeTypes.js';
 
-export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform';
-export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'all';
+export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn';
+export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'all';
 
 /** Base message request structure with id, timestamp, src and dst */
 type BaseWorkerMessageRequest = {
@@ -117,6 +117,10 @@ type WorkerMessageMap = {
   'frontend_attributechanged': {
     request: { type: 'frontend_attributechanged'; params: { plugin: string; serialNumber: string; uniqueId: string; number: EndpointNumber; id: string; cluster: string; attribute: string; value: number | string | boolean | null } };
     response: { type: 'frontend_attributechanged'; response: { success: boolean } };
+  };
+  'frontend_logmessage': {
+    request: { type: 'frontend_logmessage'; params: { level: string; time: string; name: string; message: string } };
+    response: { type: 'frontend_logmessage'; response: { success: boolean } };
   };
 
   // PluginManager methods

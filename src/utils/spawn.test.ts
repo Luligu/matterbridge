@@ -1,6 +1,8 @@
 // src\utils\spawn.test.ts
 /* eslint-disable jest/no-conditional-expect */
 
+process.argv = [...originalProcessArgv, '--verbose'];
+
 // Mock the spawn function from the child_process module. We use jest.unstable_mockModule to ensure that the mock is applied correctly and can be used in the tests.
 jest.unstable_mockModule('node:child_process', async () => {
   const originalModule = jest.requireActual<typeof import('node:child_process')>('node:child_process');
@@ -18,49 +20,42 @@ const { spawn } = await import('node:child_process');
 import { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { Matterbridge } from '../matterbridge.js';
-import { setupTest } from '../jestutils/jestHelpers.js';
+import { flushAsync, loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from '../jestutils/jestHelpers.js';
 
 import { spawnCommand } from './spawn.js';
 
-setupTest('SpawnCommand');
+await setupTest('SpawnCommand', false);
 
 describe('Spawn', () => {
-  const matterbridge = {
-    log: new AnsiLogger({ logName: 'SpawnCommand', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG }),
-    frontend: {
-      wssSendLogMessage: jest.fn(),
-    },
-  } as unknown as Matterbridge;
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  afterAll(() => {
+  afterEach(async () => {});
+
+  afterAll(async () => {
     jest.restoreAllMocks();
   });
 
   it('should spawn a command successfully -nosudo', async () => {
-    process.argv = ['node', 'spawn.test.js', '-nosudo'];
+    process.argv = ['node', 'spawn.test.js', '--verbose', '-nosudo'];
     const command = 'npm';
     const args = ['list', '--depth=0'];
 
-    const result = await spawnCommand(matterbridge, command, args);
+    const result = await spawnCommand(command, args);
 
     expect(spawn).toHaveBeenCalled();
     expect(result).toBe(true);
     if (process.platform === 'win32') {
-      expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn command cmd.exe with`));
+      expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn command cmd.exe with`));
     } else {
-      expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn command ${command} with`));
+      expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn command ${command} with`));
     }
   });
 
   it('should mock a spawn command with sudo', async () => {
-    process.argv = ['node', 'spawn.test.js', '-sudo'];
+    process.argv = ['node', 'spawn.test.js', '--verbose', '-sudo'];
     const command = 'npm';
     const args = ['list', '--depth=0'];
 
@@ -73,10 +68,10 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    const result = await spawnCommand(matterbridge, command, args);
+    const result = await spawnCommand(command, args);
 
     expect(result).toBe(true);
-    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn command sudo with`));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn command sudo with`));
   });
 
   it('should mock a spawn command and throw an error', async () => {
@@ -92,9 +87,10 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow('Spawn error');
+    // await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow('Spawn error');
+    expect(await spawnCommand(command, args)).toBe(false);
 
-    expect(matterbridge.log.log).toHaveBeenCalledWith('error', expect.stringContaining(`Failed to start child process`));
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`Failed to start child process`));
   });
 
   it('should mock a spawn command and throw an error on close', async () => {
@@ -110,9 +106,10 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow();
+    // await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow();
+    expect(await spawnCommand(command, args)).toBe(false);
 
-    expect(matterbridge.log.log).toHaveBeenCalledWith('error', expect.stringContaining(`closed with code 1 and signal null`));
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`closed with code 1 and signal null`));
   });
 
   it('should mock a spawn command and throw an error on exit', async () => {
@@ -128,9 +125,10 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow();
+    // await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow();
+    expect(await spawnCommand(command, args)).toBe(false);
 
-    expect(matterbridge.log.log).toHaveBeenCalledWith('error', expect.stringContaining(`exited with code 1 and signal null`));
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`exited with code 1 and signal null`));
   });
 
   it('should mock a spawn command and send data on stdout and stderr', async () => {
@@ -163,10 +161,10 @@ describe('Spawn', () => {
         },
       } as any;
     });
-    await spawnCommand(matterbridge, command, args);
+    await spawnCommand(command, args);
 
-    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn output (stdout): Hello from stdout`));
-    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn verbose (stderr): Hello from stderr`));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn output (stdout): Hello from stdout`));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn verbose (stderr): Hello from stderr`));
   });
 
   it('should mock a spawn command on windows and send data on stdout and stderr', async () => {
@@ -204,10 +202,10 @@ describe('Spawn', () => {
         },
       } as any;
     });
-    await spawnCommand(matterbridge, command, args);
+    await spawnCommand(command, args);
 
-    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn output (stdout): Hello from stdout`));
-    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn verbose (stderr): Hello from stderr`));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn output (stdout): Hello from stdout`));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn verbose (stderr): Hello from stderr`));
 
     Object.defineProperty(process, 'platform', {
       value: originalPlatform,
@@ -237,10 +235,10 @@ describe('Spawn', () => {
       } as any;
     });
 
-    const result = await spawnCommand(matterbridge, command, args);
+    const result = await spawnCommand(command, args);
 
     expect(result).toBe(true);
-    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining('Spawn command sudo with npm install -g test-package'));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Spawn command sudo with npm install -g test-package'));
 
     Object.defineProperty(process, 'platform', {
       value: originalPlatform,
@@ -270,10 +268,10 @@ describe('Spawn', () => {
       } as any;
     });
 
-    const result = await spawnCommand(matterbridge, command, args);
+    const result = await spawnCommand(command, args);
 
     expect(result).toBe(true);
-    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining('Spawn command npm with install -g test-package'));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Spawn command npm with install -g test-package'));
 
     Object.defineProperty(process, 'platform', {
       value: originalPlatform,
@@ -303,10 +301,10 @@ describe('Spawn', () => {
       } as any;
     });
 
-    const result = await spawnCommand(matterbridge, command, args);
+    const result = await spawnCommand(command, args);
 
     expect(result).toBe(true);
-    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining('Spawn command ls with -la'));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Spawn command ls with -la'));
 
     Object.defineProperty(process, 'platform', {
       value: originalPlatform,

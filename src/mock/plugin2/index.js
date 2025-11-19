@@ -23,9 +23,11 @@ class MockPlatform extends MatterbridgeDynamicPlatform {
     this.setSelectEntity('Outlet', 'Outlet', 'matter');
   }
   async onConfigure() {
+    await super.onConfigure();
     this.log.info(`Configuring platform ${this.config.name}`);
   }
   async onShutdown(reason) {
+    await super.onShutdown(reason);
     this.log.info(`Shutting down platform ${this.config.name}: ${reason ?? ''}`);
   }
 }

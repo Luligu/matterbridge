@@ -28,7 +28,7 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.3.9] - Not published
+## [3.4.0] - Not published
 
 ### Development Breaking Changes
 
@@ -38,9 +38,19 @@ Removed the following long deprecated elements:
 - [endpoint]: uniqueStorageKey instead of id in MatterbridgeEndpointOptions (deprecated since months).
 - [endpoint]: endpointId instead of number in MatterbridgeEndpointOptions (deprecated since months).
 
+### Added
+
+- [endpoint]: Added getChildEndpointById() and getChildEndpointByOriginalId().
+- [endpoint]: Deprecated getChildEndpointByName(). Use getChildEndpointById() or getChildEndpointByOriginalId().
+- [platform]: Added wssSendSnackbarMessage method to MatterbridgePlatform for sending snackbar notifications to the frontend.
+
 ### Changed
 
 - [package]: Updated dependencies.
+- [deviceManager]: Bumped DeviceManager v.1.1.1.
+- [broadcastServer]: Bumped BroadcastServer v.1.0.3.
+- [jest]: Bumped jestHelpers v.1.0.13.
+- [spawn]: Bumped spawn module v.1.2.0.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
@@ -68,8 +78,6 @@ So please update your plugin.
 - [platform]: Added setSchema() to temporarly set the schema for the config editor.
 - [platform]: Added getSchema() to retrieve the schema from the Matterbridge plugin manager.
 - [platform]: Added return value to registerVirtualDevice().
-- [endpoint]: Added getChildEndpointById() and getChildEndpointByOriginalId().
-- [endpoint]: Deprecated getChildEndpointByName(). Use getChildEndpointById() or getChildEndpointByOriginalId().
 
 ### Changed
 

@@ -537,8 +537,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   async install(packageName: string): Promise<boolean> {
     this.log.debug(`Installing plugin ${plg}${packageName}${db}...`);
     const { spawnCommand } = await import('./utils/spawn.js');
-    try {
-      await spawnCommand(this.matterbridge, 'npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName);
+    if (await spawnCommand('npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName)) {
       this.matterbridge.restartRequired = true;
       this.matterbridge.fixedRestartRequired = true;
       packageName = packageName.replace(/@.*$/, ''); // Remove @version if present
@@ -551,11 +550,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           await this.matterbridge.shutdownProcess();
         }
       }
-      this.log.debug(`Installed plugin ${plg}${packageName}${db} successfully`);
+      this.log.info(`Installed plugin ${plg}${packageName}${db} successfully`);
       return true;
-    } catch (error) {
-      inspectError(this.log, `Failed to install package ${plg}${packageName}${er}`, error);
-      this.log.debug(`Failed to install plugin ${plg}${packageName}${db}`);
+    } else {
+      this.log.error(`Failed to install plugin ${plg}${packageName}${er}`);
       return false;
     }
   }
@@ -571,18 +569,16 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     const { spawnCommand } = await import('./utils/spawn.js');
     packageName = packageName.replace(/@.*$/, '');
     if (packageName === 'matterbridge') return false;
-    try {
-      if (this.has(packageName)) {
-        const plugin = this.get(packageName);
-        if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
-        await this.remove(packageName);
-      }
-      await spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', packageName, '--verbose'], 'uninstall', packageName);
-      this.log.debug(`Uninstalled plugin ${plg}${packageName}${db} successfully`);
+    if (this.has(packageName)) {
+      const plugin = this.get(packageName);
+      if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
+      await this.remove(packageName);
+    }
+    if (await spawnCommand('npm', ['uninstall', '-g', packageName, '--verbose'], 'uninstall', packageName)) {
+      this.log.info(`Uninstalled plugin ${plg}${packageName}${db} successfully`);
       return true;
-    } catch (error) {
-      inspectError(this.log, `Failed to uninstall package ${plg}${packageName}${er}`, error);
-      this.log.debug(`Failed to uninstall plugin ${plg}${packageName}${db}`);
+    } else {
+      this.log.error(`Failed to uninstall plugin ${plg}${packageName}${er}`);
       return false;
     }
   }
@@ -998,7 +994,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         plugin.author = this.getAuthor(packageJson);
         plugin.configJson = config;
         plugin.schemaJson = await this.loadSchema(plugin);
-        config.name = plugin.name;
+        config.name = packageJson.name;
         config.version = packageJson.version;
 
         const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.log.logLevel });

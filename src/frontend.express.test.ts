@@ -50,6 +50,15 @@ const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').m
   return Promise.resolve(undefined) as any;
 });
 
+// Mock the spawnCommand from spawn module before importing it
+jest.unstable_mockModule('./utils/spawn.js', () => ({
+  spawnCommand: jest.fn((command: string, args: string[]) => {
+    return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
+  }),
+}));
+const spawnModule = await import('./utils/spawn.js');
+const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
+
 // Setup the test environment
 await setupTest(NAME, false);
 
@@ -501,6 +510,9 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('POST /api/uploadpackage with wrong tgz', async () => {
+    spawnCommandMock.mockImplementationOnce((command: string, args: string[]) => {
+      return Promise.resolve(false);
+    });
     // Read the test file
     const testFileContent = await fs.readFile('./src/mock/test.zip');
     const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
@@ -508,6 +520,17 @@ describe('Matterbridge frontend express with http', () => {
     expect(typeof response.body).toBe('string');
     expect(response.body).toContain('Error uploading or installing plugin package matterbridge-plugin-template.tgz');
     await expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/matterbridge-plugin-template.tgz'))).resolves.toBeUndefined();
+  }, 30000);
+
+  test('POST /api/uploadpackage throw error', async () => {
+    spawnCommandMock.mockImplementationOnce((command: string, args: string[]) => {
+      throw new Error('Mocked spawnCommand error for install');
+    });
+    // Read the test file
+    const testFileContent = await fs.readFile('./src/mock/matterbridge-plugin-template._tgz');
+    const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
+    expect(response.status).toBe(500);
+    expect(typeof response.body).toBe('string');
   }, 30000);
 
   test('GET Fallback for routing', async () => {
