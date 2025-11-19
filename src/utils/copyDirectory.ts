@@ -23,17 +23,18 @@
  */
 
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat } from '../logger/export.js';
+import { AnsiLogger } from 'node-ansi-logger';
 
 /**
  * Copies a directory and all its subdirectories and files to a new location.
  *
  * @param {string} srcDir - The path to the source directory.
  * @param {string} destDir - The path to the destination directory.
+ * @param {AnsiLogger} [log] - Optional AnsiLogger instance for logging.
  * @returns {Promise<boolean>} - A promise that resolves when the copy operation is complete or fails for error.
  * @throws {Error} - Throws an error if the copy operation fails.
  */
-export async function copyDirectory(srcDir: string, destDir: string): Promise<boolean> {
+export async function copyDirectory(srcDir: string, destDir: string, log?: AnsiLogger): Promise<boolean> {
   if (srcDir === '') {
     throw new Error('Source directory must be specified.');
   }
@@ -49,12 +50,11 @@ export async function copyDirectory(srcDir: string, destDir: string): Promise<bo
   if (srcDir === destDir) {
     throw new Error('Source and destination directories must be different.');
   }
-  const log = new AnsiLogger({ logName: 'CopyDirectory', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
   const fs = await import('node:fs').then((mod) => mod.promises);
   const path = await import('node:path');
 
-  log.debug(`copyDirectory: copying directory from ${srcDir} to ${destDir}`);
+  log?.debug(`copyDirectory: copying directory from ${srcDir} to ${destDir}`);
   try {
     // Create destination directory if it doesn't exist
     await fs.mkdir(destDir, { recursive: true });
@@ -76,7 +76,7 @@ export async function copyDirectory(srcDir: string, destDir: string): Promise<bo
     }
     return true;
   } catch (error) {
-    log.error(`copyDirectory error copying from ${srcDir} to ${destDir}: ${error instanceof Error ? error.message : error}`);
+    log?.error(`copyDirectory error copying from ${srcDir} to ${destDir}: ${error instanceof Error ? error.message : error}`);
     return false;
   }
 }
