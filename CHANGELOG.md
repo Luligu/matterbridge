@@ -68,6 +68,8 @@ So please update your plugin.
 - [platform]: Added setSchema() to temporarly set the schema for the config editor.
 - [platform]: Added getSchema() to retrieve the schema from the Matterbridge plugin manager.
 - [platform]: Added return value to registerVirtualDevice().
+- [endpoint]: Added getChildEndpointById() and getChildEndpointByOriginalId().
+- [endpoint]: Deprecated getChildEndpointByName(). Use getChildEndpointById() or getChildEndpointByOriginalId().
 
 ### Changed
 

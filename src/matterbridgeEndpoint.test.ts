@@ -1074,6 +1074,8 @@ describe('Matterbridge ' + NAME, () => {
     childEndpoint.createDefaultIdentifyClusterServer();
     childEndpoint.createDefaultBooleanStateClusterServer(false);
     expect(device.getChildEndpointByName('contactChild-1')).toBeDefined();
+    expect(device.getChildEndpointById('contactChild-1')).toBeDefined();
+    expect(device.getChildEndpointByOriginalId('contactChild-1')).toBeDefined();
     expect(device.getChildEndpoints().length).toBe(1);
     await flushAsync();
   });

@@ -799,13 +799,38 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Retrieves a child endpoint by its name.
+   * Retrieves a child endpoint by its name (id).
+   * Since the name is stored like id, the endpointName should be without spaces and dots.
+   * If case of not latin characters, the endpointName should be the generated unique id.
    *
    * @param {string} endpointName - The name of the endpoint to retrieve.
    * @returns {Endpoint | undefined} The child endpoint with the specified name, or undefined if not found.
+   * @deprecated Use getChildEndpointById() or getChildEndpointByOriginalId() instead.
    */
   getChildEndpointByName(endpointName: string): MatterbridgeEndpoint | undefined {
     return this.parts.find((part) => part.id === endpointName) as MatterbridgeEndpoint | undefined;
+  }
+
+  /**
+   * Retrieves a child endpoint by its id.
+   * Since the id of a child endpoint is the endpointName passed in the constructor, the id to retrieve it should be without spaces and dots.
+   * If case of not latin characters, the id is a generated unique id.
+   *
+   * @param {string} id - The id of the endpoint to retrieve.
+   * @returns {Endpoint | undefined} The child endpoint with the specified id, or undefined if not found.
+   */
+  getChildEndpointById(id: string): MatterbridgeEndpoint | undefined {
+    return this.parts.find((part) => part.id === id) as MatterbridgeEndpoint | undefined;
+  }
+
+  /**
+   * Retrieves a child endpoint by its original id (the id of MatterbridgeEndpointOptions).
+   *
+   * @param {string} originalId - The original id of the endpoint to retrieve.
+   * @returns {Endpoint | undefined} The child endpoint with the specified originalId, or undefined if not found.
+   */
+  getChildEndpointByOriginalId(originalId: string): MatterbridgeEndpoint | undefined {
+    return (this.parts as unknown as MatterbridgeEndpoint[]).find((part) => part.originalId === originalId) as MatterbridgeEndpoint | undefined;
   }
 
   /**
