@@ -4,7 +4,7 @@
  * @file broadcastServer.ts
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 1.0.2
+ * @version 1.0.3
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -170,11 +170,11 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * It broadcasts a request message and waits for a response with the same id.
    *
    * @param {WorkerRequest<T>} message - The typed request message to broadcast.
-   * @param {number} timeout - The timeout in milliseconds to wait for a response. Default is 100ms.
+   * @param {number} timeout - The timeout in milliseconds to wait for a response. Default is 250ms.
    * @returns {Promise<WorkerResponse<T>>} A promise that resolves with the response from the worker or rejects on timeout.
-   * @throws {Error} If the fetch operation times out after 100ms.
+   * @throws {Error} If the fetch operation times out after 250ms.
    */
-  async fetch<M extends WorkerRequest<WorkerMessageType>>(message: M, timeout: number = 100): Promise<WorkerResponse<M['type']>> {
+  async fetch<M extends WorkerRequest<WorkerMessageType>>(message: M, timeout: number = 250): Promise<WorkerResponse<M['type']>> {
     if (message.id === undefined) {
       message.id = this.getUniqueId();
     }
