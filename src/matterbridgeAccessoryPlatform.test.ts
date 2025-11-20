@@ -51,5 +51,6 @@ describe('Matterbridge accessory platform', () => {
   test('create a MatterbridgeAccessoryPlatform', async () => {
     const platform = new MatterbridgeAccessoryPlatform(matterbridge, matterbridge.log, { name: 'test', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     expect(platform.type).toBe('AccessoryPlatform');
+    await platform.onShutdown();
   });
 });

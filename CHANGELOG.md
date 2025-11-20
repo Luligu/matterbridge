@@ -46,6 +46,7 @@ Removed the following long deprecated elements:
 - [doorLock]: Added autoRelockTime attribute with default 0.
 - [DevContainer]: Added instructions for testing a plugin with a paired controller when using DevContainer.
 - [platform]: Made internal use promises hard-private.
+- [platform]: Added size(), getDeviceByName(), getDeviceByUniqueId(), getDeviceBySerialNumber(), getDeviceById(), getDeviceByOriginalId(), getDeviceByNumber() and hasDeviceUniqueId().
 
 ### Changed
 

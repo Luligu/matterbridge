@@ -51,5 +51,6 @@ describe('Matterbridge dynamic platform', () => {
   test('create a MatterbridgeDynamicPlatform', async () => {
     const platform = new MatterbridgeDynamicPlatform(matterbridge, matterbridge.log, { name: 'test', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     expect(platform.type).toBe('DynamicPlatform');
+    await platform.onShutdown();
   });
 });

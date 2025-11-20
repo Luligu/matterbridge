@@ -155,7 +155,10 @@ export class MatterbridgePlatform {
     if (this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name} with config:\n${JSON.stringify(this.config, null, 2)}\n`);
 
     // create the NodeStorageManager for the plugin platform
-    if (!isValidString(this.config.name, 1)) throw new Error('Platform: the plugin name is missing or invalid.');
+    if (!isValidString(this.config.name, 1)) {
+      this.#server.close();
+      throw new Error('Platform: the plugin name is missing or invalid.');
+    }
     this.log.debug(`Creating storage for plugin ${this.config.name} in ${path.join(this.matterbridge.matterbridgeDirectory, this.config.name)}`);
     this.storage = new NodeStorageManager({
       dir: path.join(this.matterbridge.matterbridgeDirectory, this.config.name),
@@ -196,6 +199,25 @@ export class MatterbridgePlatform {
       this.log.debug(`MatterbridgePlatform for plugin ${this.config.name} is fully initialized`);
       return;
     });
+  }
+
+  /**
+   * Destroys the platform, cleaning up memory, closing storage and broadcast server.
+   */
+  private async destroy() {
+    // Cleanup memory
+    this.selectDevice.clear();
+    this.selectEntity.clear();
+    this.registeredEndpointsByUniqueId.clear();
+    this.registeredEndpointsByName.clear();
+
+    // Close the storage
+    await this.context?.close();
+    this.context = undefined;
+    await this.storage?.close();
+
+    // Close the broadcast server
+    this.#server.close();
   }
 
   /**
@@ -243,19 +265,8 @@ export class MatterbridgePlatform {
     // Check and update the endpoint numbers
     await this.checkEndpointNumbers();
 
-    // Cleanup memory
-    this.selectDevice.clear();
-    this.selectEntity.clear();
-    this.registeredEndpointsByUniqueId.clear();
-    this.registeredEndpointsByName.clear();
-
-    // Close the storage
-    await this.context?.close();
-    this.context = undefined;
-    await this.storage?.close();
-
-    // Close the broadcast server
-    this.#server.close();
+    // Cleanup memory and close storage and broadcast server
+    await this.destroy();
   }
 
   /**
@@ -358,7 +369,6 @@ export class MatterbridgePlatform {
    */
   wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false): void {
     this.#server.request({ type: 'frontend_restartrequired', src: 'platform', dst: 'frontend', params: { snackbar, fixed } });
-    // (this.matterbridge as InternalPlatformMatterbridge).frontend.wssSendRestartRequired(snackbar, fixed);
   }
 
   /**
@@ -374,7 +384,15 @@ export class MatterbridgePlatform {
    */
   wssSendSnackbarMessage(message: string, timeout?: number, severity?: 'error' | 'success' | 'info' | 'warning'): void {
     this.#server.request({ type: 'frontend_snackbarmessage', src: 'platform', dst: 'frontend', params: { message, timeout, severity } });
-    // (this.matterbridge as InternalPlatformMatterbridge).frontend.wssSendSnackbarMessage(message, timeout, severity);
+  }
+
+  /**
+   * Retrieves the number of devices registered with the platform.
+   *
+   * @returns {number} The number of registered devices.
+   */
+  size(): number {
+    return this.registeredEndpointsByUniqueId.size;
   }
 
   /**
@@ -387,6 +405,66 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Retrieves a registered device by its name.
+   *
+   * @param {string} deviceName - The device name to search for.
+   * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
+   */
+  getDeviceByName(deviceName: string): MatterbridgeEndpoint | undefined {
+    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.deviceName === deviceName);
+  }
+
+  /**
+   * Retrieves a registered device by its uniqueId.
+   *
+   * @param {string} uniqueId - The device unique ID to search for.
+   * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
+   */
+  getDeviceByUniqueId(uniqueId: string): MatterbridgeEndpoint | undefined {
+    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.uniqueId === uniqueId);
+  }
+
+  /**
+   * Retrieves a registered device by its serialNumber.
+   *
+   * @param {string} serialNumber - The device serial number to search for.
+   * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
+   */
+  getDeviceBySerialNumber(serialNumber: string): MatterbridgeEndpoint | undefined {
+    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.serialNumber === serialNumber);
+  }
+
+  /**
+   * Retrieves a registered device by its id.
+   *
+   * @param {string} id - The device id to search for.
+   * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
+   */
+  getDeviceById(id: string): MatterbridgeEndpoint | undefined {
+    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.maybeId === id);
+  }
+
+  /**
+   * Retrieves a registered device by its originalId.
+   *
+   * @param {string} originalId - The device originalId to search for.
+   * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
+   */
+  getDeviceByOriginalId(originalId: string): MatterbridgeEndpoint | undefined {
+    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.originalId === originalId);
+  }
+
+  /**
+   * Retrieves a registered device by its number.
+   *
+   * @param {EndpointNumber | number} number - The device number to search for.
+   * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
+   */
+  getDeviceByNumber(number: EndpointNumber | number): MatterbridgeEndpoint | undefined {
+    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.maybeNumber === number);
+  }
+
+  /**
    * Checks if a device with this name is already registered in the platform.
    *
    * @param {string} deviceName - The device name to check.
@@ -394,6 +472,16 @@ export class MatterbridgePlatform {
    */
   hasDeviceName(deviceName: string): boolean {
     return this.registeredEndpointsByName.has(deviceName);
+  }
+
+  /**
+   * Checks if a device with this uniqueId is already registered in the platform.
+   *
+   * @param {string} deviceUniqueId - The device unique ID to check.
+   * @returns {boolean} True if the device is already registered, false otherwise.
+   */
+  hasDeviceUniqueId(deviceUniqueId: string): boolean {
+    return this.registeredEndpointsByUniqueId.has(deviceUniqueId);
   }
 
   /**
