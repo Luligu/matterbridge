@@ -48,6 +48,7 @@ Removed the following long deprecated elements:
 
 - [package]: Updated dependencies.
 - [deviceManager]: Bumped DeviceManager v.1.1.1.
+- [pluginManager]: Bumped PluginManager v.1.3.1.
 - [broadcastServer]: Bumped BroadcastServer v.1.0.3.
 - [jest]: Bumped jestHelpers v.1.0.13.
 - [spawn]: Bumped spawn module v.1.2.0.
