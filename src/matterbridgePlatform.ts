@@ -127,9 +127,7 @@ export class MatterbridgePlatform {
   readonly ready: Promise<void>;
 
   /** Registered MatterbridgeEndpoint map keyed by uniqueId */
-  private readonly registeredEndpointsByUniqueId = new Map<string, MatterbridgeEndpoint>();
-  /** Registered MatterbridgeEndpoint map keyed by deviceName */
-  private readonly registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>();
+  private readonly registeredEndpoints = new Map<string, MatterbridgeEndpoint>();
 
   /** Broadcast server */
   readonly #server: BroadcastServer;
@@ -208,8 +206,7 @@ export class MatterbridgePlatform {
     // Cleanup memory
     this.selectDevice.clear();
     this.selectEntity.clear();
-    this.registeredEndpointsByUniqueId.clear();
-    this.registeredEndpointsByName.clear();
+    this.registeredEndpoints.clear();
 
     // Close the storage
     await this.context?.close();
@@ -392,7 +389,7 @@ export class MatterbridgePlatform {
    * @returns {number} The number of registered devices.
    */
   size(): number {
-    return this.registeredEndpointsByUniqueId.size;
+    return this.registeredEndpoints.size;
   }
 
   /**
@@ -401,7 +398,7 @@ export class MatterbridgePlatform {
    * @returns {MatterbridgeEndpoint[]} The registered devices.
    */
   getDevices(): MatterbridgeEndpoint[] {
-    return Array.from(this.registeredEndpointsByUniqueId.values());
+    return Array.from(this.registeredEndpoints.values());
   }
 
   /**
@@ -411,7 +408,7 @@ export class MatterbridgePlatform {
    * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
    */
   getDeviceByName(deviceName: string): MatterbridgeEndpoint | undefined {
-    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.deviceName === deviceName);
+    return Array.from(this.registeredEndpoints.values()).find((device) => device.deviceName === deviceName);
   }
 
   /**
@@ -421,7 +418,7 @@ export class MatterbridgePlatform {
    * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
    */
   getDeviceByUniqueId(uniqueId: string): MatterbridgeEndpoint | undefined {
-    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.uniqueId === uniqueId);
+    return Array.from(this.registeredEndpoints.values()).find((device) => device.uniqueId === uniqueId);
   }
 
   /**
@@ -431,7 +428,7 @@ export class MatterbridgePlatform {
    * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
    */
   getDeviceBySerialNumber(serialNumber: string): MatterbridgeEndpoint | undefined {
-    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.serialNumber === serialNumber);
+    return Array.from(this.registeredEndpoints.values()).find((device) => device.serialNumber === serialNumber);
   }
 
   /**
@@ -441,7 +438,7 @@ export class MatterbridgePlatform {
    * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
    */
   getDeviceById(id: string): MatterbridgeEndpoint | undefined {
-    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.maybeId === id);
+    return Array.from(this.registeredEndpoints.values()).find((device) => device.maybeId === id);
   }
 
   /**
@@ -451,7 +448,7 @@ export class MatterbridgePlatform {
    * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
    */
   getDeviceByOriginalId(originalId: string): MatterbridgeEndpoint | undefined {
-    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.originalId === originalId);
+    return Array.from(this.registeredEndpoints.values()).find((device) => device.originalId === originalId);
   }
 
   /**
@@ -461,7 +458,7 @@ export class MatterbridgePlatform {
    * @returns {MatterbridgeEndpoint | undefined} The registered device or undefined if not found.
    */
   getDeviceByNumber(number: EndpointNumber | number): MatterbridgeEndpoint | undefined {
-    return Array.from(this.registeredEndpointsByUniqueId.values()).find((device) => device.maybeNumber === number);
+    return Array.from(this.registeredEndpoints.values()).find((device) => device.maybeNumber === number);
   }
 
   /**
@@ -471,7 +468,8 @@ export class MatterbridgePlatform {
    * @returns {boolean} True if the device is already registered, false otherwise.
    */
   hasDeviceName(deviceName: string): boolean {
-    return this.registeredEndpointsByName.has(deviceName);
+    return Array.from(this.registeredEndpoints.values()).find((device) => device.deviceName === deviceName) !== undefined;
+    // return this.registeredEndpointsByName.has(deviceName);
   }
 
   /**
@@ -481,7 +479,7 @@ export class MatterbridgePlatform {
    * @returns {boolean} True if the device is already registered, false otherwise.
    */
   hasDeviceUniqueId(deviceUniqueId: string): boolean {
-    return this.registeredEndpointsByUniqueId.has(deviceUniqueId);
+    return this.registeredEndpoints.has(deviceUniqueId);
   }
 
   /**
@@ -558,7 +556,7 @@ export class MatterbridgePlatform {
       this.log.error(`Device with uniqueId ${CYAN}${device.uniqueId}${er} has no serialNumber. The device will not be added.`);
       return;
     }
-    if (this.registeredEndpointsByName.has(device.deviceName)) {
+    if (this.hasDeviceName(device.deviceName)) {
       this.log.error(`Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
       return;
     }
@@ -600,8 +598,7 @@ export class MatterbridgePlatform {
 
     // TODO: replace with a message to the matterbridge thread
     await (this.matterbridge as InternalPlatformMatterbridge).addBridgedEndpoint(this.name, device);
-    this.registeredEndpointsByUniqueId.set(device.uniqueId, device);
-    this.registeredEndpointsByName.set(device.deviceName, device);
+    this.registeredEndpoints.set(device.uniqueId, device);
   }
 
   /**
@@ -612,8 +609,7 @@ export class MatterbridgePlatform {
   async unregisterDevice(device: MatterbridgeEndpoint) {
     // TODO: replace with a message to the matterbridge thread
     await (this.matterbridge as InternalPlatformMatterbridge).removeBridgedEndpoint(this.name, device);
-    if (device.uniqueId) this.registeredEndpointsByUniqueId.delete(device.uniqueId);
-    if (device.deviceName) this.registeredEndpointsByName.delete(device.deviceName);
+    if (device.uniqueId) this.registeredEndpoints.delete(device.uniqueId);
   }
 
   /**
@@ -624,8 +620,7 @@ export class MatterbridgePlatform {
   async unregisterAllDevices(delay: number = 0) {
     // TODO: replace with a message to the matterbridge thread
     await (this.matterbridge as InternalPlatformMatterbridge).removeAllBridgedEndpoints(this.name, delay);
-    this.registeredEndpointsByUniqueId.clear();
-    this.registeredEndpointsByName.clear();
+    this.registeredEndpoints.clear();
   }
 
   /**
