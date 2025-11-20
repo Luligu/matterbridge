@@ -45,8 +45,9 @@ Removed the following long deprecated elements:
 - [platform]: Added wssSendSnackbarMessage method to MatterbridgePlatform for sending snackbar notifications to the frontend.
 - [doorLock]: Added autoRelockTime attribute with default 0.
 - [DevContainer]: Added instructions for testing a plugin with a paired controller when using DevContainer.
-- [platform]: Made internal use promises hard-private.
+- [platform]: Made internal use methods and properties hard-private.
 - [platform]: Added size(), getDeviceByName(), getDeviceByUniqueId(), getDeviceBySerialNumber(), getDeviceById(), getDeviceByOriginalId(), getDeviceByNumber() and hasDeviceUniqueId().
+- [platform]: Added isReady, isLoaded, isStarted and isConfigured.
 
 ### Changed
 

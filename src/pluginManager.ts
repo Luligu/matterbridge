@@ -1004,6 +1004,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         platform.name = packageJson.name;
         platform.config = config;
         platform.version = packageJson.version;
+        platform.isLoaded = true;
         plugin.name = packageJson.name;
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
@@ -1073,6 +1074,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       await plugin.platform.onStart(message);
       this.log.notice(`Started plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.started = true;
+      plugin.platform.isStarted = true;
       await this.saveConfigFromPlugin(plugin);
       this.emit('started', plugin.name);
       if (configure) await this.configure(plugin);
@@ -1120,6 +1122,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       await plugin.platform.onConfigure();
       this.log.notice(`Configured plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.configured = true;
+      plugin.platform.isConfigured = true;
       this.emit('configured', plugin.name);
       return plugin;
     } catch (err) {
@@ -1169,6 +1172,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}: ${reason}...`);
     try {
       await plugin.platform.onShutdown(reason);
+      plugin.platform.isReady = false;
+      plugin.platform.isLoaded = false;
+      plugin.platform.isStarted = false;
+      plugin.platform.isConfigured = false;
       plugin.locked = undefined;
       plugin.error = undefined;
       plugin.loaded = undefined;
