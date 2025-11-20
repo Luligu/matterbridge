@@ -54,6 +54,12 @@ To start the Dev Container, simply open the project folder in [Visual Studio Cod
 
 Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
 
+When you want to test your plugin with a paired controller, you have several options:
+
+- create a tgz (npm run npmPack) and upload it to a running instance of matterbridge.
+- publish it with tag dev and install it (matterbridge-yourplugin@dev in Install plugins) in a running instance of matterbridge.
+- use a local instance of matterbridge running outside the dev container and install (../matterbridge-yourplugin in Install plugins) or add (../matterbridge-yourplugin in Install plugins) your plugin to it (easiest way). Adjust the path if matterbridge dir and your plugin dir are not in the same parent directory.
+
 ## Guidelines on imports/exports
 
 Matterbridge exports from:
