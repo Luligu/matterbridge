@@ -27,7 +27,7 @@ class MockPlatform extends MatterbridgeDynamicPlatform {
     this.log.info(`Configuring platform ${this.config.name}`);
   }
   async onShutdown(reason) {
-    await super.onShutdown();
+    await super.onShutdown(reason);
     this.log.info(`Shutting down platform ${this.config.name}: ${reason ?? ''}`);
   }
 }

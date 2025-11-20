@@ -403,6 +403,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     // Load the array from storage and convert it to a map
     const pluginsArray = await this.matterbridge.nodeContext.get<StoragePlugin[]>('plugins', []);
     for (const plugin of pluginsArray) this._plugins.set(plugin.name, plugin);
+    this.log.debug(`Loaded ${BLUE}${pluginsArray.length}${db} plugins from storage`);
     return pluginsArray;
   }
 
