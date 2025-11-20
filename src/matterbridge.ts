@@ -141,7 +141,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public fileLogger = false;
 
   /** Matter logger */
-  public readonly matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  public readonly matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
   /** Matter logger level */
   public matterLogLevel: LogLevel = this.matterLog.logLevel;
   /** Whether to log Matter to a file */
