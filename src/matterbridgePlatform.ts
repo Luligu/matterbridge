@@ -97,20 +97,20 @@ type InternalPlatformMatterbridge = PlatformMatterbridge & {
  *
  */
 export class MatterbridgePlatform {
-  /** The Matterbridge instance of this Platform. */
+  /** The PlatformMatterbridge instance of this Platform. */
   matterbridge: PlatformMatterbridge;
-  /** The logger instance for this platform. */
+  /** The logger instance for this platform. Created by the PluginManager.load() method. */
   log: AnsiLogger;
-  /** The configuration for this platform. */
+  /** The configuration for this platform. Set by the PluginManager.load() method using the stored config file. */
   config: PlatformConfig;
-  /** The name of the platform. Will be set by the loadPlugin() method using the package.json value. */
+  /** The name of the platform. Set by the PluginManager.load() method using the package.json name value. */
   name = '';
-  /** The type of the platform. Will be set by the extending classes. */
+  /** The type of the platform. Set by the extending classes: MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform */
   type: 'DynamicPlatform' | 'AccessoryPlatform' | 'AnyPlatform' = 'AnyPlatform';
-  /** The version of the platform. Will be set by the loadPlugin() method using the package.json value */
+  /** The version of the platform. Set by the PluginManager.load() method using the package.json version value. */
   version = '1.0.0';
 
-  /** Platform node storage manager in the matterbridgeDirectory. */
+  /** Platform node storage manager created in the matterbridgeDirectory with the plugin name. */
   storage: NodeStorageManager;
   /** Platform context in the storage of matterbridgeDirectory. Use await platform.ready to access it early. */
   context?: NodeStorage;
@@ -119,12 +119,12 @@ export class MatterbridgePlatform {
   private readonly selectDevice = new Map<string, { serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
   private readonly selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
 
-  // Promises for platform initialization. They are grouped in platform.ready with Promise.all.
-  private contextReady: Promise<void>;
-  private selectDeviceContextReady: Promise<void>;
-  private selectEntityContextReady: Promise<void>;
-  /** The ready promise for the platform, which resolves when the platform is fully initialized (including context and selects). */
-  ready: Promise<void>;
+  // Promises for platform initialization. They are grouped in MatterbridgePlatform.ready with Promise.all.
+  readonly #contextReady: Promise<void>;
+  readonly #selectDeviceContextReady: Promise<void>;
+  readonly #selectEntityContextReady: Promise<void>;
+  /** The ready promise for the platform, which resolves when the platform is fully initialized (including context and selects). Await it if you access the platform context or select early. */
+  readonly ready: Promise<void>;
 
   /** Registered MatterbridgeEndpoint map keyed by uniqueId */
   private readonly registeredEndpointsByUniqueId = new Map<string, MatterbridgeEndpoint>();
@@ -138,8 +138,8 @@ export class MatterbridgePlatform {
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
-   * It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
-   * Each plugin must extend the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
+   * It is extended by the MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform classes.
+   * Each plugin must extend the MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform classes.
    *
    * @param {PlatformMatterbridge} matterbridge - The Matterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
@@ -167,7 +167,7 @@ export class MatterbridgePlatform {
 
     // create the context storage for the plugin platform
     this.log.debug(`Creating context for plugin ${this.config.name}`);
-    this.contextReady = this.storage.createStorage('context').then((context) => {
+    this.#contextReady = this.storage.createStorage('context').then((context) => {
       this.context = context;
       this.log.debug(`Created context for plugin ${this.config.name}`);
       return;
@@ -175,7 +175,7 @@ export class MatterbridgePlatform {
 
     // create the selectDevice storage for the plugin platform
     this.log.debug(`Loading selectDevice for plugin ${this.config.name}`);
-    this.selectDeviceContextReady = this.storage.createStorage('selectDevice').then(async (context) => {
+    this.#selectDeviceContextReady = this.storage.createStorage('selectDevice').then(async (context) => {
       const selectDevice = await context.get<{ serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]>('selectDevice', []);
       for (const device of selectDevice) this.selectDevice.set(device.serial, device);
       this.log.debug(`Loaded ${this.selectDevice.size} selectDevice for plugin ${this.config.name}`);
@@ -184,7 +184,7 @@ export class MatterbridgePlatform {
 
     // create the selectEntity storage for the plugin platform
     this.log.debug(`Loading selectEntity for plugin ${this.config.name}`);
-    this.selectEntityContextReady = this.storage.createStorage('selectEntity').then(async (context) => {
+    this.#selectEntityContextReady = this.storage.createStorage('selectEntity').then(async (context) => {
       const selectEntity = await context.get<{ name: string; description: string; icon?: string }[]>('selectEntity', []);
       for (const entity of selectEntity) this.selectEntity.set(entity.name, entity);
       this.log.debug(`Loaded ${this.selectEntity.size} selectEntity for plugin ${this.config.name}`);
@@ -192,7 +192,7 @@ export class MatterbridgePlatform {
     });
 
     // Create the `ready` promise for the platform
-    this.ready = Promise.all([this.contextReady, this.selectDeviceContextReady, this.selectEntityContextReady]).then(() => {
+    this.ready = Promise.all([this.#contextReady, this.#selectDeviceContextReady, this.#selectEntityContextReady]).then(() => {
       this.log.debug(`MatterbridgePlatform for plugin ${this.config.name} is fully initialized`);
       return;
     });
@@ -563,7 +563,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Clears all the select device and entity maps.
+   * Clears all the select device and entity maps and saves the changes to the storage.
    *
    * @returns {void}
    */
@@ -574,7 +574,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Clears the select for a single device.
+   * Clears the select for a single device and saves the changes to the storage.
    *
    * @param {string} serial - The serial of the device to clear.
    * @returns {void}
@@ -585,7 +585,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Clears the select for a single entity.
+   * Clears the select for a single entity and saves the changes to the storage.
    *
    * @param {string} name - The name of the entity to clear.
    * @returns {void}

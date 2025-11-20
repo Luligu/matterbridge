@@ -44,7 +44,8 @@ Removed the following long deprecated elements:
 - [endpoint]: Deprecated getChildEndpointByName(). Use getChildEndpointById() or getChildEndpointByOriginalId().
 - [platform]: Added wssSendSnackbarMessage method to MatterbridgePlatform for sending snackbar notifications to the frontend.
 - [doorLock]: Added autoRelockTime attribute with default 0.
-- [DevContainer]: Add instructions for testing a plugin with a paired controller when using DevContainer.
+- [DevContainer]: Added instructions for testing a plugin with a paired controller when using DevContainer.
+- [platform]: Made internal use promises hard-private.
 
 ### Changed
 

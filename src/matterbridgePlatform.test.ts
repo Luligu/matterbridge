@@ -75,9 +75,6 @@ describe('Matterbridge platform', () => {
     expect((platform as any).selectEntity).toBeDefined();
     expect((platform as any).selectEntity).toBeInstanceOf(Map);
     expect((platform as any).selectEntity.size).toBe(0);
-    expect((platform as any).contextReady).toBeInstanceOf(Promise);
-    expect((platform as any).selectDeviceContextReady).toBeInstanceOf(Promise);
-    expect((platform as any).selectEntityContextReady).toBeInstanceOf(Promise);
     expect(platform.ready).toBeInstanceOf(Promise);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Creating storage for plugin test'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Creating context for plugin test'));
