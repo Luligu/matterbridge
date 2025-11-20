@@ -25,7 +25,7 @@ import { flushAsync, loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupT
 
 import { spawnCommand } from './spawn.js';
 
-await setupTest('SpawnCommand', true);
+await setupTest('SpawnCommand', false);
 
 describe('Spawn', () => {
   beforeEach(() => {
