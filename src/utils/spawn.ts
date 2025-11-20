@@ -46,7 +46,12 @@ export async function spawnCommand(command: string, args: string[], packageComma
   const server = new BroadcastServer('spawn', log);
 
   const sendLog = (name: string, message: string) => {
-    server.request({ type: 'frontend_logmessage', src: 'spawn', dst: 'frontend', params: { level: 'spawn', time: log.now(), name, message } });
+    try {
+      server.request({ type: 'frontend_logmessage', src: 'spawn', dst: 'frontend', params: { level: 'spawn', time: log.now(), name, message } });
+    } catch (err) {
+      // istanbul ignore next cause it's a precaution
+      log.debug(`Failed to send log message to frontend: ${err instanceof Error ? err.message : String(err)}`);
+    }
   };
 
   if (verbose) log.debug(`Spawning command: ${command} with ${args.join(' ')} ${packageCommand} ${packageName}`);
