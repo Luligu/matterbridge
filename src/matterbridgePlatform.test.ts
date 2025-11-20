@@ -88,8 +88,8 @@ describe('Matterbridge platform', () => {
     addMatterbridgePlatform(platform, 'test');
     expect(platform).toBeDefined();
     expect(platform).toBeInstanceOf(MatterbridgePlatform);
-    expect(platform.storage).toBeDefined();
-    expect(platform.storage).toBeInstanceOf(NodeStorageManager);
+    expect((platform as any).storage).toBeDefined();
+    expect((platform as any).storage).toBeInstanceOf(NodeStorageManager);
     expect(platform.context).toBeUndefined();
     expect(platform.getSelectDevices()).toHaveLength(0);
     expect(platform.getSelectEntities()).toHaveLength(0);
@@ -436,20 +436,20 @@ describe('Matterbridge platform', () => {
   });
 
   test('checkEndpointNumbers should return -1', async () => {
-    const storage = platform.storage;
-    (platform.storage as any) = undefined; // Simulate no storage available
+    const storage = (platform as any).storage;
+    (platform as any).storage = undefined; // Simulate no storage available
     expect(await (platform as any).checkEndpointNumbers()).toBe(-1);
-    (platform.storage as any) = storage; // Restore storage
+    (platform as any).storage = storage; // Restore storage
   });
 
   test('checkEndpointNumbers should be empty', async () => {
-    const context = await platform.storage?.createStorage('endpointNumbers');
+    const context = await (platform as any).storage?.createStorage('endpointNumbers');
     await context?.set('endpointMap', []);
     expect(await (platform as any).checkEndpointNumbers()).toBe(0);
   });
 
   test('checkEndpointNumbers should not validate without uniqueId', async () => {
-    const context = await platform.storage?.createStorage('endpointNumbers');
+    const context = await (platform as any).storage?.createStorage('endpointNumbers');
     await context?.set('endpointMap', []);
     const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.uniqueId = 'test';
@@ -462,7 +462,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('checkEndpointNumbers should not be empty', async () => {
-    const context = await platform.storage?.createStorage('endpointNumbers');
+    const context = await (platform as any).storage?.createStorage('endpointNumbers');
     await context?.set('endpointMap', []);
     const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234');

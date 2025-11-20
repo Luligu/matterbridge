@@ -111,7 +111,7 @@ export class MatterbridgePlatform {
   version = '1.0.0';
 
   /** Platform node storage manager created in the matterbridgeDirectory with the plugin name. */
-  readonly storage: NodeStorageManager;
+  private readonly storage: NodeStorageManager;
   /** Platform context in the storage of matterbridgeDirectory. Use await platform.ready to access it early. */
   context?: NodeStorage;
 
