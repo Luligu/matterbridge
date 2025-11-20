@@ -40,8 +40,6 @@ import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-de
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
 // Matterbridge
-// import { Matterbridge } from './matterbridge.js';
-import { Frontend } from './frontend.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
@@ -87,7 +85,6 @@ export type PlatformMatterbridge = {
 
 // Internal use only methods: they will be converted to messages through the MessagePort of the MessageChannel in the future versions with threading
 type InternalPlatformMatterbridge = PlatformMatterbridge & {
-  frontend: Frontend;
   plugins: PluginManager;
   aggregatorNode: Endpoint<AggregatorEndpoint> | undefined;
   addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void>;
@@ -414,6 +411,8 @@ export class MatterbridgePlatform {
    *
    * @remarks
    * The virtual devices don't show up in the device list of the frontend.
+   * They can be enabled/disabled through the frontend settings page.
+   * Type 'switch' is not supported by Alexa and 'mounted_switch' is not supported by Apple Home.
    */
   async registerVirtualDevice(name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<boolean> {
     let aggregator: Endpoint<AggregatorEndpoint> | undefined;

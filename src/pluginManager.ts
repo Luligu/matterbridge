@@ -30,7 +30,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, d
 
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';
-import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import type { MatterbridgePlatform, PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatform.js';
 import { ApiPlugin, plg, Plugin, PluginName, StoragePlugin, typ } from './matterbridgeTypes.js';
 import { inspectError, logError } from './utils/error.js';
 import { hasParameter } from './utils/commandLine.js';
@@ -981,7 +981,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       const { pathToFileURL } = await import('node:url');
       const pluginUrl = pathToFileURL(pluginEntry);
       this.log.debug(`Importing plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
-      const pluginInstance = await import(pluginUrl.href);
+      const pluginInstance = (await import(pluginUrl.href)) as { default: (matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) => MatterbridgePlatform };
       this.log.debug(`Imported plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
 
       // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
@@ -998,8 +998,8 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         config.name = packageJson.name;
         config.version = packageJson.version;
 
-        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.log.logLevel });
-        const platform = pluginInstance.default(this.matterbridge, log, config) as MatterbridgePlatform;
+        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.logLevel });
+        const platform = pluginInstance.default(this.matterbridge, log, config);
         config.type = platform.type;
         platform.name = packageJson.name;
         platform.config = config;

@@ -34,7 +34,7 @@ Advantages:
 
 Removed the following long deprecated elements:
 
-- [platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.0.0).
+- [platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.3.0).
 - [endpoint]: uniqueStorageKey instead of id in MatterbridgeEndpointOptions (deprecated since months).
 - [endpoint]: endpointId instead of number in MatterbridgeEndpointOptions (deprecated since months).
 
@@ -43,6 +43,7 @@ Removed the following long deprecated elements:
 - [endpoint]: Added getChildEndpointById() and getChildEndpointByOriginalId().
 - [endpoint]: Deprecated getChildEndpointByName(). Use getChildEndpointById() or getChildEndpointByOriginalId().
 - [platform]: Added wssSendSnackbarMessage method to MatterbridgePlatform for sending snackbar notifications to the frontend.
+- [doorLock]: Added autoRelockTime attribute with default 0.
 
 ### Changed
 

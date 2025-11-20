@@ -135,11 +135,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   /** Matterbridge logger */
   public readonly log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+  /** Matterbridge logger level */
+  public logLevel: LogLevel = this.log.logLevel;
   /** Whether to log to a file */
   public fileLogger = false;
 
   /** Matter logger */
   public readonly matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  /** Matter logger level */
+  public matterLogLevel: LogLevel = this.matterLog.logLevel;
   /** Whether to log Matter to a file */
   public matterFileLogger = false;
 
@@ -497,6 +501,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     } else {
       this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', this.shellyBoard ? LogLevel.NOTICE : LogLevel.INFO);
     }
+    this.logLevel = this.log.logLevel;
     this.frontend.logLevel = this.log.logLevel;
     MatterbridgeEndpoint.logLevel = this.log.logLevel;
 
@@ -535,13 +540,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       Logger.level = (await this.nodeContext.get<number>('matterLogLevel', this.shellyBoard ? MatterLogLevel.NOTICE : MatterLogLevel.INFO)) as MatterLogLevel;
     }
     Logger.format = MatterLogFormat.ANSI;
+    this.matterLogLevel = MatterLogLevel.names[Logger.level] as LogLevel;
 
     // Create the logger for matter.js with file logging (context: matterFileLog)
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
       this.matterFileLogger = true;
     }
     Logger.destinations.default.write = this.createDestinationMatterLogger(this.matterFileLogger);
-    this.log.debug(`Matter logLevel: ${Logger.level} fileLoger: ${this.matterFileLogger}.`);
+    this.log.debug(`Matter logLevel: ${this.matterLogLevel} fileLoger: ${this.matterFileLogger}.`);
 
     // Log network interfaces
     const networkInterfaces = os.networkInterfaces();
@@ -1145,6 +1151,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<LogLevel>} A promise that resolves when the logLevel has been set.
    */
   async setLogLevel(logLevel: LogLevel): Promise<LogLevel> {
+    this.logLevel = logLevel;
     this.log.logLevel = logLevel;
     this.frontend.logLevel = logLevel;
     MatterbridgeEndpoint.logLevel = logLevel;
