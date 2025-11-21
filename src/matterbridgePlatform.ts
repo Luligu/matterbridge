@@ -120,11 +120,11 @@ export class MatterbridgePlatform {
 
   /** Indicates whether the platform is is fully initialized (including context and selects). */
   isReady = false;
-  /** Indicates whether the platform is loaded. */
+  /** Indicates whether the platform has been loaded. */
   isLoaded = false;
-  /** Indicates whether the platform is started. */
+  /** Indicates whether the platform has been started. */
   isStarted = false;
-  /** Indicates whether the platform is configured. */
+  /** Indicates whether the platform has been configured. */
   isConfigured = false;
 
   // Device and entity select in the plugin config UI
@@ -135,7 +135,7 @@ export class MatterbridgePlatform {
   readonly #contextReady: Promise<void>;
   readonly #selectDeviceContextReady: Promise<void>;
   readonly #selectEntityContextReady: Promise<void>;
-  /** The ready promise for the platform, which resolves when the platform is fully initialized (including context and selects). Await it if you access the platform context or select early. */
+  /** The ready promise for the platform, which resolves when the platform is fully initialized (including context and selects). Await platform.ready if you access the platform context or select early. */
   readonly ready: Promise<void>;
 
   /** Registered MatterbridgeEndpoint map keyed by uniqueId */
