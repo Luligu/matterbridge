@@ -71,12 +71,15 @@ export type PlatformMatterbridge = {
   readonly homeDirectory: string;
   readonly matterbridgeDirectory: string;
   readonly matterbridgePluginDirectory: string;
+  readonly matterbridgeCertDirectory: string;
   readonly globalModulesDirectory: string;
   readonly matterbridgeVersion: string;
   readonly matterbridgeLatestVersion: string;
   readonly matterbridgeDevVersion: string;
+  readonly frontendVersion: string;
   readonly bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
   readonly restartMode: 'service' | 'docker' | '';
+  readonly virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
   readonly aggregatorVendorId: VendorId;
   readonly aggregatorVendorName: string;
   readonly aggregatorProductId: number;
@@ -111,7 +114,7 @@ export class MatterbridgePlatform {
   version = '1.0.0';
 
   /** Platform node storage manager created in the matterbridgeDirectory with the plugin name. */
-  private readonly storage: NodeStorageManager;
+  readonly #storage: NodeStorageManager;
   /** Platform context in the storage of matterbridgeDirectory. Use await platform.ready to access it early. */
   context?: NodeStorage;
 
@@ -167,7 +170,7 @@ export class MatterbridgePlatform {
       throw new Error('Platform: the plugin name is missing or invalid.');
     }
     this.log.debug(`Creating storage for plugin ${this.config.name} in ${path.join(this.matterbridge.matterbridgeDirectory, this.config.name)}`);
-    this.storage = new NodeStorageManager({
+    this.#storage = new NodeStorageManager({
       dir: path.join(this.matterbridge.matterbridgeDirectory, this.config.name),
       writeQueue: false,
       expiredInterval: undefined,
@@ -177,7 +180,7 @@ export class MatterbridgePlatform {
 
     // create the context storage for the plugin platform
     this.log.debug(`Creating context for plugin ${this.config.name}`);
-    this.#contextReady = this.storage.createStorage('context').then((context) => {
+    this.#contextReady = this.#storage.createStorage('context').then((context) => {
       this.context = context;
       this.log.debug(`Created context for plugin ${this.config.name}`);
       return;
@@ -185,7 +188,7 @@ export class MatterbridgePlatform {
 
     // create the selectDevice storage for the plugin platform
     this.log.debug(`Loading selectDevice for plugin ${this.config.name}`);
-    this.#selectDeviceContextReady = this.storage.createStorage('selectDevice').then(async (context) => {
+    this.#selectDeviceContextReady = this.#storage.createStorage('selectDevice').then(async (context) => {
       const selectDevice = await context.get<{ serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]>('selectDevice', []);
       for (const device of selectDevice) this.#selectDevices.set(device.serial, device);
       this.log.debug(`Loaded ${this.#selectDevices.size} selectDevice for plugin ${this.config.name}`);
@@ -194,7 +197,7 @@ export class MatterbridgePlatform {
 
     // create the selectEntity storage for the plugin platform
     this.log.debug(`Loading selectEntity for plugin ${this.config.name}`);
-    this.#selectEntityContextReady = this.storage.createStorage('selectEntity').then(async (context) => {
+    this.#selectEntityContextReady = this.#storage.createStorage('selectEntity').then(async (context) => {
       const selectEntity = await context.get<{ name: string; description: string; icon?: string }[]>('selectEntity', []);
       for (const entity of selectEntity) this.#selectEntities.set(entity.name, entity);
       this.log.debug(`Loaded ${this.#selectEntities.size} selectEntity for plugin ${this.config.name}`);
@@ -223,7 +226,7 @@ export class MatterbridgePlatform {
     // Close the storage
     await this.context?.close();
     this.context = undefined;
-    await this.storage?.close();
+    await this.#storage?.close();
 
     // Close the broadcast server
     this.#server.close();
@@ -648,14 +651,14 @@ export class MatterbridgePlatform {
    * @returns {Promise<void>} A promise that resolves when the save operation is complete.
    */
   private async saveSelects(): Promise<void> {
-    if (this.storage) {
+    if (this.#storage) {
       this.log.debug(`Saving ${this.#selectDevices.size} selectDevice...`);
-      const selectDevice = await this.storage.createStorage('selectDevice');
+      const selectDevice = await this.#storage.createStorage('selectDevice');
       await selectDevice.set('selectDevice', Array.from(this.#selectDevices.values()));
       await selectDevice.close();
 
       this.log.debug(`Saving ${this.#selectEntities.size} selectEntity...`);
-      const selectEntity = await this.storage.createStorage('selectEntity');
+      const selectEntity = await this.#storage.createStorage('selectEntity');
       await selectEntity.set('selectEntity', Array.from(this.#selectEntities.values()));
       await selectEntity.close();
     }
@@ -932,6 +935,16 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Clears all stored endpoint numbers for checkEndpointNumbers().
+   *
+   * @returns {Promise<void>} A promise that resolves when the endpoint numbers have been cleared.
+   */
+  private async clearEndpointNumbers(): Promise<void> {
+    const context = await this.#storage.createStorage('endpointNumbers');
+    await context.set('endpointMap', []);
+  }
+
+  /**
    * Checks and updates the endpoint numbers for Matterbridge devices.
    *
    * This method retrieves the list of Matterbridge devices and their child endpoints,
@@ -941,9 +954,8 @@ export class MatterbridgePlatform {
    * @returns {Promise<number>} The size of the updated endpoint map, or -1 if storage is not available.
    */
   private async checkEndpointNumbers(): Promise<number> {
-    if (!this.storage) return -1;
     this.log.debug('Checking endpoint numbers...');
-    const context = await this.storage.createStorage('endpointNumbers');
+    const context = await this.#storage.createStorage('endpointNumbers');
     const separator = '|.|';
     const endpointMap = new Map<string, EndpointNumber>(await context.get<[string, EndpointNumber][]>('endpointMap', []));
 

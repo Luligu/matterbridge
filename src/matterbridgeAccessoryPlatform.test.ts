@@ -16,7 +16,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge accessory platform', () => {
   const matterbridge = {
