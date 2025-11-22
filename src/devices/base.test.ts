@@ -2,23 +2,20 @@
 
 const MATTER_PORT = 8000;
 const NAME = 'BaseTest';
-const HOMEDIR = path.join('jest', NAME);
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 
 // Matterbridge
-import { aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import { aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 // Setup the test environment
 setupTest(NAME, false);
 
-// Setup the Matter test environment
-createTestEnvironment(NAME);
-
 describe('Matterbridge ' + NAME, () => {
-  beforeAll(async () => {});
+  beforeAll(async () => {
+    // Setup the Matter test environment
+    createTestEnvironment(NAME);
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -28,6 +25,8 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });

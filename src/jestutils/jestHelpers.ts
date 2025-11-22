@@ -578,7 +578,7 @@ export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<voi
 }
 
 /**
- * Create a matter Environment for testing:
+ * Create a matter test environment for testing:
  * - it will remove any existing home directory
  * - setup the matter environment with name, debug logging and ANSI format
  * - setup the mDNS service in the environment
@@ -604,8 +604,22 @@ export function createTestEnvironment(name: string): Environment {
 
   // Setup the mDNS service in the environment
   new MdnsService(environment);
+  // await environment.get(MdnsService)?.construction.ready;
 
   return environment;
+}
+
+/**
+ * Destroy the matter test environment by closing the mDNS service.
+ *
+ * @returns {Promise<void>} A promise that resolves when the test environment is destroyed.
+ */
+export async function destroyTestEnvironment(): Promise<void> {
+  // stop the mDNS service
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mdns = environment.get(MdnsService) as any;
+  if (mdns && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
+  if (mdns && typeof mdns.close === 'function') await mdns.close();
 }
 
 /**
