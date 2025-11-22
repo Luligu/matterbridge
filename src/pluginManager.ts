@@ -104,6 +104,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             if (plugin) {
               this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
             } else {
+              this.log.debug(`***Plugin ${plg}${msg.params.name}${db} not found in plugins_get`);
               this.server.respond({ ...msg, response: { plugin: undefined } });
             }
           }
