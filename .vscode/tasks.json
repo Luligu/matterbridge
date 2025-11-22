@@ -177,7 +177,7 @@
         "--coverage",
         "--maxWorkers=100%",
         "matterbridgePlatform.test.ts",
-        "matterbridgePlatform.active.test.ts",
+        "matterbridgePlatform.initialized.test.ts",
         "matterbridgeAccessoryPlatform.test.ts",
         "matterbridgeDynamicPlatform.test.ts"
       ],
