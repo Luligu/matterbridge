@@ -190,6 +190,8 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
           this.off('broadcast_message', responseHandler);
           if (this.verbose) this.log.debug(`Fetch response: ${debugStringify(msg)}`);
           resolve(msg);
+        } else if (this.isWorkerResponse(msg, message.type) && msg.id !== message.id) {
+          if (this.verbose) this.log.debug(`Fetch received unrelated response: ${debugStringify(msg)}`);
         }
       };
 
