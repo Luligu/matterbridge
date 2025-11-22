@@ -11,13 +11,14 @@ import https from 'node:https';
  *  - ZCL_OUT: output path for zcl.json (default: chip/zcl.json)
  *  - ZCL_BRANCH: connectedhomeip branch to fetch from (default: v1.4-branch)
  */
-const OUT_PATH = process.env.ZCL_OUT || 'chip/zcl.json';
 // Single branch strategy from online only
-const BRANCH = process.env.ZCL_BRANCH || 'v1.4-branch';
-const ZCL_BASE = `https://raw.githubusercontent.com/project-chip/connectedhomeip/${BRANCH}/src/app/zap-templates/zcl/`;
-const ZCL_JSON_URL = ZCL_BASE + 'zcl.json';
-const XML_BASE = ZCL_BASE + 'data-model/chip/';
-const MANUFACTURERS_URL = ZCL_BASE + 'data-model/manufacturers.xml';
+const BRANCH = process.env.ZCL_BRANCH || 'v1.4.2-branch';
+const OUT_ZCL_PATH = process.env.ZCL_OUT || `chip/${BRANCH}/zcl.json`;
+const OUT_MANUFACTURERS_PATH = process.env.MANUFACTURERS_OUT || `chip/${BRANCH}/manufacturers.xml`;
+const ZCL_BASE_URL = `https://raw.githubusercontent.com/project-chip/connectedhomeip/${BRANCH}/src/app/zap-templates/zcl/`;
+const ZCL_JSON_URL = ZCL_BASE_URL + 'zcl.json';
+const MANUFACTURERS_URL = ZCL_BASE_URL + 'data-model/manufacturers.xml';
+const XML_BASE_URL = ZCL_BASE_URL + 'data-model/chip/';
 
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
@@ -37,7 +38,7 @@ function fetchUrl(url) {
 }
 
 async function main() {
-  await mkdir(dirname(OUT_PATH), { recursive: true });
+  await mkdir(dirname(OUT_ZCL_PATH), { recursive: true });
   // Always fetch online from the specified branch
   const data = await fetchUrl(ZCL_JSON_URL);
 
@@ -52,15 +53,14 @@ async function main() {
     process.stderr.write('Warning: zcl.json does not contain expected ZAP ZCL properties (xmlFile). Saving anyway for manual inspection.\n');
   }
 
-  await writeFile(OUT_PATH, JSON.stringify(parsed, null, 2));
-  process.stderr.write(`Saved ${OUT_PATH}.\n`);
+  await writeFile(OUT_ZCL_PATH, JSON.stringify(parsed, null, 2));
+  process.stderr.write(`Saved ${OUT_ZCL_PATH}. Branch=${BRANCH}\n`);
 
   // Also fetch manufacturers.xml to chip/manufacturers.xml from the same branch
   try {
-    const outManu = 'chip/manufacturers.xml';
     const manuContent = await fetchUrl(MANUFACTURERS_URL);
-    await writeFile(outManu, manuContent);
-    process.stderr.write('Saved chip/manufacturers.xml.\n');
+    await writeFile(OUT_MANUFACTURERS_PATH, manuContent);
+    process.stderr.write(`Saved ${OUT_MANUFACTURERS_PATH}. Branch=${BRANCH}\n`);
   } catch (e) {
     process.stderr.write(`Warning: failed to fetch manufacturers.xml (${e.message}).\n`);
   }
@@ -70,14 +70,14 @@ async function main() {
   if (xmlFiles.length === 0) {
     process.stderr.write('No xmlFile entries found; skipping XML fetch.\n');
   } else {
-    const outXmlBase = 'chip/xml';
+    const outXmlBase = `chip/${BRANCH}/xml`;
     await mkdir(outXmlBase, { recursive: true });
     let ok = 0;
     let fail = 0;
     for (const fileName of xmlFiles) {
       const relative = fileName.trim();
       try {
-        const url = XML_BASE + relative;
+        const url = XML_BASE_URL + relative;
         const content = await fetchUrl(url);
         const outPath = pathJoin(outXmlBase, relative.replaceAll('/', pathSep));
         await mkdir(dirname(outPath), { recursive: true });
