@@ -4,11 +4,6 @@
 
 const NAME = 'MatterbridgePlatform';
 const MATTER_PORT = 7000;
-const HOMEDIR = path.join('jest', NAME);
-
-process.argv = ['node', 'matterbridge.test.js', '--novirtual', '--frontend', '0', '--homedir', HOMEDIR];
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, CYAN, db, er, LogLevel, pl, wr } from 'node-ansi-logger';
@@ -68,6 +63,11 @@ describe('Matterbridge platform', () => {
     await startMatterbridgeEnvironment(MATTER_PORT);
   });
 
+  beforeEach(() => {
+    // Clear all mocks
+    jest.clearAllMocks();
+  });
+
   afterAll(async () => {
     // Destroy Matterbridge environment
     await stopMatterbridgeEnvironment();
@@ -76,12 +76,7 @@ describe('Matterbridge platform', () => {
     jest.restoreAllMocks();
   });
 
-  beforeEach(() => {
-    // Clear all mocks
-    jest.clearAllMocks();
-  });
-
-  test('should have created an instance of NodeStorageManager', async () => {
+  test('should have created an instance of MatterbridgePlatform', async () => {
     // @ts-expect-error access private constructor
     platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     // Add the platform to the Matterbridge environment
@@ -563,6 +558,33 @@ describe('Matterbridge platform', () => {
     await platform.unregisterDevice(testDevice);
   });
 
+  test('saveConfig', async () => {
+    const originalName = platform.name;
+    platform.name = 'unknown';
+    expect(platform.saveConfig(platform.config)).toBeUndefined();
+    platform.name = originalName;
+    expect(platform.saveConfig(platform.config)).toBeUndefined();
+    await flushAsync();
+  });
+
+  test('getSchema', async () => {
+    const originalName = platform.name;
+    platform.name = 'unknown';
+    expect(await platform.getSchema()).toBeUndefined();
+    platform.name = originalName;
+    expect(await platform.getSchema()).toBeUndefined();
+    await flushAsync();
+  });
+
+  test('setSchema', async () => {
+    const originalName = platform.name;
+    platform.name = 'unknown';
+    expect(platform.setSchema({})).toBeUndefined();
+    platform.name = originalName;
+    expect(platform.setSchema({})).toBeUndefined();
+    await flushAsync();
+  });
+
   test('wssSendRestartRequired', async () => {
     expect(platform.wssSendRestartRequired()).toBeUndefined();
   });
@@ -601,49 +623,14 @@ describe('Matterbridge platform', () => {
     expect(platform.getDevices()).toEqual([]);
   });
 
-  test('saveConfig', async () => {
-    const originalName = platform.name;
-    platform.name = 'unknown';
-    expect(() => platform.saveConfig(platform.config)).toThrow('Plugin unknown not found');
-
-    (matterbridge.plugins as any)._plugins.set('unknown', { name: 'unknown', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false } as any);
-    expect(() => platform.saveConfig(platform.config)).not.toThrow();
-    (matterbridge.plugins as any)._plugins.delete('unknown');
-    platform.name = originalName;
-    await flushAsync();
-  });
-
-  test('getSchema', async () => {
-    const originalName = platform.name;
-    platform.name = 'unknown';
-    expect(() => platform.getSchema()).toThrow('Plugin unknown not found');
-
-    (matterbridge.plugins as any)._plugins.set('unknown', { name: 'unknown', type: 'type', version: '1.0.0', schemaJson: {}, debug: false, unregisterOnShutdown: false } as any);
-    expect(() => platform.getSchema()).not.toThrow();
-    (matterbridge.plugins as any)._plugins.delete('unknown');
-    platform.name = originalName;
-    await flushAsync();
-  });
-
-  test('setSchema', async () => {
-    const originalName = platform.name;
-    platform.name = 'unknown';
-    expect(() => platform.setSchema(platform.config)).toThrow('Plugin unknown not found');
-
-    (matterbridge.plugins as any)._plugins.set('unknown', { name: 'unknown', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false } as any);
-    expect(() => platform.setSchema(platform.config)).not.toThrow();
-    (matterbridge.plugins as any)._plugins.delete('unknown');
-    platform.name = originalName;
-    await flushAsync();
-  });
-
   test('registerVirtualDevice', async () => {
     async function testCallback(): Promise<void> {}
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(true);
     expect(matterbridge.aggregatorNode?.parts.has('Virtual' + ':' + 'switch')).toBeTruthy();
 
-    jest.spyOn(matterbridge.plugins, 'get').mockReturnValueOnce({ name: platform.name, type: 'type', version: '1.0.0', aggregatorNode: matterbridge.aggregatorNode } as any);
+    jest.spyOn(matterbridge.plugins, 'get').mockReturnValueOnce({ name: platform.name, type: 'DynamicPlatform', version: '1.0.0', aggregatorNode: matterbridge.aggregatorNode } as any);
     matterbridge.bridgeMode = 'childbridge';
+    platform.type = 'DynamicPlatform';
     expect(await platform.registerVirtualDevice('VirtualChildbridge', 'switch', testCallback)).toBe(true);
     matterbridge.bridgeMode = 'bridge';
     expect(matterbridge.aggregatorNode?.parts.has('VirtualChildbridge' + ':' + 'switch')).toBeTruthy();
@@ -738,6 +725,7 @@ describe('Matterbridge platform', () => {
     device.createDefaultBasicInformationClusterServer('Device1234', '123456789');
     expect(device.deviceName).toBe('Device1234');
     expect(device.serialNumber).toBe('123456789');
+    expect(device.uniqueId).toBeDefined();
     expect(device.hasClusterServer('BasicInformation')).toBeFalsy();
     expect(device.hasClusterServer('BridgedDeviceBasicInformation')).toBeFalsy();
     await platform.registerDevice(device);

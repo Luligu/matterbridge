@@ -101,9 +101,9 @@ type InternalPlatformMatterbridge = PlatformMatterbridge & {
  */
 export class MatterbridgePlatform {
   /** The PlatformMatterbridge instance of this Platform. */
-  matterbridge: PlatformMatterbridge;
+  readonly matterbridge: PlatformMatterbridge;
   /** The logger instance for this platform. Created by the PluginManager.load() method. */
-  log: AnsiLogger;
+  readonly log: AnsiLogger;
   /** The configuration for this platform. Set by the PluginManager.load() method using the stored config file. */
   config: PlatformConfig;
   /** The name of the platform. Set by the PluginManager.load() method using the package.json name value. */
@@ -149,9 +149,10 @@ export class MatterbridgePlatform {
   /**
    * Creates an instance of the base MatterbridgePlatform.
    * It is extended by the MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform classes.
-   * Each plugin must extend the MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform classes.
+   * Each plugin must extend the MatterbridgeDynamicPlatform or MatterbridgeAccessoryPlatform class.
+   * MatterbridgePlatform cannot be instantiated directly, it can only be extended by the MatterbridgeDynamicPlatform or MatterbridgeAccessoryPlatform class.
    *
-   * @param {PlatformMatterbridge} matterbridge - The Matterbridge instance.
+   * @param {PlatformMatterbridge} matterbridge - The PlatformMatterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
    * @param {PlatformConfig} config - The platform configuration.
    */
@@ -339,26 +340,16 @@ export class MatterbridgePlatform {
    * @returns {void}
    */
   saveConfig(config: PlatformConfig): void {
-    // TODO: replace with a message to the plugins thread
-    const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
-    if (!plugin) {
-      throw new Error(`Plugin ${this.name} not found`);
-    }
-    (this.matterbridge as InternalPlatformMatterbridge).plugins.saveConfigFromJson(plugin, config); // No await as it's not necessary to wait
+    this.#server.request({ type: 'plugins_saveconfigfromjson', src: 'platform', dst: 'plugins', params: { name: this.name, config } });
   }
 
   /**
    * Get the platform schema for the config editor. This will retrieve the schema from the Matterbridge plugin manager.
    *
-   * @returns {PlatformSchema} The platform schema.
+   * @returns {Promise<PlatformSchema | undefined>} The platform schema.
    */
-  getSchema(): PlatformSchema {
-    // TODO: replace with a message to the plugins thread
-    const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
-    if (!plugin || !isValidObject(plugin.schemaJson)) {
-      throw new Error(`Plugin ${this.name} not found`);
-    }
-    return plugin.schemaJson;
+  async getSchema(): Promise<PlatformSchema | undefined> {
+    return (await this.#server.fetch({ type: 'plugins_getschema', src: 'platform', dst: 'plugins', params: { name: this.name } })).response.schema;
   }
 
   /**
@@ -368,12 +359,7 @@ export class MatterbridgePlatform {
    * @returns {void}
    */
   setSchema(schema: PlatformSchema): void {
-    // TODO: replace with a message to the plugins thread
-    const plugin = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name);
-    if (!plugin) {
-      throw new Error(`Plugin ${this.name} not found`);
-    }
-    plugin.schemaJson = schema;
+    this.#server.request({ type: 'plugins_setschema', src: 'platform', dst: 'plugins', params: { name: this.name, schema } });
   }
 
   /**
@@ -502,7 +488,8 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Registers a virtual device with the platform aggregator endpoint.
+   * Registers a virtual device with the Matterbridge platform.
+   * Virtual devices are only supported in bridge mode and childbridge mode with a DynamicPlatform.
    *
    * The virtual device is created as an instance of `Endpoint` with the provided device type.
    * When the virtual device is turned on, the provided callback function is executed.
@@ -516,7 +503,6 @@ export class MatterbridgePlatform {
    *
    * @remarks
    * The virtual devices don't show up in the device list of the frontend.
-   * They can be enabled/disabled through the frontend settings page.
    * Type 'switch' is not supported by Alexa and 'mounted_switch' is not supported by Apple Home.
    */
   async registerVirtualDevice(name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<boolean> {
@@ -524,7 +510,7 @@ export class MatterbridgePlatform {
     // TODO: replace with a message to the matterbridge thread
     if (this.matterbridge.bridgeMode === 'bridge') {
       aggregator = (this.matterbridge as InternalPlatformMatterbridge).aggregatorNode;
-    } else if (this.matterbridge.bridgeMode === 'childbridge') {
+    } else if (this.matterbridge.bridgeMode === 'childbridge' && this.type === 'DynamicPlatform') {
       aggregator = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name)?.aggregatorNode;
     }
     if (aggregator) {
@@ -537,6 +523,7 @@ export class MatterbridgePlatform {
         return true;
       }
     }
+    this.log.warn(`Virtual device ${name} not created. Virtual devices are only supported in bridge mode and childbridge mode with a DynamicPlatform.`);
     return false;
   }
 

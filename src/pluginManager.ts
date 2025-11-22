@@ -203,6 +203,38 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             }
           }
           break;
+        case 'plugins_getschema':
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              this.server.respond({ ...msg, response: { schema: plugin.schemaJson } });
+            } else {
+              this.server.respond({ ...msg, response: { schema: undefined } });
+            }
+          }
+          break;
+        case 'plugins_setschema':
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              plugin.schemaJson = msg.params.schema;
+              this.server.respond({ ...msg, response: { success: true } });
+            } else {
+              this.server.respond({ ...msg, response: { success: false } });
+            }
+          }
+          break;
+        case 'plugins_saveconfigfromjson':
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              this.saveConfigFromJson(plugin, msg.params.config, msg.params.restartRequired); // No await as it's not necessary to wait
+              this.server.respond({ ...msg, response: { success: true } });
+            } else {
+              this.server.respond({ ...msg, response: { success: false } });
+            }
+          }
+          break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
