@@ -350,7 +350,7 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.3.0';
+  matterbridge.matterbridgeVersion = '3.4.0';
   matterbridge.bridgeMode = 'bridge';
   matterbridge.rootDirectory = path.join('jest', name);
   matterbridge.homeDirectory = path.join('jest', name);
@@ -524,7 +524,7 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
 /**
  * Destroy the matterbridge environment
  *
- * @param {number} cleanupPause The timeout for the destroy operation (default 250ms).
+ * @param {number} cleanupPause The timeout for the destroy operation (default 10ms).
  * @param {number} destroyPause The pause duration after cleanup before destroying the instance (default 250ms).
  *
  * @example
