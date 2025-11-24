@@ -137,9 +137,7 @@ describe('MatterNode bridge', () => {
     jest.restoreAllMocks();
 
     // Log any keep-alive handles
-    await flushAsync();
-    // @ts-expect-error log is private
-    logKeepAlives(matter.log);
+    // logKeepAlives(matter.log);
 
     // process.stdout.write('=== Finished MatterNode bridge tests ===\n\n');
   });

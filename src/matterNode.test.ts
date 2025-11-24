@@ -19,13 +19,13 @@ import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'nod
 import { Logger } from '@matter/general';
 import { ExposedFabricInformation, FabricAction } from '@matter/protocol';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
-import { SessionsBehavior } from '@matter/main/node';
+import { ServerNodeStore, SessionsBehavior } from '@matter/main/node';
 import { NodeStorageManager } from 'node-persist-manager';
 import { Identify, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/main/clusters';
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, Plugin, plg, dev, MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from './matterbridgeTypes.js';
-import { flushAsync, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, logKeepAlives, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { closeServerNodeStores, flushAsync, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, logKeepAlives, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { getInterfaceDetails } from './utils/network.js';
 import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
@@ -110,7 +110,7 @@ describe('MatterNode', () => {
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
-    process.stdout.write('=== Starting MatterNode tests ===\n\n');
+    // process.stdout.write('=== Starting MatterNode tests ===\n\n');
 
     // Create MatterNode instance
     matter = new MatterNode(matterbridge);
@@ -135,11 +135,9 @@ describe('MatterNode', () => {
     jest.restoreAllMocks();
 
     // Log any keep-alive handles
-    await flushAsync();
-    // @ts-expect-error log is private
-    logKeepAlives(matter.log);
+    // logKeepAlives(matter.log);
 
-    process.stdout.write('=== Finished MatterNode tests ===\n\n');
+    // process.stdout.write('=== Finished MatterNode tests ===\n\n');
   });
 
   test('Broadcast unknown server message type', async () => {
@@ -404,8 +402,15 @@ describe('MatterNode', () => {
     expect(await device.getChildEndpointByOriginalId('Temperature sensor child')?.setAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', 2850)).toBeTruthy();
     expect(await device.getChildEndpointByOriginalId('Humidity sensor child')?.setAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue', 5500)).toBeTruthy();
 
+    await closeServerNodeStores(matter.serverNode);
+    /*
+    matter.serverNode?.env.get(ServerNodeStore)?.endpointStores.deactivateStoreForEndpoint(device);
+    for (const child of device.getChildEndpoints()) {
+      matter.serverNode?.env.get(ServerNodeStore)?.endpointStores.deactivateStoreForEndpoint(child);
+    }
+    */
     // Add time to process asynchronous operations in ServerEndpointStores.storeForEndpoint
-    await matter.yieldToNode(250);
+    // await matter.yieldToNode(250);
   });
 
   test('Remove endpoint from the Matter aggregator node for Matterbridge', async () => {

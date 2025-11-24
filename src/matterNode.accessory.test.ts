@@ -136,9 +136,8 @@ describe('MatterNode accessory', () => {
     // Restore all mocks
     jest.restoreAllMocks();
 
-    await flushAsync();
-    // @ts-expect-error log is private
-    logKeepAlives(matter.log);
+    // Log any keep-alive handles
+    // logKeepAlives(matter.log);
 
     // process.stdout.write('=== Finished MatterNode childbridge tests ===\n\n');
   });
