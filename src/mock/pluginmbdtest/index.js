@@ -10,9 +10,11 @@ class MockPlatform extends MatterbridgeDynamicPlatform {
   async onStart(reason) {
     await this.ready;
     this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);
-    const device = new MatterbridgeEndpoint(pressureSensor, { id: 'TestPlugin' }).createDefaultBasicInformationClusterServer('Test plugin', '0x123456789', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge PressureSensor').addRequiredClusterServers();
+    const device = new MatterbridgeEndpoint(pressureSensor, { id: 'TestDynamicPlugin' })
+      .createDefaultBasicInformationClusterServer('Test dynamic plugin device', '0x123456789', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge PressureSensor')
+      .addRequiredClusterServers();
     await this.registerDevice(device);
-    this.setSelectDevice('0x123456789', 'Test plugin');
+    this.setSelectDevice('0x123456789', 'Test dynamic plugin device');
     this.setSelectEntity('Pressure', 'Pressure', 'matter');
   }
   async onConfigure() {
