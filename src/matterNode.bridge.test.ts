@@ -28,7 +28,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PluginManager } from './pluginManager.js';
 import type { Matterbridge } from './matterbridge.js';
 import { DeviceManager } from './deviceManager.js';
-import { bridgedNode, flowSensor, humiditySensor, occupancySensor, temperatureSensor } from './matterbridgeDeviceTypes.js';
+import { bridgedNode, flowSensor, humiditySensor, occupancySensor, onOffOutlet, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 
 const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../frontend/package.json', import.meta.url), 'utf8'));
@@ -230,6 +230,26 @@ describe('MatterNode bridge', () => {
     expect(deviceManager.length).toBe(1);
     await matter.aggregatorNode?.parts.get('Flowsensor')?.delete();
     await expect(matter.removeAllBridgedEndpoints('serverdevicetest')).rejects.toThrow(`Endpoint ${plg}${sensor.plugin}${er}:${dev}${sensor.deviceName}${er} id ${sensor.id} not found removing all endpoints`);
+    deviceManager.clear();
+    expect(deviceManager.length).toBe(0);
+  });
+
+  test('Stress test adding and removing bridged endpoints in bridge mode not started', async () => {
+    for (let i = 1; i <= 100; i++) {
+      const outlet = new MatterbridgeEndpoint([onOffOutlet, bridgedNode, powerSource], { id: `Outlet ${i}` }, true)
+        .createDefaultBridgedDeviceBasicInformationClusterServer(`Outlet ${i}`, `OUTLET1234567890-${i}`)
+        .createDefaultPowerSourceBatteryClusterServer()
+        .addRequiredClusterServers();
+      outlet.plugin = 'matterbridge-mock1';
+      await matter.addBridgedEndpoint('matterbridge-mock1', outlet);
+      expect(outlet.owner).toBeDefined();
+      expect(deviceManager.length).toBe(i);
+    }
+    for (let i = 1; i <= 100; i++) {
+      const outlet = matter.aggregatorNode?.parts.get(`Outlet${i}`) as MatterbridgeEndpoint;
+      await matter.removeBridgedEndpoint('matterbridge-mock1', outlet);
+    }
+    expect(deviceManager.length).toBe(0);
   });
 
   test('Start MatterNode in bridge mode', async () => {
@@ -239,6 +259,41 @@ describe('MatterNode bridge', () => {
     expect(matter.serverNode).toBeDefined();
     expect(matter.serverNode?.lifecycle.isOnline).toBe(true);
     expect(matter.aggregatorNode).toBeDefined();
+  });
+
+  test('Stress test adding and removing bridged endpoints in bridge mode started', async () => {
+    expect(deviceManager.length).toBe(2);
+    for (let i = 1; i <= 100; i++) {
+      const outlet = new MatterbridgeEndpoint([onOffOutlet, bridgedNode, powerSource], { id: `Outlet ${i}` }, true)
+        .createDefaultBridgedDeviceBasicInformationClusterServer(`Outlet ${i}`, `OUTLET1234567890-${i}`)
+        .createDefaultPowerSourceBatteryClusterServer()
+        .addRequiredClusterServers();
+      outlet.plugin = 'matterbridge-mock1';
+      await matter.addBridgedEndpoint('matterbridge-mock1', outlet);
+      expect(outlet.owner).toBeDefined();
+      expect(deviceManager.length).toBe(i + 2); // +2 from plugin
+    }
+    for (let i = 1; i <= 100; i++) {
+      const outlet = matter.aggregatorNode?.parts.get(`Outlet${i}`) as MatterbridgeEndpoint;
+      await matter.removeBridgedEndpoint('matterbridge-mock1', outlet);
+    }
+    expect(deviceManager.length).toBe(2);
+  });
+
+  test('Stress test adding and removing all bridged endpoints in bridge mode started', async () => {
+    expect(deviceManager.length).toBe(2);
+    for (let i = 1; i <= 100; i++) {
+      const outlet = new MatterbridgeEndpoint([onOffOutlet, bridgedNode, powerSource], { id: `Outlet ${i}` }, true)
+        .createDefaultBridgedDeviceBasicInformationClusterServer(`Outlet ${i}`, `OUTLET1234567890-${i}`)
+        .createDefaultPowerSourceBatteryClusterServer()
+        .addRequiredClusterServers();
+      outlet.plugin = 'matterbridge-mock1';
+      await matter.addBridgedEndpoint('matterbridge-mock1', outlet);
+      expect(outlet.owner).toBeDefined();
+      expect(deviceManager.length).toBe(i + 2); // +2 from plugin
+    }
+    await matter.removeAllBridgedEndpoints('matterbridge-mock1');
+    expect(deviceManager.length).toBe(1);
   });
 
   test('Stop MatterNode in bridge mode', async () => {
