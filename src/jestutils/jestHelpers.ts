@@ -641,6 +641,54 @@ export async function flushAsync(ticks: number = 3, microTurns: number = 10, pau
 }
 
 /**
+ * Summarize live libuv handles/requests inside a process.
+ *
+ * @param {AnsiLogger} log - Logger to use for output
+ *
+ * @returns {number} - The total number of active handles and requests
+ */
+export function logKeepAlives(log?: AnsiLogger): number {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handles = (process as any)._getActiveHandles?.() ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const requests = (process as any)._getActiveRequests?.() ?? [];
+
+  const fmtHandle = (h: unknown, i: number) => {
+    const ctor = (h as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
+    // Timer-like?
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hasRef = typeof (h as any)?.hasRef === 'function' ? (h as any).hasRef() : undefined;
+    // MessagePort?
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isPort = (h as any)?.constructor?.name?.includes('MessagePort');
+    // Socket/Server?
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fd = (h as any)?.fd ?? (h as any)?._handle?.fd;
+    return { i, type: ctor, hasRef, isPort, fd };
+  };
+
+  const fmtReq = (r: unknown, i: number) => {
+    const ctor = (r as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
+    return { i, type: ctor };
+  };
+
+  const summary = {
+    handles: handles.map(fmtHandle),
+    requests: requests.map(fmtReq),
+  };
+
+  if (summary.handles.length === 0 && summary.requests.length === 0) {
+    log?.debug('KeepAlive: no active handles or requests.');
+  } else {
+    log?.debug(`KeepAlive:${rs}\n${inspect(summary, { depth: 5, colors: true })}`);
+    if (!log) {
+      process.stdout.write(`KeepAlive:\n${inspect(summary, { depth: 5, colors: true })}\n`);
+    }
+  }
+  return summary.handles.length + summary.requests.length;
+}
+
+/**
  * Flush (await) the lazy endpoint number persistence mechanism used by matter.js.
  *
  * Background:
@@ -706,6 +754,17 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
     }
   }
   return all.length;
+}
+
+/**
+ * Close the server node stores to flush any pending endpoint number persistence.
+ *
+ * @param {ServerNode} targetServer The server whose endpoint stores should be closed.
+ * @returns {Promise<void>} Resolves when the stores have been closed.
+ */
+export async function closeServerNodeStores(targetServer?: ServerNode): Promise<void> {
+  // Close endpoint stores to avoid number persistence issues
+  await targetServer?.env.get(ServerNodeStore)?.endpointStores.close();
 }
 
 /**
