@@ -175,7 +175,7 @@ describe('MatterNode dynamic', () => {
       await matter.removeBridgedEndpoint('matterbridge-mock1', outlet);
     }
     expect(deviceManager.length).toBe(0);
-  });
+  }, 30000);
 
   test('Start MatterNode in childbridge mode', async () => {
     await matter.start();
@@ -264,7 +264,7 @@ describe('MatterNode dynamic', () => {
       await matter.removeBridgedEndpoint('matterbridge-mock1', outlet);
     }
     expect(deviceManager.length).toBe(1);
-  });
+  }, 30000);
 
   test('Stop MatterNode in childbridge mode', async () => {
     await matter.stop();

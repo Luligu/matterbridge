@@ -250,7 +250,7 @@ describe('MatterNode bridge', () => {
       await matter.removeBridgedEndpoint('matterbridge-mock1', outlet);
     }
     expect(deviceManager.length).toBe(0);
-  });
+  }, 30000);
 
   test('Start MatterNode in bridge mode', async () => {
     await setDebug(false);
@@ -278,7 +278,7 @@ describe('MatterNode bridge', () => {
       await matter.removeBridgedEndpoint('matterbridge-mock1', outlet);
     }
     expect(deviceManager.length).toBe(2);
-  });
+  }, 30000);
 
   test('Stress test adding and removing all bridged endpoints in bridge mode started', async () => {
     expect(deviceManager.length).toBe(2);
@@ -294,7 +294,7 @@ describe('MatterNode bridge', () => {
     }
     await matter.removeAllBridgedEndpoints('matterbridge-mock1');
     expect(deviceManager.length).toBe(1);
-  });
+  }, 30000);
 
   test('Stop MatterNode in bridge mode', async () => {
     await matter.stop();

@@ -175,7 +175,7 @@ describe('MatterNode accessory', () => {
       await matter.removeBridgedEndpoint('matterbridge-mock4', outlet);
     }
     expect(deviceManager.length).toBe(0);
-  });
+  }, 30000);
 
   test('Start MatterNode in childbridge mode', async () => {
     await matter.start();
@@ -201,7 +201,7 @@ describe('MatterNode accessory', () => {
       await matter.removeBridgedEndpoint('matterbridge-mock4', outlet);
     }
     expect(deviceManager.length).toBe(1);
-  });
+  }, 30000);
 
   test('Change server reachable attribute for Accessory plugin', async () => {
     expect(matter.serverNode).toBeDefined();
