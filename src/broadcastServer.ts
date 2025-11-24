@@ -28,7 +28,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 import { EventEmitter } from 'node:events';
 import { BroadcastChannel } from 'node:worker_threads';
 
-import { type AnsiLogger, debugStringify } from 'node-ansi-logger';
+import { type AnsiLogger, CYAN, db, debugStringify } from 'node-ansi-logger';
 
 import type { WorkerMessage, WorkerMessageType, WorkerRequest, WorkerResponse, WorkerSrcType } from './broadcastServerTypes.js';
 import { hasParameter } from './utils/commandLine.js';
@@ -112,7 +112,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    */
   private broadcastMessageHandler(event: MessageEvent): void {
     const data = event.data as WorkerMessage;
-    if (this.verbose) this.log.debug(`Received broadcast message: ${debugStringify(data)}`);
+    if (this.verbose && (data.dst === this.name || data.dst === 'all')) this.log.debug(`Server ${CYAN}${this.name}${db} received broadcast message: ${debugStringify(data)}`);
     this.emit('broadcast_message', data);
   }
 
