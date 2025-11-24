@@ -28,6 +28,4 @@ crypto
 docs/Matter specifications/
 STYLEGUIDE.md
 workers/
-matterNode.ts
-matterNode.test.ts
 history.html
