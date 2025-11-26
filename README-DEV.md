@@ -22,7 +22,7 @@ The easiest way is to clone the [Matterbridge Plugin Template](https://github.co
 
 After you clone it locally, change the name (keep always matterbridge- at the beginning of the name), version, description, author, homepage, repository, bugs and funding in the package.json.
 
-It is also possible to add two custom properties to the package.json: **help** and **changelog** with a url that will be used in the frontend instead of the default (/blob/main/README.md and /blob/main/CHANGELOG.md).
+It is also possible to add two custom properties to the package.json: **help** and **changelog** with a url that will be used in the frontend instead of the default (/blob/main/README and /blob/main/CHANGELOG).
 
 Add your plugin logic in module.ts.
 

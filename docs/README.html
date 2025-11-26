@@ -51,6 +51,11 @@
   </style>
 </head>
 <body>
+
+
+
+
+
 <h1><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge</h1>
 <p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
@@ -67,7 +72,7 @@
 <p>It allows you to have all your Matter devices up and running in a couple of minutes without having to deal with the pairing process for each individual device.</p>
 <p>Developers can focus solely on device development by extending the provided classes.</p>
 <p>Simply pair Matterbridge once, and it will load all your registered plugins.</p>
-<p>This project aims to enable porting Homebridge plugins to Matterbridge plugins without having to recode everything (<a href="README-DEV.md">Development</a>).</p>
+<p>This project aims to enable porting Homebridge plugins to Matterbridge plugins without having to recode everything (<a href="README-DEV.html">Development</a>).</p>
 <p>The easiest way to start create a new plugin is to clone the <a href="https://github.com/Luligu/matterbridge-plugin-template">Matterbridge Plugin Template</a> which has <strong>Dev Container support for instant development environment</strong> and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.</p>
 <p>Matterbridge creates a device that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, Home Assistant, or any other platform supporting Matter.</p>
 <p>You don&#39;t need a hub or a dedicated new machine.</p>
@@ -98,7 +103,7 @@ The supported versions of node are 20 and 22. Please install Node.js 22 LTS. Don
 Node.js 23, like all odd-numbered versions, is not supported.
 Nvm is not a good choice and should not be used for production.</p>
 <p>If you don&#39;t have Docker already install, please use this method to install it on a debian device: <a href="https://docs.docker.com/engine/install">https://docs.docker.com/engine/install</a>.
-After follow the guidelines for the <a href="README-DOCKER.md">Docker configurations</a>.</p>
+After follow the guidelines for the <a href="README-DOCKER.html">Docker configurations</a>.</p>
 <p>I suggest using Docker for its simplicity.</p>
 <p>Since Matter is designed as &quot;a universal IPv6-based communication protocol for smart home devices&quot; (per the Matter specifications), <strong>IPv6 must be enabled on your local network (LAN)</strong>.</p>
 <p><strong>Important:</strong> You only need IPv6 on your local network - it doesn&#39;t matter if your internet provider doesn&#39;t provide IPv6 on the internet side (WAN).</p>
@@ -149,25 +154,25 @@ After follow the guidelines for the <a href="README-DOCKER.md">Docker configurat
 <h2>Advanced configurations</h2>
 <h3>Run matterbridge as a daemon with systemctl (Linux only)</h3>
 <p>Traditional configuration</p>
-<p><a href="README-SERVICE.md">Service configurations</a></p>
+<p><a href="README-SERVICE.html">Service configurations</a></p>
 <p>or with local global node_modules (no sudo required)</p>
-<p><a href="README-SERVICE-LOCAL.md">Service configurations with local global node_modules</a></p>
+<p><a href="README-SERVICE-LOCAL.html">Service configurations with local global node_modules</a></p>
 <p>or with user matterbridge and with private global node_modules (no sudo required)</p>
-<p><a href="README-SERVICE-OPT.md">Service configurations with user matterbridge and private global node_modules</a></p>
+<p><a href="README-SERVICE-OPT.html">Service configurations with user matterbridge and private global node_modules</a></p>
 <h3>Run matterbridge as a system service with launchctl (macOS only)</h3>
-<p><a href="README-MACOS-PLIST.md">Launchctl configurations</a></p>
+<p><a href="README-MACOS-PLIST.html">Launchctl configurations</a></p>
 <h3>Run matterbridge with docker and docker compose</h3>
-<p><a href="README-DOCKER.md">Docker configurations</a></p>
+<p><a href="README-DOCKER.html">Docker configurations</a></p>
 <h3>Run matterbridge with podman</h3>
-<p><a href="README-PODMAN.md">Podman configurations</a></p>
+<p><a href="README-PODMAN.html">Podman configurations</a></p>
 <h3>Run matterbridge with nginx</h3>
-<p><a href="README-NGINX.md">Nginx configurations</a></p>
+<p><a href="README-NGINX.html">Nginx configurations</a></p>
 <h3>Run matterbridge as an home assistant add-on with the official add-on</h3>
 <p><a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Home assistant add-on configurations</a></p>
 <h3>Other Home Assistant Community Add-ons</h3>
 <p>The other Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.</p>
 <h2>Development</h2>
-<p><a href="README-DEV.md">Development</a></p>
+<p><a href="README-DEV.html">Development</a></p>
 <h2>Plugins</h2>
 <h3>Shelly</h3>
 <a href="https://github.com/Luligu/matterbridge-shelly">
@@ -215,7 +220,7 @@ After follow the guidelines for the <a href="README-DOCKER.md">Docker configurat
 </a>
 
 <p>Matterbridge Home Assistant plugin allows you to expose the Home Assistant devices and entities to Matter.</p>
-<p>It is the ideal companion of the official <a href="https://github.com/Luligu/matterbridge-home-assistant-addon/blob/main/README.md">Matterbridge Home Assistant Add-on</a>.</p>
+<p>It is the ideal companion of the official <a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Matterbridge Home Assistant Add-on</a>.</p>
 <h3>Webhooks</h3>
 <a href="https://github.com/Luligu/matterbridge-webhooks">
   <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge logo" width="100" />
@@ -329,7 +334,7 @@ matterbridge --add matterbridge-zigbee2mqtt
 <pre><code class="language-bash">matterbridge --ssl --frontend 443
 </code></pre>
 <p>Add the <strong>--mtls</strong> parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible).</p>
-<p>The browser must provide the client certificate: on Windows you need to import it in Current User ΓåÆ Personal ΓåÆ Certificates with certmgr.msc.</p>
+<p>The browser must provide the client certificate: on Windows you need to import it in Current User -> Personal -> Certificates with certmgr.msc.</p>
 <pre><code class="language-bash">matterbridge --ssl --mtls --frontend 443
 </code></pre>
 <h3>Restart</h3>
@@ -448,3 +453,12 @@ Click on the badge below to get started:</p>
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

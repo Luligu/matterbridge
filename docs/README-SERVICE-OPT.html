@@ -71,9 +71,9 @@
 <p>The storage position is <strong>not compatible</strong> with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
 <p>Also various script don&#39;t work if you choose this configuration.</p>
 <h3>1 - Create the matterbridge user and group</h3>
-<pre><code class="language-bash"># Γ£à Create the matterbridge group
+<pre><code class="language-bash"># &#x2714; Create the matterbridge group
 sudo groupadd --system matterbridge 2&gt;/dev/null || true
-# Γ£à Create the matterbridge user
+# &#x2714; Create the matterbridge user
 sudo useradd  --system \
   --home-dir /opt/matterbridge \
   --shell /usr/sbin/nologin \
@@ -83,29 +83,29 @@ sudo useradd  --system \
 <h3>2 - Create the Matterbridge directories and set the correct permissions</h3>
 <p>This will create the required directories if they don&#39;t exist</p>
 <pre><code class="language-bash">cd ~
-# Γ£à Safe precaution if matterbridge was already running with the traditional setup
+# &#x2714; Safe precaution if matterbridge was already running with the traditional setup
 sudo systemctl stop matterbridge 2&gt;/dev/null || true
-# Γ£à Safe precaution we need to uninstall from the global node_modules
+# &#x2714; Safe precaution we need to uninstall from the global node_modules
 sudo npm uninstall matterbridge -g 2&gt;/dev/null || true
-# Γ£à Creates all required directories
+# &#x2714; Creates all required directories
 sudo mkdir -p /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
-# Γ£à Ensures ownership
+# &#x2714; Ensures ownership
 sudo chown -R matterbridge:matterbridge /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
-# Γ£à Secure permissions
+# &#x2714; Secure permissions
 sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
 # make sure the ΓÇ£binΓÇ¥ dir exists for global executables
 sudo -u matterbridge mkdir -p /opt/matterbridge/.npm-global/bin
-# Γ£à Install matterbridge in the private global node_modules
+# &#x2714; Install matterbridge in the private global node_modules
 sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global npm install matterbridge --omit=dev --verbose --global
-# Γ£à Create a link to matterbridge bins
+# &#x2714; Create a link to matterbridge bins
 sudo ln -sf /opt/matterbridge/.npm-global/bin/matterbridge /usr/bin/matterbridge
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_mdns /usr/bin/mb_mdns
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_coap /usr/bin/mb_coap
-# Γ£à Clear bash command cache as a precaution
+# &#x2714; Clear bash command cache as a precaution
 hash -r
-# Γ£à Check if matterbridge is /usr/bin/matterbridge
+# &#x2714; Check if matterbridge is /usr/bin/matterbridge
 which matterbridge
-# Γ£à Will output the matterbridge version
+# &#x2714; Will output the matterbridge version
 matterbridge --version
 </code></pre>
 <p>The storage position is <strong>not compatible</strong> with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
