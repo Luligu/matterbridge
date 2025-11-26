@@ -30,6 +30,8 @@ Advantages:
 
 ### Added
 
+- [matterbridge.io]: Updated website https://matterbridge.io with all guides.
+
 ### Changed
 
 - [package]: Updated dependencies.
