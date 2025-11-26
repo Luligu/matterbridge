@@ -1,4 +1,4 @@
-# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
+# <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -270,7 +270,7 @@ It is the ideal companion of the official [Matterbridge Home Assistant Add-on](h
 ### Webhooks
 
 <a href="https://github.com/Luligu/matterbridge-webhooks">
-  <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
+  <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge logo" width="100" />
 </a>
 
 Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.
@@ -278,7 +278,7 @@ Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.
 ### BTHome
 
 <a href="https://github.com/Luligu/matterbridge-webhooks">
-  <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
+  <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge logo" width="100" />
 </a>
 
 Matterbridge BTHome allows you to expose any BTHome device to Matter using the native bluetooth of the host machine.
