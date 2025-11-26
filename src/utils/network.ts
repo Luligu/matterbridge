@@ -209,6 +209,17 @@ export async function getNpmPackageVersion(packageName: string, tag: string = 'l
   });
 }
 
+export type UpdateJson = {
+  latest: string;
+  latestDate: string;
+  dev: string;
+  devDate: string;
+  latestMessage: string;
+  latestMessageSeverity: 'info' | 'warning' | 'error' | 'success';
+  devMessage: string;
+  devMessageSeverity: 'info' | 'warning' | 'error' | 'success';
+};
+
 /**
  * Retrieves a file from the public directory of the Matterbridge GitHub repository.
  *
@@ -218,7 +229,7 @@ export async function getNpmPackageVersion(packageName: string, tag: string = 'l
  * @returns {Promise<Record<string, boolean | string | number>>} A promise that resolves to the parsed JSON object from the file.
  * @throws {Error} If the request fails or the JSON parsing fails.
  */
-export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, timeout: number = 10000): Promise<Record<string, boolean | string | number>> {
+export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, timeout: number = 10000): Promise<UpdateJson> {
   const https = await import('node:https');
   return new Promise((resolve, reject) => {
     const url = `https://matterbridge.io/${branch}_${file}`;
@@ -253,7 +264,7 @@ export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, time
       });
     });
 
-    // istanbul ignore next
+    // istanbul ignore next cause it's just a precaution for network errors
     req.on('error', (error) => {
       clearTimeout(timeoutId);
       reject(new Error(`Request failed: ${error instanceof Error ? error.message : error}`));
