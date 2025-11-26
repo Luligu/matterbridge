@@ -22,7 +22,11 @@ The advantage of this setup is that the global node_modules are private for matt
 
 The service runs with group and user matterbridge and the system has full protection.
 
+### Important
+
 The storage position is **not compatible** with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
+
+Also various script don't work if you choose this configuration.
 
 ### 1 - Create the matterbridge user and group
 

@@ -27,8 +27,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
+      width: 24px;
+      height: 24px;
       padding: 0;
       cursor: pointer;
       border: none;
@@ -67,7 +67,9 @@
 <h2>Run matterbridge as a daemon with systemctl (Linux only) with user matterbridge and private global node_modules</h2>
 <p>The advantage of this setup is that the global node_modules are private for matterbridge and sudo is not required.</p>
 <p>The service runs with group and user matterbridge and the system has full protection.</p>
+<h3>Important</h3>
 <p>The storage position is <strong>not compatible</strong> with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
+<p>Also various script don&#39;t work if you choose this configuration.</p>
 <h3>1 - Create the matterbridge user and group</h3>
 <pre><code class="language-bash"># Γ£à Create the matterbridge group
 sudo groupadd --system matterbridge 2&gt;/dev/null || true

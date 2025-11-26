@@ -148,7 +148,7 @@ matterbridge --version
 
 ## Frontend
 
-Matterbridge has a frontend available on IPv4 `http://MATTERBIDGE-IPV4-ADDRESS:8283` and IPv6 `http://[MATTERBIDGE-IPV6-ADDRESS]:8283`
+Matterbridge has a frontend available on IPv4 `http://localhost:8283` or `http://MATTERBIDGE-IPV4-ADDRESS:8283` and IPv6 `http://[::1]:8283` or `http://[MATTERBIDGE-IPV6-ADDRESS]:8283`.
 
 You can change the default port by adding the frontend parameter when you run it.
 
@@ -162,17 +162,15 @@ To use the frontend with ssl see below.
 
 From the frontend you can do all operations in an easy way.
 
-Home page:
-![See the screenshot here](./screenshot/Screenshot%20home.jpg)
+Home page
 
-Devices page:
-[See the screenshot here](./screenshot/Screenshot%20devices.jpg)
+![Home page](./screenshot/Screenshot%20home.jpg)
 
-Logs page:
-[See the screenshot here](./screenshot/Screenshot%20logs.jpg)
+[Devices page](./screenshot/Screenshot%20devices.jpg)
 
-Config editor:
-[See the screenshot here](./screenshot/Screenshot%20config%20editor.jpg)
+[Logs page](./screenshot/Screenshot%20logs.jpg)
+
+[Config editor](./screenshot/Screenshot%20config%20editor.jpg)
 
 ## Advanced configurations
 
@@ -185,6 +183,10 @@ Traditional configuration
 or with local global node_modules (no sudo required)
 
 [Service configurations with local global node_modules](README-SERVICE-LOCAL.md)
+
+or with user matterbridge and with private global node_modules (no sudo required)
+
+[Service configurations with user matterbridge and private global node_modules](README-SERVICE-OPT.md)
 
 ### Run matterbridge as a system service with launchctl (macOS only)
 
