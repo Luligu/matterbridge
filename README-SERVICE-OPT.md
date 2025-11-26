@@ -76,6 +76,7 @@ matterbridge --version
 The storage position is **not compatible** with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
 
 If you are migrating from the traditional service setup, before removing the old diretories, you may want to copy the contents of ~/Matterbridge ~/.matterbridge ~/.mattercert to the new directories /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert.
+This will save all the plugin configs and the fabrics but you need to remove all plugins and readd them cause the path will be different.
 
 Copy the old diretories content
 

@@ -109,7 +109,8 @@ which matterbridge
 matterbridge --version
 </code></pre>
 <p>The storage position is <strong>not compatible</strong> with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
-<p>If you are migrating from the traditional service setup, before removing the old diretories, you may want to copy the contents of ~/Matterbridge ~/.matterbridge ~/.mattercert to the new directories /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert.</p>
+<p>If you are migrating from the traditional service setup, before removing the old diretories, you may want to copy the contents of ~/Matterbridge ~/.matterbridge ~/.mattercert to the new directories /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert.
+This will save all the plugin configs and the fabrics but you need to remove all plugins and readd them cause the path will be different.</p>
 <p>Copy the old diretories content</p>
 <pre><code class="language-bash">sudo cp -a ~/Matterbridge/. /opt/matterbridge/Matterbridge/
 sudo cp -a ~/.matterbridge/. /opt/matterbridge/.matterbridge/
@@ -223,3 +224,6 @@ sudo systemctl status matterbridge.service
   </script>
 </body>
 </html>
+
+
+
