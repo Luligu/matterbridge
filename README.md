@@ -273,7 +273,7 @@ Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose 
 
 Matterbridge Home Assistant plugin allows you to expose the Home Assistant devices and entities to Matter.
 
-It is the ideal companion of the official [Matterbridge Home Assistant Add-on](https://github.com/Luligu/matterbridge-home-assistant-addon/blob/main/README.md).
+It is the ideal companion of the official [Matterbridge Home Assistant Add-on](https://github.com/Luligu/matterbridge-home-assistant-addon).
 
 ### Webhooks
 
