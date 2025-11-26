@@ -653,6 +653,7 @@ export function logKeepAlives(log?: AnsiLogger): number {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const requests = (process as any)._getActiveRequests?.() ?? [];
 
+  // istanbul ignore next
   const fmtHandle = (h: unknown, i: number) => {
     const ctor = (h as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
     // Timer-like?
@@ -667,6 +668,7 @@ export function logKeepAlives(log?: AnsiLogger): number {
     return { i, type: ctor, hasRef, isPort, fd };
   };
 
+  // istanbul ignore next
   const fmtReq = (r: unknown, i: number) => {
     const ctor = (r as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
     return { i, type: ctor };
@@ -677,6 +679,7 @@ export function logKeepAlives(log?: AnsiLogger): number {
     requests: requests.map(fmtReq),
   };
 
+  // istanbul ignore next if
   if (summary.handles.length === 0 && summary.requests.length === 0) {
     log?.debug('KeepAlive: no active handles or requests.');
   } else {
@@ -764,6 +767,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
  */
 export async function closeServerNodeStores(targetServer?: ServerNode): Promise<void> {
   // Close endpoint stores to avoid number persistence issues
+  if (!targetServer) targetServer = server;
   await targetServer?.env.get(ServerNodeStore)?.endpointStores.close();
 }
 
