@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Frontend",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "isBackground": false,
+      "group": "build"
+    },
+    {
+      "label": "Build frontend",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "isBackground": false,
+      "group": "build"
+    }
+  ]
+}

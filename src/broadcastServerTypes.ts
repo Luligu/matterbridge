@@ -29,8 +29,8 @@ import { RefreshRequiredChanged } from './frontendTypes.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, Plugin, StoragePlugin } from './matterbridgeTypes.js';
 
-export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter';
-export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'all';
+export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn';
+export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'all';
 
 /** Base message request structure with id, timestamp, src and dst */
 type BaseWorkerMessageRequest = {
@@ -117,6 +117,10 @@ type WorkerMessageMap = {
   'frontend_attributechanged': {
     request: { type: 'frontend_attributechanged'; params: { plugin: string; serialNumber: string; uniqueId: string; number: EndpointNumber; id: string; cluster: string; attribute: string; value: number | string | boolean | null } };
     response: { type: 'frontend_attributechanged'; response: { success: boolean } };
+  };
+  'frontend_logmessage': {
+    request: { type: 'frontend_logmessage'; params: { level: string; time: string; name: string; message: string } };
+    response: { type: 'frontend_logmessage'; response: { success: boolean } };
   };
 
   // PluginManager methods
@@ -228,25 +232,29 @@ type WorkerMessageMap = {
     request: { type: 'plugins_shutdown'; params: { plugin: ApiPlugin | string; reason?: string; removeAllDevices?: boolean; force?: boolean } };
     response: { type: 'plugins_shutdown'; response: { plugin: ApiPlugin | undefined } };
   };
-  'plugins_loadConfig': {
-    request: { type: 'plugins_loadConfig'; params: { plugin: ApiPlugin } };
-    response: { type: 'plugins_loadConfig'; response: { config: PlatformConfig } };
+  'plugins_loadconfig': {
+    request: { type: 'plugins_loadconfig'; params: { plugin: ApiPlugin } };
+    response: { type: 'plugins_loadconfig'; response: { config: PlatformConfig } };
   };
-  'plugins_saveConfigFromPlugin': {
-    request: { type: 'plugins_saveConfigFromPlugin'; params: { plugin: ApiPlugin; restartRequired?: boolean } };
-    response: { type: 'plugins_saveConfigFromPlugin'; response: { success: boolean } };
+  'plugins_saveconfigfromplugin': {
+    request: { type: 'plugins_saveconfigfromplugin'; params: { name: string; restartRequired?: boolean } };
+    response: { type: 'plugins_saveconfigfromplugin'; response: { success: boolean } };
   };
-  'plugins_saveConfigFromJson': {
-    request: { type: 'plugins_saveConfigFromJson'; params: { plugin: ApiPlugin; config: PlatformConfig; restartRequired?: boolean } };
-    response: { type: 'plugins_saveConfigFromJson'; response: { success: boolean } };
+  'plugins_saveconfigfromjson': {
+    request: { type: 'plugins_saveconfigfromjson'; params: { name: string; config: PlatformConfig; restartRequired?: boolean } };
+    response: { type: 'plugins_saveconfigfromjson'; response: { success: boolean } };
   };
-  'plugins_loadSchema': {
-    request: { type: 'plugins_loadSchema'; params: { plugin: ApiPlugin } };
-    response: { type: 'plugins_loadSchema'; response: { schema: PlatformSchema } };
+  'plugins_loadschema': {
+    request: { type: 'plugins_loadschema'; params: { name: string } };
+    response: { type: 'plugins_loadschema'; response: { schema: PlatformSchema | undefined } };
   };
-  'plugins_getDefaultSchema': {
-    request: { type: 'plugins_getDefaultSchema'; params: { plugin: ApiPlugin } };
-    response: { type: 'plugins_getDefaultSchema'; response: { schema: PlatformSchema } };
+  'plugins_getschema': {
+    request: { type: 'plugins_getschema'; params: { name: string } };
+    response: { type: 'plugins_getschema'; response: { schema: PlatformSchema | undefined } };
+  };
+  'plugins_setschema': {
+    request: { type: 'plugins_setschema'; params: { name: string; schema: PlatformSchema } };
+    response: { type: 'plugins_setschema'; response: { success: boolean } };
   };
 
   // DeviceManager methods

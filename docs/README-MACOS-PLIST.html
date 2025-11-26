@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+    }
+    pre {
+      background: #cfd1d4;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+<h1><img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge launchctl configuration (macOS)</h1>
+<p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge.svg" alt="Docker Pulls"></a>
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
+<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a></p>
+<p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
+<hr>
+<h1>Advanced configuration</h1>
+<h2>Run matterbridge as system service with launchctl (macOS) and its own global node_modules directory</h2>
+<h3>Optional: cleanup all previous setups</h3>
+<pre><code class="language-bash">sudo rm -rf ~/Matterbridge
+sudo rm -rf ~/.matterbridge
+sudo rm -rf ~/.mattercert
+sudo rm -rf /usr/local/etc/matterbridge
+sudo rm -f /Library/LaunchDaemons/matterbridge.plist
+sudo rm -f /var/log/matterbridge.log /var/log/matterbridge.err
+sudo npm uninstall matterbridge -g
+</code></pre>
+<h3>Verify node setup</h3>
+<pre><code class="language-bash">node -v
+npm -v
+</code></pre>
+<p>It should output something like:</p>
+<pre><code>v22.20.0
+10.9.3
+</code></pre>
+<h3>Check node path</h3>
+<pre><code class="language-bash">which node
+</code></pre>
+<p>It should output something like:</p>
+<pre><code>/usr/local/bin/node
+</code></pre>
+<p>In this case you will need in the step below to replace <strong><em>MYNODEPATH</em></strong> with /usr/local/bin</p>
+<h3>First create the Matterbridge directories</h3>
+<p>This will create the required directories if they don&#39;t exist and install matterbridge in the matterbridge global node_modules directory</p>
+<pre><code class="language-bash">sudo mkdir -p /usr/local/etc/matterbridge
+sudo mkdir -p /usr/local/etc/matterbridge/.npm-global
+sudo mkdir -p /usr/local/etc/matterbridge/Matterbridge
+sudo mkdir -p /usr/local/etc/matterbridge/.matterbridge
+sudo mkdir -p /usr/local/etc/matterbridge/.mattercert
+sudo chown -R root:wheel /usr/local/etc/matterbridge
+sudo chown -R root:wheel /usr/local/etc/matterbridge/.npm-global
+sudo chmod -R 755 /usr/local/etc/matterbridge/.npm-global
+sudo NPM_CONFIG_PREFIX=/usr/local/etc/matterbridge/.npm-global npm install -g matterbridge --omit=dev
+</code></pre>
+<h3>Then create a system launchctl configuration file for Matterbridge</h3>
+<ul>
+<li>create a launchctl configuration file for Matterbridge</li>
+</ul>
+<pre><code class="language-bash">sudo nano /Library/LaunchDaemons/matterbridge.plist
+</code></pre>
+<ul>
+<li>add the following to the file, replacing <strong><em>MYNODEPATH</em></strong> with the path found in the step before:</li>
+</ul>
+<pre><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;
+&lt;plist version=&quot;1.0&quot;&gt;
+&lt;dict&gt;
+        &lt;key&gt;EnvironmentVariables&lt;/key&gt;
+        &lt;dict&gt;
+                &lt;key&gt;PATH&lt;/key&gt;
+                &lt;string&gt;/usr/local/etc/matterbridge/.npm-global/bin:MYNODEPATH&lt;/string&gt;
+                &lt;key&gt;NPM_CONFIG_PREFIX&lt;/key&gt;
+                &lt;string&gt;/usr/local/etc/matterbridge/.npm-global&lt;/string&gt;
+                &lt;key&gt;HOME&lt;/key&gt;
+                &lt;string&gt;/var/root&lt;/string&gt;
+                &lt;key&gt;NODE_PATH&lt;/key&gt;
+                &lt;string&gt;/usr/local/etc/matterbridge/.npm-global/lib/node_modules&lt;/string&gt;
+        &lt;/dict&gt;
+        &lt;key&gt;KeepAlive&lt;/key&gt;
+        &lt;true/&gt;
+        &lt;key&gt;Label&lt;/key&gt;
+        &lt;string&gt;matterbridge&lt;/string&gt;
+        &lt;key&gt;ProgramArguments&lt;/key&gt;
+        &lt;array&gt;
+                &lt;string&gt;/usr/local/etc/matterbridge/.npm-global/bin/matterbridge&lt;/string&gt;
+                &lt;string&gt;--homedir&lt;/string&gt;
+                &lt;string&gt;/usr/local/etc/matterbridge&lt;/string&gt;
+                &lt;string&gt;--service&lt;/string&gt;
+                &lt;string&gt;--nosudo&lt;/string&gt;
+        &lt;/array&gt;
+        &lt;key&gt;RunAtLoad&lt;/key&gt;
+        &lt;true/&gt;
+        &lt;key&gt;StandardErrorPath&lt;/key&gt;
+        &lt;string&gt;/var/log/matterbridge.err&lt;/string&gt;
+        &lt;key&gt;StandardOutPath&lt;/key&gt;
+        &lt;string&gt;/var/log/matterbridge.log&lt;/string&gt;
+        &lt;key&gt;WorkingDirectory&lt;/key&gt;
+        &lt;string&gt;/usr/local/etc/matterbridge&lt;/string&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+</code></pre>
+<ul>
+<li>stop matterbridge</li>
+</ul>
+<pre><code class="language-bash">sudo launchctl bootout system/matterbridge
+</code></pre>
+<ul>
+<li>check the plist</li>
+</ul>
+<pre><code class="language-bash">sudo chown root:wheel /Library/LaunchDaemons/matterbridge.plist
+sudo chmod 644 /Library/LaunchDaemons/matterbridge.plist
+sudo plutil -lint /Library/LaunchDaemons/matterbridge.plist
+sudo plutil -convert xml1 /Library/LaunchDaemons/matterbridge.plist
+</code></pre>
+<ul>
+<li>bootstrap matterbridge and enable it</li>
+</ul>
+<pre><code class="language-bash">sudo rm -f /var/log/matterbridge.log /var/log/matterbridge.err
+sudo launchctl bootstrap system /Library/LaunchDaemons/matterbridge.plist
+sudo launchctl enable system/matterbridge
+</code></pre>
+<h3>Start Matterbridge</h3>
+<pre><code class="language-bash">sudo launchctl kickstart -k system/matterbridge
+</code></pre>
+<h3>Stop Matterbridge</h3>
+<pre><code class="language-bash">sudo launchctl bootout system/matterbridge
+</code></pre>
+<h3>Restart Matterbridge</h3>
+<pre><code class="language-bash">sudo launchctl kickstart -k system/matterbridge
+</code></pre>
+<h3>Show Matterbridge status</h3>
+<pre><code class="language-bash">sudo launchctl print system/matterbridge
+</code></pre>
+<h3>Show Matterbridge status (only essentials)</h3>
+<pre><code class="language-bash">sudo launchctl print system/matterbridge | grep -E &quot;pid|state&quot;
+</code></pre>
+<h3>Enable Matterbridge to start automatically on boot</h3>
+<pre><code class="language-bash">sudo launchctl enable system/matterbridge
+</code></pre>
+<h3>Disable Matterbridge from starting automatically on boot</h3>
+<pre><code class="language-bash">sudo launchctl disable system/matterbridge
+</code></pre>
+<h3>View the log of Matterbridge in real time (this will show the log with colors)</h3>
+<pre><code class="language-bash">sudo tail -n 1000 -f /var/log/matterbridge.log /var/log/matterbridge.err
+</code></pre>
+<h3>Optional: automatically rotate logs (every 5 days or at 100 MB, keep 5 compressed backups)</h3>
+<pre><code class="language-bash">sudo tee /etc/newsyslog.d/matterbridge.conf &lt;&lt;&#39;EOF&#39;
+/var/log/matterbridge.log  root:wheel 640  5  102400  5  ZC
+/var/log/matterbridge.err  root:wheel 640  5  102400  5  ZC
+EOF
+sudo newsyslog -v
+</code></pre>
+<h3>Optional: remove the password prompt for sudo</h3>
+<pre><code class="language-bash">sudo EDITOR=nano visudo
+</code></pre>
+<p>Add this line at the end of the file (replace USER with your macOS username):</p>
+<pre><code>USER ALL=(ALL) NOPASSWD: ALL
+</code></pre>
+<p>Save and validate syntax:</p>
+<pre><code class="language-bash">sudo visudo -c
+</code></pre>
+<h3>Optional: ask for password only each 60 minutes</h3>
+<pre><code class="language-bash">sudo EDITOR=nano visudo
+</code></pre>
+<p>Add (or edit) this line anywhere in the file:</p>
+<pre><code>Defaults        timestamp_timeout = 60
+</code></pre>
+<p>Save and validate syntax:</p>
+<pre><code class="language-bash">sudo visudo -c
+</code></pre>
+
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

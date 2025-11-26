@@ -8,12 +8,12 @@ process.argv = ['node', 'deviceManager.test.js', '-logger', 'info', '-matterlogg
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, er, id, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { DeviceManager } from './deviceManager.js';
 import { BaseDevice, dev } from './matterbridgeTypes.js';
-import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Setup the test environment
@@ -60,9 +60,9 @@ describe('DeviceManager', () => {
   test('size returns correct number of devices', async () => {
     expect(devices.size).toBe(0);
     expect(devices.length).toBe(0);
-    devices.set({ name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1', uniqueId: 'DeviceUniqueId1' } as unknown as MatterbridgeEndpoint);
-    devices.set({ name: 'DeviceType2', serialNumber: 'DeviceSerial2', deviceName: 'Device2', uniqueId: 'DeviceUniqueId2' } as unknown as MatterbridgeEndpoint);
-    devices.set({ plugin: 'jest', name: 'DeviceType3', serialNumber: 'DeviceSerial3', deviceName: 'Device3', uniqueId: 'DeviceUniqueId3' } as unknown as MatterbridgeEndpoint);
+    devices.set({ name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1', uniqueId: 'DeviceUniqueId1', id: 'DeviceId1', number: 1, maybeId: 'DeviceId1', maybeNumber: 1 } as unknown as MatterbridgeEndpoint);
+    devices.set({ name: 'DeviceType2', serialNumber: 'DeviceSerial2', deviceName: 'Device2', uniqueId: 'DeviceUniqueId2', id: 'DeviceId2', number: 2, maybeId: 'DeviceId2', maybeNumber: 2 } as unknown as MatterbridgeEndpoint);
+    devices.set({ plugin: 'jest', name: 'DeviceType3', serialNumber: 'DeviceSerial3', deviceName: 'Device3', uniqueId: 'DeviceUniqueId3', id: 'DeviceId3', number: 3, maybeId: 'DeviceId3', maybeNumber: 3 } as unknown as MatterbridgeEndpoint);
     expect(devices.size).toBe(3);
     expect(devices.length).toBe(3);
     await (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_basearray', src: 'frontend', dst: 'devices', params: {} } as any);
@@ -77,13 +77,35 @@ describe('DeviceManager', () => {
   });
 
   test('set already registered device to log error', async () => {
-    const device = { name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1', uniqueId: 'DeviceUniqueId1' } as unknown as MatterbridgeEndpoint;
+    const device = { name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1', uniqueId: 'DeviceUniqueId1', id: 'DeviceId1', number: 1, maybeId: 'DeviceId1', maybeNumber: 1 } as unknown as MatterbridgeEndpoint;
     devices.set(device);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `The device ${dev}Device1${er} with uniqueId ${BLUE}DeviceUniqueId1${er} serialNumber ${BLUE}DeviceSerial1${er} is already in the device manager`);
 
-    const baseDevice = { name: 'DeviceType1bis', serialNumber: 'DeviceSerial1bis', deviceName: 'Device1bis', uniqueId: 'DeviceUniqueId1bis' } as unknown as BaseDevice;
+    expect(devices.size).toBe(3);
+    const baseDevice = { name: 'DeviceType1bis', serialNumber: 'DeviceSerial1bis', deviceName: 'Device1bis', uniqueId: 'DeviceUniqueId1bis', id: 'DeviceId1bis', number: 10 } as unknown as BaseDevice;
     expect((await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).response.device).toBeDefined();
+    expect(devices.size).toBe(4);
+    let getDevice: BaseDevice | undefined = (await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).response.device;
+    expect(getDevice).toEqual({
+      'deviceName': 'Device1bis',
+      'id': 'DeviceId1bis',
+      'name': 'DeviceType1bis',
+      'number': 10,
+      'serialNumber': 'DeviceSerial1bis',
+      'uniqueId': 'DeviceUniqueId1bis',
+    });
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    getDevice = (await testServer.fetch({ type: 'devices_get', src: testServer.name, dst: 'devices', params: { uniqueId: baseDevice.uniqueId! } })).response.device;
+    expect(getDevice).toEqual({
+      'deviceName': 'Device1bis',
+      'id': 'DeviceId1bis',
+      'name': 'DeviceType1bis',
+      'number': 10,
+      'serialNumber': 'DeviceSerial1bis',
+      'uniqueId': 'DeviceUniqueId1bis',
+    });
     expect((await testServer.fetch({ type: 'devices_remove', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).response.success).toBe(true);
+    expect(devices.size).toBe(3);
   });
 
   test('has returns true if device exists', async () => {
@@ -143,9 +165,52 @@ describe('DeviceManager', () => {
   });
 
   test('array to return all the devices', async () => {
+    await setDebug(true);
     expect(devices.array()).toHaveLength(3);
 
     expect((await testServer.fetch({ type: 'devices_basearray', src: testServer.name, dst: 'devices', params: {} })).response.devices).toHaveLength(3);
+    expect((await testServer.fetch({ type: 'devices_basearray', src: testServer.name, dst: 'devices', params: {} })).response.devices).toEqual([
+      {
+        'configUrl': undefined,
+        'deviceName': 'Device1',
+        'deviceType': undefined,
+        'id': 'DeviceId1',
+        mode: undefined,
+        'name': 'DeviceType1',
+        'number': 1,
+        'plugin': undefined,
+        'productUrl': undefined,
+        'serialNumber': 'DeviceSerial1',
+        'uniqueId': 'DeviceUniqueId1',
+      },
+      {
+        'configUrl': undefined,
+        'deviceName': 'Device2',
+        'deviceType': undefined,
+        'id': 'DeviceId2',
+        mode: undefined,
+        'name': 'DeviceType2',
+        'number': 2,
+        'plugin': undefined,
+        'productUrl': undefined,
+        'serialNumber': 'DeviceSerial2',
+        'uniqueId': 'DeviceUniqueId2',
+      },
+      {
+        'configUrl': undefined,
+        'deviceName': 'Device3',
+        'deviceType': undefined,
+        'id': 'DeviceId3',
+        mode: undefined,
+        'name': 'DeviceType3',
+        'number': 3,
+        'plugin': 'jest',
+        'productUrl': undefined,
+        'serialNumber': 'DeviceSerial3',
+        'uniqueId': 'DeviceUniqueId3',
+      },
+    ]);
+    await setDebug(false);
   });
 
   test('remove returns true', () => {

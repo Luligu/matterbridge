@@ -148,6 +148,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendAttributeChangedMessage(msg.params.plugin, msg.params.serialNumber, msg.params.uniqueId, msg.params.number, msg.params.id, msg.params.cluster, msg.params.attribute, msg.params.value);
           this.server.respond({ ...msg, response: { success: true } });
           break;
+        case 'frontend_logmessage':
+          this.wssSendLogMessage(msg.params.level, msg.params.time, msg.params.name, msg.params.message);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
@@ -326,6 +330,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           // Only proceed for real WebSocket upgrades
           // istanbul ignore next cause is only a safety check
           if ((req.headers.upgrade || '').toLowerCase() !== 'websocket') {
+            this.log.error(`WebSocket upgrade error: Invalid upgrade header ${req.headers.upgrade}`);
             socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
             return socket.destroy();
           }
@@ -886,13 +891,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // Install the plugin package
         if (filename.endsWith('.tgz')) {
           const { spawnCommand } = await import('./utils/spawn.js');
-          await spawnCommand(this.matterbridge, 'npm', ['install', '-g', filePath, '--omit=dev', '--verbose'], 'install', filename);
-          this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
-          this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
-          this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
-          this.wssSendRestartRequired();
-          res.send(`Plugin package ${filename} uploaded and installed successfully`);
-        } else res.send(`File ${filename} uploaded successfully`);
+          if (await spawnCommand('npm', ['install', '-g', filePath, '--omit=dev', '--verbose'], 'install', filename)) {
+            this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
+            this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
+            this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
+            this.wssSendRestartRequired();
+            res.send(`Plugin package ${filename} uploaded and installed successfully`);
+          } else {
+            this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}`);
+            this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
+            this.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
+            res.status(500).send(`Error uploading or installing plugin package ${filename}`);
+          }
+        } else {
+          res.send(`File ${filename} uploaded successfully`);
+        }
       } catch (err) {
         this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
         this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
@@ -1435,6 +1448,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.log.debug(`Sending api response message: ${debugStringify(data)}`);
         }
         client.send(JSON.stringify(data));
+      } else {
+        // istanbul ignore next cause is only a safety check
+        this.log.error('Cannot send api response, client not connected');
       }
     };
 
@@ -1905,6 +1921,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               } else if (data.params.value === 'Fatal') {
                 Logger.level = MatterLogLevel.FATAL;
               }
+              this.matterbridge.matterLogLevel = MatterLogLevel.names[Logger.level as number] as LogLevel;
 
               // Set the global logger callback for the WebSocketServer to the common minimum logLevel
               let callbackLogLevel = LogLevel.NOTICE;

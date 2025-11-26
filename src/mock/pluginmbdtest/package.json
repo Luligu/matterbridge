@@ -1,0 +1,8 @@
+{
+  "name": "matterbridge-dynamic-test",
+  "type": "module",
+  "main": "index.js",
+  "version": "1.0.0",
+  "description": "Matterbridge dynamic test plugin",
+  "author": "LuLigu"
+}

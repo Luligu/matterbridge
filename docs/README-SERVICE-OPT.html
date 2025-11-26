@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+    }
+    pre {
+      background: #cfd1d4;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+<h1><img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with private global node_modules</h1>
+<p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge.svg" alt="Docker Pulls"></a>
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
+<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a></p>
+<p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
+<hr>
+<h1>Advanced configuration</h1>
+<h2>Run matterbridge as a daemon with systemctl (Linux only) with user matterbridge and private global node_modules</h2>
+<p>The advantage of this setup is that the global node_modules are private for matterbridge and sudo is not required.</p>
+<p>The service runs with group and user matterbridge and the system has full protection.</p>
+<p>The storage position is <strong>not compatible</strong> with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
+<h3>1 - Create the matterbridge user and group</h3>
+<pre><code class="language-bash"># Γ£à Create the matterbridge group
+sudo groupadd --system matterbridge 2&gt;/dev/null || true
+# Γ£à Create the matterbridge user
+sudo useradd  --system \
+  --home-dir /opt/matterbridge \
+  --shell /usr/sbin/nologin \
+  --gid matterbridge \
+  matterbridge 2&gt;/dev/null || true
+</code></pre>
+<h3>2 - Create the Matterbridge directories and set the correct permissions</h3>
+<p>This will create the required directories if they don&#39;t exist</p>
+<pre><code class="language-bash">cd ~
+# Γ£à Safe precaution if matterbridge was already running with the traditional setup
+sudo systemctl stop matterbridge 2&gt;/dev/null || true
+# Γ£à Safe precaution we need to uninstall from the global node_modules
+sudo npm uninstall matterbridge -g 2&gt;/dev/null || true
+# Γ£à Creates all required directories
+sudo mkdir -p /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+# Γ£à Ensures ownership
+sudo chown -R matterbridge:matterbridge /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+# Γ£à Secure permissions
+sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+# make sure the ΓÇ£binΓÇ¥ dir exists for global executables
+sudo -u matterbridge mkdir -p /opt/matterbridge/.npm-global/bin
+# Γ£à Install matterbridge in the private global node_modules
+sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global npm install matterbridge --omit=dev --verbose --global
+# Γ£à Create a link to matterbridge bins
+sudo ln -sf /opt/matterbridge/.npm-global/bin/matterbridge /usr/bin/matterbridge
+sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_mdns /usr/bin/mb_mdns
+sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_coap /usr/bin/mb_coap
+# Γ£à Clear bash command cache as a precaution
+hash -r
+# Γ£à Check if matterbridge is /usr/bin/matterbridge
+which matterbridge
+# Γ£à Will output the matterbridge version
+matterbridge --version
+</code></pre>
+<p>The storage position is <strong>not compatible</strong> with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
+<p>If you are migrating from the traditional service setup, before removing the old diretories, you may want to copy the contents of ~/Matterbridge ~/.matterbridge ~/.mattercert to the new directories /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert.</p>
+<p>Copy the old diretories content</p>
+<pre><code class="language-bash">sudo cp -a ~/Matterbridge/. /opt/matterbridge/Matterbridge/
+sudo cp -a ~/.matterbridge/. /opt/matterbridge/.matterbridge/
+sudo cp -a ~/.mattercert/. /opt/matterbridge/.mattercert/
+</code></pre>
+<p>Remove the old diretories</p>
+<pre><code class="language-bash">sudo rm -rf ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global
+</code></pre>
+<h3>3 - Create a systemctl configuration file for Matterbridge</h3>
+<p>Create a systemctl configuration file for Matterbridge</p>
+<pre><code class="language-bash">sudo nano /etc/systemd/system/matterbridge.service
+</code></pre>
+<p>Add the following to this file:</p>
+<pre><code>[Unit]
+Description=matterbridge
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+Environment=NODE_ENV=production
+Environment=&quot;NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global&quot;
+ExecStart=matterbridge --service --nosudo
+WorkingDirectory=/opt/matterbridge/Matterbridge
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=matterbridge
+Group=matterbridge
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/matterbridge
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+<p>If you use the frontend with <strong>-ssl</strong> -frontend 443 and get an error message: &quot;Port 443 requires elevated privileges&quot;,
+add this:</p>
+<pre><code>[Service]
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+</code></pre>
+<p>If you use the <strong>matterbridge-bthome</strong> plugin add this:</p>
+<pre><code>[Service]
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
+</code></pre>
+<p>Now and if you modify matterbridge.service after, run:</p>
+<pre><code class="language-bash">sudo systemctl daemon-reload
+sudo systemctl restart matterbridge.service
+sudo systemctl status matterbridge.service
+</code></pre>
+<h3>Start Matterbridge</h3>
+<pre><code class="language-bash">sudo systemctl start matterbridge
+</code></pre>
+<h3>Stop Matterbridge</h3>
+<pre><code class="language-bash">sudo systemctl stop matterbridge
+</code></pre>
+<h3>Show Matterbridge status</h3>
+<pre><code class="language-bash">sudo systemctl status matterbridge
+</code></pre>
+<h3>Enable Matterbridge to start automatically on boot</h3>
+<pre><code class="language-bash">sudo systemctl enable matterbridge
+</code></pre>
+<h3>Disable Matterbridge from starting automatically on boot</h3>
+<pre><code class="language-bash">sudo systemctl disable matterbridge
+</code></pre>
+<h3>View the log of Matterbridge in real time (this will show the log with colors)</h3>
+<pre><code class="language-bash">sudo journalctl -u matterbridge -n 1000 -f --output cat
+</code></pre>
+
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

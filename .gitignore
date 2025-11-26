@@ -2,7 +2,7 @@
 # This file specifies intentionally untracked directories and files that Git should ignore.
 
 # Specific directories that should be ignored
-.vscode/
+# .vscode/
 coverage/
 dist/
 jest/
@@ -28,5 +28,4 @@ crypto
 docs/Matter specifications/
 STYLEGUIDE.md
 workers/
-matter.ts
 history.html

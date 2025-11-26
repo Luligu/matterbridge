@@ -54,6 +54,12 @@ To start the Dev Container, simply open the project folder in [Visual Studio Cod
 
 Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
 
+When you want to test your plugin with a paired controller, you have several options:
+
+- create a tgz (npm run npmPack) and upload it to a running instance of matterbridge.
+- publish it with tag dev and install it (matterbridge-yourplugin@dev in Install plugins) in a running instance of matterbridge.
+- use a local instance of matterbridge running outside the dev container and install (../matterbridge-yourplugin in Install plugins) or add (../matterbridge-yourplugin in Install plugins) your plugin to it (easiest way). Adjust the path if matterbridge dir and your plugin dir are not in the same parent directory.
+
 ## Guidelines on imports/exports
 
 Matterbridge exports from:
@@ -199,7 +205,7 @@ The plugin platform type.
 The plugin config (loaded before the platform constructor is called and saved after onShutdown() is called).
 Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for example)
 
-### constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)
+### constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig)
 
 The contructor is called when is plugin is loaded.
 
@@ -282,7 +288,7 @@ You create a Matter device with a new instance of MatterbridgeEndpoint(definitio
 
 In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.
 
-All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the 'Matter-1.4-Device-Library-Specification.pdf'.
+All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the 'Matter-1.4.1-Device-Library-Specification.pdf'.
 
 All default cluster helpers are available as methods of MatterbridgeEndpoint.
 
@@ -292,12 +298,6 @@ All default cluster helpers are available as methods of MatterbridgeEndpoint.
 - @param {'server' | 'matter'} [mode] - The mode for the endpoint.
 - @param {string} [id] - The unique storage key for the endpoint. If not provided, a default key will be used.
 - @param {EndpointNumber} [number] - The endpoint number for the endpoint. If not provided, the endpoint will be created with the next available endpoint number.
-
-```typescript
-    const robot = new RoboticVacuumCleaner('Robot Vacuum', 'RVC1238777820', 'server');
-```
-
-In the above example we create a Rvc device type with its own server node.
 
 The mode=`server` property of MatterbridgeEndpointOptions, allows to create an independent (not bridged) Matter device with its server node. In this case the bridge mode is not relevant.
 
@@ -318,50 +318,50 @@ const robot = new RoboticVacuumCleaner('Robot Vacuum', 'RVC1238777820', 'server'
 ### Chapter 13. Appliances Device Types - Single class device types
 
 ```typescript
-    this.laundryWasher = new LaundryWasher('Laundry Washer', 'LW1234567890');
+const laundryWasher = new LaundryWasher('Laundry Washer', 'LW1234567890');
 ```
 
 ```typescript
-    this.laundryDryer = new LaundryDryer('Laundry Dryer', 'LDW1235227890');
+const laundryDryer = new LaundryDryer('Laundry Dryer', 'LDW1235227890');
 ```
 
 ```typescript
-    this.dishwasher = new Dishwasher('Dishwasher', 'DW1234567890');
+const dishwasher = new Dishwasher('Dishwasher', 'DW1234567890');
 ```
 
 ```typescript
-    this.extractorHood = new ExtractorHood('Extractor Hood', 'EH1234567893');
+const extractorHood = new ExtractorHood('Extractor Hood', 'EH1234567893');
 ```
 
 ```typescript
-    this.microwaveOven = new MicrowaveOven('Microwave Oven', 'MO1234567893');
+const microwaveOven = new MicrowaveOven('Microwave Oven', 'MO1234567893');
 ```
 
 The Oven is always a composed device. You create the Oven and add one or more cabinet.
 
 ```typescript
-    this.oven = new Oven('Oven', 'OV1234567890');
-    this.oven.addCabinet('Upper Cabinet', [{ mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label }]);
+const oven = new Oven('Oven', 'OV1234567890');
+oven.addCabinet('Upper Cabinet', [{ mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label }]);
 ```
 
 The Cooktop is always a composed device. You create the Cooktop and add one or more surface.
 
 ```typescript
-    this.cooktop = new Cooktop('Cooktop', 'CT1234567890');
-    this.cooktop.addSurface('Surface Top Left', [
-      { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label },
-      { mfgCode: null, namespaceId: PositionTag.Left.namespaceId, tag: PositionTag.Left.tag, label: PositionTag.Left.label },
-    ]);
+const cooktop = new Cooktop('Cooktop', 'CT1234567890');
+cooktop.addSurface('Surface Top Left', [
+  { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label },
+  { mfgCode: null, namespaceId: PositionTag.Left.namespaceId, tag: PositionTag.Left.tag, label: PositionTag.Left.label },
+]);
 ```
 
 The Refrigerator is always a composed device. You create the Refrigerator and add one or more cabinet.
 
 ```typescript
-    const refrigerator = new Refrigerator('Refrigerator', 'RE1234567890');
-    refrigerator.addCabinet('Refrigerator Top', [
-      { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: 'Refrigerator Top' },
-      { mfgCode: null, namespaceId: RefrigeratorTag.Refrigerator.namespaceId, tag: RefrigeratorTag.Refrigerator.tag, label: RefrigeratorTag.Refrigerator.label },
-    ]);
+const refrigerator = new Refrigerator('Refrigerator', 'RE1234567890');
+refrigerator.addCabinet('Refrigerator Top', [
+  { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: 'Refrigerator Top' },
+  { mfgCode: null, namespaceId: RefrigeratorTag.Refrigerator.namespaceId, tag: RefrigeratorTag.Refrigerator.tag, label: RefrigeratorTag.Refrigerator.label },
+]);
 ```
 
 ### Chapter 14. Energy Device Types - Single class device types
@@ -394,6 +394,7 @@ Each plugin has a minimal default config file injected by Matterbridge when it i
 {
   name: plugin.name, // i.e. matterbridge-test
   type: plugin.type, // i.e. AccessoryPlatform or DynamicPlatform (on the first run is AnyPlatform cause it is still unknown)
+  version: plugin.version,
   debug: false,
   unregisterOnShutdown: false
 }

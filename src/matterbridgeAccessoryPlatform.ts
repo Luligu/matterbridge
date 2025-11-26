@@ -4,7 +4,7 @@
  * @file matterbridgeAccessoryPlatform.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.0.5
+ * @version 1.0.6
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -40,7 +40,7 @@ export class MatterbridgeAccessoryPlatform extends MatterbridgePlatform {
   /**
    * Creates an instance of MatterbridgeAccessoryPlatform.
    *
-   * @param {PlatformMatterbridge} matterbridge - The Matterbridge instance.
+   * @param {PlatformMatterbridge} matterbridge - The PlatformMatterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
    * @param {PlatformConfig} config - The platform configuration.
    */

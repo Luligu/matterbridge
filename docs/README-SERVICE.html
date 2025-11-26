@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+    }
+    pre {
+      background: #cfd1d4;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+<h1><img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration</h1>
+<p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge.svg" alt="Docker Pulls"></a>
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
+<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a></p>
+<p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
+<hr>
+<h1>Advanced configuration</h1>
+<h2>Run matterbridge as a daemon with systemctl (Linux only)</h2>
+<p>The easiest way to add systemctl is to use <a href="https://github.com/Luligu/mb-service-linux">Matterbridge service cli for linux</a>.</p>
+<p>If your setup is too complex or you prefer to do it manually follow this method. You can still use mb-service to manage systemd after.</p>
+<h3>First create the Matterbridge directories</h3>
+<p>This will create the required directories if they don&#39;t exist</p>
+<pre><code class="language-bash">cd ~
+mkdir -p ~/Matterbridge
+mkdir -p ~/.matterbridge
+mkdir -p ~/.mattercert
+sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert
+</code></pre>
+<h3>Then create a systemctl configuration file for Matterbridge</h3>
+<p>Create a systemctl configuration file for Matterbridge</p>
+<pre><code class="language-bash">sudo nano /etc/systemd/system/matterbridge.service
+</code></pre>
+<p>Add the following to this file, replacing 3 times (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi):</p>
+<p>You may need to adapt the configuration to your setup:</p>
+<ul>
+<li>execStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -service</li>
+</ul>
+<pre><code>[Unit]
+Description=matterbridge
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=matterbridge -service
+WorkingDirectory=/home/&lt;USER&gt;/Matterbridge
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=&lt;USER&gt;
+Group=&lt;USER&gt;
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+<p>If you use the frontend with -ssl -frontend 443 and get an error message: &quot;Port 443 requires elevated privileges&quot;,
+add this:</p>
+<pre><code>[Service]
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+</code></pre>
+<p>If you use the matterbridge-bthome plugin add this:</p>
+<pre><code>[Service]
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
+</code></pre>
+<p>If you modify matterbridge.service after, then run:</p>
+<pre><code class="language-bash">sudo systemctl daemon-reload
+sudo systemctl restart matterbridge.service
+</code></pre>
+<h3>Start Matterbridge</h3>
+<pre><code class="language-bash">sudo systemctl start matterbridge
+</code></pre>
+<h3>Stop Matterbridge</h3>
+<pre><code class="language-bash">sudo systemctl stop matterbridge
+</code></pre>
+<h3>Show Matterbridge status</h3>
+<pre><code class="language-bash">sudo systemctl status matterbridge.service
+</code></pre>
+<h3>Enable Matterbridge to start automatically on boot</h3>
+<pre><code class="language-bash">sudo systemctl enable matterbridge.service
+</code></pre>
+<h3>Disable Matterbridge from starting automatically on boot</h3>
+<pre><code class="language-bash">sudo systemctl disable matterbridge.service
+</code></pre>
+<h3>View the log of Matterbridge in real time (this will show the log with colors)</h3>
+<pre><code class="language-bash">sudo journalctl -u matterbridge.service -n 1000 -f --output cat
+</code></pre>
+<h3>Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)</h3>
+<p>Check the space used</p>
+<pre><code class="language-bash">sudo journalctl --disk-usage
+</code></pre>
+<p>remove all log older then 3 days</p>
+<pre><code class="language-bash">sudo journalctl --rotate
+sudo journalctl --vacuum-time=3d
+</code></pre>
+<h2>Prevent the journal logs to grow</h2>
+<p>If you want to make the setting permanent to prevent the journal logs to grow too much, run</p>
+<pre><code class="language-bash">sudo nano /etc/systemd/journald.conf
+</code></pre>
+<p>add</p>
+<pre><code class="language-bash">Compress=yes            # Compress logs
+MaxRetentionSec=3days   # Keep logs for a maximum of 3 days.
+MaxFileSec=1day         # Rotate logs daily within the 3-day retention period.
+ForwardToSyslog=no      # Disable forwarding to syslog to prevent duplicate logging.
+SystemMaxUse=100M       # Limit persistent logs in /var/log/journal to 100 MB.
+RuntimeMaxUse=100M      # Limit runtime logs in /run/log/journal to 100 MB.
+</code></pre>
+<p>save it and run</p>
+<pre><code class="language-bash">sudo systemctl restart systemd-journald
+</code></pre>
+<h2>Verify that with your distro you can run sudo npm install -g matterbridge without the password</h2>
+<p>Run the following command to verify if you can install Matterbridge globally without being prompted for a password:</p>
+<pre><code class="language-bash">sudo npm install -g matterbridge --omit=dev
+</code></pre>
+<p>If you are not prompted for a password, no further action is required.</p>
+<p>If that is not the case, open the sudoers file for editing using visudo</p>
+<pre><code class="language-bash">sudo visudo
+</code></pre>
+<p>verify the presence of of a line</p>
+<pre><code>@includedir /etc/sudoers.d
+</code></pre>
+<p>exit and create a configuration file for sudoers</p>
+<pre><code class="language-bash">sudo nano /etc/sudoers.d/matterbridge
+</code></pre>
+<p>add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD: ALL)</p>
+<pre><code>&lt;USER&gt; ALL=(ALL) NOPASSWD: ALL
+</code></pre>
+<p>or if you prefers to only give access to npm without password try with (e.g. radxa ALL=(ALL) NOPASSWD: /usr/bin/npm)</p>
+<pre><code>&lt;USER&gt; ALL=(ALL) NOPASSWD: /usr/bin/npm
+</code></pre>
+<p>save the file and reload the settings with:</p>
+<pre><code class="language-bash">sudo chmod 0440 /etc/sudoers.d/matterbridge
+sudo visudo -c
+</code></pre>
+<p>Verify if you can install Matterbridge globally without being prompted for a password:</p>
+<pre><code class="language-bash">sudo npm install -g matterbridge --omit=dev
+</code></pre>
+
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

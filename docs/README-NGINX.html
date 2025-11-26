@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+    }
+    pre {
+      background: #cfd1d4;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+<h1><img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge NGINX configuration</h1>
+<p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge.svg" alt="Docker Pulls"></a>
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
+<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a></p>
+<p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
+<hr>
+<h1>Advanced configuration to use NGINX</h1>
+<h2>Run matterbridge with nginx</h2>
+<h3>Install nginx if it is not installed</h3>
+<pre><code class="language-bash">sudo apt update
+sudo apt install nginx
+</code></pre>
+<h3>Create a basic nginx configuration file that redirect from <a href="http://yourhost">http://yourhost</a> to <a href="http://yourhost:8283">http://yourhost:8283</a></h3>
+<p>Create or edit the matterbridge configuration file</p>
+<pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
+</code></pre>
+<p>paste this configuration and if desired change the port to listen (here is 80) and the server_name using yours:</p>
+<pre><code>server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    location / {
+        # Redirect to Matterbridge frontend from http:/yourhost:80
+        proxy_pass http://localhost:8283/;
+        proxy_set_header Host                 $host;
+        proxy_set_header X-Real-IP            $remote_addr;
+        proxy_set_header X-Forwarded-For      $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto    $scheme;
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade              $http_upgrade;
+        proxy_set_header Connection           $http_connection;
+    }
+}
+</code></pre>
+<p>Add matterbridge to enabled sites</p>
+<pre><code class="language-bash">sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
+</code></pre>
+<p>Restart nginx and test the configuration</p>
+<pre><code class="language-bash">sudo systemctl restart nginx
+sudo nginx -t
+</code></pre>
+<h3>Create a basic nginx configuration file that redirect from <a href="http://yourhost/matterbridge">http://yourhost/matterbridge</a> to <a href="http://yourhost:8283/matterbridge">http://yourhost:8283/matterbridge</a></h3>
+<p>Create or edit the matterbridge configuration file</p>
+<pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
+</code></pre>
+<p>paste this configuration and if desired change the port to listen (here is 80) and the server_name using yours:</p>
+<pre><code>server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    location /matterbridge/ {
+        # Redirect to Matterbridge frontend from http:/yourhost/matterbridge:80
+        proxy_pass http://localhost:8283/;
+        proxy_set_header Host                     $host;
+        proxy_set_header X-Real-IP                $remote_addr;
+        proxy_set_header X-Forwarded-For          $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto        $scheme;
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade                  $http_upgrade;
+        proxy_set_header Connection               $http_connection;
+    }
+}
+</code></pre>
+<p>Add matterbridge to enabled sites</p>
+<pre><code class="language-bash">sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
+</code></pre>
+<p>Restart nginx and test the configuration</p>
+<pre><code class="language-bash">sudo systemctl restart nginx
+sudo nginx -t
+</code></pre>
+<h3>Create an advanced nginx configuration file that redirect from <a href="http://yourhost">http://yourhost</a> or <a href="https://yourhost">https://yourhost</a> to <a href="http://yourhost:8283">http://yourhost:8283</a> with ssl</h3>
+<p>Add your certificates in /etc/nginx/certs: <code>cert.pem</code> and <code>key.pem</code></p>
+<p>Create or edit the matterbridge configuration file</p>
+<pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
+</code></pre>
+<p>paste this configuration:</p>
+<pre><code># Redirect all HTTP requests to HTTPS
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS server configuration
+server {
+    listen 443 ssl default_server;
+      listen [::]:443 ssl default_server;
+    http2 on;
+    server_name _;
+
+    # SSL certificate paths
+    ssl_certificate /etc/nginx/certs/cert.pem;
+    ssl_certificate_key /etc/nginx/certs/key.pem;
+
+    # SSL security settings
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    location / {
+      # Redirect to Matterbridge frontend from https:/yourhost:443
+      proxy_pass http://localhost:8283/;
+      proxy_set_header Host                 $host;
+      proxy_set_header X-Real-IP            $remote_addr;
+      proxy_set_header X-Forwarded-For      $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto    $scheme;
+
+      # WebSocket support
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade              $http_upgrade;
+      proxy_set_header Connection           $http_connection;
+    }
+}
+</code></pre>
+<p>Add matterbridge to enabled sites</p>
+<pre><code class="language-bash">sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
+</code></pre>
+<p>Restart nginx and test the configuration</p>
+<pre><code class="language-bash">sudo systemctl restart nginx
+sudo nginx -t
+</code></pre>
+<h3>Create an advanced nginx configuration file that redirect from <a href="http://yourhost/matterbridge">http://yourhost/matterbridge</a> or <a href="https://yourhost/matterbridge">https://yourhost/matterbridge</a> to <a href="http://yourhost/matterbridge">http://yourhost/matterbridge</a> with ssl</h3>
+<p>Add your certificates in /etc/nginx/certs: <code>cert.pem</code> and <code>key.pem</code></p>
+<p>Create or edit the matterbridge configuration file</p>
+<pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
+</code></pre>
+<p>paste this configuration:</p>
+<pre><code># Redirect all HTTP requests to HTTPS
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS server configuration
+server {
+	listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+	http2 on;
+	server_name _;
+
+	# SSL certificate paths
+    ssl_certificate /etc/nginx/certs/cert.pem;
+    ssl_certificate_key /etc/nginx/certs/key.pem;
+
+    # SSL security settings
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+	root /var/www/html;
+	index index.html index.htm index.nginx-debian.html;
+
+	location / {
+		# First attempt to serve request as file, then
+		# as directory, then fall back to displaying a 404.
+		try_files $uri $uri/ =404;
+	}
+
+  location /matterbridge/ {
+    # Redirect to Matterbridge frontend from https:/yourhost/matterbridge:443
+      proxy_pass http://localhost:8283/;
+      proxy_set_header Host                       $host;
+      proxy_set_header X-Real-IP                  $remote_addr;
+      proxy_set_header X-Forwarded-For            $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto          $scheme;
+
+    # WebSocket support
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade                    $http_upgrade;
+      proxy_set_header Connection                 $http_connection;
+  }
+}
+</code></pre>
+<p>Add matterbridge to enabled sites</p>
+<pre><code class="language-bash">sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
+</code></pre>
+<p>Restart nginx and test the configuration</p>
+<pre><code class="language-bash">sudo systemctl restart nginx
+sudo nginx -t
+</code></pre>
+
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+    }
+    pre {
+      background: #cfd1d4;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+<h1><img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge docker configuration</h1>
+<p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge.svg" alt="Docker Pulls"></a>
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
+<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a></p>
+<p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
+<hr>
+<h1>Advanced configuration</h1>
+<h2>Run matterbridge with docker and docker compose</h2>
+<p>The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on <strong>Docker Hub</strong>.</p>
+<p>The image (tag <strong>latest</strong>) includes matterbridge and all official plugins with the latest release (as published on npm). You can just pull the new image and matterbridge with all plugins will be the latest release published on npm.</p>
+<p>The image (tag <strong>dev</strong>) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest dev release pushed on GitHub. It is possible that the devs are outdated by published latests.</p>
+<p>You can directly select and add a plugin without installing it.</p>
+<p>It is based on node:22-bookworm-slim and integrates the health check.</p>
+<p>How Health Checks Work in Different Scenarios</p>
+<p>With docker-compose</p>
+<p>Docker monitors the health check and can restart the container if needed.</p>
+<p>With docker run</p>
+<p>The health check still runs in the background, but:
+The container doesnΓÇÖt restart automatically if it becomes unhealthy.</p>
+<p>You can manually check the health status:</p>
+<pre><code class="language-bash">docker exec -it matterbridge curl -v http://localhost:8283/health
+</code></pre>
+<h3>First create the Matterbridge directories</h3>
+<p>This will create the required directories in your home directory if they don&#39;t exist</p>
+<pre><code class="language-bash">cd ~
+mkdir -p ~/Matterbridge
+mkdir -p ~/.matterbridge
+mkdir -p ~/.mattercert
+sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert
+</code></pre>
+<p>You may need to adapt the script to your setup.</p>
+<h3>Add your user to docker group</h3>
+<p>If you don&#39;t want to use sudo with docker commands, run this command:</p>
+<pre><code class="language-bash">sudo groupadd docker
+sudo usermod -aG docker $USER
+</code></pre>
+<p>After adding your user to the docker group, you need to log out and log back in for the changes to take effect. This ensures that your current session recognizes the group membership change.</p>
+<h3>Run the Docker container and start it</h3>
+<p>The container must have full access to the host network (needed for mdns and Matter protocol).</p>
+<pre><code class="language-bash">sudo docker run --name matterbridge \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
+  -v ~/.mattercert:/root/.mattercert \
+  --network host --restart always -d luligu/matterbridge:latest
+</code></pre>
+<p>You may need to adapt the script to your setup.</p>
+<h3>Run with docker compose</h3>
+<p>The docker-compose.yml file is available in the docker directory of the package</p>
+<pre><code>services:
+  matterbridge:
+    container_name: matterbridge
+    image: luligu/matterbridge:latest                         # Matterbridge image with the tag latest
+    network_mode: host                                        # Ensures the Matter mdns works
+    restart: always                                           # Ensures the container always restarts automatically
+    volumes:
+      - &quot;${HOME}/Matterbridge:/root/Matterbridge&quot;             # Mounts the Matterbridge plugin directory
+      - &quot;${HOME}/.matterbridge:/root/.matterbridge&quot;           # Mounts the Matterbridge storage directory
+      - &quot;${HOME}/.mattercert:/root/.mattercert&quot;               # Mounts the Matterbridge certificate directory
+</code></pre>
+<p>Copy it in the home directory or edit the existing one to add the matterbridge service.</p>
+<p>Then start docker compose with:</p>
+<pre><code class="language-bash">docker compose up -d
+</code></pre>
+<p>or start only the matterbridge container with:</p>
+<pre><code class="language-bash">docker compose up -d matterbridge
+</code></pre>
+<h3>Stop with docker compose</h3>
+<pre><code class="language-bash">docker compose down
+</code></pre>
+<h3>Update with docker compose</h3>
+<p>This will pull the new matterbridge image and restart only the matterbridge container.</p>
+<pre><code class="language-bash">docker compose pull matterbridge
+docker compose up -d --no-deps --force-recreate matterbridge
+</code></pre>
+<h3>Inspect the container</h3>
+<pre><code class="language-bash">docker container inspect matterbridge
+</code></pre>
+<h3>Start the Docker container</h3>
+<pre><code class="language-bash">docker start matterbridge
+</code></pre>
+<h3>Stop the Docker container</h3>
+<pre><code class="language-bash">docker stop matterbridge
+</code></pre>
+<h3>Restart the Docker container</h3>
+<pre><code class="language-bash">docker restart matterbridge
+</code></pre>
+<h3>Shows the logs</h3>
+<pre><code class="language-bash">docker logs matterbridge
+</code></pre>
+<h3>Shows the logs for a time interval</h3>
+<pre><code class="language-bash">docker logs \
+  --since &quot;2025-04-19T00:00:00&quot; \
+  --until &quot;2025-04-19T00:02:00&quot; \
+  matterbridge
+</code></pre>
+<h3>Shows the logs real time (tail)</h3>
+<pre><code class="language-bash">docker logs --tail 1000 -f matterbridge
+</code></pre>
+<h3>Prevent the logs to grow</h3>
+<p>If you want to prevent the docker logs to grow too much, you can configure Docker&#39;s logging options globally.</p>
+<p><strong>Warning</strong>: This will restart Docker and affect all running containers.</p>
+<pre><code class="language-bash">sudo nano /etc/docker/daemon.json
+</code></pre>
+<p>Add or update the logging configuration in the daemon.json file:</p>
+<pre><code class="language-json">{
+  &quot;log-driver&quot;: &quot;json-file&quot;,
+  &quot;log-opts&quot;: {
+    &quot;max-size&quot;: &quot;100m&quot;,
+    &quot;max-file&quot;: &quot;3&quot;
+  }
+}
+</code></pre>
+<p>Where:</p>
+<ul>
+<li><code>max-size</code>: Maximum size of each log file (e.g., &quot;10m&quot;, &quot;100m&quot;, &quot;1g&quot;)</li>
+<li><code>max-file</code>: Maximum number of log files to keep</li>
+</ul>
+<p>Save the file and restart Docker:</p>
+<pre><code class="language-bash">sudo systemctl restart docker
+</code></pre>
+<p><strong>Note</strong>: This configuration applies to new containers. Existing containers will need to be recreated to use the new logging settings.</p>
+
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

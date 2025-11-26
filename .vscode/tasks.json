@@ -74,13 +74,13 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "matterbridge.test.ts",
-        "matterbridge.mocked.test.ts",
-        "matterbridge.matterjs.test.ts",
         "matterbridge.bridge.test.ts",
         "matterbridge.childbridge.test.ts",
         "matterbridge.device.matter.test.ts",
-        "matterbridge.device.server.test.ts"
+        "matterbridge.device.server.test.ts",
+        "matterbridge.matterjs.test.ts",
+        "matterbridge.mocked.test.ts",
+        "matterbridge.test.ts",
       ],
       "group": {
         "kind": "test",
@@ -99,7 +99,9 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "frontend.*.test.ts"
+        "frontend.test.ts",
+        "frontend.express.test.ts",
+        "frontend.websocket.test.ts"
       ],
       "group": {
         "kind": "test",
@@ -175,6 +177,7 @@
         "--coverage",
         "--maxWorkers=100%",
         "matterbridgePlatform.test.ts",
+        "matterbridgePlatform.initialized.test.ts",
         "matterbridgeAccessoryPlatform.test.ts",
         "matterbridgeDynamicPlatform.test.ts"
       ],
@@ -298,6 +301,11 @@
         "--coverage",
         "--maxWorkers=100%",
         "src/broadcastServer.test.ts",
+        "src/matterNode.test.ts",
+        "src/matterNode.bridge.test.ts",
+        "src/matterNode.accessory.test.ts",
+        "src/matterNode.dynamic.test.ts",
+        "src/matterNode.server.test.ts",
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []

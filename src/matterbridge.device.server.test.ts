@@ -88,8 +88,8 @@ describe('Matterbridge Device serverMode=server', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval for Matterbridge`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in bridge mode`);
   }, 60000);
 
   test('add mocked plugin pluginserverdevice', async () => {
@@ -127,12 +127,15 @@ describe('Matterbridge Device serverMode=server', () => {
   });
 
   test('Matterbridge.destroyInstance()', async () => {
+    const stopServerNodeSpy = jest.spyOn(matterbridge as any, 'stopServerNode');
+
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(stopServerNodeSpy).toHaveBeenCalledTimes(1);
   });
 
-  test('Restart initialize() with -bridge', async () => {
+  test('Restart initialize()', async () => {
     const startServerNodeSpy = jest.spyOn(matterbridge as any, 'startServerNode');
 
     expect((matterbridge as any).initialized).toBeFalsy();
@@ -213,7 +216,6 @@ describe('Matterbridge Device serverMode=server', () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-
     expect(stopServerNodeSpy).toHaveBeenCalledTimes(2);
   });
 });

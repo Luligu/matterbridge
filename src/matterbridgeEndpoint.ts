@@ -162,6 +162,7 @@ import {
   getDefaultDeviceEnergyManagementModeClusterServer,
   getDefaultPowerSourceBatteryClusterServer,
 } from './matterbridgeEndpointHelpers.js';
+import { inspectError } from './utils/error.js';
 
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
@@ -206,9 +207,6 @@ export class MatterbridgeEndpoint extends Endpoint {
   tagList?: Semtag[] = undefined;
   /** The original id (with spaces and .) of the MatterbridgeEndpoint constructor options */
   originalId: string | undefined = undefined;
-  // TODO: matter.js 0.16.0 remove uniqueStorageKey
-  /** The original id (with spaces and .) of the endpoint (old api compatibility) */
-  uniqueStorageKey: string | undefined = undefined;
   /** The name of the first device type of the MatterbridgeEndpoint */
   name: string | undefined = undefined;
   /** The code of the first device type of the MatterbridgeEndpoint */
@@ -267,30 +265,20 @@ export class MatterbridgeEndpoint extends Endpoint {
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
     // Check if the options.id is valid
-    // TODO: matter.js 0.16.0 remove uniqueStorageKey
-    // istanbul ignore next if branch cause it will be removed
-    if (options.uniqueStorageKey && checkNotLatinCharacters(options.uniqueStorageKey)) {
-      options.uniqueStorageKey = generateUniqueId(options.uniqueStorageKey);
-    }
     if (options.id && checkNotLatinCharacters(options.id)) {
       options.id = generateUniqueId(options.id);
     }
 
     // Convert the options to an Endpoint.Options
     const optionsV8 = {
-      // TODO: matter.js 0.16.0 remove uniqueStorageKey
-      id: options.id?.replace(/[ .]/g, '') || options.uniqueStorageKey?.replace(/[ .]/g, ''),
-      number: options.number || options.endpointId,
-      // id: options.id?.replace(/[ .]/g, ''),
-      // number: options.number,
+      id: options.id?.replace(/[ .]/g, ''),
+      number: options.number,
       descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
 
     super(endpointV8, optionsV8);
 
     this.mode = options.mode;
-    // TODO: matter.js 0.16.0 remove uniqueStorageKey
-    this.uniqueStorageKey = options.id ?? options.uniqueStorageKey;
     this.originalId = originalId;
     this.name = firstDefinition.name;
     this.deviceType = firstDefinition.code;
@@ -306,8 +294,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
     // Create the logger. Temporarly uses the originalId if available or 'MatterbridgeEndpoint' as fallback. The logName will be set by createDefaultBasicInformationClusterServer() and createDefaultBridgedDeviceBasicInformationClusterServer() with deviceName.
-    // TODO: matter.js 0.16.0 remove uniqueStorageKey
-    this.log = new AnsiLogger({ logName: this.originalId ?? this.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
+    this.log = new AnsiLogger({ logName: this.originalId ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} mode: ${CYAN}${this.mode}${db} id: ${CYAN}${optionsV8.id}${db} number: ${CYAN}${optionsV8.number}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
@@ -712,10 +699,20 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (alreadyAdded) return child;
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      this.add(child);
+      try {
+        this.add(child);
+      } catch (error) {
+        // istanbul ignore next cause is only a safety check
+        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
+      }
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
-      this.parts.add(child);
+      try {
+        this.parts.add(child);
+      } catch (error) {
+        // istanbul ignore next cause is only a safety check
+        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle NOT installed) child endpoint ${CYAN}${endpointName}${db}`, error);
+      }
     }
     return child;
   }
@@ -783,22 +780,57 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (alreadyAdded) return child;
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      this.add(child);
+      try {
+        this.add(child);
+      } catch (error) {
+        // istanbul ignore next cause is only a safety check
+        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
+      }
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
-      this.parts.add(child);
+      try {
+        this.parts.add(child);
+      } catch (error) {
+        // istanbul ignore next cause is only a safety check
+        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle NOT installed) child endpoint ${CYAN}${endpointName}${db}`, error);
+      }
     }
     return child;
   }
 
   /**
-   * Retrieves a child endpoint by its name.
+   * Retrieves a child endpoint by its name (id).
+   * Since the name is stored like id, the endpointName should be without spaces and dots.
+   * If case of not latin characters, the endpointName should be the generated unique id.
    *
    * @param {string} endpointName - The name of the endpoint to retrieve.
    * @returns {Endpoint | undefined} The child endpoint with the specified name, or undefined if not found.
+   * @deprecated Use getChildEndpointById() or getChildEndpointByOriginalId() instead.
    */
   getChildEndpointByName(endpointName: string): MatterbridgeEndpoint | undefined {
     return this.parts.find((part) => part.id === endpointName) as MatterbridgeEndpoint | undefined;
+  }
+
+  /**
+   * Retrieves a child endpoint by its id.
+   * Since the id of a child endpoint is the endpointName passed in the constructor, the id to retrieve it should be without spaces and dots.
+   * If case of not latin characters, the id is a generated unique id.
+   *
+   * @param {string} id - The id of the endpoint to retrieve.
+   * @returns {Endpoint | undefined} The child endpoint with the specified id, or undefined if not found.
+   */
+  getChildEndpointById(id: string): MatterbridgeEndpoint | undefined {
+    return this.parts.find((part) => part.id === id) as MatterbridgeEndpoint | undefined;
+  }
+
+  /**
+   * Retrieves a child endpoint by its original id (the id of MatterbridgeEndpointOptions).
+   *
+   * @param {string} originalId - The original id of the endpoint to retrieve.
+   * @returns {Endpoint | undefined} The child endpoint with the specified originalId, or undefined if not found.
+   */
+  getChildEndpointByOriginalId(originalId: string): MatterbridgeEndpoint | undefined {
+    return (this.parts as unknown as MatterbridgeEndpoint[]).find((part) => part.originalId === originalId) as MatterbridgeEndpoint | undefined;
   }
 
   /**
@@ -2416,7 +2448,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   createSmokeOnlySmokeCOAlarmClusterServer(smokeState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal): this {
     this.behaviors.require(
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm).enable({
-        events: { smokeAlarm: true, interconnectSmokeAlarm: false, coAlarm: false, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
+        events: { smokeAlarm: true, interconnectSmokeAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
       }),
       {
         smokeState,
@@ -2440,7 +2472,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   createCoOnlySmokeCOAlarmClusterServer(coState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal): this {
     this.behaviors.require(
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.CoAlarm).enable({
-        events: { smokeAlarm: false, interconnectSmokeAlarm: false, coAlarm: true, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
+        events: { coAlarm: true, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
       }),
       {
         coState,

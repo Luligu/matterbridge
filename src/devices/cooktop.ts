@@ -69,7 +69,8 @@ export class Cooktop extends MatterbridgeEndpoint {
    * 13.7 A Cook Surface device type represents a heating object on a cooktop or other similar device. It
    * SHALL only be used when composed as part of another device type.
    *
-   * The OnOff cluster is off only mandatory for all Cook Surface devices!
+   * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements.
+   * TemperatureLevel is the only valid temperature control mode.
    */
   addSurface(name: string, tagList: Semtag[], selectedTemperatureLevel: number = 2, supportedTemperatureLevels: string[] = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']): MatterbridgeEndpoint {
     const surface = this.addChildDeviceType(name, cookSurface, { tagList }, true);

@@ -1129,7 +1129,7 @@ export function getDefaultDeviceEnergyManagementClusterServer(
  *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
  */
 export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]) {
-  // TODO: matter.js 0.16.0
+  // TODO: matter.js 0.16.0 needs a with() method
   return optionsFor(MatterbridgeDeviceEnergyManagementModeServer.with(), {
     supportedModes: supportedModes ?? [
       { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.NoOptimization }] },
@@ -1170,7 +1170,7 @@ export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: 
  * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
  */
 export function getDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped) {
-  // TODO: matter.js 0.16.0
+  // TODO: matter.js 0.16.0 needs a with() method
   return optionsFor(MatterbridgeOperationalStateServer.with(), {
     phaseList: [],
     currentPhase: null,
@@ -1299,6 +1299,7 @@ export function getDefaultOccupancySensingClusterServer(occupied = false, holdTi
     occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
     pirOccupiedToUnoccupiedDelay: holdTime,
     pirUnoccupiedToOccupiedDelay: holdTime,
+    pirUnoccupiedToOccupiedThreshold: 1,
     holdTime,
     holdTimeLimits: { holdTimeMin, holdTimeMax, holdTimeDefault: holdTime },
   });

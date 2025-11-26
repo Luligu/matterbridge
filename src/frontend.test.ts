@@ -2,8 +2,8 @@
 
 /* eslint-disable no-console */
 
-const MATTER_PORT = 6005;
-const FRONTEND_PORT = 8285;
+const MATTER_PORT = 9000;
+const FRONTEND_PORT = 8284;
 const NAME = 'Frontend';
 const HOMEDIR = path.join('jest', NAME);
 
@@ -37,7 +37,7 @@ import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
 import { wait, waiter } from './utils/wait.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Mock BroadcastServer methods
@@ -67,9 +67,6 @@ describe('Matterbridge frontend', () => {
   });
 
   afterAll(async () => {
-    frontend.destroy();
-    // Close mDNS instance
-    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -88,6 +85,8 @@ describe('Matterbridge frontend', () => {
     frontend = matterbridge.frontend;
     expect(matterbridge).toBeDefined();
     expect(frontend).toBeDefined();
+    expect(matterbridge.bridgeMode).toBe('bridge');
+    expect((matterbridge as any).initialized).toBe(true);
 
     // prettier-ignore
     await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
@@ -95,6 +94,8 @@ describe('Matterbridge frontend', () => {
     await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
     // prettier-ignore
     await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
+
+    await flushAsync();
 
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
@@ -105,7 +106,6 @@ describe('Matterbridge frontend', () => {
     expect(createServerMock).toHaveBeenCalled();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Initializing the frontend http server on port ${YELLOW}${FRONTEND_PORT}${db}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on`));
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening`));
   }, 60000);
 
   test('broadcast handler', async () => {
@@ -138,6 +138,7 @@ describe('Matterbridge frontend', () => {
       dst: 'frontend',
       params: { plugin: 'test', serialNumber: '1234', uniqueId: 'uniqueId', number: 123, id: 'id', cluster: 'cluster', attribute: 'attribute', value: 'value' },
     } as any);
+    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_logmessage', src: 'manager', dst: 'frontend', params: { level: 'info', time: 'time', name: 'jest', message: 'info' } } as any);
     for (const type of ['plugins_install', 'plugins_uninstall'] as const) {
       await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: true, packageName: 'testPlugin' } } as any);
       await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: false, packageName: 'testPlugin' } } as any);
@@ -740,11 +741,13 @@ describe('Matterbridge frontend', () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
-
     expect(stopSpy).toHaveBeenCalledTimes(1);
-    expect((matterbridge as any).frontend.httpServer).toBeUndefined();
-    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
-    expect((matterbridge as any).frontend.expressApp).toBeUndefined();
-    expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
+    expect((frontend as any).httpServer).toBeUndefined();
+    expect((frontend as any).httpsServer).toBeUndefined();
+    expect((frontend as any).expressApp).toBeUndefined();
+    expect((frontend as any).webSocketServer).toBeUndefined();
+
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
   });
 });

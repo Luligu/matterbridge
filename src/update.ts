@@ -64,7 +64,7 @@ export async function checkUpdates(matterbridge: Matterbridge): Promise<void> {
 }
 
 /**
- * Checks for updates and logs from GitHub.
+ * Checks for updates and logs from https://matterbridge.io/.
  * If the update check fails, logs a warning message.
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
@@ -80,14 +80,10 @@ export async function checkUpdatesAndLog(matterbridge: Matterbridge): Promise<vo
     if (
       isValidString(branch === 'main' ? updateJson.latestMessage : updateJson.devMessage, 1) &&
       isValidString(branch === 'main' ? updateJson.latestMessageSeverity : updateJson.devMessageSeverity, 4) &&
-      ['info', 'warning', 'error', 'success'].includes(branch === 'main' ? (updateJson.latestMessageSeverity as string) : (updateJson.devMessageSeverity as string))
+      ['info', 'warning', 'error', 'success'].includes(branch === 'main' ? updateJson.latestMessageSeverity : updateJson.devMessageSeverity)
     ) {
       matterbridge.log.notice(`GitHub ${branch} update message: ${branch === 'main' ? updateJson.latestMessage : updateJson.devMessage}`);
-      matterbridge.frontend.wssSendSnackbarMessage(
-        branch === 'main' ? (updateJson.latestMessage as string) : (updateJson.devMessage as string),
-        0,
-        branch === 'main' ? (updateJson.latestMessageSeverity as 'info' | 'warning' | 'error' | 'success') : (updateJson.devMessageSeverity as 'info' | 'warning' | 'error' | 'success'),
-      );
+      matterbridge.frontend.wssSendSnackbarMessage(branch === 'main' ? updateJson.latestMessage : updateJson.devMessage, 0, branch === 'main' ? updateJson.latestMessageSeverity : updateJson.devMessageSeverity);
     }
   } catch (error) {
     matterbridge.log.debug(`Error checking GitHub ${branch} updates: ${error instanceof Error ? error.message : error}`);

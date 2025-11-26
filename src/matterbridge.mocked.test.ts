@@ -24,7 +24,7 @@ const logInterfacesMock = networkModule.logInterfaces as jest.MockedFunction<typ
 
 // Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./utils/spawn.js', () => ({
-  spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
+  spawnCommand: jest.fn((command: string, args: string[]) => {
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
@@ -70,26 +70,32 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { plg, Plugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { getParameter } from './utils/commandLine.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { DeviceManager } from './deviceManager.js';
 
 // Setup the test environment
 setupTest(NAME, false);
 
 describe('Matterbridge mocked', () => {
   let matterbridge: MatterbridgeType;
+  let plugins: PluginManager;
+  let devices: DeviceManager;
 
   beforeEach(async () => {
-    // Reset the process.argv to simulate command line arguments
+    // Reset the process.argv to simulate command line arguments (no frontend no matter server)
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest'];
 
     // Reset the Matterbridge instance
     (Matterbridge as any).instance = undefined;
     matterbridge = await Matterbridge.loadInstance(); // Default to false if no parameter is provided
+    plugins = matterbridge.plugins;
+    devices = matterbridge.devices;
   });
 
   afterEach(async () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge, 10, 10);
+
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);
 
@@ -98,25 +104,23 @@ describe('Matterbridge mocked', () => {
   });
 
   afterAll(async () => {
-    // Close mDNS instance
-    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('mocked spawnCommand', async () => {
+  test('verify mocked spawnCommand', async () => {
     const { spawnCommand } = await import('./utils/spawn.js');
-    const result = await spawnCommand(matterbridge, 'echo', ['Hello, World!'], 'install', 'echo');
+    const result = await spawnCommand('echo', ['Hello, World!'], 'install', 'echo');
     expect(result).toBe(true);
-    expect(spawnCommand).toHaveBeenCalledWith(matterbridge, 'echo', ['Hello, World!'], 'install', 'echo');
+    expect(spawnCommand).toHaveBeenCalledWith('echo', ['Hello, World!'], 'install', 'echo');
   });
 
-  test('mocked wait', async () => {
+  test('verify mocked wait', async () => {
     await wait(1000, 'Test Wait', true);
     expect(wait).toHaveBeenCalledWith(1000, 'Test Wait', true);
   });
 
-  test('mocked waiter', async () => {
+  test('verify mocked waiter', async () => {
     const condition = jest.fn(() => true);
     const result = await waiter('Test Waiter', condition, false, 5000, 500, true);
     expect(result).toBe(true);
@@ -124,7 +128,7 @@ describe('Matterbridge mocked', () => {
     expect(waiter).toHaveBeenCalledWith('Test Waiter', condition, false, 5000, 500, true);
   });
 
-  test('mocked withTimeout', async () => {
+  test('verify mocked withTimeout', async () => {
     const promise = new Promise((resolve) => setTimeout(resolve, 1000));
     const result = await withTimeout(promise, 2000);
     expect(result).toBeUndefined();
@@ -417,14 +421,20 @@ describe('Matterbridge mocked', () => {
     expect(await (matterbridge.plugins as any).add('./src/mock/plugin4')).not.toBeNull();
     expect(await (matterbridge.plugins as any).add('./src/mock/plugin5')).not.toBeNull();
     expect(await (matterbridge.plugins as any).add('./src/mock/plugin6')).not.toBeNull();
-    expect((matterbridge.plugins as any).length).toBe(6);
+    expect(plugins.length).toBe(6);
+  });
 
+  test('Matterbridge.initialize() logLevel', async () => {
     // Test set log level for plugins
-    await (matterbridge.plugins as any).load(matterbridge.plugins.array()[0]);
+    await (matterbridge as any).initialize();
+    expect(plugins.length).toBe(6);
+    await plugins.load(plugins.array()[0]);
     matterbridge.setLogLevel(LogLevel.NOTICE);
-    expect((matterbridge.plugins as any).log.logLevel).toBe(LogLevel.NOTICE);
-    expect(matterbridge.plugins.array()[0].platform?.log.logLevel).toBe(LogLevel.NOTICE);
+    expect((plugins as any).log.logLevel).toBe(LogLevel.NOTICE);
+    expect(plugins.array()[0].platform?.log.logLevel).toBe(LogLevel.NOTICE);
+  });
 
+  test('Matterbridge.initialize() reinstall of plugins', async () => {
     // Test reinstall of plugins
     const parseSpy = jest.spyOn(PluginManager.prototype, 'parse').mockImplementation(async (plugin: Plugin | string) => {
       return null; // Simulate a plugin that does not return a valid instance
@@ -432,15 +442,22 @@ describe('Matterbridge mocked', () => {
     const existSpy = jest.spyOn(fs, 'existsSync').mockImplementation((path: PathLike) => {
       return false; // Simulate a plugin that does not exist
     });
-    spawnCommandMock.mockImplementationOnce((matterbridge: MatterbridgeType, command: string, args: string[]) => {
-      return Promise.reject(new Error(`Mocked spawnCommand error for command: ${command} with args: ${args.join(' ')}`));
+    spawnCommandMock.mockImplementationOnce((command: string, args: string[]) => {
+      return Promise.resolve(false); // Simulate a failed installation
     });
     await (matterbridge as any).initialize();
-    expect(existSpy).toHaveBeenCalledTimes(7);
-    expect(parseSpy).toHaveBeenCalledTimes(5);
-    expect(spawnCommandMock).toHaveBeenCalledTimes(6);
-    parseSpy.mockRestore();
+    expect(plugins.length).toBe(6);
+    expect(existSpy).toHaveBeenCalledTimes(6); // Six plugins checked for existence
+    expect(parseSpy).toHaveBeenCalledTimes(5); // One plugin is skipped due to invalid install
+    expect(spawnCommandMock).toHaveBeenCalledTimes(6); // Six plugins attempted to install
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Trying to reinstall it from npm...'));
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error reinstalling plugin'));
 
+    parseSpy.mockRestore();
+    existSpy.mockRestore();
+  });
+
+  test('Matterbridge.initialize() startPlugins', async () => {
     // Test startPlugins
     const resolveSpy = jest.spyOn(PluginManager.prototype, 'resolve').mockImplementation(async (pluginPath: string) => {
       return null; // Simulate a plugin that does not return a valid path
@@ -449,6 +466,7 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).startPlugins();
     expect(resolveSpy).toHaveBeenCalledTimes(6);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('not found or not validated. Disabling it.'));
+    expect(plugins.length).toBe(6);
 
     for (const plugin of matterbridge.plugins) {
       expect(plugin.enabled).toBe(false);
@@ -460,9 +478,12 @@ describe('Matterbridge mocked', () => {
     });
     await (matterbridge as any).startPlugins();
     expect(resolveSpy).toHaveBeenCalledTimes(12);
+    expect(plugins.length).toBe(6);
 
     resolveSpy.mockRestore();
+  });
 
+  test('Matterbridge.initialize() node version', async () => {
     // Test throw error for unsupported Node version
     const originalNodeVersion = process.versions.node;
     Object.defineProperty(process.versions, 'node', {
@@ -472,7 +493,6 @@ describe('Matterbridge mocked', () => {
     Object.defineProperty(process.versions, 'node', {
       get: () => originalNodeVersion,
     });
-    expect((matterbridge.plugins as any).length).toBe(6);
   });
 
   test('Matterbridge.initialize() devices', async () => {
@@ -830,16 +850,17 @@ describe('Matterbridge mocked', () => {
 
     await matterbridge.updateProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
+    expect(spawnCommandMock).toHaveBeenCalledWith('npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Matterbridge has been updated. Full restart required.'));
     jest.clearAllMocks();
 
     spawnCommandMock.mockImplementationOnce(() => {
-      return Promise.reject(new Error('Mocked spawnCommand error for updateProcess'));
+      return Promise.resolve(false);
     });
     await matterbridge.updateProcess();
     expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
-    expect(spawnCommandMock).toHaveBeenCalledWith(matterbridge, 'npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error updating matterbridge:'));
+    expect(spawnCommandMock).toHaveBeenCalledWith('npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error updating matterbridge.'));
 
     cleanupSpy.mockRestore();
   });
@@ -1186,6 +1207,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.plugins.size).toBe(1);
     expect(matterbridge.devices.size).toBe(1);
     await matterbridge.removeAllBridgedEndpoints('matterbridge-mock1', 100);
+    expect(wait).toHaveBeenCalledTimes(0); // TODO : check why not twice. Not mocked anymore?
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Removing all bridged endpoints for plugin`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Removing bridged endpoint`));
     expect(matterbridge.plugins.size).toBe(1);

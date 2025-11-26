@@ -3,7 +3,7 @@
  * @file src/helpers.test.ts
  * @author Luca Liguori
  * @created 2025-09-03
- * @version 1.0.12
+ * @version 1.0.13
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -26,18 +26,24 @@ import { inspect } from 'node:util';
 import path from 'node:path';
 
 import type { jest } from '@jest/globals';
-// Imports from Matterbridge
-import { AnsiLogger, er, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
+// Imports from node-ansi-logger
+import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+// Imports from @matter
 import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, Lifecycle } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/main/protocol';
+import { NodeStorageManager } from 'node-persist-manager';
 
+// Imports from Matterbridge
 import { Matterbridge } from '../matterbridge.js';
 import { MatterbridgePlatform } from '../matterbridgePlatform.js';
-import { MATTER_STORAGE_NAME } from '../matterbridgeTypes.js';
+import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '../matterbridgeTypes.js';
 import { bridge } from '../matterbridgeDeviceTypes.js';
+import { DeviceManager } from '../deviceManager.js';
+import { PluginManager } from '../pluginManager.js';
+import { Frontend } from '../frontend.js';
 
 /* Imports from a plugin
 import { AnsiLogger, LogLevel } from 'matterbridge/logger';
@@ -45,6 +51,9 @@ import { DeviceTypeId, Endpoint, Environment, MdnsService, ServerNode, ServerNod
 import { RootEndpoint, AggregatorEndpoint } from 'matterbridge/matter/endpoints';
 import { MATTER_STORAGE_NAME, Matterbridge, MatterbridgePlatform } from 'matterbridge';
 */
+
+export const originalProcessArgv = Object.freeze([...process.argv]);
+export const originalProcessEnv = Object.freeze({ ...process.env } as Record<string, string | undefined>);
 
 export let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 export let loggerDebugSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.debug>;
@@ -64,7 +73,13 @@ export let addBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototy
 export let removeBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeBridgedEndpoint>;
 export let removeAllBridgedEndpointsSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeAllBridgedEndpoints>;
 
+export let NAME: string;
+export let HOMEDIR: string;
 export let matterbridge: Matterbridge;
+export let frontend: Frontend;
+export let plugins: PluginManager;
+export let devices: DeviceManager;
+
 export let environment: Environment;
 export let server: ServerNode<ServerNode.RootEndpoint>;
 export let aggregator: Endpoint<AggregatorEndpoint>;
@@ -91,9 +106,11 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   expect(name).toBeDefined();
   expect(typeof name).toBe('string');
   expect(name.length).toBeGreaterThanOrEqual(4);
+  NAME = name;
+  HOMEDIR = path.join('jest', name);
 
   // Cleanup any existing home directory
-  rmSync(path.join('jest', name), { recursive: true, force: true });
+  rmSync(HOMEDIR, { recursive: true, force: true });
 
   const { jest } = await import('@jest/globals');
   loggerDebugSpy = jest.spyOn(AnsiLogger.prototype, 'debug');
@@ -164,6 +181,158 @@ export async function setDebug(debug: boolean): Promise<void> {
 }
 
 /**
+ * Start a Matterbridge instance for testing.
+ *
+ * @param {('bridge' | 'childbridge' | 'controller' | '')} bridgeMode The bridge mode to start the Matterbridge instance in.
+ * @param {number} frontendPort The frontend port number.
+ * @param {number} matterPort The matter port number.
+ * @param {number} passcode The passcode number.
+ * @param {number} discriminator The discriminator number.
+ * @param {number} pluginSize The expected number of plugins.
+ * @param {number} devicesSize The expected number of devices.
+ * @returns {Promise<Matterbridge>} The Matterbridge instance.
+ */
+export async function startMatterbridge(
+  bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = 'bridge',
+  frontendPort: number = 8283,
+  matterPort: number = 5540,
+  passcode: number = 20252026,
+  discriminator: number = 3840,
+  pluginSize: number = 0,
+  devicesSize: number = 0,
+): Promise<Matterbridge> {
+  // Set the environment variables
+  process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '100';
+  process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '100';
+  // Setup the process arguments
+  process.argv.length = 0;
+  process.argv.push(
+    ...originalProcessArgv,
+    '-novirtual',
+    '-debug',
+    '-verbose',
+    '-logger',
+    'debug',
+    '-matterlogger',
+    'debug',
+    bridgeMode === '' ? '-test' : '-' + bridgeMode,
+    '-homedir',
+    HOMEDIR,
+    '-frontend',
+    frontendPort.toString(),
+    '-port',
+    matterPort.toString(),
+    '-passcode',
+    passcode.toString(),
+    '-discriminator',
+    discriminator.toString(),
+  );
+
+  // Load Matterbridge instance and initialize it
+  matterbridge = await Matterbridge.loadInstance(true);
+  expect(matterbridge).toBeDefined();
+  expect(matterbridge.profile).toBeUndefined();
+  expect(matterbridge.bridgeMode).toBe(bridgeMode);
+
+  // Get the frontend, plugins and devices
+  frontend = matterbridge.frontend;
+  plugins = matterbridge.plugins;
+  devices = matterbridge.devices;
+
+  // @ts-expect-error - access to private member for testing
+  expect(matterbridge.initialized).toBeTruthy();
+  expect(matterbridge.log).toBeDefined();
+  expect(matterbridge.rootDirectory).toBe(path.resolve('./'));
+  expect(matterbridge.homeDirectory).toBe(path.join('jest', NAME));
+  expect(matterbridge.matterbridgeDirectory).toBe(path.join('jest', NAME, '.matterbridge'));
+  expect(matterbridge.matterbridgePluginDirectory).toBe(path.join('jest', NAME, 'Matterbridge'));
+  expect(matterbridge.matterbridgeCertDirectory).toBe(path.join('jest', NAME, '.mattercert'));
+
+  expect(plugins).toBeDefined();
+  expect(plugins.size).toBe(pluginSize);
+
+  expect(devices).toBeDefined();
+  expect(devices.size).toBe(devicesSize);
+
+  expect(frontend).toBeDefined();
+  // @ts-expect-error - access to private member for testing
+  expect(frontend.listening).toBeTruthy();
+  // @ts-expect-error - access to private member for testing
+  expect(frontend.httpServer).toBeDefined();
+  // @ts-expect-error - access to private member for testing
+  expect(frontend.httpsServer).toBeUndefined();
+  // @ts-expect-error - access to private member for testing
+  expect(frontend.expressApp).toBeDefined();
+  // @ts-expect-error - access to private member for testing
+  expect(frontend.webSocketServer).toBeDefined();
+
+  expect(matterbridge.nodeStorage).toBeDefined();
+  expect(matterbridge.nodeContext).toBeDefined();
+
+  expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
+
+  expect(matterbridge.matterStorageService).toBeDefined();
+  expect(matterbridge.matterStorageManager).toBeDefined();
+  expect(matterbridge.matterbridgeContext).toBeDefined();
+  expect(matterbridge.controllerContext).toBeUndefined();
+
+  if (bridgeMode === 'bridge') {
+    expect(matterbridge.serverNode).toBeDefined();
+    expect(matterbridge.aggregatorNode).toBeDefined();
+  }
+
+  expect(matterbridge.mdnsInterface).toBe(undefined);
+  expect(matterbridge.port).toBe(matterPort + (bridgeMode === 'bridge' ? 1 : 0));
+  expect(matterbridge.passcode).toBe(passcode + (bridgeMode === 'bridge' ? 1 : 0));
+  expect(matterbridge.discriminator).toBe(discriminator + (bridgeMode === 'bridge' ? 1 : 0));
+
+  if (bridgeMode === 'bridge') {
+    const started = new Promise<void>((resolve) => {
+      matterbridge.once('bridge_started', () => {
+        resolve();
+      });
+    });
+    const online = new Promise<void>((resolve) => {
+      matterbridge.once('online', (name) => {
+        if (name === 'Matterbridge') resolve();
+      });
+    });
+    await Promise.all([started, online]);
+  } else if (bridgeMode === 'childbridge') {
+    await new Promise<void>((resolve) => {
+      matterbridge.once('childbridge_started', () => {
+        resolve();
+      });
+    });
+  }
+
+  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${frontendPort}${UNDERLINEOFF}${rs}`);
+  if (bridgeMode === 'bridge') {
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in bridge mode`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Matterbridge bridge started successfully`);
+  } else if (bridgeMode === 'childbridge') {
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in childbridge mode...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in childbridge mode`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Matterbridge childbridge started successfully`);
+  }
+
+  return matterbridge;
+}
+
+/**
+ * Stop the active Matterbridge instance.
+ *
+ * @param {cleanupPause} cleanupPause The pause duration before cleanup. Default is 10 ms.
+ * @param {destroyPause} destroyPause The pause duration before destruction. Default is 250 ms.
+ */
+export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250) {
+  await destroyMatterbridgeEnvironment(cleanupPause, destroyPause);
+}
+
+/**
  * Create a Matterbridge instance for testing without initializing it.
  *
  * @param {string} name - Name for the environment (jest/name).
@@ -181,7 +350,7 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.3.0';
+  matterbridge.matterbridgeVersion = '3.4.0';
   matterbridge.bridgeMode = 'bridge';
   matterbridge.rootDirectory = path.join('jest', name);
   matterbridge.homeDirectory = path.join('jest', name);
@@ -202,7 +371,8 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
 }
 
 /**
- * Start the matterbridge environment
+ * Start the matterbridge environment.
+ * Only node storage, matter storage and the server and aggregator nodes are started.
  *
  * @param {number} port The matter server port.
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} The started server and aggregator.
@@ -215,6 +385,11 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
  * ```
  */
 export async function startMatterbridgeEnvironment(port: number = 5540): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+  // Create the node storage
+  matterbridge.nodeStorage = new NodeStorageManager({ dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+  matterbridge.nodeContext = await matterbridge.nodeStorage.createStorage('matterbridge');
+
+  // Create the matter storage
   // @ts-expect-error - access to private member for testing
   await matterbridge.startMatterStorage();
   expect(matterbridge.matterStorageService).toBeDefined();
@@ -331,15 +506,16 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
   expect(server.lifecycle.isReady).toBeTruthy();
   expect(server.lifecycle.isOnline).toBeFalsy();
 
-  // stop the mDNS service
-  // await server.env.get(MdnsService)[Symbol.asyncDispose]();
-
   // Stop the matter storage
   // @ts-expect-error - access to private member for testing
   await matterbridge.stopMatterStorage();
   expect(matterbridge.matterStorageService).not.toBeDefined();
   expect(matterbridge.matterStorageManager).not.toBeDefined();
   expect(matterbridge.matterbridgeContext).not.toBeDefined();
+
+  // Stop the node storage
+  await matterbridge.nodeContext?.close();
+  await matterbridge.nodeStorage?.close();
 
   // Ensure the queue is empty and pause
   await flushAsync();
@@ -348,7 +524,7 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
 /**
  * Destroy the matterbridge environment
  *
- * @param {number} cleanupPause The timeout for the destroy operation (default 250ms).
+ * @param {number} cleanupPause The timeout for the destroy operation (default 10ms).
  * @param {number} destroyPause The pause duration after cleanup before destroying the instance (default 250ms).
  *
  * @example
@@ -393,6 +569,7 @@ export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: 
  * @returns {Promise<void>} A promise that resolves when the mDNS instance is closed.
  */
 export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<void> {
+  // TODO: matter.js 0.16.0 - provide close method to close the mDNS service
   // @ts-expect-error - accessing private member for testing
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mdns = matterbridge.environment.get(MdnsService) as any;
@@ -401,9 +578,10 @@ export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<voi
 }
 
 /**
- * Create a matter Environment for testing:
+ * Create a matter test environment for testing:
  * - it will remove any existing home directory
  * - setup the matter environment with name, debug logging and ANSI format
+ * - setup the mDNS service in the environment
  *
  * @param {string} name - Name for the environment (jest/name).
  * @returns {Environment} - The default matter environment.
@@ -426,8 +604,22 @@ export function createTestEnvironment(name: string): Environment {
 
   // Setup the mDNS service in the environment
   new MdnsService(environment);
+  // await environment.get(MdnsService)?.construction.ready;
 
   return environment;
+}
+
+/**
+ * Destroy the matter test environment by closing the mDNS service.
+ *
+ * @returns {Promise<void>} A promise that resolves when the test environment is destroyed.
+ */
+export async function destroyTestEnvironment(): Promise<void> {
+  // stop the mDNS service
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mdns = environment.get(MdnsService) as any;
+  if (mdns && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
+  if (mdns && typeof mdns.close === 'function') await mdns.close();
 }
 
 /**
@@ -446,6 +638,57 @@ export async function flushAsync(ticks: number = 3, microTurns: number = 10, pau
   for (let i = 0; i < ticks; i++) await new Promise((resolve) => setImmediate(resolve));
   for (let i = 0; i < microTurns; i++) await Promise.resolve();
   if (pause) await new Promise((resolve) => setTimeout(resolve, pause));
+}
+
+/**
+ * Summarize live libuv handles/requests inside a process.
+ *
+ * @param {AnsiLogger} log - Logger to use for output
+ *
+ * @returns {number} - The total number of active handles and requests
+ */
+export function logKeepAlives(log?: AnsiLogger): number {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handles = (process as any)._getActiveHandles?.() ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const requests = (process as any)._getActiveRequests?.() ?? [];
+
+  // istanbul ignore next
+  const fmtHandle = (h: unknown, i: number) => {
+    const ctor = (h as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
+    // Timer-like?
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hasRef = typeof (h as any)?.hasRef === 'function' ? (h as any).hasRef() : undefined;
+    // MessagePort?
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isPort = (h as any)?.constructor?.name?.includes('MessagePort');
+    // Socket/Server?
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fd = (h as any)?.fd ?? (h as any)?._handle?.fd;
+    return { i, type: ctor, hasRef, isPort, fd };
+  };
+
+  // istanbul ignore next
+  const fmtReq = (r: unknown, i: number) => {
+    const ctor = (r as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
+    return { i, type: ctor };
+  };
+
+  const summary = {
+    handles: handles.map(fmtHandle),
+    requests: requests.map(fmtReq),
+  };
+
+  // istanbul ignore next if
+  if (summary.handles.length === 0 && summary.requests.length === 0) {
+    log?.debug('KeepAlive: no active handles or requests.');
+  } else {
+    log?.debug(`KeepAlive:${rs}\n${inspect(summary, { depth: 5, colors: true })}`);
+    if (!log) {
+      process.stdout.write(`KeepAlive:\n${inspect(summary, { depth: 5, colors: true })}\n`);
+    }
+  }
+  return summary.handles.length + summary.requests.length;
 }
 
 /**
@@ -517,6 +760,18 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
 }
 
 /**
+ * Close the server node stores to flush any pending endpoint number persistence.
+ *
+ * @param {ServerNode} targetServer The server whose endpoint stores should be closed.
+ * @returns {Promise<void>} Resolves when the stores have been closed.
+ */
+export async function closeServerNodeStores(targetServer?: ServerNode): Promise<void> {
+  // Close endpoint stores to avoid number persistence issues
+  if (!targetServer) targetServer = server;
+  await targetServer?.env.get(ServerNodeStore)?.endpointStores.close();
+}
+
+/**
  * Start a matter server node for testing.
  *
  * @param {string} name Name of the server (used for logging and product description).
@@ -532,6 +787,7 @@ export async function startServerNode(name: string, port: number, deviceType: De
   server = await ServerNode.create({
     id: name + 'ServerNode',
 
+    // Provide the environment
     environment,
 
     // Provide Node announcement settings

@@ -120,7 +120,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     private readonly verbose: boolean = false,
   ) {
     super();
-    if (process.argv.includes('--debug') || process.argv.includes('-debug')) {
+    if (process.argv.includes('--debug') || process.argv.includes('-debug') || process.argv.includes('--verbose') || process.argv.includes('-verbose')) {
       this.debug = true;
     }
     if (process.argv.includes('--verbose') || process.argv.includes('-verbose')) {

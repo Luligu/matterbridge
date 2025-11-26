@@ -203,7 +203,7 @@ describe('BroadcastServer', () => {
 
     // Use a separate BroadcastServer instance to simulate another worker
     const testServer = new BroadcastServer('manager', log, NAME);
-    await expect(testServer.fetch({ id: 123456, type: 'jest', src: 'frontend', dst: 'manager' })).rejects.toThrow(/Fetch timeout/);
+    await expect(testServer.fetch({ id: 123456, type: 'jest', src: 'frontend', dst: 'manager' }, 5)).rejects.toThrow(/Fetch timeout/);
     testServer.close();
 
     server.off('broadcast_message', handler);

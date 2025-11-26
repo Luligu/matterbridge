@@ -28,6 +28,42 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.4.0] - 2025-11-26
+
+### Development Breaking Changes
+
+Removed the following long deprecated elements:
+
+- [platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.3.0).
+- [endpoint]: uniqueStorageKey instead of id in MatterbridgeEndpointOptions (deprecated since months).
+- [endpoint]: endpointId instead of number in MatterbridgeEndpointOptions (deprecated since months).
+
+### Added
+
+- [endpoint]: Added getChildEndpointById() and getChildEndpointByOriginalId().
+- [endpoint]: Deprecated getChildEndpointByName(). Use getChildEndpointById() or getChildEndpointByOriginalId().
+- [platform]: Added wssSendSnackbarMessage method to MatterbridgePlatform for sending snackbar notifications to the frontend.
+- [doorLock]: Added autoRelockTime attribute with default 0.
+- [DevContainer]: Added instructions for testing a plugin with a paired controller when using DevContainer.
+- [platform]: Made internal use methods and properties hard-private.
+- [platform]: Added size(), getDeviceByName(), getDeviceByUniqueId(), getDeviceBySerialNumber(), getDeviceById(), getDeviceByOriginalId(), getDeviceByNumber() and hasDeviceUniqueId() methods to retrieve a registered device.
+- [platform]: Added isReady, isLoaded, isStarted and isConfigured properties.
+- [matterbridge.io]: Updated website https://matterbridge.io.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [platform]: Bumped MatterbridgePlatform v.1.4.0.
+- [deviceManager]: Bumped DeviceManager v.1.1.1.
+- [pluginManager]: Bumped PluginManager v.1.3.1.
+- [broadcastServer]: Bumped BroadcastServer v.1.0.3.
+- [jest]: Bumped jestHelpers v.1.0.13.
+- [spawn]: Bumped spawn module v.1.2.0.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.3.8] - 2025-11-15
 
 ### Development Breaking Changes

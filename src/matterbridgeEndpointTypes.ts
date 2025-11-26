@@ -164,7 +164,6 @@ export interface SerializedMatterbridgeEndpoint {
   clusterServersId: ClusterId[];
 }
 
-// TODO: matter.js 0.16.0
 /**
  *  MatterbridgeEndpointOptions interface is used to define the options for a Matterbridge endpoint.
  *
@@ -216,38 +215,4 @@ export interface MatterbridgeEndpointOptions {
    * If provided, the endpoint will be created with the specified endpoint number.
    */
   number?: EndpointNumber;
-
-  /**
-   * Old API compatibility replaced by number.
-   *
-   * @deprecated Use `number` instead.
-   */
-  endpointId?: EndpointNumber;
-  /**
-   * Old API compatibility replaced by id.
-   *
-   * @deprecated Use `id` instead.
-   */
-  uniqueStorageKey?: string;
-}
-
-// TODO: matter.js 0.16.0
-/**
- *  EndpointOptions interface is used to define the options for an endpoint.
- *
- * @deprecated Use `MatterbridgeEndpointOptions` instead.
- */
-export interface EndpointOptions {
-  /**
-   * Old API compatibility replaced by number.
-   *
-   * @deprecated Use `number` instead.
-   */
-  endpointId?: EndpointNumber;
-  /**
-   * Old API compatibility replaced by id.
-   *
-   * @deprecated Use `id` instead.
-   */
-  uniqueStorageKey?: string;
 }

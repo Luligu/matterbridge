@@ -1,7 +1,7 @@
 // src\frontend.express.test.ts
 
-const MATTER_PORT = 6007;
-const FRONTEND_PORT = 8286;
+const MATTER_PORT = 9001;
+const FRONTEND_PORT = 8285;
 const NAME = 'FrontendExpress';
 const HOMEDIR = path.join('jest', NAME);
 
@@ -17,8 +17,6 @@ process.argv = [
   FRONTEND_PORT.toString(),
   '-homedir',
   HOMEDIR,
-  '-profile',
-  'JestFrontendExpress',
   '-port',
   MATTER_PORT.toString(),
   '-passcode',
@@ -36,8 +34,9 @@ import { jest } from '@jest/globals';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
+import type { Frontend as FrontendType } from './frontend.js';
 import { waiter } from './utils/export.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { MATTER_LOGGER_FILE, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 
@@ -51,11 +50,21 @@ const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').m
   return Promise.resolve(undefined) as any;
 });
 
+// Mock the spawnCommand from spawn module before importing it
+jest.unstable_mockModule('./utils/spawn.js', () => ({
+  spawnCommand: jest.fn((command: string, args: string[]) => {
+    return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
+  }),
+}));
+const spawnModule = await import('./utils/spawn.js');
+const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
+
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge frontend express with http', () => {
   let matterbridge: Matterbridge;
+  let frontend: FrontendType;
   let baseUrl: string;
 
   beforeEach(() => {
@@ -64,9 +73,6 @@ describe('Matterbridge frontend express with http', () => {
   });
 
   afterAll(async () => {
-    matterbridge.frontend.destroy();
-    // Close mDNS instance
-    await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -75,7 +81,7 @@ describe('Matterbridge frontend express with http', () => {
     return new Promise<{ status: number; body: any }>((resolve, reject) => {
       const data = body ? JSON.stringify(body) : null;
       const req = http.request(
-        `${'http://localhost:8286'}${path}`,
+        `http://localhost:${FRONTEND_PORT}${path}`,
         {
           method,
           headers: {
@@ -125,7 +131,7 @@ describe('Matterbridge frontend express with http', () => {
       ].join('\r\n');
 
       const req = http.request(
-        `http://localhost:8286${path}`,
+        `http://localhost:${FRONTEND_PORT}${path}`,
         {
           method: 'POST',
           headers: {
@@ -152,8 +158,9 @@ describe('Matterbridge frontend express with http', () => {
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
+    frontend = matterbridge.frontend;
     expect(matterbridge).toBeDefined();
-    expect(matterbridge.profile).toBe('JestFrontendExpress');
+    expect(frontend).toBeDefined();
     expect(matterbridge.bridgeMode).toBe('bridge');
     expect((matterbridge as any).initialized).toBe(true);
 
@@ -168,8 +175,9 @@ describe('Matterbridge frontend express with http', () => {
     // prettier-ignore
     await waiter('Matter server node started', () => { return matterbridge.serverNode?.lifecycle.isOnline === true; });
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8286${UNDERLINEOFF}${rs}`);
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening`);
+    await flushAsync();
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
   }, 60000);
@@ -179,17 +187,6 @@ describe('Matterbridge frontend express with http', () => {
     expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
     expect((matterbridge as any).frontend.expressApp).toBeDefined();
     expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
-
-    // prettier-ignore
-    await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
-    // prettier-ignore
-    await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
-    // prettier-ignore
-    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
-    // prettier-ignore
-    await waiter('Matter server node started', () => { return (matterbridge as any).reachabilityTimeout; });
-    // prettier-ignore
-    await waiter('Matter server node started', () => { return matterbridge.serverNode?.lifecycle.isOnline === true; });
   }, 60000);
 
   test('POST /api/login with valid password', async () => {
@@ -261,7 +258,7 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body.matterbridgeInformation).toHaveProperty('loggerLevel');
     expect(response.body.matterbridgeInformation).toHaveProperty('matterLoggerLevel');
     expect(response.body.matterbridgeInformation).toHaveProperty('matterPort');
-    expect(response.body.matterbridgeInformation).toHaveProperty('profile');
+    expect(response.body.matterbridgeInformation).not.toHaveProperty('profile');
   }, 30000);
 
   test('GET /api/plugins', async () => {
@@ -513,6 +510,9 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('POST /api/uploadpackage with wrong tgz', async () => {
+    spawnCommandMock.mockImplementationOnce((command: string, args: string[]) => {
+      return Promise.resolve(false);
+    });
     // Read the test file
     const testFileContent = await fs.readFile('./src/mock/test.zip');
     const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
@@ -520,6 +520,17 @@ describe('Matterbridge frontend express with http', () => {
     expect(typeof response.body).toBe('string');
     expect(response.body).toContain('Error uploading or installing plugin package matterbridge-plugin-template.tgz');
     await expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/matterbridge-plugin-template.tgz'))).resolves.toBeUndefined();
+  }, 30000);
+
+  test('POST /api/uploadpackage throw error', async () => {
+    spawnCommandMock.mockImplementationOnce((command: string, args: string[]) => {
+      throw new Error('Mocked spawnCommand error for install');
+    });
+    // Read the test file
+    const testFileContent = await fs.readFile('./src/mock/matterbridge-plugin-template._tgz');
+    const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
+    expect(response.status).toBe(500);
+    expect(typeof response.body).toBe('string');
   }, 30000);
 
   test('GET Fallback for routing', async () => {
@@ -533,13 +544,14 @@ describe('Matterbridge frontend express with http', () => {
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
-
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Stopping the frontend...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Frontend app closed successfully`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocket server closed successfully`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Http server closed successfully`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Frontend stopped successfully`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
   }, 60000);
 });

@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.3.0
+ * @version 1.3.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -30,7 +30,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, d
 
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';
-import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import type { MatterbridgePlatform, PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatform.js';
 import { ApiPlugin, plg, Plugin, PluginName, StoragePlugin, typ } from './matterbridgeTypes.js';
 import { inspectError, logError } from './utils/error.js';
 import { hasParameter } from './utils/commandLine.js';
@@ -104,6 +104,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             if (plugin) {
               this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
             } else {
+              this.log.debug(`***Plugin ${plg}${msg.params.name}${db} not found in plugins_get`);
               this.server.respond({ ...msg, response: { plugin: undefined } });
             }
           }
@@ -200,6 +201,38 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
               this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
             } else {
               this.server.respond({ ...msg, response: { plugin } });
+            }
+          }
+          break;
+        case 'plugins_getschema':
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              this.server.respond({ ...msg, response: { schema: plugin.schemaJson } });
+            } else {
+              this.server.respond({ ...msg, response: { schema: undefined } });
+            }
+          }
+          break;
+        case 'plugins_setschema':
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              plugin.schemaJson = msg.params.schema;
+              this.server.respond({ ...msg, response: { success: true } });
+            } else {
+              this.server.respond({ ...msg, response: { success: false } });
+            }
+          }
+          break;
+        case 'plugins_saveconfigfromjson':
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              this.saveConfigFromJson(plugin, msg.params.config, msg.params.restartRequired); // No await as it's not necessary to wait
+              this.server.respond({ ...msg, response: { success: true } });
+            } else {
+              this.server.respond({ ...msg, response: { success: false } });
             }
           }
           break;
@@ -403,6 +436,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     // Load the array from storage and convert it to a map
     const pluginsArray = await this.matterbridge.nodeContext.get<StoragePlugin[]>('plugins', []);
     for (const plugin of pluginsArray) this._plugins.set(plugin.name, plugin);
+    this.log.debug(`Loaded ${BLUE}${pluginsArray.length}${db} plugins from storage`);
     return pluginsArray;
   }
 
@@ -436,16 +470,16 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   /**
    * Resolves the name of a plugin by loading and parsing its package.json file.
    *
-   * @param {string} pluginPath - The path to the plugin or the path to the plugin's package.json file.
+   * @param {string} nameOrPath - The name of the plugin or the path to the plugin's package.json file.
    * @returns {Promise<string | null>} A promise that resolves to the path of the plugin's package.json file or null if it could not be resolved.
    */
-  async resolve(pluginPath: string): Promise<string | null> {
+  async resolve(nameOrPath: string): Promise<string | null> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
-    if (!pluginPath.endsWith('package.json')) pluginPath = path.join(pluginPath, 'package.json');
+    if (!nameOrPath.endsWith('package.json')) nameOrPath = path.join(nameOrPath, 'package.json');
 
     // Resolve the package.json of the plugin
-    let packageJsonPath = path.resolve(pluginPath);
+    let packageJsonPath = path.resolve(nameOrPath);
     this.log.debug(`Resolving plugin path ${plg}${packageJsonPath}${db}`);
 
     // Check if the package.json file exists
@@ -453,7 +487,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       await promises.access(packageJsonPath);
     } catch {
       this.log.debug(`Package.json not found at ${plg}${packageJsonPath}${db}`);
-      packageJsonPath = path.join(this.matterbridge.globalModulesDirectory, pluginPath);
+      packageJsonPath = path.join(this.matterbridge.globalModulesDirectory, nameOrPath);
       this.log.debug(`Trying at ${plg}${packageJsonPath}${db}`);
     }
     try {
@@ -520,10 +554,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         return null;
       }
 
-      this.log.debug(`Resolved plugin path ${plg}${pluginPath}${db}: ${packageJsonPath}`);
+      this.log.debug(`Resolved plugin path ${plg}${nameOrPath}${db}: ${packageJsonPath}`);
       return packageJsonPath;
     } catch (err) {
-      logError(this.log, `Failed to resolve plugin path ${plg}${pluginPath}${er}`, err);
+      logError(this.log, `Failed to resolve plugin path ${plg}${nameOrPath}${er}`, err);
       return null;
     }
   }
@@ -537,8 +571,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   async install(packageName: string): Promise<boolean> {
     this.log.debug(`Installing plugin ${plg}${packageName}${db}...`);
     const { spawnCommand } = await import('./utils/spawn.js');
-    try {
-      await spawnCommand(this.matterbridge, 'npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName);
+    if (await spawnCommand('npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName)) {
       this.matterbridge.restartRequired = true;
       this.matterbridge.fixedRestartRequired = true;
       packageName = packageName.replace(/@.*$/, ''); // Remove @version if present
@@ -551,11 +584,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           await this.matterbridge.shutdownProcess();
         }
       }
-      this.log.debug(`Installed plugin ${plg}${packageName}${db} successfully`);
+      this.log.info(`Installed plugin ${plg}${packageName}${db} successfully`);
       return true;
-    } catch (error) {
-      inspectError(this.log, `Failed to install package ${plg}${packageName}${er}`, error);
-      this.log.debug(`Failed to install plugin ${plg}${packageName}${db}`);
+    } else {
+      this.log.error(`Failed to install plugin ${plg}${packageName}${er}`);
       return false;
     }
   }
@@ -571,18 +603,16 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     const { spawnCommand } = await import('./utils/spawn.js');
     packageName = packageName.replace(/@.*$/, '');
     if (packageName === 'matterbridge') return false;
-    try {
-      if (this.has(packageName)) {
-        const plugin = this.get(packageName);
-        if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
-        await this.remove(packageName);
-      }
-      await spawnCommand(this.matterbridge, 'npm', ['uninstall', '-g', packageName, '--verbose'], 'uninstall', packageName);
-      this.log.debug(`Uninstalled plugin ${plg}${packageName}${db} successfully`);
+    if (this.has(packageName)) {
+      const plugin = this.get(packageName);
+      if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
+      await this.remove(packageName);
+    }
+    if (await spawnCommand('npm', ['uninstall', '-g', packageName, '--verbose'], 'uninstall', packageName)) {
+      this.log.info(`Uninstalled plugin ${plg}${packageName}${db} successfully`);
       return true;
-    } catch (error) {
-      inspectError(this.log, `Failed to uninstall package ${plg}${packageName}${er}`, error);
-      this.log.debug(`Failed to uninstall plugin ${plg}${packageName}${db}`);
+    } else {
+      this.log.error(`Failed to uninstall plugin ${plg}${packageName}${er}`);
       return false;
     }
   }
@@ -984,7 +1014,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       const { pathToFileURL } = await import('node:url');
       const pluginUrl = pathToFileURL(pluginEntry);
       this.log.debug(`Importing plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
-      const pluginInstance = await import(pluginUrl.href);
+      const pluginInstance = (await import(pluginUrl.href)) as { default: (matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) => MatterbridgePlatform };
       this.log.debug(`Imported plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
 
       // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
@@ -998,15 +1028,16 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         plugin.author = this.getAuthor(packageJson);
         plugin.configJson = config;
         plugin.schemaJson = await this.loadSchema(plugin);
-        config.name = plugin.name;
+        config.name = packageJson.name;
         config.version = packageJson.version;
 
-        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.log.logLevel });
-        const platform = pluginInstance.default(this.matterbridge, log, config) as MatterbridgePlatform;
+        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.logLevel });
+        const platform = pluginInstance.default(this.matterbridge, log, config);
         config.type = platform.type;
         platform.name = packageJson.name;
         platform.config = config;
         platform.version = packageJson.version;
+        platform.isLoaded = true;
         plugin.name = packageJson.name;
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
@@ -1076,6 +1107,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       await plugin.platform.onStart(message);
       this.log.notice(`Started plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.started = true;
+      plugin.platform.isStarted = true;
       await this.saveConfigFromPlugin(plugin);
       this.emit('started', plugin.name);
       if (configure) await this.configure(plugin);
@@ -1123,6 +1155,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       await plugin.platform.onConfigure();
       this.log.notice(`Configured plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.configured = true;
+      plugin.platform.isConfigured = true;
       this.emit('configured', plugin.name);
       return plugin;
     } catch (err) {
@@ -1172,6 +1205,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}: ${reason}...`);
     try {
       await plugin.platform.onShutdown(reason);
+      plugin.platform.isReady = false;
+      plugin.platform.isLoaded = false;
+      plugin.platform.isStarted = false;
+      plugin.platform.isConfigured = false;
       plugin.locked = undefined;
       plugin.error = undefined;
       plugin.loaded = undefined;

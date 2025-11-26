@@ -108,7 +108,7 @@ Test the installation with:
 matterbridge
 ```
 
-Now it is possible to open the frontend at the link provided in the log (e.g. http://MATTERBIDGE-IPV4-ADDRESS:8283).
+Now it is possible to open the frontend at the link provided in the log (e.g. http://MATTERBRIDGE-IPV4-ADDRESS:8283).
 
 You can then change the bridge mode and other parameters from the frontend.
 
