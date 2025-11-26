@@ -58,7 +58,7 @@ import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
-import { addVirtualDevices } from './helpers.js';
+import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
 
@@ -2544,6 +2544,52 @@ const commissioningController = new CommissioningController({
       if (delay > 0) await wait(delay);
     }
     if (delay > 0) await wait(2000);
+  }
+
+  /**
+   * Registers a virtual device.
+   * Virtual devices are only supported in bridge mode and childbridge mode with a DynamicPlatform.
+   *
+   * The virtual device is created as an instance of `Endpoint` with the provided device type.
+   * When the virtual device is turned on, the provided callback function is executed.
+   * The onOff state of the virtual device always reverts to false when the device is turned on.
+   *
+   * @param { string } pluginName - The name of the plugin to register the virtual device under.
+   * @param { string } name - The name of the virtual device.
+   * @param { 'light' | 'outlet' | 'switch' | 'mounted_switch' } type - The type of the virtual device.
+   * @param { () => Promise<void> } callback - The callback to call when the virtual device is turned on.
+   *
+   * @returns {Promise<boolean>} A promise that resolves to true if the virtual device was successfully registered, false otherwise.
+   *
+   * @remarks
+   * The virtual devices don't show up in the device list of the frontend.
+   * Type 'switch' is not supported by Alexa and 'mounted_switch' is not supported by Apple Home.
+   */
+  async addVirtualEndpoint(pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<boolean> {
+    // Check if the plugin is registered
+    const plugin = this.plugins.get(pluginName);
+    if (!plugin) {
+      this.log.error(`Error adding virtual endpoint ${dev}${name}${er} for plugin ${plg}${pluginName}${er}: plugin not found`);
+      return false;
+    }
+    let aggregator: Endpoint<AggregatorEndpoint> | undefined;
+    if (this.bridgeMode === 'bridge') {
+      aggregator = this.aggregatorNode;
+    } else if (this.bridgeMode === 'childbridge' && plugin.type === 'DynamicPlatform') {
+      aggregator = plugin.aggregatorNode;
+    }
+    if (aggregator) {
+      if (aggregator.parts.has(name.replaceAll(' ', '') + ':' + type)) {
+        this.log.error(`Virtual endpoint ${dev}${name}${er} already registered for plugin ${plg}${pluginName}${er}. Please use a different name.`);
+        return false;
+      } else {
+        await addVirtualDevice(aggregator, name.slice(0, 32), type, callback);
+        this.log.info(`Created virtual endpoint ${dev}${name}${nf} for plugin ${plg}${pluginName}${nf}`);
+        return true;
+      }
+    }
+    this.log.error(`Virtual endpoint ${dev}${name}${er} for plugin ${plg}${pluginName}${er} not created. Virtual endpoints are only supported in bridge mode and childbridge mode with a DynamicPlatform.`);
+    return false;
   }
 
   /**

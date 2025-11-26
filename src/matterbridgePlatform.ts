@@ -33,11 +33,9 @@ import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 // Matter
-import { Endpoint } from '@matter/node';
 import { EndpointNumber, VendorId } from '@matter/types/datatype';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -45,9 +43,7 @@ import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { isValidArray, isValidObject, isValidString } from './utils/isvalid.js';
 import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
-import { PluginManager } from './pluginManager.js';
 import { SystemInformation } from './matterbridgeTypes.js';
-import { addVirtualDevice } from './helpers.js';
 import { hasParameter } from './utils/commandLine.js';
 import { BroadcastServer } from './broadcastServer.js';
 
@@ -65,8 +61,33 @@ export type PlatformSchemaValue = string | number | boolean | bigint | object | 
 /** Platform schema type. */
 export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
+/** A type representing a subset of readonly properties of Matterbridge for platform use. */
 export type PlatformMatterbridge = {
-  readonly systemInformation: SystemInformation;
+  readonly systemInformation: Readonly<
+    Pick<
+      SystemInformation,
+      | 'interfaceName'
+      | 'macAddress'
+      | 'ipv4Address'
+      | 'ipv6Address'
+      | 'nodeVersion'
+      | 'hostname'
+      | 'user'
+      | 'osType'
+      | 'osRelease'
+      | 'osPlatform'
+      | 'osArch'
+      | 'totalMemory'
+      | 'freeMemory'
+      | 'systemUptime'
+      | 'processUptime'
+      | 'cpuUsage'
+      | 'processCpuUsage'
+      | 'rss'
+      | 'heapTotal'
+      | 'heapUsed'
+    >
+  >;
   readonly rootDirectory: string;
   readonly homeDirectory: string;
   readonly matterbridgeDirectory: string;
@@ -86,13 +107,12 @@ export type PlatformMatterbridge = {
   readonly aggregatorProductName: string;
 };
 
-// Internal use only methods: they will be converted to messages through the MessagePort of the MessageChannel in the future versions with threading
+// Matter helpers injected by the PluginManager.load() method
 type InternalPlatformMatterbridge = PlatformMatterbridge & {
-  plugins: PluginManager;
-  aggregatorNode: Endpoint<AggregatorEndpoint> | undefined;
   addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void>;
   removeBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void>;
   removeAllBridgedEndpoints(pluginName: string, delay?: number): Promise<void>;
+  addVirtualEndpoint(pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<boolean>;
 };
 
 /**
@@ -148,7 +168,6 @@ export class MatterbridgePlatform {
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
-   * It is extended by the MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform classes.
    * Each plugin must extend the MatterbridgeDynamicPlatform or MatterbridgeAccessoryPlatform class.
    * MatterbridgePlatform cannot be instantiated directly, it can only be extended by the MatterbridgeDynamicPlatform or MatterbridgeAccessoryPlatform class.
    *
@@ -506,25 +525,8 @@ export class MatterbridgePlatform {
    * Type 'switch' is not supported by Alexa and 'mounted_switch' is not supported by Apple Home.
    */
   async registerVirtualDevice(name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<boolean> {
-    let aggregator: Endpoint<AggregatorEndpoint> | undefined;
     // TODO: replace with a message to the matterbridge thread
-    if (this.matterbridge.bridgeMode === 'bridge') {
-      aggregator = (this.matterbridge as InternalPlatformMatterbridge).aggregatorNode;
-    } else if (this.matterbridge.bridgeMode === 'childbridge' && this.type === 'DynamicPlatform') {
-      aggregator = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name)?.aggregatorNode;
-    }
-    if (aggregator) {
-      if (aggregator.parts.has(name.replaceAll(' ', '') + ':' + type)) {
-        this.log.warn(`Virtual device ${name} already registered. Please use a different name.`);
-        return false;
-      } else {
-        await addVirtualDevice(aggregator, name.slice(0, 32), type, callback);
-        this.log.info(`Virtual device ${name} created.`);
-        return true;
-      }
-    }
-    this.log.warn(`Virtual device ${name} not created. Virtual devices are only supported in bridge mode and childbridge mode with a DynamicPlatform.`);
-    return false;
+    return await (this.matterbridge as InternalPlatformMatterbridge).addVirtualEndpoint(this.name, name, type, callback);
   }
 
   /**

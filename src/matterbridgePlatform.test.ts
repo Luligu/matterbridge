@@ -6,7 +6,7 @@ const NAME = 'MatterbridgePlatform';
 const MATTER_PORT = 7000;
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, CYAN, db, er, LogLevel, pl, wr } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, er, LogLevel, nf, pl, wr } from 'node-ansi-logger';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { EndpointNumber } from '@matter/types/datatype';
 
@@ -19,6 +19,7 @@ import {
   destroyMatterbridgeEnvironment,
   flushAsync,
   loggerDebugSpy,
+  loggerInfoSpy,
   loggerLogSpy,
   loggerWarnSpy,
   matterbridge,
@@ -28,6 +29,7 @@ import {
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
+import { dev, plg } from './matterbridgeTypes.js';
 
 jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
   // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);
@@ -627,6 +629,7 @@ describe('Matterbridge platform', () => {
     async function testCallback(): Promise<void> {}
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(true);
     expect(matterbridge.aggregatorNode?.parts.has('Virtual' + ':' + 'switch')).toBeTruthy();
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`Created virtual endpoint ${dev}Virtual${nf} for plugin ${plg}${platform.name}${nf}`);
 
     jest.spyOn(matterbridge.plugins, 'get').mockReturnValueOnce({ name: platform.name, type: 'DynamicPlatform', version: '1.0.0', aggregatorNode: matterbridge.aggregatorNode } as any);
     matterbridge.bridgeMode = 'childbridge';
@@ -634,14 +637,22 @@ describe('Matterbridge platform', () => {
     expect(await platform.registerVirtualDevice('VirtualChildbridge', 'switch', testCallback)).toBe(true);
     matterbridge.bridgeMode = 'bridge';
     expect(matterbridge.aggregatorNode?.parts.has('VirtualChildbridge' + ':' + 'switch')).toBeTruthy();
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`Created virtual endpoint ${dev}VirtualChildbridge${nf} for plugin ${plg}${platform.name}${nf}`);
+
+    const savedName = platform.name;
+    platform.name = 'unknown';
+    expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(false);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error adding virtual endpoint ${dev}Virtual${er} for plugin ${plg}${platform.name}${er}: plugin not found`);
+    platform.name = savedName;
 
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(false);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Virtual device Virtual already registered. Please use a different name.`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Virtual endpoint ${dev}Virtual${er} already registered for plugin ${plg}${platform.name}${er}. Please use a different name.`);
 
     const savedAggregatorNode = matterbridge.aggregatorNode;
     matterbridge.aggregatorNode = undefined;
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(false);
     matterbridge.aggregatorNode = savedAggregatorNode;
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Virtual endpoint ${dev}Virtual${er} for plugin ${plg}${platform.name}${er} not created. Virtual endpoints are only supported in bridge mode and childbridge mode with a DynamicPlatform.`);
   });
 
   test('registerDevice calls matterbridge.addBridgedEndpoint with correct parameters', async () => {

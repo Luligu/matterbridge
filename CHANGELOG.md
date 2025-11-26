@@ -31,6 +31,7 @@ Advantages:
 ### Added
 
 - [matterbridge.io]: Updated website https://matterbridge.io with all guides.
+- [matterbridge]: Added addVirtualEndpoint() to match thread module.
 
 ### Changed
 
