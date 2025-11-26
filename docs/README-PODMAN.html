@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Markdown Output</title>
+  <link rel="icon" type="image/svg+xml" href="matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+    }
+  </style>
+</head>
+<body>
+<h1><img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge Podman configuration</h1>
+<p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge.svg" alt="Docker Pulls"></a>
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
+<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a></p>
+<p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
+<hr>
+<h1>Advanced configuration</h1>
+<h2>Install Podman if it is not already installed</h2>
+<pre><code>cd ~
+sudo apt update
+sudo apt install podman -y
+podman --version
+</code></pre>
+<h2>Run matterbridge with podman</h2>
+<p>The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on Docker Hub and can be used with podman.</p>
+<p>Podman handles container restarts a little differently than Docker. The --restart always flag doesnΓÇÖt work exactly the same. If you want the container to automatically restart when the system reboots or if it crashes, you can create a systemd unit for the Podman container.</p>
+<h3>First create the Matterbridge directories</h3>
+<p>This will create the required directories if they don&#39;t exist</p>
+<pre><code>cd ~
+mkdir -p ./Matterbridge
+mkdir -p ./.matterbridge
+sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
+</code></pre>
+<p>You may need to adapt the script to your setup:</p>
+<ul>
+<li>./Matterbridge is the position outside of the container of your matterbridge plugin directory (inside your home directory).</li>
+<li>./.matterbridge is the position outside of the container of your matterbridge storage directory (inside your home directory).</li>
+</ul>
+<h3>Run the Podman container (root mode) and start it</h3>
+<p>The container must have full access to the host network (needed for matter mdns).</p>
+<pre><code>podman run --name matterbridge \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
+  --network host --restart always -d docker.io/luligu/matterbridge:latest
+</code></pre>
+<p>You may need to adapt the script to your setup:</p>
+<ul>
+<li>~/Matterbridge is the position outside of the container of your matterbridge plugin directory.</li>
+<li>~/.matterbridge is the position outside of the container of your matterbridge storage directory.</li>
+</ul>
+<h3>Integrate the mattebridge podman container with systemd for automatic startup after reboots</h3>
+<pre><code>podman generate systemd --name matterbridge --files --new
+sudo mv container-matterbridge.service /etc/systemd/system/
+sudo systemctl enable container-matterbridge
+sudo systemctl start container-matterbridge
+</code></pre>
+<h3>Start the Podman container</h3>
+<pre><code>podman start matterbridge
+</code></pre>
+<h3>Stop the Podman container</h3>
+<pre><code>podman stop matterbridge
+</code></pre>
+<h3>Restart the Podman container</h3>
+<pre><code>podman restart matterbridge
+</code></pre>
+<h3>Remove the Podman container</h3>
+<pre><code>podman rm matterbridge
+</code></pre>
+<h3>Shows the logs</h3>
+<pre><code>podman logs matterbridge
+</code></pre>
+<h3>Shows the logs real time (tail)</h3>
+<pre><code>podman logs --tail 1000 -f matterbridge
+</code></pre>
+
+</body>
+</html>

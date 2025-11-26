@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Markdown Output</title>
+  <link rel="icon" type="image/svg+xml" href="matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+    }
+    pre {
+        background: #cfd1d4;
+        color: #000000;
+        padding: 10px;
+        border-radius: 0.5rem;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 0.875rem;
+        margin: 10px 20px 10px 0px;
+        position: static;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+    }
+  </style>
+</head>
+<body>
+<h1><img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge</h1>
+<p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge.svg" alt="Docker Pulls"></a>
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
+<img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
+<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a></p>
+<p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
+<a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
+<hr>
+<p>Matterbridge is a Matter plugin manager.</p>
+<p>It allows you to have all your Matter devices up and running in a couple of minutes without having to deal with the pairing process for each individual device.</p>
+<p>Developers can focus solely on device development by extending the provided classes.</p>
+<p>Simply pair Matterbridge once, and it will load all your registered plugins.</p>
+<p>This project aims to enable porting Homebridge plugins to Matterbridge plugins without having to recode everything (<a href="README-DEV.md">Development</a>).</p>
+<p>The easiest way to start create a new plugin is to clone the <a href="https://github.com/Luligu/matterbridge-plugin-template">Matterbridge Plugin Template</a> which has <strong>Dev Container support for instant development environment</strong> and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.</p>
+<p>Matterbridge creates a device that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, Home Assistant, or any other platform supporting Matter.</p>
+<p>You don&#39;t need a hub or a dedicated new machine.</p>
+<p>No complex setup: just copy paste the installation scripts (available for Docker, Nginx, Linux systemctl and macOS launchctl).</p>
+<p>Matterbridge is lightweight and also runs on slow Linux machines with as little as 512MB of memory.</p>
+<p>It runs perfectly on Linux, macOS and Windows.</p>
+<p>If you like this project and find it useful, please consider giving it a star on GitHub at <a href="https://github.com/Luligu/matterbridge">https://github.com/Luligu/matterbridge</a> and sponsoring it.</p>
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
+</a>
+
+<h2>Acknowledgements</h2>
+<p>The project is build on top of <a href="https://github.com/project-chip/matter.js">https://github.com/project-chip/matter.js</a>.</p>
+<p>A special thanks to Apollon77 for his incredible work.</p>
+<h2>Discord</h2>
+<p>Join us in the Matterbridge Discord group <a href="https://discord.gg/QX58CDe6hd">https://discord.gg/QX58CDe6hd</a> created by Tamer (<a href="https://github.com/tammeryousef1006">https://github.com/tammeryousef1006</a>).</p>
+<h2>Videos</h2>
+<p><a href="https://www.youtube.com/watch?v=goNB9Cgh_Fk">https://www.youtube.com/watch?v=goNB9Cgh_Fk</a></p>
+<h2>Reviews</h2>
+<p><a href="https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge-at-home">https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge-at-home</a></p>
+<h2>Press</h2>
+<p><a href="https://matter-smarthome.de/en/interview/an-alternative-to-the-official-matter-sdk/">https://matter-smarthome.de/en/interview/an-alternative-to-the-official-matter-sdk/</a></p>
+<p><a href="https://blog.adafruit.com/2025/11/03/matterbridge-a-matter-plugin-manager/">https://blog.adafruit.com/2025/11/03/matterbridge-a-matter-plugin-manager/</a></p>
+<h2>Prerequisites</h2>
+<p>To run Matterbridge, you need either a <a href="https://nodejs.org/en">Node.js</a> environment or <a href="https://docs.docker.com/get-started/get-docker/">Docker</a> installed on your system.</p>
+<p>If you don&#39;t have Node.js already install, please use this method to install it on a debian device: <a href="https://github.com/nodesource/distributions">https://github.com/nodesource/distributions</a>.
+The supported versions of node are 20 and 22. Please install Node.js 22 LTS. Don&#39;t use Node.js Current but always the Node.js LTS.
+Node.js 23, like all odd-numbered versions, is not supported.
+Nvm is not a good choice and should not be used for production.</p>
+<p>If you don&#39;t have Docker already install, please use this method to install it on a debian device: <a href="https://docs.docker.com/desktop/setup/install/linux/debian/">https://docs.docker.com/desktop/setup/install/linux/debian/</a>.
+After follow the guidelines for the <a href="README-DOCKER.md">Docker configurations</a>.</p>
+<p>I suggest using Docker for its simplicity.</p>
+<p>Since Matter is designed as &quot;a universal IPv6-based communication protocol for smart home devices&quot; (per the Matter specifications), <strong>IPv6 must be enabled on your local network (LAN)</strong>.</p>
+<p><strong>Important:</strong> You only need IPv6 on your local network - it doesn&#39;t matter if your internet provider doesn&#39;t provide IPv6 on the internet side (WAN).</p>
+<p>Avoid using VLAN, VM and firewall blocking the communications between the controllers and Matterbridge.</p>
+<p>To pair matterbridge, you need a matter enabled controller (Apple Home, Smart Things, Google Home, Alexa, Home Assistant etc.).</p>
+<h2>Installation</h2>
+<p>Follow these steps to install Matterbridge:</p>
+<pre><code class="language-bash">npm install -g matterbridge --omit=dev
+</code></pre>
+<p>on Linux or macOS you may need the necessary permissions:</p>
+<pre><code class="language-bash">sudo npm install -g matterbridge --omit=dev
+</code></pre>
+<p>Test the installation with:</p>
+<pre><code class="language-bash">matterbridge
+</code></pre>
+<p>Now it is possible to open the frontend at the link provided in the log (e.g. <a href="http://MATTERBIDGE-IPV4-ADDRESS:8283">http://MATTERBIDGE-IPV4-ADDRESS:8283</a>).</p>
+<p>You can then change the bridge mode and other parameters from the frontend.</p>
+<h2>Usage</h2>
+<h3>mode bridge</h3>
+<pre><code class="language-bash">matterbridge -bridge
+</code></pre>
+<p>This force Matterbridge to load in bridge mode.</p>
+<p>Matterbridge only exposes itself, and you have to pair it scanning the QR code shown in the frontend or in the console.</p>
+<h3>mode childbridge</h3>
+<pre><code class="language-bash">matterbridge -childbridge
+</code></pre>
+<p>This force Matterbridge to load in childbridge mode.</p>
+<p>Matterbridge exposes each registered plugins, and you have to pair each one by scanning the QR code shown in the frontend or in the console.</p>
+<h3>Use matterbridge -help to see the command line syntax</h3>
+<pre><code class="language-bash">matterbridge -help
+</code></pre>
+<h2>Frontend</h2>
+<p>Matterbridge has a frontend available on <a href="http://MATTERBIDGE-IPV4-ADDRESS:8283">http://MATTERBIDGE-IPV4-ADDRESS:8283</a> and http://[MATTERBIDGE-IPV6-ADDRESS]:8283</p>
+<p>You can change the default port by adding the frontend parameter when you run it.</p>
+<p>Here&#39;s how to specify a different port number:</p>
+<pre><code class="language-bash">matterbridge -frontend [port number]
+</code></pre>
+<p>To use the frontend with ssl see below.</p>
+<p>From the frontend you can do all operations in an easy way.</p>
+<p>Home page:
+<img src="screenshot/Screenshot%20home.jpg" alt="See the screenshot here"></p>
+<p>Devices page:
+<a href="screenshot/Screenshot%20devices.jpg">See the screenshot here</a></p>
+<p>Logs page:
+<a href="screenshot/Screenshot%20logs.jpg">See the screenshot here</a></p>
+<p>Config editor:
+<a href="screenshot/Screenshot%20config%20editor.jpg">See the screenshot here</a></p>
+<h2>Advanced configurations</h2>
+<h3>Run matterbridge as a daemon with systemctl (Linux only)</h3>
+<p>Traditional configuration</p>
+<p><a href="README-SERVICE.md">Service configurations</a></p>
+<p>or with local global node_modules (no sudo required)</p>
+<p><a href="README-SERVICE-LOCAL.md">Service configurations with local global node_modules</a></p>
+<h3>Run matterbridge as a system service with launchctl (macOS only)</h3>
+<p><a href="README-MACOS-PLIST.md">Launchctl configurations</a></p>
+<h3>Run matterbridge with docker and docker compose</h3>
+<p><a href="README-DOCKER.md">Docker configurations</a></p>
+<h3>Run matterbridge with podman</h3>
+<p><a href="README-PODMAN.md">Podman configurations</a></p>
+<h3>Run matterbridge with nginx</h3>
+<p><a href="README-NGINX.md">Nginx configurations</a></p>
+<h3>Run matterbridge as an home assistant add-on with the official add-on</h3>
+<p><a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Home assistant add-on configurations</a></p>
+<h3>Other Home Assistant Community Add-ons</h3>
+<p>The other Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.</p>
+<h2>Development</h2>
+<p><a href="README-DEV.md">Development</a></p>
+<h2>Plugins</h2>
+<h3>Shelly</h3>
+<a href="https://github.com/Luligu/matterbridge-shelly">
+  <img src="screenshot/Shelly.svg" alt="Shelly plugin logo" width="100" />
+</a>
+
+<p>Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and Gen 4 and BLU devices to Matter.</p>
+<p>Features:</p>
+<ul>
+<li>Shellies are automatically discovered using mDNS.</li>
+<li>Shelly wifi battery-powered devices are supported.</li>
+<li>Shelly wifi battery-powered devices with sleep_mode are supported.</li>
+<li>Shelly BLU devices are supported through local devices configured as ble gateway.</li>
+<li>Discovered shellies are stored in local storage for quick loading on startup.</li>
+<li>The components exposed are Light (with brightness and RGB color), Switch, Relay, Roller, Cover, PowerMeter, Temperature, Humidity, Illuminance, Thermostat, Button and Input.</li>
+<li>PowerMeters expose the electrical measurements with the electricalSensor device type (suppoerted by Home Assistant and partially by SmartThings), waiting for the controllers to upgrade to the Matter 1.3 specs.</li>
+<li>Shellies are controlled locally, eliminating the need for cloud or MQTT (which can both be disabled).</li>
+<li>Shelly Gen 1 devices are controlled using the CoIoT protocol.</li>
+<li>Shelly Gen 2 and Gen 3 devices are controlled using WebSocket.</li>
+<li>The Matter device takes the name configured in the Shelly device&#39;s web page.</li>
+<li>Each device can be blacklisted or whitelisted using its name, id or mac address.</li>
+<li>Device components can be blacklisted globally or on a per-device basis.</li>
+<li>If the device has a firmware update available, a message is displayed.</li>
+<li>If the device&#39;s CoIoT protocol is not correctly configured, a message is displayed.</li>
+<li>If the device cover/roller component is not calibrated, a message is displayed.</li>
+<li>If a device changes its ip address on the network, a message is displayed and the new address is stored.</li>
+<li>A 10-minute timer checks if the device has reported within that time frame, and fetch un update.</li>
+</ul>
+<h3>Zigbee2MQTT</h3>
+<a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">
+  <img src="screenshot/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
+</a>
+
+<p>Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.</p>
+<p>No hub or dedicated hardware needed.</p>
+<h3>Somfy tahoma</h3>
+<a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
+  <img src="screenshot/Somfy.svg" alt="Somfy plugin logo" width="100" />
+</a>
+
+<p>Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.</p>
+<h3>Home Assistant</h3>
+<a href="https://github.com/Luligu/matterbridge-hass">
+  <img src="screenshot/HomeAssistant.svg" alt="Hass logo" width="100" />
+</a>
+
+<p>Matterbridge Home Assistant plugin allows you to expose the Home Assistant devices and entities to Matter.</p>
+<p>It is the ideal companion of the official <a href="https://github.com/Luligu/matterbridge-home-assistant-addon/blob/main/README.md">Matterbridge Home Assistant Add-on</a>.</p>
+<h3>Webhooks</h3>
+<a href="https://github.com/Luligu/matterbridge-webhooks">
+  <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
+</a>
+
+<p>Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.</p>
+<h3>BTHome</h3>
+<a href="https://github.com/Luligu/matterbridge-webhooks">
+  <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
+</a>
+
+<p>Matterbridge BTHome allows you to expose any BTHome device to Matter using the native bluetooth of the host machine.</p>
+<p>Features:</p>
+<ul>
+<li>The bluetooth works correctly on all platforms and is based on the @stoprocent fork of noble.</li>
+<li>The discovered BTHome devices are stored with all attributes to easily restart the plugin.</li>
+<li>The plugin has also a command line to test and verify the bluetooth adapter and the ble network.</li>
+</ul>
+<h3>Accessory platform example</h3>
+<p>This is an example of an accessory platform plugin.</p>
+<p>It exposes a virtual cover device that continuously moves position and shows how to use the command handlers (you can control the device).</p>
+<p>An Accessory platform plugin only exposes one device.</p>
+<p><a href="https://github.com/Luligu/matterbridge-example-accessory-platform">See the plugin homepage here</a></p>
+<h3>Dynamic platform example</h3>
+<p>This is an example of a dynamic platform plugin.</p>
+<p>It exposes 57 virtual devices.</p>
+<p>All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).</p>
+<p>A Dynamic platform plugin exposes as many devices as you need (the limit for the Home app is 150 accessories for bridge).</p>
+<p><a href="https://github.com/Luligu/matterbridge-example-dynamic-platform">See the plugin homepage here</a></p>
+<h3>Example plugins to show the usage of history in matter</h3>
+<p><a href="https://github.com/Luligu/matterbridge-eve-door">Door plugin with history</a></p>
+<p><a href="https://github.com/Luligu/matterbridge-eve-motion">Motion plugin with history</a></p>
+<p><a href="https://github.com/Luligu/matterbridge-eve-energy">Energy plugin with history</a></p>
+<p><a href="https://github.com/Luligu/matterbridge-eve-weather">Weather plugin with history</a></p>
+<p><a href="https://github.com/Luligu/matterbridge-eve-room">Room plugin with history</a></p>
+<p>The history works in both bridge and childbridge mode.</p>
+<p>The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode (this means the plugin is paired directly).</p>
+<h2>Third-party plugins</h2>
+<h3><a href="https://github.com/andrasg/matterbridge-loxone">Loxone</a></h3>
+<p>A matterbridge plugin that allows connecting Loxone devices to Matter.</p>
+<h3><a href="https://github.com/thoukydides/matterbridge-dyson-robot">Dyson robot</a></h3>
+<p>A Matterbridge plugin that connects Dyson robot vacuums and air treatment devices.
+to the Matter smart home ecosystem via their local MQTT APIs.</p>
+<h3><a href="https://github.com/thoukydides/matterbridge-aeg-robot">Aeg robot</a></h3>
+<p>AEG RX 9 / Electrolux Pure i9 robot vacuum plugin for Matterbridge.</p>
+<h3><a href="https://github.com/michaelahern/matterbridge-airthings">Airthings</a></h3>
+<p>A Matterbridge plugin for Airthings air quality monitors via the Airthings Consumer API.</p>
+<h3><a href="https://github.com/andrasg/matterbridge-daikin-ac">Daikin AC</a></h3>
+<p>The plugin uses local connection to Daikin Wifi modules. The plugin does not work with Daikin cloud (Onecta) connected devices.</p>
+<h3><a href="https://github.com/RinDevJunior/matterbridge-roborock-vacuum-plugin">Roborock</a></h3>
+<p>Matterbridge Roborock Platform Plugin is a dynamic platform plugin for Matterbridge that integrates Roborock vacuums into the Matter ecosystem, enabling control via Apple Home and other Matter-compatible apps.</p>
+<h3><a href="https://github.com/RMCob/matterbridge-wyze-robovac">Wyze Robot Vacuum</a></h3>
+<p>Matterbridge plugin to control and report status of the Wyze S200 Robot Vacuum</p>
+<h2>How to install and add a plugin with the frontend (best option)</h2>
+<p>Just open the frontend on the link provided in the log, select a plugin and click install.</p>
+<h2>How to install and add a plugin manually from a terminal (from npm)</h2>
+<p>To install i.e. <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">https://github.com/Luligu/matterbridge-zigbee2mqtt</a></p>
+<p>On windows:</p>
+<pre><code class="language-powershell">cd $HOME\Matterbridge
+npm install -g matterbridge-zigbee2mqtt
+matterbridge -add matterbridge-zigbee2mqtt
+</code></pre>
+<p>On linux or macOS:</p>
+<pre><code class="language-bash">cd ~/Matterbridge
+sudo npm install -g matterbridge-zigbee2mqtt
+matterbridge -add matterbridge-zigbee2mqtt
+</code></pre>
+<h2>How to add a plugin to Matterbridge from a terminal</h2>
+<pre><code class="language-bash">matterbridge -add [plugin path or plugin name]
+</code></pre>
+<h2>How to remove a plugin from Matterbridge from a terminal</h2>
+<pre><code class="language-bash">matterbridge -remove [plugin path or plugin name]
+</code></pre>
+<h2>How to disable a registered plugin from a terminal</h2>
+<pre><code class="language-bash">matterbridge -disable [plugin path or plugin name]
+</code></pre>
+<h2>How to enable a registered plugin from a terminal</h2>
+<pre><code class="language-bash">matterbridge -enable [plugin path or plugin name]
+</code></pre>
+<h2>How to remove the commissioning information for Matterbridge so you can pair it again (bridge mode). Shutdown Matterbridge before!</h2>
+<pre><code class="language-bash">matterbridge -reset
+</code></pre>
+<h2>How to remove the commissioning information for a registered plugin so you can pair it again (childbridge mode). Shutdown Matterbridge before!</h2>
+<pre><code class="language-bash">matterbridge -reset [plugin path or plugin name]
+</code></pre>
+<h2>How to factory reset Matterbridge. Shutdown Matterbridge before!</h2>
+<pre><code class="language-bash">matterbridge -factoryreset
+</code></pre>
+<p>This will reset the internal storages. All commissioning informations will be lost. All plugins will be unregistered.</p>
+<h1>Frequently asked questions</h1>
+<h2>How to enable HTTPS for the frontend</h2>
+<h3>Provide your own standard certificate, key and ca (optional)</h3>
+<p>Place your own certificates in the <code>.matterbridge/cert</code> directory:</p>
+<ul>
+<li><code>cert.pem</code></li>
+<li><code>key.pem</code></li>
+<li><code>ca.pem</code> (optional)</li>
+</ul>
+<p><img src="screenshot/Screenshot%20Certificates.png" alt="image"></p>
+<p>Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.</p>
+<h3>Provide your own &#39;PKCS#12&#39; certificate and the passphrase</h3>
+<p>Place your own p12 certificate (binary file) and the passphrase (text file) in the <code>.matterbridge/cert</code> directory:</p>
+<ul>
+<li><code>cert.p12</code></li>
+<li><code>cert.pass</code></li>
+</ul>
+<p>Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.</p>
+<h3>Change the command line</h3>
+<p>Add the <strong>-ssl</strong> parameter to the command line.</p>
+<p>If desired, you can also change the frontend port with <strong>-frontend 443</strong>.</p>
+<pre><code class="language-bash">matterbridge -ssl -frontend 443
+</code></pre>
+<p>Add the <strong>-mtls</strong> parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible).</p>
+<p>The browser must provide the client certificate: on Windows you need to import it in Current User ΓåÆ Personal ΓåÆ Certificates with certmgr.msc.</p>
+<pre><code class="language-bash">matterbridge -ssl -mtls -frontend 443
+</code></pre>
+<h3>Restart</h3>
+<p>If the certificate are correctly configured, you will be able to connect with https to the frontend.</p>
+<p><img src="screenshot/Screenshot%20Browser%20Secured.png" alt="image"></p>
+<h2>How to send the debug log files</h2>
+<h3>Enable debug and log on file</h3>
+<p>In the frontend, go to settings and enable debug mode as shown below:</p>
+<p><img src="screenshot/Screenshot%20Matterbridge%20Logger%20Debug.png" alt="Debug Matterbridge Settings"></p>
+<p><img src="screenshot/Screenshot%20Matter%20Logger%20Debug.png" alt="Debug Matter Settings"></p>
+<h3>Restart</h3>
+<p>Wait a few minutes to allow the logs to to accumulate.</p>
+<p>Then, from the dots menu in the frontend, download the <code>matterbridge.log</code> and <code>matter.log</code> files.</p>
+<p><img src="screenshot/Screenshot%20Debug%20Download%20Logs.png" alt="image"></p>
+<p>Don&#39;t forget to unselect the debug mode when is no more needed. The network traffic and cpu usage is very high in debug mode.</p>
+<h1>Known general issues</h1>
+<h2>Session XYZ does not exist or Cannot find a session for ID XYZ</h2>
+<p>This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
+After some time, the controller will reconnect.
+In this context, the message is not indicative of a problem.</p>
+<h2>Apple Home</h2>
+<p>The HomePods, being a WiFi devices, sometimes pruduce message trasmission errors. The Apple TV with network cable is more reliable (but also more expensive).</p>
+<p>All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now they are stable.</p>
+<p>If you have more then one Apple TV or Home Pod, you can herve better results setting to disabled &quot;Automatic Selection&quot; in &quot;Home Setting&quot;, &quot;Home Hubs &amp; Bridges&quot;. When &quot;Automatic selection&quot; is disabled, select your Apple Tv if you have one or any of your Home Pod. In this way you should not have anymore more then one session for fabric.</p>
+<h3>Manufacturer Serial Number and Model</h3>
+<p>The Home app forgets about them when you restart the node.</p>
+<h3>Appliances</h3>
+<p>As of version 18.4.x, all Appliances device types are not supported by the Home app. They don&#39;t even appear like unsupported accessories.</p>
+<h3>Robot</h3>
+<p>As of version 18.4.x, the Robot is supported by the Home app only as a single, non-bridged device or if it is the only device in the bridge.</p>
+<p>If a Robot is present alongside other devices in the bridge, the entire bridge becomes unstable in the Home app.</p>
+<p>A workaround has been released in Matterbridge 3.1.1. Ask the plugin authors to update the code.</p>
+<h2>Home Assistant</h2>
+<p>So far is the only controller supporting all Matter 1.2, 1.3 and 1.4 device type.</p>
+<h2>Home Assistant issues</h2>
+<ul>
+<li>If HA doesn&#39;t show all devices, reload the Matter Server Integration or reboot HA</li>
+<li>Home Assistant doesn&#39;t seem to always react when a device is removed from the bridge: they remain in HA unavailable forever...</li>
+<li>Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.</li>
+</ul>
+<h2>Google Home</h2>
+<p>If you face a problem pairing to Google Home from Ios app the solution is there <a href="https://github.com/Luligu/matterbridge/issues/61">https://github.com/Luligu/matterbridge/issues/61</a>.</p>
+<p>If you face a problem changing the brightness check this for the explanation: <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80">https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80</a></p>
+<p>No other issues reported so far.</p>
+<h2>Alexa</h2>
+<p>Tested by Tamer Salah</p>
+<p>Alexa needs the standard port 5540 to pair (from matter.js readme).</p>
+<p>There is no support for these Matter device types:</p>
+<ul>
+<li>pressure sensor</li>
+<li>flow sensor</li>
+</ul>
+<p>In the zigbee2mqtt and shelly plugins select the option to expose the switch devices like light or outlet cause they don&#39;t show up like switch
+(Matterbridge uses a switch device type without client cluster).</p>
+<h2>SmartThings</h2>
+<p>Tested by Tamer Salah</p>
+<p>No issues reported so far.</p>
+<h2>eWeLink</h2>
+<p>Tested by Tamer Salah</p>
+<p>eWeLink needs the standard port 5540 for commissioning.</p>
+<h2>Tuya/Smart Life</h2>
+<p>Check the matter.js readme.</p>
+<h2>Code of Conduct</h2>
+<p>We believe in a welcoming and respectful community for all. Please make sure to follow our <a href="LINK_TO_CODE_OF_CONDUCT">Code of Conduct</a> in all your interactions with the project.</p>
+<h2>Support</h2>
+<p>If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee.
+On my side I sponsor the packages that I use in this project. It would be nice to have sponsors too.
+Click on the badge below to get started:</p>
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
+</a>
+
+<p>Thank you for your support!</p>
+<h1>Licensing</h1>
+<p>Matterbridge is licensed under the <a href="./LICENSE">Apache License 2.0</a>.</p>
+
+  <script>
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.textContent = 'Copy';
+
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        button.textContent = 'Copied!';
+        setTimeout(() => { button.textContent = 'Copy'; }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+
+</body>
+</html>
