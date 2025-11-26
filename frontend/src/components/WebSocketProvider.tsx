@@ -162,7 +162,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     if (wssHost === '' || wssHost === null || wssHost === undefined) return;
     logMessage('WebSocket', `Connecting ${wssPassword ? `with password` : ''} to WebSocket: ${wssHost}`);
     if (debug) console.log(`WebSocket connecting to: ${wssHost}${wssPassword ? `?password=[redacted]` : ''}`);
-    wsRef.current = new WebSocket(wssHost + (wssPassword ? `?password=${wssPassword}` : ''));
+    wsRef.current = new WebSocket(wssHost + (wssPassword ? `?password=${encodeURIComponent(wssPassword)}` : ''));
 
     wsRef.current.onmessage = (event) => {
       if (!online) setOnline(true);

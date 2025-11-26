@@ -30,9 +30,17 @@ Advantages:
 
 ## [3.4.1] - 2025-11-30
 
+### Added
+
 ### Changed
 
 - [package]: Updated dependencies.
+- [frontend]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to 3.3.2.
+
+### Fixed
+
+- [frontend]: Fixed when the user put special characters in password. Thanks Dabern (https://github.com/Luligu/matterbridge/issues/443).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
