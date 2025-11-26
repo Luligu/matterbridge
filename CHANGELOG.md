@@ -28,7 +28,7 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.4.0] - Not published
+## [3.4.0] - 2025-11-26
 
 ### Development Breaking Changes
 
@@ -46,8 +46,9 @@ Removed the following long deprecated elements:
 - [doorLock]: Added autoRelockTime attribute with default 0.
 - [DevContainer]: Added instructions for testing a plugin with a paired controller when using DevContainer.
 - [platform]: Made internal use methods and properties hard-private.
-- [platform]: Added size(), getDeviceByName(), getDeviceByUniqueId(), getDeviceBySerialNumber(), getDeviceById(), getDeviceByOriginalId(), getDeviceByNumber() and hasDeviceUniqueId() methods.
+- [platform]: Added size(), getDeviceByName(), getDeviceByUniqueId(), getDeviceBySerialNumber(), getDeviceById(), getDeviceByOriginalId(), getDeviceByNumber() and hasDeviceUniqueId() methods to retrieve a registered device.
 - [platform]: Added isReady, isLoaded, isStarted and isConfigured properties.
+- [matterbridge.io]: Updated website https://matterbridge.io.
 
 ### Changed
 
