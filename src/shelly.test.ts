@@ -15,6 +15,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.js';
 import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 const log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -27,6 +28,10 @@ describe('Shelly API', () => {
   let serverFail = false;
   let updatingInProgress = false;
   let matterbridgeMock: Matterbridge;
+
+  // Create BroadcastServer for tests
+  const log = new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  const testServer = new BroadcastServer('manager', log);
 
   beforeAll(async () => {
     server = http.createServer((req: IncomingMessage, res: ServerResponse) => {
@@ -117,6 +122,8 @@ describe('Shelly API', () => {
   });
 
   afterAll(async () => {
+    // Close the test server
+    testServer.close();
     // Restore the original implementations
     jest.restoreAllMocks();
   });
@@ -133,11 +140,11 @@ describe('Shelly API', () => {
 
   it('should getShellySysUpdate', async () => {
     const { getShellySysUpdate } = await import('./shelly.js');
-    const result = await getShellySysUpdate(matterbridgeMock);
+    const result = await getShellySysUpdate(matterbridgeMock, log, testServer);
     expect(result).toBeUndefined();
 
     serverFail = true;
-    await getShellySysUpdate(matterbridgeMock);
+    await getShellySysUpdate(matterbridgeMock, log, testServer);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error'));
   });
 
@@ -180,11 +187,11 @@ describe('Shelly API', () => {
 
   it('should getShellyMainUpdate', async () => {
     const { getShellyMainUpdate } = await import('./shelly.js');
-    const result = await getShellyMainUpdate(matterbridgeMock);
+    const result = await getShellyMainUpdate(matterbridgeMock, log, testServer);
     expect(result).toBeUndefined();
 
     serverFail = true;
-    await getShellyMainUpdate(matterbridgeMock);
+    await getShellyMainUpdate(matterbridgeMock, log, testServer);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error'));
   });
 
