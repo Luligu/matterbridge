@@ -388,7 +388,7 @@ const heatPump = new HeatPump('Heat Pump', 'HP1234567890');
 
 ## Plugin config file
 
-Each plugin has a minimal default config file injected by Matterbridge when it is loaded:
+Each plugin has a minimal default config file injected by Matterbridge when it is loaded and the plugin doesn't have its own default one:
 
 ```typescript
 {
@@ -408,7 +408,7 @@ In all subsequent loads the config file is loaded from the '.matterbridge' direc
 
 ## Plugin schema file
 
-Each plugin has a minimal default schema file injected by Matterbridge when it is loaded:
+Each plugin has a minimal default schema file injected by Matterbridge when it is loaded and the plugin doesn't have its own default one:
 
 ```typescript
 {
