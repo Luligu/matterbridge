@@ -65,6 +65,8 @@ const matterbridge: SharedMatterbridge = {
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
+  shellySysUpdate: false,
+  shellyMainUpdate: false,
   systemInformation: {
     interfaceName: nic?.interfaceName || '',
     macAddress: nic?.macAddress || '',

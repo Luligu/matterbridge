@@ -1,11 +1,21 @@
 // src\update.test.ts
 
-import { jest } from '@jest/globals';
-import { db, nt, wr } from 'node-ansi-logger';
+const MATTER_PORT = 6020;
+const FRONTEND_PORT = 8810;
+const NAME = 'MatterbridgeUpdate';
+const HOMEDIR = path.join('jest', NAME);
+const PASSCODE = 123456;
+const DISCRIMINATOR = 3860;
 
-import type { Matterbridge } from './matterbridge.js';
+import path from 'node:path';
+
+import { jest } from '@jest/globals';
+import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-logger';
+
 import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './update.js';
-import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
+import { ApiPlugin, plg } from './matterbridgeTypes.js';
+import { flushAsync, loggerDebugSpy, loggerNoticeSpy, loggerWarnSpy, matterbridge, setupTest, startMatterbridge, stopMatterbridge, wssSendRefreshRequiredSpy, wssSendSnackbarMessageSpy, wssSendUpdateRequiredSpy } from './jestutils/jestHelpers.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 // Mock the function getNpmPackageVersion
 jest.unstable_mockModule('./utils/network.js', () => ({
@@ -19,45 +29,41 @@ jest.unstable_mockModule('./shelly.js', () => ({
   getShellyMainUpdate: jest.fn(),
 }));
 
+await setupTest(NAME, false);
+
 describe('getMatterbridgeLatestVersion', () => {
-  let matterbridgeMock: Matterbridge;
-  let pluginMock: RegisteredPlugin;
+  // Create BroadcastServer for tests
+  const log = new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  const testServer = new BroadcastServer('manager', log);
+  let plugin: ApiPlugin | null = null;
+
+  beforeAll(async () => {
+    // Start matterbridge instance
+    await startMatterbridge('bridge', 9500, 9600);
+  });
 
   beforeEach(() => {
-    pluginMock = {
-      name: 'matterbridge-test',
-      version: '1.0.0',
-      latestVersion: {},
-    } as unknown as RegisteredPlugin;
-
-    matterbridgeMock = {
-      matterbridgeVersion: '1.0.0',
-      matterbridgeInformation: {},
-      log: {
-        notice: jest.fn(),
-        error: jest.fn(),
-        debug: jest.fn(),
-        warn: jest.fn(),
-      },
-      frontend: {
-        wssSendSnackbarMessage: jest.fn(),
-        wssSendRefreshRequired: jest.fn(),
-        wssSendUpdateRequired: jest.fn(),
-      },
-      nodeContext: {
-        set: jest.fn(),
-      },
-      plugins: [pluginMock],
-    } as unknown as Matterbridge;
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  afterAll(() => {
-    jest.resetModules();
+  afterAll(async () => {
+    // Close test server
+    testServer.close();
+    // Stop matterbridge instance
+    await stopMatterbridge();
+    // Restore all mocks
     jest.restoreAllMocks();
+    // Reset modules to clear the mocked modules
+    jest.resetModules();
+  });
+
+  it('should add plugin', async () => {
+    plugin = (await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: './src/mock/plugin1' } }, 5000)).response.plugin;
+    expect(plugin).not.toBe(null);
   });
 
   it('should check updates', async () => {
@@ -69,13 +75,13 @@ describe('getMatterbridgeLatestVersion', () => {
 
     process.argv.push('-shelly');
 
-    await checkUpdates(matterbridgeMock);
+    await checkUpdates(matterbridge);
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge');
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
-    expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge-test');
-    expect(getShellySysUpdate).toHaveBeenCalledWith(matterbridgeMock);
-    expect(getShellyMainUpdate).toHaveBeenCalledWith(matterbridgeMock);
+    expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin ? plugin.name : 'unknown-plugin');
+    expect(getShellySysUpdate).toHaveBeenCalledWith(matterbridge, expect.any(AnsiLogger), expect.any(BroadcastServer));
+    expect(getShellyMainUpdate).toHaveBeenCalledWith(matterbridge, expect.any(AnsiLogger), expect.any(BroadcastServer));
   });
 
   it('should update to the latest version if versions differ', async () => {
@@ -84,31 +90,31 @@ describe('getMatterbridgeLatestVersion', () => {
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.1.0');
 
-    await getMatterbridgeLatestVersion(matterbridgeMock);
+    await getMatterbridgeLatestVersion(matterbridge, log, testServer);
+    await flushAsync(undefined, undefined, 100);
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge');
-    expect(matterbridgeMock.matterbridgeVersion).toBe('1.0.0');
-    expect(matterbridgeMock.matterbridgeLatestVersion).toBe('1.1.0');
-    expect(matterbridgeMock.log.notice).toHaveBeenCalledWith('Matterbridge is out of date. Current version: 1.0.0. Latest version: 1.1.0.');
-    expect(matterbridgeMock.frontend.wssSendSnackbarMessage).toHaveBeenCalledWith('Matterbridge latest update available', 0, 'info');
-    expect(matterbridgeMock.frontend.wssSendUpdateRequired).toHaveBeenCalled();
+    expect(matterbridge.matterbridgeLatestVersion).toBe('1.1.0');
+    expect(loggerNoticeSpy).toHaveBeenCalledWith(`Matterbridge is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: 1.1.0.`);
+    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith('Matterbridge latest update available', 0, 'info');
+    expect(wssSendUpdateRequiredSpy).toHaveBeenCalled();
   });
 
   it('should log a debug message if the current version is up to date', async () => {
     const { getNpmPackageVersion } = await import('./utils/network.js');
 
     // Set the return value for this specific test case
-    (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.0.0');
+    (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce(matterbridge.matterbridgeVersion);
 
-    await getMatterbridgeLatestVersion(matterbridgeMock);
+    await getMatterbridgeLatestVersion(matterbridge, log, testServer);
+    await flushAsync(undefined, undefined, 100);
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge');
-    expect(matterbridgeMock.matterbridgeVersion).toBe('1.0.0');
-    expect(matterbridgeMock.matterbridgeLatestVersion).toBe('1.0.0');
-    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith('Matterbridge is up to date. Current version: 1.0.0. Latest version: 1.0.0.');
-    expect(matterbridgeMock.frontend.wssSendSnackbarMessage).not.toHaveBeenCalled();
-    expect(matterbridgeMock.frontend.wssSendRefreshRequired).not.toHaveBeenCalled();
-    expect(matterbridgeMock.frontend.wssSendUpdateRequired).not.toHaveBeenCalled();
+    expect(matterbridge.matterbridgeLatestVersion).toBe(matterbridge.matterbridgeVersion);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeVersion}.`);
+    expect(wssSendSnackbarMessageSpy).not.toHaveBeenCalled();
+    expect(wssSendUpdateRequiredSpy).not.toHaveBeenCalled();
+    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
   });
 
   it('should log a warning on error fetching the latest version', async () => {
@@ -117,46 +123,48 @@ describe('getMatterbridgeLatestVersion', () => {
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockRejectedValueOnce(new Error('Network error'));
 
-    await getMatterbridgeLatestVersion(matterbridgeMock);
+    await getMatterbridgeLatestVersion(matterbridge, log, testServer);
+    await flushAsync(undefined, undefined, 100);
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge');
-    expect(matterbridgeMock.log.warn).toHaveBeenCalledWith('Error getting Matterbridge latest version: Network error');
+    expect(loggerWarnSpy).toHaveBeenCalledWith('Error getting Matterbridge latest version: Network error');
   });
 
   it('should update to the dev version if versions differ', async () => {
     const { getNpmPackageVersion } = await import('./utils/network.js');
 
-    matterbridgeMock.matterbridgeVersion = '1.0.0-dev-1';
+    matterbridge.matterbridgeVersion = '1.0.0-dev-1';
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.1.0-dev-1');
 
-    await getMatterbridgeDevVersion(matterbridgeMock);
+    await getMatterbridgeDevVersion(matterbridge, log, testServer);
+    await flushAsync(undefined, undefined, 100);
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
-    expect(matterbridgeMock.matterbridgeVersion).toBe('1.0.0-dev-1');
-    expect(matterbridgeMock.matterbridgeDevVersion).toBe('1.1.0-dev-1');
-    expect(matterbridgeMock.log.notice).toHaveBeenCalledWith('Matterbridge@dev is out of date. Current version: 1.0.0-dev-1. Latest dev version: 1.1.0-dev-1.');
-    expect(matterbridgeMock.frontend.wssSendSnackbarMessage).toHaveBeenCalledWith('Matterbridge dev update available', 0, 'info');
-    expect(matterbridgeMock.frontend.wssSendUpdateRequired).toHaveBeenCalled();
+    expect(matterbridge.matterbridgeDevVersion).toBe('1.1.0-dev-1');
+    expect(loggerNoticeSpy).toHaveBeenCalledWith('Matterbridge@dev is out of date. Current version: 1.0.0-dev-1. Latest dev version: 1.1.0-dev-1.');
+    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith('Matterbridge dev update available', 0, 'info');
+    expect(wssSendUpdateRequiredSpy).toHaveBeenCalled();
   });
 
   it('should log a debug message if the dev version is up to date', async () => {
     const { getNpmPackageVersion } = await import('./utils/network.js');
 
-    matterbridgeMock.matterbridgeVersion = '1.0.0-dev-1';
+    matterbridge.matterbridgeVersion = '1.0.0-dev-1';
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.0.0-dev-1');
 
-    await getMatterbridgeDevVersion(matterbridgeMock);
+    await getMatterbridgeDevVersion(matterbridge, log, testServer);
+    await flushAsync(undefined, undefined, 100);
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
-    expect(matterbridgeMock.matterbridgeVersion).toBe('1.0.0-dev-1');
-    expect(matterbridgeMock.matterbridgeDevVersion).toBe('1.0.0-dev-1');
-    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith('Matterbridge@dev is up to date. Current version: 1.0.0-dev-1. Latest dev version: 1.0.0-dev-1.');
-    expect(matterbridgeMock.frontend.wssSendRefreshRequired).not.toHaveBeenCalled();
-    expect(matterbridgeMock.frontend.wssSendUpdateRequired).not.toHaveBeenCalled();
+    expect(matterbridge.matterbridgeDevVersion).toBe('1.0.0-dev-1');
+    expect(loggerDebugSpy).toHaveBeenCalledWith('Matterbridge@dev is up to date. Current version: 1.0.0-dev-1. Latest dev version: 1.0.0-dev-1.');
+    expect(wssSendSnackbarMessageSpy).not.toHaveBeenCalled();
+    expect(wssSendUpdateRequiredSpy).not.toHaveBeenCalled();
+    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
   });
 
   it('should log a warning on error fetching the dev version', async () => {
@@ -165,10 +173,11 @@ describe('getMatterbridgeLatestVersion', () => {
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockRejectedValueOnce(new Error('Network error'));
 
-    await getMatterbridgeDevVersion(matterbridgeMock);
+    await getMatterbridgeDevVersion(matterbridge, log, testServer);
+    await flushAsync(undefined, undefined, 100);
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
-    expect(matterbridgeMock.log.warn).toHaveBeenCalledWith('Error getting Matterbridge latest dev version: Network error');
+    expect(loggerWarnSpy).toHaveBeenCalledWith('Error getting Matterbridge latest dev version: Network error');
   });
 
   it('should update to the plugin latest version if versions differ', async () => {
@@ -177,28 +186,30 @@ describe('getMatterbridgeLatestVersion', () => {
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.1.0');
 
-    await getPluginLatestVersion(matterbridgeMock, pluginMock);
+    expect(plugin).not.toBeNull();
+    if (plugin === null) return;
+    await getPluginLatestVersion(log, testServer, plugin);
+    await flushAsync(undefined, undefined, 100);
 
-    expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge-test');
-    expect(pluginMock.version).toBe('1.0.0');
-    expect(pluginMock.latestVersion).toBe('1.1.0');
-    expect(matterbridgeMock.log.notice).toHaveBeenCalledWith(`The plugin ${plg}matterbridge-test${nt} is out of date. Current version: 1.0.0. Latest version: 1.1.0.`);
-    expect(matterbridgeMock.frontend.wssSendRefreshRequired).toHaveBeenCalledWith('plugins');
+    expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name);
+    expect(loggerNoticeSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: 1.1.0.`);
+    expect(wssSendRefreshRequiredSpy).toHaveBeenCalledWith('plugins', undefined);
   });
 
   it('should log a debug message if the plugin current version is up to date', async () => {
     const { getNpmPackageVersion } = await import('./utils/network.js');
 
     // Set the return value for this specific test case
-    (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.0.0');
+    (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.0.1');
 
-    await getPluginLatestVersion(matterbridgeMock, pluginMock);
+    expect(plugin).not.toBeNull();
+    if (plugin === null) return;
+    await getPluginLatestVersion(log, testServer, plugin);
+    await flushAsync(undefined, undefined, 100);
 
-    expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge-test');
-    expect(pluginMock.version).toBe('1.0.0');
-    expect(pluginMock.latestVersion).toBe('1.0.0');
-    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith(`The plugin ${plg}matterbridge-test${db} is up to date. Current version: 1.0.0. Latest version: 1.0.0.`);
-    expect(matterbridgeMock.frontend.wssSendRefreshRequired).not.toHaveBeenCalled();
+    expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: 1.0.1.`);
+    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
   });
 
   it('should log a warning on error fetching the plugin latest version', async () => {
@@ -207,44 +218,51 @@ describe('getMatterbridgeLatestVersion', () => {
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockRejectedValueOnce(new Error('Network error'));
 
-    await getPluginLatestVersion(matterbridgeMock, pluginMock);
+    expect(plugin).not.toBeNull();
+    if (plugin === null) return;
+    await getPluginLatestVersion(log, testServer, plugin);
+    await flushAsync(undefined, undefined, 100);
 
-    expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge-test');
-    expect(matterbridgeMock.log.warn).toHaveBeenCalledWith(`Error getting plugin ${plg}matterbridge-test${wr} latest version: Network error`);
+    expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(`Error getting plugin ${plg}${plugin.name}${wr} latest version: Network error`);
   });
 
   it('should update to the plugin dev version and log if versions differ', async () => {
     const { getNpmPackageVersion } = await import('./utils/network.js');
 
-    pluginMock.version = '1.0.0-dev-123456';
+    expect(plugin).not.toBeNull();
+    if (plugin === null) return;
+    plugin.version = '1.0.0-dev-123456';
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.1.0-dev-123456');
 
-    await getPluginDevVersion(matterbridgeMock, pluginMock);
+    await getPluginDevVersion(log, testServer, plugin);
+    await flushAsync(undefined, undefined, 100);
 
-    expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge-test', 'dev');
-    expect(pluginMock.version).toBe('1.0.0-dev-123456');
-    expect(pluginMock.devVersion).toBe('1.1.0-dev-123456');
-    expect(matterbridgeMock.log.notice).toHaveBeenCalledWith(`The plugin ${plg}matterbridge-test${nt} is out of date. Current version: 1.0.0-dev-123456. Latest dev version: 1.1.0-dev-123456.`);
-    expect(matterbridgeMock.frontend.wssSendRefreshRequired).toHaveBeenCalledWith('plugins');
+    expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name, 'dev');
+    expect(plugin.devVersion).toBe('1.1.0-dev-123456');
+    expect(loggerNoticeSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: 1.0.0-dev-123456. Latest dev version: 1.1.0-dev-123456.`);
+    expect(wssSendRefreshRequiredSpy).toHaveBeenCalledWith('plugins', undefined);
   });
 
   it('should update to the plugin dev version and log if the plugin current version is up to date', async () => {
     const { getNpmPackageVersion } = await import('./utils/network.js');
 
-    pluginMock.version = '1.1.0-dev-123456';
+    expect(plugin).not.toBeNull();
+    if (plugin === null) return;
+    plugin.version = '1.1.0-dev-123456';
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.1.0-dev-123456');
 
-    await getPluginDevVersion(matterbridgeMock, pluginMock);
+    await getPluginDevVersion(log, testServer, plugin);
+    await flushAsync(undefined, undefined, 100);
 
-    expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge-test', 'dev');
-    expect(pluginMock.version).toBe('1.1.0-dev-123456');
-    expect(pluginMock.devVersion).toBe('1.1.0-dev-123456');
-    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith(`The plugin ${plg}matterbridge-test${db} is up to date. Current version: 1.1.0-dev-123456. Latest dev version: 1.1.0-dev-123456.`);
-    expect(matterbridgeMock.frontend.wssSendRefreshRequired).not.toHaveBeenCalled();
+    expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name, 'dev');
+    expect(plugin.devVersion).toBe('1.1.0-dev-123456');
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: 1.1.0-dev-123456. Latest dev version: 1.1.0-dev-123456.`);
+    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
   });
 
   it('should log a warning on error fetching the plugin dev version', async () => {
@@ -253,10 +271,13 @@ describe('getMatterbridgeLatestVersion', () => {
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockRejectedValueOnce(new Error('Network error'));
 
-    await getPluginDevVersion(matterbridgeMock, pluginMock);
+    expect(plugin).not.toBeNull();
+    if (plugin === null) return;
+    await getPluginDevVersion(log, testServer, plugin);
+    await flushAsync(undefined, undefined, 100);
 
-    expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge-test', 'dev');
-    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith(`Error getting plugin ${plg}matterbridge-test${db} latest dev version: Network error`);
+    expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name, 'dev');
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`Error getting plugin ${plg}${plugin.name}${db} latest dev version: Network error`);
   });
 
   it('should check GitHub for updates and log', async () => {
@@ -274,15 +295,15 @@ describe('getMatterbridgeLatestVersion', () => {
       'devMessageSeverity': 'info',
     });
 
-    await checkUpdatesAndLog(matterbridgeMock);
+    matterbridge.matterbridgeVersion = '1.0.0';
+    await checkUpdatesAndLog(matterbridge, log, testServer);
     expect(getGitHubUpdate).toHaveBeenCalledWith('main', 'update.json', 5_000);
-    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith(expect.stringContaining(`GitHub main update status:`));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`GitHub main update status:`));
 
-    matterbridgeMock.matterbridgeVersion = '1.0.0-dev-1';
-    await checkUpdatesAndLog(matterbridgeMock);
+    matterbridge.matterbridgeVersion = '1.0.0-dev-1';
+    await checkUpdatesAndLog(matterbridge, log, testServer);
     expect(getGitHubUpdate).toHaveBeenCalledWith('dev', 'update.json', 5_000);
-    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith(expect.stringContaining(`GitHub dev update status:`));
-    matterbridgeMock.matterbridgeVersion = '1.0.0';
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`GitHub dev update status:`));
   });
 
   it('should check GitHub and fail', async () => {
@@ -291,14 +312,14 @@ describe('getMatterbridgeLatestVersion', () => {
     // Set the return value for this specific test case
     (getGitHubUpdate as jest.MockedFunction<(branch: string, file: string, timeout?: number) => Promise<any>>).mockRejectedValue(new Error('Network error'));
 
-    await checkUpdatesAndLog(matterbridgeMock);
+    matterbridge.matterbridgeVersion = '1.0.0';
+    await checkUpdatesAndLog(matterbridge, log, testServer);
     expect(getGitHubUpdate).toHaveBeenCalledWith('main', 'update.json', 5_000);
-    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith(`Error checking GitHub main updates: Network error`);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`Error checking GitHub main updates: Network error`);
 
-    matterbridgeMock.matterbridgeVersion = '1.0.0-dev-1';
-    await checkUpdatesAndLog(matterbridgeMock);
+    matterbridge.matterbridgeVersion = '1.0.0-dev-1';
+    await checkUpdatesAndLog(matterbridge, log, testServer);
     expect(getGitHubUpdate).toHaveBeenCalledWith('dev', 'update.json', 5_000);
-    expect(matterbridgeMock.log.debug).toHaveBeenCalledWith(`Error checking GitHub dev updates: Network error`);
-    matterbridgeMock.matterbridgeVersion = '1.0.0';
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`Error checking GitHub dev updates: Network error`);
   });
 });
