@@ -276,6 +276,14 @@ type WorkerMessageMap = {
     request: { type: 'plugins_setschema'; params: { name: string; schema: PlatformSchema } };
     response: { type: 'plugins_setschema'; response: { success: boolean } };
   };
+  'plugins_set_latest_version': {
+    request: { type: 'plugins_set_latest_version'; params: { plugin: ApiPlugin; version: string } };
+    response: { type: 'plugins_set_latest_version'; response: { success: boolean } };
+  };
+  'plugins_set_dev_version': {
+    request: { type: 'plugins_set_dev_version'; params: { plugin: ApiPlugin; version: string } };
+    response: { type: 'plugins_set_dev_version'; response: { success: boolean } };
+  };
 
   // DeviceManager methods
   'devices_length': {
