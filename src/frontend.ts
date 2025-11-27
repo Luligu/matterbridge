@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.3.0
+ * @version 1.3.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -125,7 +125,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.respond({ ...msg, response: { success: true } });
           break;
         case 'frontend_refreshrequired':
-          this.wssSendRefreshRequired(msg.params.changed, { matter: msg.params.matter });
+          this.wssSendRefreshRequired(msg.params.changed, msg.params.matter ? { matter: msg.params.matter } : undefined);
           this.server.respond({ ...msg, response: { success: true } });
           break;
         case 'frontend_restartrequired':
@@ -150,6 +150,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           break;
         case 'frontend_logmessage':
           this.wssSendLogMessage(msg.params.level, msg.params.time, msg.params.name, msg.params.message);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'frontend_broadcast_message':
+          this.wssBroadcastMessage(msg.params.msg);
           this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
