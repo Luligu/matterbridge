@@ -54,7 +54,7 @@ import { Matterbridge } from './matterbridge.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
-import { plg, Plugin, typ } from './matterbridgeTypes.js';
+import { ApiPlugin, plg, Plugin, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { waiter, wait } from './utils/export.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
@@ -195,6 +195,8 @@ describe('PluginManager', () => {
 
     expect((await testServer.fetch({ type: 'plugins_uninstall', src: testServer.name, dst: 'plugins', params: { packageName: 'matterbridge-mock1' } }, 5000)).response.success).toBe(true);
     expect(plugins.has('matterbridge-mock1')).toBe(false);
+    expect((await testServer.fetch({ type: 'plugins_set_latest_version', src: testServer.name, dst: 'plugins', params: { plugin: {} as ApiPlugin, version: '1.0.0' } }, 5000)).response.success).toBe(false);
+    expect((await testServer.fetch({ type: 'plugins_set_dev_version', src: testServer.name, dst: 'plugins', params: { plugin: {} as ApiPlugin, version: '1.0.0' } }, 5000)).response.success).toBe(false);
   });
 
   test('logLevel changes correctly', async () => {

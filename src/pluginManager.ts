@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.3.1
+ * @version 1.3.2
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -230,6 +230,28 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             const plugin = this.get(msg.params.name);
             if (plugin) {
               this.saveConfigFromJson(plugin, msg.params.config, msg.params.restartRequired); // No await as it's not necessary to wait
+              this.server.respond({ ...msg, response: { success: true } });
+            } else {
+              this.server.respond({ ...msg, response: { success: false } });
+            }
+          }
+          break;
+        case 'plugins_set_latest_version':
+          {
+            const plugin = this.get(msg.params.plugin.name);
+            if (plugin) {
+              plugin.latestVersion = msg.params.version;
+              this.server.respond({ ...msg, response: { success: true } });
+            } else {
+              this.server.respond({ ...msg, response: { success: false } });
+            }
+          }
+          break;
+        case 'plugins_set_dev_version':
+          {
+            const plugin = this.get(msg.params.plugin.name);
+            if (plugin) {
+              plugin.devVersion = msg.params.version;
               this.server.respond({ ...msg, response: { success: true } });
             } else {
               this.server.respond({ ...msg, response: { success: false } });
