@@ -4,7 +4,7 @@
  * @file broadcastServer.ts
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 1.0.3
+ * @version 1.0.4
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -32,6 +32,7 @@ import { type AnsiLogger, CYAN, db, debugStringify } from 'node-ansi-logger';
 
 import type { WorkerMessage, WorkerMessageType, WorkerRequest, WorkerResponse, WorkerSrcType } from './broadcastServerTypes.js';
 import { hasParameter } from './utils/commandLine.js';
+import { logError } from './utils/error.js';
 
 interface BroadcastServerEvents {
   'broadcast_message': [msg: WorkerMessage];
@@ -144,7 +145,11 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       return;
     }
     if (this.verbose) this.log.debug(`Broadcasting request message: ${debugStringify(message)}`);
-    this.broadcastChannel.postMessage(message);
+    try {
+      this.broadcastChannel.postMessage(message);
+    } catch (error) {
+      logError(this.log, `Failed to broadcast request message: ${debugStringify(message)}`, error);
+    }
   }
 
   /**
@@ -162,7 +167,11 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       return;
     }
     if (this.verbose) this.log.debug(`Broadcasting response message: ${debugStringify(message)}`);
-    this.broadcastChannel.postMessage(message);
+    try {
+      this.broadcastChannel.postMessage(message);
+    } catch (error) {
+      logError(this.log, `Failed to broadcast response message: ${debugStringify(message)}`, error);
+    }
   }
 
   /**
@@ -200,7 +209,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
 
       const timeoutId = setTimeout(() => {
         this.off('broadcast_message', responseHandler);
-        reject(new Error(`Fetch timeout after ${timeout}ms for message id ${message.id}`));
+        reject(new Error(`Fetch timeout after ${timeout}ms for message type ${message.type} id ${message.id} from ${message.src} to ${message.dst}`));
       }, timeout);
     });
   }

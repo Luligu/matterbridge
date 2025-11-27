@@ -39,6 +39,7 @@ Advantages:
 - [frontend]: Updated dependencies.
 - [frontend]: Bumped `frontend` version to 3.3.2.
 - [platform]: Bumped MatterbridgePlatform v.1.5.0.
+- [thread]: Bump BroadcastServer to v1.0.4.
 
 ### Fixed
 

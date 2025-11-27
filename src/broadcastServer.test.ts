@@ -11,18 +11,10 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
-import { flushAsync, setupTest } from './jestutils/jestHelpers.js';
-
-// Spy on BroadcastServer methods
-const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
-const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse');
-const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler');
-const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request');
-const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond');
-const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch');
+import { broadcastServerRequestSpy, broadcastServerRespondSpy, flushAsync, loggerErrorSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('BroadcastServer', () => {
   const log = new AnsiLogger({ logName: 'BroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
@@ -235,5 +227,19 @@ describe('BroadcastServer', () => {
   test('close', async () => {
     server.close();
     expect((server as any).broadcastChannel.onmessage).toBeNull();
+  });
+
+  test('request: should log error if the port is closed', async () => {
+    const requestMsg = { id: 654321, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'manager' } as const;
+    server.request(requestMsg);
+    expect(broadcastServerRequestSpy).toHaveBeenCalledWith(requestMsg);
+    // expect(loggerErrorSpy).toHaveBeenCalled();
+  });
+
+  test('respond: should log error if the port is closed', async () => {
+    const responseMsg = { id: 654321, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'manager', response: { name: 'Bob', age: 42 } } as const;
+    server.respond(responseMsg);
+    expect(broadcastServerRespondSpy).toHaveBeenCalledWith(responseMsg);
+    // expect(loggerErrorSpy).toHaveBeenCalled();
   });
 });

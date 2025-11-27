@@ -4,7 +4,7 @@
  * @file broadcastServerTypes.ts
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -25,12 +25,12 @@
 import { LogLevel } from 'node-ansi-logger';
 import { EndpointNumber } from '@matter/types/datatype';
 
-import { RefreshRequiredChanged } from './frontendTypes.js';
+import { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, Plugin, StoragePlugin } from './matterbridgeTypes.js';
 
-export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn';
-export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'all';
+export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
+export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates' | 'all';
 
 /** Base message request structure with id, timestamp, src and dst */
 type BaseWorkerMessageRequest = {
@@ -74,6 +74,22 @@ type WorkerMessageMap = {
     request: { type: 'matterbridge_initialize' };
     response: { type: 'matterbridge_initialize'; response: { success: boolean } };
   };
+  'matterbridge_latest_version': {
+    request: { type: 'matterbridge_latest_version'; params: { version: string } };
+    response: { type: 'matterbridge_latest_version'; response: { success: boolean } };
+  };
+  'matterbridge_dev_version': {
+    request: { type: 'matterbridge_dev_version'; params: { version: string } };
+    response: { type: 'matterbridge_dev_version'; response: { success: boolean } };
+  };
+  'matterbridge_sys_update': {
+    request: { type: 'matterbridge_sys_update' };
+    response: { type: 'matterbridge_sys_update'; response: { success: boolean } };
+  };
+  'matterbridge_main_update': {
+    request: { type: 'matterbridge_main_update' };
+    response: { type: 'matterbridge_main_update'; response: { success: boolean } };
+  };
 
   // Matter methods
   'matter_start': {
@@ -95,7 +111,7 @@ type WorkerMessageMap = {
     response: { type: 'frontend_stop'; response: { success: boolean } };
   };
   'frontend_refreshrequired': {
-    request: { type: 'frontend_refreshrequired'; params: { changed: RefreshRequiredChanged; matter: ApiMatter } };
+    request: { type: 'frontend_refreshrequired'; params: { changed: RefreshRequiredChanged; matter?: ApiMatter } };
     response: { type: 'frontend_refreshrequired'; response: { success: boolean } };
   };
   'frontend_restartrequired': {
@@ -121,6 +137,10 @@ type WorkerMessageMap = {
   'frontend_logmessage': {
     request: { type: 'frontend_logmessage'; params: { level: string; time: string; name: string; message: string } };
     response: { type: 'frontend_logmessage'; response: { success: boolean } };
+  };
+  'frontend_broadcast_message': {
+    request: { type: 'frontend_broadcast_message'; params: { msg: WsMessageBroadcast } };
+    response: { type: 'frontend_broadcast_message'; response: { success: boolean } };
   };
 
   // PluginManager methods
