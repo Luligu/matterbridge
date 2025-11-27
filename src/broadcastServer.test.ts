@@ -11,7 +11,7 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
-import { broadcastServerRequestSpy, broadcastServerRespondSpy, flushAsync, loggerErrorSpy, setupTest } from './jestutils/jestHelpers.js';
+import { broadcastServerRequestSpy, broadcastServerRespondSpy, flushAsync, loggerErrorSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

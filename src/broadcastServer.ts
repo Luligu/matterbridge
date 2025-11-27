@@ -28,7 +28,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 import { EventEmitter } from 'node:events';
 import { BroadcastChannel } from 'node:worker_threads';
 
-import { type AnsiLogger, CYAN, db, debugStringify } from 'node-ansi-logger';
+import { type AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
 
 import type { WorkerMessage, WorkerMessageType, WorkerRequest, WorkerResponse, WorkerSrcType } from './broadcastServerTypes.js';
 import { hasParameter } from './utils/commandLine.js';
@@ -148,7 +148,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     try {
       this.broadcastChannel.postMessage(message);
     } catch (error) {
-      logError(this.log, `Failed to broadcast request message: ${debugStringify(message)}`, error);
+      logError(this.log, `Failed to broadcast request message ${debugStringify(message)}${er}`, error);
     }
   }
 
@@ -170,7 +170,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     try {
       this.broadcastChannel.postMessage(message);
     } catch (error) {
-      logError(this.log, `Failed to broadcast response message: ${debugStringify(message)}`, error);
+      logError(this.log, `Failed to broadcast response message ${debugStringify(message)}${er}`, error);
     }
   }
 
