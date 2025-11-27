@@ -251,9 +251,25 @@ It is called when the plugin config has been updated.
 
 Retrieves the devices registered with the platform.
 
+### getDeviceByName(deviceName: string): MatterbridgeEndpoint | undefined
+
+### getDeviceByUniqueId(uniqueId: string): MatterbridgeEndpoint | undefined
+
+### getDeviceBySerialNumber(serialNumber: string): MatterbridgeEndpoint | undefined
+
+### getDeviceById(id: string): MatterbridgeEndpoint | undefined
+
+### getDeviceByOriginalId(originalId: string): MatterbridgeEndpoint | undefined
+
+### getDeviceByNumber(number: EndpointNumber | number): MatterbridgeEndpoint | undefined
+
+They all return MatterbridgeEndpoint or undefined if not found.
+
 ### hasDeviceName(deviceName: string): boolean
 
-Checks if a device with this name is already registered in the platform.
+### hasDeviceUniqueId(deviceUniqueId: string): boolean
+
+Checks if a device with this name or uniqueId is already registered in the platform.
 
 ### async registerDevice(device: MatterbridgeEndpoint)
 
@@ -288,7 +304,7 @@ You create a Matter device with a new instance of MatterbridgeEndpoint(definitio
 
 In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.
 
-All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the 'Matter-1.4.1-Device-Library-Specification.pdf'.
+All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the 'Matter-1.4.2-Device-Library-Specification.pdf'.
 
 All default cluster helpers are available as methods of MatterbridgeEndpoint.
 
