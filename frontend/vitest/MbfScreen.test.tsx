@@ -80,19 +80,24 @@ describe('MbfScreen', () => {
 
   describe('isMobile', () => {
     it('returns true if width < threshold', () => {
-      setViewport(1000, 900);
-      expect(MOBILE_WIDTH_THRESHOLD).toBe(1200);
-      expect(MOBILE_HEIGHT_THRESHOLD).toBe(800);
+      expect(MOBILE_WIDTH_THRESHOLD).toBe(1300);
+      expect(MOBILE_HEIGHT_THRESHOLD).toBe(1024);
+      setViewport(1000, 1100);
       expect(isMobile()).toBe(true);
     });
 
     it('returns true if height < threshold', () => {
-      setViewport(1300, 700);
+      setViewport(1400, 1000);
+      expect(isMobile()).toBe(true);
+    });
+
+    it('returns true if width and height < threshold', () => {
+      setViewport(1299, 1023);
       expect(isMobile()).toBe(true);
     });
 
     it('returns false if width and height >= threshold', () => {
-      setViewport(1300, 900);
+      setViewport(1400, 1100);
       expect(isMobile()).toBe(false);
     });
 
