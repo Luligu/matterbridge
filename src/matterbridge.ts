@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.6.0
+ * @version 1.6.1
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -255,6 +255,24 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          break;
+        case 'matterbridge_latest_version':
+          this.matterbridgeLatestVersion = msg.params.version;
+          await this.nodeContext?.set<string>('matterbridgeLatestVersion', msg.params.version);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'matterbridge_dev_version':
+          this.matterbridgeDevVersion = msg.params.version;
+          await this.nodeContext?.set<string>('matterbridgeDevVersion', msg.params.version);
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'matterbridge_sys_update':
+          this.shellySysUpdate = true;
+          this.server.respond({ ...msg, response: { success: true } });
+          break;
+        case 'matterbridge_main_update':
+          this.shellyMainUpdate = true;
+          this.server.respond({ ...msg, response: { success: true } });
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
