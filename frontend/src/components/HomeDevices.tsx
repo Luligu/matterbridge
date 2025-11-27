@@ -139,6 +139,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     {
       label: 'Url',
       id: 'configUrl',
+      maxWidth: 150,
     },
     {
       label: 'Actions',

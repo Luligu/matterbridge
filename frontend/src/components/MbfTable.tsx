@@ -117,23 +117,6 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
     return next;
   }, [columns, columnVisibility]);
 
-  // Memoized sorted rows
-  // const [sortedRows, setSortedRows] = useState<T[]>(rows);
-  // const workerRef = useRef<Worker>(null);
-  // workerRef.current = new Worker(new URL('./MbfTableSortWorker.tsx', import.meta.url));
-  /*
-  useEffect(() => {
-    if (!workerRef.current) {
-    }
-    const worker = workerRef.current;
-    worker.onmessage = (e) => setSortedRows(e.data);
-    worker.postMessage({ rows, orderBy, order, columns });
-    return () => {
-      worker.onmessage = null;
-    };
-  }, [rows, orderBy, order, columns, name]);  
-  */
-
   // Memoized sorted rows without web worker
   const sortedRows = useMemo<T[]>(() => {
     if (!orderBy || !order) return rows;

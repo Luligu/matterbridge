@@ -7,8 +7,8 @@ import { UiContext } from './UiProvider';
 import { debug, enableMobile } from '../App';
 // const debug = true;
 
-export const MOBILE_WIDTH_THRESHOLD = 1200;
-export const MOBILE_HEIGHT_THRESHOLD = 800;
+export const MOBILE_WIDTH_THRESHOLD = 1300;
+export const MOBILE_HEIGHT_THRESHOLD = 1024;
 export const MOBILE_MIN_WIDTH = 360;
 export const MOBILE_MAX_HEIGHT = 1000;
 export let viewportWidth: number;

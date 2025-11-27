@@ -44,6 +44,7 @@ Advantages:
 ### Fixed
 
 - [frontend]: Fixed when the user put special characters in password. Thanks Dabern (https://github.com/Luligu/matterbridge/issues/443).
+- [frontend]: Fixed minimum size to 1300x1024 and add a max width to Url. Thanks Ricardo B. (https://github.com/Luligu/matterbridge-home-assistant-addon/issues/23).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
