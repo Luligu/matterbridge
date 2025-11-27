@@ -56,6 +56,8 @@ Join us in the Matterbridge [Discord group](https://discord.gg/QX58CDe6hd) creat
 
 https://www.youtube.com/watch?v=goNB9Cgh_Fk
 
+https://www.youtube.com/watch?v=06zzl7o_IqQ
+
 ## Reviews
 
 https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge-at-home
