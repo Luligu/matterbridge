@@ -3,7 +3,7 @@
  * @file src/helpers.test.ts
  * @author Luca Liguori
  * @created 2025-09-03
- * @version 1.0.13
+ * @version 1.0.14
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -102,6 +102,7 @@ export let broadcastServerIsWorkerResponseSpy: jest.SpiedFunction<typeof Broadca
 export let broadcastServerRequestSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.request>;
 export let broadcastServerRespondSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.respond>;
 export let broadcastServerFetchSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.fetch>;
+export let broadcastMessageHandlerSpy: jest.SpiedFunction<(this: BroadcastServer, event: MessageEvent) => void>;
 
 export let NAME: string;
 export let HOMEDIR: string;
@@ -193,6 +194,8 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request');
   broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond');
   broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  broadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler');
 }
 
 /**
