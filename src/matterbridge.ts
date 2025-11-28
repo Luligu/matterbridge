@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.6.1
+ * @version 1.6.2
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -246,46 +246,36 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   private async msgHandler(msg: WorkerMessage) {
-    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'matterbridge_latest_version':
           this.matterbridgeLatestVersion = msg.params.version;
           await this.nodeContext?.set<string>('matterbridgeLatestVersion', msg.params.version);
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'matterbridge_dev_version':
           this.matterbridgeDevVersion = msg.params.version;
           await this.nodeContext?.set<string>('matterbridgeDevVersion', msg.params.version);
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'matterbridge_sys_update':
           this.shellySysUpdate = true;
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'matterbridge_main_update':
           this.shellyMainUpdate = true;
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
-      }
-    }
-    if (this.server.isWorkerResponse(msg, msg.type)) {
-      if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
-      switch (msg.type) {
-        case 'get_log_level':
-        case 'set_log_level':
-          break;
-        default:
-          if (this.verbose) this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }
