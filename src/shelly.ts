@@ -4,7 +4,7 @@
  * @file shelly.ts
  * @author Luca Liguori
  * @created 2025-02-19
- * @version 1.2.0
+ * @version 1.2.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -68,7 +68,7 @@ export async function getShellySysUpdate(matterbridge: SharedMatterbridge, log: 
     const updates = (await getShelly('/api/updates/sys/check')) as { name: string }[];
     if (updates.length === 0) return;
 
-    server.request({ type: 'matterbridge_sys_update', src: server.name, dst: 'matterbridge' });
+    server.request({ type: 'matterbridge_sys_update', src: server.name, dst: 'matterbridge', params: { available: true } });
     // matterbridge.shellySysUpdate = true;
     server.request({ type: 'frontend_broadcast_message', src: server.name, dst: 'frontend', params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } } } });
     // matterbridge.frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } });
@@ -118,7 +118,7 @@ export async function getShellyMainUpdate(matterbridge: SharedMatterbridge, log:
     const updates = (await getShelly('/api/updates/main/check')) as { name: string }[];
     if (updates.length === 0) return;
 
-    server.request({ type: 'matterbridge_main_update', src: server.name, dst: 'matterbridge' });
+    server.request({ type: 'matterbridge_main_update', src: server.name, dst: 'matterbridge', params: { available: true } });
     // matterbridge.shellyMainUpdate = true;
     server.request({ type: 'frontend_broadcast_message', src: server.name, dst: 'frontend', params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_main_update', success: true, response: { available: true } } } });
     // matterbridge.frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_main_update', success: true, response: { available: true } });
