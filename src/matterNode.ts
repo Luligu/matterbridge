@@ -198,21 +198,21 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @param {WorkerMessage} msg - The incoming message.
    */
   async msgHandler(msg: WorkerMessage) {
-    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'matter')) {
+    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matter')) {
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
-    if (this.server.isWorkerResponse(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'matter')) {
+    if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'matter')) {
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -1064,7 +1064,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     const plugin = this.pluginManager.get(pluginName);
     if (!plugin) throw new Error(`Error removing all bridged endpoints for plugin ${plg}${pluginName}${er}: plugin not found`);
     this.log.debug(`Removing all #${plugin.registeredDevices} bridged endpoints for plugin ${plg}${pluginName}${db}${delay > 0 ? ` with delay ${delay} ms` : ''}...`);
-    const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName } })).response.devices;
+    const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName } })).result.devices;
     for (const device of devices) {
       const endpoint = (this.aggregatorNode?.parts.get(device.id || '') || this.serverNode?.parts.get(device.id || '')) as MatterbridgeEndpoint | undefined;
       if (!endpoint) throw new Error(`Endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} id ${device.id} not found removing all endpoints`);

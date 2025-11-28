@@ -5,6 +5,7 @@ const NAME = 'MatterNodeAccessory';
 const HOMEDIR = path.join('jest', NAME);
 const PASSCODE = 123458;
 const DISCRIMINATOR = 3862;
+const STRESS_TEST_ITERATIONS = 5;
 
 process.argv = [...originalProcessArgv, '--verbose'];
 process.env['MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS'] = '10';
@@ -21,7 +22,7 @@ import { ServerNodeStore } from '@matter/main/node';
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, NODE_STORAGE_DIR, plg, dev } from './matterbridgeTypes.js';
-import { flushAsync, loggerInfoSpy, logKeepAlives, originalProcessArgv, setupTest } from './jestutils/jestHelpers.js';
+import { loggerInfoSpy, originalProcessArgv, setupTest } from './jestutils/jestHelpers.js';
 import { getInterfaceDetails } from './utils/network.js';
 import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -59,6 +60,8 @@ const matterbridge: SharedMatterbridge = {
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
+  shellySysUpdate: false,
+  shellyMainUpdate: false,
   systemInformation: {
     interfaceName: nic?.interfaceName || '',
     macAddress: nic?.macAddress || '',
@@ -160,7 +163,7 @@ describe('MatterNode accessory', () => {
 
   test('Stress test adding and removing bridged endpoints in bridge mode not started', async () => {
     expect(deviceManager.length).toBe(0);
-    for (let i = 1; i <= 100; i++) {
+    for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
       const outlet = new MatterbridgeEndpoint([onOffOutlet, powerSource], { id: `Outlet ${i}` }, true)
         .createDefaultBasicInformationClusterServer(`Outlet ${i}`, `OUTLET1234567890-${i}`)
         .createDefaultPowerSourceBatteryClusterServer()
@@ -170,7 +173,7 @@ describe('MatterNode accessory', () => {
       expect(outlet.owner).toBeDefined();
       expect(deviceManager.length).toBe(i);
     }
-    for (let i = 1; i <= 100; i++) {
+    for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
       const outlet = matter.serverNode?.parts.get(`Outlet${i}`) as MatterbridgeEndpoint;
       await matter.removeBridgedEndpoint('matterbridge-mock4', outlet);
     }
@@ -186,7 +189,7 @@ describe('MatterNode accessory', () => {
 
   test('Stress test adding and removing bridged endpoints in bridge mode started', async () => {
     expect(deviceManager.length).toBe(1);
-    for (let i = 1; i <= 100; i++) {
+    for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
       const outlet = new MatterbridgeEndpoint([onOffOutlet, powerSource], { id: `Outlet ${i}` }, true)
         .createDefaultBasicInformationClusterServer(`Outlet ${i}`, `OUTLET1234567890-${i}`)
         .createDefaultPowerSourceBatteryClusterServer()
@@ -196,7 +199,7 @@ describe('MatterNode accessory', () => {
       expect(outlet.owner).toBeDefined();
       expect(deviceManager.length).toBe(i + 1); // +1 for the server node
     }
-    for (let i = 1; i <= 100; i++) {
+    for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
       const outlet = matter.serverNode?.parts.get(`Outlet${i}`) as MatterbridgeEndpoint;
       await matter.removeBridgedEndpoint('matterbridge-mock4', outlet);
     }

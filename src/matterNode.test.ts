@@ -19,13 +19,13 @@ import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'nod
 import { Logger } from '@matter/general';
 import { ExposedFabricInformation, FabricAction } from '@matter/protocol';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
-import { ServerNodeStore, SessionsBehavior } from '@matter/main/node';
+import { SessionsBehavior } from '@matter/main/node';
 import { NodeStorageManager } from 'node-persist-manager';
 import { Identify, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/main/clusters';
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, Plugin, plg, dev, MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from './matterbridgeTypes.js';
-import { closeServerNodeStores, flushAsync, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, logKeepAlives, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { closeServerNodeStores, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { getInterfaceDetails } from './utils/network.js';
 import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
@@ -149,14 +149,14 @@ describe('MatterNode', () => {
 
   test('Broadcast response server message type', async () => {
     // @ts-expect-error -- Testing unknown message type
-    expect(testServer.respond({ type: 'unknown', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', response: {} })).toBeUndefined();
-    expect(testServer.respond({ type: 'get_log_level', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', response: { logLevel: LogLevel.DEBUG, success: true } })).toBeUndefined();
-    expect(testServer.respond({ type: 'set_log_level', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', response: { logLevel: LogLevel.DEBUG, success: true } })).toBeUndefined();
+    expect(testServer.respond({ type: 'unknown', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', result: { success: true } })).toBeUndefined();
+    expect(testServer.respond({ type: 'get_log_level', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', result: { logLevel: LogLevel.DEBUG } })).toBeUndefined();
+    expect(testServer.respond({ type: 'set_log_level', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', result: { logLevel: LogLevel.DEBUG } })).toBeUndefined();
   });
 
   test('Broadcast logLevel changes correctly', async () => {
-    expect((await testServer.fetch({ type: 'set_log_level', src: testServer.name, dst: 'matter', params: { logLevel: LogLevel.DEBUG } })).response.logLevel).toBe(LogLevel.DEBUG);
-    expect((await testServer.fetch({ type: 'get_log_level', src: testServer.name, dst: 'matter' })).response.logLevel).toBe(LogLevel.DEBUG);
+    expect((await testServer.fetch({ type: 'set_log_level', src: testServer.name, dst: 'matter', params: { logLevel: LogLevel.DEBUG } })).result.logLevel).toBe(LogLevel.DEBUG);
+    expect((await testServer.fetch({ type: 'get_log_level', src: testServer.name, dst: 'matter' })).result.logLevel).toBe(LogLevel.DEBUG);
   });
 
   test('Broadcast close', async () => {

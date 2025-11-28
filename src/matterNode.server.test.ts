@@ -5,6 +5,7 @@ const NAME = 'MatterNodeServer';
 const HOMEDIR = path.join('jest', NAME);
 const PASSCODE = 123460;
 const DISCRIMINATOR = 3864;
+const STRESS_TEST_ITERATIONS = 5;
 
 process.argv = [...originalProcessArgv, '--verbose'];
 process.env['MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS'] = '10';
@@ -20,7 +21,7 @@ import { NodeStorageManager } from 'node-persist-manager';
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, NODE_STORAGE_DIR } from './matterbridgeTypes.js';
-import { flushAsync, logKeepAlives, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { originalProcessArgv, setupTest } from './jestutils/jestHelpers.js';
 import { getInterfaceDetails } from './utils/network.js';
 import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -58,6 +59,8 @@ const matterbridge: SharedMatterbridge = {
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
+  shellySysUpdate: false,
+  shellyMainUpdate: false,
   systemInformation: {
     interfaceName: nic?.interfaceName || '',
     macAddress: nic?.macAddress || '',
