@@ -4,7 +4,7 @@
  * @file broadcastServer.ts
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 1.0.4
+ * @version 2.0.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -30,7 +30,7 @@ import { BroadcastChannel } from 'node:worker_threads';
 
 import { type AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
 
-import type { WorkerMessage, WorkerMessageType, WorkerRequest, WorkerResponse, WorkerSrcType } from './broadcastServerTypes.js';
+import type { WorkerMessage, WorkerMessageRequest, WorkerMessageRequestAny, WorkerMessageResponse, WorkerMessageResponseSuccess, WorkerMessageTypes, WorkerSrcType } from './broadcastServerTypes.js';
 import { hasParameter } from './utils/commandLine.js';
 import { logError } from './utils/error.js';
 
@@ -75,34 +75,74 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   }
 
   /**
-   * Generates a unique ID with range 100000-999999.
+   * Generate a pseudo-random identifier between 100,000,000 and 999,999,999.
    *
-   * @returns {number} - A unique ID between 100000 and 999999
+   * @returns {number} A nine-digit identifier.
    */
   getUniqueId(): number {
-    return Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000; // random int between 100000 and 999999
+    return Math.floor(Math.random() * 900000000) + 100000000;
   }
 
   /**
-   * Type guard to check if a message is a request of a specific type.
+   * Type guard to verify a value matches the WorkerMessageRequest structure.
    *
-   * @param {unknown} msg - The message to check.
-   * @param {T} type - The type to check against.
-   * @returns {msg is WorkerRequest<T>} True if the message is a request of the specified type.
+   * @param {unknown} value Value to test.
+   * @returns {value is WorkerMessageRequest} True when the value looks like a request message.
    */
-  isWorkerRequest<T extends WorkerMessageType>(msg: unknown, type: T): msg is WorkerRequest<T> {
-    return typeof msg === 'object' && msg !== null && 'id' in msg && 'timestamp' in msg && 'type' in msg && msg.type === type && !('response' in msg) && 'src' in msg && 'dst' in msg;
+  isWorkerRequest(value: unknown): value is WorkerMessageRequest {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+
+    const message = value as Partial<WorkerMessageRequest> & { result?: unknown; error?: unknown };
+    if (typeof message.type !== 'string' || typeof message.src !== 'string' || typeof message.dst !== 'string' || typeof message.id !== 'number' || typeof message.timestamp !== 'number') {
+      return false;
+    }
+
+    return message.result === undefined && message.error === undefined;
   }
 
   /**
-   * Type guard to check if a message is a response of a specific type.
+   * Type guard to verify a value matches a specific WorkerMessageRequest structure.
    *
-   * @param {unknown} msg - The message to check.
-   * @param {T} type - The type to check against.
-   * @returns {msg is WorkerResponse<T>} True if the message is a response of the specified type.
+   * @param {unknown} value Value to test.
+   * @param {K} type Worker message type to match.
+   * @returns {value is WorkerMessageRequest<K>} True when the value looks like a request message of the requested type.
    */
-  isWorkerResponse<T extends WorkerMessageType>(msg: unknown, type: T): msg is WorkerResponse<T> {
-    return typeof msg === 'object' && msg !== null && 'id' in msg && 'timestamp' in msg && 'type' in msg && msg.type === type && 'response' in msg && 'src' in msg && 'dst' in msg;
+  isWorkerRequestOfType<K extends keyof WorkerMessageTypes>(value: unknown, type: K): value is WorkerMessageRequest<K> {
+    return this.isWorkerRequest(value) && (value as WorkerMessageRequest).type === type;
+  }
+
+  /**
+   * Type guard to verify a value matches the WorkerMessageResponse structure.
+   *
+   * @param {unknown} value Value to test.
+   * @returns {value is WorkerMessageResponse} True when the value looks like a response message.
+   */
+  isWorkerResponse(value: unknown): value is WorkerMessageResponse {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+
+    const message = value as Partial<WorkerMessageResponse> & { error?: unknown; result?: unknown };
+    if (typeof message.type !== 'string' || typeof message.src !== 'string' || typeof message.dst !== 'string' || typeof message.id !== 'number' || typeof message.timestamp !== 'number') {
+      return false;
+    }
+
+    const hasError = typeof message.error === 'string';
+    const hasResult = message.result !== undefined;
+    return hasError !== hasResult;
+  }
+
+  /**
+   * Type guard to verify a value matches a specific WorkerMessageResponse structure.
+   *
+   * @param {unknown} value Value to test.
+   * @param {K} type Worker message type to match.
+   * @returns {value is WorkerMessageResponse<K>} True when the value looks like a response message of the requested type.
+   */
+  isWorkerResponseOfType<K extends keyof WorkerMessageTypes>(value: unknown, type: K): value is WorkerMessageResponse<K> {
+    return this.isWorkerResponse(value) && (value as WorkerMessageResponse).type === type;
   }
 
   /**
@@ -112,36 +152,56 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {void}
    */
   private broadcastMessageHandler(event: MessageEvent): void {
-    const data = event.data as WorkerMessage;
-    if (this.verbose && (data.dst === this.name || data.dst === 'all')) this.log.debug(`Server ${CYAN}${this.name}${db} received broadcast message: ${debugStringify(data)}`);
-    this.emit('broadcast_message', data);
+    const msg = event.data as WorkerMessage;
+    if (msg.dst === this.name || msg.dst === 'all') {
+      if (this.verbose) this.log.debug(`Server ${CYAN}${this.name}${db} received broadcast message: ${debugStringify(msg)}`);
+      this.emit('broadcast_message', msg);
+    } else {
+      if (this.verbose) this.log.debug(`Server ${CYAN}${this.name}${db} received unrelated broadcast message: ${debugStringify(msg)}`);
+    }
   }
 
   /**
    * Broadcast a message to all workers.
    *
    * @param {WorkerMessage} message - The message to broadcast.
+   * @returns {void}
+   *
+   * @remarks No checks are performed on the message structure.
    */
   broadcast(message: WorkerMessage) {
-    if (this.verbose) this.log.debug(`Broadcasting message: ${debugStringify(message)}`);
-    this.broadcastChannel.postMessage(message);
-  }
-
-  /**
-   * Broadcast a request message to all workers.
-   *
-   * @param {WorkerRequest<T>} message - The typed request message to broadcast.
-   * @returns {void}
-   */
-  request<M extends WorkerRequest<WorkerMessageType>>(message: M): void {
     if (message.id === undefined) {
       message.id = this.getUniqueId();
     }
     if (message.timestamp === undefined) {
       message.timestamp = Date.now();
     }
-    if (!this.isWorkerRequest(message, message.type)) {
-      this.log.error(`Invalid request message format for broadcast: ${debugStringify(message)}`);
+    message.src = this.name;
+    if (this.verbose) this.log.debug(`Broadcasting message: ${debugStringify(message)}`);
+    try {
+      this.broadcastChannel.postMessage(message);
+    } catch (error) {
+      logError(this.log, `Failed to broadcast message ${debugStringify(message)}${er}`, error);
+    }
+  }
+
+  /**
+   * Send a request message from the worker implementation.
+   *
+   * @template K
+   * @param {WorkerMessageRequest<K>} message The request message to send.
+   * @returns {void}
+   */
+  request<K extends keyof WorkerMessageTypes>(message: WorkerMessageRequest<K>): void {
+    if (message.id === undefined) {
+      message.id = this.getUniqueId();
+    }
+    if (message.timestamp === undefined) {
+      message.timestamp = Date.now();
+    }
+    message.src = this.name;
+    if (!this.isWorkerRequest(message)) {
+      this.log.error(`Invalid request message format: ${debugStringify(message)}`);
       return;
     }
     if (this.verbose) this.log.debug(`Broadcasting request message: ${debugStringify(message)}`);
@@ -153,17 +213,25 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   }
 
   /**
-   * Broadcast a response message to all workers.
+   * Send a response message from the worker implementation.
    *
-   * @param {WorkerResponse<T>} message - The typed response message to broadcast.
+   * @template K
+   * @param {WorkerMessageResponse<K>} message The response message to send.
    * @returns {void}
    */
-  respond<M extends WorkerResponse<WorkerMessageType>>(message: M): void {
+  respond<K extends keyof WorkerMessageTypes>(message: WorkerMessageResponse<K>): void {
+    if (typeof message.timestamp === 'number') {
+      message.elapsed = Date.now() - message.timestamp;
+    }
     if (message.timestamp === undefined) {
       message.timestamp = Date.now();
     }
-    if (!this.isWorkerResponse(message, message.type)) {
-      this.log.error(`Invalid response message format for broadcast: ${debugStringify(message)}`);
+    if (message.dst === this.name || message.dst === 'all') {
+      message.dst = message.src;
+    }
+    message.src = this.name;
+    if (!this.isWorkerResponse(message)) {
+      this.log.error(`Invalid response message format: ${debugStringify(message)}`);
       return;
     }
     if (this.verbose) this.log.debug(`Broadcasting response message: ${debugStringify(message)}`);
@@ -176,14 +244,15 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
 
   /**
    * Fetch data from a worker.
-   * It broadcasts a request message and waits for a response with the same id.
+   * It broadcasts a request message and waits for a valid response with the same id.
    *
-   * @param {WorkerRequest<T>} message - The typed request message to broadcast.
+   * @template K
+   * @param {WorkerMessageRequest<K>} message - The typed request message to fetch.
    * @param {number} timeout - The timeout in milliseconds to wait for a response. Default is 250ms.
-   * @returns {Promise<WorkerResponse<T>>} A promise that resolves with the response from the worker or rejects on timeout.
-   * @throws {Error} If the fetch operation times out after 250ms.
+   * @returns {Promise<WorkerMessageResponseSuccess<K>>} A promise that resolves with the successful response from the worker or rejects on timeout.
+   * @throws {Error} If the fetch operation times out after 250ms or if an error response is received or if the response is malformed.
    */
-  async fetch<M extends WorkerRequest<WorkerMessageType>>(message: M, timeout: number = 250): Promise<WorkerResponse<M['type']>> {
+  async fetch<T extends WorkerMessageRequestAny, K extends Extract<keyof WorkerMessageTypes, T['type']>>(message: T, timeout: number = 250): Promise<WorkerMessageResponseSuccess<K>> {
     if (message.id === undefined) {
       message.id = this.getUniqueId();
     }
@@ -192,15 +261,20 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     }
     if (this.verbose) this.log.debug(`Fetching message: ${debugStringify(message)}`);
 
-    return new Promise<WorkerResponse<M['type']>>((resolve, reject) => {
+    return new Promise<WorkerMessageResponseSuccess<K>>((resolve, reject) => {
       const responseHandler = (msg: WorkerMessage) => {
-        if (this.isWorkerResponse(msg, message.type) && msg.id === message.id) {
+        if (this.isWorkerResponseOfType(msg, message.type) && msg.id === message.id) {
           clearTimeout(timeoutId);
           this.off('broadcast_message', responseHandler);
           if (this.verbose) this.log.debug(`Fetch response: ${debugStringify(msg)}`);
-          resolve(msg);
-        } else if (this.isWorkerResponse(msg, message.type) && msg.id !== message.id) {
-          if (this.verbose) this.log.debug(`Fetch received unrelated response: ${debugStringify(msg)}`);
+          if ('error' in msg && typeof msg.error === 'string') {
+            reject(new Error(`Fetch received error response ${msg.error} to message type ${message.type} id ${message.id} from ${message.src} to ${message.dst}`));
+          } else if ('result' in msg) {
+            resolve(msg as WorkerMessageResponseSuccess<K>);
+          } else {
+            reject(new Error(`Fetch received malformed response for message type ${message.type} id ${message.id} from ${message.src} to ${message.dst}`));
+          }
+          return;
         }
       };
 

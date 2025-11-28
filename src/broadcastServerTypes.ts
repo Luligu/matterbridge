@@ -4,7 +4,7 @@
  * @file broadcastServerTypes.ts
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 1.0.1
+ * @version 2.0.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -29,299 +29,344 @@ import { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, Plugin, StoragePlugin } from './matterbridgeTypes.js';
 
+/** Types of worker source */
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
+
+/** Types of worker destination */
 export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates' | 'all';
 
-/** Base message request structure with id, timestamp, src and dst */
-type BaseWorkerMessageRequest = {
-  id?: number;
-  timestamp?: number;
-  src: WorkerSrcType;
-  dst: WorkerDstType;
+/** Normalized message request structure */
+type NormalizeRequest<T> = T extends { params: infer P } ? ([P] extends [undefined] ? { params?: undefined } : { params: P }) : Record<never, never>;
+
+/** Message request structure with id, timestamp, src and dst */
+type WorkerMessageRequestMap = {
+  [K in keyof WorkerMessageTypes]: {
+    type: K;
+    id?: number;
+    timestamp?: number;
+    src: WorkerSrcType;
+    dst: WorkerDstType;
+  } & NormalizeRequest<WorkerMessageTypes[K]['request']>;
 };
 
-/** Base message response structure with id, timestamp, src and dst */
-type BaseWorkerMessageResponse = {
-  id?: number;
-  timestamp?: number;
-  src: WorkerSrcType;
-  dst: WorkerDstType;
+/** Message request structure with id, timestamp, src and dst */
+export type WorkerMessageRequest<K extends keyof WorkerMessageTypes = keyof WorkerMessageTypes> = WorkerMessageRequestMap[K];
+
+/** Normalized message response success structure that guarantees a successful result */
+type NormalizeResponseSuccess<T> = T & { error?: never };
+
+/** Normalized message response error structure that guarantees an error-only payload */
+type NormalizeResponseError<T> = { error: string } & { [K in keyof T]?: never };
+
+/** Normalized message response structure */
+type NormalizeResponse<T> = NormalizeResponseSuccess<T> | NormalizeResponseError<T>;
+
+/** Message response structure with id, timestamp, elapsed, src and dst */
+type WorkerMessageResponseMap = {
+  [K in keyof WorkerMessageTypes]: {
+    type: K;
+    id?: number;
+    timestamp?: number;
+    elapsed?: number;
+    src: WorkerSrcType;
+    dst: WorkerDstType;
+  } & NormalizeResponse<WorkerMessageTypes[K]['response']>;
 };
 
-/** Extended message map that adds src/dst to all requests and responses */
-type ExtendedWorkerMessageMap = {
-  [K in keyof WorkerMessageMap]: {
-    request: WorkerMessageMap[K]['request'] & BaseWorkerMessageRequest;
-    response: WorkerMessageMap[K]['response'] & BaseWorkerMessageResponse;
-  };
+/** Message response structure with id, timestamp, elapsed, src and dst */
+export type WorkerMessageResponse<K extends keyof WorkerMessageTypes = keyof WorkerMessageTypes> = WorkerMessageResponseMap[K];
+
+/** Message response success structure that guarantees a successful result */
+type WorkerMessageResponseSuccessMap = {
+  [K in keyof WorkerMessageTypes]: {
+    type: K;
+    id?: number;
+    timestamp?: number;
+    elapsed?: number;
+    src: WorkerSrcType;
+    dst: WorkerDstType;
+  } & NormalizeResponseSuccess<WorkerMessageTypes[K]['response']>;
 };
 
-/** Union type of all worker messages (requests and responses) */
-export type WorkerMessage = {
-  [K in keyof ExtendedWorkerMessageMap]: ExtendedWorkerMessageMap[K]['request'] | ExtendedWorkerMessageMap[K]['response'];
-}[keyof ExtendedWorkerMessageMap];
+/** Message response success structure that guarantees a successful result */
+export type WorkerMessageResponseSuccess<K extends keyof WorkerMessageTypes = keyof WorkerMessageTypes> = WorkerMessageResponseSuccessMap[K];
+
+/** Message response error structure */
+type WorkerMessageResponseErrorMap = {
+  [K in keyof WorkerMessageTypes]: {
+    type: K;
+    id?: number;
+    timestamp?: number;
+    elapsed?: number;
+    src: WorkerSrcType;
+    dst: WorkerDstType;
+  } & NormalizeResponseError<WorkerMessageTypes[K]['response']>;
+};
+
+/** Message response error structure */
+export type WorkerMessageResponseError<K extends keyof WorkerMessageTypes = keyof WorkerMessageTypes> = WorkerMessageResponseErrorMap[K];
+
+/** Convenience alias for any worker request */
+export type WorkerMessageRequestAny = WorkerMessageRequest<keyof WorkerMessageTypes>;
+
+/** Resolve a successful response type based on the originating request */
+export type WorkerMessageResponseSuccessForRequest<T extends WorkerMessageRequestAny> = WorkerMessageResponseSuccess<Extract<keyof WorkerMessageTypes, T['type']>>;
+
+/** Resolve an error response type based on the originating request */
+export type WorkerMessageResponseErrorForRequest<T extends WorkerMessageRequestAny> = WorkerMessageResponseError<Extract<keyof WorkerMessageTypes, T['type']>>;
+
+/** Union type for WorkerMessageRequest and WorkerMessageResponse */
+export type WorkerMessage<K extends keyof WorkerMessageTypes = keyof WorkerMessageTypes> = WorkerMessageRequest<K> | WorkerMessageResponse<K> | WorkerMessageResponseSuccess<K> | WorkerMessageResponseError<K>;
 
 /** Map of all worker message types with their request and response structures */
-type WorkerMessageMap = {
-  'jest': { request: { type: 'jest' }; response: { type: 'jest'; response: { name: string; age: number } } };
+export type WorkerMessageTypes = {
+  // Jest example message
+  'jest': {
+    request: { params: { userId: number } };
+    response: { result: { name: string; age: number } };
+  };
+  'jest_simple': {
+    request: { params: undefined };
+    response: { result: { success: true } };
+  };
 
   // Logger general methods
-  'get_log_level': { request: { type: 'get_log_level' }; response: { type: 'get_log_level'; response: { logLevel: LogLevel; success: boolean } } };
-  'set_log_level': { request: { type: 'set_log_level'; params: { logLevel: LogLevel } }; response: { type: 'set_log_level'; response: { logLevel: LogLevel; success: boolean } } };
+  'get_log_level': {
+    request: { params: undefined };
+    response: { result: { logLevel: LogLevel } };
+  };
+  'set_log_level': {
+    request: { params: { logLevel: LogLevel } };
+    response: { result: { logLevel: LogLevel } };
+  };
 
   // Matterbridge methods
   'matterbridge_initialize': {
-    request: { type: 'matterbridge_initialize' };
-    response: { type: 'matterbridge_initialize'; response: { success: boolean } };
+    request: { params: undefined };
+    response: { result: { success: true } };
   };
   'matterbridge_latest_version': {
-    request: { type: 'matterbridge_latest_version'; params: { version: string } };
-    response: { type: 'matterbridge_latest_version'; response: { success: boolean } };
+    request: { params: { version: string } };
+    response: { result: { success: true } };
   };
   'matterbridge_dev_version': {
-    request: { type: 'matterbridge_dev_version'; params: { version: string } };
-    response: { type: 'matterbridge_dev_version'; response: { success: boolean } };
+    request: { params: { version: string } };
+    response: { result: { success: true } };
   };
   'matterbridge_sys_update': {
-    request: { type: 'matterbridge_sys_update' };
-    response: { type: 'matterbridge_sys_update'; response: { success: boolean } };
+    request: { params: { available: boolean } };
+    response: { result: { success: true } };
   };
   'matterbridge_main_update': {
-    request: { type: 'matterbridge_main_update' };
-    response: { type: 'matterbridge_main_update'; response: { success: boolean } };
+    request: { params: { available: boolean } };
+    response: { result: { success: true } };
   };
 
   // Matter methods
   'matter_start': {
-    request: { type: 'matter_start'; params: { storeId: string } };
-    response: { type: 'matter_start'; response: { storeId: string; success: boolean } };
+    request: { params: { storeId: string } };
+    response: { result: { storeId: string; success: true } };
   };
   'matter_stop': {
-    request: { type: 'matter_stop'; params: { storeId: string } };
-    response: { type: 'matter_stop'; response: { storeId: string; success: boolean } };
+    request: { params: { storeId: string } };
+    response: { result: { storeId: string; success: true } };
   };
 
   // Frontend methods
   'frontend_start': {
-    request: { type: 'frontend_start'; params: { port: number } };
-    response: { type: 'frontend_start'; response: { success: boolean } };
+    request: { params: { port: number } };
+    response: { result: { success: true } };
   };
   'frontend_stop': {
-    request: { type: 'frontend_stop' };
-    response: { type: 'frontend_stop'; response: { success: boolean } };
+    request: { params: undefined };
+    response: { result: { success: true } };
   };
   'frontend_refreshrequired': {
-    request: { type: 'frontend_refreshrequired'; params: { changed: RefreshRequiredChanged; matter?: ApiMatter } };
-    response: { type: 'frontend_refreshrequired'; response: { success: boolean } };
+    request: { params: { changed: RefreshRequiredChanged; matter?: ApiMatter } };
+    response: { result: { success: true } };
   };
   'frontend_restartrequired': {
-    request: { type: 'frontend_restartrequired'; params: { snackbar: boolean; fixed: boolean } };
-    response: { type: 'frontend_restartrequired'; response: { success: boolean } };
+    request: { params: { snackbar: boolean; fixed: boolean } };
+    response: { result: { success: true } };
   };
   'frontend_restartnotrequired': {
-    request: { type: 'frontend_restartnotrequired'; params: { snackbar: boolean } };
-    response: { type: 'frontend_restartnotrequired'; response: { success: boolean } };
+    request: { params: { snackbar: boolean } };
+    response: { result: { success: true } };
   };
   'frontend_updaterequired': {
-    request: { type: 'frontend_updaterequired'; params: { devVersion: boolean } };
-    response: { type: 'frontend_updaterequired'; response: { success: boolean } };
+    request: { params: { devVersion: boolean } };
+    response: { result: { success: true } };
   };
   'frontend_snackbarmessage': {
-    request: { type: 'frontend_snackbarmessage'; params: { message: string; timeout?: number; severity?: 'info' | 'success' | 'warning' | 'error' } };
-    response: { type: 'frontend_snackbarmessage'; response: { success: boolean } };
+    request: { params: { message: string; timeout?: number; severity?: 'info' | 'success' | 'warning' | 'error' } };
+    response: { result: { success: true } };
   };
   'frontend_attributechanged': {
-    request: { type: 'frontend_attributechanged'; params: { plugin: string; serialNumber: string; uniqueId: string; number: EndpointNumber; id: string; cluster: string; attribute: string; value: number | string | boolean | null } };
-    response: { type: 'frontend_attributechanged'; response: { success: boolean } };
+    request: { params: { plugin: string; serialNumber: string; uniqueId: string; number: EndpointNumber; id: string; cluster: string; attribute: string; value: number | string | boolean | null } };
+    response: { result: { success: true } };
   };
   'frontend_logmessage': {
-    request: { type: 'frontend_logmessage'; params: { level: string; time: string; name: string; message: string } };
-    response: { type: 'frontend_logmessage'; response: { success: boolean } };
+    request: { params: { level: string; time: string; name: string; message: string } };
+    response: { result: { success: true } };
   };
   'frontend_broadcast_message': {
-    request: { type: 'frontend_broadcast_message'; params: { msg: WsMessageBroadcast } };
-    response: { type: 'frontend_broadcast_message'; response: { success: boolean } };
+    request: { params: { msg: WsMessageBroadcast } };
+    response: { result: { success: true } };
   };
 
   // PluginManager methods
   'plugins_length': {
-    request: { type: 'plugins_length' };
-    response: { type: 'plugins_length'; response: { length: number } };
+    request: { params: undefined };
+    response: { result: { length: number } };
   };
   'plugins_size': {
-    request: { type: 'plugins_size' };
-    response: { type: 'plugins_size'; response: { size: number } };
+    request: { params: undefined };
+    response: { result: { size: number } };
   };
   'plugins_has': {
-    request: { type: 'plugins_has'; params: { name: string } };
-    response: { type: 'plugins_has'; response: { has: boolean } };
+    request: { params: { name: string } };
+    response: { result: { has: boolean } };
   };
   'plugins_get': {
-    request: { type: 'plugins_get'; params: { name: string } };
-    response: { type: 'plugins_get'; response: { plugin: ApiPlugin | undefined } };
+    request: { params: { name: string } };
+    response: { result: { plugin: ApiPlugin | undefined } };
   };
   'plugins_set': {
-    request: { type: 'plugins_set'; params: { plugin: ApiPlugin } };
-    response: { type: 'plugins_set'; response: { plugin: ApiPlugin } };
+    request: { params: { plugin: ApiPlugin } };
+    response: { result: { plugin: ApiPlugin } };
   };
   'plugins_clear': {
-    request: { type: 'plugins_clear' };
-    response: { type: 'plugins_clear'; response: { success: boolean } };
+    request: { params: undefined };
+    response: { result: { success: true } };
   };
   'plugins_storagepluginarray': {
-    request: { type: 'plugins_storagepluginarray' };
-    response: { type: 'plugins_storagepluginarray'; response: { plugins: StoragePlugin[] } };
+    request: { params: undefined };
+    response: { result: { plugins: StoragePlugin[] } };
   };
   'plugins_apipluginarray': {
-    request: { type: 'plugins_apipluginarray' };
-    response: { type: 'plugins_apipluginarray'; response: { plugins: ApiPlugin[] } };
+    request: { params: undefined };
+    response: { result: { plugins: ApiPlugin[] } };
   };
   'plugins_loadFromStorage': {
-    request: { type: 'plugins_loadFromStorage' };
-    response: { type: 'plugins_loadFromStorage'; response: { plugins: ApiPlugin[] } };
+    request: { params: undefined };
+    response: { result: { plugins: ApiPlugin[] } };
   };
   'plugins_saveToStorage': {
-    request: { type: 'plugins_saveToStorage' };
-    response: { type: 'plugins_saveToStorage'; response: { count: number } };
+    request: { params: undefined };
+    response: { result: { count: number } };
   };
   'plugins_resolve': {
-    request: { type: 'plugins_resolve'; params: { pluginPath: string } };
-    response: { type: 'plugins_resolve'; response: { resolved: string | null } };
+    request: { params: { pluginPath: string } };
+    response: { result: { resolved: string | null } };
   };
   'plugins_install': {
-    request: { type: 'plugins_install'; params: { packageName: string } };
-    response: { type: 'plugins_install'; response: { packageName: string; success: boolean } };
+    request: { params: { packageName: string } };
+    response: { result: { packageName: string; success: boolean } };
   };
   'plugins_uninstall': {
-    request: { type: 'plugins_uninstall'; params: { packageName: string } };
-    response: { type: 'plugins_uninstall'; response: { packageName: string; success: boolean } };
-  };
-  'plugins_getAuthor': {
-    request: { type: 'plugins_getAuthor'; params: { packageJson: Record<string, unknown> } };
-    response: { type: 'plugins_getAuthor'; response: { author: string } };
-  };
-  'plugins_getHomepage': {
-    request: { type: 'plugins_getHomepage'; params: { packageJson: Record<string, unknown> } };
-    response: { type: 'plugins_getHomepage'; response: { homepage?: string } };
-  };
-  'plugins_getHelp': {
-    request: { type: 'plugins_getHelp'; params: { packageJson: Record<string, unknown> } };
-    response: { type: 'plugins_getHelp'; response: { help?: string } };
-  };
-  'plugins_getChangelog': {
-    request: { type: 'plugins_getChangelog'; params: { packageJson: Record<string, unknown> } };
-    response: { type: 'plugins_getChangelog'; response: { changelog?: string } };
-  };
-  'plugins_getFunding': {
-    request: { type: 'plugins_getFunding'; params: { packageJson: Record<string, unknown> } };
-    response: { type: 'plugins_getFunding'; response: { funding?: string } };
+    request: { params: { packageName: string } };
+    response: { result: { packageName: string; success: boolean } };
   };
   'plugins_parse': {
-    request: { type: 'plugins_parse'; params: { plugin: Plugin } };
-    response: { type: 'plugins_parse'; response: { packageJson: Record<string, unknown> | null } };
+    request: { params: { plugin: Plugin } };
+    response: { result: { packageJson: Record<string, unknown> | null } };
   };
   'plugins_enable': {
-    request: { type: 'plugins_enable'; params: { nameOrPath: string } };
-    response: { type: 'plugins_enable'; response: { plugin: ApiPlugin | null } };
+    request: { params: { nameOrPath: string } };
+    response: { result: { plugin: ApiPlugin | null } };
   };
   'plugins_disable': {
-    request: { type: 'plugins_disable'; params: { nameOrPath: string } };
-    response: { type: 'plugins_disable'; response: { plugin: ApiPlugin | null } };
+    request: { params: { nameOrPath: string } };
+    response: { result: { plugin: ApiPlugin | null } };
   };
   'plugins_remove': {
-    request: { type: 'plugins_remove'; params: { nameOrPath: string } };
-    response: { type: 'plugins_remove'; response: { plugin: ApiPlugin | null } };
+    request: { params: { nameOrPath: string } };
+    response: { result: { plugin: ApiPlugin | null } };
   };
   'plugins_add': {
-    request: { type: 'plugins_add'; params: { nameOrPath: string } };
-    response: { type: 'plugins_add'; response: { plugin: ApiPlugin | null } };
+    request: { params: { nameOrPath: string } };
+    response: { result: { plugin: ApiPlugin | null } };
   };
   'plugins_load': {
-    request: { type: 'plugins_load'; params: { plugin: ApiPlugin | string; start?: boolean; message?: string; configure?: boolean } };
-    response: { type: 'plugins_load'; response: { platform: unknown | undefined } };
+    request: { params: { plugin: ApiPlugin | string; start?: boolean; message?: string; configure?: boolean } };
+    response: { result: { platform: unknown | undefined } };
   };
   'plugins_start': {
-    request: { type: 'plugins_start'; params: { plugin: ApiPlugin | string; message?: string; configure?: boolean } };
-    response: { type: 'plugins_start'; response: { plugin: ApiPlugin | undefined } };
+    request: { params: { plugin: ApiPlugin | string; message?: string; configure?: boolean } };
+    response: { result: { plugin: ApiPlugin | undefined } };
   };
   'plugins_configure': {
-    request: { type: 'plugins_configure'; params: { plugin: ApiPlugin | string } };
-    response: { type: 'plugins_configure'; response: { plugin: ApiPlugin | undefined } };
+    request: { params: { plugin: ApiPlugin | string } };
+    response: { result: { plugin: ApiPlugin | undefined } };
   };
   'plugins_shutdown': {
-    request: { type: 'plugins_shutdown'; params: { plugin: ApiPlugin | string; reason?: string; removeAllDevices?: boolean; force?: boolean } };
-    response: { type: 'plugins_shutdown'; response: { plugin: ApiPlugin | undefined } };
+    request: { params: { plugin: ApiPlugin | string; reason?: string; removeAllDevices?: boolean; force?: boolean } };
+    response: { result: { plugin: ApiPlugin | undefined } };
   };
   'plugins_loadconfig': {
-    request: { type: 'plugins_loadconfig'; params: { plugin: ApiPlugin } };
-    response: { type: 'plugins_loadconfig'; response: { config: PlatformConfig } };
+    request: { params: { plugin: ApiPlugin } };
+    response: { result: { config: PlatformConfig } };
   };
   'plugins_saveconfigfromplugin': {
-    request: { type: 'plugins_saveconfigfromplugin'; params: { name: string; restartRequired?: boolean } };
-    response: { type: 'plugins_saveconfigfromplugin'; response: { success: boolean } };
+    request: { params: { name: string; restartRequired?: boolean } };
+    response: { result: { success: true } };
   };
   'plugins_saveconfigfromjson': {
-    request: { type: 'plugins_saveconfigfromjson'; params: { name: string; config: PlatformConfig; restartRequired?: boolean } };
-    response: { type: 'plugins_saveconfigfromjson'; response: { success: boolean } };
+    request: { params: { name: string; config: PlatformConfig; restartRequired?: boolean } };
+    response: { result: { success: true } };
   };
   'plugins_loadschema': {
-    request: { type: 'plugins_loadschema'; params: { name: string } };
-    response: { type: 'plugins_loadschema'; response: { schema: PlatformSchema | undefined } };
+    request: { params: { name: string } };
+    response: { result: { schema: PlatformSchema | undefined } };
   };
   'plugins_getschema': {
-    request: { type: 'plugins_getschema'; params: { name: string } };
-    response: { type: 'plugins_getschema'; response: { schema: PlatformSchema | undefined } };
+    request: { params: { name: string } };
+    response: { result: { schema: PlatformSchema | undefined } };
   };
   'plugins_setschema': {
-    request: { type: 'plugins_setschema'; params: { name: string; schema: PlatformSchema } };
-    response: { type: 'plugins_setschema'; response: { success: boolean } };
+    request: { params: { name: string; schema: PlatformSchema } };
+    response: { result: { success: true } };
   };
   'plugins_set_latest_version': {
-    request: { type: 'plugins_set_latest_version'; params: { plugin: ApiPlugin; version: string } };
-    response: { type: 'plugins_set_latest_version'; response: { success: boolean } };
+    request: { params: { plugin: ApiPlugin; version: string } };
+    response: { result: { success: true } };
   };
   'plugins_set_dev_version': {
-    request: { type: 'plugins_set_dev_version'; params: { plugin: ApiPlugin; version: string } };
-    response: { type: 'plugins_set_dev_version'; response: { success: boolean } };
+    request: { params: { plugin: ApiPlugin; version: string } };
+    response: { result: { success: true } };
   };
 
   // DeviceManager methods
   'devices_length': {
-    request: { type: 'devices_length' };
-    response: { type: 'devices_length'; response: { length: number } };
+    request: { params: undefined };
+    response: { result: { length: number } };
   };
   'devices_size': {
-    request: { type: 'devices_size' };
-    response: { type: 'devices_size'; response: { size: number } };
+    request: { params: undefined };
+    response: { result: { size: number } };
   };
   'devices_has': {
-    request: { type: 'devices_has'; params: { uniqueId: string } };
-    response: { type: 'devices_has'; response: { has: boolean } };
+    request: { params: { uniqueId: string } };
+    response: { result: { has: boolean } };
   };
   'devices_get': {
-    request: { type: 'devices_get'; params: { uniqueId: string } };
-    response: { type: 'devices_get'; response: { device: BaseDevice | undefined } };
+    request: { params: { uniqueId: string } };
+    response: { result: { device: BaseDevice | undefined } };
   };
   'devices_set': {
-    request: { type: 'devices_set'; params: { device: BaseDevice } };
-    response: { type: 'devices_set'; response: { device: BaseDevice } };
+    request: { params: { device: BaseDevice } };
+    response: { result: { device: BaseDevice } };
   };
   'devices_remove': {
-    request: { type: 'devices_remove'; params: { device: BaseDevice } };
-    response: { type: 'devices_remove'; response: { success: boolean } };
+    request: { params: { device: BaseDevice } };
+    response: { result: { success: boolean } };
   };
   'devices_clear': {
-    request: { type: 'devices_clear' };
-    response: { type: 'devices_clear'; response: { success: boolean } };
+    request: { params: undefined };
+    response: { result: { success: true } };
   };
   'devices_basearray': {
-    request: { type: 'devices_basearray'; params: { pluginName?: string } };
-    response: { type: 'devices_basearray'; response: { devices: BaseDevice[] } };
+    request: { params: { pluginName?: string } };
+    response: { result: { devices: BaseDevice[] } };
   };
 };
-
-export type WorkerMessageType = keyof WorkerMessageMap;
-
-export type WorkerRequest<T extends WorkerMessageType> = ExtendedWorkerMessageMap[T]['request'];
-
-export type WorkerResponse<T extends WorkerMessageType> = ExtendedWorkerMessageMap[T]['response'];
