@@ -4,7 +4,7 @@
  * @file matterbridgePlatform.ts
  * @author Luca Liguori
  * @created 2024-03-21
- * @version 1.5.0
+ * @version 1.5.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -368,7 +368,7 @@ export class MatterbridgePlatform {
    * @returns {Promise<PlatformSchema | undefined>} The platform schema.
    */
   async getSchema(): Promise<PlatformSchema | undefined> {
-    return (await this.#server.fetch({ type: 'plugins_getschema', src: 'platform', dst: 'plugins', params: { name: this.name } })).response.schema;
+    return (await this.#server.fetch({ type: 'plugins_getschema', src: 'platform', dst: 'plugins', params: { name: this.name } })).result.schema;
   }
 
   /**
