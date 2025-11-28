@@ -62,7 +62,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should add plugin', async () => {
-    plugin = (await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: './src/mock/plugin1' } }, 5000)).response.plugin;
+    plugin = (await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: './src/mock/plugin1' } }, 5000)).result.plugin;
     expect(plugin).not.toBe(null);
   });
 
