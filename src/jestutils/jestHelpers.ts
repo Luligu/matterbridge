@@ -99,6 +99,7 @@ export let wssSendRestartNotRequiredSpy: jest.SpiedFunction<typeof Frontend.prot
 // Spy on BroadcastServer methods
 export let broadcastServerIsWorkerRequestSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerRequest>;
 export let broadcastServerIsWorkerResponseSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerResponse>;
+export let broadcastServerBroadcastSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.broadcast>;
 export let broadcastServerRequestSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.request>;
 export let broadcastServerRespondSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.respond>;
 export let broadcastServerFetchSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.fetch>;
@@ -191,6 +192,7 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
 
   broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
   broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse');
+  broadcastServerBroadcastSpy = jest.spyOn(BroadcastServer.prototype, 'broadcast');
   broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request');
   broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond');
   broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch');
