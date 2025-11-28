@@ -53,8 +53,8 @@ describe('DeviceManager', () => {
     devices.logLevel = LogLevel.DEBUG;
     expect((devices as any).log.logLevel).toBe(LogLevel.DEBUG);
 
-    expect((await testServer.fetch({ type: 'set_log_level', src: testServer.name, dst: 'devices', params: { logLevel: LogLevel.DEBUG } })).response.logLevel).toBe(LogLevel.DEBUG);
-    expect((await testServer.fetch({ type: 'get_log_level', src: testServer.name, dst: 'devices' })).response.logLevel).toBe(LogLevel.DEBUG);
+    expect((await testServer.fetch({ type: 'set_log_level', src: testServer.name, dst: 'devices', params: { logLevel: LogLevel.DEBUG } })).result.logLevel).toBe(LogLevel.DEBUG);
+    expect((await testServer.fetch({ type: 'get_log_level', src: testServer.name, dst: 'devices' })).result.logLevel).toBe(LogLevel.DEBUG);
   });
 
   test('size returns correct number of devices', async () => {
@@ -68,11 +68,11 @@ describe('DeviceManager', () => {
     await (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_basearray', src: 'frontend', dst: 'devices', params: {} } as any);
     await (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_basearray', src: 'frontend', dst: 'devices', params: { pluginName: 'jest' } } as any);
 
-    expect((await testServer.fetch({ type: 'devices_size', src: testServer.name, dst: 'devices' })).response.size).toBe(3);
-    expect((await testServer.fetch({ type: 'devices_length', src: testServer.name, dst: 'devices' })).response.length).toBe(3);
+    expect((await testServer.fetch({ type: 'devices_size', src: testServer.name, dst: 'devices' })).result.size).toBe(3);
+    expect((await testServer.fetch({ type: 'devices_length', src: testServer.name, dst: 'devices' })).result.length).toBe(3);
   });
 
-  test('set without uniqueId to throw', () => {
+  test('set without uniqueId to throw', async () => {
     expect(() => devices.set({ name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1' } as unknown as MatterbridgeEndpoint)).toThrow();
   });
 
@@ -83,9 +83,9 @@ describe('DeviceManager', () => {
 
     expect(devices.size).toBe(3);
     const baseDevice = { name: 'DeviceType1bis', serialNumber: 'DeviceSerial1bis', deviceName: 'Device1bis', uniqueId: 'DeviceUniqueId1bis', id: 'DeviceId1bis', number: 10 } as unknown as BaseDevice;
-    expect((await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).response.device).toBeDefined();
+    expect((await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.device).toBeDefined();
     expect(devices.size).toBe(4);
-    let getDevice: BaseDevice | undefined = (await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).response.device;
+    let getDevice: BaseDevice | undefined = (await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.device;
     expect(getDevice).toEqual({
       'deviceName': 'Device1bis',
       'id': 'DeviceId1bis',
@@ -95,7 +95,7 @@ describe('DeviceManager', () => {
       'uniqueId': 'DeviceUniqueId1bis',
     });
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    getDevice = (await testServer.fetch({ type: 'devices_get', src: testServer.name, dst: 'devices', params: { uniqueId: baseDevice.uniqueId! } })).response.device;
+    getDevice = (await testServer.fetch({ type: 'devices_get', src: testServer.name, dst: 'devices', params: { uniqueId: baseDevice.uniqueId! } })).result.device;
     expect(getDevice).toEqual({
       'deviceName': 'Device1bis',
       'id': 'DeviceId1bis',
@@ -104,7 +104,7 @@ describe('DeviceManager', () => {
       'serialNumber': 'DeviceSerial1bis',
       'uniqueId': 'DeviceUniqueId1bis',
     });
-    expect((await testServer.fetch({ type: 'devices_remove', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).response.success).toBe(true);
+    expect((await testServer.fetch({ type: 'devices_remove', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.success).toBe(true);
     expect(devices.size).toBe(3);
   });
 
@@ -114,8 +114,8 @@ describe('DeviceManager', () => {
     expect(devices.has('DeviceUniqueId2')).toBe(true);
     expect(devices.has('DeviceUniqueId3')).toBe(true);
 
-    expect((await testServer.fetch({ type: 'devices_has', src: testServer.name, dst: 'devices', params: { uniqueId: 'Unknown' } })).response.has).toBe(false);
-    expect((await testServer.fetch({ type: 'devices_has', src: testServer.name, dst: 'devices', params: { uniqueId: 'DeviceUniqueId1' } })).response.has).toBe(true);
+    expect((await testServer.fetch({ type: 'devices_has', src: testServer.name, dst: 'devices', params: { uniqueId: 'Unknown' } })).result.has).toBe(false);
+    expect((await testServer.fetch({ type: 'devices_has', src: testServer.name, dst: 'devices', params: { uniqueId: 'DeviceUniqueId1' } })).result.has).toBe(true);
   });
 
   test('get returns the correct devices', async () => {
@@ -126,8 +126,8 @@ describe('DeviceManager', () => {
     expect(devices.get('DeviceUniqueId2')?.serialNumber).toBe('DeviceSerial2');
     expect(devices.get('DeviceUniqueId3')?.serialNumber).toBe('DeviceSerial3');
 
-    expect((await testServer.fetch({ type: 'devices_get', src: testServer.name, dst: 'devices', params: { uniqueId: 'Unknown' } })).response.device).toBeUndefined();
-    expect((await testServer.fetch({ type: 'devices_get', src: testServer.name, dst: 'devices', params: { uniqueId: 'DeviceUniqueId1' } })).response.device).toBeDefined();
+    expect((await testServer.fetch({ type: 'devices_get', src: testServer.name, dst: 'devices', params: { uniqueId: 'Unknown' } })).result.device).toBeUndefined();
+    expect((await testServer.fetch({ type: 'devices_get', src: testServer.name, dst: 'devices', params: { uniqueId: 'DeviceUniqueId1' } })).result.device).toBeDefined();
   });
 
   test('Symbol.iterator allows for iteration over devices', () => {
@@ -168,8 +168,8 @@ describe('DeviceManager', () => {
     await setDebug(true);
     expect(devices.array()).toHaveLength(3);
 
-    expect((await testServer.fetch({ type: 'devices_basearray', src: testServer.name, dst: 'devices', params: {} })).response.devices).toHaveLength(3);
-    expect((await testServer.fetch({ type: 'devices_basearray', src: testServer.name, dst: 'devices', params: {} })).response.devices).toEqual([
+    expect((await testServer.fetch({ type: 'devices_basearray', src: testServer.name, dst: 'devices', params: {} })).result.devices).toHaveLength(3);
+    expect((await testServer.fetch({ type: 'devices_basearray', src: testServer.name, dst: 'devices', params: {} })).result.devices).toEqual([
       {
         'configUrl': undefined,
         'deviceName': 'Device1',
@@ -244,7 +244,7 @@ describe('DeviceManager', () => {
     devices.clear();
     expect(devices.length).toBe(0);
 
-    expect((await testServer.fetch({ type: 'devices_clear', src: testServer.name, dst: 'devices' })).response.success).toBe(true);
+    expect((await testServer.fetch({ type: 'devices_clear', src: testServer.name, dst: 'devices' })).result.success).toBe(true);
   });
 
   test('async forEach to return immediately if no devices', async () => {
