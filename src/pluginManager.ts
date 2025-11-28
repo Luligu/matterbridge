@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.3.2
+ * @version 1.3.3
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -79,58 +79,58 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
-    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'plugins')) {
+    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'plugins')) {
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'plugins_length':
-          this.server.respond({ ...msg, response: { length: this.length } });
+          this.server.respond({ ...msg, result: { length: this.length } });
           break;
         case 'plugins_size':
-          this.server.respond({ ...msg, response: { size: this.size } });
+          this.server.respond({ ...msg, result: { size: this.size } });
           break;
         case 'plugins_has':
-          this.server.respond({ ...msg, response: { has: this.has(msg.params.name) } });
+          this.server.respond({ ...msg, result: { has: this.has(msg.params.name) } });
           break;
         case 'plugins_get':
           {
             const plugin = this.get(msg.params.name);
             if (plugin) {
-              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
               this.log.debug(`***Plugin ${plg}${msg.params.name}${db} not found in plugins_get`);
-              this.server.respond({ ...msg, response: { plugin: undefined } });
+              this.server.respond({ ...msg, result: { plugin: undefined } });
             }
           }
           break;
         case 'plugins_set':
-          this.server.respond({ ...msg, response: { plugin: this.set(msg.params.plugin) } });
+          this.server.respond({ ...msg, result: { plugin: this.set(msg.params.plugin) } });
           break;
         case 'plugins_storagepluginarray':
-          this.server.respond({ ...msg, response: { plugins: this.storagePluginArray() } });
+          this.server.respond({ ...msg, result: { plugins: this.storagePluginArray() } });
           break;
         case 'plugins_apipluginarray':
-          this.server.respond({ ...msg, response: { plugins: this.apiPluginArray() } });
+          this.server.respond({ ...msg, result: { plugins: this.apiPluginArray() } });
           break;
         case 'plugins_install':
-          this.server.respond({ ...msg, response: { packageName: msg.params.packageName, success: await this.install(msg.params.packageName) } });
+          this.server.respond({ ...msg, result: { packageName: msg.params.packageName, success: await this.install(msg.params.packageName) } });
           break;
         case 'plugins_uninstall':
-          this.server.respond({ ...msg, response: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
+          this.server.respond({ ...msg, result: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
           break;
         case 'plugins_add':
           {
             const plugin = await this.add(msg.params.nameOrPath);
             if (plugin) {
-              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -138,9 +138,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.remove(msg.params.nameOrPath);
             if (plugin) {
-              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -148,9 +148,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.enable(msg.params.nameOrPath);
             if (plugin) {
-              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -158,9 +158,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.disable(msg.params.nameOrPath);
             if (plugin) {
-              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -168,9 +168,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const platform = await this.load(msg.params.plugin);
             if (platform) {
-              this.server.respond({ ...msg, params: {}, response: { platform: {} } });
+              this.server.respond({ ...msg, result: { platform: {} } });
             } else {
-              this.server.respond({ ...msg, response: { platform } });
+              this.server.respond({ ...msg, result: { platform } });
             }
           }
           break;
@@ -178,9 +178,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.start(msg.params.plugin, msg.params.message, msg.params.configure);
             if (plugin) {
-              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -188,9 +188,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.configure(msg.params.plugin);
             if (plugin) {
-              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -198,9 +198,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.shutdown(msg.params.plugin, msg.params.reason, msg.params.removeAllDevices, msg.params.force);
             if (plugin) {
-              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -208,9 +208,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = this.get(msg.params.name);
             if (plugin) {
-              this.server.respond({ ...msg, response: { schema: plugin.schemaJson } });
+              this.server.respond({ ...msg, result: { schema: plugin.schemaJson } });
             } else {
-              this.server.respond({ ...msg, response: { schema: undefined } });
+              this.server.respond({ ...msg, result: { schema: undefined } });
             }
           }
           break;
@@ -219,9 +219,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             const plugin = this.get(msg.params.name);
             if (plugin) {
               plugin.schemaJson = msg.params.schema;
-              this.server.respond({ ...msg, response: { success: true } });
+              this.server.respond({ ...msg, result: { success: true } });
             } else {
-              this.server.respond({ ...msg, response: { success: false } });
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.name} not found` });
             }
           }
           break;
@@ -230,9 +230,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             const plugin = this.get(msg.params.name);
             if (plugin) {
               this.saveConfigFromJson(plugin, msg.params.config, msg.params.restartRequired); // No await as it's not necessary to wait
-              this.server.respond({ ...msg, response: { success: true } });
+              this.server.respond({ ...msg, result: { success: true } });
             } else {
-              this.server.respond({ ...msg, response: { success: false } });
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.name} not found` });
             }
           }
           break;
@@ -241,9 +241,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             const plugin = this.get(msg.params.plugin.name);
             if (plugin) {
               plugin.latestVersion = msg.params.version;
-              this.server.respond({ ...msg, response: { success: true } });
+              this.server.respond({ ...msg, result: { success: true } });
             } else {
-              this.server.respond({ ...msg, response: { success: false } });
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.plugin.name} not found` });
             }
           }
           break;
@@ -252,9 +252,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             const plugin = this.get(msg.params.plugin.name);
             if (plugin) {
               plugin.devVersion = msg.params.version;
-              this.server.respond({ ...msg, response: { success: true } });
+              this.server.respond({ ...msg, result: { success: true } });
             } else {
-              this.server.respond({ ...msg, response: { success: false } });
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.plugin.name} not found` });
             }
           }
           break;

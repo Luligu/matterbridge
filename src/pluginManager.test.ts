@@ -155,56 +155,55 @@ describe('PluginManager', () => {
 
   test('BroadcastServer from local path', async () => {
     const pluginPath = path.join('.', 'src', 'mock', 'plugin1');
-    expect((await testServer.fetch({ type: 'plugins_install', src: testServer.name, dst: 'plugins', params: { packageName: pluginPath } }, 5000)).response.success).toBe(true);
+    expect((await testServer.fetch({ type: 'plugins_install', src: testServer.name, dst: 'plugins', params: { packageName: pluginPath } }, 5000)).result.success).toBe(true);
     expect(plugins.has('matterbridge-mock1')).toBe(true);
     expect(plugins.get('matterbridge-mock1')?.enabled).toBe(true);
 
-    expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).response.plugin).toBeDefined();
-
-    expect((await testServer.fetch({ type: 'plugins_disable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeDefined();
+    expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
+    expect((await testServer.fetch({ type: 'plugins_disable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeDefined();
     expect(plugins.get('matterbridge-mock1')?.enabled).toBe(false);
 
-    expect((await testServer.fetch({ type: 'plugins_enable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeDefined();
+    expect((await testServer.fetch({ type: 'plugins_enable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeDefined();
     expect(plugins.get('matterbridge-mock1')?.enabled).toBe(true);
 
-    expect((await testServer.fetch({ type: 'plugins_load', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).response.platform).toBeDefined();
+    expect((await testServer.fetch({ type: 'plugins_load', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).result.platform).toBeDefined();
     expect(plugins.get('matterbridge-mock1')?.loaded).toBe(true);
 
-    expect((await testServer.fetch({ type: 'plugins_start', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeDefined();
+    expect((await testServer.fetch({ type: 'plugins_start', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeDefined();
     expect(plugins.get('matterbridge-mock1')?.started).toBe(true);
 
-    expect((await testServer.fetch({ type: 'plugins_configure', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeDefined();
+    expect((await testServer.fetch({ type: 'plugins_configure', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeDefined();
     expect(plugins.get('matterbridge-mock1')?.configured).toBe(true);
 
-    expect((await testServer.fetch({ type: 'plugins_shutdown', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeDefined();
+    expect((await testServer.fetch({ type: 'plugins_shutdown', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeDefined();
 
-    expect((await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeDefined();
+    expect((await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeDefined();
 
     // Try all operations on removed plugin
-    expect((await testServer.fetch({ type: 'plugins_enable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeNull();
-    expect((await testServer.fetch({ type: 'plugins_disable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeNull();
-    expect((await testServer.fetch({ type: 'plugins_load', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).response.platform).toBeUndefined();
-    expect((await testServer.fetch({ type: 'plugins_start', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeUndefined();
-    expect((await testServer.fetch({ type: 'plugins_configure', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeUndefined();
-    expect((await testServer.fetch({ type: 'plugins_shutdown', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeUndefined();
-    expect((await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).response.plugin).toBeNull();
+    expect((await testServer.fetch({ type: 'plugins_enable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeNull();
+    expect((await testServer.fetch({ type: 'plugins_disable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeNull();
+    expect((await testServer.fetch({ type: 'plugins_load', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).result.platform).toBeUndefined();
+    expect((await testServer.fetch({ type: 'plugins_start', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeUndefined();
+    expect((await testServer.fetch({ type: 'plugins_configure', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeUndefined();
+    expect((await testServer.fetch({ type: 'plugins_shutdown', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeUndefined();
+    expect((await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeNull();
     // @ts-expect-error testing non-existing type
     testServer.request({ type: 'plugins_unknown', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } });
 
-    expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).response.plugin).toBeDefined();
-
-    expect((await testServer.fetch({ type: 'plugins_uninstall', src: testServer.name, dst: 'plugins', params: { packageName: 'matterbridge-mock1' } }, 5000)).response.success).toBe(true);
+    expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
+    expect((await testServer.fetch({ type: 'plugins_uninstall', src: testServer.name, dst: 'plugins', params: { packageName: 'matterbridge-mock1' } }, 5000)).result.success).toBe(true);
     expect(plugins.has('matterbridge-mock1')).toBe(false);
-    expect((await testServer.fetch({ type: 'plugins_set_latest_version', src: testServer.name, dst: 'plugins', params: { plugin: {} as ApiPlugin, version: '1.0.0' } }, 5000)).response.success).toBe(false);
-    expect((await testServer.fetch({ type: 'plugins_set_dev_version', src: testServer.name, dst: 'plugins', params: { plugin: {} as ApiPlugin, version: '1.0.0' } }, 5000)).response.success).toBe(false);
+
+    await expect(testServer.fetch({ type: 'plugins_set_latest_version', src: testServer.name, dst: 'plugins', params: { plugin: {} as ApiPlugin, version: '1.0.0' } }, 5000)).rejects.toThrow();
+    await expect(testServer.fetch({ type: 'plugins_set_dev_version', src: testServer.name, dst: 'plugins', params: { plugin: {} as ApiPlugin, version: '1.0.0' } }, 5000)).rejects.toThrow();
   });
 
   test('logLevel changes correctly', async () => {
     plugins.logLevel = LogLevel.DEBUG;
     expect((plugins as any).log.logLevel).toBe(LogLevel.DEBUG);
 
-    expect((await testServer.fetch({ type: 'set_log_level', src: testServer.name, dst: 'plugins', params: { logLevel: LogLevel.DEBUG } })).response.logLevel).toBe(LogLevel.DEBUG);
-    expect((await testServer.fetch({ type: 'get_log_level', src: testServer.name, dst: 'plugins' })).response.logLevel).toBe(LogLevel.DEBUG);
+    expect((await testServer.fetch({ type: 'set_log_level', src: testServer.name, dst: 'plugins', params: { logLevel: LogLevel.DEBUG } })).result.logLevel).toBe(LogLevel.DEBUG);
+    expect((await testServer.fetch({ type: 'get_log_level', src: testServer.name, dst: 'plugins' })).result.logLevel).toBe(LogLevel.DEBUG);
   });
 
   test('clear, save and load from storage', async () => {
@@ -234,8 +233,8 @@ describe('PluginManager', () => {
     expect(plugins.size).toBe(0);
     expect(plugins.length).toBe(0);
 
-    expect((await testServer.fetch({ type: 'plugins_size', src: testServer.name, dst: 'plugins' })).response.size).toBe(0);
-    expect((await testServer.fetch({ type: 'plugins_length', src: testServer.name, dst: 'plugins' })).response.length).toBe(0);
+    expect((await testServer.fetch({ type: 'plugins_size', src: testServer.name, dst: 'plugins' })).result.size).toBe(0);
+    expect((await testServer.fetch({ type: 'plugins_length', src: testServer.name, dst: 'plugins' })).result.length).toBe(0);
   });
 
   test('set and get return plugin', async () => {
@@ -260,13 +259,13 @@ describe('PluginManager', () => {
       { 'author': 'To update', 'description': 'To update', enabled: true, 'homepage': 'https://example.com', 'name': 'matterbridge-mock3', 'path': './src/mock/plugin3/package.json', 'type': 'Unknown', 'version': '1.0.0' },
     ]);
 
-    expect((await testServer.fetch({ type: 'plugins_get', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-mock1' } })).response.plugin).toBeDefined();
-    expect((await testServer.fetch({ type: 'plugins_get', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-unknown' } })).response.plugin).toBeUndefined();
-    expect((await testServer.fetch({ type: 'plugins_storagepluginarray', src: testServer.name, dst: 'plugins' })).response.plugins).toHaveLength(3);
-    expect((await testServer.fetch({ type: 'plugins_apipluginarray', src: testServer.name, dst: 'plugins' })).response.plugins).toHaveLength(3);
+    expect((await testServer.fetch({ type: 'plugins_get', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-mock1' } })).result.plugin).toBeDefined();
+    expect((await testServer.fetch({ type: 'plugins_get', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-unknown' } })).result.plugin).toBeUndefined();
+    expect((await testServer.fetch({ type: 'plugins_storagepluginarray', src: testServer.name, dst: 'plugins' })).result.plugins).toHaveLength(3);
+    expect((await testServer.fetch({ type: 'plugins_apipluginarray', src: testServer.name, dst: 'plugins' })).result.plugins).toHaveLength(3);
     const mockPlugin4 = { name: 'matterbridge-mock4', path: './src/mock/plugin4/package.json', enabled: true, type: 'Unknown' as any, version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' };
-    expect((await testServer.fetch({ type: 'plugins_set', src: testServer.name, dst: 'plugins', params: { plugin: mockPlugin4 } })).response.plugin).toEqual(mockPlugin4);
-    expect((await testServer.fetch({ type: 'plugins_get', src: testServer.name, dst: 'plugins', params: { name: mockPlugin4.name } })).response.plugin).toEqual(mockPlugin4);
+    expect((await testServer.fetch({ type: 'plugins_set', src: testServer.name, dst: 'plugins', params: { plugin: mockPlugin4 } })).result.plugin).toEqual(mockPlugin4);
+    expect((await testServer.fetch({ type: 'plugins_get', src: testServer.name, dst: 'plugins', params: { name: mockPlugin4.name } })).result.plugin).toEqual(mockPlugin4);
     // @ts-expect-error accessing private member
     plugins._plugins.delete('matterbridge-mock4');
   });
@@ -282,8 +281,8 @@ describe('PluginManager', () => {
     expect(plugins.has('matterbridge-mock2')).toBe(true);
     expect(plugins.has('matterbridge-mock3')).toBe(true);
 
-    expect((await testServer.fetch({ type: 'plugins_has', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-mock1' } })).response.has).toBe(true);
-    expect((await testServer.fetch({ type: 'plugins_has', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-unknown' } })).response.has).toBe(false);
+    expect((await testServer.fetch({ type: 'plugins_has', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-mock1' } })).result.has).toBe(true);
+    expect((await testServer.fetch({ type: 'plugins_has', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-unknown' } })).result.has).toBe(false);
   });
 
   test('array returns array of plugins', () => {
