@@ -451,6 +451,7 @@ describe('Matterbridge mocked', () => {
     matterbridge.setLogLevel(LogLevel.NOTICE);
     expect((plugins as any).log.logLevel).toBe(LogLevel.NOTICE);
     expect(plugins.array()[0].platform?.log.logLevel).toBe(LogLevel.NOTICE);
+    await plugins.shutdown(plugins.array()[0], 'Test Shutdown', false, true);
   });
 
   test('Matterbridge.initialize() reinstall of plugins', async () => {

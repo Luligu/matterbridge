@@ -202,6 +202,10 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(plugins.get('matterbridge-mock4')?.type).toBe('AccessoryPlatform');
     expect(plugins.get('matterbridge-mock5')?.type).toBe('AccessoryPlatform');
     expect(plugins.get('matterbridge-mock6')?.type).toBe('AccessoryPlatform');
+    for (const plugin of matterbridge.plugins) {
+      await matterbridge.plugins.shutdown(plugin, 'Test Shutdown', false, true);
+      expect(plugin.loaded).toBeFalsy();
+    }
   });
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
