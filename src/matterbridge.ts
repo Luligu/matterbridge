@@ -266,6 +266,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await this.nodeContext?.set<string>('matterbridgeDevVersion', msg.params.version);
           this.server.respond({ ...msg, result: { success: true } });
           break;
+        case 'matterbridge_global_prefix':
+          this.globalModulesDirectory = msg.params.prefix;
+          await this.nodeContext?.set<string>('globalModulesDirectory', msg.params.prefix);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
         case 'matterbridge_sys_update':
           this.shellySysUpdate = true;
           this.server.respond({ ...msg, result: { success: true } });
@@ -1112,15 +1117,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
     } else {
       // The global node_modules directory is already set in the node storage and we check if it is still valid
-      this.log.debug(`Checking global node_modules directory: ${this.globalModulesDirectory}`);
-      try {
-        const { getGlobalNodeModules } = await import('./utils/network.js');
-        this.globalModulesDirectory = await getGlobalNodeModules();
-        this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-        await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
-      } catch (error) {
-        this.log.error(`Error checking global node_modules directory: ${error}`);
-      }
+      this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+      const { createESMWorker } = await import('./workers.js');
+      createESMWorker('NpmGlobalPrefix', './dist/workerGlobalPrefix.js');
     }
 
     // Matterbridge version
