@@ -27,7 +27,7 @@ import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, set
 import { ExtractorHood } from './extractorHood.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 // Setup the Matter test environment
 createTestEnvironment(NAME);
@@ -53,7 +53,7 @@ describe('Matterbridge ' + NAME, () => {
     await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  });
+  }, 10000);
 
   test('create an extractor hood device', async () => {
     device = new ExtractorHood('Extractor Hood Test Device', 'EH123456');

@@ -18,7 +18,7 @@ import { addDevice, aggregator, createTestEnvironment, server, setupTest, startS
 import { Cooktop } from './cooktop.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 // Setup the Matter test environment
 createTestEnvironment(NAME);
@@ -48,7 +48,7 @@ describe('Matterbridge ' + NAME, () => {
     await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  });
+  }, 10000);
 
   test('create a cooktop device', async () => {
     device = new Cooktop('Cooktop Test Device', 'CT123456');

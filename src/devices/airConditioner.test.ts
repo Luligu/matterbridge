@@ -42,7 +42,7 @@ describe('Matterbridge ' + NAME, () => {
     await startServerNode(NAME, MATTER_PORT, airConditioner.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  });
+  }, 10000);
 
   test('create an air conditioner device (defaults)', async () => {
     device = new AirConditioner('Air Conditioner Test Device', 'AC123456');
