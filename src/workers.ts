@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-import { isMainThread, parentPort, threadId, threadName, Worker, workerData, WorkerOptions } from 'node:worker_threads';
+import { isMainThread, parentPort, threadId, Worker, workerData, WorkerOptions } from 'node:worker_threads';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { inspect } from 'node:util';
@@ -38,7 +38,7 @@ import type { ParentPortMessage } from './workerTypes.js';
  */
 // istanbul ignore next cause it's available only in worker threads
 export function parentPost(message: ParentPortMessage): void {
-  if (!parentPort) throw new Error(`WorkerServer ${threadName}: parentPort is not available.`);
+  if (!parentPort) throw new Error(`WorkerServer ${workerData.threadName}: parentPort is not available.`);
   parentPort.postMessage(message);
 }
 
@@ -51,8 +51,8 @@ export function parentPost(message: ParentPortMessage): void {
  */
 // istanbul ignore next cause it's available only in worker threads
 export function parentLog(logName: string | undefined, logLevel: LogLevel, message: string): void {
-  if (!parentPort) throw new Error(`WorkerServer ${threadName}: parentPort is not available.`);
-  const logMessage: ParentPortMessage = { type: 'log', threadId, threadName, logName, logLevel, message };
+  if (!parentPort) throw new Error(`WorkerServer ${workerData.threadName}: parentPort is not available.`);
+  const logMessage: ParentPortMessage = { type: 'log', threadId, threadName: workerData.threadName, logName, logLevel, message };
   parentPort.postMessage(logMessage);
 }
 
@@ -78,7 +78,7 @@ export function parentLog(logName: string | undefined, logLevel: LogLevel, messa
 export function createESMWorker(name: string, relativePath: string, workerData?: Record<string, boolean | number | string | object>, argv?: string[], env?: NodeJS.ProcessEnv, execArgv?: string[]): Worker {
   const fileURL = pathToFileURL(resolve(relativePath));
   const options: WorkerOptions & { type: string } = {
-    workerData,
+    workerData: { ...workerData, threadName: name }, // Pass threadName in workerData cause worker_threads don't have it natively in node 20
     type: 'module',
     name,
     argv: argv ?? process.argv.slice(2), // Pass command line arguments to worker
@@ -96,7 +96,7 @@ export function createESMWorker(name: string, relativePath: string, workerData?:
  */
 export function logWorkerInfo(log: AnsiLogger, logEnv: boolean = false): void {
   // Log worker info
-  log.debug(`${isMainThread ? 'Main thread' : 'Worker thread'}: ${threadName}:${threadId} Pid: ${process.pid}`);
+  log.debug(`${isMainThread ? 'Main thread' : 'Worker thread'}: ${workerData?.threadName}:${threadId} Pid: ${process.pid}`);
   log.debug(`ParentPort: ${parentPort ? 'active' : 'not active'}`);
   log.debug(`WorkerData: ${workerData ? inspect(workerData, true, 10, true) : 'none'}`);
   const argv = process.argv.slice(2);
