@@ -14,8 +14,9 @@ The project will evolve to a multi-threaded architecture (the CLI will become th
 - frontend;
 - plugins;
 - devices;
-- check_updates;
-- npm_install;
+- check updates;
+- npm install;
+- ✅ get global node_modules;
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
@@ -31,7 +32,9 @@ Advantages:
 ### Added
 
 - [matterbridge.io]: Updated website https://matterbridge.io with all guides.
-- [matterbridge]: Added addVirtualEndpoint() to match thread module.
+- [matterbridge]: Added addVirtualEndpoint() to match Matterbridge thread module.
+- [BroadcastServer]: Backport BroadcastServer v.2.0.0 from Matterbridge thread module.
+- [MatterbridgePrefix]: Added worker thread to get global node_modules.
 
 ### Changed
 
