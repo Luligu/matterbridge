@@ -1010,6 +1010,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     // Subscribe to the attributes changed event
     await this.subscribeAttributeChanged(plugin, device);
     this.log.info(`Added endpoint #${plugin.registeredDevices} ${plg}${pluginName}${nf}:${dev}${device.deviceName}${nf} (${zb}${device.name}${nf})`);
+    await this.yieldToNode(10);
     return device;
   }
 
@@ -1044,6 +1045,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
     // Remove the device from the DeviceManager
     await this.server.fetch({ type: 'devices_remove', src: this.server.name, dst: 'devices', params: { device: toBaseDevice(device) } });
+    await this.yieldToNode(10);
     return device;
   }
 
@@ -1074,6 +1076,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
       // Remove the device from the DeviceManager
       await this.server.fetch({ type: 'devices_remove', src: this.server.name, dst: 'devices', params: { device: toBaseDevice(device) } });
+      await this.yieldToNode(10);
       if (delay > 0) await wait(delay);
     }
     if (delay > 0) await wait(Number(process.env['MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS']) || 2000);
@@ -1119,6 +1122,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
     await addVirtualDevice(this.aggregatorNode, name.slice(0, 32), type, callback);
     this.log.debug(`Created virtual device ${plg}${pluginName}${db}:${dev}${name}${db}`);
+    await this.yieldToNode(10);
     return true;
   }
 
