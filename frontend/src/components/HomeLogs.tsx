@@ -25,7 +25,7 @@ function HomeLogs(): React.JSX.Element {
           Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}" Scroll: {autoScroll ? 'auto' : 'manual'}
         </MbfWindowHeaderText>
       </MbfWindowHeader>
-      <MbfWindowContent style={{ flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '10px' }}>
+      <MbfWindowContent style={{ flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '10px', alignItems: 'start' }}>
         <WebSocketLogs />
       </MbfWindowContent>
     </MbfWindow>
