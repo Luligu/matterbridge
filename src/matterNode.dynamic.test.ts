@@ -22,7 +22,7 @@ import { ServerNodeStore } from '@matter/main/node';
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, NODE_STORAGE_DIR, dev, plg } from './matterbridgeTypes.js';
-import { loggerInfoSpy, originalProcessArgv, setupTest } from './jestutils/jestHelpers.js';
+import { flushAsync, loggerInfoSpy, originalProcessArgv, setupTest } from './jestutils/jestHelpers.js';
 import { getInterfaceDetails } from './utils/network.js';
 import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -172,10 +172,12 @@ describe('MatterNode dynamic', () => {
       await matter.addBridgedEndpoint('matterbridge-mock1', outlet);
       expect(outlet.owner).toBeDefined();
       expect(deviceManager.length).toBe(i);
+      await flushAsync(undefined, undefined, 10); // Allow async operations to complete
     }
     for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
       const outlet = matter.aggregatorNode?.parts.get(`Outlet${i}`) as MatterbridgeEndpoint;
       await matter.removeBridgedEndpoint('matterbridge-mock1', outlet);
+      await flushAsync(undefined, undefined, 10); // Allow async operations to complete
     }
     expect(deviceManager.length).toBe(0);
   }, 30000);
@@ -261,10 +263,12 @@ describe('MatterNode dynamic', () => {
       await matter.addBridgedEndpoint('matterbridge-mock1', outlet);
       expect(outlet.owner).toBeDefined();
       expect(deviceManager.length).toBe(i + 1); // +1 for the initial device
+      await flushAsync(undefined, undefined, 10); // Allow async operations to complete
     }
     for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
       const outlet = matter.aggregatorNode?.parts.get(`Outlet${i}`) as MatterbridgeEndpoint;
       await matter.removeBridgedEndpoint('matterbridge-mock1', outlet);
+      await flushAsync(undefined, undefined, 10); // Allow async operations to complete
     }
     expect(deviceManager.length).toBe(1);
   }, 30000);
