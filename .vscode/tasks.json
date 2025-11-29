@@ -16,12 +16,7 @@
       "label": "Test: All",
       "type": "shell",
       "command": "node",
-      "args": [
-        "--no-warnings",
-        "--experimental-vm-modules",
-        "node_modules/jest/bin/jest.js",
-        "--maxWorkers=100%"
-      ],
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--maxWorkers=100%"],
       "group": {
         "kind": "test",
         "isDefault": true
@@ -32,13 +27,7 @@
       "label": "Test: Verbose",
       "type": "shell",
       "command": "node",
-      "args": [
-        "--no-warnings",
-        "--experimental-vm-modules",
-        "node_modules/jest/bin/jest.js",
-        "--verbose",
-        "--maxWorkers=100%"
-      ],
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--maxWorkers=100%"],
       "group": {
         "kind": "test",
         "isDefault": false
@@ -49,14 +38,7 @@
       "label": "Test: Coverage",
       "type": "shell",
       "command": "node",
-      "args": [
-        "--no-warnings",
-        "--experimental-vm-modules",
-        "node_modules/jest/bin/jest.js",
-        "--verbose",
-        "--coverage",
-        "--maxWorkers=100%"
-      ],
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%"],
       "group": {
         "kind": "test",
         "isDefault": false
@@ -80,7 +62,7 @@
         "matterbridge.device.server.test.ts",
         "matterbridge.matterjs.test.ts",
         "matterbridge.mocked.test.ts",
-        "matterbridge.test.ts",
+        "matterbridge.test.ts"
       ],
       "group": {
         "kind": "test",
@@ -92,17 +74,7 @@
       "label": "Test: Frontend",
       "type": "shell",
       "command": "node",
-      "args": [
-        "--no-warnings",
-        "--experimental-vm-modules",
-        "node_modules/jest/bin/jest.js",
-        "--verbose",
-        "--coverage",
-        "--maxWorkers=100%",
-        "frontend.test.ts",
-        "frontend.express.test.ts",
-        "frontend.websocket.test.ts"
-      ],
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "frontend.test.ts", "frontend.express.test.ts", "frontend.websocket.test.ts"],
       "group": {
         "kind": "test",
         "isDefault": false
@@ -157,7 +129,7 @@
         "src/devices/roboticVacuumCleaner.test.ts",
         "src/devices/solarPower.test.ts",
         "src/devices/speaker.test.ts",
-        "src/devices/waterHeater.test.ts",
+        "src/devices/waterHeater.test.ts"
       ],
       "group": {
         "kind": "test",
@@ -191,15 +163,7 @@
       "label": "Test: PluginManager",
       "type": "shell",
       "command": "node",
-      "args": [
-        "--no-warnings",
-        "--experimental-vm-modules",
-        "node_modules/jest/bin/jest.js",
-        "--verbose",
-        "--coverage",
-        "--maxWorkers=100%",
-        "pluginManager.test.ts"
-      ],
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "pluginManager.test.ts"],
       "group": {
         "kind": "test",
         "isDefault": false
@@ -210,15 +174,7 @@
       "label": "Test: DeviceManager",
       "type": "shell",
       "command": "node",
-      "args": [
-        "--no-warnings",
-        "--experimental-vm-modules",
-        "node_modules/jest/bin/jest.js",
-        "--verbose",
-        "--coverage",
-        "--maxWorkers=100%",
-        "deviceManager.test.ts"
-      ],
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "deviceManager.test.ts"],
       "group": {
         "kind": "test",
         "isDefault": false
@@ -281,7 +237,7 @@
         "src/utils/spawn.test.ts",
         "src/utils/tracker.test.ts",
         "src/utils/utils.test.ts",
-        "src/utils/wait.test.ts",
+        "src/utils/wait.test.ts"
       ],
       "group": {
         "kind": "test",
@@ -306,7 +262,7 @@
         "src/matterNode.bridge.test.ts",
         "src/matterNode.accessory.test.ts",
         "src/matterNode.dynamic.test.ts",
-        "src/matterNode.server.test.ts",
+        "src/matterNode.server.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -334,9 +290,7 @@
     {
       "type": "npm",
       "script": "lint",
-      "problemMatcher": [
-        "$eslint-stylish"
-      ],
+      "problemMatcher": ["$eslint-stylish"],
       "label": "npm: lint"
     }
   ]
