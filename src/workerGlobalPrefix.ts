@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-import { threadId, threadName, isMainThread, parentPort } from 'node:worker_threads';
+import { threadId, isMainThread, parentPort, workerData } from 'node:worker_threads';
 
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
@@ -38,8 +38,8 @@ const verbose = hasParameter('verbose');
 // Send init message
 // istanbul ignore next cause it's available only in worker threads
 if (!isMainThread && parentPort) {
-  parentPost({ type: 'init', threadId, threadName, success: true });
-  if (debug) parentLog('MatterbridgePrefix', LogLevel.INFO, `Worker ${threadName}:${threadId} initialized.`);
+  parentPost({ type: 'init', threadId, threadName: workerData.threadName, success: true });
+  if (debug) parentLog('MatterbridgePrefix', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} initialized.`);
 }
 
 // Broadcast server
@@ -68,6 +68,6 @@ server.close();
 // Send exit message
 // istanbul ignore next cause it's available only in worker threads
 if (!isMainThread && parentPort) {
-  parentPost({ type: 'exit', threadId, threadName, success });
-  if (debug) parentLog('MatterbridgePrefix', LogLevel.INFO, `Worker ${threadName}:${threadId} exiting with success: ${success}.`);
+  parentPost({ type: 'exit', threadId, threadName: workerData.threadName, success });
+  if (debug) parentLog('MatterbridgePrefix', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} exiting with success: ${success}.`);
 }
