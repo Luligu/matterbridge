@@ -301,6 +301,7 @@
         "--coverage",
         "--maxWorkers=100%",
         "src/broadcastServer.test.ts",
+        "src/workers.test.ts",
         "src/matterNode.test.ts",
         "src/matterNode.bridge.test.ts",
         "src/matterNode.accessory.test.ts",
