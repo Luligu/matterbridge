@@ -88,11 +88,12 @@ export class DeviceManager {
   }
 
   destroy(): void {
+    this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
   }
 
   private async msgHandler(msg: WorkerMessage) {
-    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'devices')) {
+    if (this.server.isWorkerRequest(msg)) {
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':

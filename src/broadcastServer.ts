@@ -214,6 +214,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
 
   /**
    * Send a response message from the worker implementation.
+   * It also calculates the elapsed time since the request was sent and swaps the source and destination fields.
    *
    * @template K
    * @param {WorkerMessageResponse<K>} message The response message to send.

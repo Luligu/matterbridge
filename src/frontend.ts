@@ -102,11 +102,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   destroy(): void {
+    this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
   }
 
   private async msgHandler(msg: WorkerMessage) {
-    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'frontend')) {
+    if (this.server.isWorkerRequest(msg)) {
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -160,7 +161,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
-    if (this.server.isWorkerResponse(msg) && msg.result && (msg.dst === 'all' || msg.dst === 'frontend')) {
+    if (this.server.isWorkerResponse(msg) && msg.result) {
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'plugins_install':
