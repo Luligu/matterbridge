@@ -35,6 +35,7 @@ Advantages:
 - [matterbridge]: Added addVirtualEndpoint() to match Matterbridge thread module.
 - [BroadcastServer]: Backport BroadcastServer v.2.0.0 from Matterbridge thread module.
 - [MatterbridgePrefix]: Added worker thread to get global node_modules.
+- [PluginManager]: Improved the resolve method to resolve automatically also in the plugin directory Usefull for developing with DevContainer.
 
 ### Changed
 
