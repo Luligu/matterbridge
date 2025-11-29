@@ -110,7 +110,7 @@ describe('Matterbridge frontend', () => {
     // Restore all mocks
     jest.restoreAllMocks();
 
-    logKeepAlives();
+    // logKeepAlives();
   });
 
   const onMessage = (event: WebSocket.MessageEvent) => {
