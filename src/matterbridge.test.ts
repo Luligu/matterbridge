@@ -34,7 +34,7 @@ const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').m
 });
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;

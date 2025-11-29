@@ -6,6 +6,15 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
+// Mock the createESMWorker from workers module before importing it
+jest.unstable_mockModule('./workers.js', () => ({
+  createESMWorker: jest.fn(() => {
+    return undefined; // Mock the createESMWorker function to return immediately
+  }),
+}));
+const workerModule = await import('./workers.js');
+const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
+
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -18,7 +27,7 @@ import { dev, plg } from './matterbridgeTypes.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge  Device serverMode=matter', () => {
   let matterbridge: Matterbridge;

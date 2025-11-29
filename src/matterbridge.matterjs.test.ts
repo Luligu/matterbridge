@@ -18,7 +18,7 @@ import { Matterbridge } from './matterbridge.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge matterjs', () => {
   let matterbridge: Matterbridge;
@@ -140,7 +140,7 @@ describe('Matterbridge matterjs', () => {
     expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
 
     jest.spyOn(matterbridge.serverNode as any, 'close').mockImplementationOnce(() => {
-      throw new Error('Test error creating server node');
+      throw new Error('Test error closing server node');
     });
     await (matterbridge as any).stopServerNode(matterbridge.serverNode, 100);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Closing Matterbridge server node`));

@@ -48,7 +48,7 @@ const wait = waitModule.wait as jest.MockedFunction<typeof waitModule.wait>;
 const waiter = waitModule.waiter as jest.MockedFunction<typeof waitModule.waiter>;
 const withTimeout = waitModule.withTimeout as jest.MockedFunction<typeof waitModule.withTimeout>;
 
-// Mock the spawnCommand from spawn module before importing it
+// Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('./workers.js', () => ({
   createESMWorker: jest.fn(() => {
     return undefined; // Mock the createESMWorker function to return immediately
