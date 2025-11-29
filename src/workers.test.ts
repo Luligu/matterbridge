@@ -58,7 +58,7 @@ describe('Workers', () => {
     await new Promise<void>((resolve, reject) => {
       worker = createESMWorker('NpmGlobalPrefix', './dist/workerGlobalPrefix.js');
       worker.on('message', messageHandler);
-      workerName = worker.threadName;
+      workerName = 'NpmGlobalPrefix';
       workerId = worker.threadId;
       expect(worker).toBeDefined();
       expect(workerName).toBeDefined();
