@@ -6,6 +6,15 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
+// Mock the getGlobalNodeModules logInterfaces from network module before importing it
+jest.unstable_mockModule('./utils/network.js', () => ({
+  getGlobalNodeModules: jest.fn(() => {
+    return Promise.resolve('./node_modules'); // Mock the getGlobalNodeModules function to resolve immediately
+  }),
+}));
+const networkModule = await import('./utils/network.js');
+const getGlobalNodeModulesMock = networkModule.getGlobalNodeModules as jest.MockedFunction<typeof networkModule.getGlobalNodeModules>;
+
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('./workers.js', () => ({
   createESMWorker: jest.fn(() => {
@@ -43,6 +52,8 @@ describe('Matterbridge  Device serverMode=matter', () => {
     await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
+
+    // logKeepAlives();
   });
 
   test('Matterbridge.loadInstance(true)', async () => {
@@ -128,6 +139,25 @@ describe('Matterbridge  Device serverMode=matter', () => {
       const plugin = matterbridge.plugins.get('matterdevicetest');
       expect(plugin).toBeDefined();
       if (plugin) matterbridge.plugins.load(plugin);
+    });
+
+    expect(matterbridge.plugins.size).toBe(1);
+    expect(matterbridge.devices.size).toBe(0);
+    expect(matterbridge.plugins.get('matterdevicetest')).toBeDefined();
+    expect(matterbridge.plugins.get('matterdevicetest')?.type).toBe('DynamicPlatform');
+  });
+
+  test('shutdown mocked plugin matterdevicetest', async () => {
+    expect(matterbridge.plugins.size).toBe(1);
+    expect(matterbridge.devices.size).toBe(0);
+
+    await new Promise<void>((resolve) => {
+      matterbridge.plugins.once('shutdown', (name) => {
+        if (name === 'matterdevicetest') resolve();
+      });
+      const plugin = matterbridge.plugins.get('matterdevicetest');
+      expect(plugin).toBeDefined();
+      if (plugin) matterbridge.plugins.shutdown(plugin, 'shutdown', false, true);
     });
 
     expect(matterbridge.plugins.size).toBe(1);
