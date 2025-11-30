@@ -865,7 +865,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       return;
     }
 
-    // Check in 30 seconds the latest and dev versions of matterbridge and the plugins
+    // Check in 5 minutes the latest and dev versions of matterbridge and the plugins
     clearTimeout(this.checkUpdateTimeout);
     this.checkUpdateTimeout = setTimeout(async () => {
       const { checkUpdates } = await import('./update.js');
