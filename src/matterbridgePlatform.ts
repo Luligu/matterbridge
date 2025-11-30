@@ -842,11 +842,13 @@ export class MatterbridgePlatform {
 
   /**
    * Verifies if the Matterbridge version meets the required version.
+   * If not, it destroys the platform cause the implementation may not call destroy().
    *
    * @param {string} requiredVersion - The required version to compare against.
+   * @param {boolean} [destroy] - Whether to destroy the platform if the version check fails. Default is true.
    * @returns {boolean} True if the Matterbridge version meets or exceeds the required version, false otherwise.
    */
-  verifyMatterbridgeVersion(requiredVersion: string): boolean {
+  verifyMatterbridgeVersion(requiredVersion: string, destroy: boolean = true): boolean {
     const compareVersions = (matterbridgeVersion: string, requiredVersion: string): boolean => {
       const stripTag = (v: string) => {
         const parts = v.split('-');
@@ -866,7 +868,10 @@ export class MatterbridgePlatform {
       return true;
     };
 
-    if (!compareVersions(this.matterbridge.matterbridgeVersion, requiredVersion)) return false;
+    if (!compareVersions(this.matterbridge.matterbridgeVersion, requiredVersion)) {
+      if (destroy) this.destroy();
+      return false;
+    }
     return true;
   }
 
