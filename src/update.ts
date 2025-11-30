@@ -49,7 +49,7 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
   const pluginsVersionPromises = [];
   const pluginsDevVersionPromises = [];
   const shellyUpdatesPromises = [];
-  const plugins = (await server.fetch({ type: 'plugins_apipluginarray', src: server.name, dst: 'plugins' })).result.plugins;
+  const plugins = (await server.fetch({ type: 'plugins_apipluginarray', src: server.name, dst: 'plugins' }, 1000)).result.plugins;
   for (const plugin of plugins) {
     pluginsVersionPromises.push(getPluginLatestVersion(log, server, plugin));
     pluginsDevVersionPromises.push(getPluginDevVersion(log, server, plugin));
