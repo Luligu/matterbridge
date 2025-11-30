@@ -1070,6 +1070,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         platform.config = config;
         platform.version = packageJson.version;
         platform.isLoaded = true;
+        // @ts-expect-error - setMatterNode is intentionally private
+        platform.setMatterNode?.(
+          this.matterbridge.addBridgedEndpoint.bind(this.matterbridge),
+          this.matterbridge.removeBridgedEndpoint.bind(this.matterbridge),
+          this.matterbridge.removeAllBridgedEndpoints.bind(this.matterbridge),
+          this.matterbridge.addVirtualEndpoint.bind(this.matterbridge),
+        );
         plugin.name = packageJson.name;
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
