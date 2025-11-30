@@ -20,6 +20,8 @@
 
 The advantage of this setup is that the global node_modules are private for the user and sudo is not required.
 
+This configuration uses a private separate npm cache.
+
 The service runs rootless like the current user.
 
 The storage position is compatible with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
@@ -30,18 +32,30 @@ This will create the required directories if they don't exist
 
 ```bash
 cd ~
-sudo systemctl stop matterbridge                                                        # ✅ Safe precaution if matterbridge was already running with the traditional setup
-sudo npm uninstall matterbridge -g                                                      # ✅ We need to uninstall from the global node_modules
-mkdir -p ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                     # ✅ Creates all needed dirs
-chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global         # ✅ Ensures ownership
-chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                 # ✅ Secure permissions
-NPM_CONFIG_PREFIX=~/.npm-global npm install matterbridge --omit=dev --verbose --global  # ✅ Install matterbridge in the local global node_modules, no sudo
-sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge        # ✅ Create a link to matterbridge bin
-sudo ln -sf /home/$USER/.npm-global/bin/mb_mdns /usr/local/bin/mb_mdns                  # ✅ Create a link to mb_mdns bin
-sudo ln -sf /home/$USER/.npm-global/bin/mb_coap /usr/local/bin/mb_coap                  # ✅ Create a link to mb_coap bin
-hash -r                                                                                 # ✅ Clear bash command cache as a precaution
-which matterbridge                                                                      # ✅ Check it
-matterbridge --version                                                                  # ✅ Will output the matterbridge version
+# ✅ Safe precaution if matterbridge was already running with the traditional setup
+sudo systemctl stop matterbridge
+# ✅ We need to uninstall from the global node_modules
+sudo npm uninstall matterbridge -g
+# ✅ Creates all needed dirs
+mkdir -p ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-cache
+# ✅ Ensures ownership
+chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-cache
+# ✅ Secure permissions
+chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-cache
+# ✅ Install matterbridge in the local global node_modules, with the local cache and no sudo
+npm install matterbridge --omit=dev --verbose --global --prefix=~/.npm-global --cache=~/.npm-cache
+# ✅ Create a link to matterbridge bin
+sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge
+# ✅ Create a link to mb_mdns bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb_mdns /usr/local/bin/mb_mdns
+# ✅ Create a link to mb_coap bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb_coap /usr/local/bin/mb_coap
+# ✅ Clear bash command cache as a precaution
+hash -r
+# ✅ Check which matterbridge
+which matterbridge
+# ✅ Will output the matterbridge version
+matterbridge --version
 ```
 
 ### Then create a systemctl configuration file for Matterbridge
@@ -52,7 +66,7 @@ Create a systemctl configuration file for Matterbridge
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
-Add the following to this file, **replacing 4 times (!) USER with your user name** (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi and Environment="NPM_CONFIG_PREFIX=/home/pi/.npm-global"):
+Add the following to this file, **replacing 5 times (!) USER with your user name** (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi, Environment="NPM_CONFIG_PREFIX=/home/pi/.npm-global" and Environment="NPM_CONFIG_CACHE=/home/pi/.npm-cache"):
 
 ```
 [Unit]
@@ -63,6 +77,7 @@ Wants=network.target
 [Service]
 Type=simple
 Environment="NPM_CONFIG_PREFIX=/home/<USER>/.npm-global"
+Environment="NPM_CONFIG_CACHE=/home/<USER>/.npm-cache"
 ExecStart=matterbridge --service --nosudo
 WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit

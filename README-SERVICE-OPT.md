@@ -20,6 +20,8 @@
 
 The advantage of this setup is that the global node_modules are private for matterbridge and sudo is not required.
 
+This configuration uses a private separate npm cache.
+
 The service runs with group and user matterbridge and the system has full protection.
 
 ### Important
@@ -52,15 +54,15 @@ sudo systemctl stop matterbridge 2>/dev/null || true
 # ✅ Safe precaution we need to uninstall from the global node_modules
 sudo npm uninstall matterbridge -g 2>/dev/null || true
 # ✅ Creates all required directories
-sudo mkdir -p /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+sudo mkdir -p /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
 # ✅ Ensures ownership
-sudo chown -R matterbridge:matterbridge /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+sudo chown -R matterbridge:matterbridge /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
 # ✅ Secure permissions
-sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
 # make sure the “bin” dir exists for global executables
 sudo -u matterbridge mkdir -p /opt/matterbridge/.npm-global/bin
-# ✅ Install matterbridge in the private global node_modules
-sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global npm install matterbridge --omit=dev --verbose --global
+# ✅ Install matterbridge in the private global node_modules using the private npm cache
+sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache npm install matterbridge --omit=dev --verbose --global
 # ✅ Create a link to matterbridge bins
 sudo ln -sf /opt/matterbridge/.npm-global/bin/matterbridge /usr/bin/matterbridge
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_mdns /usr/bin/mb_mdns

@@ -34,7 +34,7 @@ Advantages:
 - [matterbridge.io]: Updated website https://matterbridge.io with all guides.
 - [matterbridge]: Added addVirtualEndpoint() to match Matterbridge thread module.
 - [BroadcastServer]: Backport BroadcastServer v.2.0.0 from Matterbridge thread module.
-- [MatterbridgePrefix]: Added worker thread to get global node_modules.
+- [MatterbridgePrefix]: Added worker **thread** to get global node_modules.
 - [PluginManager]: Improved the resolve method to resolve automatically also in the plugin directory Usefull for developing with DevContainer.
 
 ### Changed
@@ -44,6 +44,7 @@ Advantages:
 - [frontend]: Bumped `frontend` version to 3.3.2.
 - [platform]: Bumped MatterbridgePlatform v.1.5.0.
 - [thread]: Bump BroadcastServer to v1.0.4.
+- [updates]: The update availability check now starts after 5 minutes and each 12 hours. It can also be triggered from the frontend.
 
 ### Fixed
 

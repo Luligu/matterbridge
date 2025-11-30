@@ -373,6 +373,8 @@ export class MatterbridgePlatform {
 
   /**
    * Set the platform schema for the config editor. This will update the schema in the Matterbridge plugin manager but will not change the schema file.
+   * It must be called from onStart() to update the schema in the plugin.
+   * Calling this method from the platform constructor will have no effect.
    *
    * @param {PlatformSchema} [schema] - The platform schema to set.
    * @returns {void}
