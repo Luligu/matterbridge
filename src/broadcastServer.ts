@@ -60,6 +60,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   ) {
     super();
     this.broadcastChannel = new BroadcastChannel(this.channel);
+    this.broadcastChannel.unref();
     this.broadcastChannel.onmessage = this.broadcastMessageHandler.bind(this);
   }
 
