@@ -2573,6 +2573,8 @@ const commissioningController = new CommissioningController({
    * Type 'switch' is not supported by Alexa and 'mounted_switch' is not supported by Apple Home.
    */
   async addVirtualEndpoint(pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<boolean> {
+    this.log.debug(`Adding virtual endpoint ${plg}${pluginName}${db}:${dev}${name}${db}...`);
+
     // Check if the plugin is registered
     const plugin = this.plugins.get(pluginName);
     if (!plugin) {
