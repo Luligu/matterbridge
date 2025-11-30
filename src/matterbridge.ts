@@ -870,7 +870,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.checkUpdateTimeout = setTimeout(async () => {
       const { checkUpdates } = await import('./update.js');
       checkUpdates(this);
-    }, 30 * 1000).unref();
+    }, 300 * 1000).unref();
 
     // Check each 12 hours the latest and dev versions of matterbridge and the plugins
     clearInterval(this.checkUpdateInterval);
