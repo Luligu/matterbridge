@@ -39,7 +39,7 @@ describe('getMatterbridgeLatestVersion', () => {
 
   beforeAll(async () => {
     // Start matterbridge instance
-    await startMatterbridge('bridge', 9500, 9600);
+    await startMatterbridge('bridge', FRONTEND_PORT, MATTER_PORT, PASSCODE, DISCRIMINATOR);
   });
 
   beforeEach(() => {
