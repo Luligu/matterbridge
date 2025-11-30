@@ -517,6 +517,9 @@ export async function startMatterbridgeEnvironment(port: number = 5540): Promise
  * ```
  */
 export function addMatterbridgePlatform(platform: MatterbridgePlatform, name?: string): void {
+  // @ts-expect-error - setMatterNode is intentionally private
+  platform.setMatterNode?.(matterbridge.addBridgedEndpoint.bind(matterbridge), matterbridge.removeBridgedEndpoint.bind(matterbridge), matterbridge.removeAllBridgedEndpoints.bind(matterbridge), matterbridge.addVirtualEndpoint.bind(matterbridge));
+
   if (name) platform.config.name = name;
   expect(platform).toBeDefined();
   expect(platform.config.name).toBeDefined();
