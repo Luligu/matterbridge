@@ -4,7 +4,7 @@
  * @file matterbridgePlatform.ts
  * @author Luca Liguori
  * @created 2024-03-21
- * @version 1.4.0
+ * @version 1.6.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -33,11 +33,9 @@ import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 // Matter
-import { Endpoint } from '@matter/node';
 import { EndpointNumber, VendorId } from '@matter/types/datatype';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -45,9 +43,7 @@ import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { isValidArray, isValidObject, isValidString } from './utils/isvalid.js';
 import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
-import { PluginManager } from './pluginManager.js';
 import { SystemInformation } from './matterbridgeTypes.js';
-import { addVirtualDevice } from './helpers.js';
 import { hasParameter } from './utils/commandLine.js';
 import { BroadcastServer } from './broadcastServer.js';
 
@@ -65,8 +61,33 @@ export type PlatformSchemaValue = string | number | boolean | bigint | object | 
 /** Platform schema type. */
 export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
+/** A type representing a subset of readonly properties of Matterbridge for platform use. */
 export type PlatformMatterbridge = {
-  readonly systemInformation: SystemInformation;
+  readonly systemInformation: Readonly<
+    Pick<
+      SystemInformation,
+      | 'interfaceName'
+      | 'macAddress'
+      | 'ipv4Address'
+      | 'ipv6Address'
+      | 'nodeVersion'
+      | 'hostname'
+      | 'user'
+      | 'osType'
+      | 'osRelease'
+      | 'osPlatform'
+      | 'osArch'
+      | 'totalMemory'
+      | 'freeMemory'
+      | 'systemUptime'
+      | 'processUptime'
+      | 'cpuUsage'
+      | 'processCpuUsage'
+      | 'rss'
+      | 'heapTotal'
+      | 'heapUsed'
+    >
+  >;
   readonly rootDirectory: string;
   readonly homeDirectory: string;
   readonly matterbridgeDirectory: string;
@@ -84,15 +105,6 @@ export type PlatformMatterbridge = {
   readonly aggregatorVendorName: string;
   readonly aggregatorProductId: number;
   readonly aggregatorProductName: string;
-};
-
-// Internal use only methods: they will be converted to messages through the MessagePort of the MessageChannel in the future versions with threading
-type InternalPlatformMatterbridge = PlatformMatterbridge & {
-  plugins: PluginManager;
-  aggregatorNode: Endpoint<AggregatorEndpoint> | undefined;
-  addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void>;
-  removeBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void>;
-  removeAllBridgedEndpoints(pluginName: string, delay?: number): Promise<void>;
 };
 
 /**
@@ -146,9 +158,45 @@ export class MatterbridgePlatform {
   readonly #debug = hasParameter('debug') || hasParameter('verbose');
   readonly #verbose = hasParameter('verbose');
 
+  /** MatterNode helper injected by the PluginManager.load() method */
+  #addBridgedEndpoint: ((pluginName: string, device: MatterbridgeEndpoint) => Promise<void>) | undefined;
+  /** MatterNode helper injected by the PluginManager.load() method */
+  #removeBridgedEndpoint: ((pluginName: string, device: MatterbridgeEndpoint) => Promise<void>) | undefined;
+  /** MatterNode helper injected by the PluginManager.load() method */
+  #removeAllBridgedEndpoints: ((pluginName: string, delay?: number) => Promise<void>) | undefined;
+  /** MatterNode helper injected by the PluginManager.load() method */
+  #addVirtualEndpoint: ((pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => Promise<boolean>) | undefined;
+
+  /**
+   * MatterNode helpers injected by the PluginManager.load() method
+   *
+   * @param {(pluginName: string, device: MatterbridgeEndpoint) => Promise<void>} addBridgedEndpoint - Function to add a bridged endpoint.
+   * @param {(pluginName: string, device: MatterbridgeEndpoint) => Promise<void>} removeBridgedEndpoint - Function to remove a bridged endpoint.
+   * @param {(pluginName: string, delay?: number) => Promise<void>} removeAllBridgedEndpoints - Function to remove all bridged endpoints.
+   * @param {(pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => Promise<boolean>} addVirtualEndpoint - Function to add a virtual endpoint.
+   */
+  private setMatterNode:
+    | ((
+        addBridgedEndpoint: (pluginName: string, device: MatterbridgeEndpoint) => Promise<void>,
+        removeBridgedEndpoint: (pluginName: string, device: MatterbridgeEndpoint) => Promise<void>,
+        removeAllBridgedEndpoints: (pluginName: string, delay?: number) => Promise<void>,
+        addVirtualEndpoint: (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => Promise<boolean>,
+      ) => void)
+    | undefined = (
+    addBridgedEndpoint: (pluginName: string, device: MatterbridgeEndpoint) => Promise<void>,
+    removeBridgedEndpoint: (pluginName: string, device: MatterbridgeEndpoint) => Promise<void>,
+    removeAllBridgedEndpoints: (pluginName: string, delay?: number) => Promise<void>,
+    addVirtualEndpoint: (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => Promise<boolean>,
+  ) => {
+    this.#addBridgedEndpoint = addBridgedEndpoint;
+    this.#removeBridgedEndpoint = removeBridgedEndpoint;
+    this.#removeAllBridgedEndpoints = removeAllBridgedEndpoints;
+    this.#addVirtualEndpoint = addVirtualEndpoint;
+    this.setMatterNode = undefined;
+  };
+
   /**
    * Creates an instance of the base MatterbridgePlatform.
-   * It is extended by the MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform classes.
    * Each plugin must extend the MatterbridgeDynamicPlatform or MatterbridgeAccessoryPlatform class.
    * MatterbridgePlatform cannot be instantiated directly, it can only be extended by the MatterbridgeDynamicPlatform or MatterbridgeAccessoryPlatform class.
    *
@@ -349,11 +397,13 @@ export class MatterbridgePlatform {
    * @returns {Promise<PlatformSchema | undefined>} The platform schema.
    */
   async getSchema(): Promise<PlatformSchema | undefined> {
-    return (await this.#server.fetch({ type: 'plugins_getschema', src: 'platform', dst: 'plugins', params: { name: this.name } })).response.schema;
+    return (await this.#server.fetch({ type: 'plugins_getschema', src: 'platform', dst: 'plugins', params: { name: this.name } })).result.schema;
   }
 
   /**
    * Set the platform schema for the config editor. This will update the schema in the Matterbridge plugin manager but will not change the schema file.
+   * It must be called from onStart() to update the schema in the plugin.
+   * Calling this method from the platform constructor will have no effect.
    *
    * @param {PlatformSchema} [schema] - The platform schema to set.
    * @returns {void}
@@ -506,25 +556,7 @@ export class MatterbridgePlatform {
    * Type 'switch' is not supported by Alexa and 'mounted_switch' is not supported by Apple Home.
    */
   async registerVirtualDevice(name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<boolean> {
-    let aggregator: Endpoint<AggregatorEndpoint> | undefined;
-    // TODO: replace with a message to the matterbridge thread
-    if (this.matterbridge.bridgeMode === 'bridge') {
-      aggregator = (this.matterbridge as InternalPlatformMatterbridge).aggregatorNode;
-    } else if (this.matterbridge.bridgeMode === 'childbridge' && this.type === 'DynamicPlatform') {
-      aggregator = (this.matterbridge as InternalPlatformMatterbridge).plugins.get(this.name)?.aggregatorNode;
-    }
-    if (aggregator) {
-      if (aggregator.parts.has(name.replaceAll(' ', '') + ':' + type)) {
-        this.log.warn(`Virtual device ${name} already registered. Please use a different name.`);
-        return false;
-      } else {
-        await addVirtualDevice(aggregator, name.slice(0, 32), type, callback);
-        this.log.info(`Virtual device ${name} created.`);
-        return true;
-      }
-    }
-    this.log.warn(`Virtual device ${name} not created. Virtual devices are only supported in bridge mode and childbridge mode with a DynamicPlatform.`);
-    return false;
+    return (await this.#addVirtualEndpoint?.(this.name, name, type, callback)) ?? false;
   }
 
   /**
@@ -602,8 +634,7 @@ export class MatterbridgePlatform {
       }
     }
 
-    // TODO: replace with a message to the matterbridge thread
-    await (this.matterbridge as InternalPlatformMatterbridge).addBridgedEndpoint(this.name, device);
+    await this.#addBridgedEndpoint?.(this.name, device);
     this.#registeredEndpoints.set(device.uniqueId, device);
   }
 
@@ -613,8 +644,7 @@ export class MatterbridgePlatform {
    * @param {MatterbridgeEndpoint} device - The device to unregister.
    */
   async unregisterDevice(device: MatterbridgeEndpoint) {
-    // TODO: replace with a message to the matterbridge thread
-    await (this.matterbridge as InternalPlatformMatterbridge).removeBridgedEndpoint(this.name, device);
+    await this.#removeBridgedEndpoint?.(this.name, device);
     if (device.uniqueId) this.#registeredEndpoints.delete(device.uniqueId);
   }
 
@@ -624,8 +654,7 @@ export class MatterbridgePlatform {
    * @param {number} [delay] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    */
   async unregisterAllDevices(delay: number = 0) {
-    // TODO: replace with a message to the matterbridge thread
-    await (this.matterbridge as InternalPlatformMatterbridge).removeAllBridgedEndpoints(this.name, delay);
+    await this.#removeAllBridgedEndpoints?.(this.name, delay);
     this.#registeredEndpoints.clear();
   }
 
@@ -838,11 +867,13 @@ export class MatterbridgePlatform {
 
   /**
    * Verifies if the Matterbridge version meets the required version.
+   * If not, it destroys the platform cause the implementation may not call destroy().
    *
    * @param {string} requiredVersion - The required version to compare against.
+   * @param {boolean} [destroy] - Whether to destroy the platform if the version check fails. Default is true.
    * @returns {boolean} True if the Matterbridge version meets or exceeds the required version, false otherwise.
    */
-  verifyMatterbridgeVersion(requiredVersion: string): boolean {
+  verifyMatterbridgeVersion(requiredVersion: string, destroy: boolean = true): boolean {
     const compareVersions = (matterbridgeVersion: string, requiredVersion: string): boolean => {
       const stripTag = (v: string) => {
         const parts = v.split('-');
@@ -862,7 +893,10 @@ export class MatterbridgePlatform {
       return true;
     };
 
-    if (!compareVersions(this.matterbridge.matterbridgeVersion, requiredVersion)) return false;
+    if (!compareVersions(this.matterbridge.matterbridgeVersion, requiredVersion)) {
+      if (destroy) this.destroy();
+      return false;
+    }
     return true;
   }
 

@@ -1,4 +1,4 @@
-# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
+# <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -36,25 +36,27 @@ Matterbridge is lightweight and also runs on slow Linux machines with as little 
 
 It runs perfectly on Linux, macOS and Windows.
 
-If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
+If you like this project and find it useful, please consider giving it a star on [GitHub](https://github.com/Luligu/matterbridge) and sponsoring it.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
+  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
 ## Acknowledgements
 
-The project is build on top of https://github.com/project-chip/matter.js.
+The project is build on top of [matter.js](https://github.com/project-chip/matter.js).
 
 A special thanks to Apollon77 for his incredible work.
 
 ## Discord
 
-Join us in the Matterbridge Discord group https://discord.gg/QX58CDe6hd created by Tamer (https://github.com/tammeryousef1006).
+Join us in the Matterbridge [Discord group](https://discord.gg/QX58CDe6hd) created by [Tamer](https://github.com/tammeryousef1006).
 
 ## Videos
 
 https://www.youtube.com/watch?v=goNB9Cgh_Fk
+
+https://www.youtube.com/watch?v=06zzl7o_IqQ
 
 ## Reviews
 
@@ -75,7 +77,7 @@ The supported versions of node are 20 and 22. Please install Node.js 22 LTS. Don
 Node.js 23, like all odd-numbered versions, is not supported.
 Nvm is not a good choice and should not be used for production.
 
-If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/desktop/setup/install/linux/debian/.
+If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/engine/install.
 After follow the guidelines for the [Docker configurations](README-DOCKER.md).
 
 I suggest using Docker for its simplicity.
@@ -108,7 +110,7 @@ Test the installation with:
 matterbridge
 ```
 
-Now it is possible to open the frontend at the link provided in the log (e.g. http://MATTERBRIDGE-IPV4-ADDRESS:8283).
+Now it is possible to open the frontend at the link provided in the log (e.g. `http://MATTERBRIDGE-IPV4-ADDRESS:8283`).
 
 You can then change the bridge mode and other parameters from the frontend.
 
@@ -117,7 +119,7 @@ You can then change the bridge mode and other parameters from the frontend.
 ### mode bridge
 
 ```bash
-matterbridge -bridge
+matterbridge --bridge
 ```
 
 This force Matterbridge to load in bridge mode.
@@ -127,46 +129,50 @@ Matterbridge only exposes itself, and you have to pair it scanning the QR code s
 ### mode childbridge
 
 ```bash
-matterbridge -childbridge
+matterbridge --childbridge
 ```
 
 This force Matterbridge to load in childbridge mode.
 
 Matterbridge exposes each registered plugins, and you have to pair each one by scanning the QR code shown in the frontend or in the console.
 
-### Use matterbridge -help to see the command line syntax
+### Use matterbridge --help to see the command line syntax
 
 ```bash
-matterbridge -help
+matterbridge --help
+```
+
+### Use matterbridge --version to see the current version
+
+```bash
+matterbridge --version
 ```
 
 ## Frontend
 
-Matterbridge has a frontend available on http://MATTERBIDGE-IPV4-ADDRESS:8283 and http://[MATTERBIDGE-IPV6-ADDRESS]:8283
+Matterbridge has a frontend available on IPv4 `http://localhost:8283` or `http://MATTERBIDGE-IPV4-ADDRESS:8283` and IPv6 `http://[::1]:8283` or `http://[MATTERBIDGE-IPV6-ADDRESS]:8283`.
 
 You can change the default port by adding the frontend parameter when you run it.
 
 Here's how to specify a different port number:
 
 ```bash
-matterbridge -frontend [port number]
+matterbridge --frontend [port number]
 ```
 
 To use the frontend with ssl see below.
 
 From the frontend you can do all operations in an easy way.
 
-Home page:
-![See the screenshot here](screenshot/Screenshot%20home.jpg)
+Home page
 
-Devices page:
-[See the screenshot here](screenshot/Screenshot%20devices.jpg)
+![Home page](./screenshot/Screenshot%20home.jpg)
 
-Logs page:
-[See the screenshot here](screenshot/Screenshot%20logs.jpg)
+[Devices page](./screenshot/Screenshot%20devices.jpg)
 
-Config editor:
-[See the screenshot here](screenshot/Screenshot%20config%20editor.jpg)
+[Logs page](./screenshot/Screenshot%20logs.jpg)
+
+[Config editor](./screenshot/Screenshot%20config%20editor.jpg)
 
 ## Advanced configurations
 
@@ -179,6 +185,10 @@ Traditional configuration
 or with local global node_modules (no sudo required)
 
 [Service configurations with local global node_modules](README-SERVICE-LOCAL.md)
+
+or with user matterbridge and with private global node_modules (no sudo required)
+
+[Service configurations with user matterbridge and private global node_modules](README-SERVICE-OPT.md)
 
 ### Run matterbridge as a system service with launchctl (macOS only)
 
@@ -213,7 +223,7 @@ The other Home Assistant Community Add-ons and plugins are not verified to work 
 ### Shelly
 
 <a href="https://github.com/Luligu/matterbridge-shelly">
-  <img src="screenshot/Shelly.svg" alt="Shelly plugin logo" width="100" />
+  <img src="./screenshot/Shelly.svg" alt="Shelly plugin logo" width="100" />
 </a>
 
 Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and Gen 4 and BLU devices to Matter.
@@ -242,7 +252,7 @@ Features:
 ### Zigbee2MQTT
 
 <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">
-  <img src="screenshot/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
+  <img src="./screenshot/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
 </a>
 
 Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.
@@ -252,7 +262,7 @@ No hub or dedicated hardware needed.
 ### Somfy tahoma
 
 <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
-  <img src="screenshot/Somfy.svg" alt="Somfy plugin logo" width="100" />
+  <img src="./screenshot/Somfy.svg" alt="Somfy plugin logo" width="100" />
 </a>
 
 Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.
@@ -260,17 +270,17 @@ Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose 
 ### Home Assistant
 
 <a href="https://github.com/Luligu/matterbridge-hass">
-  <img src="screenshot/HomeAssistant.svg" alt="Hass logo" width="100" />
+  <img src="./screenshot/HomeAssistant.svg" alt="Hass logo" width="100" />
 </a>
 
 Matterbridge Home Assistant plugin allows you to expose the Home Assistant devices and entities to Matter.
 
-It is the ideal companion of the official [Matterbridge Home Assistant Add-on](https://github.com/Luligu/matterbridge-home-assistant-addon/blob/main/README.md).
+It is the ideal companion of the official [Matterbridge Home Assistant Add-on](https://github.com/Luligu/matterbridge-home-assistant-addon).
 
 ### Webhooks
 
 <a href="https://github.com/Luligu/matterbridge-webhooks">
-  <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
+  <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge logo" width="100" />
 </a>
 
 Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.
@@ -278,7 +288,7 @@ Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.
 ### BTHome
 
 <a href="https://github.com/Luligu/matterbridge-webhooks">
-  <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
+  <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge logo" width="100" />
 </a>
 
 Matterbridge BTHome allows you to expose any BTHome device to Matter using the native bluetooth of the host machine.
@@ -370,58 +380,58 @@ On windows:
 
 ```powershell
 cd $HOME\Matterbridge
-npm install -g matterbridge-zigbee2mqtt
-matterbridge -add matterbridge-zigbee2mqtt
+npm install -g matterbridge-zigbee2mqtt --omit=dev
+matterbridge --add matterbridge-zigbee2mqtt
 ```
 
 On linux or macOS:
 
 ```bash
 cd ~/Matterbridge
-sudo npm install -g matterbridge-zigbee2mqtt
-matterbridge -add matterbridge-zigbee2mqtt
+sudo npm install -g matterbridge-zigbee2mqtt --omit=dev
+matterbridge --add matterbridge-zigbee2mqtt
 ```
 
 ## How to add a plugin to Matterbridge from a terminal
 
 ```bash
-matterbridge -add [plugin path or plugin name]
+matterbridge --add [plugin path or plugin name]
 ```
 
 ## How to remove a plugin from Matterbridge from a terminal
 
 ```bash
-matterbridge -remove [plugin path or plugin name]
+matterbridge --remove [plugin path or plugin name]
 ```
 
 ## How to disable a registered plugin from a terminal
 
 ```bash
-matterbridge -disable [plugin path or plugin name]
+matterbridge --disable [plugin path or plugin name]
 ```
 
 ## How to enable a registered plugin from a terminal
 
 ```bash
-matterbridge -enable [plugin path or plugin name]
+matterbridge --enable [plugin path or plugin name]
 ```
 
 ## How to remove the commissioning information for Matterbridge so you can pair it again (bridge mode). Shutdown Matterbridge before!
 
 ```bash
-matterbridge -reset
+matterbridge --reset
 ```
 
 ## How to remove the commissioning information for a registered plugin so you can pair it again (childbridge mode). Shutdown Matterbridge before!
 
 ```bash
-matterbridge -reset [plugin path or plugin name]
+matterbridge --reset [plugin path or plugin name]
 ```
 
 ## How to factory reset Matterbridge. Shutdown Matterbridge before!
 
 ```bash
-matterbridge -factoryreset
+matterbridge --factoryreset
 ```
 
 This will reset the internal storages. All commissioning informations will be lost. All plugins will be unregistered.
@@ -438,7 +448,7 @@ Place your own certificates in the `.matterbridge/cert` directory:
 - `key.pem`
 - `ca.pem` (optional)
 
-![image](screenshot/Screenshot%20Certificates.png)
+![image](./screenshot/Screenshot%20Certificates.png)
 
 Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
 
@@ -453,27 +463,27 @@ Matterbridge looks first for .p12 certificate and if it is not found it looks fo
 
 ### Change the command line
 
-Add the **-ssl** parameter to the command line.
+Add the **--ssl** parameter to the command line.
 
 If desired, you can also change the frontend port with **-frontend 443**.
 
 ```bash
-matterbridge -ssl -frontend 443
+matterbridge --ssl --frontend 443
 ```
 
-Add the **-mtls** parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible).
+Add the **--mtls** parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible).
 
 The browser must provide the client certificate: on Windows you need to import it in Current User → Personal → Certificates with certmgr.msc.
 
 ```bash
-matterbridge -ssl -mtls -frontend 443
+matterbridge --ssl --mtls --frontend 443
 ```
 
 ### Restart
 
 If the certificate are correctly configured, you will be able to connect with https to the frontend.
 
-![image](screenshot/Screenshot%20Browser%20Secured.png)
+![image](./screenshot/Screenshot%20Browser%20Secured.png)
 
 ## How to send the debug log files
 
@@ -481,9 +491,9 @@ If the certificate are correctly configured, you will be able to connect with ht
 
 In the frontend, go to settings and enable debug mode as shown below:
 
-![Debug Matterbridge Settings](screenshot/Screenshot%20Matterbridge%20Logger%20Debug.png)
+![Debug Matterbridge Settings](./screenshot/Screenshot%20Matterbridge%20Logger%20Debug.png)
 
-![Debug Matter Settings](screenshot/Screenshot%20Matter%20Logger%20Debug.png)
+![Debug Matter Settings](./screenshot/Screenshot%20Matter%20Logger%20Debug.png)
 
 ### Restart
 
@@ -491,7 +501,7 @@ Wait a few minutes to allow the logs to to accumulate.
 
 Then, from the dots menu in the frontend, download the `matterbridge.log` and `matter.log` files.
 
-![image](screenshot/Screenshot%20Debug%20Download%20Logs.png)
+![image](./screenshot/Screenshot%20Debug%20Download%20Logs.png)
 
 Don't forget to unselect the debug mode when is no more needed. The network traffic and cpu usage is very high in debug mode.
 
@@ -586,7 +596,7 @@ On my side I sponsor the packages that I use in this project. It would be nice t
 Click on the badge below to get started:
 
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
+  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
 Thank you for your support!

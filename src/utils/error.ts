@@ -46,9 +46,12 @@ export function logError(log: AnsiLogger, message: string, error: unknown): void
  * @param {AnsiLogger} log - The AnsiLogger instance to use for logging.
  * @param {string} message - The error message to log.
  * @param {unknown} error - The error object or value to log. Will be inspected with depth 10.
+ * @returns {string} - The full logged message.
  */
-export function inspectError(log: AnsiLogger, message: string, error: unknown): void {
+export function inspectError(log: AnsiLogger, message: string, error: unknown): string {
   const errorMessage = error instanceof Error ? `${error.message} \n` : '';
   const inspectedError = inspect(error, { depth: 10, colors: true, showHidden: false });
-  log.error(`${message}: ${errorMessage}${RESET}${inspectedError}`);
+  const fullMessage = `${message}: ${errorMessage}${RESET}${inspectedError}`;
+  log.error(fullMessage);
+  return fullMessage;
 }

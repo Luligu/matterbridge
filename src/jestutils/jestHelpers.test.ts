@@ -1,3 +1,12 @@
+// Mock the spawnCommand from spawn module before importing it
+jest.unstable_mockModule('../workers.js', () => ({
+  createESMWorker: jest.fn(() => {
+    return undefined; // Mock the createESMWorker function to return immediately
+  }),
+}));
+const workerModule = await import('../workers.js');
+const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
+
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -42,7 +51,7 @@ import {
 
 process.argv.push('--debug');
 
-describe('Matter.js instance', () => {
+describe('Matter.js test environment', () => {
   const MATTER_PORT = 8502;
   const NAME = 'JestHelpersMatterjs';
   const HOMEDIR = path.join('jest', NAME);
@@ -143,7 +152,7 @@ describe('Matter.js instance', () => {
   });
 });
 
-describe('Matterbridge not initialized instance', () => {
+describe('Matterbridge not initialized test environment', () => {
   const MATTER_PORT = 8501;
   const NAME = 'JestHelpersMatterbridge';
   const HOMEDIR = path.join('jest', NAME);
@@ -259,7 +268,7 @@ describe('Matterbridge not initialized instance', () => {
   });
 });
 
-describe('Matterbridge initialized instance', () => {
+describe('Matterbridge initialized test environment', () => {
   beforeAll(async () => {
     await setupTest('MatterbridgeInitialized', false);
   });

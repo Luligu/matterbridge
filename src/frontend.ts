@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.3.0
+ * @version 1.3.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -102,88 +102,88 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   destroy(): void {
+    this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
   }
 
   private async msgHandler(msg: WorkerMessage) {
-    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'frontend')) {
+    if (this.server.isWorkerRequest(msg)) {
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'frontend_start':
           await this.start(msg.params.port);
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_stop':
           await this.stop();
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_refreshrequired':
-          this.wssSendRefreshRequired(msg.params.changed, { matter: msg.params.matter });
-          this.server.respond({ ...msg, response: { success: true } });
+          this.wssSendRefreshRequired(msg.params.changed, msg.params.matter ? { matter: msg.params.matter } : undefined);
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_restartrequired':
           this.wssSendRestartRequired(msg.params.snackbar, msg.params.fixed);
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_restartnotrequired':
           this.wssSendRestartNotRequired(msg.params.snackbar);
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_updaterequired':
           this.wssSendUpdateRequired(msg.params.devVersion);
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_snackbarmessage':
           this.wssSendSnackbarMessage(msg.params.message, msg.params.timeout, msg.params.severity);
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_attributechanged':
           this.wssSendAttributeChangedMessage(msg.params.plugin, msg.params.serialNumber, msg.params.uniqueId, msg.params.number, msg.params.id, msg.params.cluster, msg.params.attribute, msg.params.value);
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_logmessage':
           this.wssSendLogMessage(msg.params.level, msg.params.time, msg.params.name, msg.params.message);
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'frontend_broadcast_message':
+          this.wssBroadcastMessage(msg.params.msg);
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
-    if (this.server.isWorkerResponse(msg, msg.type)) {
+    if (this.server.isWorkerResponse(msg) && msg.result) {
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
-        case 'get_log_level':
-        case 'set_log_level':
-          break;
         case 'plugins_install':
-          this.wssSendCloseSnackbarMessage(`Installing package ${msg.response.packageName}...`);
-          if (msg.response.success) {
+          this.wssSendCloseSnackbarMessage(`Installing package ${msg.result.packageName}...`);
+          if (msg.result.success) {
             this.wssSendRestartRequired(true, true);
             this.wssSendRefreshRequired('plugins');
-            this.wssSendSnackbarMessage(`Installed package ${msg.response.packageName}`, 5, 'success');
+            this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
           } else {
-            this.wssSendSnackbarMessage(`Package ${msg.response.packageName} not installed`, 10, 'error');
+            this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not installed`, 10, 'error');
           }
           break;
         case 'plugins_uninstall':
-          this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.response.packageName}...`);
-          if (msg.response.success) {
+          this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.result.packageName}...`);
+          if (msg.result.success) {
             this.wssSendRestartRequired(true, true);
             this.wssSendRefreshRequired('plugins');
-            this.wssSendSnackbarMessage(`Uninstalled package ${msg.response.packageName}`, 5, 'success');
+            this.wssSendSnackbarMessage(`Uninstalled package ${msg.result.packageName}`, 5, 'success');
           } else {
-            this.wssSendSnackbarMessage(`Package ${msg.response.packageName} not uninstalled`, 10, 'error');
+            this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not uninstalled`, 10, 'error');
           }
           break;
-        default:
-          if (this.verbose) this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }

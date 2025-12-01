@@ -4,7 +4,7 @@
  * @file devices.ts
  * @author Luca Liguori
  * @created 2024-07-26
- * @version 1.1.1
+ * @version 1.1.2
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -88,47 +88,48 @@ export class DeviceManager {
   }
 
   destroy(): void {
+    this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
   }
 
   private async msgHandler(msg: WorkerMessage) {
-    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'devices')) {
+    if (this.server.isWorkerRequest(msg)) {
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'devices_length':
-          this.server.respond({ ...msg, response: { length: this.length } });
+          this.server.respond({ ...msg, result: { length: this.length } });
           break;
         case 'devices_size':
-          this.server.respond({ ...msg, response: { size: this.size } });
+          this.server.respond({ ...msg, result: { size: this.size } });
           break;
         case 'devices_has':
-          this.server.respond({ ...msg, response: { has: this.has(msg.params.uniqueId) } });
+          this.server.respond({ ...msg, result: { has: this.has(msg.params.uniqueId) } });
           break;
         case 'devices_get':
           {
             const endpoint = this.get(msg.params.uniqueId);
-            this.server.respond({ ...msg, response: { device: endpoint ? toBaseDevice(endpoint) : undefined } });
+            this.server.respond({ ...msg, result: { device: endpoint ? toBaseDevice(endpoint) : undefined } });
           }
           break;
         case 'devices_set':
-          this.server.respond({ ...msg, response: { device: this.set(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
+          this.server.respond({ ...msg, result: { device: this.set(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
           break;
         case 'devices_remove':
-          this.server.respond({ ...msg, response: { success: this.remove(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) } });
+          this.server.respond({ ...msg, result: { success: this.remove(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) } });
           break;
         case 'devices_clear':
           this.clear();
-          this.server.respond({ ...msg, response: { success: true } });
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'devices_basearray':
-          this.server.respond({ ...msg, response: { devices: this.baseArray(msg.params.pluginName) } });
+          this.server.respond({ ...msg, result: { devices: this.baseArray(msg.params.pluginName) } });
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);

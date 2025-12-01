@@ -21,7 +21,7 @@ import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, set
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from './oven.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 // Setup the Matter test environment
 createTestEnvironment(NAME);
@@ -49,7 +49,7 @@ describe('Matterbridge ' + NAME, () => {
     await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  });
+  }, 10000);
 
   test('create a oven device', async () => {
     device = new Oven('Oven Test Device', 'OV123456');

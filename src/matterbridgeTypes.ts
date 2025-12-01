@@ -4,7 +4,7 @@
  * @file matterbridgeTypes.ts
  * @author Luca Liguori
  * @created 2024-07-12
- * @version 1.0.2
+ * @version 1.0.3
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -83,6 +83,8 @@ export type SharedMatterbridge = Readonly<
     | 'port'
     | 'discriminator'
     | 'passcode'
+    | 'shellySysUpdate'
+    | 'shellyMainUpdate'
   >
 >;
 

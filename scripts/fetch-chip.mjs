@@ -22,18 +22,20 @@ const XML_BASE_URL = ZCL_BASE_URL + 'data-model/chip/';
 
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
-      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        // Follow redirect
-        return resolve(fetchUrl(res.headers.location));
-      }
-      if (res.statusCode !== 200) {
-        return reject(new Error(`Failed to fetch ${url}: ${res.statusCode}`));
-      }
-      const chunks = [];
-      res.on('data', (c) => chunks.push(c));
-      res.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-    }).on('error', reject);
+    https
+      .get(url, (res) => {
+        if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          // Follow redirect
+          return resolve(fetchUrl(res.headers.location));
+        }
+        if (res.statusCode !== 200) {
+          return reject(new Error(`Failed to fetch ${url}: ${res.statusCode}`));
+        }
+        const chunks = [];
+        res.on('data', (c) => chunks.push(c));
+        res.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      })
+      .on('error', reject);
   });
 }
 

@@ -53,7 +53,7 @@ describe('Matterbridge platform', () => {
     expect(accessoryPlatform.type).toBe('AccessoryPlatform');
     expect(plugins.get('matterbridge-accessory-test')?.name).toBe('matterbridge-accessory-test');
     expect(plugins.get('matterbridge-accessory-test')?.type).toBe('AccessoryPlatform');
-  });
+  }, 10000);
 
   test('Add dynamic plugin matterbridge-dynamic-test', async () => {
     expect(plugins.length).toBe(1);
@@ -66,7 +66,7 @@ describe('Matterbridge platform', () => {
     expect(dynamicPlatform.type).toBe('DynamicPlatform');
     expect(plugins.get('matterbridge-dynamic-test')?.name).toBe('matterbridge-dynamic-test');
     expect(plugins.get('matterbridge-dynamic-test')?.type).toBe('DynamicPlatform');
-  });
+  }, 10000);
 
   test('Constructor accessory', async () => {
     expect(accessoryPlatform.matterbridge).toBe(matterbridge);

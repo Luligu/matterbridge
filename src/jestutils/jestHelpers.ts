@@ -3,7 +3,7 @@
  * @file src/helpers.test.ts
  * @author Luca Liguori
  * @created 2025-09-03
- * @version 1.0.13
+ * @version 1.0.14
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -44,17 +44,12 @@ import { bridge } from '../matterbridgeDeviceTypes.js';
 import { DeviceManager } from '../deviceManager.js';
 import { PluginManager } from '../pluginManager.js';
 import { Frontend } from '../frontend.js';
-
-/* Imports from a plugin
-import { AnsiLogger, LogLevel } from 'matterbridge/logger';
-import { DeviceTypeId, Endpoint, Environment, MdnsService, ServerNode, ServerNodeStore, VendorId, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Lifecycle } from 'matterbridge/matter';
-import { RootEndpoint, AggregatorEndpoint } from 'matterbridge/matter/endpoints';
-import { MATTER_STORAGE_NAME, Matterbridge, MatterbridgePlatform } from 'matterbridge';
-*/
+import { BroadcastServer } from '../broadcastServer.js';
 
 export const originalProcessArgv = Object.freeze([...process.argv]);
 export const originalProcessEnv = Object.freeze({ ...process.env } as Record<string, string | undefined>);
 
+// Spy on logger methods
 export let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 export let loggerDebugSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.debug>;
 export let loggerInfoSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.info>;
@@ -63,15 +58,47 @@ export let loggerWarnSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.warn>;
 export let loggerErrorSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.error>;
 export let loggerFatalSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.fatal>;
 
+// Spy on console methods
 export let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 export let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 export let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 export let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 export let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
 
+// Spy on Matterbridge methods
 export let addBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addBridgedEndpoint>;
 export let removeBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeBridgedEndpoint>;
 export let removeAllBridgedEndpointsSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeAllBridgedEndpoints>;
+export let addVirtualEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addVirtualEndpoint>;
+
+// Spy on PluginManager methods
+export let installPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.install>;
+export let uninstallPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.uninstall>;
+export let addPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.add>;
+export let loadPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.load>;
+export let startPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.start>;
+export let configurePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.configure>;
+export let shutdownPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.shutdown>;
+export let removePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.remove>;
+export let enablePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.enable>;
+export let disablePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.disable>;
+
+// Spy on Frontend methods
+export let wssSendSnackbarMessageSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendSnackbarMessage>;
+export let wssSendCloseSnackbarMessageSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendCloseSnackbarMessage>;
+export let wssSendUpdateRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendUpdateRequired>;
+export let wssSendRefreshRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRefreshRequired>;
+export let wssSendRestartRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRestartRequired>;
+export let wssSendRestartNotRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRestartNotRequired>;
+
+// Spy on BroadcastServer methods
+export let broadcastServerIsWorkerRequestSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerRequest>;
+export let broadcastServerIsWorkerResponseSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerResponse>;
+export let broadcastServerBroadcastSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.broadcast>;
+export let broadcastServerRequestSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.request>;
+export let broadcastServerRespondSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.respond>;
+export let broadcastServerFetchSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.fetch>;
+export let broadcastMessageHandlerSpy: jest.SpiedFunction<(this: BroadcastServer, event: MessageEvent) => void>;
 
 export let NAME: string;
 export let HOMEDIR: string;
@@ -98,8 +125,7 @@ export let log: AnsiLogger;
  * import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
  *
  * // Setup the test environment
- * setupTest(NAME, false);
- *
+ * await setupTest(NAME, false);
  * ```
  */
 export async function setupTest(name: string, debug: boolean = false): Promise<void> {
@@ -134,25 +160,55 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   }
+
   addBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint');
   removeBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint');
   removeAllBridgedEndpointsSpy = jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints');
+  addVirtualEndpointSpy = jest.spyOn(Matterbridge.prototype, 'addVirtualEndpoint');
+
+  installPluginSpy = jest.spyOn(PluginManager.prototype, 'install');
+  uninstallPluginSpy = jest.spyOn(PluginManager.prototype, 'uninstall');
+  addPluginSpy = jest.spyOn(PluginManager.prototype, 'add');
+  loadPluginSpy = jest.spyOn(PluginManager.prototype, 'load');
+  startPluginSpy = jest.spyOn(PluginManager.prototype, 'start');
+  configurePluginSpy = jest.spyOn(PluginManager.prototype, 'configure');
+  shutdownPluginSpy = jest.spyOn(PluginManager.prototype, 'shutdown');
+  removePluginSpy = jest.spyOn(PluginManager.prototype, 'remove');
+  enablePluginSpy = jest.spyOn(PluginManager.prototype, 'enable');
+  disablePluginSpy = jest.spyOn(PluginManager.prototype, 'disable');
+
+  wssSendSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendSnackbarMessage');
+  wssSendCloseSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendCloseSnackbarMessage');
+  wssSendUpdateRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendUpdateRequired');
+  wssSendRefreshRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRefreshRequired');
+  wssSendRestartRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
+  wssSendRestartNotRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartNotRequired');
+
+  broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
+  broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse');
+  broadcastServerBroadcastSpy = jest.spyOn(BroadcastServer.prototype, 'broadcast');
+  broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request');
+  broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond');
+  broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  broadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler');
 }
 
 /**
  * Set or unset the debug mode.
  *
  * @param {boolean} debug If true, the logging is not mocked.
+ * @returns {Promise<void>} A promise that resolves when the debug mode is set.
  *
  * @example
  * ```typescript
  * // Set the debug mode in test environment
- * setDebug(true);
+ * await setDebug(true);
  * ```
  *
  * ```typescript
  * // Reset the debug mode in test environment
- * setDebug(false);
+ * await setDebug(false);
  * ```
  */
 export async function setDebug(debug: boolean): Promise<void> {
@@ -181,7 +237,7 @@ export async function setDebug(debug: boolean): Promise<void> {
 }
 
 /**
- * Start a Matterbridge instance for testing.
+ * Create and start a fully initialized Matterbridge instance for testing.
  *
  * @param {('bridge' | 'childbridge' | 'controller' | '')} bridgeMode The bridge mode to start the Matterbridge instance in.
  * @param {number} frontendPort The frontend port number.
@@ -191,6 +247,12 @@ export async function setDebug(debug: boolean): Promise<void> {
  * @param {number} pluginSize The expected number of plugins.
  * @param {number} devicesSize The expected number of devices.
  * @returns {Promise<Matterbridge>} The Matterbridge instance.
+ *
+ * @example
+ * ```typescript
+ * // Create and start a fully initialized Matterbridge instance for testing.
+ * await startMatterbridge();
+ * ```
  */
 export async function startMatterbridge(
   bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = 'bridge',
@@ -323,10 +385,16 @@ export async function startMatterbridge(
 }
 
 /**
- * Stop the active Matterbridge instance.
+ * Stop the fully initialized Matterbridge instance.
  *
  * @param {cleanupPause} cleanupPause The pause duration before cleanup. Default is 10 ms.
  * @param {destroyPause} destroyPause The pause duration before destruction. Default is 250 ms.
+ *
+ * @example
+ * ```typescript
+ * // Stop the fully initialized Matterbridge instance.
+ * await stopMatterbridge();
+ * ```
  */
 export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250) {
   await destroyMatterbridgeEnvironment(cleanupPause, destroyPause);
@@ -359,6 +427,11 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
   matterbridge.matterbridgeCertDirectory = path.join('jest', name, '.mattercert');
   matterbridge.log.logLevel = LogLevel.DEBUG;
   log = new AnsiLogger({ logName: 'Plugin platform', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+
+  // Get the frontend, plugins and devices
+  frontend = matterbridge.frontend;
+  plugins = matterbridge.plugins;
+  devices = matterbridge.devices;
 
   // Setup matter environment
   // @ts-expect-error - access to private member for testing
@@ -455,8 +528,12 @@ export async function startMatterbridgeEnvironment(port: number = 5540): Promise
  * ```
  */
 export function addMatterbridgePlatform(platform: MatterbridgePlatform, name?: string): void {
-  if (name) platform.config.name = name;
   expect(platform).toBeDefined();
+  // Setup the platform MatterNode helpers
+  // @ts-expect-error - setMatterNode is intentionally private
+  platform.setMatterNode?.(matterbridge.addBridgedEndpoint.bind(matterbridge), matterbridge.removeBridgedEndpoint.bind(matterbridge), matterbridge.removeAllBridgedEndpoints.bind(matterbridge), matterbridge.addVirtualEndpoint.bind(matterbridge));
+
+  if (name) platform.config.name = name;
   expect(platform.config.name).toBeDefined();
   expect(platform.config.type).toBeDefined();
   expect(platform.type).toBeDefined();
@@ -515,7 +592,9 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
 
   // Stop the node storage
   await matterbridge.nodeContext?.close();
+  matterbridge.nodeContext = undefined;
   await matterbridge.nodeStorage?.close();
+  matterbridge.nodeStorage = undefined;
 
   // Ensure the queue is empty and pause
   await flushAsync();
@@ -896,7 +975,7 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   if (mdns && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
   if (mdns && typeof mdns.close === 'function') await mdns.close();
 
-  // Ensure the queue is empty and pause 100ms
+  // Ensure the queue is empty and pause 250ms
   await flushAsync();
 }
 

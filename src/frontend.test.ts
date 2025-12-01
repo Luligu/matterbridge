@@ -133,6 +133,13 @@ describe('Matterbridge frontend', () => {
     await (frontend as any).msgHandler({ id: 123456, type: 'frontend_snackbarmessage', src: 'manager', dst: 'frontend', params: { message: 'message', timeout: 5, severity: 'info' } } as any);
     await (frontend as any).msgHandler({
       id: 123456,
+      type: 'frontend_broadcast_message',
+      src: 'manager',
+      dst: 'frontend',
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } } },
+    } as any);
+    await (frontend as any).msgHandler({
+      id: 123456,
       type: 'frontend_attributechanged',
       src: 'manager',
       dst: 'frontend',
@@ -140,8 +147,8 @@ describe('Matterbridge frontend', () => {
     } as any);
     await (frontend as any).msgHandler({ id: 123456, type: 'frontend_logmessage', src: 'manager', dst: 'frontend', params: { level: 'info', time: 'time', name: 'jest', message: 'info' } } as any);
     for (const type of ['plugins_install', 'plugins_uninstall'] as const) {
-      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: true, packageName: 'testPlugin' } } as any);
-      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', response: { success: false, packageName: 'testPlugin' } } as any);
+      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', result: { success: true, packageName: 'testPlugin' } } as any);
+      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', result: { success: false, packageName: 'testPlugin' } } as any);
     }
   });
 

@@ -6,7 +6,7 @@ const NAME = 'MatterbridgePlatform';
 const MATTER_PORT = 7000;
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, CYAN, db, er, LogLevel, pl, wr } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { EndpointNumber } from '@matter/types/datatype';
 
@@ -19,6 +19,7 @@ import {
   destroyMatterbridgeEnvironment,
   flushAsync,
   loggerDebugSpy,
+  loggerInfoSpy,
   loggerLogSpy,
   loggerWarnSpy,
   matterbridge,
@@ -28,6 +29,7 @@ import {
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
+import { dev, plg } from './matterbridgeTypes.js';
 
 jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
   // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);
@@ -83,6 +85,7 @@ describe('Matterbridge platform', () => {
     addMatterbridgePlatform(platform, 'test');
     expect(platform).toBeDefined();
     expect(platform).toBeInstanceOf(MatterbridgePlatform);
+    expect(platform.name).toBe('test');
     expect(platform.context).toBeUndefined();
     expect(platform.getSelectDevices()).toHaveLength(0);
     expect(platform.getSelectEntities()).toHaveLength(0);
@@ -111,31 +114,31 @@ describe('Matterbridge platform', () => {
 
   it('should validate version', () => {
     matterbridge.matterbridgeVersion = '1.5.4';
-    expect(platform.verifyMatterbridgeVersion('1.5.3')).toBe(true);
-    expect(platform.verifyMatterbridgeVersion('1.5.4')).toBe(true);
-    expect(platform.verifyMatterbridgeVersion('2.0.0')).toBe(false);
-    expect(platform.verifyMatterbridgeVersion('2.0.0-dev.1')).toBe(false);
+    expect(platform.verifyMatterbridgeVersion('1.5.3', false)).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('1.5.4', false)).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('2.0.0', false)).toBe(false);
+    expect(platform.verifyMatterbridgeVersion('2.0.0-dev.1', false)).toBe(false);
   });
 
   it('should validate version with unused versions', () => {
     matterbridge.matterbridgeVersion = '1.5.4';
-    expect(platform.verifyMatterbridgeVersion('1.5')).toBe(true);
-    expect(platform.verifyMatterbridgeVersion('1.5.3.5')).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('1.5', false)).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('1.5.3.5', false)).toBe(true);
   });
 
   it('should validate version with unused versions bis', () => {
     matterbridge.matterbridgeVersion = '1.5';
-    expect(platform.verifyMatterbridgeVersion('1')).toBe(true);
-    expect(platform.verifyMatterbridgeVersion('2')).toBe(false);
-    expect(platform.verifyMatterbridgeVersion('1.5.0')).toBe(true);
-    expect(platform.verifyMatterbridgeVersion('1.5.3.5')).toBe(false);
+    expect(platform.verifyMatterbridgeVersion('1', false)).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('2', false)).toBe(false);
+    expect(platform.verifyMatterbridgeVersion('1.5.0', false)).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('1.5.3.5', false)).toBe(false);
   });
 
   it('should validate version beta', () => {
     matterbridge.matterbridgeVersion = '1.5.4-dev.1';
-    expect(platform.verifyMatterbridgeVersion('1.5.3')).toBe(true);
-    expect(platform.verifyMatterbridgeVersion('1.5.4')).toBe(true);
-    expect(platform.verifyMatterbridgeVersion('2.0.0')).toBe(false);
+    expect(platform.verifyMatterbridgeVersion('1.5.3', false)).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('1.5.4', false)).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('2.0.0', false)).toBe(false);
   });
 
   it('should validate with white and black list', () => {
@@ -577,6 +580,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('setSchema', async () => {
+    await setDebug(false);
     const originalName = platform.name;
     platform.name = 'unknown';
     expect(platform.setSchema({})).toBeUndefined();
@@ -623,10 +627,20 @@ describe('Matterbridge platform', () => {
     expect(platform.getDevices()).toEqual([]);
   });
 
+  test('setMatterNode should set helpers', async () => {
+    // @ts-expect-error - setMatterNode is intentionally private
+    platform.setMatterNode?.(matterbridge.addBridgedEndpoint.bind(matterbridge), matterbridge.removeBridgedEndpoint.bind(matterbridge), matterbridge.removeAllBridgedEndpoints.bind(matterbridge), matterbridge.addVirtualEndpoint.bind(matterbridge));
+    // @ts-expect-error - setMatterNode is intentionally private
+    expect(platform.setMatterNode).toBeUndefined();
+  });
+
   test('registerVirtualDevice', async () => {
+    expect(matterbridge.plugins).toBeDefined();
+    expect(matterbridge.devices).toBeDefined();
     async function testCallback(): Promise<void> {}
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(true);
     expect(matterbridge.aggregatorNode?.parts.has('Virtual' + ':' + 'switch')).toBeTruthy();
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`Created virtual endpoint ${dev}Virtual${nf} for plugin ${plg}${platform.name}${nf}`);
 
     jest.spyOn(matterbridge.plugins, 'get').mockReturnValueOnce({ name: platform.name, type: 'DynamicPlatform', version: '1.0.0', aggregatorNode: matterbridge.aggregatorNode } as any);
     matterbridge.bridgeMode = 'childbridge';
@@ -634,17 +648,27 @@ describe('Matterbridge platform', () => {
     expect(await platform.registerVirtualDevice('VirtualChildbridge', 'switch', testCallback)).toBe(true);
     matterbridge.bridgeMode = 'bridge';
     expect(matterbridge.aggregatorNode?.parts.has('VirtualChildbridge' + ':' + 'switch')).toBeTruthy();
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`Created virtual endpoint ${dev}VirtualChildbridge${nf} for plugin ${plg}${platform.name}${nf}`);
+
+    const savedName = platform.name;
+    platform.name = 'unknown';
+    expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(false);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error adding virtual endpoint ${dev}Virtual${er} for plugin ${plg}${platform.name}${er}: plugin not found`);
+    platform.name = savedName;
 
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(false);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Virtual device Virtual already registered. Please use a different name.`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Virtual endpoint ${dev}Virtual${er} already registered for plugin ${plg}${platform.name}${er}. Please use a different name.`);
 
     const savedAggregatorNode = matterbridge.aggregatorNode;
     matterbridge.aggregatorNode = undefined;
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(false);
     matterbridge.aggregatorNode = savedAggregatorNode;
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Virtual endpoint ${dev}Virtual${er} for plugin ${plg}${platform.name}${er} not created. Virtual endpoints are only supported in bridge mode and childbridge mode with a DynamicPlatform.`);
   });
 
   test('registerDevice calls matterbridge.addBridgedEndpoint with correct parameters', async () => {
+    expect(matterbridge.plugins).toBeDefined();
+    expect(matterbridge.devices).toBeDefined();
     await platform.unregisterAllDevices();
     const testDevice = new MatterbridgeEndpoint(powerSource);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234');
@@ -654,6 +678,8 @@ describe('Matterbridge platform', () => {
   });
 
   test('unregisterDevice calls matterbridge.removeBridgedEndpoint with correct parameters', async () => {
+    expect(matterbridge.plugins).toBeDefined();
+    expect(matterbridge.devices).toBeDefined();
     await platform.unregisterAllDevices();
     const testDevice = new MatterbridgeEndpoint(powerSource);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234');
@@ -663,6 +689,8 @@ describe('Matterbridge platform', () => {
   });
 
   test('unregisterAllDevices calls matterbridge.removeAllBridgedEndpoints with correct parameters', async () => {
+    expect(matterbridge.plugins).toBeDefined();
+    expect(matterbridge.devices).toBeDefined();
     await platform.unregisterAllDevices();
     expect(platform.size()).toBe(0);
     expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();

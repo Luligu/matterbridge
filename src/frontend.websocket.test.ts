@@ -44,9 +44,21 @@ import { plg, Plugin } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Frontend } from './frontend.js';
 import { wait, waiter } from './utils/wait.js';
-import { PluginManager } from './pluginManager.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
-import { BroadcastServer } from './broadcastServer.js';
+import {
+  closeMdnsInstance,
+  destroyInstance,
+  flushAsync,
+  installPluginSpy,
+  loggerLogSpy,
+  logKeepAlives,
+  setDebug,
+  setupTest,
+  uninstallPluginSpy,
+  wssSendCloseSnackbarMessageSpy,
+  wssSendRefreshRequiredSpy,
+  wssSendRestartNotRequiredSpy,
+  wssSendSnackbarMessageSpy,
+} from './jestutils/jestHelpers.js';
 import { isApiRequest, isApiResponse, isBroadcast, WsMessageApiLog, WsMessageApiMemoryUpdate } from './frontendTypes.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
@@ -60,31 +72,16 @@ jest.unstable_mockModule('./shelly.ts', () => ({
 }));
 const { triggerShellySysUpdate, triggerShellyMainUpdate, createShellySystemLog, triggerShellySoftReset, triggerShellyHardReset, triggerShellyReboot, triggerShellyChangeIp } = await import('./shelly.ts');
 
+// Mock the function getNpmPackageVersion
+jest.unstable_mockModule('./update.js', () => ({
+  checkUpdates: jest.fn(),
+}));
+const { checkUpdates } = await import('./update.js');
+
 // Spy on Matterbridge methods
 const createServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'createServerNode');
 const startServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'startServerNode');
 const stopServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'stopServerNode');
-
-// Spy on PluginManager methods
-const addPluginSpy = jest.spyOn(PluginManager.prototype, 'add');
-const loadPluginSpy = jest.spyOn(PluginManager.prototype, 'load');
-
-// Spy on Frontend methods
-const wssSendSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendSnackbarMessage');
-const wssSendCloseSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendCloseSnackbarMessage');
-const wssSendRefreshRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRefreshRequired');
-const wssSendRestartRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
-const wssSendRestartNotRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartNotRequired');
-
-// Mock BroadcastServer methods
-const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
-const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
-const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
-const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
-const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
-const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
-  return Promise.resolve(undefined) as any;
-});
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -112,6 +109,8 @@ describe('Matterbridge frontend', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
+
+    // logKeepAlives();
   });
 
   const onMessage = (event: WebSocket.MessageEvent) => {
@@ -439,6 +438,7 @@ describe('Matterbridge frontend', () => {
   test('Websocket API send /api/checkupdates', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/checkupdates', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/checkupdates', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(checkUpdates).toHaveBeenCalled();
   });
 
   test('Websocket API send /api/shellysysupdate', async () => {
@@ -608,10 +608,18 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API /api/install', async () => {
+    installPluginSpy.mockImplementationOnce(async (packageName: string) => {
+      return Promise.resolve(true);
+    });
+    expect((matterbridge as any).plugins.size).toBe(3);
     const msg = await waitMessageId(++WS_ID, '/api/install', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test', restart: false } });
+    await flushAsync(undefined, undefined, 100);
     expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
     expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`, 0);
+    expect(installPluginSpy).toHaveBeenCalledWith('matterbridge-test');
+    // expect(addPluginSpy).toHaveBeenCalledWith('matterbridge-test'); // Disabled as we do not actually add the plugin in the mock
+    expect((matterbridge as any).plugins.size).toBe(3);
   });
 
   test('Websocket API /api/uninstall with wrong params', async () => {
@@ -621,9 +629,17 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API /api/uninstall', async () => {
+    uninstallPluginSpy.mockImplementationOnce(async (packageName: string) => {
+      return Promise.resolve(true);
+    });
+    expect((matterbridge as any).plugins.size).toBe(3);
     const msg = await waitMessageId(++WS_ID, '/api/uninstall', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-test' } });
+    await flushAsync(undefined, undefined, 100);
     expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
+    expect(uninstallPluginSpy).toHaveBeenCalledWith('matterbridge-test');
+    // expect(removePluginSpy).toHaveBeenCalledWith('matterbridge-test'); // Disabled as we do not actually remove the plugin in the mock
+    expect((matterbridge as any).plugins.size).toBe(3);
   });
 
   test('Websocket API /api/addplugin', async () => {
@@ -1512,12 +1528,13 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Plugins removed', async () => {
+    // process.stdout.write(`${inspect((matterbridge as any).plugins.array(), { showHidden: false, colors: true, depth: 1 })}`);
     expect((matterbridge as any).plugins.size).toBe(0);
   });
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
-    setDebug(true);
     // Destroy the Matterbridge instance
+    // await matterbridge.setLogLevel(LogLevel.DEBUG);
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Stopping the frontend...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Frontend app closed successfully`);

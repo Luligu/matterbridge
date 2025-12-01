@@ -61,8 +61,9 @@ function Logs(): React.JSX.Element {
   }
   return (
     <MbfPage name='Logs'>
-      {/* Logs Filter and Clear Button */}
+      {/* Filter and Clear Button */}
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', margin: '0px', padding: '0px', gap: '10px' }}>
+        {/* Filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <InputLabel id='select-level' style={{ color: 'var(--div-text-color)' }}>
             Filter log by level:
@@ -95,6 +96,7 @@ function Logs(): React.JSX.Element {
           />
           <FormControlLabel control={<Checkbox checked={logAutoScroll} onChange={handleAutoScrollChange} />} label='Auto scroll' style={{ color: 'var(--div-text-color)' }} />
         </div>
+        {/* Clear Button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <Tooltip title='Clear the logs'>
             <Button onClick={handleClearLogsClick} endIcon={<DeleteForever />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>

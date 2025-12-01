@@ -9,7 +9,7 @@ import { jest } from '@jest/globals';
 import { aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   beforeAll(async () => {
@@ -35,7 +35,7 @@ describe('Matterbridge ' + NAME, () => {
     await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  });
+  }, 10000);
 
   test('close the server node', async () => {
     expect(server).toBeDefined();

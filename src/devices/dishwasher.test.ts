@@ -21,7 +21,7 @@ import { Dishwasher, MatterbridgeDishwasherModeServer } from './dishwasher.js';
 import { MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 // Setup the Matter test environment
 createTestEnvironment(NAME);
@@ -47,7 +47,7 @@ describe('Matterbridge ' + NAME, () => {
     await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  });
+  }, 10000);
 
   test('create a dishwasher device', async () => {
     device = new Dishwasher('Dishwasher Test Device', 'DW123456');

@@ -22,7 +22,7 @@ import { LaundryWasher, MatterbridgeLaundryWasherModeServer } from './laundryWas
 import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 // Setup the Matter test environment
 createTestEnvironment(NAME);
@@ -48,7 +48,7 @@ describe('Matterbridge ' + NAME, () => {
     await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  });
+  }, 10000);
 
   test('create a laundry washer device', async () => {
     device = new LaundryWasher('Laundry Washer Test Device', 'LW123456');

@@ -4,7 +4,7 @@
  * @file shelly.ts
  * @author Luca Liguori
  * @created 2025-02-19
- * @version 1.1.0
+ * @version 1.2.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -26,9 +26,11 @@
 
 import type { RequestOptions } from 'node:http';
 
-import { debugStringify } from 'node-ansi-logger';
+import { AnsiLogger, debugStringify } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
+import { BroadcastServer } from './broadcastServer.js';
+import { SharedMatterbridge } from './matterbridgeTypes.js';
 
 let verifyIntervalSecs = 15;
 let verifyTimeoutSecs = 600;
@@ -56,23 +58,28 @@ export function setVerifyTimeoutSecs(seconds: number): void {
 /**
  * Fetches Shelly system updates. If available: logs the result, sends a snackbar message, and broadcasts the message.
  *
- * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ * @param {SharedMatterbridge} matterbridge - The Matterbridge instance.
+ * @param {AnsiLogger} log - The logger instance.
+ * @param {BroadcastServer} server - The broadcast server instance.
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
-export async function getShellySysUpdate(matterbridge: Matterbridge): Promise<void> {
+export async function getShellySysUpdate(matterbridge: SharedMatterbridge, log: AnsiLogger, server: BroadcastServer): Promise<void> {
   try {
     const updates = (await getShelly('/api/updates/sys/check')) as { name: string }[];
     if (updates.length === 0) return;
 
-    matterbridge.shellySysUpdate = true;
-    matterbridge.frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } });
+    server.request({ type: 'matterbridge_sys_update', src: server.name, dst: 'matterbridge', params: { available: true } });
+    // matterbridge.shellySysUpdate = true;
+    server.request({ type: 'frontend_broadcast_message', src: server.name, dst: 'frontend', params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } } } });
+    // matterbridge.frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } });
     for (const { name } of updates) {
       if (!name) continue;
-      matterbridge.log.notice(`Shelly system update available: ${name}`);
-      matterbridge.frontend.wssSendSnackbarMessage(`Shelly system update available: ${name}`, 10);
+      log.notice(`Shelly system update available: ${name}`);
+      server.request({ type: 'frontend_snackbarmessage', src: server.name, dst: 'frontend', params: { message: `Shelly system update available: ${name}`, timeout: 10 } });
+      // matterbridge.frontend.wssSendSnackbarMessage(`Shelly system update available: ${name}`, 10);
     }
   } catch (err) {
-    matterbridge.log.error(`Error getting Shelly system updates: ${err instanceof Error ? err.message : String(err)}`);
+    log.error(`Error getting Shelly system updates: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -101,23 +108,28 @@ export async function triggerShellySysUpdate(matterbridge: Matterbridge): Promis
 /**
  * Fetches Shelly main updates. If available: logs the result, sends a snackbar message, and broadcasts the message.
  *
- * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ * @param {SharedMatterbridge} matterbridge - The Matterbridge instance.
+ * @param {AnsiLogger} log - The logger instance.
+ * @param {BroadcastServer} server - The broadcast server instance.
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
-export async function getShellyMainUpdate(matterbridge: Matterbridge): Promise<void> {
+export async function getShellyMainUpdate(matterbridge: SharedMatterbridge, log: AnsiLogger, server: BroadcastServer): Promise<void> {
   try {
     const updates = (await getShelly('/api/updates/main/check')) as { name: string }[];
     if (updates.length === 0) return;
 
-    matterbridge.shellyMainUpdate = true;
-    matterbridge.frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_main_update', success: true, response: { available: true } });
+    server.request({ type: 'matterbridge_main_update', src: server.name, dst: 'matterbridge', params: { available: true } });
+    // matterbridge.shellyMainUpdate = true;
+    server.request({ type: 'frontend_broadcast_message', src: server.name, dst: 'frontend', params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_main_update', success: true, response: { available: true } } } });
+    // matterbridge.frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_main_update', success: true, response: { available: true } });
     for (const { name } of updates) {
       if (!name) continue;
-      matterbridge.log.notice(`Shelly software update available: ${name}`);
-      matterbridge.frontend.wssSendSnackbarMessage(`Shelly software update available: ${name}`, 10);
+      log.notice(`Shelly software update available: ${name}`);
+      server.request({ type: 'frontend_snackbarmessage', src: server.name, dst: 'frontend', params: { message: `Shelly software update available: ${name}`, timeout: 10 } });
+      // matterbridge.frontend.wssSendSnackbarMessage(`Shelly software update available: ${name}`, 10);
     }
   } catch (err) {
-    matterbridge.log.error(`Error getting Shelly main updates: ${err instanceof Error ? err.message : String(err)}`);
+    log.error(`Error getting Shelly main updates: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

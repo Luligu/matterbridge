@@ -48,6 +48,15 @@ const wait = waitModule.wait as jest.MockedFunction<typeof waitModule.wait>;
 const waiter = waitModule.waiter as jest.MockedFunction<typeof waitModule.waiter>;
 const withTimeout = waitModule.withTimeout as jest.MockedFunction<typeof waitModule.withTimeout>;
 
+// Mock the createESMWorker from workers module before importing it
+jest.unstable_mockModule('./workers.js', () => ({
+  createESMWorker: jest.fn(() => {
+    return undefined; // Mock the createESMWorker function to return immediately
+  }),
+}));
+const workerModule = await import('./workers.js');
+const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
+
 const pluginsLoadSpy = jest.spyOn(PluginManager.prototype, 'load');
 const pluginsStartSpy = jest.spyOn(PluginManager.prototype, 'start');
 const pluginsConfigureSpy = jest.spyOn(PluginManager.prototype, 'configure');
@@ -67,19 +76,21 @@ import { VendorId } from '@matter/types';
 
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { plg, Plugin } from './matterbridgeTypes.js';
+import { NODE_STORAGE_DIR, plg, Plugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { getParameter } from './utils/commandLine.js';
 import { closeMdnsInstance, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 import { DeviceManager } from './deviceManager.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge mocked', () => {
   let matterbridge: MatterbridgeType;
   let plugins: PluginManager;
   let devices: DeviceManager;
+
+  beforeAll(async () => {});
 
   beforeEach(async () => {
     // Reset the process.argv to simulate command line arguments (no frontend no matter server)
@@ -113,6 +124,11 @@ describe('Matterbridge mocked', () => {
     const result = await spawnCommand('echo', ['Hello, World!'], 'install', 'echo');
     expect(result).toBe(true);
     expect(spawnCommand).toHaveBeenCalledWith('echo', ['Hello, World!'], 'install', 'echo');
+  });
+
+  test('verify mocked createESMWorker', async () => {
+    createESMWorker('NpmGlobalPrefix', './dist/workerGlobalPrefix.js');
+    expect(createESMWorker).toHaveBeenCalled();
   });
 
   test('verify mocked wait', async () => {
@@ -196,6 +212,9 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).initialize();
     expect((matterbridge as any).initialized).toBeTruthy();
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
+
+    expect(matterbridge.nodeStorage).toBeDefined();
+    expect(matterbridge.nodeContext).toBeDefined();
 
     expect(matterbridge.serverNode).toBeUndefined();
     expect(matterbridge.aggregatorNode).toBeUndefined();
@@ -432,6 +451,7 @@ describe('Matterbridge mocked', () => {
     matterbridge.setLogLevel(LogLevel.NOTICE);
     expect((plugins as any).log.logLevel).toBe(LogLevel.NOTICE);
     expect(plugins.array()[0].platform?.log.logLevel).toBe(LogLevel.NOTICE);
+    await plugins.shutdown(plugins.array()[0], 'Test Shutdown', false, true);
   });
 
   test('Matterbridge.initialize() reinstall of plugins', async () => {
@@ -662,6 +682,9 @@ describe('Matterbridge mocked', () => {
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
+    expect(matterbridge.nodeContext).toBeDefined();
+    await matterbridge.nodeContext?.set<string>('globalModulesDirectory', '');
+    matterbridge.globalModulesDirectory = '';
     await (matterbridge as any).logNodeAndSystemInfo();
     await wait(100);
     expect(getGlobalNodeModulesMock).toHaveBeenCalled();
@@ -676,14 +699,15 @@ describe('Matterbridge mocked', () => {
     });
 
     await (matterbridge as any).initialize();
+    expect(matterbridge.nodeContext).toBeDefined();
     await matterbridge.nodeContext?.set<string>('globalModulesDirectory', '');
     matterbridge.globalModulesDirectory = '';
     await (matterbridge as any).logNodeAndSystemInfo();
     await wait(100);
     expect(getGlobalNodeModulesMock).toHaveBeenCalled();
     expect(matterbridge.globalModulesDirectory).toBe('');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Getting global node_modules directory...'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error getting global node_modules directory: Error: Test error for getGlobalNodeModules'));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error checking global node_modules directory: Error: Test error for getGlobalNodeModules'));
 
     getGlobalNodeModulesMock.mockImplementation(() => {
       return Promise.resolve('usr/local/lib/node_modules');

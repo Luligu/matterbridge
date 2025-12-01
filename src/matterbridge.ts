@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.6.0
+ * @version 1.6.2
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -58,7 +58,7 @@ import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
-import { addVirtualDevices } from './helpers.js';
+import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
 
@@ -246,28 +246,41 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   private async msgHandler(msg: WorkerMessage) {
-    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
+          break;
+        case 'matterbridge_latest_version':
+          this.matterbridgeLatestVersion = msg.params.version;
+          await this.nodeContext?.set<string>('matterbridgeLatestVersion', msg.params.version);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'matterbridge_dev_version':
+          this.matterbridgeDevVersion = msg.params.version;
+          await this.nodeContext?.set<string>('matterbridgeDevVersion', msg.params.version);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'matterbridge_global_prefix':
+          this.globalModulesDirectory = msg.params.prefix;
+          await this.nodeContext?.set<string>('globalModulesDirectory', msg.params.prefix);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'matterbridge_sys_update':
+          this.shellySysUpdate = true;
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'matterbridge_main_update':
+          this.shellyMainUpdate = true;
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
-      }
-    }
-    if (this.server.isWorkerResponse(msg, msg.type)) {
-      if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
-      switch (msg.type) {
-        case 'get_log_level':
-        case 'set_log_level':
-          break;
-        default:
-          if (this.verbose) this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
   }
@@ -852,12 +865,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       return;
     }
 
-    // Check in 30 seconds the latest and dev versions of matterbridge and the plugins
+    // Check in 5 minutes the latest and dev versions of matterbridge and the plugins
     clearTimeout(this.checkUpdateTimeout);
     this.checkUpdateTimeout = setTimeout(async () => {
       const { checkUpdates } = await import('./update.js');
       checkUpdates(this);
-    }, 30 * 1000).unref();
+    }, 300 * 1000).unref();
 
     // Check each 12 hours the latest and dev versions of matterbridge and the plugins
     clearInterval(this.checkUpdateInterval);
@@ -1104,15 +1117,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
     } else {
       // The global node_modules directory is already set in the node storage and we check if it is still valid
-      this.log.debug(`Checking global node_modules directory: ${this.globalModulesDirectory}`);
-      try {
-        const { getGlobalNodeModules } = await import('./utils/network.js');
-        this.globalModulesDirectory = await getGlobalNodeModules();
-        this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-        await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
-      } catch (error) {
-        this.log.error(`Error checking global node_modules directory: ${error}`);
-      }
+      this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+      const { createESMWorker } = await import('./workers.js');
+      createESMWorker('NpmGlobalPrefix', path.join(this.rootDirectory, 'dist/workerGlobalPrefix.js'));
     }
 
     // Matterbridge version
@@ -2544,6 +2551,54 @@ const commissioningController = new CommissioningController({
       if (delay > 0) await wait(delay);
     }
     if (delay > 0) await wait(2000);
+  }
+
+  /**
+   * Registers a virtual device.
+   * Virtual devices are only supported in bridge mode and childbridge mode with a DynamicPlatform.
+   *
+   * The virtual device is created as an instance of `Endpoint` with the provided device type.
+   * When the virtual device is turned on, the provided callback function is executed.
+   * The onOff state of the virtual device always reverts to false when the device is turned on.
+   *
+   * @param { string } pluginName - The name of the plugin to register the virtual device under.
+   * @param { string } name - The name of the virtual device.
+   * @param { 'light' | 'outlet' | 'switch' | 'mounted_switch' } type - The type of the virtual device.
+   * @param { () => Promise<void> } callback - The callback to call when the virtual device is turned on.
+   *
+   * @returns {Promise<boolean>} A promise that resolves to true if the virtual device was successfully registered, false otherwise.
+   *
+   * @remarks
+   * The virtual devices don't show up in the device list of the frontend.
+   * Type 'switch' is not supported by Alexa and 'mounted_switch' is not supported by Apple Home.
+   */
+  async addVirtualEndpoint(pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<boolean> {
+    this.log.debug(`Adding virtual endpoint ${plg}${pluginName}${db}:${dev}${name}${db}...`);
+
+    // Check if the plugin is registered
+    const plugin = this.plugins.get(pluginName);
+    if (!plugin) {
+      this.log.error(`Error adding virtual endpoint ${dev}${name}${er} for plugin ${plg}${pluginName}${er}: plugin not found`);
+      return false;
+    }
+    let aggregator: Endpoint<AggregatorEndpoint> | undefined;
+    if (this.bridgeMode === 'bridge') {
+      aggregator = this.aggregatorNode;
+    } else if (this.bridgeMode === 'childbridge' && plugin.type === 'DynamicPlatform') {
+      aggregator = plugin.aggregatorNode;
+    }
+    if (aggregator) {
+      if (aggregator.parts.has(name.replaceAll(' ', '') + ':' + type)) {
+        this.log.error(`Virtual endpoint ${dev}${name}${er} already registered for plugin ${plg}${pluginName}${er}. Please use a different name.`);
+        return false;
+      } else {
+        await addVirtualDevice(aggregator, name.slice(0, 32), type, callback);
+        this.log.info(`Created virtual endpoint ${dev}${name}${nf} for plugin ${plg}${pluginName}${nf}`);
+        return true;
+      }
+    }
+    this.log.error(`Virtual endpoint ${dev}${name}${er} for plugin ${plg}${pluginName}${er} not created. Virtual endpoints are only supported in bridge mode and childbridge mode with a DynamicPlatform.`);
+    return false;
   }
 
   /**

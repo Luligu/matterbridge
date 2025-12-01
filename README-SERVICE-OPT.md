@@ -1,4 +1,4 @@
-# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with private global node_modules
+# <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with private global node_modules
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -20,9 +20,15 @@
 
 The advantage of this setup is that the global node_modules are private for matterbridge and sudo is not required.
 
+This configuration uses a private separate npm cache.
+
 The service runs with group and user matterbridge and the system has full protection.
 
+### Important
+
 The storage position is **not compatible** with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
+
+Also various script don't work if you choose this configuration.
 
 ### 1 - Create the matterbridge user and group
 
@@ -48,15 +54,15 @@ sudo systemctl stop matterbridge 2>/dev/null || true
 # ✅ Safe precaution we need to uninstall from the global node_modules
 sudo npm uninstall matterbridge -g 2>/dev/null || true
 # ✅ Creates all required directories
-sudo mkdir -p /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+sudo mkdir -p /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
 # ✅ Ensures ownership
-sudo chown -R matterbridge:matterbridge /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+sudo chown -R matterbridge:matterbridge /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
 # ✅ Secure permissions
-sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
 # make sure the “bin” dir exists for global executables
 sudo -u matterbridge mkdir -p /opt/matterbridge/.npm-global/bin
-# ✅ Install matterbridge in the private global node_modules
-sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global npm install matterbridge --omit=dev --verbose --global
+# ✅ Install matterbridge in the private global node_modules using the private npm cache
+sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache npm install matterbridge --omit=dev --verbose --global
 # ✅ Create a link to matterbridge bins
 sudo ln -sf /opt/matterbridge/.npm-global/bin/matterbridge /usr/bin/matterbridge
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_mdns /usr/bin/mb_mdns
@@ -72,6 +78,7 @@ matterbridge --version
 The storage position is **not compatible** with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
 
 If you are migrating from the traditional service setup, before removing the old diretories, you may want to copy the contents of ~/Matterbridge ~/.matterbridge ~/.mattercert to the new directories /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert.
+This will save all the plugin configs and the fabrics but you need to remove all plugins and readd them cause the path will be different.
 
 Copy the old diretories content
 
@@ -107,6 +114,7 @@ Wants=network.target
 Type=simple
 Environment=NODE_ENV=production
 Environment="NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global"
+Environment="NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache"
 ExecStart=matterbridge --service --nosudo
 WorkingDirectory=/opt/matterbridge/Matterbridge
 StandardOutput=inherit

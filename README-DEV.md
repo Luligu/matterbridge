@@ -1,4 +1,4 @@
-# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge development
+# <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge development
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -22,7 +22,7 @@ The easiest way is to clone the [Matterbridge Plugin Template](https://github.co
 
 After you clone it locally, change the name (keep always matterbridge- at the beginning of the name), version, description, author, homepage, repository, bugs and funding in the package.json.
 
-It is also possible to add two custom properties to the package.json: **help** and **changelog** with a url that will be used in the frontend instead of the default (/blob/main/README.md and /blob/main/CHANGELOG.md).
+It is also possible to add two custom properties to the package.json: **help** and **changelog** with a url that will be used in the frontend instead of the default (/blob/main/README and /blob/main/CHANGELOG).
 
 Add your plugin logic in module.ts.
 
@@ -251,9 +251,25 @@ It is called when the plugin config has been updated.
 
 Retrieves the devices registered with the platform.
 
+### getDeviceByName(deviceName: string): MatterbridgeEndpoint | undefined
+
+### getDeviceByUniqueId(uniqueId: string): MatterbridgeEndpoint | undefined
+
+### getDeviceBySerialNumber(serialNumber: string): MatterbridgeEndpoint | undefined
+
+### getDeviceById(id: string): MatterbridgeEndpoint | undefined
+
+### getDeviceByOriginalId(originalId: string): MatterbridgeEndpoint | undefined
+
+### getDeviceByNumber(number: EndpointNumber | number): MatterbridgeEndpoint | undefined
+
+They all return MatterbridgeEndpoint or undefined if not found.
+
 ### hasDeviceName(deviceName: string): boolean
 
-Checks if a device with this name is already registered in the platform.
+### hasDeviceUniqueId(deviceUniqueId: string): boolean
+
+Checks if a device with this name or uniqueId is already registered in the platform.
 
 ### async registerDevice(device: MatterbridgeEndpoint)
 
@@ -288,7 +304,7 @@ You create a Matter device with a new instance of MatterbridgeEndpoint(definitio
 
 In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.
 
-All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the 'Matter-1.4.1-Device-Library-Specification.pdf'.
+All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the 'Matter-1.4.2-Device-Library-Specification.pdf'.
 
 All default cluster helpers are available as methods of MatterbridgeEndpoint.
 
@@ -388,7 +404,7 @@ const heatPump = new HeatPump('Heat Pump', 'HP1234567890');
 
 ## Plugin config file
 
-Each plugin has a minimal default config file injected by Matterbridge when it is loaded:
+Each plugin has a minimal default config file injected by Matterbridge when it is loaded and the plugin doesn't have its own default one:
 
 ```typescript
 {
@@ -408,7 +424,7 @@ In all subsequent loads the config file is loaded from the '.matterbridge' direc
 
 ## Plugin schema file
 
-Each plugin has a minimal default schema file injected by Matterbridge when it is loaded:
+Each plugin has a minimal default schema file injected by Matterbridge when it is loaded and the plugin doesn't have its own default one:
 
 ```typescript
 {

@@ -6,7 +6,7 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-debug'];
 
-import os from 'node:os';
+import os, { version } from 'node:os';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -34,7 +34,7 @@ const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').m
 });
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
@@ -109,6 +109,16 @@ describe('Matterbridge', () => {
 
     await (matterbridge as any).msgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'matterbridge' } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'matterbridge', params: { level: LogLevel.DEBUG } } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_latest_version', src: 'manager', dst: 'matterbridge', params: { version: '1.0.0' } } as any);
+    expect(matterbridge.matterbridgeLatestVersion).toBe('1.0.0');
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_dev_version', src: 'manager', dst: 'matterbridge', params: { version: '1.0.0' } } as any);
+    expect(matterbridge.matterbridgeDevVersion).toBe('1.0.0');
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_global_prefix', src: 'manager', dst: 'matterbridge', params: { prefix: '' } } as any);
+    expect(matterbridge.globalModulesDirectory).toBe('');
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_sys_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    expect(matterbridge.shellySysUpdate).toBe(true);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_main_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    expect(matterbridge.shellyMainUpdate).toBe(true);
   });
 
   test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {

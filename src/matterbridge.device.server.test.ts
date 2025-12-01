@@ -6,6 +6,24 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
+// Mock the getGlobalNodeModules logInterfaces from network module before importing it
+jest.unstable_mockModule('./utils/network.js', () => ({
+  getGlobalNodeModules: jest.fn(() => {
+    return Promise.resolve('./node_modules'); // Mock the getGlobalNodeModules function to resolve immediately
+  }),
+}));
+const networkModule = await import('./utils/network.js');
+const getGlobalNodeModulesMock = networkModule.getGlobalNodeModules as jest.MockedFunction<typeof networkModule.getGlobalNodeModules>;
+
+// Mock the createESMWorker from workers module before importing it
+jest.unstable_mockModule('./workers.js', () => ({
+  createESMWorker: jest.fn(() => {
+    return undefined; // Mock the createESMWorker function to return immediately
+  }),
+}));
+const workerModule = await import('./workers.js');
+const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
+
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -15,10 +33,10 @@ import { db, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { dev, plg } from './matterbridgeTypes.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, logKeepAlives, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge Device serverMode=server', () => {
   let matterbridge: Matterbridge;
@@ -34,6 +52,8 @@ describe('Matterbridge Device serverMode=server', () => {
     await closeMdnsInstance(matterbridge);
     // Restore all mocks
     jest.restoreAllMocks();
+
+    // logKeepAlives();
   });
 
   test('Matterbridge.loadInstance(true)', async () => {
@@ -118,6 +138,25 @@ describe('Matterbridge Device serverMode=server', () => {
       const plugin = matterbridge.plugins.get('serverdevicetest');
       expect(plugin).toBeDefined();
       if (plugin) matterbridge.plugins.load(plugin);
+    });
+
+    expect(matterbridge.plugins.size).toBe(1);
+    expect(matterbridge.devices.size).toBe(0);
+    expect(matterbridge.plugins.get('serverdevicetest')).toBeDefined();
+    expect(matterbridge.plugins.get('serverdevicetest')?.type).toBe('AccessoryPlatform');
+  });
+
+  test('shutdown mocked plugin serverdevicetest', async () => {
+    expect(matterbridge.plugins.size).toBe(1);
+    expect(matterbridge.devices.size).toBe(0);
+
+    await new Promise<void>((resolve) => {
+      matterbridge.plugins.once('shutdown', (name) => {
+        if (name === 'serverdevicetest') resolve();
+      });
+      const plugin = matterbridge.plugins.get('serverdevicetest');
+      expect(plugin).toBeDefined();
+      if (plugin) matterbridge.plugins.shutdown(plugin, 'shutdown', false, true);
     });
 
     expect(matterbridge.plugins.size).toBe(1);

@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.3.1
+ * @version 1.3.4
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -75,62 +75,63 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   destroy(): void {
+    this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
   }
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
-    if (this.server.isWorkerRequest(msg, msg.type) && (msg.dst === 'all' || msg.dst === 'plugins')) {
+    if (this.server.isWorkerRequest(msg)) {
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
-          this.server.respond({ ...msg, response: { success: true, logLevel: this.log.logLevel } });
+          this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
         case 'plugins_length':
-          this.server.respond({ ...msg, response: { length: this.length } });
+          this.server.respond({ ...msg, result: { length: this.length } });
           break;
         case 'plugins_size':
-          this.server.respond({ ...msg, response: { size: this.size } });
+          this.server.respond({ ...msg, result: { size: this.size } });
           break;
         case 'plugins_has':
-          this.server.respond({ ...msg, response: { has: this.has(msg.params.name) } });
+          this.server.respond({ ...msg, result: { has: this.has(msg.params.name) } });
           break;
         case 'plugins_get':
           {
             const plugin = this.get(msg.params.name);
             if (plugin) {
-              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
               this.log.debug(`***Plugin ${plg}${msg.params.name}${db} not found in plugins_get`);
-              this.server.respond({ ...msg, response: { plugin: undefined } });
+              this.server.respond({ ...msg, result: { plugin: undefined } });
             }
           }
           break;
         case 'plugins_set':
-          this.server.respond({ ...msg, response: { plugin: this.set(msg.params.plugin) } });
+          this.server.respond({ ...msg, result: { plugin: this.set(msg.params.plugin) } });
           break;
         case 'plugins_storagepluginarray':
-          this.server.respond({ ...msg, response: { plugins: this.storagePluginArray() } });
+          this.server.respond({ ...msg, result: { plugins: this.storagePluginArray() } });
           break;
         case 'plugins_apipluginarray':
-          this.server.respond({ ...msg, response: { plugins: this.apiPluginArray() } });
+          this.server.respond({ ...msg, result: { plugins: this.apiPluginArray() } });
           break;
         case 'plugins_install':
-          this.server.respond({ ...msg, response: { packageName: msg.params.packageName, success: await this.install(msg.params.packageName) } });
+          this.server.respond({ ...msg, result: { packageName: msg.params.packageName, success: await this.install(msg.params.packageName) } });
           break;
         case 'plugins_uninstall':
-          this.server.respond({ ...msg, response: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
+          this.server.respond({ ...msg, result: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
           break;
         case 'plugins_add':
           {
             const plugin = await this.add(msg.params.nameOrPath);
             if (plugin) {
-              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -138,9 +139,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.remove(msg.params.nameOrPath);
             if (plugin) {
-              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -148,9 +149,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.enable(msg.params.nameOrPath);
             if (plugin) {
-              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -158,9 +159,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.disable(msg.params.nameOrPath);
             if (plugin) {
-              this.server.respond({ ...msg, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -168,9 +169,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const platform = await this.load(msg.params.plugin);
             if (platform) {
-              this.server.respond({ ...msg, params: {}, response: { platform: {} } });
+              this.server.respond({ ...msg, result: { platform: {} } });
             } else {
-              this.server.respond({ ...msg, response: { platform } });
+              this.server.respond({ ...msg, result: { platform } });
             }
           }
           break;
@@ -178,9 +179,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.start(msg.params.plugin, msg.params.message, msg.params.configure);
             if (plugin) {
-              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -188,9 +189,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.configure(msg.params.plugin);
             if (plugin) {
-              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -198,9 +199,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.shutdown(msg.params.plugin, msg.params.reason, msg.params.removeAllDevices, msg.params.force);
             if (plugin) {
-              this.server.respond({ ...msg, params: {}, response: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
             } else {
-              this.server.respond({ ...msg, response: { plugin } });
+              this.server.respond({ ...msg, result: { plugin } });
             }
           }
           break;
@@ -208,9 +209,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = this.get(msg.params.name);
             if (plugin) {
-              this.server.respond({ ...msg, response: { schema: plugin.schemaJson } });
+              this.server.respond({ ...msg, result: { schema: plugin.schemaJson } });
             } else {
-              this.server.respond({ ...msg, response: { schema: undefined } });
+              this.server.respond({ ...msg, result: { schema: undefined } });
             }
           }
           break;
@@ -219,9 +220,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             const plugin = this.get(msg.params.name);
             if (plugin) {
               plugin.schemaJson = msg.params.schema;
-              this.server.respond({ ...msg, response: { success: true } });
+              this.server.respond({ ...msg, result: { success: true } });
             } else {
-              this.server.respond({ ...msg, response: { success: false } });
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.name} not found` });
             }
           }
           break;
@@ -230,9 +231,31 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             const plugin = this.get(msg.params.name);
             if (plugin) {
               this.saveConfigFromJson(plugin, msg.params.config, msg.params.restartRequired); // No await as it's not necessary to wait
-              this.server.respond({ ...msg, response: { success: true } });
+              this.server.respond({ ...msg, result: { success: true } });
             } else {
-              this.server.respond({ ...msg, response: { success: false } });
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.name} not found` });
+            }
+          }
+          break;
+        case 'plugins_set_latest_version':
+          {
+            const plugin = this.get(msg.params.plugin.name);
+            if (plugin) {
+              plugin.latestVersion = msg.params.version;
+              this.server.respond({ ...msg, result: { success: true } });
+            } else {
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.plugin.name} not found` });
+            }
+          }
+          break;
+        case 'plugins_set_dev_version':
+          {
+            const plugin = this.get(msg.params.plugin.name);
+            if (plugin) {
+              plugin.devVersion = msg.params.version;
+              this.server.respond({ ...msg, result: { success: true } });
+            } else {
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.plugin.name} not found` });
             }
           }
           break;
@@ -469,6 +492,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
 
   /**
    * Resolves the name of a plugin by loading and parsing its package.json file.
+   * It will first try to resolve the path as is, then in the global modules directory, and finally in the matterbridge plugin directory.
    *
    * @param {string} nameOrPath - The name of the plugin or the path to the plugin's package.json file.
    * @returns {Promise<string | null>} A promise that resolves to the path of the plugin's package.json file or null if it could not be resolved.
@@ -482,7 +506,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     let packageJsonPath = path.resolve(nameOrPath);
     this.log.debug(`Resolving plugin path ${plg}${packageJsonPath}${db}`);
 
-    // Check if the package.json file exists
+    // Check if the package.json file exists at the specified path or next try in the global modules directory
     try {
       await promises.access(packageJsonPath);
     } catch {
@@ -490,8 +514,16 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       packageJsonPath = path.join(this.matterbridge.globalModulesDirectory, nameOrPath);
       this.log.debug(`Trying at ${plg}${packageJsonPath}${db}`);
     }
+    // Check if the package.json file exists at the global modules directory or next try in the matterbridge plugin directory
     try {
-      // Load the package.json of the plugin
+      await promises.access(packageJsonPath);
+    } catch {
+      this.log.debug(`Package.json not found at ${plg}${packageJsonPath}${db}`);
+      packageJsonPath = path.join(this.matterbridge.matterbridgePluginDirectory, nameOrPath);
+      this.log.debug(`Trying at ${plg}${packageJsonPath}${db}`);
+    }
+    try {
+      // Load the package.json of the plugin or fails if even not found in the matterbridge plugin directory
       const packageJson = JSON.parse(await promises.readFile(packageJsonPath, 'utf8'));
 
       // Check for main issues
@@ -1038,6 +1070,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         platform.config = config;
         platform.version = packageJson.version;
         platform.isLoaded = true;
+        // @ts-expect-error - setMatterNode is intentionally private
+        platform.setMatterNode?.(
+          this.matterbridge.addBridgedEndpoint.bind(this.matterbridge),
+          this.matterbridge.removeBridgedEndpoint.bind(this.matterbridge),
+          this.matterbridge.removeAllBridgedEndpoints.bind(this.matterbridge),
+          this.matterbridge.addVirtualEndpoint.bind(this.matterbridge),
+        );
         plugin.name = packageJson.name;
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
@@ -1241,7 +1280,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   async loadConfig(plugin: Plugin): Promise<PlatformConfig> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
-    const { shelly_config, somfytahoma_config, zigbee2mqtt_config } = await import('./defaultConfigSchema.js');
     const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
     const defaultConfigFile = plugin.path.replace('package.json', `${plugin.name}.config.json`);
 
@@ -1269,12 +1307,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           this.log.debug(`Loaded default config file ${defaultConfigFile} for plugin ${plg}${plugin.name}${db}.`);
         } catch (_err) {
           this.log.debug(`Default config file ${defaultConfigFile} for plugin ${plg}${plugin.name}${db} does not exist, creating new config file...`);
-          // TODO: Remove this when all these plugins have their own default config file
-          // istanbul ignore next if
-          if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
-          else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
-          else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
-          else config = { name: plugin.name, type: plugin.type, version: '1.0.0', debug: false, unregisterOnShutdown: false };
+          config = { name: plugin.name, type: plugin.type, version: '1.0.0', debug: false, unregisterOnShutdown: false };
         }
         try {
           await promises.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');

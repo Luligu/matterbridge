@@ -21,7 +21,7 @@ import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, set
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 // Setup the Matter test environment
 createTestEnvironment(NAME);
@@ -47,7 +47,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     await startServerNode(NAME, MATTER_PORT);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  });
+  }, 10000);
 
   test('create an RVC device', async () => {
     device = new RoboticVacuumCleaner('RVC Test Device', 'RVC123456');

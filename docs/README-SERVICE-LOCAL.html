@@ -27,8 +27,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
+      width: 24px;
+      height: 24px;
       padding: 0;
       cursor: pointer;
       border: none;
@@ -51,7 +51,7 @@
   </style>
 </head>
 <body>
-<h1><img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with local global node_modules</h1>
+<h1><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with local global node_modules</h1>
 <p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
@@ -71,18 +71,18 @@
 <h3>First create the Matterbridge directories and set the correct permissions</h3>
 <p>This will create the required directories if they don&#39;t exist</p>
 <pre><code class="language-bash">cd ~
-sudo systemctl stop matterbridge                                                        # Γ£à Safe precaution if matterbridge was already running with the traditional setup
-sudo npm uninstall matterbridge -g                                                      # Γ£à We need to uninstall from the global node_modules
-mkdir -p ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                     # Γ£à Creates all needed dirs
-chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global         # Γ£à Ensures ownership
-chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                 # Γ£à Secure permissions
-NPM_CONFIG_PREFIX=~/.npm-global npm install matterbridge --omit=dev --verbose --global  # Γ£à Install matterbridge in the local global node_modules, no sudo
-sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge        # Γ£à Create a link to matterbridge bin
-sudo ln -sf /home/$USER/.npm-global/bin/mb_mdns /usr/local/bin/mb_mdns                  # Γ£à Create a link to mb_mdns bin
-sudo ln -sf /home/$USER/.npm-global/bin/mb_coap /usr/local/bin/mb_coap                  # Γ£à Create a link to mb_coap bin
-hash -r                                                                                 # Γ£à Clear bash command cache as a precaution
-which matterbridge                                                                      # Γ£à Check it
-matterbridge --version                                                                  # Γ£à Will output the matterbridge version
+sudo systemctl stop matterbridge                                                        # &#x2714; Safe precaution if matterbridge was already running with the traditional setup
+sudo npm uninstall matterbridge -g                                                      # &#x2714; We need to uninstall from the global node_modules
+mkdir -p ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                     # &#x2714; Creates all needed dirs
+chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global         # &#x2714; Ensures ownership
+chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                 # &#x2714; Secure permissions
+NPM_CONFIG_PREFIX=~/.npm-global npm install matterbridge --omit=dev --verbose --global  # &#x2714; Install matterbridge in the local global node_modules, no sudo
+sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge        # &#x2714; Create a link to matterbridge bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb_mdns /usr/local/bin/mb_mdns                  # &#x2714; Create a link to mb_mdns bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb_coap /usr/local/bin/mb_coap                  # &#x2714; Create a link to mb_coap bin
+hash -r                                                                                 # &#x2714; Clear bash command cache as a precaution
+which matterbridge                                                                      # &#x2714; Check it
+matterbridge --version                                                                  # &#x2714; Will output the matterbridge version
 </code></pre>
 <h3>Then create a systemctl configuration file for Matterbridge</h3>
 <p>Create a systemctl configuration file for Matterbridge</p>
@@ -206,3 +206,6 @@ RuntimeMaxUse=100M      # Limit runtime logs in /run/log/journal to 100 MB.
   </script>
 </body>
 </html>
+
+
+

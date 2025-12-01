@@ -6,6 +6,24 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.matterjs.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
+// Mock the getGlobalNodeModules logInterfaces from network module before importing it
+jest.unstable_mockModule('./utils/network.js', () => ({
+  getGlobalNodeModules: jest.fn(() => {
+    return Promise.resolve('./node_modules'); // Mock the getGlobalNodeModules function to resolve immediately
+  }),
+}));
+const networkModule = await import('./utils/network.js');
+const getGlobalNodeModulesMock = networkModule.getGlobalNodeModules as jest.MockedFunction<typeof networkModule.getGlobalNodeModules>;
+
+// Mock the createESMWorker from workers module before importing it
+jest.unstable_mockModule('./workers.js', () => ({
+  createESMWorker: jest.fn(() => {
+    return undefined; // Mock the createESMWorker function to return immediately
+  }),
+}));
+const workerModule = await import('./workers.js');
+const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
+
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -18,7 +36,7 @@ import { Matterbridge } from './matterbridge.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge matterjs', () => {
   let matterbridge: Matterbridge;
@@ -140,7 +158,7 @@ describe('Matterbridge matterjs', () => {
     expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
 
     jest.spyOn(matterbridge.serverNode as any, 'close').mockImplementationOnce(() => {
-      throw new Error('Test error creating server node');
+      throw new Error('Test error closing server node');
     });
     await (matterbridge as any).stopServerNode(matterbridge.serverNode, 100);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Closing Matterbridge server node`));

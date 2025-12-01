@@ -557,15 +557,5 @@ h3 {
     width: 1300px;
     height: 1024px;
   }
-
-  .xxxheader {
-    flex-direction: column;
-    align-items: start;
-    justify-content: start;
-  }
-
-  .xxxsub-header {
-    align-items: start;
-    justify-content: start;
-  }
 }
+
