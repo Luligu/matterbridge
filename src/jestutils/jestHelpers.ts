@@ -46,16 +46,10 @@ import { PluginManager } from '../pluginManager.js';
 import { Frontend } from '../frontend.js';
 import { BroadcastServer } from '../broadcastServer.js';
 
-/* Imports from a plugin
-import { AnsiLogger, LogLevel } from 'matterbridge/logger';
-import { DeviceTypeId, Endpoint, Environment, MdnsService, ServerNode, ServerNodeStore, VendorId, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Lifecycle } from 'matterbridge/matter';
-import { RootEndpoint, AggregatorEndpoint } from 'matterbridge/matter/endpoints';
-import { MATTER_STORAGE_NAME, Matterbridge, MatterbridgePlatform } from 'matterbridge';
-*/
-
 export const originalProcessArgv = Object.freeze([...process.argv]);
 export const originalProcessEnv = Object.freeze({ ...process.env } as Record<string, string | undefined>);
 
+// Spy on logger methods
 export let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 export let loggerDebugSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.debug>;
 export let loggerInfoSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.info>;
@@ -64,6 +58,7 @@ export let loggerWarnSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.warn>;
 export let loggerErrorSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.error>;
 export let loggerFatalSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.fatal>;
 
+// Spy on console methods
 export let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 export let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 export let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
@@ -130,8 +125,7 @@ export let log: AnsiLogger;
  * import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
  *
  * // Setup the test environment
- * setupTest(NAME, false);
- *
+ * await setupTest(NAME, false);
  * ```
  */
 export async function setupTest(name: string, debug: boolean = false): Promise<void> {
@@ -209,12 +203,12 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
  * @example
  * ```typescript
  * // Set the debug mode in test environment
- * setDebug(true);
+ * await setDebug(true);
  * ```
  *
  * ```typescript
  * // Reset the debug mode in test environment
- * setDebug(false);
+ * await setDebug(false);
  * ```
  */
 export async function setDebug(debug: boolean): Promise<void> {
@@ -243,7 +237,7 @@ export async function setDebug(debug: boolean): Promise<void> {
 }
 
 /**
- * Start a Matterbridge instance for testing.
+ * Create and start a fully initialized Matterbridge instance for testing.
  *
  * @param {('bridge' | 'childbridge' | 'controller' | '')} bridgeMode The bridge mode to start the Matterbridge instance in.
  * @param {number} frontendPort The frontend port number.
@@ -253,6 +247,12 @@ export async function setDebug(debug: boolean): Promise<void> {
  * @param {number} pluginSize The expected number of plugins.
  * @param {number} devicesSize The expected number of devices.
  * @returns {Promise<Matterbridge>} The Matterbridge instance.
+ *
+ * @example
+ * ```typescript
+ * // Create and start a fully initialized Matterbridge instance for testing.
+ * await startMatterbridge();
+ * ```
  */
 export async function startMatterbridge(
   bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = 'bridge',
@@ -385,10 +385,16 @@ export async function startMatterbridge(
 }
 
 /**
- * Stop the active Matterbridge instance.
+ * Stop the fully initialized Matterbridge instance.
  *
  * @param {cleanupPause} cleanupPause The pause duration before cleanup. Default is 10 ms.
  * @param {destroyPause} destroyPause The pause duration before destruction. Default is 250 ms.
+ *
+ * @example
+ * ```typescript
+ * // Stop the fully initialized Matterbridge instance.
+ * await stopMatterbridge();
+ * ```
  */
 export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250) {
   await destroyMatterbridgeEnvironment(cleanupPause, destroyPause);
@@ -421,6 +427,11 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
   matterbridge.matterbridgeCertDirectory = path.join('jest', name, '.mattercert');
   matterbridge.log.logLevel = LogLevel.DEBUG;
   log = new AnsiLogger({ logName: 'Plugin platform', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+
+  // Get the frontend, plugins and devices
+  frontend = matterbridge.frontend;
+  plugins = matterbridge.plugins;
+  devices = matterbridge.devices;
 
   // Setup matter environment
   // @ts-expect-error - access to private member for testing
@@ -581,7 +592,9 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
 
   // Stop the node storage
   await matterbridge.nodeContext?.close();
+  matterbridge.nodeContext = undefined;
   await matterbridge.nodeStorage?.close();
+  matterbridge.nodeStorage = undefined;
 
   // Ensure the queue is empty and pause
   await flushAsync();
@@ -962,7 +975,7 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   if (mdns && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
   if (mdns && typeof mdns.close === 'function') await mdns.close();
 
-  // Ensure the queue is empty and pause 100ms
+  // Ensure the queue is empty and pause 250ms
   await flushAsync();
 }
 

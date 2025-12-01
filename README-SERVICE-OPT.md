@@ -114,6 +114,7 @@ Wants=network.target
 Type=simple
 Environment=NODE_ENV=production
 Environment="NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global"
+Environment="NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache"
 ExecStart=matterbridge --service --nosudo
 WorkingDirectory=/opt/matterbridge/Matterbridge
 StandardOutput=inherit

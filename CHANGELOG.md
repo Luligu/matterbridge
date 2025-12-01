@@ -14,11 +14,12 @@ The project will evolve to a multi-threaded architecture (the CLI will become th
 - frontend;
 - plugins;
 - devices;
-- check updates;
-- npm install;
-- ✅ get global node_modules;
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
+
+- check updates;
+- npm install;
+- ✅ get the global node_modules directory;
 
 Advantages:
 
@@ -27,23 +28,23 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.4.1] - 2025-11-30
+## [3.4.1] - 2025-12-01
 
 ### Added
 
 - [matterbridge.io]: Updated website https://matterbridge.io with all guides.
 - [matterbridge]: Added addVirtualEndpoint() to match Matterbridge thread module.
 - [BroadcastServer]: Backport BroadcastServer v.2.0.0 from Matterbridge thread module.
-- [MatterbridgePrefix]: Added worker **thread** to get global node_modules.
-- [PluginManager]: Improved the resolve method to resolve automatically also in the plugin directory Usefull for developing with DevContainer.
+- [MatterbridgePrefix]: Added **worker thread** to get the global node_modules.
+- [PluginManager]: Improved the resolve method to resolve automatically also in the plugin directory. Usefull for developing with DevContainer.
 
 ### Changed
 
 - [package]: Updated dependencies.
 - [frontend]: Updated dependencies.
-- [frontend]: Bumped `frontend` version to 3.3.2.
-- [platform]: Bumped MatterbridgePlatform v.1.5.0.
-- [thread]: Bump BroadcastServer to v1.0.4.
+- [frontend]: Bumped `frontend` version to v.3.3.2.
+- [platform]: Bumped `MatterbridgePlatform` v.1.6.0.
+- [thread]: Bump `BroadcastServer` to v.2.0.0.
 - [updates]: The update availability check now starts after 5 minutes and each 12 hours. It can also be triggered from the frontend.
 
 ### Fixed
