@@ -43,6 +43,7 @@ Advantages:
 ### Fixed
 
 - [frontend]: Fixed persistance of autoScroll.
+- [frontend]: Fixed parameters info of Log panel in the Home page.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
