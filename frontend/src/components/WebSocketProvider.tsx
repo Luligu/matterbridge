@@ -21,25 +21,27 @@ export interface WsLogMessage {
 // TypeScript interfaces for context values
 export interface WebSocketMessagesContextType {
   messages: WsLogMessage[];
-  maxMessages: number;
+  logMaxMessages: number;
   logFilterLevel: string;
   logFilterSearch: string;
-  autoScroll: boolean;
+  logAutoScroll: boolean;
   setMessages: React.Dispatch<React.SetStateAction<WsLogMessage[]>>;
-  setLogFilters: (level: string, search: string) => void;
-  setMaxMessages: React.Dispatch<React.SetStateAction<number>>;
-  setAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
+  setLogMaxMessages: React.Dispatch<React.SetStateAction<number>>;
+  setLogFilterLevel: React.Dispatch<React.SetStateAction<string>>;
+  setLogFilterSearch: React.Dispatch<React.SetStateAction<string>>;
+  setLogAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface WebSocketContextType {
-  maxMessages: number;
+  logMaxMessages: number;
   logFilterLevel: string;
   logFilterSearch: string;
-  autoScroll: boolean;
+  logAutoScroll: boolean;
   setMessages: React.Dispatch<React.SetStateAction<WsLogMessage[]>>;
-  setLogFilters: (level: string, search: string) => void;
-  setMaxMessages: React.Dispatch<React.SetStateAction<number>>;
-  setAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
+  setLogMaxMessages: React.Dispatch<React.SetStateAction<number>>;
+  setLogFilterLevel: React.Dispatch<React.SetStateAction<string>>;
+  setLogFilterSearch: React.Dispatch<React.SetStateAction<string>>;
+  setLogAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
   online: boolean;
   retry: number;
   getUniqueId: () => number;
@@ -56,10 +58,10 @@ export const WebSocketContext = createContext<WebSocketContextType>(null as unkn
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   // States
   const [messages, setMessages] = useState<WsLogMessage[]>([]);
-  const [maxMessages, setMaxMessages] = useState(1000);
+  const [logMaxMessages, setLogMaxMessages] = useState(1000);
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
-  const [autoScroll, setAutoScroll] = useState(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
+  const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
 
   const [online, setOnline] = useState(false);
 
@@ -137,15 +139,6 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const logMessage = useCallback((badge: string, message: string) => {
     setMessages((prevMessages) => [...prevMessages, { level: badge, time: '', name: '', message }]);
   }, []);
-
-  const setLogFilters = useCallback(
-    (level: string, search: string) => {
-      setLogFilterLevel(level);
-      setLogFilterSearch(search);
-      logMessage('WebSocket', `Filtering by log level "${level}" and log search "${search}"`);
-    },
-    [logMessage],
-  );
 
   const addListener = useCallback((listener: (msg: WsMessageApiResponse) => void, id: number) => {
     if (debug) console.log(`WebSocket addListener id ${id}:`, listener);
@@ -234,8 +227,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           setMessages((prevMessagesNew) => {
             const newMessagesNew = [...prevMessagesNew, { level: msg.response.level, time: msg.response.time, name: msg.response.name, message: msg.response.message }];
             // Check if the new array length exceeds the maximum allowed
-            if (newMessagesNew.length > maxMessages * 2) {
-              return newMessagesNew.slice(maxMessages);
+            if (newMessagesNew.length > logMaxMessages * 2) {
+              return newMessagesNew.slice(logMaxMessages);
             }
             return newMessagesNew;
           });
@@ -321,28 +314,30 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const contextMessagesValue = useMemo(
     () => ({
       messages,
-      maxMessages,
-      autoScroll,
+      logMaxMessages,
+      logAutoScroll,
       logFilterLevel,
       logFilterSearch,
       setMessages,
-      setLogFilters,
-      setMaxMessages,
-      setAutoScroll,
+      setLogMaxMessages,
+      setLogFilterLevel,
+      setLogFilterSearch,
+      setLogAutoScroll,
     }),
-    [messages, maxMessages, autoScroll, logFilterLevel, logFilterSearch, setMessages, setLogFilters, setMaxMessages, setAutoScroll],
+    [messages, logMaxMessages, logAutoScroll, logFilterLevel, logFilterSearch, setMessages, setLogFilterLevel, setLogFilterSearch, setLogMaxMessages, setLogAutoScroll],
   );
 
   const contextValue = useMemo(
     () => ({
-      maxMessages,
-      autoScroll,
+      logMaxMessages,
+      logAutoScroll,
       logFilterLevel,
       logFilterSearch,
       setMessages,
-      setLogFilters,
-      setMaxMessages,
-      setAutoScroll,
+      setLogMaxMessages,
+      setLogFilterLevel,
+      setLogFilterSearch,
+      setLogAutoScroll,
       online,
       retry: retryCountRef.current,
       getUniqueId,
@@ -351,7 +346,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       sendMessage,
       logMessage,
     }),
-    [maxMessages, autoScroll, setMessages, setLogFilters, setMaxMessages, setAutoScroll, online, retryCountRef.current, addListener, removeListener, sendMessage, logMessage],
+    [logMaxMessages, logAutoScroll, setMessages, setLogFilterLevel, setLogFilterSearch, setLogMaxMessages, setLogAutoScroll, online, retryCountRef.current, addListener, removeListener, sendMessage, logMessage],
   );
 
   return (

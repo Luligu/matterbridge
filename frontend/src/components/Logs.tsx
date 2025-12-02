@@ -27,32 +27,32 @@ function Logs(): React.JSX.Element {
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
   const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
-  const { setMessages, setLogFilters, online, setAutoScroll } = useContext(WebSocketContext);
+  const { setMessages: setContextMessages, setLogFilterLevel: setContextLogFilterLevel, setLogFilterSearch: setContextLogFilterSearch, online, setLogAutoScroll: setContextAutoScroll } = useContext(WebSocketContext);
 
   const handleChangeLevel = (event: SelectChangeEvent) => {
     setLogFilterLevel(event.target.value);
-    setLogFilters(event.target.value, logFilterSearch);
+    setContextLogFilterLevel(event.target.value);
     localStorage.setItem('logFilterLevel', event.target.value);
     if (debug) console.log('handleChangeLevel called with value:', event.target.value);
   };
 
   const handleChangeSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLogFilterSearch(event.target.value);
-    setLogFilters(logFilterLevel, event.target.value);
+    setContextLogFilterSearch(event.target.value);
     localStorage.setItem('logFilterSearch', event.target.value);
     if (debug) console.log('handleChangeSearch called with value:', event.target.value);
   };
 
   const handleAutoScrollChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLogAutoScroll(event.target.checked);
-    setAutoScroll(event.target.checked);
+    setContextAutoScroll(event.target.checked);
     localStorage.setItem('logAutoScroll', event.target.checked ? 'true' : 'false');
     if (debug) console.log('handleAutoScrollChange called with value:', event.target.checked);
   };
 
   const handleClearLogsClick = () => {
     if (debug) console.log('handleClearLogsClick called');
-    setMessages([]);
+    setContextMessages([]);
   };
 
   if (debug) console.log('Logs rendering...');

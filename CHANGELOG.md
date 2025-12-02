@@ -32,7 +32,7 @@ Advantages:
 
 ### Added
 
-- [frontend]: Added throttle to autoScroll.
+- [frontend]: Added throttle and timeout to autoScroll.
 
 ### Changed
 

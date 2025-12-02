@@ -1,5 +1,5 @@
 // React
-import { memo, useContext } from 'react';
+import { memo, useContext, useEffect } from 'react';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -11,7 +11,11 @@ import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } fro
 
 function HomeLogs(): React.JSX.Element {
   // Contexts
-  const { logFilterLevel, logFilterSearch, autoScroll, online } = useContext(WebSocketContext);
+  const { logFilterLevel, logFilterSearch, logAutoScroll, online } = useContext(WebSocketContext);
+
+  useEffect(() => {
+    if (debug) console.log(`HomeLogs logFilterLevel: ${logFilterLevel}, logFilterSearch: ${logFilterSearch}, logAutoScroll: ${logAutoScroll}`);
+  }, [logFilterLevel, logFilterSearch, logAutoScroll]);
 
   if (debug) console.log('HomeLogs rendering...');
   if (!online) {
@@ -22,7 +26,7 @@ function HomeLogs(): React.JSX.Element {
       <MbfWindowHeader>
         <MbfWindowHeaderText>Logs</MbfWindowHeaderText>
         <MbfWindowHeaderText style={{ fontWeight: 'normal', fontSize: '12px', marginTop: '2px' }}>
-          Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}" Scroll: {autoScroll ? 'auto' : 'manual'}
+          Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}" Scroll: {logAutoScroll ? 'auto' : 'manual'}
         </MbfWindowHeaderText>
       </MbfWindowHeader>
       <MbfWindowContent style={{ flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '10px', alignItems: 'start' }}>
