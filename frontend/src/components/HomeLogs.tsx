@@ -1,21 +1,22 @@
 // React
-import { memo, useContext, useEffect } from 'react';
+import { memo, useContext, useState } from 'react';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import WebSocketLogs from './WebSocketLogs';
 import { Connecting } from './Connecting';
-import { debug } from '../App';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
+import { debug } from '../App';
 // const debug = true;
 
 function HomeLogs(): React.JSX.Element {
-  // Contexts
-  const { logFilterLevel, logFilterSearch, logAutoScroll, online } = useContext(WebSocketContext);
+  // States
+  const [logFilterLevel, _setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
+  const [logFilterSearch, _setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
+  const [logAutoScroll, _setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
 
-  useEffect(() => {
-    if (debug) console.log(`HomeLogs logFilterLevel: ${logFilterLevel}, logFilterSearch: ${logFilterSearch}, logAutoScroll: ${logAutoScroll}`);
-  }, [logFilterLevel, logFilterSearch, logAutoScroll]);
+  // Contexts
+  const { online } = useContext(WebSocketContext);
 
   if (debug) console.log('HomeLogs rendering...');
   if (!online) {

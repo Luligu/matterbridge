@@ -123,7 +123,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const filterLogMessages = useCallback((level: string, search: string) => {
-    console.log(`WebSocket filterLogMessages called with level "${level}" and search "${search}". Messages count: ${messages.length}`);
+    if (debug) console.log(`WebSocket filterLogMessages called with level "${level}" and search "${search}"...`);
     setMessages((prevMessages) => {
       return prevMessages.filter((msg) => {
         // Process log filtering by level
@@ -138,7 +138,6 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         return true;
       });
     });
-    console.log(`WebSocket filterLogMessages called with level "${level}" and search "${search}". Messages count: ${messages.length}`);
   }, []);
 
   const sendMessage = useCallback((message: WsMessageApiRequest) => {
