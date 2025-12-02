@@ -33,6 +33,7 @@ Advantages:
 ### Added
 
 - [frontend]: Added throttle and timeout to autoScroll.
+- [frontend]: Log filters are now applied to existing messages too.
 
 ### Changed
 

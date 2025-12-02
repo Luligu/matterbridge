@@ -30,6 +30,7 @@ export interface WebSocketMessagesContextType {
   setLogFilterLevel: React.Dispatch<React.SetStateAction<string>>;
   setLogFilterSearch: React.Dispatch<React.SetStateAction<string>>;
   setLogAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
+  filterLogMessages: (level: string, search: string) => void;
 }
 
 export interface WebSocketContextType {
@@ -42,6 +43,7 @@ export interface WebSocketContextType {
   setLogFilterLevel: React.Dispatch<React.SetStateAction<string>>;
   setLogFilterSearch: React.Dispatch<React.SetStateAction<string>>;
   setLogAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
+  filterLogMessages: (level: string, search: string) => void;
   online: boolean;
   retry: number;
   getUniqueId: () => number;
@@ -118,6 +120,25 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   const getUniqueId = useCallback(() => {
     return Math.floor(Math.random() * (999999 - 1000 + 1)) + 1000;
+  }, []);
+
+  const filterLogMessages = useCallback((level: string, search: string) => {
+    console.log(`WebSocket filterLogMessages called with level "${level}" and search "${search}". Messages count: ${messages.length}`);
+    setMessages((prevMessages) => {
+      return prevMessages.filter((msg) => {
+        // Process log filtering by level
+        if (level === 'info' && msg.level === 'debug') return false;
+        if (level === 'notice' && (msg.level === 'debug' || msg.level === 'info')) return false;
+        if (level === 'warn' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice')) return false;
+        if (level === 'error' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn')) return false;
+        if (level === 'fatal' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn' || msg.level === 'error')) return false;
+        // Process log filtering by search
+        if (search !== '*' && search !== '' && !msg.message.toLowerCase().includes(search.toLowerCase()) && !msg.name.toLowerCase().includes(search.toLowerCase())) return false;
+
+        return true;
+      });
+    });
+    console.log(`WebSocket filterLogMessages called with level "${level}" and search "${search}". Messages count: ${messages.length}`);
   }, []);
 
   const sendMessage = useCallback((message: WsMessageApiRequest) => {
@@ -323,8 +344,9 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       setLogFilterLevel,
       setLogFilterSearch,
       setLogAutoScroll,
+      filterLogMessages,
     }),
-    [messages, logMaxMessages, logAutoScroll, logFilterLevel, logFilterSearch, setMessages, setLogFilterLevel, setLogFilterSearch, setLogMaxMessages, setLogAutoScroll],
+    [messages, logMaxMessages, logAutoScroll, logFilterLevel, logFilterSearch, setMessages, setLogFilterLevel, setLogFilterSearch, setLogMaxMessages, setLogAutoScroll, filterLogMessages],
   );
 
   const contextValue = useMemo(
@@ -338,6 +360,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       setLogFilterLevel,
       setLogFilterSearch,
       setLogAutoScroll,
+      filterLogMessages,
       online,
       retry: retryCountRef.current,
       getUniqueId,

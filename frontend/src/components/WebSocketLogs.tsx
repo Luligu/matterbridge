@@ -40,6 +40,7 @@ function WebSocketLogs() {
     if (logAutoScroll && !isHovering && !isTouchscreen) {
       const now = Date.now();
       if (now - lastScrollTimeRef.current >= 500) {
+        if (debug) console.log('WebSocketLogs auto-scroll to bottom');
         lastScrollTimeRef.current = now;
         endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
       } else {
@@ -53,7 +54,7 @@ function WebSocketLogs() {
         }, 1000);
       }
     }
-  }, [messages, isHovering, logAutoScroll, isTouchscreen]);
+  }, [messages, logAutoScroll, isHovering, isTouchscreen]);
 
   const getLevelMessageBgColor = (level: string) => {
     switch (level.toLowerCase()) {

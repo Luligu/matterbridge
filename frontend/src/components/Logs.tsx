@@ -27,11 +27,12 @@ function Logs(): React.JSX.Element {
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
   const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
-  const { setMessages: setContextMessages, setLogFilterLevel: setContextLogFilterLevel, setLogFilterSearch: setContextLogFilterSearch, online, setLogAutoScroll: setContextAutoScroll } = useContext(WebSocketContext);
+  const { setMessages: setContextMessages, setLogFilterLevel: setContextLogFilterLevel, setLogFilterSearch: setContextLogFilterSearch, online, setLogAutoScroll: setContextAutoScroll, filterLogMessages } = useContext(WebSocketContext);
 
   const handleChangeLevel = (event: SelectChangeEvent) => {
     setLogFilterLevel(event.target.value);
     setContextLogFilterLevel(event.target.value);
+    filterLogMessages(event.target.value, logFilterSearch);
     localStorage.setItem('logFilterLevel', event.target.value);
     if (debug) console.log('handleChangeLevel called with value:', event.target.value);
   };
@@ -39,6 +40,7 @@ function Logs(): React.JSX.Element {
   const handleChangeSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLogFilterSearch(event.target.value);
     setContextLogFilterSearch(event.target.value);
+    filterLogMessages(logFilterLevel, event.target.value);
     localStorage.setItem('logFilterSearch', event.target.value);
     if (debug) console.log('handleChangeSearch called with value:', event.target.value);
   };
@@ -46,6 +48,7 @@ function Logs(): React.JSX.Element {
   const handleAutoScrollChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLogAutoScroll(event.target.checked);
     setContextAutoScroll(event.target.checked);
+    filterLogMessages(logFilterLevel, logFilterSearch);
     localStorage.setItem('logAutoScroll', event.target.checked ? 'true' : 'false');
     if (debug) console.log('handleAutoScrollChange called with value:', event.target.checked);
   };
