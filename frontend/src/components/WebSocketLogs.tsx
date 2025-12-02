@@ -42,7 +42,7 @@ function WebSocketLogs() {
       if (now - lastScrollTimeRef.current >= 500) {
         if (debug) console.log('WebSocketLogs auto-scroll to bottom');
         lastScrollTimeRef.current = now;
-        endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+        endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       } else {
         if (debug) console.log('WebSocketLogs auto-scroll skipped to avoid flicker');
         if (lastScrollTimeoutRef.current) {

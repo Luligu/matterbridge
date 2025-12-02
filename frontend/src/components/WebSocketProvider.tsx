@@ -126,12 +126,14 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     if (debug) console.log(`WebSocket filterLogMessages called with level "${level}" and search "${search}"...`);
     setMessages((prevMessages) => {
       return prevMessages.filter((msg) => {
-        // Process log filtering by level
-        if (level === 'info' && msg.level === 'debug') return false;
-        if (level === 'notice' && (msg.level === 'debug' || msg.level === 'info')) return false;
-        if (level === 'warn' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice')) return false;
-        if (level === 'error' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn')) return false;
-        if (level === 'fatal' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn' || msg.level === 'error')) return false;
+        // Process log filtering by level. Leave 'spawn' and other system levels always visible
+        if (['debug', 'info', 'notice', 'warn', 'error', 'fatal'].includes(msg.level)) {
+          if (level === 'info' && msg.level === 'debug') return false;
+          if (level === 'notice' && (msg.level === 'debug' || msg.level === 'info')) return false;
+          if (level === 'warn' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice')) return false;
+          if (level === 'error' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn')) return false;
+          if (level === 'fatal' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn' || msg.level === 'error')) return false;
+        }
         // Process log filtering by search
         if (search !== '*' && search !== '' && !msg.message.toLowerCase().includes(search.toLowerCase()) && !msg.name.toLowerCase().includes(search.toLowerCase())) return false;
 
