@@ -36,6 +36,8 @@ export interface UiContextType {
   exitInstallProgressError: () => void;
   hideInstallProgress: () => void;
   addInstallProgress: (output: string) => void;
+  installAutoExit: boolean;
+  setInstallAutoExit: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const UiContext = createContext<UiContextType>(null as unknown as UiContextType);
@@ -147,6 +149,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   const [installCommand, setInstallCommand] = useState('');
   const [installPackageName, setInstallPackageName] = useState('');
   const [installOutput, setInstallOutput] = useState('');
+  const [installAutoExit, setInstallAutoExit] = useState(localStorage.getItem('installAutoExit') === 'false' ? false : true);
 
   const showInstallProgress = useCallback((title: string, command: string, packageName: string) => {
     if (debug) console.log(`UiProvider show install progress for package ${title}`);
@@ -165,6 +168,10 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   const exitInstallProgressSuccess = useCallback(() => {
     if (debug) console.log(`UiProvider exitInstallProgressSuccess: package ${installPackageName}`);
     // setInstallOutput((prevOutput) => prevOutput + `Successfully installed ${installPackageName}\n`);
+    const installAutoExitLocal = localStorage.getItem('installAutoExit') === 'false' ? false : true;
+    if (installAutoExitLocal) {
+      setInstallDialogOpen(false);
+    }
   }, [installPackageName]);
 
   const exitInstallProgressError = useCallback(() => {
@@ -199,6 +206,8 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
       exitInstallProgressError,
       hideInstallProgress,
       addInstallProgress,
+      installAutoExit,
+      setInstallAutoExit,
     }),
     [
       mobile,
@@ -214,6 +223,8 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
       exitInstallProgressError,
       hideInstallProgress,
       addInstallProgress,
+      installAutoExit,
+      setInstallAutoExit,
     ],
   );
 

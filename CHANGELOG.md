@@ -34,6 +34,7 @@ Advantages:
 
 - [frontend]: Added throttle and timeout to autoScroll.
 - [frontend]: Log filters are now applied to existing messages too.
+- [frontend]: Added close on success to Install dialog.
 
 ### Changed
 
