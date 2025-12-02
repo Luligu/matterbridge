@@ -46,7 +46,7 @@ function Logs(): React.JSX.Element {
   const handleAutoScrollChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLogAutoScroll(event.target.checked);
     setAutoScroll(event.target.checked);
-    localStorage.setItem('logAutoScroll', event.target.value ? 'true' : 'false');
+    localStorage.setItem('logAutoScroll', event.target.checked ? 'true' : 'false');
     if (debug) console.log('handleAutoScrollChange called with value:', event.target.checked);
   };
 

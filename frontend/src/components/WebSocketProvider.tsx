@@ -22,6 +22,8 @@ export interface WsLogMessage {
 export interface WebSocketMessagesContextType {
   messages: WsLogMessage[];
   maxMessages: number;
+  logFilterLevel: string;
+  logFilterSearch: string;
   autoScroll: boolean;
   setMessages: React.Dispatch<React.SetStateAction<WsLogMessage[]>>;
   setLogFilters: (level: string, search: string) => void;
@@ -31,9 +33,9 @@ export interface WebSocketMessagesContextType {
 
 export interface WebSocketContextType {
   maxMessages: number;
-  autoScroll: boolean;
   logFilterLevel: string;
   logFilterSearch: string;
+  autoScroll: boolean;
   setMessages: React.Dispatch<React.SetStateAction<WsLogMessage[]>>;
   setLogFilters: (level: string, search: string) => void;
   setMaxMessages: React.Dispatch<React.SetStateAction<number>>;
@@ -53,11 +55,12 @@ export const WebSocketContext = createContext<WebSocketContextType>(null as unkn
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   // States
-  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
-  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
   const [messages, setMessages] = useState<WsLogMessage[]>([]);
   const [maxMessages, setMaxMessages] = useState(1000);
-  const [autoScroll, setAutoScroll] = useState(true);
+  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
+  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
+  const [autoScroll, setAutoScroll] = useState(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
+
   const [online, setOnline] = useState(false);
 
   // Contexts
@@ -320,12 +323,14 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       messages,
       maxMessages,
       autoScroll,
+      logFilterLevel,
+      logFilterSearch,
       setMessages,
       setLogFilters,
       setMaxMessages,
       setAutoScroll,
     }),
-    [messages, setMessages, setLogFilters],
+    [messages, maxMessages, autoScroll, logFilterLevel, logFilterSearch, setMessages, setLogFilters, setMaxMessages, setAutoScroll],
   );
 
   const contextValue = useMemo(

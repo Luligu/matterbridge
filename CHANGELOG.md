@@ -33,6 +33,11 @@ Advantages:
 ### Changed
 
 - [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to v.3.3.3.
+
+### Fixed
+
+- [frontend]: Fixed persistance of autoScroll.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
