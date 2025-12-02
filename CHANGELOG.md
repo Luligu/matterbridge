@@ -32,7 +32,7 @@ Advantages:
 
 ### Added
 
-- [frontend]: Added throttle and timeout to autoScroll.
+- [frontend]: Added throttle and timeout to autoScroll in the logs.
 - [frontend]: Log filters are now applied to existing messages too.
 - [frontend]: Added close on success to Install dialog.
 
