@@ -25,6 +25,7 @@ function WebSocketLogs() {
   const { messages, autoScroll } = useContext(WebSocketMessagesContext);
   const [isHovering, setIsHovering] = useState(false);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const lastScrollTimeRef = useRef<number>(0); // throttle auto-scroll to avoid flicker
 
   // Detect touchscreen only once per component mount
   const isTouchscreen = useMemo(() => detectTouchscreen(), []);
@@ -36,7 +37,11 @@ function WebSocketLogs() {
   useEffect(() => {
     if (debug) console.log(`WebSocketLogs autoScroll: ${autoScroll} isHovering: ${isHovering}`);
     if (autoScroll && !isHovering && !isTouchscreen) {
-      endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const now = Date.now();
+      if (now - lastScrollTimeRef.current >= 500) {
+        lastScrollTimeRef.current = now;
+        endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   }, [messages, isHovering, autoScroll, isTouchscreen]);
 

@@ -30,6 +30,10 @@ Advantages:
 
 ## [3.4.2] - 2025-12-??
 
+### Added
+
+- [frontend]: Added throttle to autoScroll.
+
 ### Changed
 
 - [package]: Updated dependencies.
