@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.3.4
+ * @version 1.3.5
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -1243,11 +1243,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     }
     this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}: ${reason}...`);
     try {
+      plugin.platform.isShuttingDown = true;
       await plugin.platform.onShutdown(reason);
       plugin.platform.isReady = false;
       plugin.platform.isLoaded = false;
       plugin.platform.isStarted = false;
       plugin.platform.isConfigured = false;
+      plugin.platform.isShuttingDown = false;
       plugin.locked = undefined;
       plugin.error = undefined;
       plugin.loaded = undefined;

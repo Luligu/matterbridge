@@ -4,7 +4,7 @@
  * @file matterbridgePlatform.ts
  * @author Luca Liguori
  * @created 2024-03-21
- * @version 1.6.0
+ * @version 1.6.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -138,6 +138,8 @@ export class MatterbridgePlatform {
   isStarted = false;
   /** Indicates whether the platform has been configured. */
   isConfigured = false;
+  /** Indicates whether the platform is shutting down. */
+  isShuttingDown = false;
 
   // Device and entity select in the plugin config UI
   readonly #selectDevices = new Map<string, { serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();

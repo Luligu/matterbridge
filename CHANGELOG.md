@@ -36,6 +36,7 @@ Advantages:
 - [frontend]: Log filters are now applied to existing messages too.
 - [frontend]: Added close on success to Install dialog.
 - [BroadcastServer]: Added check for port closed.
+- [platform]: Added isShuttingDown property to MatterbridgePlatform.
 
 ### Changed
 
