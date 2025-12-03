@@ -37,6 +37,7 @@ Advantages:
 - [frontend]: Added close on success to Install dialog.
 - [BroadcastServer]: Added check for port closed.
 - [platform]: Added isShuttingDown property to MatterbridgePlatform.
+- [delay]: Added --delay [seconds]. It will wait to start Matterbridge for the specified delay (default 2 minutes) if the system uptime is less then 5 minutes. It is a safe switch to avoid race conditions on start.
 
 ### Changed
 

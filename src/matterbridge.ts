@@ -901,6 +901,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await this.nodeContext?.set<string>('bridgeMode', 'bridge');
     }
 
+    // Wait delay if specified (default 2 minutes) and the system uptime is less than 5 minutes
+    if (hasParameter('delay') && os.uptime() <= 60 * 5) {
+      const delay = getIntParameter('delay') || 2000;
+      this.log.warn('Delay switch found with system uptime less than 5 minutes. Waiting for ' + delay + ' seconds before starting matterbridge...');
+      await wait(delay * 1000, 'Race condition delay', true);
+    }
+
     // Start matterbridge in bridge mode
     if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
       this.bridgeMode = 'bridge';
