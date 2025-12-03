@@ -35,6 +35,7 @@ Advantages:
 - [frontend]: Added throttle and timeout to autoScroll in the logs.
 - [frontend]: Log filters are now applied to existing messages too.
 - [frontend]: Added close on success to Install dialog.
+- [BroadcastServer]: Added check for port closed.
 
 ### Changed
 
@@ -45,6 +46,7 @@ Advantages:
 
 - [frontend]: Fixed persistance of autoScroll.
 - [frontend]: Fixed parameters info of Log panel in the Home page.
+- [thread]: Bump `BroadcastServer` to v.2.0.1.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

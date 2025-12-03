@@ -10,8 +10,8 @@ import { BroadcastChannel } from 'node:worker_threads';
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { BroadcastServer } from './broadcastServer.js';
-import { broadcastServerBroadcastSpy, broadcastServerRequestSpy, broadcastServerRespondSpy, flushAsync, setupTest } from './jestutils/jestHelpers.js';
+import type { BroadcastServer } from './broadcastServer.js';
+import { broadcastServerBroadcastSpy, broadcastServerRequestSpy, broadcastServerRespondSpy, flushAsync, loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -35,9 +35,57 @@ describe('BroadcastServer', () => {
   });
 
   test('constructor', async () => {
+    process.argv = [...originalProcessArgv, '--loader', '--verbose'];
+    const { BroadcastServer } = await import('./broadcastServer.js');
     server = new BroadcastServer('manager', log, NAME);
     expect(server).toBeInstanceOf(BroadcastServer);
     expect((server as any).broadcastChannel).toBeInstanceOf(BroadcastChannel);
+  });
+
+  test('message handler', async () => {
+    // @ts-expect-error: access private method for test
+    server.verbose = true;
+
+    // @ts-expect-error: access private method for test
+    server.broadcastChannel.onmessage({ data: { dst: 'all' } } as any);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/received broadcast message/));
+    jest.clearAllMocks();
+
+    // @ts-expect-error: access private method for test
+    server.broadcastChannel.onmessage({ data: { dst: 'none' } } as any);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/received unrelated broadcast message/));
+
+    // @ts-expect-error: access private method for test
+    server.verbose = false;
+  });
+
+  test('message error handler', async () => {
+    // @ts-expect-error: access private method for test
+    server.broadcastChannel.onmessageerror({ data: { invalid: 'message' } } as any);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/received message error/));
+  });
+
+  test('should not post message when closed', async () => {
+    // @ts-expect-error: access private method for test
+    server.closed = true;
+
+    server.broadcast({ type: 'jest_simple', src: 'frontend', dst: 'manager' });
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Broadcast channel is closed/));
+    jest.clearAllMocks();
+
+    server.request({ type: 'jest_simple', src: 'frontend', dst: 'manager' });
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Broadcast channel is closed/));
+    jest.clearAllMocks();
+
+    server.respond({ type: 'jest_simple', src: 'frontend', dst: 'manager', result: { success: true } });
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Broadcast channel is closed/));
+    jest.clearAllMocks();
+
+    await expect(server.fetch({ type: 'jest_simple', src: 'frontend', dst: 'manager' })).rejects.toThrow(/Broadcast channel is closed/);
+    jest.clearAllMocks();
+
+    // @ts-expect-error: access private method for test
+    server.closed = false;
   });
 
   test('getUniqueId', async () => {
@@ -206,6 +254,7 @@ describe('BroadcastServer', () => {
     const eventHandler = jest.fn();
     server.on('broadcast_message', eventHandler);
 
+    const { BroadcastServer } = await import('./broadcastServer.js');
     const testServer = new BroadcastServer('manager', log, NAME);
     const testMessage = { id: 123456, type: 'jest', src: 'frontend', dst: 'manager' } as const;
     // @ts-expect-error: access private method for test
@@ -264,6 +313,7 @@ describe('BroadcastServer', () => {
     server.on('broadcast_message', handler);
 
     // Use a separate BroadcastServer instance to simulate another worker
+    const { BroadcastServer } = await import('./broadcastServer.js');
     const testServer = new BroadcastServer('frontend', log, NAME);
     const result = await testServer.fetch({ id: 123456, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } });
     testServer.close();
@@ -306,6 +356,7 @@ describe('BroadcastServer', () => {
 
   test('fetch: should reject on timeout from another thread', async () => {
     // Use a separate BroadcastServer instance to simulate another worker
+    const { BroadcastServer } = await import('./broadcastServer.js');
     const testServer = new BroadcastServer('manager', log, NAME);
     await expect(testServer.fetch({ id: 123456, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } }, 10)).rejects.toThrow(/Fetch timeout/);
     testServer.close();
@@ -337,6 +388,8 @@ describe('BroadcastServer', () => {
   test('close', async () => {
     server.close();
     expect((server as any).broadcastChannel.onmessage).toBeNull();
+    // @ts-expect-error: access private method for test
+    server.closed = false;
   });
 
   test('broadcast: should log error if the port is closed', async () => {
