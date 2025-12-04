@@ -32,6 +32,8 @@ process.argv = [
   '-discriminator',
   DISCRIMINATOR.toString(),
 ];
+process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
+process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('./workers.js', () => ({
@@ -77,6 +79,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   });
 
   test('Matterbridge.loadInstance(true) -childbridge mode', async () => {
+    await setDebug(true);
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
@@ -132,6 +135,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8802${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in childbridge mode...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in childbridge mode`);
+    await setDebug(false);
   }, 60000);
 
   test('addBridgedEndpoint with invalid plugin', async () => {

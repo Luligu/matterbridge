@@ -5,8 +5,10 @@ const NAME = 'MatterbridgeGlobal';
 const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-debug'];
+process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
+process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
-import os, { version } from 'node:os';
+import os from 'node:os';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -20,7 +22,7 @@ import { getParameter, hasParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
 import { plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Mock BroadcastServer methods
@@ -122,6 +124,7 @@ describe('Matterbridge', () => {
   });
 
   test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
+    // await setDebug(true);
     expect((Matterbridge as any).instance).toBeDefined();
     matterbridge = await Matterbridge.loadInstance(true);
     expect((matterbridge as any).initialized).toBeFalsy();
@@ -183,6 +186,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).initialized).toBeFalsy();
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
     expect((Matterbridge as any).instance).toBeUndefined(); // Instance is not defined cause cleanup() has been called
+    // await setDebug(false);
   });
 
   test('Matterbridge.loadInstance(true) with frontend', async () => {

@@ -31,6 +31,8 @@ process.argv = [
   '-discriminator',
   DISCRIMINATOR.toString(),
 ];
+process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
+process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('./workers.js', () => ({
