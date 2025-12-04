@@ -51,7 +51,6 @@ import { copyDirectory } from './utils/copyDirectory.js';
 import { createDirectory } from './utils/createDirectory.js';
 import { isValidString, parseVersionString, isValidNumber, isValidObject } from './utils/isvalid.js';
 import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
-import { withTimeout, waiter, wait } from './utils/wait.js';
 import { ApiMatter, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, MaybePromise, NODE_STORAGE_DIR, plg, Plugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -230,7 +229,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   /** Broadcast server */
   private readonly server: BroadcastServer;
-  private readonly debug = hasParameter('debug') || hasParameter('verbose');
   private readonly verbose = hasParameter('verbose');
 
   /** We load asyncronously so is private */
@@ -901,11 +899,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await this.nodeContext?.set<string>('bridgeMode', 'bridge');
     }
 
-    // Wait delay if specified (default 2 minutes) and the system uptime is less than 5 minutes
+    // Wait delay if specified (default 2 minutes) and the system uptime is less than 5 minutes. It solves race conditions on system startup.
     if (hasParameter('delay') && os.uptime() <= 60 * 5) {
+      const { wait } = await import('./utils/wait.js');
       const delay = getIntParameter('delay') || 2000;
-      this.log.warn('Delay switch found with system uptime less than 5 minutes. Waiting for ' + delay + ' seconds before starting matterbridge...');
+      this.log.warn('Delay switch found with system uptime less then 5 minutes. Waiting for ' + delay + ' seconds before starting matterbridge...');
       await wait(delay * 1000, 'Race condition delay', true);
+    }
+
+    // Wait delay if specified (default 2 minutes). It solves race conditions on docker compose startup.
+    if (hasParameter('fixed_delay')) {
+      const { wait } = await import('./utils/wait.js');
+      const delay = getIntParameter('fixed_delay') || 2000;
+      this.log.warn('Fixed delay switch found. Waiting for ' + delay + ' seconds before starting matterbridge...');
+      await wait(delay * 1000, 'Fixed race condition delay', true);
     }
 
     // Start matterbridge in bridge mode
@@ -1278,6 +1285,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
   async unregisterAndShutdownProcess(timeout: number = 1000): Promise<void> {
+    const { wait } = await import('./utils/wait.js');
     this.log.info('Unregistering all devices and shutting down...');
     for (const plugin of this.plugins.array()) {
       if (plugin.error || !plugin.enabled) continue;
@@ -1374,6 +1382,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Stop matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
       if (pause > 0) {
+        const { wait } = await import('./utils/wait.js');
         this.log.debug(`Waiting ${pause}ms for the MessageExchange to finish...`);
         await wait(pause, `Waiting ${pause}ms for the MessageExchange to finish...`, false);
       }
@@ -1646,6 +1655,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   private async startChildbridge(delay: number = 1000): Promise<void> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
+    const { wait } = await import('./utils/wait.js');
 
     // Load with await all plugins but don't start them. We get the platform.type to pre-create server nodes for DynamicPlatform plugins
     this.log.debug('Loading all plugins in childbridge mode...');
@@ -2309,6 +2319,7 @@ const commissioningController = new CommissioningController({
    * @returns {Promise<void>} A promise that resolves when the server node has stopped.
    */
   private async stopServerNode(matterServerNode: ServerNode, timeout: number = 30000): Promise<void> {
+    const { withTimeout } = await import('./utils/wait.js');
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
 
@@ -2397,6 +2408,7 @@ const commissioningController = new CommissioningController({
    * @returns {Promise<void>} A promise that resolves when the bridged endpoint has been added.
    */
   async addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
+    const { waiter } = await import('./utils/wait.js');
     // Check if the plugin is registered
     const plugin = this.plugins.get(pluginName);
     if (!plugin) {
@@ -2552,6 +2564,7 @@ const commissioningController = new CommissioningController({
    * The delay is useful to allow the controllers to receive a single subscription for each device removed.
    */
   async removeAllBridgedEndpoints(pluginName: string, delay: number = 0): Promise<void> {
+    const { wait } = await import('./utils/wait.js');
     this.log.debug(`Removing all bridged endpoints for plugin ${plg}${pluginName}${db}${delay > 0 ? ` with delay ${delay} ms` : ''}`);
     for (const device of this.devices.array().filter((device) => device.plugin === pluginName)) {
       await this.removeBridgedEndpoint(pluginName, device);
