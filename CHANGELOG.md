@@ -34,8 +34,11 @@ Advantages:
 
 We have a race condition when, after a blackout or with docker compose or with other systems that start more then one process, Matterbridge starts before other required system or network components.
 
-- [delay]: Added --delay [seconds]. It will wait to start Matterbridge for the specified delay (default 2 minutes) if the system uptime is less then 5 minutes. It is a safe switch to avoid race conditions on start after a blackout.
-- [fixed_delay]: Added --fixed_delay [seconds]. It will wait to start Matterbridge for the specified delay (default 2 minutes). It is a safe switch to always avoid race conditions on start on docker compose. Use only if really needed cause it will always wait.
+Race condition can cause missing configuration or missed devices on the controller side. All Matterbridge official plugins already wait for system and network components to be ready so there is no need of delay.
+
+To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart.
+
+To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed.
 
 ### Added
 
@@ -44,6 +47,8 @@ We have a race condition when, after a blackout or with docker compose or with o
 - [frontend]: Added close on success to Install dialog.
 - [BroadcastServer]: Added check for port closed.
 - [platform]: Added isShuttingDown property to MatterbridgePlatform.
+- [delay]: Added --delay [seconds]. It will wait to start Matterbridge for the specified delay (default 2 minutes) if the system uptime is less then 5 minutes. It is a safe switch to avoid race conditions on start after a blackout.
+- [fixed_delay]: Added --fixed_delay [seconds]. It will wait to start Matterbridge for the specified delay (default 2 minutes). It is a safe switch to always avoid race conditions on start on docker compose. Use only if really needed cause it will always wait.
 
 ### Changed
 
