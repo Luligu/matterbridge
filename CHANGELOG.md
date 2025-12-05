@@ -28,7 +28,7 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.4.2] - 2025-12-??
+## [3.4.2] - 2025-12-05
 
 ### Race condition
 
@@ -36,7 +36,7 @@ We have a race condition when, after a blackout or with docker compose or with o
 
 Race condition can cause missing configuration or missed devices on the controller side. All Matterbridge official plugins already wait for system and network components to be ready so there is no need of delay.
 
-To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart.
+To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart cause the delay is applied only in the first 5 minutes from system reboot.
 
 To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed.
 
