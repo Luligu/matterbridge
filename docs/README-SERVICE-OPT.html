@@ -66,6 +66,7 @@
 <h1>Advanced configuration</h1>
 <h2>Run matterbridge as a daemon with systemctl (Linux only) with user matterbridge and private global node_modules</h2>
 <p>The advantage of this setup is that the global node_modules are private for matterbridge and sudo is not required.</p>
+<p>This configuration uses a private separate npm cache.</p>
 <p>The service runs with group and user matterbridge and the system has full protection.</p>
 <h3>Important</h3>
 <p>The storage position is <strong>not compatible</strong> with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
@@ -88,15 +89,15 @@ sudo systemctl stop matterbridge 2&gt;/dev/null || true
 # &#x2714; Safe precaution we need to uninstall from the global node_modules
 sudo npm uninstall matterbridge -g 2&gt;/dev/null || true
 # &#x2714; Creates all required directories
-sudo mkdir -p /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+sudo mkdir -p /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
 # &#x2714; Ensures ownership
-sudo chown -R matterbridge:matterbridge /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+sudo chown -R matterbridge:matterbridge /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
 # &#x2714; Secure permissions
-sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global
+sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
 # make sure the ΓÇ£binΓÇ¥ dir exists for global executables
 sudo -u matterbridge mkdir -p /opt/matterbridge/.npm-global/bin
-# &#x2714; Install matterbridge in the private global node_modules
-sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global npm install matterbridge --omit=dev --verbose --global
+# &#x2714; Install matterbridge in the private global node_modules using the private npm cache
+sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache npm install matterbridge --omit=dev --verbose --global
 # &#x2714; Create a link to matterbridge bins
 sudo ln -sf /opt/matterbridge/.npm-global/bin/matterbridge /usr/bin/matterbridge
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_mdns /usr/bin/mb_mdns
@@ -133,6 +134,7 @@ Wants=network.target
 Type=simple
 Environment=NODE_ENV=production
 Environment=&quot;NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global&quot;
+Environment=&quot;NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache&quot;
 ExecStart=matterbridge --service --nosudo
 WorkingDirectory=/opt/matterbridge/Matterbridge
 StandardOutput=inherit

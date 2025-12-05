@@ -221,8 +221,16 @@ Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for e
 <p>It is called when the plugin config has been updated.</p>
 <h3>getDevices(): MatterbridgeEndpoint[]</h3>
 <p>Retrieves the devices registered with the platform.</p>
+<h3>getDeviceByName(deviceName: string): MatterbridgeEndpoint | undefined</h3>
+<h3>getDeviceByUniqueId(uniqueId: string): MatterbridgeEndpoint | undefined</h3>
+<h3>getDeviceBySerialNumber(serialNumber: string): MatterbridgeEndpoint | undefined</h3>
+<h3>getDeviceById(id: string): MatterbridgeEndpoint | undefined</h3>
+<h3>getDeviceByOriginalId(originalId: string): MatterbridgeEndpoint | undefined</h3>
+<h3>getDeviceByNumber(number: EndpointNumber | number): MatterbridgeEndpoint | undefined</h3>
+<p>They all return MatterbridgeEndpoint or undefined if not found.</p>
 <h3>hasDeviceName(deviceName: string): boolean</h3>
-<p>Checks if a device with this name is already registered in the platform.</p>
+<h3>hasDeviceUniqueId(deviceUniqueId: string): boolean</h3>
+<p>Checks if a device with this name or uniqueId is already registered in the platform.</p>
 <h3>async registerDevice(device: MatterbridgeEndpoint)</h3>
 <p>After you have created your device, add it to the platform.</p>
 <h3>async unregisterDevice(device: MatterbridgeEndpoint)</h3>
@@ -245,7 +253,7 @@ Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for e
       .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
 </code></pre>
 <p>In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.</p>
-<p>All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the &#39;Matter-1.4.1-Device-Library-Specification.pdf&#39;.</p>
+<p>All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the &#39;Matter-1.4.2-Device-Library-Specification.pdf&#39;.</p>
 <p>All default cluster helpers are available as methods of MatterbridgeEndpoint.</p>
 <h2>MatterbridgeEndpointOptions</h2>
 <ul>
@@ -303,7 +311,7 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
 <pre><code class="language-typescript">const heatPump = new HeatPump(&#39;Heat Pump&#39;, &#39;HP1234567890&#39;);
 </code></pre>
 <h2>Plugin config file</h2>
-<p>Each plugin has a minimal default config file injected by Matterbridge when it is loaded:</p>
+<p>Each plugin has a minimal default config file injected by Matterbridge when it is loaded and the plugin doesn&#39;t have its own default one:</p>
 <pre><code class="language-typescript">{
   name: plugin.name, // i.e. matterbridge-test
   type: plugin.type, // i.e. AccessoryPlatform or DynamicPlatform (on the first run is AnyPlatform cause it is still unknown)
@@ -316,7 +324,7 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
 <p>Matterbridge (only on the first load of the plugin and if a config file is not already present in the .matterbridge directory) looks for the default config file in the root of the plugin package. The file must be named &#39;[PLUGIN-NAME].config.json&#39; (i.e. &#39;matterbridge-test.config.json&#39;).</p>
 <p>In all subsequent loads the config file is loaded from the &#39;.matterbridge&#39; directory.</p>
 <h2>Plugin schema file</h2>
-<p>Each plugin has a minimal default schema file injected by Matterbridge when it is loaded:</p>
+<p>Each plugin has a minimal default schema file injected by Matterbridge when it is loaded and the plugin doesn&#39;t have its own default one:</p>
 <pre><code class="language-typescript">{
   title: plugin.description,
   description: plugin.name + &#39; v. &#39; + plugin.version + &#39; by &#39; + plugin.author,

@@ -66,29 +66,42 @@
 <h1>Advanced configuration</h1>
 <h2>Run matterbridge as a daemon with systemctl (Linux only) with local global node_modules</h2>
 <p>The advantage of this setup is that the global node_modules are private for the user and sudo is not required.</p>
+<p>This configuration uses a private separate npm cache.</p>
 <p>The service runs rootless like the current user.</p>
 <p>The storage position is compatible with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
 <h3>First create the Matterbridge directories and set the correct permissions</h3>
 <p>This will create the required directories if they don&#39;t exist</p>
 <pre><code class="language-bash">cd ~
-sudo systemctl stop matterbridge                                                        # &#x2714; Safe precaution if matterbridge was already running with the traditional setup
-sudo npm uninstall matterbridge -g                                                      # &#x2714; We need to uninstall from the global node_modules
-mkdir -p ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                     # &#x2714; Creates all needed dirs
-chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global         # &#x2714; Ensures ownership
-chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global                 # &#x2714; Secure permissions
-NPM_CONFIG_PREFIX=~/.npm-global npm install matterbridge --omit=dev --verbose --global  # &#x2714; Install matterbridge in the local global node_modules, no sudo
-sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge        # &#x2714; Create a link to matterbridge bin
-sudo ln -sf /home/$USER/.npm-global/bin/mb_mdns /usr/local/bin/mb_mdns                  # &#x2714; Create a link to mb_mdns bin
-sudo ln -sf /home/$USER/.npm-global/bin/mb_coap /usr/local/bin/mb_coap                  # &#x2714; Create a link to mb_coap bin
-hash -r                                                                                 # &#x2714; Clear bash command cache as a precaution
-which matterbridge                                                                      # &#x2714; Check it
-matterbridge --version                                                                  # &#x2714; Will output the matterbridge version
+# &#x2714; Safe precaution if matterbridge was already running with the traditional setup
+sudo systemctl stop matterbridge
+# &#x2714; We need to uninstall from the global node_modules
+sudo npm uninstall matterbridge -g
+# &#x2714; Creates all needed dirs
+mkdir -p ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-cache
+# &#x2714; Ensures ownership
+chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-cache
+# &#x2714; Secure permissions
+chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-cache
+# &#x2714; Install matterbridge in the local global node_modules, with the local cache and no sudo
+npm install matterbridge --omit=dev --verbose --global --prefix=~/.npm-global --cache=~/.npm-cache
+# &#x2714; Create a link to matterbridge bin
+sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge
+# &#x2714; Create a link to mb_mdns bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb_mdns /usr/local/bin/mb_mdns
+# &#x2714; Create a link to mb_coap bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb_coap /usr/local/bin/mb_coap
+# &#x2714; Clear bash command cache as a precaution
+hash -r
+# &#x2714; Check which matterbridge
+which matterbridge
+# &#x2714; Will output the matterbridge version
+matterbridge --version
 </code></pre>
 <h3>Then create a systemctl configuration file for Matterbridge</h3>
 <p>Create a systemctl configuration file for Matterbridge</p>
 <pre><code class="language-bash">sudo nano /etc/systemd/system/matterbridge.service
 </code></pre>
-<p>Add the following to this file, <strong>replacing 4 times (!) USER with your user name</strong> (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi and Environment=&quot;NPM_CONFIG_PREFIX=/home/pi/.npm-global&quot;):</p>
+<p>Add the following to this file, <strong>replacing 5 times (!) USER with your user name</strong> (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi, Environment=&quot;NPM_CONFIG_PREFIX=/home/pi/.npm-global&quot; and Environment=&quot;NPM_CONFIG_CACHE=/home/pi/.npm-cache&quot;):</p>
 <pre><code>[Unit]
 Description=matterbridge
 After=network.target
@@ -97,6 +110,7 @@ Wants=network.target
 [Service]
 Type=simple
 Environment=&quot;NPM_CONFIG_PREFIX=/home/&lt;USER&gt;/.npm-global&quot;
+Environment=&quot;NPM_CONFIG_CACHE=/home/&lt;USER&gt;/.npm-cache&quot;
 ExecStart=matterbridge --service --nosudo
 WorkingDirectory=/home/&lt;USER&gt;/Matterbridge
 StandardOutput=inherit

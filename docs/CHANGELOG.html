@@ -58,14 +58,24 @@
 <h2>Project evolution</h2>
 <p>The project will evolve to a multi-threaded architecture (the CLI will become the thread manager) with these initial threads:</p>
 <ul>
-<li>matterbridge;</li>
-<li>frontend;</li>
-<li>plugins;</li>
-<li>devices;</li>
-<li>check_updates;</li>
-<li>npm_install;</li>
-<li>all plugins in bridge mode;</li>
-<li>each plugin in childbridge mode;</li>
+<li><p>matterbridge;</p>
+</li>
+<li><p>frontend;</p>
+</li>
+<li><p>plugins;</p>
+</li>
+<li><p>devices;</p>
+</li>
+<li><p>all plugins in bridge mode;</p>
+</li>
+<li><p>each plugin in childbridge mode;</p>
+</li>
+<li><p>check updates;</p>
+</li>
+<li><p>npm install;</p>
+</li>
+<li><p>Γ£à get the global node_modules directory;</p>
+</li>
 </ul>
 <p>Advantages:</p>
 <ul>
@@ -74,20 +84,67 @@
 <li>individual plugin isolation in childbridge mode;</li>
 <li>ability to update the plugin in childbridge mode without restarting matterbridge;</li>
 </ul>
-<h2>[3.4.1] - 2025-11-30</h2>
+<h2>[3.4.3] - 2025-12-12</h2>
+<h3>Changed</h3>
+<ul>
+<li>[package]: Updated dependencies.</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>[matterbridge]: Plugin version is now updated even if the plugin is disabled.</li>
+<li>[matterbridge]: Fixed default delay and fixed_delay to 120 seconds.</li>
+</ul>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<h2>[3.4.2] - 2025-12-05</h2>
+<h3>Race condition</h3>
+<p>We have a race condition when, after a blackout or with docker compose or with other systems that start more then one process, Matterbridge starts before other required system or network components.</p>
+<p>Race condition can cause missing configuration or missed devices on the controller side. All Matterbridge official plugins already wait for system and network components to be ready so there is no need of delay.</p>
+<p>To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart cause the delay is applied only in the first 5 minutes from system reboot.</p>
+<p>To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed.</p>
+<h3>Added</h3>
+<ul>
+<li>[frontend]: Added throttle and timeout to autoScroll in the logs.</li>
+<li>[frontend]: Log filters are now applied to existing messages too.</li>
+<li>[frontend]: Added close on success to Install dialog.</li>
+<li>[BroadcastServer]: Added check for port closed.</li>
+<li>[platform]: Added isShuttingDown property to MatterbridgePlatform.</li>
+<li>[delay]: Added --delay [seconds]. It will wait to start Matterbridge for the specified delay (default 2 minutes) if the system uptime is less then 5 minutes. It is a safe switch to avoid race conditions on start after a blackout.</li>
+<li>[fixed_delay]: Added --fixed_delay [seconds]. It will wait to start Matterbridge for the specified delay (default 2 minutes). It is a safe switch to always avoid race conditions on start on docker compose. Use only if really needed cause it will always wait.</li>
+</ul>
+<h3>Changed</h3>
+<ul>
+<li>[package]: Updated dependencies.</li>
+<li>[frontend]: Bumped <code>frontend</code> version to v.3.3.3.</li>
+<li>[thread]: Bump <code>BroadcastServer</code> to v.2.0.1.</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>[frontend]: Fixed persistance of autoScroll.</li>
+<li>[frontend]: Fixed parameters info of Log panel in the Home page.</li>
+</ul>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<h2>[3.4.1] - 2025-12-01</h2>
 <h3>Added</h3>
 <ul>
 <li>[matterbridge.io]: Updated website <a href="https://matterbridge.io">https://matterbridge.io</a> with all guides.</li>
+<li>[matterbridge]: Added addVirtualEndpoint() to match Matterbridge thread module.</li>
+<li>[BroadcastServer]: Backport BroadcastServer v.2.0.0 from Matterbridge thread module.</li>
+<li>[MatterbridgePrefix]: Added <strong>worker thread</strong> to get the global node_modules.</li>
+<li>[PluginManager]: Improved the resolve method to resolve automatically also in the plugin directory. Usefull for developing with DevContainer.</li>
 </ul>
 <h3>Changed</h3>
 <ul>
 <li>[package]: Updated dependencies.</li>
 <li>[frontend]: Updated dependencies.</li>
-<li>[frontend]: Bumped <code>frontend</code> version to 3.3.2.</li>
+<li>[frontend]: Bumped <code>frontend</code> version to v.3.3.2.</li>
+<li>[platform]: Bumped <code>MatterbridgePlatform</code> v.1.6.0.</li>
+<li>[thread]: Bump <code>BroadcastServer</code> to v.2.0.0.</li>
+<li>[updates]: The update availability check now starts after 5 minutes and each 12 hours. It can also be triggered from the frontend.</li>
 </ul>
 <h3>Fixed</h3>
 <ul>
 <li>[frontend]: Fixed when the user put special characters in password. Thanks Dabern (<a href="https://github.com/Luligu/matterbridge/issues/443">https://github.com/Luligu/matterbridge/issues/443</a>).</li>
+<li>[frontend]: Fixed minimum size to 1300x1024 and add a max width to Url. Thanks Ricardo B. (<a href="https://github.com/Luligu/matterbridge-home-assistant-addon/issues/23">https://github.com/Luligu/matterbridge-home-assistant-addon/issues/23</a>).</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2>[3.4.0] - 2025-11-26</h2>
