@@ -4,7 +4,7 @@
  * @file broadcastServer.ts
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 2.0.0
+ * @version 2.0.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -43,6 +43,7 @@ interface BroadcastServerEvents {
  */
 export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   private readonly broadcastChannel: BroadcastChannel;
+  private closed = false;
   private readonly debug = hasParameter('debug') || hasParameter('verbose');
   private readonly verbose = hasParameter('verbose');
 
@@ -62,6 +63,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     this.broadcastChannel = new BroadcastChannel(this.channel);
     // this.broadcastChannel.unref();
     this.broadcastChannel.onmessage = this.broadcastMessageHandler.bind(this);
+    this.broadcastChannel.onmessageerror = this.broadcastMessageErrorHandler.bind(this);
   }
 
   /**
@@ -72,7 +74,37 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   close(): void {
     // @ts-expect-error: wrong type definition in node.d.ts
     this.broadcastChannel.onmessage = null;
+    // @ts-expect-error: wrong type definition in node.d.ts
+    this.broadcastChannel.onmessageerror = null;
     this.broadcastChannel.close();
+    this.closed = true;
+  }
+
+  /**
+   * Handles incoming broadcast messages.
+   *
+   * @param {MessageEvent} event - The message event containing the broadcast message.
+   * @returns {void}
+   */
+  private broadcastMessageHandler(event: MessageEvent): void {
+    const msg = event.data as WorkerMessage;
+    if (msg.dst === this.name || msg.dst === 'all') {
+      if (this.verbose) this.log.debug(`Server ${CYAN}${this.name}${db} received broadcast message: ${debugStringify(msg)}`);
+      this.emit('broadcast_message', msg);
+    } else {
+      if (this.verbose) this.log.debug(`Server ${CYAN}${this.name}${db} received unrelated broadcast message: ${debugStringify(msg)}`);
+    }
+  }
+
+  /**
+   * Handles incoming broadcast error messages.
+   *
+   * @param {MessageEvent} event - The message event containing the broadcast message.
+   * @returns {void}
+   */
+  private broadcastMessageErrorHandler(event: MessageEvent): void {
+    const msg = event.data as WorkerMessage;
+    this.log.error(`Server ${CYAN}${this.name}${db} received message error: ${debugStringify(msg)}`);
   }
 
   /**
@@ -147,22 +179,6 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   }
 
   /**
-   * Handles incoming broadcast messages.
-   *
-   * @param {MessageEvent} event - The message event containing the broadcast message.
-   * @returns {void}
-   */
-  private broadcastMessageHandler(event: MessageEvent): void {
-    const msg = event.data as WorkerMessage;
-    if (msg.dst === this.name || msg.dst === 'all') {
-      if (this.verbose) this.log.debug(`Server ${CYAN}${this.name}${db} received broadcast message: ${debugStringify(msg)}`);
-      this.emit('broadcast_message', msg);
-    } else {
-      if (this.verbose) this.log.debug(`Server ${CYAN}${this.name}${db} received unrelated broadcast message: ${debugStringify(msg)}`);
-    }
-  }
-
-  /**
    * Broadcast a message to all workers.
    *
    * @param {WorkerMessage} message - The message to broadcast.
@@ -170,7 +186,11 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    *
    * @remarks No checks are performed on the message structure.
    */
-  broadcast(message: WorkerMessage) {
+  broadcast(message: WorkerMessage): void {
+    if (this.closed) {
+      this.log.error('Broadcast channel is closed');
+      return;
+    }
     if (message.id === undefined) {
       message.id = this.getUniqueId();
     }
@@ -194,6 +214,10 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {void}
    */
   request<K extends keyof WorkerMessageTypes>(message: WorkerMessageRequest<K>): void {
+    if (this.closed) {
+      this.log.error('Broadcast channel is closed');
+      return;
+    }
     if (message.id === undefined) {
       message.id = this.getUniqueId();
     }
@@ -222,6 +246,10 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {void}
    */
   respond<K extends keyof WorkerMessageTypes>(message: WorkerMessageResponse<K>): void {
+    if (this.closed) {
+      this.log.error('Broadcast channel is closed');
+      return;
+    }
     if (typeof message.timestamp === 'number') {
       message.elapsed = Date.now() - message.timestamp;
     }
@@ -255,6 +283,9 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @throws {Error} If the fetch operation times out after 250ms or if an error response is received or if the response is malformed.
    */
   async fetch<T extends WorkerMessageRequestAny, K extends Extract<keyof WorkerMessageTypes, T['type']>>(message: T, timeout: number = 250): Promise<WorkerMessageResponseSuccess<K>> {
+    if (this.closed) {
+      return Promise.reject(new Error('Broadcast channel is closed'));
+    }
     if (message.id === undefined) {
       message.id = this.getUniqueId();
     }

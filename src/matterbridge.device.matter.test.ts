@@ -5,6 +5,8 @@ const NAME = 'MatterbridgeDeviceMatter';
 const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
+process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
+process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
 // Mock the getGlobalNodeModules logInterfaces from network module before importing it
 jest.unstable_mockModule('./utils/network.js', () => ({

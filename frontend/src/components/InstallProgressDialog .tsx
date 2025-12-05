@@ -1,5 +1,5 @@
 // React
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useContext } from 'react';
 
 // @mui/material
 import Dialog from '@mui/material/Dialog';
@@ -10,6 +10,9 @@ import Button from '@mui/material/Button';
 
 // Frontend
 import { debug } from '../App';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import { UiContext } from './UiProvider';
 // const debug = true;
 
 interface InstallProgressDialogProps {
@@ -23,15 +26,22 @@ interface InstallProgressDialogProps {
 }
 
 export const InstallProgressDialog = ({ open, output, title, _command, _packageName, onInstall, onClose }: InstallProgressDialogProps) => {
+  const { installAutoExit, setInstallAutoExit } = useContext(UiContext);
   // Ref to access the log <ul> element for auto-scrolling.
   const endOfMessagesRef = useRef<HTMLLIElement>(null);
+
+  const handleInstallAutoExitChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInstallAutoExit(event.target.checked);
+    localStorage.setItem('installAutoExit', event.target.checked ? 'true' : 'false');
+    if (debug) console.log('handleInstallAutoExitChange called with value:', event.target.checked);
+  };
 
   // Scroll to the bottom whenever the output updates.
   useEffect(() => {
     if (debug) console.log(`InstallProgressDialog output effect mounted, scrolling to bottom: ${endOfMessagesRef.current}`);
     setTimeout(() => {
       if (debug) console.log('Scrolling to bottom:', endOfMessagesRef.current);
-      endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+      endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, 0);
   }, [output]);
 
@@ -94,13 +104,14 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
           <li ref={endOfMessagesRef} style={{ padding: 0, margin: 0 }} />
         </ul>
       </DialogContent>
-      <DialogActions sx={{ justifyContent: 'center' }}>
+      <DialogActions sx={{ justifyContent: 'space-evenly' }}>
         {onInstall && (
           <Button variant='contained' onClick={onInstall}>
             Install
           </Button>
         )}
         <Button onClick={onClose}>Close</Button>
+        <FormControlLabel control={<Checkbox checked={installAutoExit} onChange={(e) => handleInstallAutoExitChange(e)} />} label='Close on success' style={{ color: 'var(--div-text-color)' }} />
       </DialogActions>
     </Dialog>
   );

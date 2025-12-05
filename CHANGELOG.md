@@ -28,6 +28,41 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.4.2] - 2025-12-05
+
+### Race condition
+
+We have a race condition when, after a blackout or with docker compose or with other systems that start more then one process, Matterbridge starts before other required system or network components.
+
+Race condition can cause missing configuration or missed devices on the controller side. All Matterbridge official plugins already wait for system and network components to be ready so there is no need of delay.
+
+To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart cause the delay is applied only in the first 5 minutes from system reboot.
+
+To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed.
+
+### Added
+
+- [frontend]: Added throttle and timeout to autoScroll in the logs.
+- [frontend]: Log filters are now applied to existing messages too.
+- [frontend]: Added close on success to Install dialog.
+- [BroadcastServer]: Added check for port closed.
+- [platform]: Added isShuttingDown property to MatterbridgePlatform.
+- [delay]: Added --delay [seconds]. It will wait to start Matterbridge for the specified delay (default 2 minutes) if the system uptime is less then 5 minutes. It is a safe switch to avoid race conditions on start after a blackout.
+- [fixed_delay]: Added --fixed_delay [seconds]. It will wait to start Matterbridge for the specified delay (default 2 minutes). It is a safe switch to always avoid race conditions on start on docker compose. Use only if really needed cause it will always wait.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to v.3.3.3.
+- [thread]: Bump `BroadcastServer` to v.2.0.1.
+
+### Fixed
+
+- [frontend]: Fixed persistance of autoScroll.
+- [frontend]: Fixed parameters info of Log panel in the Home page.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.4.1] - 2025-12-01
 
 ### Added

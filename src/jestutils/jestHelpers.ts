@@ -45,6 +45,7 @@ import { DeviceManager } from '../deviceManager.js';
 import { PluginManager } from '../pluginManager.js';
 import { Frontend } from '../frontend.js';
 import { BroadcastServer } from '../broadcastServer.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 export const originalProcessArgv = Object.freeze([...process.argv]);
 export const originalProcessEnv = Object.freeze({ ...process.env } as Record<string, string | undefined>);
@@ -70,6 +71,12 @@ export let addBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototy
 export let removeBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeBridgedEndpoint>;
 export let removeAllBridgedEndpointsSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeAllBridgedEndpoints>;
 export let addVirtualEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addVirtualEndpoint>;
+
+// Spy on MatterbridgeEndpoint methods
+export let setAttributeSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.setAttribute>;
+export let updateAttributeSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.updateAttribute>;
+export let triggerEventSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.triggerEvent>;
+export let triggerSwitchEventSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.triggerSwitchEvent>;
 
 // Spy on PluginManager methods
 export let installPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.install>;
@@ -165,6 +172,11 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   removeBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint');
   removeAllBridgedEndpointsSpy = jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints');
   addVirtualEndpointSpy = jest.spyOn(Matterbridge.prototype, 'addVirtualEndpoint');
+
+  setAttributeSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'setAttribute');
+  updateAttributeSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'updateAttribute');
+  triggerEventSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerEvent');
+  triggerSwitchEventSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerSwitchEvent');
 
   installPluginSpy = jest.spyOn(PluginManager.prototype, 'install');
   uninstallPluginSpy = jest.spyOn(PluginManager.prototype, 'uninstall');
@@ -426,7 +438,7 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
   matterbridge.matterbridgePluginDirectory = path.join('jest', name, 'Matterbridge');
   matterbridge.matterbridgeCertDirectory = path.join('jest', name, '.mattercert');
   matterbridge.log.logLevel = LogLevel.DEBUG;
-  log = new AnsiLogger({ logName: 'Plugin platform', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Get the frontend, plugins and devices
   frontend = matterbridge.frontend;
@@ -669,6 +681,9 @@ export function createTestEnvironment(name: string): Environment {
   expect(name).toBeDefined();
   expect(typeof name).toBe('string');
   expect(name.length).toBeGreaterThanOrEqual(4); // avoid accidental deletion of short paths like "/" or "C:\"
+
+  // Setup the logger
+  log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Cleanup any existing home directory
   rmSync(path.join('jest', name), { recursive: true, force: true });
