@@ -827,14 +827,14 @@ describe('Matterbridge mocked', () => {
     });
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-delay'];
     await (matterbridge as any).parseCommandLine();
-    expect(wait).toHaveBeenCalledWith(2000000, 'Race condition delay', true);
+    expect(wait).toHaveBeenCalledWith(120000, 'Race condition delay', true);
 
     jest.spyOn(Matterbridge.prototype as any, 'startBridge').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-fixed_delay'];
     await (matterbridge as any).parseCommandLine();
-    expect(wait).toHaveBeenCalledWith(2000000, 'Fixed race condition delay', true);
+    expect(wait).toHaveBeenCalledWith(120000, 'Fixed race condition delay', true);
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR];
   });
 
