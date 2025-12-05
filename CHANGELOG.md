@@ -37,7 +37,7 @@ Advantages:
 ### Fixed
 
 - [matterbridge]: Plugin version is now updated even if the plugin is disabled.
-- [matterbridge]: Fixed default delay to 120 seconds.
+- [matterbridge]: Fixed default delay and fixed_delay to 120 seconds.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
