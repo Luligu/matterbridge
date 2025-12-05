@@ -54,12 +54,12 @@ To solve the race condition on docker compose, use the --fixed_delay parameter. 
 
 - [package]: Updated dependencies.
 - [frontend]: Bumped `frontend` version to v.3.3.3.
+- [thread]: Bump `BroadcastServer` to v.2.0.1.
 
 ### Fixed
 
 - [frontend]: Fixed persistance of autoScroll.
 - [frontend]: Fixed parameters info of Log panel in the Home page.
-- [thread]: Bump `BroadcastServer` to v.2.0.1.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
