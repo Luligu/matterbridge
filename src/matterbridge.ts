@@ -681,12 +681,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           plugin.enabled = false;
           continue;
         }
-        if ((await this.plugins.parse(plugin)) === null) {
-          this.log.error(`Error parsing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`);
-          plugin.error = true;
-          plugin.enabled = false;
-          continue;
-        }
+      }
+      if ((await this.plugins.parse(plugin)) === null) {
+        this.log.error(`Error parsing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`);
+        plugin.error = true;
+        plugin.enabled = false;
+        continue;
       }
       this.log.debug(`Creating node storage context for plugin  ${plg}${plugin.name}${db}`);
       plugin.nodeContext = await this.nodeStorage.createStorage(plugin.name);
@@ -902,7 +902,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Wait delay if specified (default 2 minutes) and the system uptime is less than 5 minutes. It solves race conditions on system startup.
     if (hasParameter('delay') && os.uptime() <= 60 * 5) {
       const { wait } = await import('./utils/wait.js');
-      const delay = getIntParameter('delay') || 2000;
+      const delay = getIntParameter('delay') || 120;
       this.log.warn('Delay switch found with system uptime less then 5 minutes. Waiting for ' + delay + ' seconds before starting matterbridge...');
       await wait(delay * 1000, 'Race condition delay', true);
     }
@@ -910,7 +910,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Wait delay if specified (default 2 minutes). It solves race conditions on docker compose startup.
     if (hasParameter('fixed_delay')) {
       const { wait } = await import('./utils/wait.js');
-      const delay = getIntParameter('fixed_delay') || 2000;
+      const delay = getIntParameter('fixed_delay') || 120;
       this.log.warn('Fixed delay switch found. Waiting for ' + delay + ' seconds before starting matterbridge...');
       await wait(delay * 1000, 'Fixed race condition delay', true);
     }

@@ -28,6 +28,19 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.4.3] - 2025-12-12
+
+### Changed
+
+- [package]: Updated dependencies.
+
+### Fixed
+
+- [matterbridge]: Plugin version is now updated even if the plugin is disabled.
+- [matterbridge]: Fixed default delay to 120 seconds.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.4.2] - 2025-12-05
 
 ### Race condition
