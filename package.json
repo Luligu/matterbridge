@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.4.2",
+  "version": "3.4.3",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -159,7 +159,7 @@
   "dependencies": {
     "@matter/main": "0.15.6",
     "archiver": "7.0.1",
-    "express": "5.1.0",
+    "express": "5.2.1",
     "glob": "13.0.0",
     "multer": "2.0.2",
     "node-ansi-logger": "3.1.1",
@@ -170,12 +170,12 @@
     "@eslint/js": "9.39.1",
     "@jest/globals": "30.2.0",
     "@types/archiver": "7.0.0",
-    "@types/express": "5.0.5",
+    "@types/express": "5.0.6",
     "@types/jest": "30.0.0",
     "@types/multer": "2.0.0",
     "@types/node": "24.10.1",
     "@types/ws": "8.18.1",
-    "@vitest/coverage-v8": "4.0.14",
+    "@vitest/coverage-v8": "4.0.15",
     "@vitest/eslint-plugin": "1.5.1",
     "eslint": "9.39.1",
     "eslint-config-prettier": "10.1.8",
@@ -187,11 +187,11 @@
     "eslint-plugin-promise": "7.2.1",
     "jest": "30.2.0",
     "npm-check-updates": "19.1.2",
-    "prettier": "3.7.3",
+    "prettier": "3.7.4",
     "shx": "0.4.0",
-    "ts-jest": "29.4.5",
+    "ts-jest": "29.4.6",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.48.0",
-    "vitest": "4.0.14"
+    "typescript-eslint": "8.48.1",
+    "vitest": "4.0.15"
   }
 }
