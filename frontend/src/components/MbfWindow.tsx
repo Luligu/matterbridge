@@ -149,7 +149,7 @@ export function MbfWindowContent({ children, style, onDragOver, onDragLeave, onD
     flexDirection: 'row',
     flex: '0 0 auto',
     overflow: 'hidden',
-    alignItems: 'center',
+    alignItems: 'start',
     justifyContent: 'space-between',
     margin: '0px',
     padding: '10px',

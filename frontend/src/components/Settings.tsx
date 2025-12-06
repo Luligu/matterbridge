@@ -26,7 +26,7 @@ import { createDebouncer } from '../utils/createDebouncer';
 import { debug, setWssPassword } from '../App';
 // const debug = true;
 
-const widthPx = 500;
+const widthPx = 335;
 
 function Settings(): React.JSX.Element {
   // WebSocket context
@@ -199,7 +199,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
         <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: `${widthPx - 20}px`, backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <FormLabel style={{ padding: '0px', margin: '0px' }} id='matterbridgeInfo-mode'>
-              Matterbridge mode:
+              Mode:
             </FormLabel>
             <RadioGroup row name='mode-buttons-group' value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
               <FormControlLabel value='bridge' control={<Radio />} label='Bridge' disabled={matterbridgeInfo.readOnly === true} />

@@ -20,12 +20,12 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
     'fileLogger',
     'matterLoggerLevel',
     'loggerLevel',
-    'virtualMode',
+    'cccvirtualMode',
     'bridgeMode',
     'restartMode',
-    'restartRequired',
+    '---restartRequired',
     'fixedRestartRequired',
-    'updateRequired',
+    '---updateRequired',
     'matterMdnsInterface',
     'matterIpv4Address',
     'matterIpv6Address',
@@ -59,8 +59,10 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
                 <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
                   <td style={{ border: 'none', borderCollapse: 'collapse' }}>
                     {key
-                      .replace('matterbridgeVersion', 'matterbridge')
-                      .replace('frontendVersion', 'frontend')
+                      .replace('matterbridgeVersion', 'matterbridge v.')
+                      .replace('matterbridgeLatestVersion', 'matterbridge latest v.')
+                      .replace('matterbridgeDevVersion', 'matterbridge dev v.')
+                      .replace('frontendVersion', 'frontend v.')
                       .replace('homeDirectory', 'home')
                       .replace('rootDirectory', 'root')
                       .replace('matterbridgeDirectory', 'storage')
@@ -69,7 +71,7 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
                       .replace('globalModulesDirectory', 'modules')}
                   </td>
                   <td style={{ border: 'none', borderCollapse: 'collapse' }}>
-                    <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={26} />
+                    <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={24} />
                   </td>
                 </tr>
               ))}

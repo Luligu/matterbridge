@@ -7,10 +7,10 @@ import { UiContext } from './UiProvider';
 import { debug, enableMobile } from '../App';
 // const debug = true;
 
-export const MOBILE_WIDTH_THRESHOLD = 1300;
-export const MOBILE_HEIGHT_THRESHOLD = 1024;
-export const MOBILE_MIN_WIDTH = 360;
-export const MOBILE_MAX_HEIGHT = 1000;
+export const MOBILE_WIDTH_THRESHOLD = 1200; // 1300
+export const MOBILE_HEIGHT_THRESHOLD = 900; // 1024
+// export const MOBILE_MIN_WIDTH = 360;
+// export const MOBILE_MAX_HEIGHT = 1000;
 export let viewportWidth: number;
 export let viewportHeight: number;
 
@@ -23,7 +23,7 @@ export function isMobile(): boolean {
     viewportWidth = Math.floor(window.visualViewport?.width ?? window.innerWidth);
     viewportHeight = Math.floor(window.visualViewport?.height ?? window.innerHeight);
     const isMobile = viewportWidth < MOBILE_WIDTH_THRESHOLD || viewportHeight < MOBILE_HEIGHT_THRESHOLD;
-    if (debug) console.log('Visual viewport width %i height %i mobile %s', viewportWidth, viewportHeight, isMobile);
+    if (debug) console.log('Visual viewport (%s) width %i height %i mobile %s', window.visualViewport !== undefined, viewportWidth, viewportHeight, isMobile);
     return isMobile;
   }
   return false;
@@ -43,29 +43,26 @@ export function MbfScreen({ children }: MbfScreenProps): React.JSX.Element {
       setMobile(isMobile());
     }
     window.addEventListener('resize', handleResize);
+    setMobile(isMobile());
     return () => window.removeEventListener('resize', handleResize);
   }, [setMobile]);
 
   if (debug) console.log('MbfScreen rendering... mobile %s', mobile);
 
-  if (enableMobile)
+  if (enableMobile && mobile)
     return (
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          overflow: mobile ? 'visible' : 'hidden',
-          width: mobile ? 'calc(100vw - 60px)' : 'calc(100vw - 40px)',
-          maxWidth: mobile ? 'calc(100vw - 60px)' : 'calc(100vw - 40px)',
-          height: mobile ? `${MOBILE_HEIGHT_THRESHOLD}px` : 'calc(100vh - 40px)',
-          maxHeight: mobile ? `${MOBILE_HEIGHT_THRESHOLD * 2}px` : 'calc(100vh - 40px)',
+          overflow: 'visible',
           margin: '0px',
-          padding: '20px',
-          gap: '20px',
+          padding: '10px',
+          gap: '10px',
         }}
       >
         <Header />
-        <div style={{ display: 'flex', flexDirection: 'row', width: '100%', height: 'calc(100% - 60px)', margin: '0px', padding: '0px', gap: '20px' }}>{children}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', margin: '0px', padding: '0px', gap: '10px' }}>{children}</div>
       </div>
     );
   return (

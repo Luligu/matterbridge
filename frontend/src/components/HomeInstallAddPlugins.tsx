@@ -16,12 +16,14 @@ import Add from '@mui/icons-material/Add';
 import MoreVert from '@mui/icons-material/MoreVert';
 
 // Frontend
+import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
-import { debug } from '../App';
+import { debug, enableMobile } from '../App';
 
 function HomeInstallAddPlugins() {
   // Contexts
+  const { mobile } = useContext(UiContext);
   const { logMessage, sendMessage, getUniqueId } = useContext(WebSocketContext);
 
   // States
@@ -131,11 +133,6 @@ function HomeInstallAddPlugins() {
     setAnchorEl(null);
   };
 
-  /*
-      <div className="MbfWindowHeader">
-        <p className="MbfWindowHeaderText">Install plugins</p>
-      </div>
-  */
   const [closed, setClosed] = useState(false);
 
   if (debug) console.log('HomeInstallAddPlugins rendering...');
@@ -147,56 +144,60 @@ function HomeInstallAddPlugins() {
         <MbfWindowHeaderText>Install plugins</MbfWindowHeaderText>
         <MbfWindowIcons onClose={() => setClosed(true)} />
       </MbfWindowHeader>
-      <MbfWindowContent onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleFileDrop}>
-        <TextField
-          value={pluginName}
-          onChange={(event) => {
-            setPluginName(event.target.value);
-          }}
-          size='small'
-          id='plugin-name'
-          label='Plugin name or plugin path'
-          variant='outlined'
-          fullWidth
-        />
-        <IconButton onClick={handleClickVertical}>
-          <MoreVert />
-        </IconButton>
-        <Menu id='simple-menu' anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-hass')}>matterbridge-hass</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-webhooks')}>matterbridge-webhooks</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-bthome')}>matterbridge-bthome</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-test')}>matterbridge-test</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-example-accessory-platform')}>matterbridge-example-accessory-platform</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-example-dynamic-platform')}>matterbridge-example-dynamic-platform</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-door')}>matterbridge-eve-door</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-motion')}>matterbridge-eve-motion</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-energy')}>matterbridge-eve-energy</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-weather')}>matterbridge-eve-weather</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
-        </Menu>
-        <Tooltip title='Install or update a plugin from npm'>
-          <Button onClick={handleInstallPluginClick} onContextMenu={handleInstallRightClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
-            {' '}
-            Install
-          </Button>
-        </Tooltip>
-        <Tooltip title='Upload and install a plugin from a tarball'>
-          <Button onClick={handleUploadClick} onContextMenu={handleUploadRightClick} endIcon={<FileUploadIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
-            {' '}
-            Upload
-          </Button>
-        </Tooltip>
-        <Tooltip title='Add an installed plugin'>
-          <Button onClick={handleAddPluginClick} onContextMenu={handleAddRightClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
-            {' '}
-            Add
-          </Button>
-        </Tooltip>
-        <input id='file-upload' type='file' accept='.tgz' style={{ display: 'none' }} onChange={handleFileUpload} />
+      <MbfWindowContent onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleFileDrop} style={enableMobile && mobile ? { flexWrap: 'wrap', gap: '10px' } : { flexWrap: 'wrap', gap: '20px' }}>
+        <div style={{ flex: 'auto', display: 'flex', flexDirection: 'row', gap: '10px' }}>
+          <TextField
+            value={pluginName}
+            onChange={(event) => {
+              setPluginName(event.target.value);
+            }}
+            size='small'
+            id='plugin-name'
+            label='Plugin name or plugin path'
+            variant='outlined'
+            fullWidth
+          />
+          <IconButton onClick={handleClickVertical}>
+            <MoreVert />
+          </IconButton>
+          <Menu id='simple-menu' anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-hass')}>matterbridge-hass</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-webhooks')}>matterbridge-webhooks</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-bthome')}>matterbridge-bthome</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-test')}>matterbridge-test</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-example-accessory-platform')}>matterbridge-example-accessory-platform</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-example-dynamic-platform')}>matterbridge-example-dynamic-platform</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-door')}>matterbridge-eve-door</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-motion')}>matterbridge-eve-motion</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-energy')}>matterbridge-eve-energy</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-weather')}>matterbridge-eve-weather</MenuItem>
+            <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
+          </Menu>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
+          <Tooltip title='Install or update a plugin from npm'>
+            <Button onClick={handleInstallPluginClick} onContextMenu={handleInstallRightClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+              {' '}
+              Install
+            </Button>
+          </Tooltip>
+          <Tooltip title='Upload and install a plugin from a tarball'>
+            <Button onClick={handleUploadClick} onContextMenu={handleUploadRightClick} endIcon={<FileUploadIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+              {' '}
+              Upload
+            </Button>
+          </Tooltip>
+          <Tooltip title='Add an installed plugin'>
+            <Button onClick={handleAddPluginClick} onContextMenu={handleAddRightClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+              {' '}
+              Add
+            </Button>
+          </Tooltip>
+          <input id='file-upload' type='file' accept='.tgz' style={{ display: 'none' }} onChange={handleFileUpload} />
+        </div>
       </MbfWindowContent>
     </MbfWindow>
   );

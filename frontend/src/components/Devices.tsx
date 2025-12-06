@@ -61,7 +61,7 @@ function Devices(): React.JSX.Element {
   return (
     <MbfPage name='Devices'>
       {/* Devices Filter and View Mode Dialog */}
-      <div className='MbfWindowBodyRow' style={{ justifyContent: 'space-between', padding: 0, gap: '20px', width: '100%', height: '45px', minHeight: '45px', maxHeight: '45px' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', padding: 0, margin: 0, gap: '20px', width: '100%' }}>
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
           <Typography sx={{ fontSize: '16px', fontWeight: 'normal', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>Filter by:</Typography>
           <TextField

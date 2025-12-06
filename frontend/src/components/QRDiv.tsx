@@ -172,7 +172,7 @@ function QRDiv({ id }: QRDivProps) {
   } else if (!matter.online) {
     if(debug) console.log('QRDiv rendering offline state');
     return (
-      <MbfWindow style={{ alignItems: 'center', minWidth: '302px' }}>
+      <MbfWindow style={{ alignItems: 'center', width: '302px', minWidth: '302px' }}>
         <MbfWindowHeader style={{ height: '30px', justifyContent: 'space-between' }}>
           <MbfWindowHeaderText>Server node</MbfWindowHeaderText>
         </MbfWindowHeader>
@@ -186,7 +186,7 @@ function QRDiv({ id }: QRDivProps) {
   } else if (matter.advertising && matter.qrPairingCode && matter.manualPairingCode) {
     if(debug) console.log('QRDiv rendering advertising state');
     return (
-      <MbfWindow style={{ alignItems: 'center', minWidth: '302px' }}>
+      <MbfWindow style={{ alignItems: 'center', width: '302px', minWidth: '302px' }}>
         <MbfWindowHeader>
           <MbfWindowHeaderText>QR pairing code</MbfWindowHeaderText>
           <MbfWindowIcons>
@@ -215,7 +215,7 @@ function QRDiv({ id }: QRDivProps) {
   } else if (matter.commissioned && matter.fabricInformations && matter.sessionInformations) {
     if(debug) console.log('QRDiv rendering commissioned state');
     return (
-      <MbfWindow style={{ alignItems: 'center', minWidth: '302px', overflow: 'hidden' }} >
+      <MbfWindow style={{ alignItems: 'center', width: '302px', minWidth: '302px', overflow: 'hidden' }} >
         <MbfWindowHeader>
           <MbfWindowHeaderText>Paired fabrics</MbfWindowHeaderText>
           <MbfWindowIcons>
@@ -257,7 +257,7 @@ function QRDiv({ id }: QRDivProps) {
   } else if (!matter.commissioned && !matter.advertising) {
     if(debug) console.log('QRDiv rendering not commissioned and not advertising state');
     return (
-      <MbfWindow style={{ alignItems: 'center', minWidth: '302px' }}>
+      <MbfWindow style={{ alignItems: 'center', width: '302px', minWidth: '302px' }}>
         <MbfWindowHeader>
           <MbfWindowHeaderText>QR pairing code</MbfWindowHeaderText>
         </MbfWindowHeader>

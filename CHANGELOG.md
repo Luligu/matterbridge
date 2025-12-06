@@ -42,11 +42,14 @@ Advantages:
 - [frontend]: Changed help link to https://matterbridge.io/README.html.
 - [frontend]: Changed changelog link to https://matterbridge.io/CHANGELOG.html.
 - [frontend]: Changed changelog icon to HistoryOutlinedIcon.
+- [frontend]: Removed column Url from Devices panel in the Home page. It is available on the Devices page.
+- [frontend]: Mobile mode starts below 1200 x 900 and is fully responsive till a width of 340 pixel.
 
 ### Fixed
 
 - [matterbridge]: Plugin version is now updated even if the plugin is disabled.
 - [matterbridge]: Fixed default delay and fixed_delay to 120 seconds.
+- [frontend]: Fixed resize in desktop mode.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

@@ -21,7 +21,7 @@ import { debug } from '../App';
 // const debug = true;
 
 function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformation; compact: boolean }) {
-  // WebSocket context
+  // Contexts
   const { addListener, removeListener, getUniqueId, sendMessage } = useContext(WebSocketContext);
 
   // Local states
@@ -180,4 +180,11 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   );
 }
 
+/**
+ * System Info Table
+ * Displays System Information in a table format.
+ *
+ * Props:
+ * - systemInfo: SystemInformation object containing various details about the system.
+ */
 export default memo(SystemInfoTable);

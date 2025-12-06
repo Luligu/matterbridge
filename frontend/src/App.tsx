@@ -28,7 +28,7 @@ export const toggleDebug = () => {
   debug = !debug;
 };
 export const enableWindows = false;
-export const enableMobile = false;
+export const enableMobile = true;
 export let wssPassword: string | undefined = undefined;
 export const setWssPassword = (password: string) => {
   wssPassword = password;

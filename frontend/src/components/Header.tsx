@@ -32,7 +32,7 @@ import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 // Frontend
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
-import { debug, toggleDebug, enableMobile } from '../App';
+import { debug, toggleDebug } from '../App';
 // const debug = true;
 
 function Header() {
@@ -358,41 +358,34 @@ function Header() {
   if (!online || !settings) {
     return null;
   }
+  //         {((enableMobile && !mobile) || !enableMobile) && (
+  //        )}
+
   return (
-    <div className='header' style={enableMobile && mobile ? { flexDirection: 'column', alignItems: 'center', width: '100%', height: '120px', gap: '0px' } : {}}>
-      <div className='sub-header'>
-        <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '30px' }} onClick={handleLogoClick} />
-        <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
-        <nav>
-          <Link to='/' className='nav-link'>
-            Home
-          </Link>
-          <Link to='/devices' className='nav-link'>
-            Devices
-          </Link>
-          <Link to='/log' className='nav-link'>
-            Logs
-          </Link>
-          <Link to='/settings' className='nav-link'>
-            Settings
-          </Link>
-        </nav>
+    <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '30px' }} onClick={handleLogoClick} />
+          <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+          <nav>
+            <Link to='/' className='nav-link'>
+              Home
+            </Link>
+            <Link to='/devices' className='nav-link'>
+              Devices
+            </Link>
+            <Link to='/log' className='nav-link'>
+              Logs
+            </Link>
+            <Link to='/settings' className='nav-link'>
+              Settings
+            </Link>
+          </nav>
+        </div>
       </div>
-      <div className='sub-header'>
-        {/*!settings.matterbridgeInformation.readOnly && update && (
-          <Tooltip title='New Matterbridge version available, click to install'>
-            <span className='status-warning' onClick={handleUpdateClick}>
-              Update to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
-            </span>
-          </Tooltip>
-        )}
-        {!settings.matterbridgeInformation.readOnly && updateDev && (
-          <Tooltip title='New Matterbridge dev version available, click to install'>
-            <span className='status-warning' onClick={handleUpdateDevClick}>
-              Update to new dev v.{settings.matterbridgeInformation.matterbridgeDevVersion.split('-dev-')[0]}
-            </span>
-          </Tooltip>
-        )*/}
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
         {!settings.matterbridgeInformation.readOnly && (
           <Tooltip title={`Matterbridge v.${settings.matterbridgeInformation.matterbridgeVersion}`}>
             <span className='status-information' style={{ cursor: 'default' }}>
@@ -423,7 +416,7 @@ function Header() {
           </Tooltip>
         ) : null}
       </div>
-      <div className='sub-header' style={{ gap: '5px' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '5px' }}>
         {settings.matterbridgeInformation.readOnly === false ? (
           <Tooltip title='Matterbridge discord group'>
             <img src='discord.svg' alt='Discord Logo' style={{ cursor: 'pointer', height: '25px' }} onClick={handleDiscordLogoClick} />
@@ -890,12 +883,3 @@ function Header() {
 }
 
 export default memo(Header);
-
-/*
-  Old code:
-    <div className="header">
-
-  New code:
-      <div className="header" style={ isMobile ? { flexDirection: 'column', alignItems: 'center', width: '100%', height: '120px', gap: '0px' } : {}}>
-
-*/
