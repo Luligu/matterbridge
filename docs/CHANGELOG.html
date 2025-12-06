@@ -74,7 +74,7 @@
 </li>
 <li><p>npm install;</p>
 </li>
-<li><p>Γ£à get the global node_modules directory;</p>
+<li><p>✅ get the global node_modules directory;</p>
 </li>
 </ul>
 <p>Advantages:</p>
@@ -219,7 +219,7 @@
 <h3>Added</h3>
 <ul>
 <li>[matterbridge]: Added a first check for plugin existence (docker pull or Hass add-on rebuild) and reinstall it before parsing the plugin. The error messages have been removed.</li>
-<li>[service]: Added <a href="README-SERVICE-OPT.md">configuration</a> to run matterbridge as a daemon with systemctl (Linux only), private global node_modules, user/group matterbridge and no sudo required.</li>
+<li>[service]: Added <a href="README-SERVICE-OPT.html">configuration</a> to run matterbridge as a daemon with systemctl (Linux only), private global node_modules, user/group matterbridge and no sudo required.</li>
 </ul>
 <h3>Changed</h3>
 <ul>
@@ -262,7 +262,7 @@
 <ul>
 <li>[thread]: Added get_log_level and set_log_level to BroadcastServer.</li>
 <li>[frontend]: Added password check to WebSocket.</li>
-<li>[service]: Added link to <a href="README-SERVICE-LOCAL.md">configuration</a> to run matterbridge as a daemon with systemctl (Linux only) and with local global node_modules (no sudo required).</li>
+<li>[service]: Added link to <a href="README-SERVICE-LOCAL.html">configuration</a> to run matterbridge as a daemon with systemctl (Linux only) and with local global node_modules (no sudo required).</li>
 </ul>
 <h3>Changed</h3>
 <ul>
@@ -271,7 +271,7 @@
 </ul>
 <h3>Fixed</h3>
 <ul>
-<li>[service]: Fixed systemd <a href="README-SERVICE-LOCAL.md">configuration</a> with local global node_modules.</li>
+<li>[service]: Fixed systemd <a href="README-SERVICE-LOCAL.html">configuration</a> with local global node_modules.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
@@ -288,7 +288,7 @@
 <li>[cli]: Bumped <code>cli</code> version to 3.0.0 with backport of Traker and Inspector from thread module.</li>
 <li>[powerSource]: Added MatterbridgePowerSourceServer. It initializes the enpointList of the PowerSource cluster.</li>
 <li>[thread]: Added BroadcastServer to Matterbridge.</li>
-<li>[service]: Added configuration <a href="README-SERVICE-LOCAL.md">guide</a> to run matterbridge as a daemon with systemctl (Linux only) and with local global node_modules (no sudo required).</li>
+<li>[service]: Added configuration <a href="README-SERVICE-LOCAL.html">guide</a> to run matterbridge as a daemon with systemctl (Linux only) and with local global node_modules (no sudo required).</li>
 </ul>
 <h3>Changed</h3>
 <ul>
@@ -311,13 +311,13 @@
 <h3>Added</h3>
 <ul>
 <li>[thread]: Added timestamp to WorkerMessage.</li>
-<li>[macOS]: Added the <a href="README-MACOS-PLIST.md">plist configuration guide</a>.</li>
+<li>[macOS]: Added the <a href="README-MACOS-PLIST.html">plist configuration guide</a>.</li>
 <li>[frontend]: Added download diagnostic and download history to Download menu.</li>
 <li>[frontend]: Added icon to open the cpu and memory usage in System Information panel.</li>
-<li>[thermostat]: Added thermostatRunningState attribute. Thanks Ludovic BOU├ë (<a href="https://github.com/Luligu/matterbridge/pull/410">https://github.com/Luligu/matterbridge/pull/410</a>).</li>
-<li>[ElectricalPowerMeasurement]: Added createApparentElectricalPowerMeasurementClusterServer cluster helper. Thanks Ludovic BOU├ë (<a href="https://github.com/Luligu/matterbridge/pull/411">https://github.com/Luligu/matterbridge/pull/411</a>).</li>
-<li>[DeviceEnergyManagementMode]: Added logic to set optOutState. Thanks Ludovic BOU├ë (<a href="https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/34">https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/34</a>).</li>
-<li>[Thermostat]: Added provisional support for setActivePresetRequest. Thanks Ludovic BOU├ë (<a href="https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/38">https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/38</a>).</li>
+<li>[thermostat]: Added thermostatRunningState attribute. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/pull/410">https://github.com/Luligu/matterbridge/pull/410</a>).</li>
+<li>[ElectricalPowerMeasurement]: Added createApparentElectricalPowerMeasurementClusterServer cluster helper. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/pull/411">https://github.com/Luligu/matterbridge/pull/411</a>).</li>
+<li>[DeviceEnergyManagementMode]: Added logic to set optOutState. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/34">https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/34</a>).</li>
+<li>[Thermostat]: Added provisional support for setActivePresetRequest. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/38">https://github.com/Luligu/matterbridge-example-dynamic-platform/issues/38</a>).</li>
 </ul>
 <h3>Changed</h3>
 <ul>
@@ -619,7 +619,7 @@
 <li>[Refrigerator]: Added Refrigerator() class and Jest test. It is not supported by the Home app.</li>
 <li>[Pages]: Added first draft of <a href="https://luligu.github.io/matterbridge">https://luligu.github.io/matterbridge</a>.</li>
 <li>[Matter]: Added Matter Specification Version 1.0, 1.1, 1.2, 1.3, 1.4 and 1.4.1 pdf files.</li>
-<li>[Development]: Improved README-DEV.md.</li>
+<li>[Development]: Improved README-DEV.html.</li>
 </ul>
 <h3>Changed</h3>
 <ul>
@@ -734,7 +734,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[docker]: Added on demand trigger for Build Docker Image dev from other plugins workflows.</li>
 <li>[mdns]: Added bin mb_mdns.</li>
 <li>[coap]: Added bin mb_coap.</li>
-<li>[operationalState]: Improved documentation on createDefaultOperationalStateClusterServer() and added the optional attribute countdownTime. Thanks Ludovic BOU├ë (<a href="https://github.com/Luligu/matterbridge/pull/363">https://github.com/Luligu/matterbridge/pull/363</a>).</li>
+<li>[operationalState]: Improved documentation on createDefaultOperationalStateClusterServer() and added the optional attribute countdownTime. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/pull/363">https://github.com/Luligu/matterbridge/pull/363</a>).</li>
 <li>[momentarySwitch]: Added createDefaultMomentarySwitchClusterServer(). It creates a single click only switch. It is supported by the Home app.</li>
 <li>[fixedLabels]: Improved documentation and added character length check.</li>
 <li>[userLabels]: Improved documentation and added character length check.</li>
@@ -756,8 +756,8 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[enpoint]: Added resetCondition MAtter command for HEPA and Activated Carbon Filter Monitoring Cluster Server.</li>
 <li>[dishwasher]: Added Dishwasher class and Jest test. It is not supported by the Home app.</li>
 <li>[extractorHood]: Added ExtractorHood class and Jest test. It is not supported by the Home app.</li>
-<li>[fan]: Added the createCompleteFanControlClusterServer() cluster helper that create a fan device with all the features. Thanks Ludovic BOU├ë (<a href="https://github.com/Luligu/matterbridge/pull/362">https://github.com/Luligu/matterbridge/pull/362</a>).</li>
-<li>[docker]: Added logging configuration instructions to <a href="README-DOCKER.md">docker setup</a>.</li>
+<li>[fan]: Added the createCompleteFanControlClusterServer() cluster helper that create a fan device with all the features. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/pull/362">https://github.com/Luligu/matterbridge/pull/362</a>).</li>
+<li>[docker]: Added logging configuration instructions to <a href="README-DOCKER.html">docker setup</a>.</li>
 </ul>
 <h3>Changed</h3>
 <ul>
@@ -772,14 +772,14 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <ul>
 <li>[error]: Added error logging functions and corresponding tests.</li>
 <li>[matterbridge]: Improved test units on Matterbridge class (total coverage 99%).</li>
-<li>[rvc] Add RVC SupportedMaps Attribute from ServiceArea cluster. Thanks Ludovic BOU├ë (<a href="https://github.com/Luligu/matterbridge/pull/355">https://github.com/Luligu/matterbridge/pull/355</a>).</li>
+<li>[rvc] Add RVC SupportedMaps Attribute from ServiceArea cluster. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/pull/355">https://github.com/Luligu/matterbridge/pull/355</a>).</li>
 </ul>
 <h3>Changed</h3>
 <ul>
 <li>[matterbridge]: Refactored initialization of DeviceManager and PluginManager.</li>
 <li>[pluginManager]: Refactored PluginManager removing unused install/uninstall methods.</li>
 <li>[pluginManager]: Added loading of default plugin config when a plugin is added the first time. It must be a file in the package root named &#39;[PLUGIN-NAME].config.json&#39;.</li>
-<li>[readme-dev]: Added <a href="README-DEV.md">documentation</a> for default plugin config and schema files.</li>
+<li>[readme-dev]: Added <a href="README-DEV.html">documentation</a> for default plugin config and schema files.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
@@ -788,8 +788,8 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <h2>[3.1.4] - 2025-07-16</h2>
 <h3>Added</h3>
 <ul>
-<li>[frontend]: Added support for p12 certificates. Add cert.p12 and cert.pass in the &#39;.matterbridge/cert&#39; directory. If both .p12 and cert.pem are present, only the .p12 will be used. See the README.md for more info.</li>
-<li>[frontend]: Added support for p12 certificates with mTLS: both the server and the client must present the correct certificate. Add the parameter &#39;-mtls&#39;. See the README.md for more info.</li>
+<li>[frontend]: Added support for p12 certificates. Add cert.p12 and cert.pass in the &#39;.matterbridge/cert&#39; directory. If both .p12 and cert.pem are present, only the .p12 will be used. See the README.html for more info.</li>
+<li>[frontend]: Added support for p12 certificates with mTLS: both the server and the client must present the correct certificate. Add the parameter &#39;-mtls&#39;. See the README.html for more info.</li>
 <li>[frontend]: Improved test units on Frontend class (total coverage 98%).</li>
 </ul>
 <h3>Changed</h3>
@@ -829,9 +829,9 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <h2>[3.1.2] - 2025-07-06</h2>
 <h3>Development Breaking Changes</h3>
 <ul>
-<li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.md">documentation</a> for details on imports.</li>
-<li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the <a href="README-DEV.md">documentation</a> for details on using mode.</li>
-<li>[RoboticVacuumCleaner]: The signature of the constructor has changed to add the mode property. Mode <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the <a href="README-DEV.md">documentation</a> for details on using mode.</li>
+<li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
+<li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the <a href="README-DEV.html">documentation</a> for details on using mode.</li>
+<li>[RoboticVacuumCleaner]: The signature of the constructor has changed to add the mode property. Mode <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the <a href="README-DEV.html">documentation</a> for details on using mode.</li>
 </ul>
 <h3>Added</h3>
 <ul>
@@ -848,15 +848,15 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <h2>[3.1.1] - 2025-07-04</h2>
 <h3>Development Breaking Changes</h3>
 <ul>
-<li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.md">documentation</a> for details on imports.</li>
+<li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device.</li>
 </ul>
 <h3>Added</h3>
 <ul>
 <li>[LaundryDryer]: Added LaundryDryer (not supported by the Home app) class and Jest test.</li>
 <li>[DeviceEnergyManagement]: Added MatterbridgeDeviceEnergyManagementServer with power adjustment methods.</li>
-<li>[SolarPower]: Added SolarPower class and Jest test (working on Home Assistant and SmartThings). Thanks Ludovic BOU├ë.</li>
-<li>[BatteryStorage]: Added BatteryStorage class and Jest test (working on Home Assistant and SmartThings). Thanks Ludovic BOU├ë.</li>
+<li>[SolarPower]: Added SolarPower class and Jest test (working on Home Assistant and SmartThings). Thanks Ludovic BOUÉ.</li>
+<li>[BatteryStorage]: Added BatteryStorage class and Jest test (working on Home Assistant and SmartThings). Thanks Ludovic BOUÉ.</li>
 <li>[HeatPump]: Added HeatPump class and Jest test (working on Home Assistant and SmartThings).</li>
 <li>[test]: Improved test units on Frontend class and all Matterbridge classes (coverage 93%).</li>
 </ul>
@@ -875,8 +875,8 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <h2>[3.1.0] - 2025-06-28</h2>
 <h3>Added</h3>
 <ul>
-<li>[DevContainer]: Added support for the <a href="https://github.com/Luligu/matterbridge/blob/dev/README-DEV.md#matterbridge-dev-container"><strong>Matterbridge Dev Container</strong></a> with an optimized named volume for <code>node_modules</code>.</li>
-<li>[DevContainer]: Added support for the <a href="https://github.com/Luligu/matterbridge/blob/dev/README-DEV.md#matterbridge-plugin-dev-container"><strong>Matterbridge Plugin Dev Container</strong></a> with an optimized named volume for <code>matterbridge</code> and <code>node_modules</code>.</li>
+<li>[DevContainer]: Added support for the <a href="https://github.com/Luligu/matterbridge/blob/dev/README-DEV.html#matterbridge-dev-container"><strong>Matterbridge Dev Container</strong></a> with an optimized named volume for <code>node_modules</code>.</li>
+<li>[DevContainer]: Added support for the <a href="https://github.com/Luligu/matterbridge/blob/dev/README-DEV.html#matterbridge-plugin-dev-container"><strong>Matterbridge Plugin Dev Container</strong></a> with an optimized named volume for <code>matterbridge</code> and <code>node_modules</code>.</li>
 <li>[GitHub]: Added GitHub issue templates for bug reports and feature requests.</li>
 <li>[Systemd]: Added a systemd service example file for Matterbridge in the systemd directory.</li>
 <li>[ESLint]: Refactored ESLint configuration for TypeScript and improved plugin integration.</li>
@@ -903,7 +903,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <h2>[3.0.7] - 2025-06-21</h2>
 <h3>Breaking Changes</h3>
 <ul>
-<li>[devices]: The single devices (i.e. Rvc, Evse etc...) are exported from matterbridge/devices. Please update your imports to use the new export path. Refer to the <a href="README-DEV.md">documentation</a> for details on imports.</li>
+<li>[devices]: The single devices (i.e. Rvc, Evse etc...) are exported from matterbridge/devices. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 </ul>
 <h3>Added</h3>
 <ul>
@@ -953,10 +953,10 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <h3>Added</h3>
 <ul>
 <li>[cli]: Added takeHeapSnapshot() and triggerGarbageCollection() for internal testing.</li>
-<li>[LaundryWasher]: Added Evse class and Jest test. Thanks Ludovic BOU├ë.</li>
+<li>[LaundryWasher]: Added Evse class and Jest test. Thanks Ludovic BOUÉ.</li>
 <li>[LaundryWasher]: Added LaundryWasher class and Jest test.</li>
-<li>[WaterHeater]: Added WaterHeater class and Jest test. Thanks Ludovic BOU├ë.</li>
-<li>[nginx]: Added new example configurations for <a href="README-NGINX.md">nginx</a>.</li>
+<li>[WaterHeater]: Added WaterHeater class and Jest test. Thanks Ludovic BOUÉ.</li>
+<li>[nginx]: Added new example configurations for <a href="README-NGINX.html">nginx</a>.</li>
 </ul>
 <h3>Changed</h3>
 <ul>
@@ -1056,7 +1056,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <h3>Changed</h3>
 <ul>
 <li>[package]: Updated dependencies.</li>
-<li>[docker]: Updated the <a href="README-DOCKER.md">Docker configurations</a>.</li>
+<li>[docker]: Updated the <a href="README-DOCKER.html">Docker configurations</a>.</li>
 <li>[frontend]: Changing configuration for a plugin now only lock configuration on that plugin.</li>
 <li>[frontend]: Optimized rendering of Devices and Plugins panels.</li>
 <li>[frontend]: Frontend v.2.6.4.</li>
@@ -1181,7 +1181,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <h2>[2.2.7] - 2025-04-06</h2>
 <h3>Added</h3>
 <ul>
-<li>[package]: Process author, homepage, repository, funding, README.md and CHANGELOG.md for third-party plugins. If the default implementation doesn&#39;t fit, it is possible to add a custom property &quot;help&quot; and &quot;changelog&quot; to the package.json.</li>
+<li>[package]: Process author, homepage, repository, funding, README.html and CHANGELOG.html for third-party plugins. If the default implementation doesn&#39;t fit, it is possible to add a custom property &quot;help&quot; and &quot;changelog&quot; to the package.json.</li>
 <li>[frontend]: Added a link the plugin homepage (click on the plugin name or on the plugin description).</li>
 </ul>
 <h3>Changed</h3>
@@ -1348,7 +1348,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Added cpuUsed, rss and heapUsed to SystemInformation.</li>
 <li>[frontend]: Added UiProvider.</li>
 <li>[frontend]: Added wssSendCpuUpdate, wssSendMemoryUpdate and wssSendSnackbarMessage.</li>
-<li>[docker]: Added health check to docker images. See README-DOCKER.md with the updated configuration.</li>
+<li>[docker]: Added health check to docker images. See README-DOCKER.html with the updated configuration.</li>
 </ul>
 <h3>Changed</h3>
 <ul>
@@ -1534,11 +1534,11 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <h2>[1.7.0] - 2025-01-04</h2>
 <h3>Added</h3>
 <ul>
-<li>[edge]: Added guide <a href="README-EDGE.md">README-EDGE.md</a>.</li>
+<li>[edge]: Added guide <a href="README-EDGE.html">README-EDGE.html</a>.</li>
 <li>[storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is triggered every time you shutdown or restart matterbridge till the new storage has been used with matterbridge edge.</li>
 <li>[storage]: Added conversion for child endpoint numbers.</li>
 <li>[storage]: Added conversion for childbridge mode.</li>
-<li>[package]: Update README.md and README-SERVICE.md to include instructions for using SSL on port 443.</li>
+<li>[package]: Update README.html and README-SERVICE.html to include instructions for using SSL on port 443.</li>
 <li>[platform]: Added checkEndpointNumbers() to detect endpoint numbers changes.</li>
 <li>[frontend]: Frontend v.2.3.0</li>
 <li>[frontend]: Added dark and light mode to the frontend. Dark mode is now the default mode. It is possible to change the mode in Settings, Matterbridge settings.</li>
@@ -1663,7 +1663,7 @@ It is also possible to use the install plugin to install a specific version of m
 <h3>Added</h3>
 <ul>
 <li>[matter.js]: Almost completed the phase 2 of migration to edge (matter.js new API).</li>
-<li>[nginx]: Added the route /matterbridge/ to be used with nginx proxy server <a href="README-NGINX.md">README-NGINX.md</a>.</li>
+<li>[nginx]: Added the route /matterbridge/ to be used with nginx proxy server <a href="README-NGINX.html">README-NGINX.html</a>.</li>
 <li>[config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load.</li>
 <li>[config]: Added version to the config.</li>
 <li>[frontend]: Added badge &quot;edge&quot; when running in edge mode.</li>
@@ -1757,7 +1757,7 @@ It is also possible to use the install plugin to install a specific version of m
 <h2>[1.5.8] - 2024-09-21</h2>
 <h3>Added</h3>
 <ul>
-<li>[readme]: Added podman guidelines to the README.md</li>
+<li>[readme]: Added podman guidelines to the README.html</li>
 <li>[readme]: Added instructions for setting permanent journalctl settings in service mode to prevent journal to grow</li>
 <li>[readme]: Added instructions for removing sudo password for npm install in service mode</li>
 <li>[readme]: Refactor systemd instructions for Matterbridge service</li>
@@ -1856,7 +1856,7 @@ It is also possible to use the install plugin to install a specific version of m
 </ul>
 <h3>Breaking Changes for developers</h3>
 <ul>
-<li>please read this <a href="README-DEV.md">Development guide lines</a></li>
+<li>please read this <a href="README-DEV.html">Development guide lines</a></li>
 </ul>
 <h3>Added</h3>
 <ul>
@@ -2459,7 +2459,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <h2>[1.2.6] - 2024-04-11</h2>
 <h3>Added</h3>
 <ul>
-<li>[matterbridge]: Added -factoryreset parameter to factory reset Matterbridge (see the readme.md for more explanations).</li>
+<li>[matterbridge]: Added -factoryreset parameter to factory reset Matterbridge (see the readme.html for more explanations).</li>
 <li>[matterbridge]: Added -reset parameter to reset the commissioning of Matterbridge (bridge mode).</li>
 <li>[matterbridge]: Added -reset [plugin] parameter to reset the commissioning of a plugin (childbridge mode).</li>
 <li>[matterbridge]: Added -port [port] parameter to set the starting port for the commissioning servers (both bridge and childbridge modes).</li>
@@ -2645,7 +2645,6 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 
 - [Security 1]: Description of the security improvement.
 -->
-
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';

@@ -72,9 +72,9 @@
 <p>The storage position is <strong>not compatible</strong> with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
 <p>Also various script don&#39;t work if you choose this configuration.</p>
 <h3>1 - Create the matterbridge user and group</h3>
-<pre><code class="language-bash"># &#x2714; Create the matterbridge group
+<pre><code class="language-bash"># ✅ Create the matterbridge group
 sudo groupadd --system matterbridge 2&gt;/dev/null || true
-# &#x2714; Create the matterbridge user
+# ✅ Create the matterbridge user
 sudo useradd  --system \
   --home-dir /opt/matterbridge \
   --shell /usr/sbin/nologin \
@@ -84,29 +84,29 @@ sudo useradd  --system \
 <h3>2 - Create the Matterbridge directories and set the correct permissions</h3>
 <p>This will create the required directories if they don&#39;t exist</p>
 <pre><code class="language-bash">cd ~
-# &#x2714; Safe precaution if matterbridge was already running with the traditional setup
+# ✅ Safe precaution if matterbridge was already running with the traditional setup
 sudo systemctl stop matterbridge 2&gt;/dev/null || true
-# &#x2714; Safe precaution we need to uninstall from the global node_modules
+# ✅ Safe precaution we need to uninstall from the global node_modules
 sudo npm uninstall matterbridge -g 2&gt;/dev/null || true
-# &#x2714; Creates all required directories
+# ✅ Creates all required directories
 sudo mkdir -p /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
-# &#x2714; Ensures ownership
+# ✅ Ensures ownership
 sudo chown -R matterbridge:matterbridge /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
-# &#x2714; Secure permissions
+# ✅ Secure permissions
 sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert /opt/matterbridge/.npm-global /opt/matterbridge/.npm-cache
-# make sure the ΓÇ£binΓÇ¥ dir exists for global executables
+# make sure the “bin” dir exists for global executables
 sudo -u matterbridge mkdir -p /opt/matterbridge/.npm-global/bin
-# &#x2714; Install matterbridge in the private global node_modules using the private npm cache
+# ✅ Install matterbridge in the private global node_modules using the private npm cache
 sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache npm install matterbridge --omit=dev --verbose --global
-# &#x2714; Create a link to matterbridge bins
+# ✅ Create a link to matterbridge bins
 sudo ln -sf /opt/matterbridge/.npm-global/bin/matterbridge /usr/bin/matterbridge
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_mdns /usr/bin/mb_mdns
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_coap /usr/bin/mb_coap
-# &#x2714; Clear bash command cache as a precaution
+# ✅ Clear bash command cache as a precaution
 hash -r
-# &#x2714; Check if matterbridge is /usr/bin/matterbridge
+# ✅ Check if matterbridge is /usr/bin/matterbridge
 which matterbridge
-# &#x2714; Will output the matterbridge version
+# ✅ Will output the matterbridge version
 matterbridge --version
 </code></pre>
 <p>The storage position is <strong>not compatible</strong> with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
@@ -183,7 +183,6 @@ sudo systemctl status matterbridge.service
 <h3>View the log of Matterbridge in real time (this will show the log with colors)</h3>
 <pre><code class="language-bash">sudo journalctl -u matterbridge -n 1000 -f --output cat
 </code></pre>
-
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
@@ -226,6 +225,3 @@ sudo systemctl status matterbridge.service
   </script>
 </body>
 </html>
-
-
-

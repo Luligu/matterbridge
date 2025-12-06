@@ -72,29 +72,29 @@
 <h3>First create the Matterbridge directories and set the correct permissions</h3>
 <p>This will create the required directories if they don&#39;t exist</p>
 <pre><code class="language-bash">cd ~
-# &#x2714; Safe precaution if matterbridge was already running with the traditional setup
+# ✅ Safe precaution if matterbridge was already running with the traditional setup
 sudo systemctl stop matterbridge
-# &#x2714; We need to uninstall from the global node_modules
+# ✅ We need to uninstall from the global node_modules
 sudo npm uninstall matterbridge -g
-# &#x2714; Creates all needed dirs
+# ✅ Creates all needed dirs
 mkdir -p ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-cache
-# &#x2714; Ensures ownership
+# ✅ Ensures ownership
 chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-cache
-# &#x2714; Secure permissions
+# ✅ Secure permissions
 chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-cache
-# &#x2714; Install matterbridge in the local global node_modules, with the local cache and no sudo
+# ✅ Install matterbridge in the local global node_modules, with the local cache and no sudo
 npm install matterbridge --omit=dev --verbose --global --prefix=~/.npm-global --cache=~/.npm-cache
-# &#x2714; Create a link to matterbridge bin
+# ✅ Create a link to matterbridge bin
 sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge
-# &#x2714; Create a link to mb_mdns bin
+# ✅ Create a link to mb_mdns bin
 sudo ln -sf /home/$USER/.npm-global/bin/mb_mdns /usr/local/bin/mb_mdns
-# &#x2714; Create a link to mb_coap bin
+# ✅ Create a link to mb_coap bin
 sudo ln -sf /home/$USER/.npm-global/bin/mb_coap /usr/local/bin/mb_coap
-# &#x2714; Clear bash command cache as a precaution
+# ✅ Clear bash command cache as a precaution
 hash -r
-# &#x2714; Check which matterbridge
+# ✅ Check which matterbridge
 which matterbridge
-# &#x2714; Will output the matterbridge version
+# ✅ Will output the matterbridge version
 matterbridge --version
 </code></pre>
 <h3>Then create a systemctl configuration file for Matterbridge</h3>
@@ -177,7 +177,6 @@ RuntimeMaxUse=100M      # Limit runtime logs in /run/log/journal to 100 MB.
 <p>save it and run</p>
 <pre><code class="language-bash">sudo systemctl restart systemd-journald
 </code></pre>
-
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
@@ -220,6 +219,3 @@ RuntimeMaxUse=100M      # Limit runtime logs in /run/log/journal to 100 MB.
   </script>
 </body>
 </html>
-
-
-
