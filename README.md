@@ -182,11 +182,11 @@ Traditional configuration
 
 [Service configurations](README-SERVICE.md)
 
-or with local global node_modules (no sudo required)
+or with local global node_modules and npm cache (no sudo required)
 
 [Service configurations with local global node_modules](README-SERVICE-LOCAL.md)
 
-or with user matterbridge and with private global node_modules (no sudo required)
+or with user matterbridge and with private global node_modules and npm cache (no sudo required)
 
 [Service configurations with user matterbridge and private global node_modules](README-SERVICE-OPT.md)
 

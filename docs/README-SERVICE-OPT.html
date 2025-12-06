@@ -11,7 +11,31 @@
       margin: 40px;
     }
     h1, h2, h3 {
-      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
     }
     pre {
       background: #cfd1d4;
@@ -65,12 +89,11 @@
 <hr>
 <h1>Advanced configuration</h1>
 <h2>Run matterbridge as a daemon with systemctl (Linux only) with user matterbridge and private global node_modules</h2>
-<p>The advantage of this setup is that the global node_modules are private for matterbridge and sudo is not required.</p>
-<p>This configuration uses a private separate npm cache.</p>
+<p>The advantage of this setup is that the global node_modules and npm cache are private for matterbridge and sudo is not required.</p>
 <p>The service runs with group and user matterbridge and the system has full protection.</p>
 <h3>Important</h3>
 <p>The storage position is <strong>not compatible</strong> with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
-<p>Also various script don&#39;t work if you choose this configuration.</p>
+<p>Also various scripts don&#39;t work if you choose this configuration.</p>
 <h3>1 - Create the matterbridge user and group</h3>
 <pre><code class="language-bash"># ✅ Create the matterbridge group
 sudo groupadd --system matterbridge 2&gt;/dev/null || true
@@ -97,7 +120,7 @@ sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbr
 # make sure the “bin” dir exists for global executables
 sudo -u matterbridge mkdir -p /opt/matterbridge/.npm-global/bin
 # ✅ Install matterbridge in the private global node_modules using the private npm cache
-sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache npm install matterbridge --omit=dev --verbose --global
+sudo -u matterbridge npm install matterbridge --omit=dev --verbose --global --prefix=/opt/matterbridge/.npm-global --cache=/opt/matterbridge/.npm-cache
 # ✅ Create a link to matterbridge bins
 sudo ln -sf /opt/matterbridge/.npm-global/bin/matterbridge /usr/bin/matterbridge
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_mdns /usr/bin/mb_mdns
