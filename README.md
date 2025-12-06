@@ -178,17 +178,11 @@ Home page
 
 ### Run matterbridge as a daemon with systemctl (Linux only)
 
-Traditional configuration
+Traditional configuration: [configuration](README-SERVICE.md)
 
-[Service configurations](README-SERVICE.md)
+or with local global node_modules and npm cache (no sudo required): [configuration](README-SERVICE-LOCAL.md)
 
-or with local global node_modules and npm cache (no sudo required)
-
-[Service configurations with local global node_modules](README-SERVICE-LOCAL.md)
-
-or with user matterbridge and with private global node_modules and npm cache (no sudo required)
-
-[Service configurations with user matterbridge and private global node_modules](README-SERVICE-OPT.md)
+or with user matterbridge and with private global node_modules and npm cache (no sudo required): [configuration](README-SERVICE-OPT.md)
 
 ### Run matterbridge as a system service with launchctl (macOS only)
 

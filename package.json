@@ -4,7 +4,7 @@
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/Luligu/matterbridge/blob/main/README.md",
+  "homepage": "https://matterbridge.io/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Luligu/matterbridge.git"
