@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { marked } from 'marked';
+import { Marked, TextRenderer } from 'marked';
 
 const ROOT_DIR = fileURLToPath(new URL('.', import.meta.url));
 const MD_DIR = join(ROOT_DIR, '..');
@@ -12,6 +12,50 @@ const DOCS_DIR = join(ROOT_DIR, '..', 'docs');
 console.log(`Generating marked HTML files in ${DOCS_DIR}`);
 const HEADER_PATH = join(ROOT_DIR, 'markedHeader.html');
 const FOOTER_PATH = join(ROOT_DIR, 'markedFooter.html');
+
+const HEADING_FALLBACK_PREFIX = 'heading';
+
+const slugifyHeading = (text) => {
+  const normalized = text
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .toLowerCase();
+
+  return normalized
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
+const createSlugGenerator = () => {
+  const counts = new Map();
+
+  return (rawText) => {
+    const base = slugifyHeading(rawText) || HEADING_FALLBACK_PREFIX;
+    const usage = counts.get(base) ?? 0;
+    counts.set(base, usage + 1);
+    return usage > 0 ? `${base}-${usage}` : base;
+  };
+};
+
+const createMarkdownParser = () => {
+  const textRenderer = new TextRenderer();
+  const nextSlug = createSlugGenerator();
+
+  return new Marked({
+    gfm: true,
+    mangle: false,
+    renderer: {
+      heading(token) {
+        const inlineHtml = this.parser.parseInline(token.tokens);
+        const plainText = this.parser.parseInline(token.tokens, textRenderer).trim();
+        const slug = nextSlug(plainText);
+        return `<h${token.depth} id="${slug}">${inlineHtml}</h${token.depth}>\n`;
+      },
+    },
+  });
+};
 
 // Replicates marked.ps1 targets for cross-platform doc generation.
 const FILES_TO_RENDER = [
@@ -39,7 +83,8 @@ async function renderMarkdownFiles(header, footer) {
     const markdownPath = join(MD_DIR, source);
     const targetPath = join(DOCS_DIR, target);
     const markdown = await readFile(markdownPath, 'utf8');
-    const body = await marked.parse(markdown);
+    const parser = createMarkdownParser();
+    const body = await parser.parse(markdown);
 
     await writeFile(targetPath, `${header}${body}${footer}`, 'utf8');
     console.log(`Rendered ${source} to ${target}`);

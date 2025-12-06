@@ -30,9 +30,18 @@ Advantages:
 
 ## [3.4.3] - 2025-12-12
 
+### Added
+
+- [frontend]: Added homepage link to https://matterbridge.io/.
+
 ### Changed
 
 - [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to v.3.3.4.
+- [package]: Changed homepage to https://matterbridge.io.
+- [frontend]: Changed help link to https://matterbridge.io/README.html.
+- [frontend]: Changed changelog link to https://matterbridge.io/CHANGELOG.html.
+- [frontend]: Changed changelog icon to HistoryOutlinedIcon.
 
 ### Fixed
 

@@ -76,7 +76,7 @@
   </style>
 </head>
 <body>
-<h1><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge NGINX configuration</h1>
+<h1 id="img-srchttpsmatterbridgeiomatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge-nginx-configuration"><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge NGINX configuration</h1>
 <p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
@@ -88,13 +88,13 @@
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
 <a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
 <hr>
-<h1>Advanced configuration to use NGINX</h1>
-<h2>Run matterbridge with nginx</h2>
-<h3>Install nginx if it is not installed</h3>
+<h1 id="advanced-configuration-to-use-nginx">Advanced configuration to use NGINX</h1>
+<h2 id="run-matterbridge-with-nginx">Run matterbridge with nginx</h2>
+<h3 id="install-nginx-if-it-is-not-installed">Install nginx if it is not installed</h3>
 <pre><code class="language-bash">sudo apt update
 sudo apt install nginx
 </code></pre>
-<h3>Create a basic nginx configuration file that redirect from <a href="http://yourhost">http://yourhost</a> to <a href="http://yourhost:8283">http://yourhost:8283</a></h3>
+<h3 id="create-a-basic-nginx-configuration-file-that-redirect-from-httpyourhost-to-httpyourhost8283">Create a basic nginx configuration file that redirect from <a href="http://yourhost">http://yourhost</a> to <a href="http://yourhost:8283">http://yourhost:8283</a></h3>
 <p>Create or edit the matterbridge configuration file</p>
 <pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
 </code></pre>
@@ -126,7 +126,7 @@ sudo apt install nginx
 <pre><code class="language-bash">sudo systemctl restart nginx
 sudo nginx -t
 </code></pre>
-<h3>Create a basic nginx configuration file that redirect from <a href="http://yourhost/matterbridge">http://yourhost/matterbridge</a> to <a href="http://yourhost:8283/matterbridge">http://yourhost:8283/matterbridge</a></h3>
+<h3 id="create-a-basic-nginx-configuration-file-that-redirect-from-httpyourhostmatterbridge-to-httpyourhost8283matterbridge">Create a basic nginx configuration file that redirect from <a href="http://yourhost/matterbridge">http://yourhost/matterbridge</a> to <a href="http://yourhost:8283/matterbridge">http://yourhost:8283/matterbridge</a></h3>
 <p>Create or edit the matterbridge configuration file</p>
 <pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
 </code></pre>
@@ -158,7 +158,7 @@ sudo nginx -t
 <pre><code class="language-bash">sudo systemctl restart nginx
 sudo nginx -t
 </code></pre>
-<h3>Create an advanced nginx configuration file that redirect from <a href="http://yourhost">http://yourhost</a> or <a href="https://yourhost">https://yourhost</a> to <a href="http://yourhost:8283">http://yourhost:8283</a> with ssl</h3>
+<h3 id="create-an-advanced-nginx-configuration-file-that-redirect-from-httpyourhost-or-httpsyourhost-to-httpyourhost8283-with-ssl">Create an advanced nginx configuration file that redirect from <a href="http://yourhost">http://yourhost</a> or <a href="https://yourhost">https://yourhost</a> to <a href="http://yourhost:8283">http://yourhost:8283</a> with ssl</h3>
 <p>Add your certificates in /etc/nginx/certs: <code>cert.pem</code> and <code>key.pem</code></p>
 <p>Create or edit the matterbridge configuration file</p>
 <pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
@@ -211,7 +211,7 @@ server {
 <pre><code class="language-bash">sudo systemctl restart nginx
 sudo nginx -t
 </code></pre>
-<h3>Create an advanced nginx configuration file that redirect from <a href="http://yourhost/matterbridge">http://yourhost/matterbridge</a> or <a href="https://yourhost/matterbridge">https://yourhost/matterbridge</a> to <a href="http://yourhost/matterbridge">http://yourhost/matterbridge</a> with ssl</h3>
+<h3 id="create-an-advanced-nginx-configuration-file-that-redirect-from-httpyourhostmatterbridge-or-httpsyourhostmatterbridge-to-httpyourhostmatterbridge-with-ssl">Create an advanced nginx configuration file that redirect from <a href="http://yourhost/matterbridge">http://yourhost/matterbridge</a> or <a href="https://yourhost/matterbridge">https://yourhost/matterbridge</a> to <a href="http://yourhost/matterbridge">http://yourhost/matterbridge</a> with ssl</h3>
 <p>Add your certificates in /etc/nginx/certs: <code>cert.pem</code> and <code>key.pem</code></p>
 <p>Create or edit the matterbridge configuration file</p>
 <pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge

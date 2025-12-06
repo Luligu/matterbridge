@@ -19,11 +19,12 @@ import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import SaveIcon from '@mui/icons-material/Save';
 import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import ViewHeadlineIcon from '@mui/icons-material/ViewHeadline';
 import StarIcon from '@mui/icons-material/Star';
 import Favorite from '@mui/icons-material/Favorite';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 
 // Backend
 import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
@@ -57,16 +58,23 @@ function Header() {
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
 
+  const handleHomepageClick = () => {
+    window.open(`https://matterbridge.io/`);
+  };
+
   const handleHelpClick = () => {
-    window.open(`https://github.com/Luligu/matterbridge/blob/main/README.md`, '_blank');
+    window.open(`https://matterbridge.io/README.html`);
   };
 
   const handleChangelogClick = () => {
+    window.open(`https://matterbridge.io/CHANGELOG.html`);
+    /*
     if (settings?.matterbridgeInformation.matterbridgeVersion.includes('-dev-')) {
-      window.open(`https://github.com/Luligu/matterbridge/blob/dev/CHANGELOG.md`, '_blank');
+      window.open(`https://github.com/Luligu/matterbridge/blob/dev/CHANGELOG.md`);
     } else {
-      window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
+      window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`);
     }
+    */
   };
 
   const handleDiscordLogoClick = () => {
@@ -435,6 +443,11 @@ function Header() {
             </IconButton>
           </Tooltip>
         ) : null}
+        <Tooltip title='Matterbridge homepage'>
+          <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleHomepageClick}>
+            <HomeOutlinedIcon />
+          </IconButton>
+        </Tooltip>
         <Tooltip title='Matterbridge help'>
           <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleHelpClick}>
             <HelpOutlineIcon />
@@ -442,7 +455,7 @@ function Header() {
         </Tooltip>
         <Tooltip title='Matterbridge changelog'>
           <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleChangelogClick}>
-            <AnnouncementOutlinedIcon />
+            <HistoryOutlinedIcon />
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && update && (

@@ -76,7 +76,7 @@
   </style>
 </head>
 <body>
-<h1><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with local global node_modules</h1>
+<h1 id="img-srchttpsmatterbridgeiomatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge-systemd-configuration-with-local-global-nodemodules"><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with local global node_modules</h1>
 <p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
@@ -88,13 +88,13 @@
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
 <a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
 <hr>
-<h1>Advanced configuration</h1>
-<h2>Run matterbridge as a daemon with systemctl (Linux only) with local global node_modules</h2>
+<h1 id="advanced-configuration">Advanced configuration</h1>
+<h2 id="run-matterbridge-as-a-daemon-with-systemctl-linux-only-with-local-global-nodemodules">Run matterbridge as a daemon with systemctl (Linux only) with local global node_modules</h2>
 <p>The advantage of this setup is that the global node_modules and npm cache are private for the user and sudo is not required.</p>
 <p>The service runs rootless like the current user.</p>
 <p>The storage position is compatible with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).</p>
 <p>Also various scripts don&#39;t work if you choose this configuration.</p>
-<h3>First create the Matterbridge directories and set the correct permissions</h3>
+<h3 id="first-create-the-matterbridge-directories-and-set-the-correct-permissions">First create the Matterbridge directories and set the correct permissions</h3>
 <p>This will create the required directories if they don&#39;t exist</p>
 <pre><code class="language-bash">cd ~
 # ✅ Safe precaution if matterbridge was already running with the traditional setup
@@ -122,7 +122,7 @@ which matterbridge
 # ✅ Will output the matterbridge version
 matterbridge --version
 </code></pre>
-<h3>Then create a systemctl configuration file for Matterbridge</h3>
+<h3 id="then-create-a-systemctl-configuration-file-for-matterbridge">Then create a systemctl configuration file for Matterbridge</h3>
 <p>Create a systemctl configuration file for Matterbridge</p>
 <pre><code class="language-bash">sudo nano /etc/systemd/system/matterbridge.service
 </code></pre>
@@ -161,25 +161,25 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 sudo systemctl restart matterbridge.service
 sudo systemctl status matterbridge.service
 </code></pre>
-<h3>Start Matterbridge</h3>
+<h3 id="start-matterbridge">Start Matterbridge</h3>
 <pre><code class="language-bash">sudo systemctl start matterbridge
 </code></pre>
-<h3>Stop Matterbridge</h3>
+<h3 id="stop-matterbridge">Stop Matterbridge</h3>
 <pre><code class="language-bash">sudo systemctl stop matterbridge
 </code></pre>
-<h3>Show Matterbridge status</h3>
+<h3 id="show-matterbridge-status">Show Matterbridge status</h3>
 <pre><code class="language-bash">sudo systemctl status matterbridge.service
 </code></pre>
-<h3>Enable Matterbridge to start automatically on boot</h3>
+<h3 id="enable-matterbridge-to-start-automatically-on-boot">Enable Matterbridge to start automatically on boot</h3>
 <pre><code class="language-bash">sudo systemctl enable matterbridge.service
 </code></pre>
-<h3>Disable Matterbridge from starting automatically on boot</h3>
+<h3 id="disable-matterbridge-from-starting-automatically-on-boot">Disable Matterbridge from starting automatically on boot</h3>
 <pre><code class="language-bash">sudo systemctl disable matterbridge.service
 </code></pre>
-<h3>View the log of Matterbridge in real time (this will show the log with colors)</h3>
+<h3 id="view-the-log-of-matterbridge-in-real-time-this-will-show-the-log-with-colors">View the log of Matterbridge in real time (this will show the log with colors)</h3>
 <pre><code class="language-bash">sudo journalctl -u matterbridge.service -n 1000 -f --output cat
 </code></pre>
-<h3>Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)</h3>
+<h3 id="delete-the-logs-older-then-3-days-all-of-them-not-only-the-ones-of-matterbridge">Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)</h3>
 <p>Check the space used</p>
 <pre><code class="language-bash">sudo journalctl --disk-usage
 </code></pre>
@@ -187,7 +187,7 @@ sudo systemctl status matterbridge.service
 <pre><code class="language-bash">sudo journalctl --rotate
 sudo journalctl --vacuum-time=3d
 </code></pre>
-<h2>Prevent the journal logs to grow</h2>
+<h2 id="prevent-the-journal-logs-to-grow">Prevent the journal logs to grow</h2>
 <p>If you want to make the setting permanent to prevent the journal logs to grow too much, run</p>
 <pre><code class="language-bash">sudo nano /etc/systemd/journald.conf
 </code></pre>

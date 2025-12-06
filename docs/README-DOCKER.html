@@ -76,7 +76,7 @@
   </style>
 </head>
 <body>
-<h1><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge docker configuration</h1>
+<h1 id="img-srchttpsmatterbridgeiomatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge-docker-configuration"><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge docker configuration</h1>
 <p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
@@ -88,8 +88,8 @@
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
 <a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
 <hr>
-<h1>Advanced configuration</h1>
-<h2>Run matterbridge with docker and docker compose</h2>
+<h1 id="advanced-configuration">Advanced configuration</h1>
+<h2 id="run-matterbridge-with-docker-and-docker-compose">Run matterbridge with docker and docker compose</h2>
 <p>The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on <strong>Docker Hub</strong>.</p>
 <p>The image (tag <strong>latest</strong>) includes matterbridge and all official plugins with the latest release (as published on npm). You can just pull the new image and matterbridge with all plugins will be the latest release published on npm.</p>
 <p>The image (tag <strong>dev</strong>) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest dev release pushed on GitHub. It is possible that the devs are outdated by published latests.</p>
@@ -104,7 +104,7 @@ The container doesn’t restart automatically if it becomes unhealthy.</p>
 <p>You can manually check the health status:</p>
 <pre><code class="language-bash">docker exec -it matterbridge curl -v http://localhost:8283/health
 </code></pre>
-<h3>First create the Matterbridge directories</h3>
+<h3 id="first-create-the-matterbridge-directories">First create the Matterbridge directories</h3>
 <p>This will create the required directories in your home directory if they don&#39;t exist</p>
 <pre><code class="language-bash">cd ~
 mkdir -p ~/Matterbridge
@@ -113,13 +113,13 @@ mkdir -p ~/.mattercert
 sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert
 </code></pre>
 <p>You may need to adapt the script to your setup.</p>
-<h3>Add your user to docker group</h3>
+<h3 id="add-your-user-to-docker-group">Add your user to docker group</h3>
 <p>If you don&#39;t want to use sudo with docker commands, run this command:</p>
 <pre><code class="language-bash">sudo groupadd docker
 sudo usermod -aG docker $USER
 </code></pre>
 <p>After adding your user to the docker group, you need to log out and log back in for the changes to take effect. This ensures that your current session recognizes the group membership change.</p>
-<h3>Run the Docker container and start it</h3>
+<h3 id="run-the-docker-container-and-start-it">Run the Docker container and start it</h3>
 <p>The container must have full access to the host network (needed for mdns and Matter protocol).</p>
 <pre><code class="language-bash">sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
@@ -128,7 +128,7 @@ sudo usermod -aG docker $USER
   --network host --restart always -d luligu/matterbridge:latest
 </code></pre>
 <p>You may need to adapt the script to your setup.</p>
-<h3>Run with docker compose</h3>
+<h3 id="run-with-docker-compose">Run with docker compose</h3>
 <p>The docker-compose.yml file is available in the docker directory of the package</p>
 <pre><code>services:
   matterbridge:
@@ -148,39 +148,39 @@ sudo usermod -aG docker $USER
 <p>or start only the matterbridge container with:</p>
 <pre><code class="language-bash">docker compose up -d matterbridge
 </code></pre>
-<h3>Stop with docker compose</h3>
+<h3 id="stop-with-docker-compose">Stop with docker compose</h3>
 <pre><code class="language-bash">docker compose down
 </code></pre>
-<h3>Update with docker compose</h3>
+<h3 id="update-with-docker-compose">Update with docker compose</h3>
 <p>This will pull the new matterbridge image and restart only the matterbridge container.</p>
 <pre><code class="language-bash">docker compose pull matterbridge
 docker compose up -d --no-deps --force-recreate matterbridge
 </code></pre>
-<h3>Inspect the container</h3>
+<h3 id="inspect-the-container">Inspect the container</h3>
 <pre><code class="language-bash">docker container inspect matterbridge
 </code></pre>
-<h3>Start the Docker container</h3>
+<h3 id="start-the-docker-container">Start the Docker container</h3>
 <pre><code class="language-bash">docker start matterbridge
 </code></pre>
-<h3>Stop the Docker container</h3>
+<h3 id="stop-the-docker-container">Stop the Docker container</h3>
 <pre><code class="language-bash">docker stop matterbridge
 </code></pre>
-<h3>Restart the Docker container</h3>
+<h3 id="restart-the-docker-container">Restart the Docker container</h3>
 <pre><code class="language-bash">docker restart matterbridge
 </code></pre>
-<h3>Shows the logs</h3>
+<h3 id="shows-the-logs">Shows the logs</h3>
 <pre><code class="language-bash">docker logs matterbridge
 </code></pre>
-<h3>Shows the logs for a time interval</h3>
+<h3 id="shows-the-logs-for-a-time-interval">Shows the logs for a time interval</h3>
 <pre><code class="language-bash">docker logs \
   --since &quot;2025-04-19T00:00:00&quot; \
   --until &quot;2025-04-19T00:02:00&quot; \
   matterbridge
 </code></pre>
-<h3>Shows the logs real time (tail)</h3>
+<h3 id="shows-the-logs-real-time-tail">Shows the logs real time (tail)</h3>
 <pre><code class="language-bash">docker logs --tail 1000 -f matterbridge
 </code></pre>
-<h3>Prevent the logs to grow</h3>
+<h3 id="prevent-the-logs-to-grow">Prevent the logs to grow</h3>
 <p>If you want to prevent the docker logs to grow too much, you can configure Docker&#39;s logging options globally.</p>
 <p><strong>Warning</strong>: This will restart Docker and affect all running containers.</p>
 <pre><code class="language-bash">sudo nano /etc/docker/daemon.json
