@@ -32,7 +32,7 @@ Advantages:
 
 ### Added
 
-- [frontend]: Added homepage link to https://matterbridge.io/.
+- [frontend]: Added homepage icon and link to https://matterbridge.io/.
 
 ### Changed
 

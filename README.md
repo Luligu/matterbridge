@@ -186,23 +186,23 @@ or with user matterbridge and with private global node_modules and npm cache (no
 
 ### Run matterbridge as a system service with launchctl (macOS only)
 
-[Launchctl configurations](README-MACOS-PLIST.md)
+[Launchctl configuration](README-MACOS-PLIST.md)
 
 ### Run matterbridge with docker and docker compose
 
-[Docker configurations](README-DOCKER.md)
+[Docker configuration](README-DOCKER.md)
 
 ### Run matterbridge with podman
 
-[Podman configurations](README-PODMAN.md)
+[Podman configuration](README-PODMAN.md)
 
 ### Run matterbridge with nginx
 
-[Nginx configurations](README-NGINX.md)
+[Nginx configuration](README-NGINX.md)
 
 ### Run matterbridge as an home assistant add-on with the official add-on
 
-[Home assistant add-on configurations](https://github.com/Luligu/matterbridge-home-assistant-addon)
+[Home assistant add-on configuration](https://github.com/Luligu/matterbridge-home-assistant-addon)
 
 ### Other Home Assistant Community Add-ons
 
