@@ -68,8 +68,8 @@ function Devices(): React.JSX.Element {
             variant='outlined'
             value={filter}
             onChange={handleFilterChange}
-            placeholder='Enter the device name or serial number'
-            sx={{ width: '320px' }}
+            placeholder='Enter the device name or serial'
+            sx={{ width: '260px' }}
             InputProps={{
               style: {
                 backgroundColor: 'var(--main-bg-color)',

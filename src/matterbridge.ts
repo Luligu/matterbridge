@@ -1586,6 +1586,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
             this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
             this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} is in error state. Check the logs.`, 0, 'error');
+            this.frontend.wssSendSnackbarMessage(`The bridge is offline. Startup halted due to plugin errors.`, 0, 'error');
+            this.frontend.wssSendRefreshRequired('plugins');
             return;
           }
 
@@ -1684,6 +1686,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
             this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
             this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} is in error state. Check the logs.`, 0, 'error');
+            this.frontend.wssSendSnackbarMessage(`The bridge is offline. Startup halted due to plugin errors.`, 0, 'error');
+            this.frontend.wssSendRefreshRequired('plugins');
             return;
           }
 

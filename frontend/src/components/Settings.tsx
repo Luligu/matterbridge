@@ -218,7 +218,12 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
               <MenuItem value='Error'>Error</MenuItem>
               <MenuItem value='Fatal'>Fatal</MenuItem>
             </Select>
-            <FormControlLabel style={{ padding: '0px', margin: '0px' }} control={<Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} name='logOnFileMb' />} label='Log on file:' labelPlacement='start' />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FormLabel style={{ padding: '0px', margin: '0px' }} id='mblogger-file-label'>
+              Log on file:
+            </FormLabel>
+            <Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} id='mblogger-file' name='logOnFileMb' />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
             <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-theme-label'>
@@ -408,10 +413,10 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
         <Box sx={{ gap: '20px', margin: '0px', padding: '10px', width: `${widthPx - 20}px`, backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', gap: '15px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px' }} id='mjdebug-info'>
+            <FormLabel style={{ padding: '0px', margin: '0px' }} id='mjlogger-level-label'>
               Logger level:
             </FormLabel>
-            <Select style={{ height: '30px' }} labelId='select-mjlevel' id='mjdebug-level' value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
+            <Select style={{ height: '30px' }} labelId='mjlogger-level-label' id='mjlogger-level' value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
               <MenuItem value='Debug'>Debug</MenuItem>
               <MenuItem value='Info'>Info</MenuItem>
               <MenuItem value='Notice'>Notice</MenuItem>
@@ -419,7 +424,12 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
               <MenuItem value='Error'>Error</MenuItem>
               <MenuItem value='Fatal'>Fatal</MenuItem>
             </Select>
-            <FormControlLabel style={{ padding: '0px', margin: '0px' }} control={<Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} name='logOnFileMj' />} label='Log on file:' labelPlacement='start' />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FormLabel style={{ padding: '0px', margin: '0px' }} id='mjlogger-file-label'>
+              Log on file:
+            </FormLabel>
+            <Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} id='mjlogger-file' name='logOnFileMj' />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '15px' }}>
             <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Mdns interface:</FormLabel>

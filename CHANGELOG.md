@@ -43,7 +43,7 @@ Advantages:
 - [frontend]: Changed changelog link to https://matterbridge.io/CHANGELOG.html.
 - [frontend]: Changed changelog icon to HistoryOutlinedIcon.
 - [frontend]: Removed column Url from Devices panel in the Home page. It is available on the Devices page.
-- [frontend]: Mobile mode starts below 1200 x 900 and is fully responsive till a width of 340 pixel.
+- [frontend]: Mobile mode starts below 1200 x 900 and is fully responsive till a width of 360 pixel.
 
 ### Fixed
 
