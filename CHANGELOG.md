@@ -33,6 +33,7 @@ Advantages:
 ### Added
 
 - [frontend]: Added homepage icon and link to https://matterbridge.io/.
+- [matterbridge]: Added more frontend messages on start when a plugin is in error state. It is more clear when the bridge will not start for plugin errors.
 
 ### Changed
 
@@ -43,7 +44,7 @@ Advantages:
 - [frontend]: Changed changelog link to https://matterbridge.io/CHANGELOG.html.
 - [frontend]: Changed changelog icon to HistoryOutlinedIcon.
 - [frontend]: Removed column Url from Devices panel in the Home page. It is available on the Devices page.
-- [frontend]: Mobile mode starts below 1200 x 900 and is fully responsive till a width of 360 pixel.
+- [frontend]: Mobile mode starts below 1200 x 900 and is fully resizable and responsive till a width of 360 pixel.
 
 ### Fixed
 

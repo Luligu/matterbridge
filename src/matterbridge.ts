@@ -1576,6 +1576,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     let failCount = 0;
     this.startMatterInterval = setInterval(
       async () => {
+        if (failCount && failCount % 10 === 0) {
+          this.frontend.wssSendSnackbarMessage(`The bridge is still starting...`, 10, 'info');
+          this.frontend.wssSendRefreshRequired('plugins');
+        }
         for (const plugin of this.plugins) {
           if (!plugin.enabled) continue;
           if (plugin.error) {
@@ -1675,6 +1679,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     let failCount = 0;
     this.startMatterInterval = setInterval(
       async () => {
+        if (failCount && failCount % 10 === 0) {
+          this.frontend.wssSendSnackbarMessage(`The bridge is still starting...`, 10, 'info');
+          this.frontend.wssSendRefreshRequired('plugins');
+        }
         let allStarted = true;
         for (const plugin of this.plugins.array()) {
           if (!plugin.enabled) continue;
