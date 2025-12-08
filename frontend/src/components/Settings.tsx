@@ -10,7 +10,6 @@ import TextField from '@mui/material/TextField';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 
 // Frontend
