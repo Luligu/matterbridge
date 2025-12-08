@@ -123,7 +123,7 @@ function Home(): React.JSX.Element {
     return <Connecting />;
   }
   return (
-    <MbfPage name='Home' style={enableMobile && mobile ? { flexDirection: 'column', alignItems: 'center' } : { flexDirection: 'row' }}>
+    <MbfPage name='Home' style={enableMobile && mobile ? { alignItems: 'center', gap: '10px' } : { flexDirection: 'row' }}>
       {/* Left column */}
       {((enableMobile && !mobile) || !enableMobile) && (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
@@ -132,7 +132,7 @@ function Home(): React.JSX.Element {
         </div>
       )}
       {/* Right column */}
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: enableMobile && mobile ? '10px' : '20px' }}>
         {/* Refresh page on Frontend updates (flex: '0 0 auto', overflow: 'hidden') */}
         {browserRefresh && <HomeBrowserRefresh />}
 
