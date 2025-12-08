@@ -511,15 +511,15 @@ There are two ways to pair a second controller:
 
 Be patient cause the procedure can fail sometimes.
 
-## Race condition on start / restart
+## How to avoid race condition on start / restart
 
-We have a race condition when, after a blackout or with docker compose or with other systems that start more then one process, Matterbridge starts before other required system or network components.
+We have a race condition when, after a blackout or with docker compose or with other systems that start more then one process, Matterbridge always starts before other required system or network components.
 
 Race condition can cause missing configuration or missed devices on the controller side. All Matterbridge official plugins already wait for system and network components to be ready so there is no need of delay.
 
 To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart cause the delay is applied only in the first 5 minutes from system reboot.
 
-To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed.
+To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed so use it only if strictly necessary.
 
 # Known general issues
 
