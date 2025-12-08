@@ -560,7 +560,7 @@ So far is the only controller supporting all Matter 1.2, 1.3 and 1.4 device type
 ## Home Assistant issues
 
 - If HA doesn't show all devices, reload the Matter Server Integration or reboot HA
-- Home Assistant doesn't seem to always react when a device is removed from the bridge: they remain in HA unavailable forever...
+- Home Assistant doesn't seem to always react when a device is removed from the bridge: they remain in HA unavailable forever. A full Home Assistant restart solves the problem.
 - Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
 
 ## Google Home
@@ -608,7 +608,9 @@ We believe in a welcoming and respectful community for all. Please make sure to 
 ## Support
 
 If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee.
-On my side I sponsor the packages that I use in this project. It would be nice to have sponsors too.
+
+On my side I sponsor the packages that I use in this project and single developers. It would be nice to have sponsors too.
+
 Click on the badge below to get started:
 
 <a href="https://www.buymeacoffee.com/luligugithub">
