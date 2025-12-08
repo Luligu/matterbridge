@@ -54,7 +54,11 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
         <MbfWindowIcons onClose={() => setClosed(true)} />
       </MbfWindowHeader>
       <MbfWindowContent style={enableMobile && mobile ? { flex: '1 1 auto', margin: '0px', padding: '0px', gap: '0px' } : { flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '0px', gap: '0px' }}>
-        <table style={{ border: 'none', borderCollapse: 'collapse' }}>
+        <table style={{ border: 'none', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '40%' }} />
+            <col style={{ width: '60%' }} />
+          </colgroup>
           <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>
             {Object.entries(matterbridgeInfo)
               .filter(([key, value]) => !excludeKeys.includes(key) && value !== null && value !== undefined && value !== '')

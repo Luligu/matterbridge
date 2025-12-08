@@ -145,7 +145,11 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
         </MbfWindowIcons>
       </MbfWindowHeader>
       <MbfWindowContent style={enableMobile && mobile ? { flex: '1 1 auto', margin: '0px', padding: '0px', gap: '0px' } : { flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '0px', gap: '0px' }}>
-        <table style={{ border: 'none', borderCollapse: 'collapse' }}>
+        <table style={{ border: 'none', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '40%' }} />
+            <col style={{ width: '60%' }} />
+          </colgroup>
           <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>
             {Object.entries(localSystemInfo)
               .filter(([_key, value]) => value !== undefined && value !== '')
