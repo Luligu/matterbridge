@@ -14,6 +14,7 @@ import Button from '@mui/material/Button';
 
 // Frontend
 import { Connecting } from './Connecting';
+import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
 import { NetworkConfigDialog } from './NetworkConfigDialog';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
@@ -22,13 +23,14 @@ import { MatterbridgeInformation, SystemInformation } from '../../../src/matterb
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
 import { MbfPage } from './MbfPage';
 import { createDebouncer } from '../utils/createDebouncer';
-import { debug, setWssPassword } from '../App';
+import { debug, enableMobile, setWssPassword } from '../App';
 // const debug = true;
 
 const widthPx = 330;
 
 function Settings(): React.JSX.Element {
-  // WebSocket context
+  // Context
+  const { mobile } = useContext(UiContext);
   const { online, addListener, removeListener, sendMessage, getUniqueId } = useContext(WebSocketContext);
 
   // State variables
@@ -72,7 +74,7 @@ function Settings(): React.JSX.Element {
   }
   return (
     <MbfPage name='Settings'>
-      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '100%', gap: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '100%', gap: enableMobile && mobile ? '10px' : '20px' }}>
         <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} systemInfo={systemInfo} />
         <MatterSettings matterbridgeInfo={matterbridgeInfo} />
         <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo} />
@@ -204,7 +206,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
             <FormControlLabel value='childbridge' control={<Radio />} label='Childbridge' disabled={matterbridgeInfo.readOnly === true} />
           </RadioGroup>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', gap: '15px' }}>
           <FormLabel style={{ padding: '0px', margin: '0px' }} id='mblogger-level-label'>
             Logger level:
           </FormLabel>
