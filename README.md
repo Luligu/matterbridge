@@ -499,6 +499,18 @@ Then, from the dots menu in the frontend, download the `matterbridge.log` and `m
 
 Don't forget to unselect the debug mode when is no more needed. The network traffic and cpu usage is very high in debug mode.
 
+## How to pair a second controller
+
+There are two ways to pair a second controller:
+
+- from the first controller find the `share` or `turn on pairing mode` method and get a new (QR)code and use it to pair the second controller;
+
+- from Matterbridge frontend click `Turn on pairing mode` in the `Paired fabrics` panel and proceed like for the first controller.
+
+![alt text](./screenshot/Turn%20on%20pairing%20mode.png)
+
+Be patient cause the procedure can fail sometimes.
+
 ## Race condition on start / restart
 
 We have a race condition when, after a blackout or with docker compose or with other systems that start more then one process, Matterbridge starts before other required system or network components.
