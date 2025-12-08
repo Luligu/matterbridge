@@ -26,7 +26,7 @@ import { createDebouncer } from '../utils/createDebouncer';
 import { debug, setWssPassword } from '../App';
 // const debug = true;
 
-const widthPx = 335;
+const widthPx = 330;
 
 function Settings(): React.JSX.Element {
   // WebSocket context
@@ -73,7 +73,7 @@ function Settings(): React.JSX.Element {
   }
   return (
     <MbfPage name='Settings'>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '100%', gap: '20px' }}>
         <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} systemInfo={systemInfo} />
         <MatterSettings matterbridgeInfo={matterbridgeInfo} />
         <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo} />
@@ -189,92 +189,90 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
 
   if (!matterbridgeInfo || !systemInfo) return null;
   return (
-    <MbfWindow style={{ width: `${widthPx}px`, maxWidth: `${widthPx}px` }}>
+    <MbfWindow style={{ flex: `1 1 ${widthPx}px` }}>
       <MbfWindowHeader>
         <MbfWindowHeaderText>Matterbridge settings</MbfWindowHeaderText>
       </MbfWindowHeader>
       <NetworkConfigDialog open={openNetConfig} ip={systemInfo.ipv4Address} onClose={handleCloseNetConfig} onSave={handleSaveNetConfig} />
       <ChangePasswordDialog open={openChangePassword} onClose={handleCloseChangePassword} onSave={handleSaveChangePassword} />
-      <MbfWindowContent style={{ flexDirection: 'column', padding: '0', gap: '10px' }}>
-        <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: `${widthPx - 20}px`, backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px' }} id='matterbridgeInfo-mode'>
-              Mode:
-            </FormLabel>
-            <RadioGroup row name='mode-buttons-group' value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
-              <FormControlLabel value='bridge' control={<Radio />} label='Bridge' disabled={matterbridgeInfo.readOnly === true} />
-              <FormControlLabel value='childbridge' control={<Radio />} label='Childbridge' disabled={matterbridgeInfo.readOnly === true} />
-            </RadioGroup>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px' }} id='mblogger-level-label'>
-              Logger level:
-            </FormLabel>
-            <Select style={{ height: '30px' }} labelId='mblogger-level-label' id='mblogger-level' value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
-              <MenuItem value='Debug'>Debug</MenuItem>
-              <MenuItem value='Info'>Info</MenuItem>
-              <MenuItem value='Notice'>Notice</MenuItem>
-              <MenuItem value='Warn'>Warn</MenuItem>
-              <MenuItem value='Error'>Error</MenuItem>
-              <MenuItem value='Fatal'>Fatal</MenuItem>
-            </Select>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px' }} id='mblogger-file-label'>
-              Log on file:
-            </FormLabel>
-            <Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} id='mblogger-file' name='logOnFileMb' />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-theme-label'>
-              Frontend theme:
-            </FormLabel>
-            <Select style={{ height: '30px' }} labelId='frontend-theme-label' id='frontend-theme' value={frontendTheme} onChange={handleChangeTheme}>
-              <MenuItem value='classic'>Classic</MenuItem>
-              <MenuItem value='light'>Light</MenuItem>
-              <MenuItem value='dark'>Dark</MenuItem>
-            </Select>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-home-plugin-label'>
-              Home page plugins:
-            </FormLabel>
-            <Checkbox checked={homePagePlugins} onChange={handleChangeHomePagePlugins} name='showPlugins' />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-home-label'>
-              Home page bottom panel:
-            </FormLabel>
-            <Select style={{ height: '30px' }} labelId='frontend-home-label' id='frontend-home' value={homePageMode} onChange={handleChangeHomePageMode}>
-              <MenuItem value='logs'>Logs</MenuItem>
-              <MenuItem value='devices'>Devices</MenuItem>
-            </Select>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-virtual-label'>
-              Virtual devices:
-            </FormLabel>
-            <Select style={{ height: '30px' }} labelId='frontend-virtual-label' id='frontend-virtual' value={virtualMode} onChange={handleChangeVirtualMode}>
-              <MenuItem value='disabled'>Disabled</MenuItem>
-              <MenuItem value='outlet'>Outlet</MenuItem>
-              <MenuItem value='light'>Light</MenuItem>
-              <MenuItem value='switch'>Switch</MenuItem>
-              <MenuItem value='mounted_switch'>Mounted Switch</MenuItem>
-            </Select>
-          </div>
+      <MbfWindowContent style={{ flexDirection: 'column', padding: '10px', gap: '0px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id='matterbridgeInfo-mode'>
+            Mode:
+          </FormLabel>
+          <RadioGroup row name='mode-buttons-group' value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
+            <FormControlLabel value='bridge' control={<Radio />} label='Bridge' disabled={matterbridgeInfo.readOnly === true} />
+            <FormControlLabel value='childbridge' control={<Radio />} label='Childbridge' disabled={matterbridgeInfo.readOnly === true} />
+          </RadioGroup>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id='mblogger-level-label'>
+            Logger level:
+          </FormLabel>
+          <Select style={{ height: '30px' }} labelId='mblogger-level-label' id='mblogger-level' value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
+            <MenuItem value='Debug'>Debug</MenuItem>
+            <MenuItem value='Info'>Info</MenuItem>
+            <MenuItem value='Notice'>Notice</MenuItem>
+            <MenuItem value='Warn'>Warn</MenuItem>
+            <MenuItem value='Error'>Error</MenuItem>
+            <MenuItem value='Fatal'>Fatal</MenuItem>
+          </Select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id='mblogger-file-label'>
+            Log on file:
+          </FormLabel>
+          <Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} id='mblogger-file' name='logOnFileMb' />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-theme-label'>
+            Frontend theme:
+          </FormLabel>
+          <Select style={{ height: '30px' }} labelId='frontend-theme-label' id='frontend-theme' value={frontendTheme} onChange={handleChangeTheme}>
+            <MenuItem value='classic'>Classic</MenuItem>
+            <MenuItem value='light'>Light</MenuItem>
+            <MenuItem value='dark'>Dark</MenuItem>
+          </Select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-home-plugin-label'>
+            Home page plugins:
+          </FormLabel>
+          <Checkbox checked={homePagePlugins} onChange={handleChangeHomePagePlugins} name='showPlugins' />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-home-label'>
+            Home page bottom panel:
+          </FormLabel>
+          <Select style={{ height: '30px' }} labelId='frontend-home-label' id='frontend-home' value={homePageMode} onChange={handleChangeHomePageMode}>
+            <MenuItem value='logs'>Logs</MenuItem>
+            <MenuItem value='devices'>Devices</MenuItem>
+          </Select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-virtual-label'>
+            Virtual devices:
+          </FormLabel>
+          <Select style={{ height: '30px' }} labelId='frontend-virtual-label' id='frontend-virtual' value={virtualMode} onChange={handleChangeVirtualMode}>
+            <MenuItem value='disabled'>Disabled</MenuItem>
+            <MenuItem value='outlet'>Outlet</MenuItem>
+            <MenuItem value='light'>Light</MenuItem>
+            <MenuItem value='switch'>Switch</MenuItem>
+            <MenuItem value='mounted_switch'>Mounted Switch</MenuItem>
+          </Select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
+          <Button variant='contained' color='primary' onClick={() => setOpenChangePassword(true)}>
+            Change password
+          </Button>
+        </div>
+        {matterbridgeInfo.shellyBoard && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
-            <Button variant='contained' color='primary' onClick={() => setOpenChangePassword(true)}>
-              Change password
+            <Button variant='contained' color='primary' onClick={() => setOpenNetConfig(true)}>
+              Configure IP
             </Button>
           </div>
-          {matterbridgeInfo.shellyBoard && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
-              <Button variant='contained' color='primary' onClick={() => setOpenNetConfig(true)}>
-                Configure IP
-              </Button>
-            </div>
-          )}
-        </Box>
+        )}
       </MbfWindowContent>
     </MbfWindow>
   );
@@ -406,134 +404,132 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
 
   if (!matterbridgeInfo) return null;
   return (
-    <MbfWindow style={{ width: `${widthPx}px`, maxWidth: `${widthPx}px` }}>
+    <MbfWindow style={{ flex: `1 1 ${widthPx}px` }}>
       <MbfWindowHeader>
         <MbfWindowHeaderText>Matter settings</MbfWindowHeaderText>
       </MbfWindowHeader>
-      <MbfWindowContent style={{ flexDirection: 'column', padding: '0', gap: '10px' }}>
-        <Box sx={{ gap: '20px', margin: '0px', padding: '10px', width: `${widthPx - 20}px`, backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', gap: '15px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px' }} id='mjlogger-level-label'>
-              Logger level:
-            </FormLabel>
-            <Select style={{ height: '30px' }} labelId='mjlogger-level-label' id='mjlogger-level' value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
-              <MenuItem value='Debug'>Debug</MenuItem>
-              <MenuItem value='Info'>Info</MenuItem>
-              <MenuItem value='Notice'>Notice</MenuItem>
-              <MenuItem value='Warn'>Warn</MenuItem>
-              <MenuItem value='Error'>Error</MenuItem>
-              <MenuItem value='Fatal'>Fatal</MenuItem>
-            </Select>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px' }} id='mjlogger-file-label'>
-              Log on file:
-            </FormLabel>
-            <Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} id='mjlogger-file' name='logOnFileMj' />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '15px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Mdns interface:</FormLabel>
-            <TextField
-              value={mdnsInterface}
-              onChange={handleChangeMdnsInterface}
-              size='small'
-              variant='outlined'
-              style={{ height: '30px', flexGrow: 1 }}
-              InputProps={{
-                readOnly: matterbridgeInfo.readOnly === true,
-                style: {
-                  height: '30px',
-                  padding: '0',
-                },
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '15px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Ipv4 address:</FormLabel>
-            <TextField
-              value={ipv4Address}
-              onChange={handleChangeIpv4Address}
-              size='small'
-              variant='outlined'
-              style={{ height: '30px', flexGrow: 1 }}
-              InputProps={{
-                readOnly: matterbridgeInfo.readOnly === true,
-                style: {
-                  height: '30px',
-                  padding: '0',
-                },
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '15px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Ipv6 address:</FormLabel>
-            <TextField
-              value={ipv6Address}
-              onChange={handleChangeIpv6Address}
-              size='small'
-              variant='outlined'
-              style={{ height: '30px', flexGrow: 1 }}
-              InputProps={{
-                readOnly: matterbridgeInfo.readOnly === true,
-                style: {
-                  height: '30px',
-                  padding: '0',
-                },
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '15px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Commissioning port:</FormLabel>
-            <TextField
-              value={matterPort}
-              onChange={handleChangeMatterPort}
-              size='small'
-              variant='outlined'
-              style={{ height: '30px', flexGrow: 1 }}
-              InputProps={{
-                readOnly: matterbridgeInfo.readOnly === true,
-                style: {
-                  height: '30px',
-                  padding: '0',
-                },
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '15px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Commissioning discriminator:</FormLabel>
-            <TextField
-              value={matterDiscriminator}
-              onChange={handleChangeMatterDiscriminator}
-              size='small'
-              variant='outlined'
-              style={{ height: '30px', flexGrow: 1 }}
-              InputProps={{
-                readOnly: matterbridgeInfo.readOnly === true,
-                style: {
-                  height: '30px',
-                  padding: '0',
-                },
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '15px' }}>
-            <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Commissioning passcode:</FormLabel>
-            <TextField
-              value={matterPasscode}
-              onChange={handleChangemMatterPasscode}
-              size='small'
-              variant='outlined'
-              style={{ height: '30px', flexGrow: 1 }}
-              InputProps={{
-                readOnly: matterbridgeInfo.readOnly === true,
-                style: {
-                  height: '30px',
-                  padding: '0',
-                },
-              }}
-            />
-          </div>
-        </Box>
+      <MbfWindowContent style={{ flexDirection: 'column', padding: '10px', gap: '0px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', gap: '15px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id='mjlogger-level-label'>
+            Logger level:
+          </FormLabel>
+          <Select style={{ height: '30px' }} labelId='mjlogger-level-label' id='mjlogger-level' value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
+            <MenuItem value='Debug'>Debug</MenuItem>
+            <MenuItem value='Info'>Info</MenuItem>
+            <MenuItem value='Notice'>Notice</MenuItem>
+            <MenuItem value='Warn'>Warn</MenuItem>
+            <MenuItem value='Error'>Error</MenuItem>
+            <MenuItem value='Fatal'>Fatal</MenuItem>
+          </Select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', gap: '10px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id='mjlogger-file-label'>
+            Log on file:
+          </FormLabel>
+          <Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} id='mjlogger-file' name='logOnFileMj' />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '10px', gap: '15px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Mdns interface:</FormLabel>
+          <TextField
+            value={mdnsInterface}
+            onChange={handleChangeMdnsInterface}
+            size='small'
+            variant='outlined'
+            style={{ height: '30px', flexGrow: 1 }}
+            InputProps={{
+              readOnly: matterbridgeInfo.readOnly === true,
+              style: {
+                height: '30px',
+                padding: '0',
+              },
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '10px', gap: '15px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Ipv4 address:</FormLabel>
+          <TextField
+            value={ipv4Address}
+            onChange={handleChangeIpv4Address}
+            size='small'
+            variant='outlined'
+            style={{ height: '30px', flexGrow: 1 }}
+            InputProps={{
+              readOnly: matterbridgeInfo.readOnly === true,
+              style: {
+                height: '30px',
+                padding: '0',
+              },
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '10px', gap: '15px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Ipv6 address:</FormLabel>
+          <TextField
+            value={ipv6Address}
+            onChange={handleChangeIpv6Address}
+            size='small'
+            variant='outlined'
+            style={{ height: '30px', flexGrow: 1 }}
+            InputProps={{
+              readOnly: matterbridgeInfo.readOnly === true,
+              style: {
+                height: '30px',
+                padding: '0',
+              },
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '10px', gap: '15px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Commissioning port:</FormLabel>
+          <TextField
+            value={matterPort}
+            onChange={handleChangeMatterPort}
+            size='small'
+            variant='outlined'
+            style={{ height: '30px', flexGrow: 1 }}
+            InputProps={{
+              readOnly: matterbridgeInfo.readOnly === true,
+              style: {
+                height: '30px',
+                padding: '0',
+              },
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '10px', gap: '15px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Commissioning discriminator:</FormLabel>
+          <TextField
+            value={matterDiscriminator}
+            onChange={handleChangeMatterDiscriminator}
+            size='small'
+            variant='outlined'
+            style={{ height: '30px', flexGrow: 1 }}
+            InputProps={{
+              readOnly: matterbridgeInfo.readOnly === true,
+              style: {
+                height: '30px',
+                padding: '0',
+              },
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '10px', gap: '15px' }}>
+          <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Commissioning passcode:</FormLabel>
+          <TextField
+            value={matterPasscode}
+            onChange={handleChangemMatterPasscode}
+            size='small'
+            variant='outlined'
+            style={{ height: '30px', flexGrow: 1 }}
+            InputProps={{
+              readOnly: matterbridgeInfo.readOnly === true,
+              style: {
+                height: '30px',
+                padding: '0',
+              },
+            }}
+          />
+        </div>
       </MbfWindowContent>
     </MbfWindow>
   );
@@ -543,20 +539,18 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
 function MatterbridgeInfo({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeInformation | null }) {
   if (!matterbridgeInfo) return null;
   return (
-    <MbfWindow style={{ width: `${widthPx}px`, maxWidth: `${widthPx}px` }}>
+    <MbfWindow style={{ flex: `1 1 ${widthPx}px` }}>
       <MbfWindowHeader>
         <MbfWindowHeaderText>Matterbridge info</MbfWindowHeaderText>
       </MbfWindowHeader>
-      <MbfWindowContent style={{ flexDirection: 'column', padding: '0', gap: '10px' }}>
-        <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
-          <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label='Current Version' width={widthPx} />
-          <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label='Latest Version' width={widthPx} />
-          <ReadOnlyTextField value={matterbridgeInfo.rootDirectory} label='Root Directory' width={widthPx} />
-          <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label='Home Directory' width={widthPx} />
-          <ReadOnlyTextField value={matterbridgeInfo.matterbridgeDirectory} label='Matterbridge Storage Directory' width={widthPx} />
-          <ReadOnlyTextField value={matterbridgeInfo.matterbridgePluginDirectory} label='Matterbridge Plugin Directory' width={widthPx} />
-          <ReadOnlyTextField value={matterbridgeInfo.globalModulesDirectory} label='Global Module Directory' width={widthPx} />
-        </Box>
+      <MbfWindowContent style={{ flexDirection: 'column', padding: '10px', gap: '5px' }}>
+        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label='Current Version' />
+        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label='Latest Version' />
+        <ReadOnlyTextField value={matterbridgeInfo.rootDirectory} label='Root Directory' />
+        <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label='Home Directory' />
+        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeDirectory} label='Matterbridge Storage Directory' />
+        <ReadOnlyTextField value={matterbridgeInfo.matterbridgePluginDirectory} label='Matterbridge Plugin Directory' />
+        <ReadOnlyTextField value={matterbridgeInfo.globalModulesDirectory} label='Global Module Directory' />
       </MbfWindowContent>
     </MbfWindow>
   );
@@ -566,20 +560,18 @@ function MatterbridgeInfo({ matterbridgeInfo }: { matterbridgeInfo: Matterbridge
 function SystemInfo({ systemInfo }: { systemInfo: SystemInformation | null }) {
   if (!systemInfo) return null;
   return (
-    <MbfWindow style={{ width: `${widthPx}px`, maxWidth: `${widthPx}px` }}>
+    <MbfWindow style={{ flex: `1 1 ${widthPx}px` }}>
       <MbfWindowHeader>
         <MbfWindowHeaderText>System info</MbfWindowHeaderText>
       </MbfWindowHeader>
-      <MbfWindowContent style={{ flexDirection: 'column', padding: '0', gap: '10px' }}>
-        <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
-          <ReadOnlyTextField value={systemInfo.interfaceName} label='Interface name' width={widthPx} />
-          <ReadOnlyTextField value={systemInfo.macAddress} label='MAC Address' width={widthPx} />
-          <ReadOnlyTextField value={systemInfo.ipv4Address} label='IPv4 Address' width={widthPx} />
-          <ReadOnlyTextField value={systemInfo.ipv6Address} label='IPv6 Address' width={widthPx} />
-          <ReadOnlyTextField value={systemInfo.nodeVersion} label='Node Version' width={widthPx} />
-          <ReadOnlyTextField value={systemInfo.hostname} label='Hostname' width={widthPx} />
-          <ReadOnlyTextField value={systemInfo.user} label='User' width={widthPx} />
-        </Box>
+      <MbfWindowContent style={{ flexDirection: 'column', padding: '10px', gap: '5px' }}>
+        <ReadOnlyTextField value={systemInfo.interfaceName} label='Interface name' />
+        <ReadOnlyTextField value={systemInfo.macAddress} label='MAC Address' />
+        <ReadOnlyTextField value={systemInfo.ipv4Address} label='IPv4 Address' />
+        <ReadOnlyTextField value={systemInfo.ipv6Address} label='IPv6 Address' />
+        <ReadOnlyTextField value={systemInfo.nodeVersion} label='Node Version' />
+        <ReadOnlyTextField value={systemInfo.hostname} label='Hostname' />
+        <ReadOnlyTextField value={systemInfo.user} label='User' />
       </MbfWindowContent>
     </MbfWindow>
   );
@@ -595,7 +587,7 @@ function ReadOnlyTextField({ value, label, width }: { value: string; label: stri
       label={label}
       variant='standard'
       sx={{
-        width: width ? `${width - 20}px` : '400px',
+        width: width ? `${width - 20}px` : '100%',
         // idle/blur underline
         '& .MuiInput-underline:before': {
           borderBottomColor: 'var(--main-label-color)',
