@@ -14,6 +14,7 @@ import Download from '@mui/icons-material/Download';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import Add from '@mui/icons-material/Add';
 import MoreVert from '@mui/icons-material/MoreVert';
+import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
 
 // Frontend
 import { UiContext } from './UiProvider';
@@ -100,6 +101,10 @@ function HomeInstallAddPlugins() {
     sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: pluginName, restart: false } });
   };
 
+  const handleUninstallPluginClick = () => {
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/uninstall', src: 'Frontend', dst: 'Matterbridge', params: { packageName: pluginName } });
+  };
+
   const handleUploadClick = () => {
     document.getElementById('file-upload')?.click();
   };
@@ -109,11 +114,6 @@ function HomeInstallAddPlugins() {
   };
 
   // Right-click handlers
-  const handleInstallRightClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/uninstall', src: 'Frontend', dst: 'Matterbridge', params: { packageName: pluginName } });
-  };
-
   const handleUploadRightClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     console.log('Right-clicked Upload button');
@@ -144,8 +144,14 @@ function HomeInstallAddPlugins() {
         <MbfWindowHeaderText>Install plugins</MbfWindowHeaderText>
         <MbfWindowIcons onClose={() => setClosed(true)} />
       </MbfWindowHeader>
-      <MbfWindowContent onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleFileDrop} style={enableMobile && mobile ? { flexWrap: 'wrap', gap: '10px' } : { flexWrap: 'wrap', gap: '20px' }}>
-        <div style={{ flex: 'auto', display: 'flex', flexDirection: 'row', gap: '10px' }}>
+      <MbfWindowContent
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleFileDrop}
+        style={enableMobile && mobile ? { flexWrap: 'wrap', alignItems: 'center', gap: '10px' } : { flexWrap: 'wrap', alignItems: 'center', gap: '20px' }}
+      >
+        {/* Input and menu */}
+        <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
           <TextField
             value={pluginName}
             onChange={(event) => {
@@ -177,11 +183,18 @@ function HomeInstallAddPlugins() {
             <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
           </Menu>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
+        {/* Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
           <Tooltip title='Install or update a plugin from npm'>
-            <Button onClick={handleInstallPluginClick} onContextMenu={handleInstallRightClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+            <Button onClick={handleInstallPluginClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
               {' '}
               Install
+            </Button>
+          </Tooltip>
+          <Tooltip title='Uninstall and remove a plugin'>
+            <Button onClick={handleUninstallPluginClick} endIcon={<DeleteForeverOutlinedIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+              {' '}
+              Uninstall
             </Button>
           </Tooltip>
           <Tooltip title='Upload and install a plugin from a tarball'>

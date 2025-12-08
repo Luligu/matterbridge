@@ -20,7 +20,7 @@ import { NetworkConfigDialog } from './NetworkConfigDialog';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { MatterbridgeInformation, SystemInformation } from '../../../src/matterbridgeTypes';
-import { MbfWindow } from './MbfWindow';
+import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
 import { MbfPage } from './MbfPage';
 import { createDebouncer } from '../utils/createDebouncer';
 import { debug, setWssPassword } from '../App';
@@ -190,12 +190,12 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
   if (!matterbridgeInfo || !systemInfo) return null;
   return (
     <MbfWindow style={{ width: `${widthPx}px`, maxWidth: `${widthPx}px` }}>
-      <div className='MbfWindowHeader'>
-        <p className='MbfWindowHeaderText'>Matterbridge settings</p>
-      </div>
+      <MbfWindowHeader>
+        <MbfWindowHeaderText>Matterbridge settings</MbfWindowHeaderText>
+      </MbfWindowHeader>
       <NetworkConfigDialog open={openNetConfig} ip={systemInfo.ipv4Address} onClose={handleCloseNetConfig} onSave={handleSaveNetConfig} />
       <ChangePasswordDialog open={openChangePassword} onClose={handleCloseChangePassword} onSave={handleSaveChangePassword} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
+      <MbfWindowContent style={{ flexDirection: 'column', padding: '0', gap: '10px' }}>
         <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: `${widthPx - 20}px`, backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <FormLabel style={{ padding: '0px', margin: '0px' }} id='matterbridgeInfo-mode'>
@@ -275,7 +275,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
             </div>
           )}
         </Box>
-      </div>
+      </MbfWindowContent>
     </MbfWindow>
   );
 }
@@ -407,10 +407,10 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
   if (!matterbridgeInfo) return null;
   return (
     <MbfWindow style={{ width: `${widthPx}px`, maxWidth: `${widthPx}px` }}>
-      <div className='MbfWindowHeader'>
-        <p className='MbfWindowHeaderText'>Matter settings</p>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
+      <MbfWindowHeader>
+        <MbfWindowHeaderText>Matter settings</MbfWindowHeaderText>
+      </MbfWindowHeader>
+      <MbfWindowContent style={{ flexDirection: 'column', padding: '0', gap: '10px' }}>
         <Box sx={{ gap: '20px', margin: '0px', padding: '10px', width: `${widthPx - 20}px`, backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', gap: '15px' }}>
             <FormLabel style={{ padding: '0px', margin: '0px' }} id='mjlogger-level-label'>
@@ -534,7 +534,7 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             />
           </div>
         </Box>
-      </div>
+      </MbfWindowContent>
     </MbfWindow>
   );
 }
@@ -544,10 +544,10 @@ function MatterbridgeInfo({ matterbridgeInfo }: { matterbridgeInfo: Matterbridge
   if (!matterbridgeInfo) return null;
   return (
     <MbfWindow style={{ width: `${widthPx}px`, maxWidth: `${widthPx}px` }}>
-      <div className='MbfWindowHeader'>
-        <p className='MbfWindowHeaderText'>Matterbridge info</p>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
+      <MbfWindowHeader>
+        <MbfWindowHeaderText>Matterbridge info</MbfWindowHeaderText>
+      </MbfWindowHeader>
+      <MbfWindowContent style={{ flexDirection: 'column', padding: '0', gap: '10px' }}>
         <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label='Current Version' width={widthPx} />
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label='Latest Version' width={widthPx} />
@@ -557,7 +557,7 @@ function MatterbridgeInfo({ matterbridgeInfo }: { matterbridgeInfo: Matterbridge
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgePluginDirectory} label='Matterbridge Plugin Directory' width={widthPx} />
           <ReadOnlyTextField value={matterbridgeInfo.globalModulesDirectory} label='Global Module Directory' width={widthPx} />
         </Box>
-      </div>
+      </MbfWindowContent>
     </MbfWindow>
   );
 }
@@ -567,10 +567,10 @@ function SystemInfo({ systemInfo }: { systemInfo: SystemInformation | null }) {
   if (!systemInfo) return null;
   return (
     <MbfWindow style={{ width: `${widthPx}px`, maxWidth: `${widthPx}px` }}>
-      <div className='MbfWindowHeader'>
-        <p className='MbfWindowHeaderText'>System info</p>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
+      <MbfWindowHeader>
+        <MbfWindowHeaderText>System info</MbfWindowHeaderText>
+      </MbfWindowHeader>
+      <MbfWindowContent style={{ flexDirection: 'column', padding: '0', gap: '10px' }}>
         <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <ReadOnlyTextField value={systemInfo.interfaceName} label='Interface name' width={widthPx} />
           <ReadOnlyTextField value={systemInfo.macAddress} label='MAC Address' width={widthPx} />
@@ -580,7 +580,7 @@ function SystemInfo({ systemInfo }: { systemInfo: SystemInformation | null }) {
           <ReadOnlyTextField value={systemInfo.hostname} label='Hostname' width={widthPx} />
           <ReadOnlyTextField value={systemInfo.user} label='User' width={widthPx} />
         </Box>
-      </div>
+      </MbfWindowContent>
     </MbfWindow>
   );
 }
