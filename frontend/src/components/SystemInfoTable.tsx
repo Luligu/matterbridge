@@ -175,7 +175,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
                       .replace('heapUsed', 'Heap')}
                   </td>
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {enableMobile && mobile ? value : <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={22} />}
+                    {enableMobile && mobile ? typeof value !== 'string' ? value.toString() : value : <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={22} />}
                   </td>
                 </tr>
               ))}

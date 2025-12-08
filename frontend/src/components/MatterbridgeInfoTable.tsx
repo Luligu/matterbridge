@@ -19,11 +19,11 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
   const excludeKeys = [
     'matterbridgeLatestVersion',
     'matterbridgeDevVersion',
-    'matterFileLogger',
-    'fileLogger',
-    'matterLoggerLevel',
-    'loggerLevel',
-    'cccvirtualMode',
+    '--matterFileLogger',
+    '--fileLogger',
+    '--matterLoggerLevel',
+    '--loggerLevel',
+    '--virtualMode',
     '--bridgeMode',
     '--restartMode',
     '--restartRequired',
@@ -66,10 +66,10 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
                 <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>
                     {key
-                      .replace('matterbridgeVersion', 'Matterbridge v.')
+                      .replace('matterbridgeVersion', 'Matterbridge version')
                       .replace('matterbridgeLatestVersion', 'Matterbridge latest v.')
                       .replace('matterbridgeDevVersion', 'Matterbridge dev v.')
-                      .replace('frontendVersion', 'Frontend v.')
+                      .replace('frontendVersion', 'Frontend version')
                       .replace('homeDirectory', 'Home')
                       .replace('rootDirectory', 'Root')
                       .replace('matterbridgeDirectory', 'Storage')
@@ -78,11 +78,17 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
                       .replace('globalModulesDirectory', 'Modules')
                       .replace('bridgeMode', 'Bridge mode')
                       .replace('virtualMode', 'Virtual mode')
+                      .replace('loggerLevel', 'Logger level')
+                      .replace('fileLogger', 'File logger')
+                      .replace('loggerLevel', 'Logger level')
+                      .replace('fileLogger', 'File logger')
+                      .replace('matterLoggerLevel', 'Matter logger level')
+                      .replace('matterFileLogger', 'Matter file logger')
                       .replace('restartRequired', 'Restart required')
                       .replace('updateRequired', 'Update required')}
                   </td>
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {enableMobile && mobile ? value : <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={24} />}
+                    {enableMobile && mobile ? typeof value !== 'string' ? value.toString() : value : <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={24} />}
                   </td>
                 </tr>
               ))}
