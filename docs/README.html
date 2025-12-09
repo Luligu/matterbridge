@@ -178,15 +178,15 @@ After follow the guidelines for the <a href="README-DOCKER.html">Docker configur
 <p>or with local global node_modules and npm cache (no sudo required): <a href="README-SERVICE-LOCAL.html">configuration</a></p>
 <p>or with user matterbridge and with private global node_modules and npm cache (no sudo required): <a href="README-SERVICE-OPT.html">configuration</a></p>
 <h3 id="run-matterbridge-as-a-system-service-with-launchctl-macos-only">Run matterbridge as a system service with launchctl (macOS only)</h3>
-<p><a href="README-MACOS-PLIST.html">Launchctl configurations</a></p>
+<p><a href="README-MACOS-PLIST.html">Launchctl configuration</a></p>
 <h3 id="run-matterbridge-with-docker-and-docker-compose">Run matterbridge with docker and docker compose</h3>
-<p><a href="README-DOCKER.html">Docker configurations</a></p>
+<p><a href="README-DOCKER.html">Docker configuration</a></p>
 <h3 id="run-matterbridge-with-podman">Run matterbridge with podman</h3>
-<p><a href="README-PODMAN.html">Podman configurations</a></p>
+<p><a href="README-PODMAN.html">Podman configuration</a></p>
 <h3 id="run-matterbridge-with-nginx">Run matterbridge with nginx</h3>
-<p><a href="README-NGINX.html">Nginx configurations</a></p>
+<p><a href="README-NGINX.html">Nginx configuration</a></p>
 <h3 id="run-matterbridge-as-an-home-assistant-add-on-with-the-official-add-on">Run matterbridge as an home assistant add-on with the official add-on</h3>
-<p><a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Home assistant add-on configurations</a></p>
+<p><a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Home assistant add-on configuration</a></p>
 <h3 id="other-home-assistant-community-add-ons">Other Home Assistant Community Add-ons</h3>
 <p>The other Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.</p>
 <h2 id="development">Development</h2>
@@ -368,6 +368,21 @@ matterbridge --add matterbridge-zigbee2mqtt
 <p>Then, from the dots menu in the frontend, download the <code>matterbridge.log</code> and <code>matter.log</code> files.</p>
 <p><img src="./screenshot/Screenshot%20Debug%20Download%20Logs.png" alt="image"></p>
 <p>Don&#39;t forget to unselect the debug mode when is no more needed. The network traffic and cpu usage is very high in debug mode.</p>
+<h2 id="how-to-pair-a-second-controller">How to pair a second controller</h2>
+<p>There are two ways to pair a second controller:</p>
+<ul>
+<li><p>from the first controller find the <code>share</code> or <code>turn on pairing mode</code> method and get a new (QR)code and use it to pair the second controller;</p>
+</li>
+<li><p>from Matterbridge frontend click <code>Turn on pairing mode</code> in the <code>Paired fabrics</code> panel and proceed like for the first controller.</p>
+</li>
+</ul>
+<p><img src="./screenshot/Turn%20on%20pairing%20mode.png" alt="alt text"></p>
+<p>Be patient cause the procedure can fail sometimes.</p>
+<h2 id="how-to-avoid-race-condition-on-start-restart">How to avoid race condition on start / restart</h2>
+<p>We have a race condition when, after a blackout or with docker compose or with other systems that start more then one process, Matterbridge always starts before other required system or network components.</p>
+<p>Race condition can cause missing configuration or missed devices on the controller side. All Matterbridge official plugins already wait for system and network components to be ready so there is no need of delay.</p>
+<p>To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart cause the delay is applied only in the first 5 minutes from system reboot.</p>
+<p>To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed so use it only if strictly necessary.</p>
 <h1 id="known-general-issues">Known general issues</h1>
 <h2 id="session-xyz-does-not-exist-or-cannot-find-a-session-for-id-xyz">Session XYZ does not exist or Cannot find a session for ID XYZ</h2>
 <p>This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
@@ -390,7 +405,7 @@ In this context, the message is not indicative of a problem.</p>
 <h2 id="home-assistant-issues">Home Assistant issues</h2>
 <ul>
 <li>If HA doesn&#39;t show all devices, reload the Matter Server Integration or reboot HA</li>
-<li>Home Assistant doesn&#39;t seem to always react when a device is removed from the bridge: they remain in HA unavailable forever...</li>
+<li>Home Assistant doesn&#39;t seem to always react when a device is removed from the bridge: they remain in HA unavailable forever. A full Home Assistant restart solves the problem.</li>
 <li>Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.</li>
 </ul>
 <h2 id="google-home">Google Home</h2>
@@ -418,9 +433,9 @@ In this context, the message is not indicative of a problem.</p>
 <h2 id="code-of-conduct">Code of Conduct</h2>
 <p>We believe in a welcoming and respectful community for all. Please make sure to follow our <a href="LINK_TO_CODE_OF_CONDUCT">Code of Conduct</a> in all your interactions with the project.</p>
 <h2 id="support">Support</h2>
-<p>If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee.
-On my side I sponsor the packages that I use in this project. It would be nice to have sponsors too.
-Click on the badge below to get started:</p>
+<p>If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee.</p>
+<p>On my side I sponsor the packages that I use in this project and single developers. It would be nice to have sponsors too.</p>
+<p>Click on the badge below to get started:</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
