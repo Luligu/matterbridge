@@ -33,7 +33,7 @@ Advantages:
 ### Breaking Changes
 
 - [frontend]: This version of the frontend features full responsiveness till a width of 360 pixel (smallest smartphones).
-  Mobile mode starts automatically below 1200 x 900.
+  Mobile mode starts automatically below 1200 x 900 pixels.
   From the View menu of the frontend is possible to request the desktop site or the mobile site for the mobile mode.
 
 ### Added

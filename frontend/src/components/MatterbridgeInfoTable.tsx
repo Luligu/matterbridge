@@ -77,6 +77,7 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
                       .replace('matterbridgePluginDirectory', 'Plugins')
                       .replace('globalModulesDirectory', 'Modules')
                       .replace('bridgeMode', 'Bridge mode')
+                      .replace('restartMode', 'Restart mode')
                       .replace('virtualMode', 'Virtual mode')
                       .replace('loggerLevel', 'Logger level')
                       .replace('fileLogger', 'File logger')
