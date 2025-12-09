@@ -74,7 +74,7 @@ function Settings(): React.JSX.Element {
   }
   return (
     <MbfPage name='Settings'>
-      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '100%', gap: enableMobile && mobile ? '10px' : '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: enableMobile && mobile ? '10px' : '20px' }}>
         <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} systemInfo={systemInfo} />
         <MatterSettings matterbridgeInfo={matterbridgeInfo} />
         <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo} />

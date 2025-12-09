@@ -32,7 +32,8 @@ import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 // Frontend
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
-import { debug, toggleDebug } from '../App';
+import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
+import { viewportHeight, viewportWidth } from './MbfScreen';
 // const debug = true;
 
 function Header() {
@@ -358,11 +359,9 @@ function Header() {
   if (!online || !settings) {
     return null;
   }
-  //         {((enableMobile && !mobile) || !enableMobile) && (
-  //        )}
-
   return (
     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '10px' }}>
+      {/* Logo and navigation */}
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
           <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '30px' }} onClick={handleLogoClick} />
@@ -385,6 +384,7 @@ function Header() {
           </nav>
         </div>
       </div>
+      {/* Matterbridge information and statuses */}
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
         {!settings.matterbridgeInformation.readOnly && (
           <Tooltip title={`Matterbridge v.${settings.matterbridgeInformation.matterbridgeVersion}`}>
@@ -415,7 +415,15 @@ function Header() {
             </span>
           </Tooltip>
         ) : null}
+        {debug && (
+          <span className='status-information' style={{ cursor: 'default' }}>
+            {mobile ? 'Mobile ' : 'Desktop '}
+            {`${viewportWidth}x${viewportHeight}`}
+            {` enabled ${localStorage.getItem('enableMobile') === 'false' ? false : true}`}
+          </span>
+        )}
       </div>
+      {/* Icons */}
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '5px' }}>
         {settings.matterbridgeInformation.readOnly === false ? (
           <Tooltip title='Matterbridge discord group'>
@@ -491,12 +499,45 @@ function Header() {
             </IconButton>
           </Tooltip>
         ) : null}
+        {/* Command menu */}
         <Tooltip title='Download, backup and more'>
           <IconButton onClick={handleMenuOpen}>
             <MoreHoriz style={{ color: 'var(--main-icon-color)' }} />
           </IconButton>
         </Tooltip>
         <Menu id='command-menu' anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuCloseConfirm('')}>
+          {enableMobile && mobile && (
+            <MenuItem onClick={() => window.open(`/home`, '_self')}>
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Home page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+          )}
+          {enableMobile && mobile && (
+            <MenuItem onClick={() => window.open(`/devices`, '_self')}>
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Devices page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+          )}
+          {enableMobile && mobile && (
+            <MenuItem onClick={() => window.open(`/log`, '_self')}>
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Logs page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+          )}
+          {enableMobile && mobile && (
+            <MenuItem onClick={() => window.open(`/settings`, '_self')}>
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Settings page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+          )}
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && (
             <MenuItem onClick={() => handleMenuCloseConfirm('update')}>
               <ListItemIcon>
@@ -572,6 +613,32 @@ function Header() {
             <ListItemText primary='View' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
           <Menu id='sub-menu-view' anchorEl={viewMenuAnchorEl} keepMounted open={Boolean(viewMenuAnchorEl)} onClose={handleViewMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+            <MenuItem
+              onClick={() => {
+                unsetEnableMobile();
+                handleViewMenuClose();
+                handleMenuCloseCancel('');
+                window.open(`/home`, '_self');
+              }}
+            >
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Desktop site' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setEnableMobile();
+                handleViewMenuClose();
+                handleMenuCloseCancel('');
+                window.open(`/home`, '_self');
+              }}
+            >
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Mobile site' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
             <MenuItem
               onClick={() => {
                 handleMenuCloseConfirm('view-mblog');

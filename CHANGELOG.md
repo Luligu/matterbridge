@@ -30,20 +30,27 @@ Advantages:
 
 ## [3.4.3] - 2025-12-12
 
+### Breaking Changes
+
+- [frontend]: This version of the frontend features full responsiveness till a width of 360 pixel (smallest smartphones).
+  Mobile mode starts automatically below 1200 x 900.
+  From the View menu of the frontend is possible to request the desktop site or the mobile site for the mobile mode.
+
 ### Added
 
 - [frontend]: Added homepage icon and link to https://matterbridge.io/.
+- [frontend]: Added settings to request Desktop site or Mobile site in mobile mode.
 - [matterbridge]: Added more frontend messages on start when a plugin is in error state. It is more clear when the bridge will not start for plugin errors.
 
 ### Changed
 
 - [package]: Updated dependencies.
-- [frontend]: Bumped `frontend` version to v.3.3.4.
+- [frontend]: Bumped `frontend` version to v.3.4.0.
 - [package]: Changed homepage to https://matterbridge.io.
 - [frontend]: Changed help link to https://matterbridge.io/README.html.
 - [frontend]: Changed changelog link to https://matterbridge.io/CHANGELOG.html.
 - [frontend]: Changed changelog icon to HistoryOutlinedIcon.
-- [frontend]: Removed column Url from Devices panel in the Home page. It is available on the Devices page.
+- [frontend]: Removed column Url from Devices panel in the Home page. It is already available on the Devices page.
 - [frontend]: Mobile mode starts below 1200 x 900 and is fully resizable and responsive till a width of 360 pixel.
 
 ### Fixed

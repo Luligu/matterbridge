@@ -28,7 +28,15 @@ export const toggleDebug = () => {
   debug = !debug;
 };
 export const enableWindows = false;
-export const enableMobile = true;
+export let enableMobile = localStorage.getItem('enableMobile') === 'false' ? false : true;
+export const setEnableMobile = () => {
+  enableMobile = true;
+  localStorage.setItem('enableMobile', 'true');
+};
+export const unsetEnableMobile = () => {
+  enableMobile = false;
+  localStorage.setItem('enableMobile', 'false');
+};
 export let wssPassword: string | undefined = undefined;
 export const setWssPassword = (password: string) => {
   wssPassword = password;
