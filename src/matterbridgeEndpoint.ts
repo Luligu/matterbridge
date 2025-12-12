@@ -2339,7 +2339,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       actuatorEnabled: false,
       operatingMode: DoorLock.OperatingMode.Normal,
       // Special case of inverted bitmap: add also alwaysSet = 2047
-      supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: true, passage: true, alwaysSet: 2047 },
+      supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
       autoRelockTime: 0, // 0=disabled
     });
     return this;
