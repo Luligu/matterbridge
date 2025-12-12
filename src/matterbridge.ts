@@ -1576,6 +1576,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     let failCount = 0;
     this.startMatterInterval = setInterval(
       async () => {
+        // istanbul ignore if cause is just a logging statement
         if (failCount && failCount % 10 === 0) {
           this.frontend.wssSendSnackbarMessage(`The bridge is still starting...`, 10, 'info');
           this.frontend.wssSendRefreshRequired('plugins');
@@ -1679,6 +1680,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     let failCount = 0;
     this.startMatterInterval = setInterval(
       async () => {
+        // istanbul ignore if cause is just a logging statement
         if (failCount && failCount % 10 === 0) {
           this.frontend.wssSendSnackbarMessage(`The bridge is still starting...`, 10, 'info');
           this.frontend.wssSendRefreshRequired('plugins');
