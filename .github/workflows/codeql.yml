@@ -6,12 +6,20 @@ on:
     paths-ignore:
       - 'docs/**' # any file under docs/
       - 'screenshot/**' # any file under screenshot/
+      - 'scripts/**' # any file under scripts/
+      - 'chip/**' # any file under chip/
+      - 'systemd/**' # any file under systemd/
+      - 'frontend/build/**' # any file under frontend/build/
       - '**/*.md' # any .md anywhere
   pull_request:
     branches: [main]
     paths-ignore:
       - 'docs/**' # any file under docs/
       - 'screenshot/**' # any file under screenshot/
+      - 'scripts/**' # any file under scripts/
+      - 'chip/**' # any file under chip/
+      - 'systemd/**' # any file under systemd/
+      - 'frontend/build/**' # any file under frontend/build/
       - '**/*.md' # any .md anywhere
   workflow_dispatch:
 
