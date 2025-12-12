@@ -1,8 +1,8 @@
 // (imports below)
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render } from '@testing-library/react';
-import { describe, it, beforeEach, vi, expect } from 'vitest';
+import { act, render, waitFor } from '@testing-library/react';
+import { describe, it, beforeEach, afterEach, vi, expect } from 'vitest';
 import { MbfScreen, MOBILE_HEIGHT_THRESHOLD, MOBILE_WIDTH_THRESHOLD, isMobile } from '../src/components/MbfScreen';
 import { UiContext, UiContextType } from '../src/components/UiProvider';
 
@@ -17,12 +17,6 @@ vi.mock('../src/App', () => ({
 // Mock Header to avoid rendering its internals
 vi.mock('../src/components/Header', () => ({
   default: () => <div data-testid="header" />,
-}));
-
-// Mock App debug and enableMobile
-vi.mock('../src/App', () => ({
-  debug: false,
-  enableMobile: true,
 }));
 
 describe('MbfScreen', () => {
@@ -40,6 +34,8 @@ describe('MbfScreen', () => {
     exitInstallProgressError: vi.fn(),
     hideInstallProgress: vi.fn(),
     addInstallProgress: vi.fn(),
+    installAutoExit: true,
+    setInstallAutoExit: vi.fn() as React.Dispatch<React.SetStateAction<boolean>>,
   });
 
   const renderWithContext = (mobile: boolean, children: React.ReactNode = <div>child</div>, setMobileFn = vi.fn()) =>
@@ -49,8 +45,21 @@ describe('MbfScreen', () => {
       </UiContext.Provider>
     );
 
+  const originalViewport = {
+    innerWidth: window.innerWidth,
+    innerHeight: window.innerHeight,
+    visualViewport: window.visualViewport,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    debugValue = false;
+    enableMobileValue = true;
+    resetViewport();
+  });
+
+  afterEach(() => {
+    resetViewport();
   });
 
 
@@ -60,39 +69,61 @@ describe('MbfScreen', () => {
       Object.defineProperty(window, 'visualViewport', {
         value: { width, height },
         configurable: true,
+        writable: true,
       });
     } else {
       Object.defineProperty(window, 'visualViewport', {
         value: undefined,
         configurable: true,
+        writable: true,
       });
       Object.defineProperty(window, 'innerWidth', {
         value: width,
         configurable: true,
+        writable: true,
       });
       Object.defineProperty(window, 'innerHeight', {
         value: height,
         configurable: true,
+        writable: true,
       });
     }
+  }
+
+  function resetViewport() {
+    Object.defineProperty(window, 'innerWidth', {
+      value: originalViewport.innerWidth,
+      configurable: true,
+      writable: true,
+    });
+    Object.defineProperty(window, 'innerHeight', {
+      value: originalViewport.innerHeight,
+      configurable: true,
+      writable: true,
+    });
+    Object.defineProperty(window, 'visualViewport', {
+      value: originalViewport.visualViewport,
+      configurable: true,
+      writable: true,
+    });
   }
 
 
   describe('isMobile', () => {
     it('returns true if width < threshold', () => {
-      expect(MOBILE_WIDTH_THRESHOLD).toBe(1300);
-      expect(MOBILE_HEIGHT_THRESHOLD).toBe(1024);
+      expect(MOBILE_WIDTH_THRESHOLD).toBe(1200);
+      expect(MOBILE_HEIGHT_THRESHOLD).toBe(900);
       setViewport(1000, 1100);
       expect(isMobile()).toBe(true);
     });
 
     it('returns true if height < threshold', () => {
-      setViewport(1400, 1000);
+      setViewport(1400, 800);
       expect(isMobile()).toBe(true);
     });
 
     it('returns true if width and height < threshold', () => {
-      setViewport(1299, 1023);
+      setViewport(1199, 899);
       expect(isMobile()).toBe(true);
     });
 
@@ -117,60 +148,16 @@ describe('MbfScreen', () => {
 
 
   describe('MbfScreen debug and non-enableMobile branch', () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
     it('renders in debug mode', () => {
       debugValue = true;
-      enableMobileValue = true;
-      const { getByText } = render(
-        <UiContext.Provider value={{
-          mobile: false,
-          setMobile: vi.fn(),
-          currentPage: null,
-          setCurrentPage: vi.fn(),
-          showSnackbarMessage: vi.fn(),
-          closeSnackbarMessage: vi.fn(),
-          closeSnackbar: vi.fn(),
-          showConfirmCancelDialog: vi.fn(),
-          showInstallProgress: vi.fn(),
-          exitInstallProgressSuccess: vi.fn(),
-          exitInstallProgressError: vi.fn(),
-          hideInstallProgress: vi.fn(),
-          addInstallProgress: vi.fn(),
-        }}>
-          <MbfScreen>debug</MbfScreen>
-        </UiContext.Provider>
-      );
+      const { getByText } = renderWithContext(false, <div>debug</div>);
       expect(getByText('debug')).toBeInTheDocument();
-      debugValue = false;
-      enableMobileValue = true;
     });
 
     it('renders non-enableMobile branch', () => {
       enableMobileValue = false;
-      const { getByText } = render(
-        <UiContext.Provider value={{
-          mobile: false,
-          setMobile: vi.fn(),
-          currentPage: null,
-          setCurrentPage: vi.fn(),
-          showSnackbarMessage: vi.fn(),
-          closeSnackbarMessage: vi.fn(),
-          closeSnackbar: vi.fn(),
-          showConfirmCancelDialog: vi.fn(),
-          showInstallProgress: vi.fn(),
-          exitInstallProgressSuccess: vi.fn(),
-          exitInstallProgressError: vi.fn(),
-          hideInstallProgress: vi.fn(),
-          addInstallProgress: vi.fn(),
-        }}>
-          <MbfScreen>non-mobile</MbfScreen>
-        </UiContext.Provider>
-      );
+      const { getByText } = renderWithContext(false, <div>non-mobile</div>);
       expect(getByText('non-mobile')).toBeInTheDocument();
-      enableMobileValue = true;
     });
   });
   it('renders children and header', () => {
@@ -179,24 +166,53 @@ describe('MbfScreen', () => {
     expect(getByText('child')).toBeInTheDocument();
   });
 
-    it('applies mobile layout when mobile=true', () => {
-      const { container } = renderWithContext(true);
-      const style = container.firstChild as HTMLElement;
-      expect(style).toHaveStyle(`width: calc(100vw - 60px)`);
-      expect(style).toHaveStyle(`height: ${MOBILE_HEIGHT_THRESHOLD}px`);
-    });
-
-    it('applies desktop layout when mobile=false', () => {
-      const { container } = renderWithContext(false);
-      const style = container.firstChild as HTMLElement;
-      expect(style).toHaveStyle(`width: calc(100vw - 40px)`);
-      expect(style).toHaveStyle(`height: calc(100vh - 40px)`);
-    });
-
-    it('calls setMobile on resize', () => {
-      const setMobile = vi.fn();
-      renderWithContext(false, undefined, setMobile);
-      window.dispatchEvent(new Event('resize'));
-      expect(setMobile).toHaveBeenCalled();
-    });
+  it('applies mobile layout when mobile=true and enableMobile=true', () => {
+    enableMobileValue = true;
+    const { container } = renderWithContext(true);
+    const style = container.firstChild as HTMLElement;
+    expect(style).toHaveStyle('display: flex');
+    expect(style).toHaveStyle('flex-direction: column');
+    expect(style).toHaveStyle('padding: 10px');
   });
+
+  it('applies desktop layout when mobile=false', () => {
+    const { container } = renderWithContext(false);
+    const style = container.firstChild as HTMLElement;
+    expect(style).toHaveStyle('width: calc(100vw - 40px)');
+    expect(style).toHaveStyle('height: calc(100vh - 40px)');
+    expect(style).toHaveStyle('padding: 20px');
+  });
+
+  it('uses desktop fallback sizing when mobile=true but enableMobile=false', () => {
+    enableMobileValue = false;
+    const { container } = renderWithContext(true);
+    const style = container.firstChild as HTMLElement;
+    expect(style).toHaveStyle(`width: ${MOBILE_WIDTH_THRESHOLD}px`);
+    expect(style).toHaveStyle(`height: ${MOBILE_HEIGHT_THRESHOLD}px`);
+  });
+
+  it('calls setMobile on mount and on resize, and cleans up listener', async () => {
+    setViewport(1400, 1100);
+    const addListenerSpy = vi.spyOn(window, 'addEventListener');
+    const removeListenerSpy = vi.spyOn(window, 'removeEventListener');
+    const setMobile = vi.fn();
+
+    const { unmount } = renderWithContext(false, undefined, setMobile);
+
+    await waitFor(() => expect(setMobile).toHaveBeenCalledWith(false));
+    expect(addListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+
+    setViewport(1000, 800);
+    await act(async () => {
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    await waitFor(() => expect(setMobile).toHaveBeenCalledWith(true));
+
+    unmount();
+    expect(removeListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+
+    addListenerSpy.mockRestore();
+    removeListenerSpy.mockRestore();
+  });
+});

@@ -145,11 +145,11 @@ interface MbfWindowContentProps {
 
 export function MbfWindowContent({ children, style, onDragOver, onDragLeave, onDrop }: MbfWindowContentProps): React.JSX.Element {
   const defaultStyle: React.CSSProperties = {
+    flex: '0 0 auto',
     display: 'flex',
     flexDirection: 'row',
-    flex: '0 0 auto',
     overflow: 'hidden',
-    alignItems: 'center',
+    alignItems: 'start',
     justifyContent: 'space-between',
     margin: '0px',
     padding: '10px',

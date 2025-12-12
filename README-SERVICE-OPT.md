@@ -18,9 +18,7 @@
 
 ## Run matterbridge as a daemon with systemctl (Linux only) with user matterbridge and private global node_modules
 
-The advantage of this setup is that the global node_modules are private for matterbridge and sudo is not required.
-
-This configuration uses a private separate npm cache.
+The advantage of this setup is that the global node_modules and npm cache are private for matterbridge and sudo is not required.
 
 The service runs with group and user matterbridge and the system has full protection.
 
@@ -28,7 +26,7 @@ The service runs with group and user matterbridge and the system has full protec
 
 The storage position is **not compatible** with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
 
-Also various script don't work if you choose this configuration.
+Also various scripts don't work if you choose this configuration.
 
 ### 1 - Create the matterbridge user and group
 
@@ -62,7 +60,7 @@ sudo chmod -R 755 /opt/matterbridge /opt/matterbridge/Matterbridge /opt/matterbr
 # make sure the “bin” dir exists for global executables
 sudo -u matterbridge mkdir -p /opt/matterbridge/.npm-global/bin
 # ✅ Install matterbridge in the private global node_modules using the private npm cache
-sudo -u matterbridge NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache npm install matterbridge --omit=dev --verbose --global
+sudo -u matterbridge npm install matterbridge --omit=dev --verbose --global --prefix=/opt/matterbridge/.npm-global --cache=/opt/matterbridge/.npm-cache
 # ✅ Create a link to matterbridge bins
 sudo ln -sf /opt/matterbridge/.npm-global/bin/matterbridge /usr/bin/matterbridge
 sudo ln -sf /opt/matterbridge/.npm-global/bin/mb_mdns /usr/bin/mb_mdns

@@ -11,10 +11,35 @@
       margin: 40px;
     }
     h1, h2, h3 {
-      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
     }
     pre {
-      background: #cfd1d4;
+      background: #e4e7ec;
       color: #000000;
       padding: 10px 56px 10px 10px;
       border-radius: 0.5rem;
@@ -51,7 +76,7 @@
   </style>
 </head>
 <body>
-<h1><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge Podman configuration</h1>
+<h1 id="img-srchttpsmatterbridgeiomatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge-podman-configuration"><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge Podman configuration</h1>
 <p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
@@ -63,17 +88,17 @@
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
 <a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
 <hr>
-<h1>Advanced configuration</h1>
-<h2>Install Podman if it is not already installed</h2>
+<h1 id="advanced-configuration">Advanced configuration</h1>
+<h2 id="install-podman-if-it-is-not-already-installed">Install Podman if it is not already installed</h2>
 <pre><code>cd ~
 sudo apt update
 sudo apt install podman -y
 podman --version
 </code></pre>
-<h2>Run matterbridge with podman</h2>
+<h2 id="run-matterbridge-with-podman">Run matterbridge with podman</h2>
 <p>The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on Docker Hub and can be used with podman.</p>
-<p>Podman handles container restarts a little differently than Docker. The --restart always flag doesnΓÇÖt work exactly the same. If you want the container to automatically restart when the system reboots or if it crashes, you can create a systemd unit for the Podman container.</p>
-<h3>First create the Matterbridge directories</h3>
+<p>Podman handles container restarts a little differently than Docker. The --restart always flag doesn’t work exactly the same. If you want the container to automatically restart when the system reboots or if it crashes, you can create a systemd unit for the Podman container.</p>
+<h3 id="first-create-the-matterbridge-directories">First create the Matterbridge directories</h3>
 <p>This will create the required directories if they don&#39;t exist</p>
 <pre><code>cd ~
 mkdir -p ./Matterbridge
@@ -85,7 +110,7 @@ sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
 <li>./Matterbridge is the position outside of the container of your matterbridge plugin directory (inside your home directory).</li>
 <li>./.matterbridge is the position outside of the container of your matterbridge storage directory (inside your home directory).</li>
 </ul>
-<h3>Run the Podman container (root mode) and start it</h3>
+<h3 id="run-the-podman-container-root-mode-and-start-it">Run the Podman container (root mode) and start it</h3>
 <p>The container must have full access to the host network (needed for matter mdns).</p>
 <pre><code>podman run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
@@ -97,31 +122,30 @@ sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
 <li>~/Matterbridge is the position outside of the container of your matterbridge plugin directory.</li>
 <li>~/.matterbridge is the position outside of the container of your matterbridge storage directory.</li>
 </ul>
-<h3>Integrate the mattebridge podman container with systemd for automatic startup after reboots</h3>
+<h3 id="integrate-the-mattebridge-podman-container-with-systemd-for-automatic-startup-after-reboots">Integrate the mattebridge podman container with systemd for automatic startup after reboots</h3>
 <pre><code>podman generate systemd --name matterbridge --files --new
 sudo mv container-matterbridge.service /etc/systemd/system/
 sudo systemctl enable container-matterbridge
 sudo systemctl start container-matterbridge
 </code></pre>
-<h3>Start the Podman container</h3>
+<h3 id="start-the-podman-container">Start the Podman container</h3>
 <pre><code>podman start matterbridge
 </code></pre>
-<h3>Stop the Podman container</h3>
+<h3 id="stop-the-podman-container">Stop the Podman container</h3>
 <pre><code>podman stop matterbridge
 </code></pre>
-<h3>Restart the Podman container</h3>
+<h3 id="restart-the-podman-container">Restart the Podman container</h3>
 <pre><code>podman restart matterbridge
 </code></pre>
-<h3>Remove the Podman container</h3>
+<h3 id="remove-the-podman-container">Remove the Podman container</h3>
 <pre><code>podman rm matterbridge
 </code></pre>
-<h3>Shows the logs</h3>
+<h3 id="shows-the-logs">Shows the logs</h3>
 <pre><code>podman logs matterbridge
 </code></pre>
-<h3>Shows the logs real time (tail)</h3>
+<h3 id="shows-the-logs-real-time-tail">Shows the logs real time (tail)</h3>
 <pre><code>podman logs --tail 1000 -f matterbridge
 </code></pre>
-
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
@@ -164,6 +188,3 @@ sudo systemctl start container-matterbridge
   </script>
 </body>
 </html>
-
-
-

@@ -303,6 +303,8 @@ function help(): void {
       --service:               enable the service mode (used in the linux systemctl configuration file and macOS launchctl plist)
       --docker:                enable the docker mode (used in the docker image)
       --homedir:               override the home directory (default the os homedir)
+      --delay [seconds]:       set a delay in seconds before starting Matterbridge in the first 5 minutes from a reboot (default 120)
+      --fixed_delay [seconds]: set a fixed delay in seconds before starting Matterbridge (default 120)
   `);
   process.exit(0);
 }

@@ -7,6 +7,7 @@
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
 [![power by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
 [![power by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
@@ -38,9 +39,7 @@ It runs perfectly on Linux, macOS and Windows.
 
 If you like this project and find it useful, please consider giving it a star on [GitHub](https://github.com/Luligu/matterbridge) and sponsoring it.
 
-<a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120">
-</a>
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
 ## Acknowledgements
 
@@ -178,37 +177,31 @@ Home page
 
 ### Run matterbridge as a daemon with systemctl (Linux only)
 
-Traditional configuration
+Traditional configuration: [configuration](README-SERVICE.md)
 
-[Service configurations](README-SERVICE.md)
+or with local global node_modules and npm cache (no sudo required): [configuration](README-SERVICE-LOCAL.md)
 
-or with local global node_modules (no sudo required)
-
-[Service configurations with local global node_modules](README-SERVICE-LOCAL.md)
-
-or with user matterbridge and with private global node_modules (no sudo required)
-
-[Service configurations with user matterbridge and private global node_modules](README-SERVICE-OPT.md)
+or with user matterbridge and with private global node_modules and npm cache (no sudo required): [configuration](README-SERVICE-OPT.md)
 
 ### Run matterbridge as a system service with launchctl (macOS only)
 
-[Launchctl configurations](README-MACOS-PLIST.md)
+[Launchctl configuration](README-MACOS-PLIST.md)
 
 ### Run matterbridge with docker and docker compose
 
-[Docker configurations](README-DOCKER.md)
+[Docker configuration](README-DOCKER.md)
 
 ### Run matterbridge with podman
 
-[Podman configurations](README-PODMAN.md)
+[Podman configuration](README-PODMAN.md)
 
 ### Run matterbridge with nginx
 
-[Nginx configurations](README-NGINX.md)
+[Nginx configuration](README-NGINX.md)
 
 ### Run matterbridge as an home assistant add-on with the official add-on
 
-[Home assistant add-on configurations](https://github.com/Luligu/matterbridge-home-assistant-addon)
+[Home assistant add-on configuration](https://github.com/Luligu/matterbridge-home-assistant-addon)
 
 ### Other Home Assistant Community Add-ons
 
@@ -505,6 +498,28 @@ Then, from the dots menu in the frontend, download the `matterbridge.log` and `m
 
 Don't forget to unselect the debug mode when is no more needed. The network traffic and cpu usage is very high in debug mode.
 
+## How to pair a second controller
+
+There are two ways to pair a second controller:
+
+- from the first controller find the `share` or `turn on pairing mode` method and get a new (QR)code and use it to pair the second controller;
+
+- from Matterbridge frontend click `Turn on pairing mode` in the `Paired fabrics` panel and proceed like for the first controller.
+
+![alt text](./screenshot/Turn%20on%20pairing%20mode.png)
+
+Be patient cause the procedure can fail sometimes.
+
+## How to avoid race condition on start / restart
+
+We have a race condition when, after a blackout or with docker compose or with other systems that start more then one process, Matterbridge always starts before other required system or network components.
+
+Race condition can cause missing configuration or missed devices on the controller side. All Matterbridge official plugins already wait for system and network components to be ready so there is no need of delay.
+
+To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart cause the delay is applied only in the first 5 minutes from system reboot.
+
+To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed so use it only if strictly necessary.
+
 # Known general issues
 
 ## Session XYZ does not exist or Cannot find a session for ID XYZ
@@ -544,7 +559,7 @@ So far is the only controller supporting all Matter 1.2, 1.3 and 1.4 device type
 ## Home Assistant issues
 
 - If HA doesn't show all devices, reload the Matter Server Integration or reboot HA
-- Home Assistant doesn't seem to always react when a device is removed from the bridge: they remain in HA unavailable forever...
+- Home Assistant doesn't seem to always react when a device is removed from the bridge: they remain in HA unavailable forever. A full Home Assistant restart solves the problem.
 - Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
 
 ## Google Home
@@ -592,7 +607,9 @@ We believe in a welcoming and respectful community for all. Please make sure to 
 ## Support
 
 If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee.
-On my side I sponsor the packages that I use in this project. It would be nice to have sponsors too.
+
+On my side I sponsor the packages that I use in this project and single developers. It would be nice to have sponsors too.
+
 Click on the badge below to get started:
 
 <a href="https://www.buymeacoffee.com/luligugithub">

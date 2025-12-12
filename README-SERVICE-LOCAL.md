@@ -18,13 +18,13 @@
 
 ## Run matterbridge as a daemon with systemctl (Linux only) with local global node_modules
 
-The advantage of this setup is that the global node_modules are private for the user and sudo is not required.
-
-This configuration uses a private separate npm cache.
+The advantage of this setup is that the global node_modules and npm cache are private for the user and sudo is not required.
 
 The service runs rootless like the current user.
 
 The storage position is compatible with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
+
+Also various scripts don't work if you choose this configuration.
 
 ### First create the Matterbridge directories and set the correct permissions
 

@@ -79,7 +79,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   });
 
   test('Matterbridge.loadInstance(true) -childbridge mode', async () => {
-    await setDebug(true);
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();

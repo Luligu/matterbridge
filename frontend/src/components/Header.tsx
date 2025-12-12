@@ -19,11 +19,12 @@ import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import SaveIcon from '@mui/icons-material/Save';
 import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import ViewHeadlineIcon from '@mui/icons-material/ViewHeadline';
 import StarIcon from '@mui/icons-material/Star';
 import Favorite from '@mui/icons-material/Favorite';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 
 // Backend
 import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
@@ -31,7 +32,8 @@ import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 // Frontend
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
-import { debug, toggleDebug, enableMobile } from '../App';
+import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
+import { viewportHeight, viewportWidth } from './MbfScreen';
 // const debug = true;
 
 function Header() {
@@ -57,16 +59,23 @@ function Header() {
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
 
+  const handleHomepageClick = () => {
+    window.open(`https://matterbridge.io/`);
+  };
+
   const handleHelpClick = () => {
-    window.open(`https://github.com/Luligu/matterbridge/blob/main/README.md`, '_blank');
+    window.open(`https://matterbridge.io/README.html`);
   };
 
   const handleChangelogClick = () => {
+    window.open(`https://matterbridge.io/CHANGELOG.html`);
+    /*
     if (settings?.matterbridgeInformation.matterbridgeVersion.includes('-dev-')) {
-      window.open(`https://github.com/Luligu/matterbridge/blob/dev/CHANGELOG.md`, '_blank');
+      window.open(`https://github.com/Luligu/matterbridge/blob/dev/CHANGELOG.md`);
     } else {
-      window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
+      window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`);
     }
+    */
   };
 
   const handleDiscordLogoClick = () => {
@@ -351,40 +360,32 @@ function Header() {
     return null;
   }
   return (
-    <div className='header' style={enableMobile && mobile ? { flexDirection: 'column', alignItems: 'center', width: '100%', height: '120px', gap: '0px' } : {}}>
-      <div className='sub-header'>
-        <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '30px' }} onClick={handleLogoClick} />
-        <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
-        <nav>
-          <Link to='/' className='nav-link'>
-            Home
-          </Link>
-          <Link to='/devices' className='nav-link'>
-            Devices
-          </Link>
-          <Link to='/log' className='nav-link'>
-            Logs
-          </Link>
-          <Link to='/settings' className='nav-link'>
-            Settings
-          </Link>
-        </nav>
+    <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '10px' }}>
+      {/* Logo and navigation */}
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '30px' }} onClick={handleLogoClick} />
+          <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+          <nav>
+            <Link to='/' className='nav-link'>
+              Home
+            </Link>
+            <Link to='/devices' className='nav-link'>
+              Devices
+            </Link>
+            <Link to='/log' className='nav-link'>
+              Logs
+            </Link>
+            <Link to='/settings' className='nav-link'>
+              Settings
+            </Link>
+          </nav>
+        </div>
       </div>
-      <div className='sub-header'>
-        {/*!settings.matterbridgeInformation.readOnly && update && (
-          <Tooltip title='New Matterbridge version available, click to install'>
-            <span className='status-warning' onClick={handleUpdateClick}>
-              Update to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
-            </span>
-          </Tooltip>
-        )}
-        {!settings.matterbridgeInformation.readOnly && updateDev && (
-          <Tooltip title='New Matterbridge dev version available, click to install'>
-            <span className='status-warning' onClick={handleUpdateDevClick}>
-              Update to new dev v.{settings.matterbridgeInformation.matterbridgeDevVersion.split('-dev-')[0]}
-            </span>
-          </Tooltip>
-        )*/}
+      {/* Matterbridge information and statuses */}
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
         {!settings.matterbridgeInformation.readOnly && (
           <Tooltip title={`Matterbridge v.${settings.matterbridgeInformation.matterbridgeVersion}`}>
             <span className='status-information' style={{ cursor: 'default' }}>
@@ -414,8 +415,16 @@ function Header() {
             </span>
           </Tooltip>
         ) : null}
+        {debug && (
+          <span className='status-information' style={{ cursor: 'default' }}>
+            {mobile ? 'Mobile ' : 'Desktop '}
+            {`${viewportWidth}x${viewportHeight}`}
+            {` enabled ${localStorage.getItem('enableMobile') === 'false' ? false : true}`}
+          </span>
+        )}
       </div>
-      <div className='sub-header' style={{ gap: '5px' }}>
+      {/* Icons */}
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '5px' }}>
         {settings.matterbridgeInformation.readOnly === false ? (
           <Tooltip title='Matterbridge discord group'>
             <img src='discord.svg' alt='Discord Logo' style={{ cursor: 'pointer', height: '25px' }} onClick={handleDiscordLogoClick} />
@@ -435,6 +444,11 @@ function Header() {
             </IconButton>
           </Tooltip>
         ) : null}
+        <Tooltip title='Matterbridge homepage'>
+          <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleHomepageClick}>
+            <HomeOutlinedIcon />
+          </IconButton>
+        </Tooltip>
         <Tooltip title='Matterbridge help'>
           <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleHelpClick}>
             <HelpOutlineIcon />
@@ -442,7 +456,7 @@ function Header() {
         </Tooltip>
         <Tooltip title='Matterbridge changelog'>
           <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleChangelogClick}>
-            <AnnouncementOutlinedIcon />
+            <HistoryOutlinedIcon />
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && update && (
@@ -485,12 +499,45 @@ function Header() {
             </IconButton>
           </Tooltip>
         ) : null}
+        {/* Command menu */}
         <Tooltip title='Download, backup and more'>
           <IconButton onClick={handleMenuOpen}>
             <MoreHoriz style={{ color: 'var(--main-icon-color)' }} />
           </IconButton>
         </Tooltip>
         <Menu id='command-menu' anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuCloseConfirm('')}>
+          {enableMobile && mobile && (
+            <MenuItem onClick={() => window.open(`/home`, '_self')}>
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Home page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+          )}
+          {enableMobile && mobile && (
+            <MenuItem onClick={() => window.open(`/devices`, '_self')}>
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Devices page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+          )}
+          {enableMobile && mobile && (
+            <MenuItem onClick={() => window.open(`/log`, '_self')}>
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Logs page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+          )}
+          {enableMobile && mobile && (
+            <MenuItem onClick={() => window.open(`/settings`, '_self')}>
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Settings page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+          )}
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && (
             <MenuItem onClick={() => handleMenuCloseConfirm('update')}>
               <ListItemIcon>
@@ -566,6 +613,32 @@ function Header() {
             <ListItemText primary='View' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
           <Menu id='sub-menu-view' anchorEl={viewMenuAnchorEl} keepMounted open={Boolean(viewMenuAnchorEl)} onClose={handleViewMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+            <MenuItem
+              onClick={() => {
+                unsetEnableMobile();
+                handleViewMenuClose();
+                handleMenuCloseCancel('');
+                window.open(`/home`, '_self');
+              }}
+            >
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Desktop site' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setEnableMobile();
+                handleViewMenuClose();
+                handleMenuCloseCancel('');
+                window.open(`/home`, '_self');
+              }}
+            >
+              <ListItemIcon>
+                <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Mobile site' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
             <MenuItem
               onClick={() => {
                 handleMenuCloseConfirm('view-mblog');
@@ -877,12 +950,3 @@ function Header() {
 }
 
 export default memo(Header);
-
-/*
-  Old code:
-    <div className="header">
-
-  New code:
-      <div className="header" style={ isMobile ? { flexDirection: 'column', alignItems: 'center', width: '100%', height: '120px', gap: '0px' } : {}}>
-
-*/

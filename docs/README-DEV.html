@@ -11,10 +11,35 @@
       margin: 40px;
     }
     h1, h2, h3 {
-      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
     }
     pre {
-      background: #cfd1d4;
+      background: #e4e7ec;
       color: #000000;
       padding: 10px 56px 10px 10px;
       border-radius: 0.5rem;
@@ -51,7 +76,7 @@
   </style>
 </head>
 <body>
-<h1><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge development</h1>
+<h1 id="img-srchttpsmatterbridgeiomatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge-development"><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge development</h1>
 <p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
@@ -63,15 +88,15 @@
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
 <a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
 <hr>
-<h1>Development</h1>
-<h2>How to create your plugin</h2>
+<h1 id="development">Development</h1>
+<h2 id="how-to-create-your-plugin">How to create your plugin</h2>
 <p>The easiest way is to clone the <a href="https://github.com/Luligu/matterbridge-plugin-template">Matterbridge Plugin Template</a> that has <strong>Dev Container support for instant development environment</strong> and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.</p>
 <p>After you clone it locally, change the name (keep always matterbridge- at the beginning of the name), version, description, author, homepage, repository, bugs and funding in the package.json.</p>
 <p>It is also possible to add two custom properties to the package.json: <strong>help</strong> and <strong>changelog</strong> with a url that will be used in the frontend instead of the default (/blob/main/README and /blob/main/CHANGELOG).</p>
 <p>Add your plugin logic in module.ts.</p>
 <p>The Matterbridge Plugin Template has an already configured Jest / Vitest test unit (with 100% coverage) that you can expand while you add your own plugin logic.</p>
 <p>It also has a workflow configured to run on push and pull request that build, lint and test the plugin on node 20, 22 and 24 with ubuntu, macOS and windows.</p>
-<h2>Matterbridge Dev Container</h2>
+<h2 id="matterbridge-dev-container">Matterbridge Dev Container</h2>
 <p>Using a Dev Container provides a fully isolated, reproducible, and pre-configured development environment. This ensures that all contributors have the same tools, extensions, and dependencies, eliminating &quot;works on my machine&quot; issues. It also makes onboarding new developers fast and hassle-free, as everything needed is set up automatically.</p>
 <p>For improved efficiency, the setup uses named Docker volumes for <code>node_modules</code>. This means dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes.</p>
 <p>To start the Dev Container, simply open the project folder in <a href="https://code.visualstudio.com/">Visual Studio Code</a> and, if prompted, click &quot;Reopen in Container&quot;. Alternatively, use the Command Palette (<code>Ctrl+Shift+P</code> or <code>Cmd+Shift+P</code>), search for &quot;Dev Containers: Reopen in Container&quot;, and select it. VS Code will automatically build and start the containerized environment for you.</p>
@@ -79,7 +104,7 @@
 <p><strong>Note:</strong> The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as as fast as from the local folder.</p>
 </blockquote>
 <p>Since Dev Container doesn&#39;t run in network mode &#39;host&#39;, it is not possible to pair Mattebridge running inside the Dev Container.</p>
-<h2>Matterbridge Plugin Dev Container</h2>
+<h2 id="matterbridge-plugin-dev-container">Matterbridge Plugin Dev Container</h2>
 <p>Using a Dev Container provides a fully isolated, reproducible, and pre-configured development environment. This ensures that all contributors have the same tools, extensions, and dependencies, eliminating &quot;works on my machine&quot; issues. It also makes onboarding new developers fast and hassle-free, as everything needed is set up automatically.</p>
 <p>For improved efficiency, the setup uses named Docker volumes for <code>matterbridge</code> and <code>node_modules</code>. This means that the dev of matterbridge and the plugin dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes.</p>
 <p>To start the Dev Container, simply open the project folder in <a href="https://code.visualstudio.com/">Visual Studio Code</a> and, if prompted, click &quot;Reopen in Container&quot;. Alternatively, use the Command Palette (<code>Ctrl+Shift+P</code> or <code>Cmd+Shift+P</code>), search for &quot;Dev Containers: Reopen in Container&quot;, and select it. VS Code will automatically build and start the containerized environment for you.</p>
@@ -93,60 +118,60 @@
 <li>publish it with tag dev and install it (matterbridge-yourplugin@dev in Install plugins) in a running instance of matterbridge.</li>
 <li>use a local instance of matterbridge running outside the dev container and install (../matterbridge-yourplugin in Install plugins) or add (../matterbridge-yourplugin in Install plugins) your plugin to it (easiest way). Adjust the path if matterbridge dir and your plugin dir are not in the same parent directory.</li>
 </ul>
-<h2>Guidelines on imports/exports</h2>
+<h2 id="guidelines-on-importsexports">Guidelines on imports/exports</h2>
 <p>Matterbridge exports from:</p>
-<h3>&quot;matterbridge&quot;</h3>
+<h3 id="matterbridge">&quot;matterbridge&quot;</h3>
 <ul>
 <li>Matterbridge and all Matterbridge related classes.</li>
 </ul>
-<h3>&quot;matterbridge/devices&quot;</h3>
+<h3 id="matterbridgedevices">&quot;matterbridge/devices&quot;</h3>
 <ul>
 <li>All single device classes like the Rvc, LaundryWasher, etc...</li>
 </ul>
-<h3>&quot;matterbridge/clusters&quot;</h3>
+<h3 id="matterbridgeclusters">&quot;matterbridge/clusters&quot;</h3>
 <ul>
 <li>All clusters not present in matter.js or modified.</li>
 </ul>
-<h3>&quot;matterbridge/utils&quot;</h3>
+<h3 id="matterbridgeutils">&quot;matterbridge/utils&quot;</h3>
 <ul>
 <li>All general utils and colorUtils functions.</li>
 </ul>
-<h3>&quot;matterbridge/logger&quot;</h3>
+<h3 id="matterbridgelogger">&quot;matterbridge/logger&quot;</h3>
 <ul>
 <li>AnsiLogger class.</li>
 </ul>
-<h3>&quot;matterbridge/storage&quot;</h3>
+<h3 id="matterbridgestorage">&quot;matterbridge/storage&quot;</h3>
 <ul>
 <li>NodeStorageManager and NodeStorage classes.</li>
 </ul>
-<h3>&quot;matterbridge/matter&quot;</h3>
+<h3 id="matterbridgematter">&quot;matterbridge/matter&quot;</h3>
 <ul>
 <li>All relevant matter.js exports.</li>
 </ul>
-<h3>&quot;matterbridge/matter/behaviors&quot;</h3>
+<h3 id="matterbridgematterbehaviors">&quot;matterbridge/matter/behaviors&quot;</h3>
 <ul>
 <li>All matter.js behaviors.</li>
 </ul>
-<h3>&quot;matterbridge/matter/clusters&quot;</h3>
+<h3 id="matterbridgematterclusters">&quot;matterbridge/matter/clusters&quot;</h3>
 <ul>
 <li>All matter.js clusters.</li>
 </ul>
-<h3>&quot;matterbridge/matter/devices&quot;</h3>
+<h3 id="matterbridgematterdevices">&quot;matterbridge/matter/devices&quot;</h3>
 <ul>
 <li>All matter.js devices.</li>
 </ul>
-<h3>&quot;matterbridge/matter/endpoints&quot;</h3>
+<h3 id="matterbridgematterendpoints">&quot;matterbridge/matter/endpoints&quot;</h3>
 <ul>
 <li>All matter.js endpoints.</li>
 </ul>
-<h3>&quot;matterbridge/matter/types&quot;</h3>
+<h3 id="matterbridgemattertypes">&quot;matterbridge/matter/types&quot;</h3>
 <ul>
 <li>All matter.js types.</li>
 </ul>
-<h3>*<strong>*****</strong> WARNING *<strong>*****</strong></h3>
+<h3 id="warning">*<strong>*****</strong> WARNING *<strong>*****</strong></h3>
 <p>A plugin must never install or import from <code>@matter</code> or <code>@project-chip</code> directly (neither as a dependency, devDependency, nor peerDependency), as this leads to a second instance of <code>matter.js</code>, causing instability and unpredictable errors such as &quot;The only instance is Endpoint&quot;.</p>
 <p>Additionally, when Matterbridge updates the <code>matter.js</code> version, it should be consistent across all plugins.</p>
-<h3>*<strong>*****</strong> WARNING *<strong>*****</strong></h3>
+<h3 id="warning-1">*<strong>*****</strong> WARNING *<strong>*****</strong></h3>
 <p>A plugin must never install Matterbridge (neither as a dependency, devDependency, nor peerDependency).</p>
 <p>Matterbridge must be linked to the plugin in development only. At runtime the plugin is loaded directly from the running Mattebridge instance.</p>
 <pre><code class="language-json">&quot;scripts&quot;: {
@@ -170,9 +195,9 @@ npm run build
 npm link
 </code></pre>
 <p>Always keep your local instance of matterbridge up to date.</p>
-<h3>WARNING *<strong>*****</strong></h3>
+<h3 id="warning-2">WARNING *<strong>*****</strong></h3>
 <p>Some error messages are logged on start when a plugin has wrong imports or configurations and the plugin will be disabled to prevent instability and crashes.</p>
-<h2>How to install and register a plugin for development (from github)</h2>
+<h2 id="how-to-install-and-register-a-plugin-for-development-from-github">How to install and register a plugin for development (from github)</h2>
 <p>To install i.e. <a href="https://github.com/Luligu/matterbridge-example-accessory-platform">https://github.com/Luligu/matterbridge-example-accessory-platform</a></p>
 <p>On windows:</p>
 <pre><code class="language-powershell">cd $HOME\Matterbridge
@@ -190,47 +215,55 @@ npm run build
 <p>then add the plugin to Matterbridge</p>
 <pre><code class="language-bash">matterbridge -add .
 </code></pre>
-<h2>MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform api</h2>
-<h3>public name: string</h3>
+<h2 id="matterbridgedynamicplatform-and-matterbridgeaccessoryplatform-api">MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform api</h2>
+<h3 id="public-name-string">public name: string</h3>
 <p>The plugin name.</p>
-<h3>public type: string</h3>
+<h3 id="public-type-string">public type: string</h3>
 <p>The plugin platform type.</p>
-<h3>public config: object</h3>
+<h3 id="public-config-object">public config: object</h3>
 <p>The plugin config (loaded before the platform constructor is called and saved after onShutdown() is called).
 Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for example)</p>
-<h3>constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig)</h3>
+<h3 id="constructormatterbridge-platformmatterbridge-log-ansilogger-config-platformconfig">constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig)</h3>
 <p>The contructor is called when is plugin is loaded.</p>
-<h3>async onStart(reason?: string)</h3>
+<h3 id="async-onstartreason-string">async onStart(reason?: string)</h3>
 <p>The method onStart() is where you have to create your MatterbridgeEndpoint and add all needed clusters.</p>
 <p>After add the command handlers and subscribe to the attributes when needed.</p>
 <p>The MatterbridgeEndpoint class has the create cluster methods already done and all command handlers needed (see plugin examples).</p>
 <p>The method is called when Matterbridge load the plugin.</p>
-<h3>async onConfigure()</h3>
+<h3 id="async-onconfigure">async onConfigure()</h3>
 <p>The method onConfigure() is where you can configure your matter device.</p>
 <p>The method is called when the server node the platform belongs to is online.</p>
 <p>Since the persistent attributes are loaded from the storage when the server node goes online, you may need to set them in onConfigure().</p>
-<h3>async onShutdown(reason?: string)</h3>
+<h3 id="async-onshutdownreason-string">async onShutdown(reason?: string)</h3>
 <p>The method onShutdown() is where you have to stop your platform and cleanup all the used resources.</p>
 <p>The method is called when Matterbridge is shutting down or when the plugin is disabled.</p>
 <p>Since the frontend can enable and disable the plugin many times, you need to clean all resources (i.e. handlers, intervals, timers...) here.</p>
-<h3>async onChangeLoggerLevel(logLevel: LogLevel)</h3>
+<h3 id="async-onchangeloggerlevelloglevel-loglevel">async onChangeLoggerLevel(logLevel: LogLevel)</h3>
 <p>It is called when the user changes the logger level in the frontend.</p>
-<h3>async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig)</h3>
+<h3 id="async-onactionaction-string-value-string-id-string-formdata-platformconfig">async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig)</h3>
 <p>It is called when a plugin config includes an action button or an action button with text field.</p>
-<h3>async onConfigChanged(config: PlatformConfig)</h3>
+<h3 id="async-onconfigchangedconfig-platformconfig">async onConfigChanged(config: PlatformConfig)</h3>
 <p>It is called when the plugin config has been updated.</p>
-<h3>getDevices(): MatterbridgeEndpoint[]</h3>
+<h3 id="getdevices-matterbridgeendpoint">getDevices(): MatterbridgeEndpoint[]</h3>
 <p>Retrieves the devices registered with the platform.</p>
-<h3>hasDeviceName(deviceName: string): boolean</h3>
-<p>Checks if a device with this name is already registered in the platform.</p>
-<h3>async registerDevice(device: MatterbridgeEndpoint)</h3>
+<h3 id="getdevicebynamedevicename-string-matterbridgeendpoint-undefined">getDeviceByName(deviceName: string): MatterbridgeEndpoint | undefined</h3>
+<h3 id="getdevicebyuniqueiduniqueid-string-matterbridgeendpoint-undefined">getDeviceByUniqueId(uniqueId: string): MatterbridgeEndpoint | undefined</h3>
+<h3 id="getdevicebyserialnumberserialnumber-string-matterbridgeendpoint-undefined">getDeviceBySerialNumber(serialNumber: string): MatterbridgeEndpoint | undefined</h3>
+<h3 id="getdevicebyidid-string-matterbridgeendpoint-undefined">getDeviceById(id: string): MatterbridgeEndpoint | undefined</h3>
+<h3 id="getdevicebyoriginalidoriginalid-string-matterbridgeendpoint-undefined">getDeviceByOriginalId(originalId: string): MatterbridgeEndpoint | undefined</h3>
+<h3 id="getdevicebynumbernumber-endpointnumber-number-matterbridgeendpoint-undefined">getDeviceByNumber(number: EndpointNumber | number): MatterbridgeEndpoint | undefined</h3>
+<p>They all return MatterbridgeEndpoint or undefined if not found.</p>
+<h3 id="hasdevicenamedevicename-string-boolean">hasDeviceName(deviceName: string): boolean</h3>
+<h3 id="hasdeviceuniqueiddeviceuniqueid-string-boolean">hasDeviceUniqueId(deviceUniqueId: string): boolean</h3>
+<p>Checks if a device with this name or uniqueId is already registered in the platform.</p>
+<h3 id="async-registerdevicedevice-matterbridgeendpoint">async registerDevice(device: MatterbridgeEndpoint)</h3>
 <p>After you have created your device, add it to the platform.</p>
-<h3>async unregisterDevice(device: MatterbridgeEndpoint)</h3>
+<h3 id="async-unregisterdevicedevice-matterbridgeendpoint">async unregisterDevice(device: MatterbridgeEndpoint)</h3>
 <p>You can unregister a device.</p>
-<h3>async unregisterAllDevices()</h3>
+<h3 id="async-unregisteralldevices">async unregisterAllDevices()</h3>
 <p>You can unregister all the devices you added.</p>
 <p>It can be useful to call this method from onShutdown() if you don&#39;t want to keep all the devices during development.</p>
-<h2>MatterbridgeEndpoint api</h2>
+<h2 id="matterbridgeendpoint-api">MatterbridgeEndpoint api</h2>
 <p>You create a Matter device with a new instance of MatterbridgeEndpoint(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false).</p>
 <ul>
 <li>@param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.</li>
@@ -245,9 +278,9 @@ Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for e
       .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
 </code></pre>
 <p>In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.</p>
-<p>All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the &#39;Matter-1.4.1-Device-Library-Specification.pdf&#39;.</p>
+<p>All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the &#39;Matter-1.4.2-Device-Library-Specification.pdf&#39;.</p>
 <p>All default cluster helpers are available as methods of MatterbridgeEndpoint.</p>
-<h2>MatterbridgeEndpointOptions</h2>
+<h2 id="matterbridgeendpointoptions">MatterbridgeEndpointOptions</h2>
 <ul>
 <li>@param {Semtag[]} [tagList] - The tagList of the endpoint.</li>
 <li>@param {&#39;server&#39; | &#39;matter&#39;} [mode] - The mode for the endpoint.</li>
@@ -256,13 +289,13 @@ Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for e
 </ul>
 <p>The mode=<code>server</code> property of MatterbridgeEndpointOptions, allows to create an independent (not bridged) Matter device with its server node. In this case the bridge mode is not relevant.</p>
 <p>The mode=<code>matter</code> property of MatterbridgeEndpointOptions, allows to create a (not bridged) Matter device that is added to the Matterbridge server node alongside the aggregator.</p>
-<h2>MatterbridgeEndpoint single class devices</h2>
+<h2 id="matterbridgeendpoint-single-class-devices">MatterbridgeEndpoint single class devices</h2>
 <p>For the device types listed below there are single class provided to createa a fully functional device.</p>
 <p>For a working example refer to the &#39;matterbridge-example-dynamic-platform&#39;.</p>
-<h3>Chapter 12. Robotic Device Types - Single class device types</h3>
+<h3 id="chapter-12-robotic-device-types-single-class-device-types">Chapter 12. Robotic Device Types - Single class device types</h3>
 <pre><code class="language-typescript">const robot = new RoboticVacuumCleaner(&#39;Robot Vacuum&#39;, &#39;RVC1238777820&#39;, &#39;server&#39;);
 </code></pre>
-<h3>Chapter 13. Appliances Device Types - Single class device types</h3>
+<h3 id="chapter-13-appliances-device-types-single-class-device-types">Chapter 13. Appliances Device Types - Single class device types</h3>
 <pre><code class="language-typescript">const laundryWasher = new LaundryWasher(&#39;Laundry Washer&#39;, &#39;LW1234567890&#39;);
 </code></pre>
 <pre><code class="language-typescript">const laundryDryer = new LaundryDryer(&#39;Laundry Dryer&#39;, &#39;LDW1235227890&#39;);
@@ -291,7 +324,7 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
   { mfgCode: null, namespaceId: RefrigeratorTag.Refrigerator.namespaceId, tag: RefrigeratorTag.Refrigerator.tag, label: RefrigeratorTag.Refrigerator.label },
 ]);
 </code></pre>
-<h3>Chapter 14. Energy Device Types - Single class device types</h3>
+<h3 id="chapter-14-energy-device-types-single-class-device-types">Chapter 14. Energy Device Types - Single class device types</h3>
 <pre><code class="language-typescript">const waterHeater = new WaterHeater(&#39;Water Heater&#39;, &#39;WH3456177820&#39;);
 </code></pre>
 <pre><code class="language-typescript">const evse = new Evse(&#39;Evse&#39;, &#39;EV3456127820&#39;);
@@ -302,8 +335,8 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
 </code></pre>
 <pre><code class="language-typescript">const heatPump = new HeatPump(&#39;Heat Pump&#39;, &#39;HP1234567890&#39;);
 </code></pre>
-<h2>Plugin config file</h2>
-<p>Each plugin has a minimal default config file injected by Matterbridge when it is loaded:</p>
+<h2 id="plugin-config-file">Plugin config file</h2>
+<p>Each plugin has a minimal default config file injected by Matterbridge when it is loaded and the plugin doesn&#39;t have its own default one:</p>
 <pre><code class="language-typescript">{
   name: plugin.name, // i.e. matterbridge-test
   type: plugin.type, // i.e. AccessoryPlatform or DynamicPlatform (on the first run is AnyPlatform cause it is still unknown)
@@ -315,8 +348,8 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
 <p>It is possible to add a different default config file to be loaded the first time the user installs the plugin.</p>
 <p>Matterbridge (only on the first load of the plugin and if a config file is not already present in the .matterbridge directory) looks for the default config file in the root of the plugin package. The file must be named &#39;[PLUGIN-NAME].config.json&#39; (i.e. &#39;matterbridge-test.config.json&#39;).</p>
 <p>In all subsequent loads the config file is loaded from the &#39;.matterbridge&#39; directory.</p>
-<h2>Plugin schema file</h2>
-<p>Each plugin has a minimal default schema file injected by Matterbridge when it is loaded:</p>
+<h2 id="plugin-schema-file">Plugin schema file</h2>
+<p>Each plugin has a minimal default schema file injected by Matterbridge when it is loaded and the plugin doesn&#39;t have its own default one:</p>
 <pre><code class="language-typescript">{
   title: plugin.description,
   description: plugin.name + &#39; v. &#39; + plugin.version + &#39; by &#39; + plugin.author,
@@ -348,10 +381,10 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
 <p>It is possible to add a different default schema file.</p>
 <p>The schema file is loaded from the root of the plugin package. The file must be named &#39;[PLUGIN-NAME].schema.json&#39; (i.e. &#39;matterbridge-test.schema.json&#39;).</p>
 <p>The properties of the schema file shall correspond to the properties of the config file.</p>
-<h1>Frequently asked questions</h1>
-<h2>Why plugins cannot install matterbridge as a dependency, devDependency or peerDependency</h2>
+<h1 id="frequently-asked-questions">Frequently asked questions</h1>
+<h2 id="why-plugins-cannot-install-matterbridge-as-a-dependency-devdependency-or-peerdependency">Why plugins cannot install matterbridge as a dependency, devDependency or peerDependency</h2>
 <p>There must be one and only one instance of Matterbridge and matter.js in the node_modules directory.</p>
-<h3>What happens when matterbridge or matter.js are present like a devDependencies</h3>
+<h3 id="what-happens-when-matterbridge-or-matterjs-are-present-like-a-devdependencies">What happens when matterbridge or matter.js are present like a devDependencies</h3>
 <p>The plugins can be globally installed in different ways:</p>
 <ul>
 <li>from npm (all devDependencies are installed in node_modules if the plugin is not correctly published)</li>
@@ -368,7 +401,7 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
 <p>In the last (most dangerous case) they are installed when the user forgets to add --omit=dev or doesn&#39;t have NODE_ENV=production.</p>
 <p>This is also the reason why to be safe 100% all official plugins are published for production removing also devDependencies from package.json.</p>
 <p>I also lock the dependencies with npm shrinkwrap cause npm installs always the latest versions that mach your range in package.json but sometimes this just breaks the plugin. This permits to be sure that the user host machine has exactly the same dependencies you coded your plugin with.</p>
-<h3>The technical reason we cannot have matterbridge or @matter in the plugin node_modules.</h3>
+<h3 id="the-technical-reason-we-cannot-have-matterbridge-or-matter-in-the-plugin-nodemodules">The technical reason we cannot have matterbridge or @matter in the plugin node_modules.</h3>
 <p>Module Resolution in Matterbridge Plugin System.
 When Matterbridge loads plugins on demand as ESM modules, the module resolution follows Node.js&#39;s standard module resolution algorithm. Here&#39;s how it works:</p>
 <p><strong>1. Plugin Loading Process</strong>
@@ -384,23 +417,22 @@ Matterbridge&#39;s node_modules - Only reached if not found in plugin&#39;s depe
 <p><strong>3. Key Behavior</strong>
 Plugin&#39;s node_modules takes precedence - If a package exists in the plugin&#39;s own node_modules, that version will be used.
 Matterbridge&#39;s node_modules is used as fallback.</p>
-<h1>Contribution Guidelines</h1>
+<h1 id="contribution-guidelines">Contribution Guidelines</h1>
 <p>Thank you for your interest in contributing to my project!</p>
 <p>I warmly welcome contributions to this project! Whether it&#39;s reporting bugs, proposing new features, updating documentation, or writing code, your help is greatly appreciated.</p>
-<h2>Getting Started</h2>
+<h2 id="getting-started">Getting Started</h2>
 <ul>
 <li>Fork this repository to your own GitHub account and clone it to your local device.</li>
 <li>Make the necessary changes and test them out</li>
 <li>Commit your changes and push to your forked repository</li>
 </ul>
-<h2>Submitting Changes</h2>
+<h2 id="submitting-changes">Submitting Changes</h2>
 <ul>
 <li>Create a new pull request against the dev from my repository and I&#39;ll be glad to check it out</li>
 <li>Be sure to follow the existing code style</li>
 <li>Add unit tests for any new or changed functionality if possible cause Matterbridge has a 100% test coverage.</li>
 <li>In your pull request, do describe what your changes do and how they work</li>
 </ul>
-
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
@@ -443,6 +475,3 @@ Matterbridge&#39;s node_modules is used as fallback.</p>
   </script>
 </body>
 </html>
-
-
-

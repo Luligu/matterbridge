@@ -24,9 +24,11 @@ import { debug } from '../App';
 // const debug = true;
 
 function Logs(): React.JSX.Element {
+  // States
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
   const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
+  // Contexts
   const { setMessages: setContextMessages, setLogFilterLevel: setContextLogFilterLevel, setLogFilterSearch: setContextLogFilterSearch, online, setLogAutoScroll: setContextAutoScroll, filterLogMessages } = useContext(WebSocketContext);
 
   const handleChangeLevel = (event: SelectChangeEvent) => {
@@ -65,42 +67,48 @@ function Logs(): React.JSX.Element {
   return (
     <MbfPage name='Logs'>
       {/* Filter and Clear Button */}
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', margin: '0px', padding: '0px', gap: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', margin: '0px', padding: '0px', gap: '10px' }}>
         {/* Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <InputLabel id='select-level' style={{ color: 'var(--div-text-color)' }}>
-            Filter log by level:
-          </InputLabel>
-          <Select style={{ height: '30px', backgroundColor: 'var(--main-bg-color)' }} labelId='select-level' id='debug-level' value={logFilterLevel} onChange={handleChangeLevel}>
-            <MenuItem value='debug'>Debug</MenuItem>
-            <MenuItem value='info'>Info</MenuItem>
-            <MenuItem value='notice'>Notice</MenuItem>
-            <MenuItem value='warn'>Warn</MenuItem>
-            <MenuItem value='error'>Error</MenuItem>
-            <MenuItem value='fatal'>Fatal</MenuItem>
-          </Select>
-          <InputLabel id='search' style={{ color: 'var(--div-text-color)' }}>
-            Filter log by text:
-          </InputLabel>
-          <TextField
-            style={{ width: '300px' }}
-            size='small'
-            id='logsearch'
-            variant='outlined'
-            value={logFilterSearch}
-            onChange={handleChangeSearch}
-            InputProps={{
-              style: {
-                height: '30px',
-                padding: '0 0px',
-                backgroundColor: 'var(--main-bg-color)',
-              },
-            }}
-          />
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+            <InputLabel id='select-level' style={{ color: 'var(--div-text-color)' }}>
+              Filter log by level:
+            </InputLabel>
+            <Select style={{ height: '30px', backgroundColor: 'var(--main-bg-color)' }} labelId='select-level' id='debug-level' value={logFilterLevel} onChange={handleChangeLevel}>
+              <MenuItem value='debug'>Debug</MenuItem>
+              <MenuItem value='info'>Info</MenuItem>
+              <MenuItem value='notice'>Notice</MenuItem>
+              <MenuItem value='warn'>Warn</MenuItem>
+              <MenuItem value='error'>Error</MenuItem>
+              <MenuItem value='fatal'>Fatal</MenuItem>
+            </Select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
+            <InputLabel id='search' style={{ color: 'var(--div-text-color)' }}>
+              Filter log by text:
+            </InputLabel>
+            <TextField
+              style={{ width: '210px' }}
+              size='small'
+              id='logsearch'
+              variant='outlined'
+              value={logFilterSearch}
+              onChange={handleChangeSearch}
+              slotProps={{
+                input: {
+                  style: {
+                    height: '30px',
+                    padding: '0 0px',
+                    backgroundColor: 'var(--main-bg-color)',
+                  },
+                },
+              }}
+            />
+          </div>
           <FormControlLabel control={<Checkbox checked={logAutoScroll} onChange={handleAutoScrollChange} />} label='Auto scroll' style={{ color: 'var(--div-text-color)' }} />
         </div>
         {/* Clear Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
           <Tooltip title='Clear the logs'>
             <Button onClick={handleClearLogsClick} endIcon={<DeleteForever />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>
               Clear

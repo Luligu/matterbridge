@@ -136,11 +136,13 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
         } else return <span></span>;
       },
     },
+    /*
     {
       label: 'Url',
       id: 'configUrl',
       maxWidth: 150,
     },
+    */
     {
       label: 'Actions',
       id: 'selected',

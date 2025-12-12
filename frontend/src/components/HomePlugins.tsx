@@ -8,7 +8,6 @@ import Tooltip from '@mui/material/Tooltip';
 // @mui/icons-material
 import Favorite from '@mui/icons-material/Favorite';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import PublishedWithChanges from '@mui/icons-material/PublishedWithChanges';
 import UnpublishedOutlinedIcon from '@mui/icons-material/UnpublishedOutlined';
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
@@ -16,6 +15,7 @@ import QrCode2 from '@mui/icons-material/QrCode2';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -187,7 +187,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
           </Tooltip>
           <Tooltip title='Open the plugin version history' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
             <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleChangelogPlugin(plugin)} size='small'>
-              <AnnouncementOutlinedIcon />
+              <HistoryOutlinedIcon />
             </IconButton>
           </Tooltip>
           {plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (

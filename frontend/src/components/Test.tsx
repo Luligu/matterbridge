@@ -14,6 +14,7 @@ import { Connecting } from './Connecting';
 import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 import { ApiClusters, ApiDevice, ApiPlugin } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
+import { MbfPage } from './MbfPage';
 // const debug = true;
 
 function Test() {
@@ -121,12 +122,12 @@ function Test() {
     return <Connecting />;
   }
   return (
-    <div className='MbfPageDiv' style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
+    <MbfPage name='Test'>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', alignContent: 'center', gap: '20px', height: '100vh', width: '100vw' }}>
         <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '256px', width: '256px', margin: '10px' }} />
         <p>Welcome to the Test page of the Matterbridge frontend</p>
       </div>
-    </div>
+    </MbfPage>
   );
 }
 

@@ -14,12 +14,12 @@ import Icon from '@mdi/react';
 import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForeverOutline } from '@mdi/js';
 
 // Frontend
-import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
+import { WebSocketContext } from './WebSocketProvider';
 import { ApiMatter } from '../../../src/matterbridgeTypes';
 import { WsMessageApiResponse } from '../../../src/frontendTypes';
 import { MbfWindow, MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons, MbfWindowText } from './MbfWindow';
-import { debug } from '../App';
+import { debug, enableMobile } from '../App';
 // const debug = true; // Debug flag for this component
 
 // Reusable hover styling for all action icon buttons (mdi icons)
@@ -60,7 +60,7 @@ function QRDiv({ id }: QRDivProps) {
   const advertiseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const uniqueId = useRef(getUniqueId());
   // Ui context
-  const { showConfirmCancelDialog } = useContext(UiContext);
+  const { mobile, showConfirmCancelDialog } = useContext(UiContext);
 
   if (debug) console.log(`QRDiv loading with id = "${id}" storeId = "${storeIdRef.current}" timeout = ${advertiseTimeoutRef.current} and  matter:`, matter);
 
@@ -172,7 +172,7 @@ function QRDiv({ id }: QRDivProps) {
   } else if (!matter.online) {
     if(debug) console.log('QRDiv rendering offline state');
     return (
-      <MbfWindow style={{ alignItems: 'center', minWidth: '302px' }}>
+      <MbfWindow style={enableMobile && mobile ? { flex: '1 1 300px', alignItems: 'center' } : { alignItems: 'center', width: '302px', minWidth: '302px' }}>
         <MbfWindowHeader style={{ height: '30px', justifyContent: 'space-between' }}>
           <MbfWindowHeaderText>Server node</MbfWindowHeaderText>
         </MbfWindowHeader>
@@ -186,7 +186,7 @@ function QRDiv({ id }: QRDivProps) {
   } else if (matter.advertising && matter.qrPairingCode && matter.manualPairingCode) {
     if(debug) console.log('QRDiv rendering advertising state');
     return (
-      <MbfWindow style={{ alignItems: 'center', minWidth: '302px' }}>
+      <MbfWindow style={enableMobile && mobile ? { flex: '1 1 300px', alignItems: 'center' } : { alignItems: 'center', width: '302px', minWidth: '302px' }}>
         <MbfWindowHeader>
           <MbfWindowHeaderText>QR pairing code</MbfWindowHeaderText>
           <MbfWindowIcons>
@@ -215,7 +215,7 @@ function QRDiv({ id }: QRDivProps) {
   } else if (matter.commissioned && matter.fabricInformations && matter.sessionInformations) {
     if(debug) console.log('QRDiv rendering commissioned state');
     return (
-      <MbfWindow style={{ alignItems: 'center', minWidth: '302px', overflow: 'hidden' }} >
+      <MbfWindow style={enableMobile && mobile ? { flex: '1 1 300px', alignItems: 'center' } : { alignItems: 'center', width: '302px', minWidth: '302px', overflow: 'hidden' }} >
         <MbfWindowHeader>
           <MbfWindowHeaderText>Paired fabrics</MbfWindowHeaderText>
           <MbfWindowIcons>
@@ -257,7 +257,7 @@ function QRDiv({ id }: QRDivProps) {
   } else if (!matter.commissioned && !matter.advertising) {
     if(debug) console.log('QRDiv rendering not commissioned and not advertising state');
     return (
-      <MbfWindow style={{ alignItems: 'center', minWidth: '302px' }}>
+      <MbfWindow style={enableMobile && mobile ? { flex: '1 1 300px', alignItems: 'center' } : { alignItems: 'center', width: '302px', minWidth: '302px' }}>
         <MbfWindowHeader>
           <MbfWindowHeaderText>QR pairing code</MbfWindowHeaderText>
         </MbfWindowHeader>

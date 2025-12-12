@@ -2,6 +2,7 @@
 import { useEffect, useState, useContext, useRef, memo } from 'react';
 
 // Frontend
+import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import SystemInfoTable from './SystemInfoTable';
@@ -15,7 +16,8 @@ import { MbfPage } from './MbfPage';
 import HomeLogs from './HomeLogs';
 import HomeBrowserRefresh from './HomeBrowserRefresh';
 import HomeShowChangelog from './HomeShowChangelog';
-import { debug } from '../App';
+import { debug, enableMobile } from '../App';
+import MatterbridgeInfoTable from './MatterbridgeInfoTable';
 // const debug = true;
 
 function Home(): React.JSX.Element {
@@ -30,6 +32,7 @@ function Home(): React.JSX.Element {
   const [browserRefresh, setBrowserRefresh] = useState(false);
   const [storeId, setStoreId] = useState<string | null>(null);
   // Contexts
+  const { mobile } = useContext(UiContext);
   const { addListener, removeListener, online, sendMessage, getUniqueId } = useContext(WebSocketContext);
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -120,21 +123,30 @@ function Home(): React.JSX.Element {
     return <Connecting />;
   }
   return (
-    <MbfPage name='Home' style={{ flexDirection: 'row' }}>
+    <MbfPage name='Home' style={enableMobile && mobile ? { alignItems: 'center', gap: '10px' } : { flexDirection: 'row' }}>
       {/* Left column */}
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
-        <QRDiv id={storeId} />
-        <SystemInfoTable systemInfo={systemInfo} compact={true} />
-        {/*<MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>*/}
-      </div>
-
+      {((enableMobile && !mobile) || !enableMobile) && (
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
+          <QRDiv id={storeId} />
+          <SystemInfoTable systemInfo={systemInfo} compact={true} />
+        </div>
+      )}
       {/* Right column */}
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: enableMobile && mobile ? '10px' : '20px' }}>
         {/* Refresh page on Frontend updates (flex: '0 0 auto', overflow: 'hidden') */}
         {browserRefresh && <HomeBrowserRefresh />}
 
         {/* Show changelog page on Matterbridge updates (flex: '0 0 auto', overflow: 'hidden') */}
         {showChangelog && <HomeShowChangelog changelog={changelog} />}
+
+        {/* Left column on mobile */}
+        {enableMobile && mobile && (
+          <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '10px' }}>
+            <QRDiv id={storeId} />
+            <SystemInfoTable systemInfo={systemInfo} compact={true} />
+            <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo} />
+          </div>
+        )}
 
         {/* Install plugins (flex: '0 0 auto', overflow: 'hidden') */}
         {homePagePlugins && !matterbridgeInfo.readOnly && <HomeInstallAddPlugins />}
