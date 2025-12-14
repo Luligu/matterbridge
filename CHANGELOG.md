@@ -34,6 +34,10 @@ Advantages:
 
 - [package]: Updated dependencies.
 
+### Fixed
+
+- [doorLock]: Fixed DoorLock.supportedOperatingModes. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/455)
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.4.3] - 2025-12-12
