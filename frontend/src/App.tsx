@@ -42,6 +42,9 @@ export const setWssPassword = (password: string) => {
   wssPassword = password;
 };
 export let isIngress = false;
+export let hRef = '/';
+export let pathName = '/';
+export let basePath = '/';
 
 export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
   const [password, setPassword] = useState('');
@@ -140,25 +143,29 @@ function App(): React.JSX.Element {
 
   /*
     Normal:
-    href="https://lucalaptop7/"
-    pathname="/" 
-    baseName="/"
+    - href = "http://localhost:8283/"
+    - pathname = "/"
+    - baseName = "/"
+    - isIngress = "false"
 
     Ingress:
-    href="https://homeassistant.local:8123/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
-    pathname="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/" 
-    baseName="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
+    - href = "https://homeassistant.local:8123/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
+    - pathname = "/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
+    - baseName = "/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
+    - isIngress = "true"
   */
-  // Check if running in Home Assistant Ingress
-  isIngress = window.location.href.includes('/api/hassio_ingress/');
   // Set the base name for the BrowserRouter
-  const baseName = window.location.pathname.includes('/matterbridge/') ? '/matterbridge' : window.location.href.includes('/api/hassio_ingress/') ? window.location.pathname : '/';
-  if (debug) {
-    console.log(`Loading App...`);
-    console.log(`- with href = "${window.location.href}"`);
-    console.log(`- pathname = "${window.location.pathname}"`);
-    console.log(`- baseName = "${baseName}"`);
-  }
+  hRef = window.location.href;
+  pathName = window.location.pathname;
+  basePath = pathName.includes('/matterbridge/') ? '/matterbridge/' : pathName.includes('/api/hassio_ingress/') ? pathName : '/';
+  isIngress = pathName.includes('/api/hassio_ingress/');
+  // if (debug) {
+  console.log(`Loading App...`);
+  console.log(`- href = "${hRef}"`);
+  console.log(`- pathname = "${pathName}"`);
+  console.log(`- baseName = "${basePath}"`);
+  console.log(`- isIngress = "${isIngress}"`);
+  //}
 
   if (loggedIn) {
     return (
@@ -166,7 +173,7 @@ function App(): React.JSX.Element {
         <SnackbarProvider dense maxSnack={10} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
           <UiProvider>
             <WebSocketProvider>
-              <BrowserRouter basename={baseName}>
+              <BrowserRouter basename={basePath}>
                 <MbfScreen>
                   <Routes>
                     <Route path='/' element={<Home />} />

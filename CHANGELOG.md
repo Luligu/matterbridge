@@ -33,10 +33,12 @@ Advantages:
 ### Changed
 
 - [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to v.3.4.1.
 
 ### Fixed
 
-- [doorLock]: Fixed DoorLock.supportedOperatingModes. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/455)
+- [doorLock]: Fixed DoorLock.supportedOperatingModes. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/454).
+- [frontend]: Fixed mobileMode menu navigation. Thanks Calimerorulez (https://github.com/Luligu/matterbridge/issues/457).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

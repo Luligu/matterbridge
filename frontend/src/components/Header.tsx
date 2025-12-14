@@ -1,6 +1,6 @@
 // React
 import { useState, useContext, useEffect, useRef, memo } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 // @mui/material
 import Tooltip from '@mui/material/Tooltip';
@@ -54,6 +54,8 @@ function Header() {
   const [viewMenuAnchorEl, setViewMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [resetMenuAnchorEl, setResetMenuAnchorEl] = useState<HTMLElement | null>(null);
+  // Navigation
+  const navigate = useNavigate();
 
   const handleSponsorClick = () => {
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
@@ -153,7 +155,9 @@ function Header() {
   const handleMenuCloseConfirm = (value: string) => {
     if (debug) console.log('Header: handleMenuClose', value);
     setMenuAnchorEl(null);
-    if (value === 'download-mblog') {
+    if (value === '/' || value === '/devices' || value === '/log' || value === '/settings') {
+      navigate(value);
+    } else if (value === 'download-mblog') {
       logMessage('Matterbridge', `Downloading matterbridge log...`);
       showSnackbarMessage('Downloading matterbridge log...', 5);
       window.location.href = './api/download-mblog';
@@ -507,7 +511,7 @@ function Header() {
         </Tooltip>
         <Menu id='command-menu' anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuCloseConfirm('')}>
           {enableMobile && mobile && (
-            <MenuItem onClick={() => window.open(`/home`, '_self')}>
+            <MenuItem onClick={() => handleMenuCloseConfirm('/')}>
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
@@ -515,7 +519,7 @@ function Header() {
             </MenuItem>
           )}
           {enableMobile && mobile && (
-            <MenuItem onClick={() => window.open(`/devices`, '_self')}>
+            <MenuItem onClick={() => handleMenuCloseConfirm('/devices')}>
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
@@ -523,7 +527,7 @@ function Header() {
             </MenuItem>
           )}
           {enableMobile && mobile && (
-            <MenuItem onClick={() => window.open(`/log`, '_self')}>
+            <MenuItem onClick={() => handleMenuCloseConfirm('/log')}>
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
@@ -531,7 +535,7 @@ function Header() {
             </MenuItem>
           )}
           {enableMobile && mobile && (
-            <MenuItem onClick={() => window.open(`/settings`, '_self')}>
+            <MenuItem onClick={() => handleMenuCloseConfirm('/settings')}>
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
