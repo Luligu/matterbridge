@@ -281,10 +281,10 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           setMessages((prevMessages) => {
             const newMessages = [...prevMessages, { level: msg.response.level, time: msg.response.time, name: msg.response.name, message: msg.response.message }];
             /*if (debug) */ console.log(`WebSocket new log message added (${newMessages.length}/${logLength.current}):`, newMessages[newMessages.length - 1]);
-            // Check if the new array length exceeds the maximum allowed
-            if (newMessages.length > logLength.current + (logLength.current === 100 ? 50 : 100)) {
+            // Check if the new array length exceeds the maximum allowed length plus 10%
+            if (newMessages.length > logLength.current + (logLength.current * 10) / 100) {
               /*if (debug)*/ console.log(`WebSocket sliced log messages to the last ${logLength.current} entries`);
-              return newMessages.slice(logLength.current);
+              return newMessages.slice(newMessages.length - logLength.current); // Keep only the last 'logLength' messages
             }
             return newMessages;
           });
