@@ -2337,8 +2337,21 @@ export class MatterbridgeEndpoint extends Endpoint {
       lockState,
       lockType,
       actuatorEnabled: false,
+      /** This attribute SHALL indicate the current operating mode of the lock as defined in OperatingModeEnum */
       operatingMode: DoorLock.OperatingMode.Normal,
-      // Special case of inverted bitmap: add also alwaysSet = 2047
+      /**
+       * This attribute SHALL contain a bitmap with all operating bits of the OperatingMode attribute supported
+       * by the lock. All operating modes NOT supported by a lock SHALL be set to one. The value of
+       * the OperatingMode enumeration defines the related bit to be set.
+       * OperatingModesBitmap.Normal and OperatingModesBitmap.noRemoteLockUnlock are mandatory and SHALL always be supported.
+       * Default value 0xFFF6 (1111 1111 1111 0110) means:
+       * - normal: false (bit 0)
+       * - vacation: true (bit 1)
+       * - privacy: true (bit 2)
+       * - noRemoteLockUnlock: true (bit 3)
+       * - passage: true (bit 4)
+       * Special case of inverted bitmap: add also alwaysSet = 2047 (0000 0111 1111 1111) to have all bits set except the unsupported ones.
+       */
       supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: true, passage: true, alwaysSet: 2047 },
       autoRelockTime: 0, // 0=disabled
     });
