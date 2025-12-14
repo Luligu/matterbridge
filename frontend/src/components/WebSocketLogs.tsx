@@ -36,8 +36,8 @@ function WebSocketLogs() {
 
   // Scroll to the bottom of the message list on every update, only if the user is not hovering and not on a touchscreen
   useEffect(() => {
-    if (debug) console.log(`WebSocketLogs logAutoScroll: ${logAutoScroll} isHovering: ${isHovering}`);
-    if (logAutoScroll && !isHovering && !isTouchscreen) {
+    if (debug) console.log(`WebSocketLogs logAutoScroll: ${logAutoScroll.current} isHovering: ${isHovering}`);
+    if (logAutoScroll.current && !isHovering && !isTouchscreen) {
       const now = Date.now();
       if (now - lastScrollTimeRef.current >= 500) {
         if (debug) console.log('WebSocketLogs auto-scroll to bottom');

@@ -33,6 +33,8 @@ Advantages:
 ### Added
 
 - [frontend]: Set autoScroll to false in mobileMode.
+- [frontend]: Added Log length: 100, 200, 500, 1000.
+- [frontend]: Added Log search with case-insensitive regex: use /text/ in the search field.
 
 ### Changed
 
