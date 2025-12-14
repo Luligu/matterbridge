@@ -72,9 +72,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {void}
    */
   close(): void {
-    // @ts-expect-error: wrong type definition in node.d.ts
     this.broadcastChannel.onmessage = null;
-    // @ts-expect-error: wrong type definition in node.d.ts
     this.broadcastChannel.onmessageerror = null;
     this.broadcastChannel.close();
     this.closed = true;
