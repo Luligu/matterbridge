@@ -30,6 +30,10 @@ Advantages:
 
 ## [3.4.4] - 2025-12-19
 
+### Added
+
+- [frontend]: Set autoScroll to false in mobileMode.
+
 ### Changed
 
 - [package]: Updated dependencies.
