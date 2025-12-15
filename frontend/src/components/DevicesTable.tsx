@@ -103,6 +103,12 @@ const clustersColumns: MbfTableColumn<Cluster>[] = [
     label: 'Attribute Value',
     id: 'attributeValue',
     required: true,
+    maxWidth: 400,
+    tooltip: true,
+  },
+];
+
+/*
     render: (value, _rowKey, _device, _column) => (
       <Tooltip
         title={String(value)}
@@ -113,8 +119,8 @@ const clustersColumns: MbfTableColumn<Cluster>[] = [
         <div style={{ maxWidth: '500px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(value)}</div>
       </Tooltip>
     ),
-  },
-];
+
+*/
 
 const getDeviceRowKey = (row: ApiDevice) => {
   return `${row.pluginName}::${row.uniqueId}`;
