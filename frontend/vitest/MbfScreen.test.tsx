@@ -8,6 +8,7 @@ import { UiContext, UiContextType } from '../src/components/UiProvider';
 
 // Mock WebSocketContext used by MbfScreen (logAutoScroll ref)
 vi.mock('../src/components/WebSocketProvider', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   WebSocketContext: React.createContext({ logAutoScroll: { current: true } } as any),
 }));
 
