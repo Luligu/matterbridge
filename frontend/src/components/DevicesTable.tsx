@@ -3,7 +3,6 @@ import { useContext, useEffect, useState, useRef, memo, useCallback } from 'reac
 
 // @mui/material
 import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
 
 // @mui/icons-material
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -107,20 +106,6 @@ const clustersColumns: MbfTableColumn<Cluster>[] = [
     tooltip: true,
   },
 ];
-
-/*
-    render: (value, _rowKey, _device, _column) => (
-      <Tooltip
-        title={String(value)}
-        componentsProps={{
-          tooltip: { sx: { fontSize: '14px', fontWeight: 'normal', color: '#ffffff', backgroundColor: 'var(--primary-color)' } },
-        }}
-      >
-        <div style={{ maxWidth: '500px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(value)}</div>
-      </Tooltip>
-    ),
-
-*/
 
 const getDeviceRowKey = (row: ApiDevice) => {
   return `${row.pluginName}::${row.uniqueId}`;

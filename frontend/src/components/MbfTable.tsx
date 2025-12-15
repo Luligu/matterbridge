@@ -21,6 +21,7 @@ import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
 // frontend
 import { debug } from '../App';
 import { MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
+import { ConditionalTooltip } from './ConditionalTooltip';
 // const debug = true;
 
 // Generic comparator used by MbfTable sorting.
@@ -349,6 +350,19 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                     if (column.hidden) return null;
                     if (!column.required && visibleMap[column.id] === false) return null;
                     const value = (row as any)[column.id];
+                    const cellContent =
+                      typeof column.render === 'function' ? (
+                        column.render(value, rowKey, row, column)
+                      ) : typeof value === 'boolean' ? (
+                        <Checkbox checked={value} disabled size='small' sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }} />
+                      ) : column.format && typeof value === 'number' ? (
+                        column.format(value)
+                      ) : value !== undefined && value !== null ? (
+                        String(value)
+                      ) : null;
+
+                    const tooltipEnabled = !!column.tooltip && column.maxWidth !== undefined && column.maxWidth !== null;
+                    const cellWithTooltip = tooltipEnabled && value !== undefined && value !== null && cellContent !== null ? <ConditionalTooltip title={String(value)}>{cellContent}</ConditionalTooltip> : cellContent;
                     return (
                       <td
                         key={column.id}
@@ -364,15 +378,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                           textOverflow: column.maxWidth ? 'ellipsis' : undefined,
                         }}
                       >
-                        {typeof column.render === 'function' ? (
-                          column.render(value, rowKey, row, column)
-                        ) : typeof value === 'boolean' ? (
-                          <Checkbox checked={value} disabled size='small' sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }} />
-                        ) : column.format && typeof value === 'number' ? (
-                          column.format(value)
-                        ) : value !== undefined && value !== null ? (
-                          String(value)
-                        ) : null}
+                        {cellWithTooltip}
                       </td>
                     );
                   })}
