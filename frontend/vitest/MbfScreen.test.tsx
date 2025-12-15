@@ -6,6 +6,11 @@ import { describe, it, beforeEach, afterEach, vi, expect } from 'vitest';
 import { MbfScreen, MOBILE_HEIGHT_THRESHOLD, MOBILE_WIDTH_THRESHOLD, isMobile } from '../src/components/MbfScreen';
 import { UiContext, UiContextType } from '../src/components/UiProvider';
 
+// Mock WebSocketContext used by MbfScreen (logAutoScroll ref)
+vi.mock('../src/components/WebSocketProvider', () => ({
+  WebSocketContext: React.createContext({ logAutoScroll: { current: true } } as any),
+}));
+
 // Mock App debug and enableMobile with a factory so we can control per test
 let debugValue = false;
 let enableMobileValue = true;
@@ -20,6 +25,8 @@ vi.mock('../src/components/Header', () => ({
 }));
 
 describe('MbfScreen', () => {
+  let consoleLogSpy: ReturnType<typeof vi.spyOn> | undefined;
+
   const getMockUiContext = (mobile: boolean, setMobile = vi.fn()): UiContextType => ({
     mobile,
     setMobile,
@@ -53,12 +60,14 @@ describe('MbfScreen', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     debugValue = false;
     enableMobileValue = true;
     resetViewport();
   });
 
   afterEach(() => {
+    consoleLogSpy?.mockRestore();
     resetViewport();
   });
 

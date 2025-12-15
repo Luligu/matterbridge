@@ -110,7 +110,8 @@ vi.mock('../src/components/Logs', () => ({ default: () => <div>Logs</div> }));
 vi.mock('../src/components/Settings', () => ({ default: () => <div>Settings</div> }));
 vi.mock('../src/components/Test', () => ({ default: () => <div>Test</div> }));
 vi.mock('../src/components/WebSocketProvider', () => ({
-  WebSocketProvider: ({ children }: { children: React.ReactNode }) => <div>WebSocketProvider{children}</div>
+  WebSocketProvider: ({ children }: { children: React.ReactNode }) => <div>WebSocketProvider{children}</div>,
+  WebSocketContext: React.createContext({ logAutoScroll: { current: true } } as any),
 }));
 vi.mock('../src/components/muiTheme', () => ({
   createMuiTheme: (primaryColor: string) => ({ theme: `mock-theme-${primaryColor}` }),
