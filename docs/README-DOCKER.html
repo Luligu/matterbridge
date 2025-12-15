@@ -96,14 +96,15 @@
 <p>You can directly select and add a plugin without installing it.</p>
 <p>It is based on node:22-bookworm-slim and integrates the health check.</p>
 <p>How Health Checks Work in Different Scenarios</p>
-<p>With docker-compose</p>
+<p>With docker-compose:</p>
 <p>Docker monitors the health check and can restart the container if needed.</p>
-<p>With docker run</p>
+<p>With docker run:</p>
 <p>The health check still runs in the background, but:
 The container doesn’t restart automatically if it becomes unhealthy.</p>
 <p>You can manually check the health status:</p>
 <pre><code class="language-bash">docker exec -it matterbridge curl -v http://localhost:8283/health
 </code></pre>
+<p>If you use the docker image, please consider giving it a star on <a href="https://hub.docker.com/r/luligu/matterbridge"><strong>Docker Hub</strong></a>.</p>
 <h3 id="first-create-the-matterbridge-directories">First create the Matterbridge directories</h3>
 <p>This will create the required directories in your home directory if they don&#39;t exist</p>
 <pre><code class="language-bash">cd ~

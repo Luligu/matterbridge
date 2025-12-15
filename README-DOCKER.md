@@ -30,11 +30,11 @@ It is based on node:22-bookworm-slim and integrates the health check.
 
 How Health Checks Work in Different Scenarios
 
-With docker-compose
+With docker-compose:
 
 Docker monitors the health check and can restart the container if needed.
 
-With docker run
+With docker run:
 
 The health check still runs in the background, but:
 The container doesn’t restart automatically if it becomes unhealthy.
@@ -44,6 +44,8 @@ You can manually check the health status:
 ```bash
 docker exec -it matterbridge curl -v http://localhost:8283/health
 ```
+
+If you use the docker image, please consider giving it a star on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
 
 ### First create the Matterbridge directories
 
