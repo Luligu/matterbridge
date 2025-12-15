@@ -56,10 +56,8 @@ export const WebSocketContext = createContext<WebSocketContextType>(null as unkn
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   // States
   const [messages, setMessages] = useState<WsLogMessage[]>([]);
-  // const [logMaxMessages, setLogMaxMessages] = useState(Number(localStorage.getItem('logMaxMessages') ?? 200));
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
-  // const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
 
   const [online, setOnline] = useState(false);
 
@@ -82,8 +80,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const logAutoScroll = useRef(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
 
   // Memos
-  const wssHost = useMemo(() => window.location.href.replace(/^http/, 'ws'), []); // Replace "http" or "https" with "ws" or "wss" and memoryize
-  // const isIngress = useMemo(() => window.location.href.includes('api/hassio_ingress'), []);
+  const wssHost = useMemo(() => window.location.href.replace(/^http/, 'ws'), []); // Replace "http" or "https" with "ws" or "wss" and memoize
 
   // Constants
   const maxRetries = 100;
@@ -280,10 +277,10 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
           setMessages((prevMessages) => {
             const newMessages = [...prevMessages, { level: msg.response.level, time: msg.response.time, name: msg.response.name, message: msg.response.message }];
-            /*if (debug) */ console.log(`WebSocket new log message added (${newMessages.length}/${logLength.current}):`, newMessages[newMessages.length - 1]);
+            if (debug) console.log(`WebSocket new log message added (${newMessages.length}/${logLength.current}):`, newMessages[newMessages.length - 1]);
             // Check if the new array length exceeds the maximum allowed length plus 10%
             if (newMessages.length > logLength.current + (logLength.current * 10) / 100) {
-              /*if (debug)*/ console.log(`WebSocket sliced log messages to the last ${logLength.current} entries`);
+              if (debug) console.log(`WebSocket sliced log messages to the last ${logLength.current} entries`);
               return newMessages.slice(newMessages.length - logLength.current); // Keep only the last 'logLength' messages
             }
             return newMessages;
