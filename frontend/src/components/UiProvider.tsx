@@ -12,8 +12,9 @@ import { SnackbarKey, useSnackbar } from 'notistack';
 
 // Frontend
 import { ConfirmCancelForm } from './ConfirmCancelForm';
-import { debug } from '../App';
 import { InstallProgressDialog } from './InstallProgressDialog ';
+import { MbfLsk } from '../utils/localStorage';
+import { debug } from '../App';
 // const debug = true;
 
 interface PersistMessage {
@@ -149,7 +150,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   const [installCommand, setInstallCommand] = useState('');
   const [installPackageName, setInstallPackageName] = useState('');
   const [installOutput, setInstallOutput] = useState('');
-  const [installAutoExit, setInstallAutoExit] = useState(localStorage.getItem('installAutoExit') === 'false' ? false : true);
+  const [installAutoExit, setInstallAutoExit] = useState(localStorage.getItem(MbfLsk.installAutoExit) === 'false' ? false : true);
 
   const showInstallProgress = useCallback((title: string, command: string, packageName: string) => {
     if (debug) console.log(`UiProvider show install progress for package ${title}`);
@@ -168,7 +169,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   const exitInstallProgressSuccess = useCallback(() => {
     if (debug) console.log(`UiProvider exitInstallProgressSuccess: package ${installPackageName}`);
     // setInstallOutput((prevOutput) => prevOutput + `Successfully installed ${installPackageName}\n`);
-    const installAutoExitLocal = localStorage.getItem('installAutoExit') === 'false' ? false : true;
+    const installAutoExitLocal = localStorage.getItem(MbfLsk.installAutoExit) === 'false' ? false : true;
     if (installAutoExitLocal) {
       setInstallDialogOpen(false);
     }

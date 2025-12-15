@@ -102,7 +102,7 @@ const clustersColumns: MbfTableColumn<Cluster>[] = [
     label: 'Attribute Value',
     id: 'attributeValue',
     required: true,
-    maxWidth: 400,
+    maxWidth: 350,
     tooltip: true,
   },
 ];

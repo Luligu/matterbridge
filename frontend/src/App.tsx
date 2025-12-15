@@ -18,6 +18,7 @@ import { WebSocketProvider } from './components/WebSocketProvider';
 import { UiProvider } from './components/UiProvider';
 import { createMuiTheme, getCssVariable } from './components/muiTheme';
 import { MbfScreen } from './components/MbfScreen';
+import { MbfLsk } from './utils/localStorage';
 
 // App styles
 import './App.css';
@@ -28,14 +29,14 @@ export const toggleDebug = () => {
   debug = !debug;
 };
 export const enableWindows = false;
-export let enableMobile = localStorage.getItem('enableMobile') === 'false' ? false : true;
+export let enableMobile = localStorage.getItem(MbfLsk.enableMobile) === 'false' ? false : true;
 export const setEnableMobile = () => {
   enableMobile = true;
-  localStorage.setItem('enableMobile', 'true');
+  localStorage.setItem(MbfLsk.enableMobile, 'true');
 };
 export const unsetEnableMobile = () => {
   enableMobile = false;
-  localStorage.setItem('enableMobile', 'false');
+  localStorage.setItem(MbfLsk.enableMobile, 'false');
 };
 export let wssPassword: string | undefined = undefined;
 export const setWssPassword = (password: string) => {
@@ -134,7 +135,7 @@ function App(): React.JSX.Element {
   const [loggedIn, setLoggedIn] = useState(false);
 
   // Set the theme based on saved preference or default to dark
-  const savedTheme = localStorage.getItem('frontendTheme') || 'dark';
+  const savedTheme = localStorage.getItem(MbfLsk.frontendTheme) || 'dark';
   if (debug) console.log(`Setting frontend theme "%s"`, savedTheme);
   document.body.setAttribute('frontend-theme', savedTheme);
   const primaryColor = getCssVariable('--primary-color', '#1976d2');

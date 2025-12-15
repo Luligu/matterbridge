@@ -6,13 +6,14 @@ import { WebSocketContext } from './WebSocketProvider';
 import WebSocketLogs from './WebSocketLogs';
 import { Connecting } from './Connecting';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
+import { MbfLsk } from '../utils/localStorage';
 import { debug } from '../App';
 // const debug = true;
 
 function HomeLogs(): React.JSX.Element {
   // States
-  const [logFilterLevel, _setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
-  const [logFilterSearch, _setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
+  const [logFilterLevel, _setLogFilterLevel] = useState(localStorage.getItem(MbfLsk.logFilterLevel) ?? 'info');
+  const [logFilterSearch, _setLogFilterSearch] = useState(localStorage.getItem(MbfLsk.logFilterSearch) ?? '*');
 
   // Contexts
   const { online, logAutoScroll } = useContext(WebSocketContext);

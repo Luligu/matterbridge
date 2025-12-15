@@ -12,6 +12,7 @@ import Button from '@mui/material/Button';
 import { debug } from '../App';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import { MbfLsk } from '../utils/localStorage';
 import { UiContext } from './UiProvider';
 // const debug = true;
 
@@ -32,7 +33,7 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
 
   const handleInstallAutoExitChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInstallAutoExit(event.target.checked);
-    localStorage.setItem('installAutoExit', event.target.checked ? 'true' : 'false');
+    localStorage.setItem(MbfLsk.installAutoExit, event.target.checked ? 'true' : 'false');
     if (debug) console.log('handleInstallAutoExitChange called with value:', event.target.checked);
   };
 

@@ -228,7 +228,7 @@ function QRDiv({ id }: QRDivProps) {
           </MbfWindowIcons>
         </MbfWindowHeader>
         <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</MbfWindowText>
-        <MbfWindowContent style={{ flexDirection: 'column', flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '0px 0px 10px 0px', gap: '0px' }}>
+        <MbfWindowContent style={{ flexDirection: 'column', justifyContent: 'flex-start', flex: '1 1 auto', overflow: 'auto', padding: '0px 0px 10px 0px', gap: '0px' }}>
           {matter.fabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
               <div style={{ marginLeft: '20px', marginBottom: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '20px', alignItems: 'center' }}>

@@ -5,6 +5,7 @@ import { ReactNode, useEffect, useContext } from 'react';
 import Header from './Header';
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
+import { MbfLsk } from '../utils/localStorage';
 import { debug, enableMobile } from '../App';
 // const debug = true;
 
@@ -44,7 +45,7 @@ export function MbfScreen({ children }: MbfScreenProps): React.JSX.Element {
       const mobile = isMobile();
       if (mobile) {
         logAutoScroll.current = false;
-        localStorage.setItem('logAutoScroll', 'false');
+        localStorage.setItem(MbfLsk.logAutoScroll, 'false');
       }
       setMobile(mobile);
     }

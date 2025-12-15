@@ -33,6 +33,7 @@ import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
 import { viewportHeight, viewportWidth } from './MbfScreen';
+import { MbfLsk, resetLocalStorage } from '../utils/localStorage';
 import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
 // const debug = true;
 
@@ -157,6 +158,11 @@ function Header() {
     setMenuAnchorEl(null);
     if (value === '/' || value === '/devices' || value === '/log' || value === '/settings') {
       navigate(value);
+    } else if (value === 'reset_frontend') {
+      logMessage('Matterbridge', `Resetting frontend UI...`);
+      showSnackbarMessage('Resetting frontend UI...', 5);
+      resetLocalStorage();
+      window.location.reload();
     } else if (value === 'download-mblog') {
       logMessage('Matterbridge', `Downloading matterbridge log...`);
       showSnackbarMessage('Downloading matterbridge log...', 5);
@@ -423,7 +429,7 @@ function Header() {
           <span className='status-information' style={{ cursor: 'default' }}>
             {mobile ? 'Mobile ' : 'Desktop '}
             {`${viewportWidth}x${viewportHeight}`}
-            {` enabled ${localStorage.getItem('enableMobile') === 'false' ? false : true}`}
+            {` enabled ${localStorage.getItem(MbfLsk.enableMobile) === 'false' ? false : true}`}
           </span>
         )}
       </div>
@@ -867,6 +873,17 @@ function Header() {
             <ListItemText primary='Reset' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
           <Menu id='sub-menu-reset' anchorEl={resetMenuAnchorEl} keepMounted open={Boolean(resetMenuAnchorEl)} onClose={handleResetMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+            <MenuItem
+              onClick={() => {
+                handleResetMenuClose();
+                showConfirmCancelDialog('Reset the frontend UI', 'Are you sure you want to reset the frontend UI? This will reset all local settings and reload the page.', 'reset_frontend', handleMenuCloseConfirm, handleMenuCloseCancel);
+              }}
+            >
+              <ListItemIcon>
+                <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Reset the frontend UI...' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
             <MenuItem
               onClick={() => {
                 handleResetMenuClose();

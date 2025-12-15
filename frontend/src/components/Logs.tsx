@@ -20,6 +20,7 @@ import WebSocketLogs from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { MbfPage } from './MbfPage';
+import { MbfLsk } from '../utils/localStorage';
 import { debug } from '../App';
 // const debug = true;
 
@@ -27,8 +28,8 @@ function Logs(): React.JSX.Element {
   // Contexts
   const { logLength, logAutoScroll, setMessages, setLogFilterLevel: setContextLogFilterLevel, setLogFilterSearch: setContextLogFilterSearch, online, filterLogMessages } = useContext(WebSocketContext);
   // States
-  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
-  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
+  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem(MbfLsk.logFilterLevel) ?? 'info');
+  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem(MbfLsk.logFilterSearch) ?? '*');
   const [localLogLength, setLocalLogLength] = useState(logLength.current.toString());
   const [localLogAutoScroll, setLocalLogAutoScroll] = useState(logAutoScroll.current);
 
@@ -37,7 +38,7 @@ function Logs(): React.JSX.Element {
     setLogFilterLevel(newValue);
     setContextLogFilterLevel(newValue);
     filterLogMessages(newValue, logFilterSearch);
-    localStorage.setItem('logFilterLevel', newValue);
+    localStorage.setItem(MbfLsk.logFilterLevel, newValue);
     if (debug) console.log('handleLogFilterLevelChange called with value:', newValue);
   };
 
@@ -46,7 +47,7 @@ function Logs(): React.JSX.Element {
     setLogFilterSearch(newValue);
     setContextLogFilterSearch(newValue);
     filterLogMessages(logFilterLevel, newValue);
-    localStorage.setItem('logFilterSearch', newValue);
+    localStorage.setItem(MbfLsk.logFilterSearch, newValue);
     if (debug) console.log('handleLogFilterSearchChange called with value:', newValue);
   };
 
@@ -55,7 +56,7 @@ function Logs(): React.JSX.Element {
     setLocalLogAutoScroll(checked);
     logAutoScroll.current = checked;
     filterLogMessages(logFilterLevel, logFilterSearch);
-    localStorage.setItem('logAutoScroll', checked ? 'true' : 'false');
+    localStorage.setItem(MbfLsk.logAutoScroll, checked ? 'true' : 'false');
     if (debug) console.log('handleAutoScrollChange called with value:', checked);
   };
 
@@ -63,7 +64,7 @@ function Logs(): React.JSX.Element {
     const newValue = event.target.value;
     setLocalLogLength(newValue);
     logLength.current = Number(newValue);
-    localStorage.setItem('logLength', newValue);
+    localStorage.setItem(MbfLsk.logLength, newValue);
     if (debug) console.log('handleLogLengthChange called with value:', newValue);
   };
 

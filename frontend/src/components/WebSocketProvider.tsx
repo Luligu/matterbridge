@@ -7,6 +7,7 @@ import { WsMessageApiRequest, WsMessageApiResponse, WsMessageErrorApiResponse } 
 
 // Frontend modules
 import { UiContext } from './UiProvider';
+import { MbfLsk } from '../utils/localStorage';
 import { debug, isIngress, wssPassword } from '../App';
 // const debug = true;
 
@@ -56,8 +57,8 @@ export const WebSocketContext = createContext<WebSocketContextType>(null as unkn
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   // States
   const [messages, setMessages] = useState<WsLogMessage[]>([]);
-  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
-  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
+  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem(MbfLsk.logFilterLevel) ?? 'info');
+  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem(MbfLsk.logFilterSearch) ?? '*');
 
   const [online, setOnline] = useState(false);
 
@@ -76,8 +77,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const logFilterSearchRef = useRef(logFilterSearch);
   const messagesCounterRef = useRef(0);
   const messagesCounterIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const logLength = useRef(Number(localStorage.getItem('logLength') ?? 200));
-  const logAutoScroll = useRef(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
+  const logLength = useRef(Number(localStorage.getItem(MbfLsk.logLength) ?? 200));
+  const logAutoScroll = useRef(localStorage.getItem(MbfLsk.logAutoScroll) === 'false' ? false : true);
 
   // Memos
   const wssHost = useMemo(() => window.location.href.replace(/^http/, 'ws'), []); // Replace "http" or "https" with "ws" or "wss" and memoize
