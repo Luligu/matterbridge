@@ -15,6 +15,7 @@ import { debug } from '../App';
 import { ApiDevice, Cluster } from '../../../src/matterbridgeTypes';
 import { WsMessageApiResponse, WsMessageApiStateUpdate } from '../../../src/frontendTypes';
 import MbfTable, { MbfTableColumn } from './MbfTable';
+import { MbfWindow } from './MbfWindow';
 
 const devicesColumns: MbfTableColumn<ApiDevice>[] = [
   {
@@ -253,15 +254,15 @@ function DevicesTable({ filter }: { filter: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', margin: '0px', padding: '0px', gap: '20px', width: '100%', overflow: 'hidden' }}>
       {/* Devices Table */}
-      <div className='MbfWindowDiv' style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: `${pluginName && endpoint ? '30%' : '100%'}`, flex: '1 1 auto', overflow: 'hidden' }}>
+      <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: `${pluginName && endpoint ? '30%' : '100%'}`, flex: '1 1 auto', overflow: 'hidden' }}>
         <MbfTable name='Registered devices' getRowKey={getDeviceRowKey} onRowClick={handleDeviceClick} rows={filteredDevices} columns={devicesColumns} footerLeft={`Total devices: ${filteredDevices.length.toString()}`} />
-      </div>
+      </MbfWindow>
 
       {/* Clusters Table */}
       {pluginName && endpoint && (
-        <div className='MbfWindowDiv' style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', height: '70%', maxHeight: '70%', flex: '1 1 auto', overflow: 'hidden' }}>
+        <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', height: '70%', maxHeight: '70%', flex: '1 1 auto', overflow: 'hidden' }}>
           <MbfTable name='Clusters' title={deviceName || ''} getRowKey={getClusterRowKey} rows={clusters} columns={clustersColumns} footerLeft={`Total child endpoints: ${subEndpointsCount - 1}`} />
-        </div>
+        </MbfWindow>
       )}
     </div>
   );

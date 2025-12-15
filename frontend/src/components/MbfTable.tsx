@@ -20,6 +20,7 @@ import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
 
 // frontend
 import { debug } from '../App';
+import { MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 // const debug = true;
 
 // Generic comparator used by MbfTable sorting.
@@ -194,6 +195,10 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
     setConfigureVisibilityDialogOpen(false);
   };
 
+  const [closed, setClosed] = useState(false);
+
+  if (closed) return null;
+
   if (debug) console.log(`Rendering table ${name}${orderBy && order ? ` ordered by ${orderBy}:${order}` : ''}`);
 
   return (
@@ -254,11 +259,13 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
         </DialogActions>
       </Dialog>
 
-      <div className='MbfWindowHeader' style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', borderBottom: 'none' }}>
-        <p className='MbfWindowHeaderText'>{name}</p>
-        {title && <p className='MbfWindowHeaderText'>{title}</p>}
-        <div className='MbfWindowHeaderFooterIcons'>
+      <MbfWindowHeader style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', borderBottom: 'none' }}>
+        <MbfWindowHeaderText>{name}</MbfWindowHeaderText>
+        {title && <MbfWindowHeaderText>{title}</MbfWindowHeaderText>}
+        <MbfWindowIcons onClose={() => setClosed(true)}>
           <IconButton
+            size='small'
+            sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }}
             onClick={(e) => {
               if (e?.currentTarget?.blur) {
                 try {
@@ -270,16 +277,15 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
               toggleConfigureVisibilityDialog();
             }}
             aria-label='Configure Columns'
-            style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }}
           >
             <Tooltip title={`Configure ${name} columns`}>
               <Icon path={mdiCog} size='20px' color={'var(--header-text-color)'} />
             </Tooltip>
           </IconButton>
-        </div>
-      </div>
+        </MbfWindowIcons>
+      </MbfWindowHeader>
 
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, width: '100%', overflow: 'auto', margin: '0px', padding: '0px', gap: '0' }}>
+      <MbfWindowContent style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%', overflow: 'auto', margin: '0px', padding: '0px', gap: '0' }}>
         <table aria-label={`${name} table`} style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10, border: 'none', color: 'var(--header-text-color)', backgroundColor: 'var(--header-bg-color' }}>
             <tr style={{ height: '30px', minHeight: '30px' }}>
@@ -374,17 +380,13 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
             })}
           </tbody>
         </table>
-      </div>
+      </MbfWindowContent>
 
       {(footerLeft || footerRight) && (
-        <div className='MbfWindowFooter' style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', border: 'none' }}>
-          <p className='MbfWindowFooterText' style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>
-            {footerLeft}
-          </p>
-          <p className='MbfWindowFooterText' style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>
-            {footerRight}
-          </p>
-        </div>
+        <MbfWindowFooter style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', border: 'none' }}>
+          <MbfWindowFooterText style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerLeft}</MbfWindowFooterText>
+          <MbfWindowFooterText style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerRight}</MbfWindowFooterText>
+        </MbfWindowFooter>
       )}
     </div>
   );

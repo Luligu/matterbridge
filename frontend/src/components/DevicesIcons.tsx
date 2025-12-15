@@ -67,6 +67,7 @@ import { WebSocketContext } from './WebSocketProvider';
 import { WsMessageApiClustersResponse, WsMessageApiResponse, WsMessageApiStateUpdate } from '../../../src/frontendTypes';
 import { ApiDevice, Cluster } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
+import { MbfWindow } from './MbfWindow';
 // const debug = true;
 const debugUpdate = false;
 
@@ -190,7 +191,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
 
   // prettier-ignore
   return (
-    <div className='MbfWindowDiv' style={{ margin: '0px', padding: '5px', width: '150px', height: '150px', borderColor: 'var(--div-bg-color)', borderRadius: '5px', justifyContent: 'space-between' }}>
+    <MbfWindow style={{ margin: '0px', padding: '5px', width: '150px', height: '150px', borderColor: 'var(--div-bg-color)', borderRadius: '5px', justifyContent: 'space-between' }}>
       {/* BridgedDeviceBasicInformation.reachable */}
       {deviceType===0x0013 && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
         <Render icon={cluster.attributeLocalValue===true ? <WifiIcon/> : <WifiOffIcon/>} iconColor={cluster.attributeLocalValue===true ?'green':'red'} cluster={cluster} value={cluster.attributeLocalValue===true ? 'Online' : 'Offline'} />
@@ -375,7 +376,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
         <Typography sx={endpointSx}>{id}</Typography>
         {debug && <Typography sx={endpointSx}>0x{deviceType.toString(16).padStart(4, '0')}</Typography>}
       </Box>
-    </div>
+    </MbfWindow>
   );
 }
 
