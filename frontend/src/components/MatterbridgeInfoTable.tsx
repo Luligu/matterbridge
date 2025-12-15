@@ -51,7 +51,7 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
     <MbfWindow style={enableMobile && mobile ? { flex: '1 1 300px' } : { flex: '0 1 auto', width: '302px', minWidth: '302px' }}>
       <MbfWindowHeader>
         <MbfWindowHeaderText>Matterbridge info</MbfWindowHeaderText>
-        <MbfWindowIcons onClose={() => setClosed(true)} />
+        <MbfWindowIcons close={() => setClosed(true)} />
       </MbfWindowHeader>
       <MbfWindowContent style={enableMobile && mobile ? { flex: '1 1 auto', margin: '0px', padding: '0px', gap: '0px' } : { flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '0px', gap: '0px' }}>
         <table style={{ border: 'none', borderCollapse: 'collapse', tableLayout: 'fixed' }}>

@@ -264,7 +264,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       <MbfWindowHeader style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', borderBottom: 'none' }}>
         <MbfWindowHeaderText>{name}</MbfWindowHeaderText>
         {title && <MbfWindowHeaderText>{title}</MbfWindowHeaderText>}
-        <MbfWindowIcons onClose={() => setClosed(true)}>
+        <MbfWindowIcons close={() => setClosed(true)}>
           <IconButton
             size='small'
             sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }}

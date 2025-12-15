@@ -136,7 +136,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
     <MbfWindow style={enableMobile && mobile ? { flex: '1 1 300px' } : { flex: '0 1 auto', width: '302px', minWidth: '302px' }}>
       <MbfWindowHeader>
         <MbfWindowHeaderText>System info</MbfWindowHeaderText>
-        <MbfWindowIcons onClose={() => setClosed(true)}>
+        <MbfWindowIcons close={() => setClosed(true)}>
           <IconButton size='small' sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }} onClick={handleViewHistory}>
             <Tooltip title='Open the cpu and memory usage page' arrow>
               <Icon path={mdiChartTimelineVariantShimmer} size='22px' />

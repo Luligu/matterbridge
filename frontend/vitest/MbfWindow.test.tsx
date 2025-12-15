@@ -80,7 +80,7 @@ describe('MbfWindow components', () => {
   it('renders close button and calls onClose when clicked', () => {
     const onClose = vi.fn();
     const { getByRole } = render(
-      <MbfWindowIcons onClose={onClose} />
+      <MbfWindowIcons close={onClose} />
     );
     const button = getByRole('button');
     fireEvent.click(button);
