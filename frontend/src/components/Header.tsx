@@ -32,8 +32,8 @@ import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 // Frontend
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
-import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
 import { viewportHeight, viewportWidth } from './MbfScreen';
+import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
 // const debug = true;
 
 function Header() {
@@ -465,14 +465,14 @@ function Header() {
         </Tooltip>
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && update && (
           <Tooltip title={`Update matterbridge to latest version v.${settings.matterbridgeInformation.matterbridgeLatestVersion}`}>
-            <IconButton style={{ color: update ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateClick}>
+            <IconButton style={{ color: 'var(--primary-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
         )}
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && updateDev && (
           <Tooltip title={`Update matterbridge to latest dev version v.${settings.matterbridgeInformation.matterbridgeDevVersion}`}>
-            <IconButton style={{ color: updateDev ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateDevClick}>
+            <IconButton style={{ color: 'var(--secondary-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateDevClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>

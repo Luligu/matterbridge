@@ -35,6 +35,7 @@ Advantages:
 - [frontend]: Set autoScroll to false in mobileMode.
 - [frontend]: Added Log length: 100, 200, 500, 1000.
 - [frontend]: Added Log search with case-insensitive regex: use /text/ in the search field.
+- [frontend]: Differentiated update icon color: primary color for latest and secondary color for dev.
 - [MbfTable]: Added ConditionalTooltip to show clipped column cells.
 
 ### Changed
