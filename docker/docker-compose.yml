@@ -1,9 +1,10 @@
 services:
   matterbridge:
     container_name: matterbridge
-    image: luligu/matterbridge:latest # Matterbridge image with the latest tag
-    network_mode: host # Ensures the Matter mdns works
-    restart: always # Ensures the container always restarts automatically
+    image: luligu/matterbridge:latest                 # Matterbridge image with the latest tag
+    network_mode: host                                # Ensures the Matter mdns works
+    restart: always                                   # Ensures the container always restarts automatically
     volumes:
-      - '${HOME}/Matterbridge:/root/Matterbridge' # Mounts the Matterbridge plugin directory
-      - '${HOME}/.matterbridge:/root/.matterbridge' # Mounts the Matterbridge storage directory
+      - '${HOME}/Matterbridge:/root/Matterbridge'     # Mounts the Matterbridge plugin directory
+      - '${HOME}/.matterbridge:/root/.matterbridge'   # Mounts the Matterbridge storage directory
+      - "${HOME}/.mattercert:/root/.mattercert"       # Mounts the Matterbridge certificate directory

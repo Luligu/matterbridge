@@ -90,7 +90,7 @@
 <hr>
 <h1 id="advanced-configuration">Advanced configuration</h1>
 <h2 id="run-matterbridge-with-docker-and-docker-compose">Run matterbridge with docker and docker compose</h2>
-<p>The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on <strong>Docker Hub</strong>.</p>
+<p>The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on <a href="https://hub.docker.com/r/luligu/matterbridge"><strong>Docker Hub</strong></a>.</p>
 <p>The image (tag <strong>latest</strong>) includes matterbridge and all official plugins with the latest release (as published on npm). You can just pull the new image and matterbridge with all plugins will be the latest release published on npm.</p>
 <p>The image (tag <strong>dev</strong>) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest dev release pushed on GitHub. It is possible that the devs are outdated by published latests.</p>
 <p>You can directly select and add a plugin without installing it.</p>
@@ -128,9 +128,18 @@ sudo usermod -aG docker $USER
   --network host --restart always -d luligu/matterbridge:latest
 </code></pre>
 <p>You may need to adapt the script to your setup.</p>
+<h3 id="run-the-docker-container-and-start-it-adding-different-parameters-ie-frontend-on-port-8585">Run the Docker container and start it adding different parameters (i.e. frontend on port 8585)</h3>
+<pre><code class="language-bash">sudo docker run --name matterbridge \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
+  -v ~/.mattercert:/root/.mattercert \
+  --network host --restart always -d luligu/matterbridge:latest \
+  matterbridge --docker --frontend 8585
+</code></pre>
+<p>If you override, always use <code>matterbridge --docker</code> like first part of the command.</p>
 <h3 id="run-with-docker-compose">Run with docker compose</h3>
 <p>The docker-compose.yml file is available in the docker directory of the package</p>
-<pre><code>services:
+<pre><code class="language-yaml">services:
   matterbridge:
     container_name: matterbridge
     image: luligu/matterbridge:latest                         # Matterbridge image with the tag latest
@@ -148,6 +157,13 @@ sudo usermod -aG docker $USER
 <p>or start only the matterbridge container with:</p>
 <pre><code class="language-bash">docker compose up -d matterbridge
 </code></pre>
+<p>If you need to start matterbridge adding different parameters (i.e. frontend on port 8585), you can override the default command adding the line command to the service:</p>
+<pre><code class="language-yaml">services:
+  matterbridge:
+    ...
+    command: [&quot;matterbridge&quot;, &quot;--docker&quot;, &quot;--frontend&quot;, &quot;8585&quot;]
+</code></pre>
+<p>If you override, always use <code>[&quot;matterbridge&quot;, &quot;--docker&quot;]</code> like first part of the command.</p>
 <h3 id="stop-with-docker-compose">Stop with docker compose</h3>
 <pre><code class="language-bash">docker compose down
 </code></pre>
