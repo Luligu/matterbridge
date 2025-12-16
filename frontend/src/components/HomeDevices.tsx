@@ -58,6 +58,7 @@ interface MixedApiDevices {
   uniqueId?: string;
   reachable?: boolean;
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
+  batteryLevel?: number;
   cluster?: string;
   matter?: ApiMatter;
   selected?: boolean;
@@ -128,11 +129,29 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
         if (mixedDevice.powerSource === 'ac' || mixedDevice.powerSource === 'dc') {
           return <ElectricalServicesIcon fontSize='small' sx={{ color: 'var(--primary-color)' }} />;
         } else if (mixedDevice.powerSource === 'ok') {
-          return <Battery4BarIcon fontSize='small' sx={{ color: 'green' }} />;
+          if (mixedDevice.batteryLevel) {
+            return (
+              <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
+                <Battery4BarIcon fontSize='small' sx={{ color: 'green' }} />
+              </Tooltip>
+            );
+          } else return <Battery4BarIcon fontSize='small' sx={{ color: 'gray' }} />;
         } else if (mixedDevice.powerSource === 'warning') {
-          return <Battery4BarIcon fontSize='small' sx={{ color: 'yellow' }} />;
+          if (mixedDevice.batteryLevel) {
+            return (
+              <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
+                <Battery4BarIcon fontSize='small' sx={{ color: 'yellow' }} />
+              </Tooltip>
+            );
+          } else return <Battery4BarIcon fontSize='small' sx={{ color: 'yellow' }} />;
         } else if (mixedDevice.powerSource === 'critical') {
-          return <Battery4BarIcon fontSize='small' sx={{ color: 'red' }} />;
+          if (mixedDevice.batteryLevel) {
+            return (
+              <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
+                <Battery4BarIcon fontSize='small' sx={{ color: 'red' }} />
+              </Tooltip>
+            );
+          } else return <Battery4BarIcon fontSize='small' sx={{ color: 'red' }} />;
         } else return <span></span>;
       },
     },

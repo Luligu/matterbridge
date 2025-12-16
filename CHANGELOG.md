@@ -38,6 +38,7 @@ Advantages:
 - [frontend]: Differentiated update icon color: primary color for latest and secondary color for dev.
 - [frontend]: Added `Reset the frontend UI` in the Reset menu. It will reset the frontend local storage to the default and reload the page.
 - [MbfTable]: Added ConditionalTooltip to show clipped column cells. Used in the Cluster table for a better user experience.
+- [frontend]: Added battery level to Devices panel in the Home page. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 
 ### Changed
 
