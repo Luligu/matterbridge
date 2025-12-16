@@ -520,6 +520,19 @@ To solve the race condition on blackout, use the --delay parameter. There is no 
 
 To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed so use it only if strictly necessary.
 
+## How to use the regex search in the Log page
+
+The regex search is activated when the search string starts with `/` and ends with `/`.
+
+Examples:
+
+```text
+/^error/          -> match log names (the part with [...]) or lines that start with "error"
+/timeout/         -> match "timeout" anywhere in the line (beginning/middle/end)
+/disconnected$/   -> match lines that end with "disconnected"
+/error|warning/   -> match either "error" OR "warning" (double search)
+```
+
 # Known general issues
 
 ## Session XYZ does not exist or Cannot find a session for ID XYZ
