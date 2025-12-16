@@ -118,7 +118,7 @@
     "start:tracegc": "node --expose_gc --trace_gc ./dist/cli.js --debug --trace --loader",
     "start:tracegcverbose": "node --expose_gc --trace_gc_verbose ./dist/cli.js --debug --trace --loader",
     "test": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --maxWorkers=100%",
-    "test:coverage": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --maxWorkers=100% --coverageThreshold=\"{ \\\"global\\\": { \\\"lines\\\": 100 } }\"",
+    "test:coverage": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --maxWorkers=100% --coverageThreshold=\"{ \\\"global\\\": { \\\"lines\\\": 100, \\\"functions\\\": 100 } }\"",
     "test:verbose": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --maxWorkers=100%",
     "test:watch": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --watch --maxWorkers=100%",
     "test:vitest": "vitest run",
@@ -168,20 +168,20 @@
     "ws": "8.18.3"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.1",
+    "@eslint/js": "9.39.2",
     "@jest/globals": "30.2.0",
     "@types/archiver": "7.0.0",
     "@types/express": "5.0.6",
     "@types/jest": "30.0.0",
     "@types/multer": "2.0.0",
-    "@types/node": "25.0.1",
+    "@types/node": "25.0.2",
     "@types/ws": "8.18.1",
     "@vitest/coverage-v8": "4.0.15",
     "@vitest/eslint-plugin": "1.5.2",
-    "eslint": "9.39.1",
+    "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
-    "eslint-plugin-jest": "29.2.1",
+    "eslint-plugin-jest": "29.5.0",
     "eslint-plugin-jsdoc": "61.5.0",
     "eslint-plugin-n": "17.23.1",
     "eslint-plugin-prettier": "5.5.4",
@@ -193,7 +193,7 @@
     "shx": "0.4.0",
     "ts-jest": "29.4.6",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.49.0",
+    "typescript-eslint": "8.50.0",
     "vitest": "4.0.15"
   }
 }

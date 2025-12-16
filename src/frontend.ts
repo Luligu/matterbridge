@@ -22,8 +22,7 @@
  * limitations under the License.
  */
 
-// eslint-disable-next-line no-console
-// istanbul ignore next
+/* eslint-disable-next-line no-console */ /* istanbul ignore next */
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mFrontend loaded.\u001B[40;0m');
 
 // Node modules
