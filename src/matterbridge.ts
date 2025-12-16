@@ -117,19 +117,29 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   };
 
   // Matterbridge settings
+  /** It indicates the home directory of the Matterbridge application. The home directory is the base directory where Matterbridge creates the matterbridge directories (os.homedir() if not overridden). */
   public homeDirectory = '';
+  /** It indicates the root directory of the Matterbridge application. The root directory is the directory where Matterbridge is executed. */
   public rootDirectory = '';
+  /** It indicates where the directory .matterbridge is located. */
   public matterbridgeDirectory = '';
+  /** It indicates where the directory Matterbridge is located. */
   public matterbridgePluginDirectory = '';
+  /** It indicates where the directory .mattercert is located. */
   public matterbridgeCertDirectory = '';
+  /** It indicates the global modules directory for npm. */
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
   public matterbridgeDevVersion = '';
   public frontendVersion = '';
+  /** It indicates the mode of the Matterbridge instance. It can be 'bridge', 'childbridge', 'controller' or ''. */
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
+  /** It indicates the restart mode of the Matterbridge instance. It can be 'service', 'docker' or ''. */
   public restartMode: 'service' | 'docker' | '' = '';
+  /** It indicates whether virtual mode is enabled and its type. The virtual mode control the creation of "Update matterbridge" and "Restart matterbridge" endpoints. */
   public virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch' = 'outlet';
+  /** It indicates the Matterbridge profile in use. */
   public readonly profile = getParameter('profile');
 
   /** Matterbridge logger */
@@ -140,7 +150,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public fileLogger = false;
 
   /** Matter logger */
-  public readonly matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+  public readonly matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   /** Matter logger level */
   public matterLogLevel: LogLevel = this.matterLog.logLevel;
   /** Whether to log Matter to a file */
@@ -151,8 +161,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public readonly shellyBoard = hasParameter('shelly');
   public shellySysUpdate = false;
   public shellyMainUpdate = false;
+  /** It indicates whether a restart is required. It can be unset in childbridge mode by restarting the plugin that triggered the restart. */
   public restartRequired = false;
+  /** It indicates whether a fixed restart is required. It cannot be unset once set. */
   public fixedRestartRequired = false;
+  /** It indicates whether an update is available. */
   public updateRequired = false;
 
   // Managers
@@ -1573,6 +1586,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await this.startPlugins();
 
     this.log.debug('Starting start matter interval in bridge mode...');
+    this.frontend.wssSendSnackbarMessage(`The bridge is starting...`, 0, 'info');
     let failCount = 0;
     this.startMatterInterval = setInterval(
       async () => {
@@ -1648,6 +1662,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.notice('Matterbridge bridge started successfully');
         this.frontend.wssSendRefreshRequired('settings');
         this.frontend.wssSendRefreshRequired('plugins');
+        this.frontend.wssSendCloseSnackbarMessage(`The bridge is starting...`);
       },
       Number(process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS']) || this.startMatterIntervalMs,
     );
@@ -1677,6 +1692,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Start the Matterbridge in childbridge mode when all plugins are loaded and started
     this.log.debug('Starting start matter interval in childbridge mode...');
+    this.frontend.wssSendSnackbarMessage(`The bridge is starting...`, 0, 'info');
     let failCount = 0;
     this.startMatterInterval = setInterval(
       async () => {
@@ -1776,6 +1792,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.notice('Matterbridge childbridge started successfully');
         this.frontend.wssSendRefreshRequired('settings');
         this.frontend.wssSendRefreshRequired('plugins');
+        this.frontend.wssSendCloseSnackbarMessage(`The bridge is starting...`);
       },
       Number(process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS']) || this.startMatterIntervalMs,
     );

@@ -32,12 +32,12 @@ Advantages:
 
 ### Added
 
-- [frontend]: Set autoScroll to false in mobileMode.
+- [frontend]: Set automatically autoScroll to false in mobileMode.
 - [frontend]: Added Log length: 100, 200, 500, 1000.
-- [frontend]: Added Log search with case-insensitive regex: use /text/ in the search field.
+- [frontend]: Added Log search with case-insensitive regex: use /text/ in the search field to activate the regex search mode.
 - [frontend]: Differentiated update icon color: primary color for latest and secondary color for dev.
 - [frontend]: Added `Reset the frontend UI` in the Reset menu. It will reset the frontend local storage to the default.
-- [MbfTable]: Added ConditionalTooltip to show clipped column cells. Used in the Cluster table.
+- [MbfTable]: Added ConditionalTooltip to show clipped column cells. Used in the Cluster table for a better user experience.
 
 ### Changed
 
@@ -48,6 +48,7 @@ Advantages:
 
 - [doorLock]: Fixed DoorLock.supportedOperatingModes. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/454).
 - [frontend]: Fixed mobileMode menu navigation. Thanks Calimerorulez (https://github.com/Luligu/matterbridge/issues/457).
+- [matterbridge]: Fixed debug level of matter logger.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
