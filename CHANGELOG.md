@@ -34,7 +34,7 @@ Advantages:
 
 - [frontend]: Set automatically autoScroll to false in mobileMode.
 - [frontend]: Added Log length: 100, 200, 500, 1000.
-- [frontend]: Added Log search with case-insensitive regex: use /regex/ in the search field to activate the regex search mode (i.e. /Frontend/). See [Regex](https://github.com/Luligu/matterbridge?tab=readme-ov-file#how_to_use_the_regex_search_in_the_Log_page).
+- [frontend]: Added Log search with case-insensitive regex: use /regex/ in the search field to activate the regex search mode (i.e. /Frontend/). See [Regex](https://github.com/Luligu/matterbridge/tree/dev?tab=readme-ov-file#how-to-use-the-regex-search-in-the-log-page).
 - [frontend]: Differentiated update icon color: primary color for latest and secondary color for dev.
 - [frontend]: Added `Reset the frontend UI` in the Reset menu. It will reset the frontend local storage to the default and reload the page.
 - [MbfTable]: Added ConditionalTooltip to show clipped column cells. Used in the Cluster table for a better user experience.
