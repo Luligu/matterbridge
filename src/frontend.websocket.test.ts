@@ -1480,32 +1480,6 @@ describe('Matterbridge frontend', () => {
     expect(data.error).toBeUndefined();
   });
 
-  test('Websocket API ping', async () => {
-    expect(ws).toBeDefined();
-    expect(ws.readyState).toBe(WebSocket.OPEN);
-    ws.ping();
-    await wait(100, 'Wait for ping', true);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocket client ping`);
-  });
-
-  test('Websocket API pong', async () => {
-    expect(ws).toBeDefined();
-    expect(ws.readyState).toBe(WebSocket.OPEN);
-    ws.pong();
-    await wait(100, 'Wait for pong', true);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocket client pong`);
-  });
-
-  test('Websocket client disconnected', async () => {
-    expect(ws).toBeDefined();
-    expect(ws.readyState).toBe(WebSocket.OPEN);
-    ws.close();
-    // prettier-ignore
-    await waiter('Websocket closed', () => { return ws.readyState === WebSocket.CLOSED; });
-    expect(ws.readyState).toBe(WebSocket.CLOSED);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `WebSocket client disconnected`);
-  });
-
   test('Remove mock plugin 1', async () => {
     expect((matterbridge as any).plugins.has('matterbridge-mock1')).toBeTruthy();
     await (matterbridge as any).plugins.remove('./src/mock/plugin1');
@@ -1534,7 +1508,6 @@ describe('Matterbridge frontend', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Destroy the Matterbridge instance
-    // await matterbridge.setLogLevel(LogLevel.DEBUG);
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Stopping the frontend...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Frontend app closed successfully`);

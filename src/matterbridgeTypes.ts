@@ -234,6 +234,7 @@ export interface ApiDevice {
   uniqueId: string;
   reachable: boolean;
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
+  batteryLevel?: number;
   cluster: string;
   matter?: ApiMatter;
 }

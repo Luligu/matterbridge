@@ -7,7 +7,7 @@ const FRONTEND_PORT = 8284;
 const NAME = 'Frontend';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString(), '-debug', '-logger', 'debug'];
+process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString(), '-logger', 'debug', '-debug', '-verbose'];
 
 import { copyFileSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -37,8 +37,9 @@ import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
 import { wait, waiter } from './utils/wait.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
+import { EndpointNumber } from '@matter/types/datatype';
 
 // Mock BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
@@ -55,7 +56,7 @@ const startSpy = jest.spyOn(Frontend.prototype, 'start');
 const stopSpy = jest.spyOn(Frontend.prototype, 'stop');
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge frontend', () => {
   let matterbridge: MatterbridgeType;
@@ -166,7 +167,19 @@ describe('Matterbridge frontend', () => {
     cliEmitter.emit('memory', '12345678', '87654321', '12345678', '87654321', '12345678', '87654321', '12345678');
   });
 
+  test('Frontend getApiSettings', async () => {
+    const apiSetting = await (frontend as any).getApiSettings();
+    expect(apiSetting).toBeDefined();
+    expect(apiSetting.systemInformation).toBeDefined();
+    expect(apiSetting.matterbridgeInformation).toBeDefined();
+  });
+
   test('Frontend getReachability', () => {
+    // False if cleanup has started
+    (frontend as any).matterbridge.hasCleanupStarted = true;
+    expect((frontend as any).getReachability({})).toBe(false);
+    (frontend as any).matterbridge.hasCleanupStarted = false;
+
     // Test the getReachability functionality
     expect((frontend as any).getReachability({ lifecycle: { isReady: false } })).toBeFalsy();
     expect((frontend as any).getReachability({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeFalsy();
@@ -180,10 +193,18 @@ describe('Matterbridge frontend', () => {
     expect((frontend as any).getReachability({ hasClusterServer: () => false, lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } })).toBeFalsy();
   });
 
-  test('Frontend getPowerSource', () => {
+  test('Frontend getPowerSource and getBatteryLevel', () => {
+    // Undefined if cleanup has started
+    (frontend as any).matterbridge.hasCleanupStarted = true;
+    expect((frontend as any).getPowerSource({})).toBeUndefined();
+    expect((frontend as any).getBatteryLevel({})).toBeUndefined();
+    (frontend as any).matterbridge.hasCleanupStarted = false;
+
     // Undefined if not active
     expect((frontend as any).getPowerSource({ lifecycle: { isReady: false } })).toBeUndefined();
     expect((frontend as any).getPowerSource({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeUndefined();
+    expect((frontend as any).getBatteryLevel({ lifecycle: { isReady: false } })).toBeUndefined();
+    expect((frontend as any).getBatteryLevel({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeUndefined();
 
     // Wired ac
     let device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
@@ -193,6 +214,7 @@ describe('Matterbridge frontend', () => {
       if (cluster === PowerSource.Cluster.id && attribute === 'wiredCurrentType') return PowerSource.WiredCurrentType.Ac;
     });
     expect((frontend as any).getPowerSource(device)).toBe('ac');
+    expect((frontend as any).getBatteryLevel(device)).toBeUndefined();
 
     // Battery
     device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
@@ -200,8 +222,22 @@ describe('Matterbridge frontend', () => {
     device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { battery: true };
       if (cluster === PowerSource.Cluster.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
+      if (cluster === PowerSource.Cluster.id && attribute === 'batPercentRemaining') return 120;
     });
     expect((frontend as any).getPowerSource(device)).toBe('ok');
+    expect((frontend as any).getBatteryLevel(device)).toBe(60);
+    device.getAttribute = jest.fn((cluster: number, attribute: string) => {
+      if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { battery: true };
+      if (cluster === PowerSource.Cluster.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
+      if (cluster === PowerSource.Cluster.id && attribute === 'batPercentRemaining') return undefined;
+    });
+    expect((frontend as any).getPowerSource(device)).toBe('ok');
+    expect((frontend as any).getBatteryLevel(device)).toBe(undefined);
+    device.getAttribute = jest.fn((cluster: number, attribute: string) => {
+      if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { battery: true };
+      if (cluster === PowerSource.Cluster.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
+      if (cluster === PowerSource.Cluster.id && attribute === 'batPercentRemaining') return 120;
+    });
 
     // Not wired nor battery
     device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
@@ -210,29 +246,246 @@ describe('Matterbridge frontend', () => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return {};
     });
     expect((frontend as any).getPowerSource(device)).toBe(undefined);
-
+    expect((frontend as any).getBatteryLevel(device)).toBe(undefined);
     // Child endpoints
     device.hasClusterServer.mockImplementationOnce(() => false);
     device.getChildEndpoints = jest.fn(() => [device]);
     expect((frontend as any).getPowerSource(device)).toBe(undefined);
+    device.hasClusterServer.mockImplementationOnce(() => false);
+    expect((frontend as any).getBatteryLevel(device)).toBe(undefined);
   });
 
   test('Frontend getPlugins', () => {
-    matterbridge.hasCleanupStarted = true;
+    (frontend as any).matterbridge.hasCleanupStarted = true;
     expect((frontend as any).getPlugins()).toEqual([]);
-    matterbridge.hasCleanupStarted = false;
+    (frontend as any).matterbridge.hasCleanupStarted = false;
+    expect((frontend as any).getPlugins()).toEqual([]);
   });
 
   test('Frontend getDevices', async () => {
-    matterbridge.hasCleanupStarted = true;
+    (frontend as any).matterbridge.hasCleanupStarted = true;
     expect(await (frontend as any).getDevices()).toEqual([]);
-    matterbridge.hasCleanupStarted = false;
+    (frontend as any).matterbridge.hasCleanupStarted = false;
+    expect(await (frontend as any).getDevices()).toEqual([]);
+  });
+
+  test('Frontend getClusters', async () => {
+    (frontend as any).matterbridge.hasCleanupStarted = true;
+    expect(await (frontend as any).getClusters()).toBeUndefined();
+    (frontend as any).matterbridge.hasCleanupStarted = false;
+    expect(await (frontend as any).getClusters()).toBeUndefined();
   });
 
   test('Frontend getClusterTextFromDevice', () => {
+    // Empty if cleanup has started
+    (frontend as any).matterbridge.hasCleanupStarted = true;
+    expect((frontend as any).getClusterTextFromDevice({})).toBe('');
+    (frontend as any).matterbridge.hasCleanupStarted = false;
+
     // Undefined if not active
     expect((frontend as any).getClusterTextFromDevice({ lifecycle: { isReady: false } })).toBe('');
     expect((frontend as any).getClusterTextFromDevice({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBe('');
+
+    // TODO: Add more tests for getClusterTextFromDevice when needed
+  });
+
+  test('Frontend wssSendLogMessage', async () => {
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = jest.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendLogMessage('info', '12:00', 'Test', 'Message')).toBeUndefined();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendLogMessage('info', '12:00', 'Test', undefined as any)).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(0);
+    jest.clearAllMocks();
+
+    expect(frontend.wssSendLogMessage('spawn', '12:00', 'Test', 'Message')).toBeUndefined();
+    expect(spy).toHaveBeenCalledWith({ 'dst': 'Frontend', 'id': 0, 'method': 'log', 'response': { 'level': 'spawn', 'message': 'Message', 'name': 'Test', 'time': '12:00' }, 'src': 'Matterbridge', 'success': true });
+    jest.clearAllMocks();
+
+    expect(frontend.wssSendLogMessage('info', '12:00', 'Test', 'Message')).toBeUndefined();
+    expect(spy).toHaveBeenCalledWith({ 'dst': 'Frontend', 'id': 0, 'method': 'log', 'response': { 'level': 'info', 'message': 'Message', 'name': 'Test', 'time': '12:00' }, 'src': 'Matterbridge', 'success': true });
+    jest.clearAllMocks();
+
+    expect(frontend.wssSendLogMessage('info', '12:00', 'Test', 'Messageaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')).toBeUndefined();
+    expect(spy).toHaveBeenCalledWith({
+      'dst': 'Frontend',
+      'id': 0,
+      'method': 'log',
+      'response': { 'level': 'info', 'message': 'Messageaaaaaaaaaaaaa ... aaaaaaaaaaaaaaaaaaaa', 'name': 'Test', 'time': '12:00' },
+      'src': 'Matterbridge',
+      'success': true,
+    });
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssSendRefreshRequired', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = jest.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendRefreshRequired('settings')).toBeUndefined();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendRefreshRequired('settings')).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssSendRestartRequired', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = jest.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendRestartRequired()).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(0);
+    jest.clearAllMocks();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendRestartRequired()).toBeUndefined();
+    expect(frontend.wssSendRestartRequired(false)).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(3);
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssSendRestartNotRequired', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = jest.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendRestartNotRequired()).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(0);
+    jest.clearAllMocks();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendRestartNotRequired()).toBeUndefined();
+    expect(frontend.wssSendRestartNotRequired(false)).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(3);
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssSendUpdateRequired', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = jest.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendUpdateRequired()).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(0);
+    jest.clearAllMocks();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendUpdateRequired()).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssSendCpuUpdate wssSendMemoryUpdate wssSendUptimeUpdate', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = jest.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendCpuUpdate(1, 1)).toBeUndefined();
+    expect(frontend.wssSendMemoryUpdate('', '', '', '', '', '', '')).toBeUndefined();
+    expect(frontend.wssSendUptimeUpdate('', '')).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(0);
+    jest.clearAllMocks();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendCpuUpdate(1, 1)).toBeUndefined();
+    expect(frontend.wssSendMemoryUpdate('', '', '', '', '', '', '')).toBeUndefined();
+    expect(frontend.wssSendUptimeUpdate('', '')).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(3);
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssSendSnackbarMessage  wssSendCloseSnackbarMessage', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = jest.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendSnackbarMessage('Message')).toBeUndefined();
+    expect(frontend.wssSendCloseSnackbarMessage('Message')).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(0);
+    jest.clearAllMocks();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendSnackbarMessage('Message', 2, 'success')).toBeUndefined();
+    expect(frontend.wssSendCloseSnackbarMessage('Message')).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssSendAttributeChangedMessage', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = jest.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendAttributeChangedMessage('plugin', 'serialNumber', 'uniqueId', EndpointNumber(1), 'id', 'cluster', 'attribute', 'value')).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(0);
+    jest.clearAllMocks();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendAttributeChangedMessage('plugin', 'serialNumber', 'uniqueId', EndpointNumber(1), 'id', 'cluster', 'attribute', 'value')).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssBroadcastMessage', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+
+    (frontend as any).listening = false;
+    expect(frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'api' } as any)).toBeUndefined();
+    jest.clearAllMocks();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{ send: () => {} }]) } as any;
+    expect(frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'log' } as any)).toBeUndefined();
+    expect(frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'api' } as any)).toBeUndefined();
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
   });
 
   test('WebSocketServer connection and message', async () => {
@@ -248,9 +501,9 @@ describe('Matterbridge frontend', () => {
       });
     });
 
-    client.ping(); // Send a ping to test the connection
+    client.ping(); // Send a ping to test the handler
 
-    client.pong(); // Send a pong to test the connection
+    client.pong(); // Send a pong to test the handler
 
     await new Promise<void>((resolve, reject) => {
       client.on('close', () => {
@@ -263,6 +516,11 @@ describe('Matterbridge frontend', () => {
       });
       client.close(); // Close the connection
     });
+
+    await wait(100); // Wait a bit for the async log
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`WebSocket client ping received`);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`WebSocket client pong received`);
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`WebSocket client disconnected`);
     expect(client.removeAllListeners()).toBeDefined();
   });
 
