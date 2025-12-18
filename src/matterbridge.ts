@@ -1607,6 +1607,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} is in error state. Check the logs.`, 0, 'error');
             this.frontend.wssSendSnackbarMessage(`The bridge is offline. Startup halted due to plugin errors.`, 0, 'error');
             this.frontend.wssSendRefreshRequired('plugins');
+            this.frontend.wssSendCloseSnackbarMessage(`The bridge is starting...`);
             return;
           }
 
@@ -1714,6 +1715,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} is in error state. Check the logs.`, 0, 'error');
             this.frontend.wssSendSnackbarMessage(`The bridge is offline. Startup halted due to plugin errors.`, 0, 'error');
             this.frontend.wssSendRefreshRequired('plugins');
+            this.frontend.wssSendCloseSnackbarMessage(`The bridge is starting...`);
             return;
           }
 
