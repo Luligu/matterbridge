@@ -522,6 +522,12 @@ To solve the race condition on docker compose, use the --fixed_delay parameter. 
 
 # Known general issues
 
+## Google Home
+If you encounter a “Something Went Wrong” screen while commissioning MatterBridge devices in Google Home on Android, it’s due to an Android bug. Android fails to send the country code, which is mandatory under the Matter specification.
+
+### Workaround
+Install Google Home on an iPhone and complete the commissioning there. Once set up, the devices will appear and function normally on your Android phone and other Nest devices in your home.
+
 ## Session XYZ does not exist or Cannot find a session for ID XYZ
 
 This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
