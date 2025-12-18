@@ -51,7 +51,7 @@ const runGarbageCollectionSpy = jest.spyOn(Inspector.prototype, 'runGarbageColle
 });
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;

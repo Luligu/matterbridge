@@ -43,7 +43,7 @@ const updateProcessSpy = jest.spyOn(Matterbridge.prototype, 'updateProcess').moc
 });
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge ' + HOMEDIR, () => {
   let device: Endpoint;

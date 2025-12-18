@@ -14,7 +14,7 @@ import { setupTest } from '../jestutils/jestHelpers.js';
 import { createZip } from './createZip.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('createZip', () => {
   beforeEach(() => {

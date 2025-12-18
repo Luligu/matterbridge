@@ -132,7 +132,7 @@ import {
 } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let context: StorageContext;

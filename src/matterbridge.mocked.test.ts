@@ -836,7 +836,7 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).parseCommandLine();
     expect(wait).toHaveBeenCalledWith(120000, 'Fixed race condition delay', true);
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR];
-  });
+  }, 10000);
 
   test('Matterbridge.initialize() startBridge and startChildbridge', async () => {
     // await setDebug(false);

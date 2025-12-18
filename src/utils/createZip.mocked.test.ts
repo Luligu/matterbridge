@@ -40,7 +40,7 @@ jest.unstable_mockModule('archiver', () => ({
 const { createZip } = await import('./createZip.ts');
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('createZip (mocked)', () => {
   let mockArchiveInstance: any;

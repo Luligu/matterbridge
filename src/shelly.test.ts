@@ -20,7 +20,7 @@ import { BroadcastServer } from './broadcastServer.js';
 const log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 mkdirSync(HOMEDIR, { recursive: true });
 
 describe('Shelly API', () => {
