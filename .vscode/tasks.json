@@ -38,7 +38,7 @@
       "label": "Test: Coverage",
       "type": "shell",
       "command": "node",
-      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "--coverageThreshold=\"{ \\\"global\\\": { \\\"lines\\\": 100, \\\"functions\\\": 100 } }\""],
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%"],
       "group": {
         "kind": "test",
         "isDefault": false

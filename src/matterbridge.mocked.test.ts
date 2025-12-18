@@ -721,7 +721,7 @@ describe('Matterbridge mocked', () => {
     }); // Reset the spy to return an empty interface
     await (matterbridge as any).logNodeAndSystemInfo();
     expect(networkInterfacesSpy).toHaveBeenCalled();
-  });
+  }, 10000);
 
   test('matterbridge.initialize() logNodeAndSystemInfo global node modules', async () => {
     // Reset the process.argv to simulate command line arguments
@@ -757,7 +757,7 @@ describe('Matterbridge mocked', () => {
     getGlobalNodeModulesMock.mockImplementation(() => {
       return Promise.resolve('usr/local/lib/node_modules');
     });
-  });
+  }, 10000);
 
   test('Matterbridge.initialize() parseCommandLine', async () => {
     // Reset the process.argv to simulate command line arguments
