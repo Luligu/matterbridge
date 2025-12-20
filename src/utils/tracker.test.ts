@@ -12,7 +12,7 @@ import { jest } from '@jest/globals';
 import { consoleLogSpy, setDebug, setupTest } from '../jestutils/jestHelpers.js';
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Tracker', () => {
   const originalArgv = [...process.argv];

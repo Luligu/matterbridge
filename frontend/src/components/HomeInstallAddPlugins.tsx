@@ -142,7 +142,7 @@ function HomeInstallAddPlugins() {
     <MbfWindow>
       <MbfWindowHeader>
         <MbfWindowHeaderText>Install plugins</MbfWindowHeaderText>
-        <MbfWindowIcons onClose={() => setClosed(true)} />
+        <MbfWindowIcons close={() => setClosed(true)} />
       </MbfWindowHeader>
       <MbfWindowContent
         onDragOver={handleDragOver}

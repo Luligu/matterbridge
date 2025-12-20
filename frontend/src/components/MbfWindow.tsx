@@ -166,10 +166,10 @@ export function MbfWindowContent({ children, style, onDragOver, onDragLeave, onD
 interface MbfWindowIconsProps {
   children?: ReactNode;
   style?: React.CSSProperties;
-  onClose?: () => void;
+  close?: () => void;
 }
 
-export function MbfWindowIcons({ children, style, onClose }: MbfWindowIconsProps): React.JSX.Element {
+export function MbfWindowIcons({ children, style, close }: MbfWindowIconsProps): React.JSX.Element {
   const defaultStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'row',
@@ -182,8 +182,8 @@ export function MbfWindowIcons({ children, style, onClose }: MbfWindowIconsProps
   return (
     <div style={{ ...defaultStyle, ...style }}>
       {children}
-      {enableWindows && onClose && (
-        <IconButton style={{ margin: '0px' }} onClick={onClose}>
+      {enableWindows && close && (
+        <IconButton style={{ margin: '0px' }} onClick={close}>
           <Tooltip title={`Close the window`}>
             <Icon path={mdiClose} size='20px' color={'var(--header-text-color)'} />
           </Tooltip>

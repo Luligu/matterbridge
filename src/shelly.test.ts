@@ -20,7 +20,7 @@ import { BroadcastServer } from './broadcastServer.js';
 const log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 mkdirSync(HOMEDIR, { recursive: true });
 
 describe('Shelly API', () => {
@@ -149,14 +149,16 @@ describe('Shelly API', () => {
   });
 
   it('should triggerShellySysUpdate', async () => {
-    const { triggerShellySysUpdate, setVerifyTimeoutSecs } = await import('./shelly.js');
+    const { triggerShellySysUpdate, setVerifyTimeoutSecs, setVerifyIntervalSecs } = await import('./shelly.js');
+    setVerifyTimeoutSecs(0.01);
+    setVerifyIntervalSecs(0.01);
+
     const result = await triggerShellySysUpdate(matterbridgeMock);
     expect(result).toBeUndefined();
 
     updatingInProgress = true;
     await triggerShellySysUpdate(matterbridgeMock);
 
-    setVerifyTimeoutSecs(1);
     await triggerShellySysUpdate(matterbridgeMock);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('timed out'));
 
@@ -166,7 +168,10 @@ describe('Shelly API', () => {
   }, 30000);
 
   it('should verifyShellyUpdate', async () => {
-    const { verifyShellyUpdate, setVerifyTimeoutSecs } = await import('./shelly.js');
+    const { verifyShellyUpdate, setVerifyTimeoutSecs, setVerifyIntervalSecs } = await import('./shelly.js');
+    setVerifyTimeoutSecs(0.01);
+    setVerifyIntervalSecs(0.01);
+
     const result = await verifyShellyUpdate(matterbridgeMock, '/api/updates/sys/status', 'Shelly system update');
     expect(result).toBeUndefined();
 
@@ -179,9 +184,9 @@ describe('Shelly API', () => {
 
     serverFail = true;
     setVerifyTimeoutSecs(10);
-    setVerifyIntervalSecs(1);
+    setVerifyIntervalSecs(0.01);
     await verifyShellyUpdate(matterbridgeMock, '/api/updates/sys/status', 'Shelly system update');
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // wait for the error to be logged
+    await new Promise((resolve) => setTimeout(resolve, 100)); // wait for the error to be logged
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error'));
   }, 30000);
 
@@ -196,7 +201,10 @@ describe('Shelly API', () => {
   });
 
   it('should triggerShellyMainUpdate', async () => {
-    const { triggerShellyMainUpdate } = await import('./shelly.js');
+    const { triggerShellyMainUpdate, setVerifyTimeoutSecs, setVerifyIntervalSecs } = await import('./shelly.js');
+    setVerifyTimeoutSecs(0.01);
+    setVerifyIntervalSecs(0.01);
+
     const result = await triggerShellyMainUpdate(matterbridgeMock);
     expect(result).toBeUndefined();
 

@@ -43,7 +43,7 @@ const updateProcessSpy = jest.spyOn(Matterbridge.prototype, 'updateProcess').moc
 });
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('Matterbridge ' + HOMEDIR, () => {
   let device: Endpoint;
@@ -104,7 +104,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
       device.setStateOf(OnOffServer, { onOff: true });
     });
     // expect(await invokeBehaviorCommand(device as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(consoleLogSpy).toHaveBeenCalledWith('Device turned on');
     expect(device.stateOf(OnOffServer).onOff).toBe(false);
   });
@@ -173,7 +173,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
       (restartDevice as any).events.onOff.onOff$Changed.on(listener);
       restartDevice.setStateOf(OnOffServer, { onOff: true });
     });
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(restartProcessSpy).toHaveBeenCalled();
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
 
@@ -188,7 +188,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
       (restartDevice as any).events.onOff.onOff$Changed.on(listener);
       restartDevice.setStateOf(OnOffServer, { onOff: true });
     });
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(shutdownProcessSpy).toHaveBeenCalled();
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
   });
@@ -209,7 +209,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
       (updateDevice as any).events.onOff.onOff$Changed.on(listener);
       updateDevice.setStateOf(OnOffServer, { onOff: true });
     });
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(matterbridge.updateProcess).toHaveBeenCalled();
     expect(updateDevice.stateOf(OnOffServer).onOff).toBe(false);
 
@@ -239,7 +239,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
     if (!updateDevice) return;
     expect(updateDevice.stateOf(OnOffServer).onOff).toBe(false);
     expect(await invokeBehaviorCommand(updateDevice as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(getShelly).toHaveBeenCalledWith('/api/updates/sys/perform', 10 * 1000);
     expect(getShelly).toHaveBeenCalledWith('/api/updates/main/perform', 10 * 1000);
     expect(updateDevice.stateOf(OnOffServer).onOff).toBe(false);
@@ -247,7 +247,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
     jest.clearAllMocks();
     (getShelly as jest.MockedFunction<(api: string, timeout?: number) => Promise<void>>).mockRejectedValue(Error('Jest error'));
     expect(await invokeBehaviorCommand(updateDevice as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(getShelly).toHaveBeenCalledWith('/api/updates/sys/perform', 10 * 1000);
     expect(getShelly).toHaveBeenCalledWith('/api/updates/main/perform', 10 * 1000);
   });
@@ -258,14 +258,14 @@ describe('Matterbridge ' + HOMEDIR, () => {
     if (!rebootDevice) return;
     expect(rebootDevice.stateOf(OnOffServer).onOff).toBe(false);
     expect(await invokeBehaviorCommand(rebootDevice as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(postShelly).toHaveBeenCalledWith('/api/system/reboot', {}, 60 * 1000);
     expect(rebootDevice.stateOf(OnOffServer).onOff).toBe(false);
 
     jest.clearAllMocks();
     (postShelly as jest.MockedFunction<(api: string, data: any, timeout?: number) => Promise<void>>).mockRejectedValue(Error('Jest error'));
     expect(await invokeBehaviorCommand(rebootDevice as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(postShelly).toHaveBeenCalledWith('/api/system/reboot', {}, 60 * 1000);
   });
 });

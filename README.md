@@ -15,7 +15,7 @@
 
 ---
 
-Matterbridge is a Matter plugin manager.
+[Matterbridge](https://matterbridge.io) is a Matter plugin manager.
 
 It allows you to have all your Matter devices up and running in a couple of minutes without having to deal with the pairing process for each individual device.
 
@@ -27,7 +27,7 @@ This project aims to enable porting Homebridge plugins to Matterbridge plugins w
 
 The easiest way to start create a new plugin is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) which has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.
 
-Matterbridge creates a device that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, Home Assistant, or any other platform supporting Matter.
+Matterbridge creates a [Matter device](https://csa-iot.org/all-solutions/matter/) that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, Home Assistant, or any other platform supporting Matter.
 
 You don't need a hub or a dedicated new machine.
 
@@ -519,6 +519,19 @@ Race condition can cause missing configuration or missed devices on the controll
 To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart cause the delay is applied only in the first 5 minutes from system reboot.
 
 To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed so use it only if strictly necessary.
+
+## How to use the regex search in the Log page
+
+The regex search is activated when the search string starts with `/` and ends with `/`.
+
+Examples:
+
+```text
+/^error/          -> match log names (the part with [...]) or lines that start with "error"
+/timeout/         -> match "timeout" anywhere in the line (beginning/middle/end)
+/disconnected$/   -> match lines that end with "disconnected"
+/error|warning/   -> match either "error" OR "warning" (double search)
+```
 
 # Known general issues
 

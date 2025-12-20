@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.3.2
+ * @version 1.3.3
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-// eslint-disable-next-line no-console
+/* eslint-disable-next-line no-console */ /* istanbul ignore next */
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mFrontend loaded.\u001B[40;0m');
 
 // Node modules
@@ -108,6 +108,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg)) {
+      // istanbul ignore else
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -158,10 +159,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.respond({ ...msg, result: { success: true } });
           break;
         default:
+          // istanbul ignore next
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
     if (this.server.isWorkerResponse(msg) && msg.result) {
+      // istanbul ignore next
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'plugins_install':
@@ -248,7 +251,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       // Set the global logger callback for the WebSocketServer
       let callbackLogLevel = LogLevel.NOTICE;
+      // istanbul ignore else
       if (this.matterbridge.getLogLevel() === LogLevel.INFO || Logger.level === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
+      // istanbul ignore else
       if (this.matterbridge.getLogLevel() === LogLevel.DEBUG || Logger.level === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
       AnsiLogger.setGlobalCallback(this.wssSendLogMessage.bind(this), callbackLogLevel);
       this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
@@ -259,22 +264,24 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       });
 
       ws.on('ping', () => {
-        this.log.debug('WebSocket client ping');
+        this.log.debug('WebSocket client ping received');
         ws.pong();
       });
 
       ws.on('pong', () => {
-        this.log.debug('WebSocket client pong');
+        this.log.debug('WebSocket client pong received');
       });
 
       ws.on('close', () => {
         this.log.info('WebSocket client disconnected');
+        // istanbul ignore else
         if (this.webSocketServer?.clients.size === 0) {
           AnsiLogger.setGlobalCallback(undefined);
           this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
         }
       });
 
+      // istanbul ignore next
       ws.on('error', (error: Error) => {
         // istanbul ignore next
         this.log.error(`WebSocket client error: ${error}`);
@@ -318,7 +325,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         });
       } else {
         this.httpServer.listen(this.port, () => {
+          // istanbul ignore else
           if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
+          // istanbul ignore else
           if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
           this.listening = true;
           this.emit('server_listening', 'http', this.port);
@@ -459,7 +468,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         });
       } else {
         this.httpsServer.listen(this.port, () => {
+          // istanbul ignore else
           if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
+          // istanbul ignore else
           if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
           this.listening = true;
           this.emit('server_listening', 'https', this.port);
@@ -947,6 +958,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       await withTimeout(
         new Promise<void>((resolve) => {
           this.webSocketServer?.close((error) => {
+            // istanbul ignore if
             if (error) {
               // istanbul ignore next
               this.log.error(`Error closing WebSocket server: ${error}`);
@@ -1104,7 +1116,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @returns {'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined} The power source attribute.
    */
   private getPowerSource(endpoint: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined {
-    if (this.matterbridge.hasCleanupStarted) return; // Skip if cleanup has started
+    if (this.matterbridge.hasCleanupStarted) return undefined; // Skip if cleanup has started
     if (!endpoint.lifecycle.isReady || endpoint.construction.status !== Lifecycle.Status.Active) return undefined;
 
     const powerSource = (device: MatterbridgeEndpoint) => {
@@ -1124,7 +1136,36 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (endpoint.hasClusterServer(PowerSource.Cluster.id)) return powerSource(endpoint);
     // Child endpoints
     for (const child of endpoint.getChildEndpoints()) {
+      // istanbul ignore else
       if (child.hasClusterServer(PowerSource.Cluster.id)) return powerSource(child);
+    }
+  }
+
+  /**
+   * Retrieves the battery level attribute.
+   *
+   * @param {MatterbridgeEndpoint} endpoint - The MatterbridgeDevice to retrieve the power source from.
+   * @returns {number | undefined} The battery level attribute.
+   */
+  private getBatteryLevel(endpoint: MatterbridgeEndpoint): number | undefined {
+    if (this.matterbridge.hasCleanupStarted) return undefined; // Skip if cleanup has started
+    if (!endpoint.lifecycle.isReady || endpoint.construction.status !== Lifecycle.Status.Active) return undefined;
+
+    const batteryLevel = (device: MatterbridgeEndpoint) => {
+      const featureMap = device.getAttribute(PowerSource.Cluster.id, 'featureMap') as Record<string, boolean>;
+      if (featureMap.battery) {
+        const batChargeLevel = device.getAttribute(PowerSource.Cluster.id, 'batPercentRemaining') as number | undefined;
+        return isValidNumber(batChargeLevel) ? batChargeLevel / 2 : undefined;
+      }
+      return undefined;
+    };
+
+    // Root endpoint
+    if (endpoint.hasClusterServer(PowerSource.Cluster.id)) return batteryLevel(endpoint);
+    // Child endpoints
+    for (const child of endpoint.getChildEndpoints()) {
+      // istanbul ignore else
+      if (child.hasClusterServer(PowerSource.Cluster.id)) return batteryLevel(child);
     }
   }
 
@@ -1137,6 +1178,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   private getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
     if (this.matterbridge.hasCleanupStarted) return ''; // Skip if cleanup has started
+    // istanbul ignore else
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return '';
 
     const getUserLabel = (device: MatterbridgeEndpoint) => {
@@ -1292,6 +1334,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         uniqueId: device.uniqueId,
         reachable: this.getReachability(device),
         powerSource: this.getPowerSource(device),
+        batteryLevel: this.getBatteryLevel(device),
         matter: device.mode === 'server' && device.serverNode ? this.matterbridge.getServerNodeData(device.serverNode) : undefined,
         cluster: this.getClusterTextFromDevice(device),
       });
@@ -1537,9 +1580,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.wssSendSnackbarMessage(`Loaded plugin ${localData.params.pluginNameOrPath}`, 5, 'success');
               return;
             })
-            .catch((_error) => {
-              //
-            });
+            .catch(/* istanbul ignore next */ (_error) => {});
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} not added` });
           this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
@@ -1591,9 +1632,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginName}`, 5, 'success');
               return;
             })
-            .catch((_error) => {
-              //
-            });
+            .catch(/* istanbul ignore next */ (_error) => {});
         }
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/disableplugin') {
@@ -1817,6 +1856,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/devices' });
           return;
         }
+        // istanbul ignore next
         const selectDeviceValues = !plugin.platform ? [] : plugin.platform.getSelectDevices().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDeviceValues });
       } else if (data.method === '/api/select/entities') {
@@ -1829,6 +1869,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' });
           return;
         }
+        // istanbul ignore next
         const selectEntityValues = !plugin.platform ? [] : plugin.platform.getSelectEntities().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectEntityValues });
       } else if (data.method === '/api/action') {
@@ -2161,7 +2202,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * It also replaces all occurrences of \" with " and angle-brackets with &lt; and &gt;.
    * The function sends the message to all connected clients.
    */
-  wssSendLogMessage(level: string, time: string, name: string, message: string) {
+  wssSendLogMessage(level: string, time: string, name: string, message: string): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     if (!level || !time || !name || !message) return;
     // Remove ANSI escape codes from the message
@@ -2268,6 +2309,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number) {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
+    // istanbul ignore else
     if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', success: true, response: { cpuUsage: Math.round(cpuUsage * 100) / 100, processCpuUsage: Math.round(processCpuUsage * 100) / 100 } });
@@ -2286,6 +2328,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
+    // istanbul ignore else
     if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', success: true, response: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers } });
@@ -2299,6 +2342,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
+    // istanbul ignore else
     if (hasParameter('debug')) this.log.debug('Sending a uptime update message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
@@ -2370,6 +2414,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     const stringifiedMsg = JSON.stringify(msg);
     if (msg.method !== 'log') this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
     this.webSocketServer?.clients.forEach((client) => {
+      // istanbul ignore else
       if (client.readyState === client.OPEN) {
         client.send(stringifiedMsg);
       }

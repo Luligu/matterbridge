@@ -100,7 +100,7 @@ describe('MbfTable edge/fallback/error cases', () => {
   });
 });
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MbfTable, { MbfTableColumn } from '../src/components/MbfTable';
 
@@ -183,5 +183,44 @@ describe('MbfTable', () => {
     render(<MbfTable name="TestTableFooter" columns={columns} rows={rows} getRowKey="id" footerLeft="Left" footerRight="Right" />);
     expect(screen.getByText('Left')).toBeInTheDocument();
     expect(screen.getByText('Right')).toBeInTheDocument();
+  });
+
+  it('shows tooltip when tooltip=true using the cell value', async () => {
+    const tooltipColumns: MbfTableColumn<RowType>[] = [
+      { id: 'id', label: 'ID', required: true },
+      { id: 'name', label: 'Name', tooltip: true, maxWidth: 50 },
+    ];
+    const tooltipRows: RowType[] = [{ id: 'a', name: 'Alpha', value: 1, flag: false }];
+
+    render(<MbfTable name="TestTableTooltip" columns={tooltipColumns} rows={tooltipRows} getRowKey="id" />);
+
+    const cell = screen.getByText('Alpha');
+    Object.defineProperty(cell, 'scrollWidth', { value: 200, configurable: true });
+    Object.defineProperty(cell, 'clientWidth', { value: 50, configurable: true });
+
+    await act(async () => {
+      fireEvent.mouseEnter(cell);
+    });
+
+    await waitFor(async () => {
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Alpha');
+    });
+  });
+
+  it('does not show tooltip when maxWidth is not defined', async () => {
+    const tooltipColumns: MbfTableColumn<RowType>[] = [
+      { id: 'id', label: 'ID', required: true },
+      { id: 'name', label: 'Name', tooltip: true },
+    ];
+    const tooltipRows: RowType[] = [{ id: 'a', name: 'Alpha', value: 1, flag: false }];
+
+    render(<MbfTable name="TestTableTooltipNoMax" columns={tooltipColumns} rows={tooltipRows} getRowKey="id" />);
+
+    const cell = screen.getByText('Alpha');
+    await act(async () => {
+      fireEvent.mouseEnter(cell);
+    });
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 });

@@ -42,7 +42,7 @@ const makeDirent = (name: string, isFile: boolean, isDirectory: boolean) => ({
 });
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('copyDirectory', () => {
   beforeEach(() => {

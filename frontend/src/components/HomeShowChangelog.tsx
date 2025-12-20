@@ -34,7 +34,7 @@ function HomeShowChangelog({ changelog }: HomeShowChangelogProps): React.JSX.Ele
       <MbfWindowHeader>
         <MbfWindowHeaderText>Matterbridge Update</MbfWindowHeaderText>
       </MbfWindowHeader>
-      <MbfWindowContent style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      <MbfWindowContent style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
         <h4 style={{ margin: 0 }}>Matterbridge has been updated.</h4>
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '10px' }}>
           <Button

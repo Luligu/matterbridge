@@ -3,7 +3,6 @@ import { useContext, useEffect, useState, useRef, memo, useCallback } from 'reac
 
 // @mui/material
 import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
 
 // @mui/icons-material
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -15,6 +14,7 @@ import { debug } from '../App';
 import { ApiDevice, Cluster } from '../../../src/matterbridgeTypes';
 import { WsMessageApiResponse, WsMessageApiStateUpdate } from '../../../src/frontendTypes';
 import MbfTable, { MbfTableColumn } from './MbfTable';
+import { MbfWindow } from './MbfWindow';
 
 const devicesColumns: MbfTableColumn<ApiDevice>[] = [
   {
@@ -102,16 +102,8 @@ const clustersColumns: MbfTableColumn<Cluster>[] = [
     label: 'Attribute Value',
     id: 'attributeValue',
     required: true,
-    render: (value, _rowKey, _device, _column) => (
-      <Tooltip
-        title={String(value)}
-        componentsProps={{
-          tooltip: { sx: { fontSize: '14px', fontWeight: 'normal', color: '#ffffff', backgroundColor: 'var(--primary-color)' } },
-        }}
-      >
-        <div style={{ maxWidth: '500px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(value)}</div>
-      </Tooltip>
-    ),
+    maxWidth: 350,
+    tooltip: true,
   },
 ];
 
@@ -253,15 +245,15 @@ function DevicesTable({ filter }: { filter: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', margin: '0px', padding: '0px', gap: '20px', width: '100%', overflow: 'hidden' }}>
       {/* Devices Table */}
-      <div className='MbfWindowDiv' style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: `${pluginName && endpoint ? '30%' : '100%'}`, flex: '1 1 auto', overflow: 'hidden' }}>
+      <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: `${pluginName && endpoint ? '30%' : '100%'}`, flex: '1 1 auto', overflow: 'hidden' }}>
         <MbfTable name='Registered devices' getRowKey={getDeviceRowKey} onRowClick={handleDeviceClick} rows={filteredDevices} columns={devicesColumns} footerLeft={`Total devices: ${filteredDevices.length.toString()}`} />
-      </div>
+      </MbfWindow>
 
       {/* Clusters Table */}
       {pluginName && endpoint && (
-        <div className='MbfWindowDiv' style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', height: '70%', maxHeight: '70%', flex: '1 1 auto', overflow: 'hidden' }}>
+        <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', height: '70%', maxHeight: '70%', flex: '1 1 auto', overflow: 'hidden' }}>
           <MbfTable name='Clusters' title={deviceName || ''} getRowKey={getClusterRowKey} rows={clusters} columns={clustersColumns} footerLeft={`Total child endpoints: ${subEndpointsCount - 1}`} />
-        </div>
+        </MbfWindow>
       )}
     </div>
   );

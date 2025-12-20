@@ -27,7 +27,7 @@ function HomeBrowserRefresh(): React.JSX.Element {
       <MbfWindowHeader>
         <MbfWindowHeaderText>Frontend Update</MbfWindowHeaderText>
       </MbfWindowHeader>
-      <MbfWindowContent style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      <MbfWindowContent style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
         <h4 style={{ margin: 0 }}>The frontend has been updated. You are viewing an outdated web UI. Please refresh the page now.</h4>
         <div>
           <Button onClick={() => window.location.reload()} endIcon={<Refresh />} style={{ marginLeft: '10px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>

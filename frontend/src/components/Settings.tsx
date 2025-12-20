@@ -23,6 +23,7 @@ import { MatterbridgeInformation, SystemInformation } from '../../../src/matterb
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
 import { MbfPage } from './MbfPage';
 import { createDebouncer } from '../utils/createDebouncer';
+import { MbfLsk } from '../utils/localStorage';
 import { debug, enableMobile, setWssPassword } from '../App';
 // const debug = true;
 
@@ -93,9 +94,9 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info');
   const [logOnFileMb, setLogOnFileMb] = useState(false);
   const [frontendTheme, setFrontendTheme] = useState('dark');
-  const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem('homePagePlugins') === 'false' ? false : true); // default true
-  const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode') ?? 'devices'); // default devices
-  const [virtualMode, setVirtualMode] = useState(localStorage.getItem('virtualMode') ?? 'outlet'); // default outlet
+  const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) === 'false' ? false : true); // default true
+  const [homePageMode, setHomePageMode] = useState(localStorage.getItem(MbfLsk.homePageMode) ?? 'devices'); // default devices
+  const [virtualMode, setVirtualMode] = useState(localStorage.getItem(MbfLsk.virtualMode) ?? 'outlet'); // default outlet
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -127,7 +128,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
 
   // Retrieve the saved theme value from localStorage
   useEffect(() => {
-    const savedTheme = localStorage.getItem('frontendTheme');
+    const savedTheme = localStorage.getItem(MbfLsk.frontendTheme);
     if (savedTheme) {
       setFrontendTheme(savedTheme);
     }
@@ -159,7 +160,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
     const newTheme = event.target.value;
     if (debug) console.log('handleChangeTheme called with value:', newTheme);
     setFrontendTheme(newTheme);
-    localStorage.setItem('frontendTheme', newTheme);
+    localStorage.setItem(MbfLsk.frontendTheme, newTheme);
     document.body.setAttribute('frontend-theme', newTheme);
   };
 
@@ -168,7 +169,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
     const newValue = event.target.checked;
     if (debug) console.log('handleChangeHomePagePlugins called with value:', newValue);
     setHomePagePlugins(newValue);
-    localStorage.setItem('homePagePlugins', newValue ? 'true' : 'false');
+    localStorage.setItem(MbfLsk.homePagePlugins, newValue ? 'true' : 'false');
   };
 
   // Define a function to handle change home page setup
@@ -176,7 +177,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
     const newValue = event.target.value;
     if (debug) console.log('handleChangeHomePageMode called with value:', newValue);
     setHomePageMode(newValue);
-    localStorage.setItem('homePageMode', newValue);
+    localStorage.setItem(MbfLsk.homePageMode, newValue);
   };
 
   // Define a function to handle change virtual mode
@@ -184,7 +185,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
     const newValue = event.target.value;
     if (debug) console.log('handleChangeVirtualMode called with value:', newValue);
     setVirtualMode(newValue);
-    localStorage.setItem('virtualMode', newValue);
+    localStorage.setItem(MbfLsk.virtualMode, newValue);
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setvirtualmode', value: newValue } });
   };
 

@@ -18,7 +18,7 @@
 
 ## Run matterbridge with docker and docker compose
 
-The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on **Docker Hub**.
+The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
 
 The image (tag **latest**) includes matterbridge and all official plugins with the latest release (as published on npm). You can just pull the new image and matterbridge with all plugins will be the latest release published on npm.
 
@@ -30,11 +30,11 @@ It is based on node:22-bookworm-slim and integrates the health check.
 
 How Health Checks Work in Different Scenarios
 
-With docker-compose
+With docker-compose:
 
 Docker monitors the health check and can restart the container if needed.
 
-With docker run
+With docker run:
 
 The health check still runs in the background, but:
 The container doesn’t restart automatically if it becomes unhealthy.
@@ -44,6 +44,8 @@ You can manually check the health status:
 ```bash
 docker exec -it matterbridge curl -v http://localhost:8283/health
 ```
+
+If you use the docker image, please consider giving it a star on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
 
 ### First create the Matterbridge directories
 
@@ -84,11 +86,24 @@ sudo docker run --name matterbridge \
 
 You may need to adapt the script to your setup.
 
+### Run the Docker container and start it adding different parameters (i.e. frontend on port 8585)
+
+```bash
+sudo docker run --name matterbridge \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
+  -v ~/.mattercert:/root/.mattercert \
+  --network host --restart always -d luligu/matterbridge:latest \
+  matterbridge --docker --frontend 8585
+```
+
+If you override, always use `matterbridge --docker` like first part of the command.
+
 ### Run with docker compose
 
 The docker-compose.yml file is available in the docker directory of the package
 
-```
+```yaml
 services:
   matterbridge:
     container_name: matterbridge
@@ -114,6 +129,17 @@ or start only the matterbridge container with:
 ```bash
 docker compose up -d matterbridge
 ```
+
+If you need to start matterbridge adding different parameters (i.e. frontend on port 8585), you can override the default command adding the line command to the service:
+
+```yaml
+services:
+  matterbridge:
+    ...
+    command: ["matterbridge", "--docker", "--frontend", "8585"]
+```
+
+If you override, always use `["matterbridge", "--docker"]` like first part of the command.
 
 ### Stop with docker compose
 

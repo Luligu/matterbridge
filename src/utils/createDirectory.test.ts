@@ -14,10 +14,10 @@ import { createDirectory } from './createDirectory.js';
 
 const log = new AnsiLogger({ logName: 'CreateDirectory', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
-await fs.promises.rmdir(path.join('jest', 'newDir'), { recursive: true }).catch(() => {});
+await fs.promises.rmdir(path.join('jest', 'newDir')).catch(() => {});
 
 // Setup the test environment
-setupTest(NAME, false);
+await setupTest(NAME, false);
 
 describe('createDirectory', () => {
   beforeEach(() => {
@@ -32,7 +32,7 @@ describe('createDirectory', () => {
   it('should create directory if it does not exist', async () => {
     await createDirectory(path.join('jest', 'newDir'), 'Jest New Directory', log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Created Jest New Directory: ${path.join('jest', 'newDir')}`);
-    await fs.promises.rmdir(path.join('jest', 'newDir'), { recursive: true }).catch(() => {});
+    await fs.promises.rmdir(path.join('jest', 'newDir')).catch(() => {});
   });
 
   it('should handle errors when creating directory', async () => {

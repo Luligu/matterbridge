@@ -18,6 +18,7 @@ import { WebSocketProvider } from './components/WebSocketProvider';
 import { UiProvider } from './components/UiProvider';
 import { createMuiTheme, getCssVariable } from './components/muiTheme';
 import { MbfScreen } from './components/MbfScreen';
+import { MbfLsk } from './utils/localStorage';
 
 // App styles
 import './App.css';
@@ -28,20 +29,23 @@ export const toggleDebug = () => {
   debug = !debug;
 };
 export const enableWindows = false;
-export let enableMobile = localStorage.getItem('enableMobile') === 'false' ? false : true;
+export let enableMobile = localStorage.getItem(MbfLsk.enableMobile) === 'false' ? false : true;
 export const setEnableMobile = () => {
   enableMobile = true;
-  localStorage.setItem('enableMobile', 'true');
+  localStorage.setItem(MbfLsk.enableMobile, 'true');
 };
 export const unsetEnableMobile = () => {
   enableMobile = false;
-  localStorage.setItem('enableMobile', 'false');
+  localStorage.setItem(MbfLsk.enableMobile, 'false');
 };
 export let wssPassword: string | undefined = undefined;
 export const setWssPassword = (password: string) => {
   wssPassword = password;
 };
 export let isIngress = false;
+export let hRef = '/';
+export let pathName = '/';
+export let basePath = '/';
 
 export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
   const [password, setPassword] = useState('');
@@ -131,7 +135,7 @@ function App(): React.JSX.Element {
   const [loggedIn, setLoggedIn] = useState(false);
 
   // Set the theme based on saved preference or default to dark
-  const savedTheme = localStorage.getItem('frontendTheme') || 'dark';
+  const savedTheme = localStorage.getItem(MbfLsk.frontendTheme) || 'dark';
   if (debug) console.log(`Setting frontend theme "%s"`, savedTheme);
   document.body.setAttribute('frontend-theme', savedTheme);
   const primaryColor = getCssVariable('--primary-color', '#1976d2');
@@ -140,25 +144,29 @@ function App(): React.JSX.Element {
 
   /*
     Normal:
-    href="https://lucalaptop7/"
-    pathname="/" 
-    baseName="/"
+    - href = "http://localhost:8283/"
+    - pathname = "/"
+    - baseName = "/"
+    - isIngress = "false"
 
     Ingress:
-    href="https://homeassistant.local:8123/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
-    pathname="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/" 
-    baseName="/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
+    - href = "https://homeassistant.local:8123/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
+    - pathname = "/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
+    - baseName = "/api/hassio_ingress/nUosAre79uLWGKNg-8fzaf1jh9JOlvVY1ExsRhG2RBA/"
+    - isIngress = "true"
   */
-  // Check if running in Home Assistant Ingress
-  isIngress = window.location.href.includes('/api/hassio_ingress/');
   // Set the base name for the BrowserRouter
-  const baseName = window.location.pathname.includes('/matterbridge/') ? '/matterbridge' : window.location.href.includes('/api/hassio_ingress/') ? window.location.pathname : '/';
-  if (debug) {
-    console.log(`Loading App...`);
-    console.log(`- with href = "${window.location.href}"`);
-    console.log(`- pathname = "${window.location.pathname}"`);
-    console.log(`- baseName = "${baseName}"`);
-  }
+  hRef = window.location.href;
+  pathName = window.location.pathname;
+  basePath = pathName.includes('/matterbridge/') ? '/matterbridge/' : pathName.includes('/api/hassio_ingress/') ? pathName : '/';
+  isIngress = pathName.includes('/api/hassio_ingress/');
+  // if (debug) {
+  console.log(`Loading App...`);
+  console.log(`- href = "${hRef}"`);
+  console.log(`- pathname = "${pathName}"`);
+  console.log(`- baseName = "${basePath}"`);
+  console.log(`- isIngress = "${isIngress}"`);
+  //}
 
   if (loggedIn) {
     return (
@@ -166,7 +174,7 @@ function App(): React.JSX.Element {
         <SnackbarProvider dense maxSnack={10} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
           <UiProvider>
             <WebSocketProvider>
-              <BrowserRouter basename={baseName}>
+              <BrowserRouter basename={basePath}>
                 <MbfScreen>
                   <Routes>
                     <Route path='/' element={<Home />} />

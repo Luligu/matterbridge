@@ -90,20 +90,21 @@
 <hr>
 <h1 id="advanced-configuration">Advanced configuration</h1>
 <h2 id="run-matterbridge-with-docker-and-docker-compose">Run matterbridge with docker and docker compose</h2>
-<p>The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on <strong>Docker Hub</strong>.</p>
+<p>The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on <a href="https://hub.docker.com/r/luligu/matterbridge"><strong>Docker Hub</strong></a>.</p>
 <p>The image (tag <strong>latest</strong>) includes matterbridge and all official plugins with the latest release (as published on npm). You can just pull the new image and matterbridge with all plugins will be the latest release published on npm.</p>
 <p>The image (tag <strong>dev</strong>) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest dev release pushed on GitHub. It is possible that the devs are outdated by published latests.</p>
 <p>You can directly select and add a plugin without installing it.</p>
 <p>It is based on node:22-bookworm-slim and integrates the health check.</p>
 <p>How Health Checks Work in Different Scenarios</p>
-<p>With docker-compose</p>
+<p>With docker-compose:</p>
 <p>Docker monitors the health check and can restart the container if needed.</p>
-<p>With docker run</p>
+<p>With docker run:</p>
 <p>The health check still runs in the background, but:
 The container doesn’t restart automatically if it becomes unhealthy.</p>
 <p>You can manually check the health status:</p>
 <pre><code class="language-bash">docker exec -it matterbridge curl -v http://localhost:8283/health
 </code></pre>
+<p>If you use the docker image, please consider giving it a star on <a href="https://hub.docker.com/r/luligu/matterbridge"><strong>Docker Hub</strong></a>.</p>
 <h3 id="first-create-the-matterbridge-directories">First create the Matterbridge directories</h3>
 <p>This will create the required directories in your home directory if they don&#39;t exist</p>
 <pre><code class="language-bash">cd ~
@@ -128,9 +129,18 @@ sudo usermod -aG docker $USER
   --network host --restart always -d luligu/matterbridge:latest
 </code></pre>
 <p>You may need to adapt the script to your setup.</p>
+<h3 id="run-the-docker-container-and-start-it-adding-different-parameters-ie-frontend-on-port-8585">Run the Docker container and start it adding different parameters (i.e. frontend on port 8585)</h3>
+<pre><code class="language-bash">sudo docker run --name matterbridge \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
+  -v ~/.mattercert:/root/.mattercert \
+  --network host --restart always -d luligu/matterbridge:latest \
+  matterbridge --docker --frontend 8585
+</code></pre>
+<p>If you override, always use <code>matterbridge --docker</code> like first part of the command.</p>
 <h3 id="run-with-docker-compose">Run with docker compose</h3>
 <p>The docker-compose.yml file is available in the docker directory of the package</p>
-<pre><code>services:
+<pre><code class="language-yaml">services:
   matterbridge:
     container_name: matterbridge
     image: luligu/matterbridge:latest                         # Matterbridge image with the tag latest
@@ -148,6 +158,13 @@ sudo usermod -aG docker $USER
 <p>or start only the matterbridge container with:</p>
 <pre><code class="language-bash">docker compose up -d matterbridge
 </code></pre>
+<p>If you need to start matterbridge adding different parameters (i.e. frontend on port 8585), you can override the default command adding the line command to the service:</p>
+<pre><code class="language-yaml">services:
+  matterbridge:
+    ...
+    command: [&quot;matterbridge&quot;, &quot;--docker&quot;, &quot;--frontend&quot;, &quot;8585&quot;]
+</code></pre>
+<p>If you override, always use <code>[&quot;matterbridge&quot;, &quot;--docker&quot;]</code> like first part of the command.</p>
 <h3 id="stop-with-docker-compose">Stop with docker compose</h3>
 <pre><code class="language-bash">docker compose down
 </code></pre>

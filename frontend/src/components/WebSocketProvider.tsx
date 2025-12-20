@@ -7,7 +7,8 @@ import { WsMessageApiRequest, WsMessageApiResponse, WsMessageErrorApiResponse } 
 
 // Frontend modules
 import { UiContext } from './UiProvider';
-import { debug, wssPassword } from '../App';
+import { MbfLsk } from '../utils/localStorage';
+import { debug, isIngress, wssPassword } from '../App';
 // const debug = true;
 
 // TypeScript interface for log messages
@@ -21,28 +22,24 @@ export interface WsLogMessage {
 // TypeScript interfaces for context values
 export interface WebSocketMessagesContextType {
   messages: WsLogMessage[];
-  logMaxMessages: number;
+  logLength: React.RefObject<number>;
   logFilterLevel: string;
   logFilterSearch: string;
-  logAutoScroll: boolean;
+  logAutoScroll: React.RefObject<boolean>;
   setMessages: React.Dispatch<React.SetStateAction<WsLogMessage[]>>;
-  setLogMaxMessages: React.Dispatch<React.SetStateAction<number>>;
   setLogFilterLevel: React.Dispatch<React.SetStateAction<string>>;
   setLogFilterSearch: React.Dispatch<React.SetStateAction<string>>;
-  setLogAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
   filterLogMessages: (level: string, search: string) => void;
 }
 
 export interface WebSocketContextType {
-  logMaxMessages: number;
+  logLength: React.RefObject<number>;
   logFilterLevel: string;
   logFilterSearch: string;
-  logAutoScroll: boolean;
+  logAutoScroll: React.RefObject<boolean>;
   setMessages: React.Dispatch<React.SetStateAction<WsLogMessage[]>>;
-  setLogMaxMessages: React.Dispatch<React.SetStateAction<number>>;
   setLogFilterLevel: React.Dispatch<React.SetStateAction<string>>;
   setLogFilterSearch: React.Dispatch<React.SetStateAction<string>>;
-  setLogAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
   filterLogMessages: (level: string, search: string) => void;
   online: boolean;
   retry: number;
@@ -60,10 +57,8 @@ export const WebSocketContext = createContext<WebSocketContextType>(null as unkn
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   // States
   const [messages, setMessages] = useState<WsLogMessage[]>([]);
-  const [logMaxMessages, setLogMaxMessages] = useState(1000);
-  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
-  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
-  const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll') === 'false' ? false : true);
+  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem(MbfLsk.logFilterLevel) ?? 'info');
+  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem(MbfLsk.logFilterSearch) ?? '*');
 
   const [online, setOnline] = useState(false);
 
@@ -82,10 +77,11 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const logFilterSearchRef = useRef(logFilterSearch);
   const messagesCounterRef = useRef(0);
   const messagesCounterIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const logLength = useRef(Number(localStorage.getItem(MbfLsk.logLength) ?? 200));
+  const logAutoScroll = useRef(localStorage.getItem(MbfLsk.logAutoScroll) === 'false' ? false : true);
 
   // Memos
-  const wssHost = useMemo(() => window.location.href.replace(/^http/, 'ws'), []); // Replace "http" or "https" with "ws" or "wss"
-  const isIngress = useMemo(() => window.location.href.includes('api/hassio_ingress'), []);
+  const wssHost = useMemo(() => window.location.href.replace(/^http/, 'ws'), []); // Replace "http" or "https" with "ws" or "wss" and memoize
 
   // Constants
   const maxRetries = 100;
@@ -134,8 +130,24 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           if (level === 'error' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn')) return false;
           if (level === 'fatal' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn' || msg.level === 'error')) return false;
         }
-        // Process log filtering by search
-        if (search !== '*' && search !== '' && !msg.message.toLowerCase().includes(search.toLowerCase()) && !msg.name.toLowerCase().includes(search.toLowerCase())) return false;
+        // Process log filtering by normal search
+        if (search !== '*' && search !== '' && !search.startsWith('/') && !search.endsWith('/') && !msg.message.toLowerCase().includes(search.toLowerCase()) && !msg.name.toLowerCase().includes(search.toLowerCase())) return false;
+
+        // Process log filtering by regex search
+        if (
+          search.startsWith('/') &&
+          search.endsWith('/') &&
+          (() => {
+            try {
+              const regex = new RegExp(search.slice(1, -1), 'i');
+              return !regex.test(msg.message) && !regex.test(msg.name);
+            } catch (error) {
+              /*if (debug)*/ console.error(`WebSocket log search invalid regex filter "${search}":`, error);
+              return false;
+            }
+          })()
+        )
+          return false;
 
         return true;
       });
@@ -234,25 +246,45 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
             if (logFilterLevelRef.current === 'fatal' && (msg.response.level === 'debug' || msg.response.level === 'info' || msg.response.level === 'notice' || msg.response.level === 'warn' || msg.response.level === 'error')) return;
           }
 
-          // Process log filtering by search
+          // Process log filtering by normal search
           if (
             logFilterSearchRef.current !== '*' &&
             logFilterSearchRef.current !== '' &&
+            !logFilterSearchRef.current.startsWith('/') &&
+            !logFilterSearchRef.current.endsWith('/') &&
             !msg.response.message.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) &&
             !msg.response.name.toLowerCase().includes(logFilterSearchRef.current.toLowerCase())
           )
             return;
 
-          // Ignore uncommissioned messages
+          // Process log filtering by regex search
+          if (
+            logFilterSearchRef.current.startsWith('/') &&
+            logFilterSearchRef.current.endsWith('/') &&
+            (() => {
+              try {
+                const regex = new RegExp(logFilterSearchRef.current.slice(1, -1), 'i');
+                return !regex.test(msg.response.message) && !regex.test(msg.response.name);
+              } catch (error) {
+                /*if (debug)*/ console.error(`WebSocket log search invalid regex filter "${logFilterSearchRef.current}":`, error);
+                return false;
+              }
+            })()
+          )
+            return;
+
+          // Ignore uncommissioned messages to avoid the QR code spam
           if (msg.response.name === 'Commissioning' && msg.response.message.includes('is uncommissioned')) return;
 
-          setMessages((prevMessagesNew) => {
-            const newMessagesNew = [...prevMessagesNew, { level: msg.response.level, time: msg.response.time, name: msg.response.name, message: msg.response.message }];
-            // Check if the new array length exceeds the maximum allowed
-            if (newMessagesNew.length > logMaxMessages * 2) {
-              return newMessagesNew.slice(logMaxMessages);
+          setMessages((prevMessages) => {
+            const newMessages = [...prevMessages, { level: msg.response.level, time: msg.response.time, name: msg.response.name, message: msg.response.message }];
+            if (debug) console.log(`WebSocket new log message added (${newMessages.length}/${logLength.current}):`, newMessages[newMessages.length - 1]);
+            // Check if the new array length exceeds the maximum allowed length plus 10%
+            if (newMessages.length > logLength.current + (logLength.current * 10) / 100) {
+              if (debug) console.log(`WebSocket sliced log messages to the last ${logLength.current} entries`);
+              return newMessages.slice(newMessages.length - logLength.current); // Keep only the last 'logLength' messages
             }
-            return newMessagesNew;
+            return newMessages;
           });
         } else {
           if (debug) console.log(`WebSocket received message id ${msg.id} method ${msg.method}:`, msg);
@@ -317,7 +349,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       if (debug) console.error(`WebSocket: WebSocket error connecting to ${wssHost}:`, error);
       logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
     };
-  }, [wssHost]);
+  }, [wssHost]); // Intentionally left out dependencies to avoid reconnect loops
 
   const attemptReconnect = useCallback(() => {
     if (debug) console.log(`WebSocket attemptReconnect ${retryCountRef.current}/${maxRetries} to:`, wssHost);
@@ -336,31 +368,27 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const contextMessagesValue = useMemo(
     () => ({
       messages,
-      logMaxMessages,
+      logLength,
       logAutoScroll,
       logFilterLevel,
       logFilterSearch,
       setMessages,
-      setLogMaxMessages,
       setLogFilterLevel,
       setLogFilterSearch,
-      setLogAutoScroll,
       filterLogMessages,
     }),
-    [messages, logMaxMessages, logAutoScroll, logFilterLevel, logFilterSearch, setMessages, setLogFilterLevel, setLogFilterSearch, setLogMaxMessages, setLogAutoScroll, filterLogMessages],
+    [messages, logLength, logAutoScroll, logFilterLevel, logFilterSearch, setMessages, setLogFilterLevel, setLogFilterSearch, filterLogMessages],
   );
 
   const contextValue = useMemo(
     () => ({
-      logMaxMessages,
+      logLength,
       logAutoScroll,
       logFilterLevel,
       logFilterSearch,
       setMessages,
-      setLogMaxMessages,
       setLogFilterLevel,
       setLogFilterSearch,
-      setLogAutoScroll,
       filterLogMessages,
       online,
       retry: retryCountRef.current,
@@ -370,7 +398,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       sendMessage,
       logMessage,
     }),
-    [logMaxMessages, logAutoScroll, setMessages, setLogFilterLevel, setLogFilterSearch, setLogMaxMessages, setLogAutoScroll, online, retryCountRef.current, addListener, removeListener, sendMessage, logMessage],
+    [logLength, logAutoScroll, setMessages, setLogFilterLevel, setLogFilterSearch, online, retryCountRef.current, addListener, removeListener, sendMessage, logMessage],
   );
 
   return (

@@ -4,6 +4,8 @@ import { ReactNode, useEffect, useContext } from 'react';
 // Frontend
 import Header from './Header';
 import { UiContext } from './UiProvider';
+import { WebSocketContext } from './WebSocketProvider';
+import { MbfLsk } from '../utils/localStorage';
 import { debug, enableMobile } from '../App';
 // const debug = true;
 
@@ -34,16 +36,23 @@ interface MbfScreenProps {
 export function MbfScreen({ children }: MbfScreenProps): React.JSX.Element {
   // Context
   const { mobile, setMobile } = useContext(UiContext);
+  // Contexts
+  const { logAutoScroll } = useContext(WebSocketContext);
 
   // Resize effect
   useEffect(() => {
     function handleResize() {
-      setMobile(isMobile());
+      const mobile = isMobile();
+      if (mobile) {
+        logAutoScroll.current = false;
+        localStorage.setItem(MbfLsk.logAutoScroll, 'false');
+      }
+      setMobile(mobile);
     }
     window.addEventListener('resize', handleResize);
     setMobile(isMobile());
     return () => window.removeEventListener('resize', handleResize);
-  }, [setMobile]);
+  }, [logAutoScroll, setMobile]);
 
   if (debug) console.log('MbfScreen rendering... mobile %s', mobile);
 

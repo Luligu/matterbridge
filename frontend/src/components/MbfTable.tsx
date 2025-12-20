@@ -20,6 +20,8 @@ import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
 
 // frontend
 import { debug } from '../App';
+import { MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
+import { ConditionalTooltip } from './ConditionalTooltip';
 // const debug = true;
 
 // Generic comparator used by MbfTable sorting.
@@ -49,6 +51,7 @@ export interface MbfTableColumn<T extends object> {
   render?: (value: unknown, rowKey: string | number, row: T, column: MbfTableColumn<T>) => React.ReactNode;
   hidden?: boolean;
   required?: boolean;
+  tooltip?: boolean;
   comparator?: (a: T, b: T) => number;
 }
 
@@ -194,10 +197,14 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
     setConfigureVisibilityDialogOpen(false);
   };
 
+  const [closed, setClosed] = useState(false);
+
+  if (closed) return null;
+
   if (debug) console.log(`Rendering table ${name}${orderBy && order ? ` ordered by ${orderBy}:${order}` : ''}`);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', margin: '0', padding: '0', gap: '0', width: '100%', flex: '1 1 auto', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+    <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', margin: '0', padding: '0', gap: '0', width: '100%', height: '100%', overflow: 'hidden' }}>
       <Dialog
         open={configureVisibilityDialogOpen}
         onClose={(event, reason) => {
@@ -254,11 +261,13 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
         </DialogActions>
       </Dialog>
 
-      <div className='MbfWindowHeader' style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', borderBottom: 'none' }}>
-        <p className='MbfWindowHeaderText'>{name}</p>
-        {title && <p className='MbfWindowHeaderText'>{title}</p>}
-        <div className='MbfWindowHeaderFooterIcons'>
+      <MbfWindowHeader style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', borderBottom: 'none' }}>
+        <MbfWindowHeaderText>{name}</MbfWindowHeaderText>
+        {title && <MbfWindowHeaderText>{title}</MbfWindowHeaderText>}
+        <MbfWindowIcons close={() => setClosed(true)}>
           <IconButton
+            size='small'
+            sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }}
             onClick={(e) => {
               if (e?.currentTarget?.blur) {
                 try {
@@ -270,16 +279,15 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
               toggleConfigureVisibilityDialog();
             }}
             aria-label='Configure Columns'
-            style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }}
           >
             <Tooltip title={`Configure ${name} columns`}>
               <Icon path={mdiCog} size='20px' color={'var(--header-text-color)'} />
             </Tooltip>
           </IconButton>
-        </div>
-      </div>
+        </MbfWindowIcons>
+      </MbfWindowHeader>
 
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, width: '100%', overflow: 'auto', margin: '0px', padding: '0px', gap: '0' }}>
+      <MbfWindowContent style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%', overflow: 'auto', margin: '0px', padding: '0px', gap: '0' }}>
         <table aria-label={`${name} table`} style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10, border: 'none', color: 'var(--header-text-color)', backgroundColor: 'var(--header-bg-color' }}>
             <tr style={{ height: '30px', minHeight: '30px' }}>
@@ -342,6 +350,19 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                     if (column.hidden) return null;
                     if (!column.required && visibleMap[column.id] === false) return null;
                     const value = (row as any)[column.id];
+                    const cellContent =
+                      typeof column.render === 'function' ? (
+                        column.render(value, rowKey, row, column)
+                      ) : typeof value === 'boolean' ? (
+                        <Checkbox checked={value} disabled size='small' sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }} />
+                      ) : column.format && typeof value === 'number' ? (
+                        column.format(value)
+                      ) : value !== undefined && value !== null ? (
+                        String(value)
+                      ) : null;
+
+                    const tooltipEnabled = !!column.tooltip && column.maxWidth !== undefined && column.maxWidth !== null;
+                    const cellWithTooltip = tooltipEnabled && value !== undefined && value !== null && cellContent !== null ? <ConditionalTooltip title={String(value)}>{cellContent}</ConditionalTooltip> : cellContent;
                     return (
                       <td
                         key={column.id}
@@ -357,15 +378,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                           textOverflow: column.maxWidth ? 'ellipsis' : undefined,
                         }}
                       >
-                        {typeof column.render === 'function' ? (
-                          column.render(value, rowKey, row, column)
-                        ) : typeof value === 'boolean' ? (
-                          <Checkbox checked={value} disabled size='small' sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }} />
-                        ) : column.format && typeof value === 'number' ? (
-                          column.format(value)
-                        ) : value !== undefined && value !== null ? (
-                          String(value)
-                        ) : null}
+                        {cellWithTooltip}
                       </td>
                     );
                   })}
@@ -374,17 +387,13 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
             })}
           </tbody>
         </table>
-      </div>
+      </MbfWindowContent>
 
       {(footerLeft || footerRight) && (
-        <div className='MbfWindowFooter' style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', border: 'none' }}>
-          <p className='MbfWindowFooterText' style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>
-            {footerLeft}
-          </p>
-          <p className='MbfWindowFooterText' style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>
-            {footerRight}
-          </p>
-        </div>
+        <MbfWindowFooter style={{ height: '30px', minHeight: '30px', justifyContent: 'space-between', border: 'none' }}>
+          <MbfWindowFooterText style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerLeft}</MbfWindowFooterText>
+          <MbfWindowFooterText style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{footerRight}</MbfWindowFooterText>
+        </MbfWindowFooter>
       )}
     </div>
   );

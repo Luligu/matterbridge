@@ -1,6 +1,6 @@
 // React
 import { useState, useContext, useEffect, useRef, memo } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 // @mui/material
 import Tooltip from '@mui/material/Tooltip';
@@ -32,8 +32,9 @@ import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 // Frontend
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
-import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
 import { viewportHeight, viewportWidth } from './MbfScreen';
+import { MbfLsk, resetLocalStorage } from '../utils/localStorage';
+import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
 // const debug = true;
 
 function Header() {
@@ -54,6 +55,8 @@ function Header() {
   const [viewMenuAnchorEl, setViewMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [resetMenuAnchorEl, setResetMenuAnchorEl] = useState<HTMLElement | null>(null);
+  // Navigation
+  const navigate = useNavigate();
 
   const handleSponsorClick = () => {
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
@@ -153,7 +156,14 @@ function Header() {
   const handleMenuCloseConfirm = (value: string) => {
     if (debug) console.log('Header: handleMenuClose', value);
     setMenuAnchorEl(null);
-    if (value === 'download-mblog') {
+    if (value === '/' || value === '/devices' || value === '/log' || value === '/settings') {
+      navigate(value);
+    } else if (value === 'reset_frontend') {
+      logMessage('Matterbridge', `Resetting frontend UI...`);
+      showSnackbarMessage('Resetting frontend UI...', 5);
+      resetLocalStorage();
+      window.location.reload();
+    } else if (value === 'download-mblog') {
       logMessage('Matterbridge', `Downloading matterbridge log...`);
       showSnackbarMessage('Downloading matterbridge log...', 5);
       window.location.href = './api/download-mblog';
@@ -419,7 +429,7 @@ function Header() {
           <span className='status-information' style={{ cursor: 'default' }}>
             {mobile ? 'Mobile ' : 'Desktop '}
             {`${viewportWidth}x${viewportHeight}`}
-            {` enabled ${localStorage.getItem('enableMobile') === 'false' ? false : true}`}
+            {` enabled ${localStorage.getItem(MbfLsk.enableMobile) === 'false' ? false : true}`}
           </span>
         )}
       </div>
@@ -461,14 +471,14 @@ function Header() {
         </Tooltip>
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && update && (
           <Tooltip title={`Update matterbridge to latest version v.${settings.matterbridgeInformation.matterbridgeLatestVersion}`}>
-            <IconButton style={{ color: update ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateClick}>
+            <IconButton style={{ color: 'var(--primary-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
         )}
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && updateDev && (
           <Tooltip title={`Update matterbridge to latest dev version v.${settings.matterbridgeInformation.matterbridgeDevVersion}`}>
-            <IconButton style={{ color: updateDev ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateDevClick}>
+            <IconButton style={{ color: 'var(--secondary-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleUpdateDevClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
@@ -507,7 +517,7 @@ function Header() {
         </Tooltip>
         <Menu id='command-menu' anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuCloseConfirm('')}>
           {enableMobile && mobile && (
-            <MenuItem onClick={() => window.open(`/home`, '_self')}>
+            <MenuItem onClick={() => handleMenuCloseConfirm('/')}>
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
@@ -515,7 +525,7 @@ function Header() {
             </MenuItem>
           )}
           {enableMobile && mobile && (
-            <MenuItem onClick={() => window.open(`/devices`, '_self')}>
+            <MenuItem onClick={() => handleMenuCloseConfirm('/devices')}>
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
@@ -523,7 +533,7 @@ function Header() {
             </MenuItem>
           )}
           {enableMobile && mobile && (
-            <MenuItem onClick={() => window.open(`/log`, '_self')}>
+            <MenuItem onClick={() => handleMenuCloseConfirm('/log')}>
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
@@ -531,7 +541,7 @@ function Header() {
             </MenuItem>
           )}
           {enableMobile && mobile && (
-            <MenuItem onClick={() => window.open(`/settings`, '_self')}>
+            <MenuItem onClick={() => handleMenuCloseConfirm('/settings')}>
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
@@ -863,6 +873,17 @@ function Header() {
             <ListItemText primary='Reset' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
           <Menu id='sub-menu-reset' anchorEl={resetMenuAnchorEl} keepMounted open={Boolean(resetMenuAnchorEl)} onClose={handleResetMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+            <MenuItem
+              onClick={() => {
+                handleResetMenuClose();
+                showConfirmCancelDialog('Reset the frontend UI', 'Are you sure you want to reset the frontend UI? This will reset all local settings and reload the page.', 'reset_frontend', handleMenuCloseConfirm, handleMenuCloseCancel);
+              }}
+            >
+              <ListItemIcon>
+                <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
+              </ListItemIcon>
+              <ListItemText primary='Reset the frontend UI...' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            </MenuItem>
             <MenuItem
               onClick={() => {
                 handleResetMenuClose();

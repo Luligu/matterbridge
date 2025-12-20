@@ -28,6 +28,31 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.4.4] - 2025-12-19
+
+### Added
+
+- [frontend]: Set automatically autoScroll to false in mobileMode.
+- [frontend]: Added Log length: 100, 200, 500, 1000.
+- [frontend]: Added Log search with case-insensitive regex: use /regex/ in the search field to activate the regex search mode (i.e. /Frontend/). See [Regex](https://github.com/Luligu/matterbridge/tree/dev?tab=readme-ov-file#how-to-use-the-regex-search-in-the-log-page).
+- [frontend]: Differentiated update icon color: primary color for latest and secondary color for dev.
+- [frontend]: Added `Reset the frontend UI` in the Reset menu. It will reset the frontend local storage to the default and reload the page.
+- [MbfTable]: Added ConditionalTooltip to show clipped column cells. Used in the Cluster table for a better user experience.
+- [frontend]: Added battery level to Devices panel in the Home page. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+
+### Changed
+
+- [package]: Updated dependencies.
+- [frontend]: Bumped `frontend` version to v.3.4.1.
+
+### Fixed
+
+- [doorLock]: Fixed DoorLock.supportedOperatingModes. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/454).
+- [frontend]: Fixed mobileMode menu navigation. Thanks Calimerorulez (https://github.com/Luligu/matterbridge/issues/457).
+- [matterbridge]: Fixed debug level of matter logger.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.4.3] - 2025-12-12
 
 ### Breaking Changes

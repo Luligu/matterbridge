@@ -18,6 +18,7 @@ import DevicesIcons from './DevicesIcons';
 import DevicesTable from './DevicesTable';
 import { Connecting } from './Connecting';
 import { MbfPage } from './MbfPage';
+import { MbfLsk } from '../utils/localStorage';
 import { debug } from '../App';
 
 function Devices(): React.JSX.Element {
@@ -31,14 +32,14 @@ function Devices(): React.JSX.Element {
   // Refs
 
   useEffect(() => {
-    const savedFilter = localStorage.getItem('devicesFilter');
+    const savedFilter = localStorage.getItem(MbfLsk.devicesFilter);
     if (savedFilter) {
       setFilter(savedFilter);
     }
   }, []);
 
   useEffect(() => {
-    const savedViewMode = localStorage.getItem('devicesViewMode');
+    const savedViewMode = localStorage.getItem(MbfLsk.devicesViewMode);
     if (savedViewMode) {
       setViewMode(savedViewMode);
     }
@@ -46,12 +47,12 @@ function Devices(): React.JSX.Element {
 
   const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(event.target.value.toLowerCase());
-    localStorage.setItem('devicesFilter', event.target.value.toLowerCase());
+    localStorage.setItem(MbfLsk.devicesFilter, event.target.value.toLowerCase());
   };
 
   const handleViewModeChange = (mode: string) => {
     setViewMode(mode);
-    localStorage.setItem('devicesViewMode', mode);
+    localStorage.setItem(MbfLsk.devicesViewMode, mode);
   };
 
   if (debug) console.log('Devices rendering...');
