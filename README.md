@@ -577,7 +577,7 @@ So far is the only controller supporting all Matter 1.2, 1.3 and 1.4 device type
 
 ## Google Home
 
-If you face a problem pairing to Google Home from Ios app the solution is there https://github.com/Luligu/matterbridge/issues/61.
+If you face a problem pairing to Google Home from iOS app the solution is there https://github.com/Luligu/matterbridge/issues/61.
 
 If you face a problem changing the brightness check this for the explanation: https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80
 
