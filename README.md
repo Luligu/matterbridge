@@ -581,7 +581,11 @@ If you face a problem pairing to Google Home from Ios app the solution is there 
 
 If you face a problem changing the brightness check this for the explanation: https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80
 
-No other issues reported so far.
+If you encounter a “Something Went Wrong” screen while commissioning MatterBridge devices in Google Home on Android, it’s due to an Android bug. Android fails to send the country code, which is mandatory under the Matter specification.
+
+### Workaround
+
+Install Google Home on an iPhone and complete the commissioning there. Once set up, the devices will appear and function normally on your Android phone and other Nest devices in your home. By [Artem Kovalov](https://github.com/artemkovalyov).
 
 ## Alexa
 
