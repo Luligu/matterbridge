@@ -100,13 +100,16 @@ describe('Matterbridge mocked', () => {
 
   afterEach(async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge, 1, 1);
 
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);
 
     // Clear all mocks
     jest.clearAllMocks();
+
+    // Clear the debug flag
+    await setDebug(false);
   });
 
   afterAll(async () => {
@@ -273,8 +276,8 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-filelogger', '-matterlogger', 'debug', '-matterfilelogger', '-debug'];
-    const filePath = path.join('jest', 'MatterbridgeMocked', '.mattercert', 'profiles', 'Jest', 'pairing.json');
-    mkdirSync(path.join('jest', 'MatterbridgeMocked', 'profiles', 'Jest', '.mattercert'), { recursive: true });
+    const filePath = path.join('jest', NAME, '.mattercert', 'profiles', 'Jest', 'pairing.json');
+    mkdirSync(path.join('jest', NAME, 'profiles', 'Jest', '.mattercert'), { recursive: true });
     writeFileSync(
       filePath,
       `{
@@ -315,6 +318,21 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).nodeContext.set('mattermdnsinterface', '');
     await (matterbridge as any).nodeContext.set('matteripv4address', '');
     await (matterbridge as any).nodeContext.set('matteripv6address', '');
+  });
+
+  test('Matterbridge.initialize() logger debug', async () => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+      return Promise.resolve();
+    });
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+      return Promise.resolve();
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-debug'];
+    await (matterbridge as any).initialize();
+    expect(matterbridge.log.logLevel).toBe(LogLevel.DEBUG);
+    expect(matterbridge.fileLogger).toBe(false);
+    expect(Logger.level).toBe(MatterLogLevel.DEBUG);
+    expect(matterbridge.matterFileLogger).toBe(false);
   });
 
   test('Matterbridge.initialize() logger info', async () => {
@@ -470,7 +488,8 @@ describe('Matterbridge mocked', () => {
     expect((matterbridge.devices as any).log.logLevel).toBe(LogLevel.DEBUG);
     expect((matterbridge.plugins as any).log.logLevel).toBe(LogLevel.DEBUG);
 
-    await setDebug(false);
+    logNodeSpy.mockRestore();
+    parseCommandLineSpy.mockRestore();
   });
 
   test('Matterbridge.initialize() plugins', async () => {
@@ -600,12 +619,18 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() reset', async () => {
     // Reset the process.argv to simulate reset of a registered plugin
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-mock1'];
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+      return Promise.resolve();
+    });
     await (matterbridge as any).initialize();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Reset commissioning for plugin ${plg}matterbridge-mock1${nt} done! Remove the device from the controller.`);
     await destroyInstance(matterbridge, 10, 10);
 
     // Reset the process.argv to simulate reset of not registered plugin
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-noplugin'];
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+      return Promise.resolve();
+    });
     await (matterbridge as any).initialize();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Plugin ${plg}matterbridge-noplugin${wr} not registerd in matterbridge`);
   }, 10000);
