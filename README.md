@@ -533,6 +533,17 @@ Examples:
 /error|warning/   -> match either "error" OR "warning" (double search)
 ```
 
+## Window Covering cluster and position explained
+
+In Matter spec the Window Covering cluster uses:
+
+- 10000 = fully closed
+- 0 = fully opened
+
+So depending on the controller you pair with, you should see 100 for fully closed and 0 for fully open.
+
+Some controllers invert the position so you need to verify your controller.
+
 # Known general issues
 
 ## Session XYZ does not exist or Cannot find a session for ID XYZ
