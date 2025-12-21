@@ -1,53 +1,47 @@
 // .devcontainer/devcontainer.json
+
 // This file defines the development container configuration for Matterbridge.
-// WARNING: since the dev container doesn't have network host, you can run matterbridge inside the container and test it but is not possible to pair the Matterbridge instance.
+
+/* 
+  ************************************************* WARNING *************************************************
+  Dev containers have certain networking limitations depending on the host operating system and Docker setup.
+  When using Docker Desktop on Windows or macOS, the dev container cannot use host networking mode cause 
+  Docker Desktop runs inside a VM and not directly on the host.
+  In that case, you can still run and test matterbridge inside the container, but pairing with other services
+  that require network access will not work.
+  It works fine on native Linux hosts or WSL 2 with Docker engine CLI integration.
+  ************************************************* WARNING *************************************************
+*/
 {
   // Name of the dev container
   "name": "Matterbridge",
   // Use the pre-built image with Node+TypeScript
   "image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:latest",
-  // Mount the local matterbridge and node_modules workspace folder to the container's workspace volumes to improve performance
-  "mounts": ["source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume"],
+  // Mount the node_modules workspace folder to the container's workspace volumes to improve performance
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume"
+  ],
   // On startup, update npm, build matterbridge and link it globally
   "postCreateCommand": "echo '1 - Installing updates ...' && sudo npm install -g npm npm-check-updates shx && echo '2 - Setting permissions ...' && sudo chown -R node:node . && echo '3 - Building the package ...' && npm install && npm run build && npm outdated || true && npm link && echo '4 - Setup completed!'",
   "runArgs": [
     // Give the Docker container the same name as the repository (must be unique on host)
     "--name",
-    "${localWorkspaceFolderBasename}"
-  ],
-  /*
-  "runArgs": [
-    // At the moment not working in Docker Desktop on WSL 2 because of lack of support for host networking mode.
+    "${localWorkspaceFolderBasename}",
+    // Remove network host mode if on Docker Desktop for Windows or macOS
     "--network=host"
   ],
-  */
-  /*
-  // At the moment not working in Docker Desktop on WSL 2
-  "runArgs": [
-    "--name",
-    "${localWorkspaceFolderBasename}",
-    "-p",
-    "0.0.0.0:5353:5353/udp",
-    "-p",
-    "[::]:5353:5353/udp",
-    "-p",
-    "0.0.0.0:5540:5540/tcp",
-    "-p",
-    "[::]:5540:5540/tcp",
-    "-p",
-    "0.0.0.0:5540:5540/udp",
-    "-p",
-    "[::]:5540:5540/udp",
-    "-p",
-    "0.0.0.0:8283:8283/tcp",
-    "-p",
-    "[::]:8283:8283/tcp"
-  ],
-  */
   "customizations": {
     "vscode": {
       // Extensions to install in the dev container
-      "extensions": ["ms-vscode.vscode-typescript-next", "ms-azuretools.vscode-containers", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "github.copilot-chat", "github.vscode-github-actions", "github.vscode-pull-request-github"],
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "ms-azuretools.vscode-containers",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "github.copilot-chat",
+        "github.vscode-github-actions",
+        "github.vscode-pull-request-github"
+      ],
       // Settings for the VS Code environment
       "settings": {
         "terminal.integrated.shell.linux": "/bin/bash",
