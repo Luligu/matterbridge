@@ -1,7 +1,5 @@
 // .devcontainer/devcontainer.json
-
 // This file defines the development container configuration for Matterbridge.
-
 /* 
 ************************************************* WARNING *************************************************
 Dev containers have networking limitations depending on the host OS and Docker setup.
@@ -26,12 +24,17 @@ Dev containers have networking limitations depending on the host OS and Docker s
   "name": "Matterbridge",
   // Use the pre-built image with Node+TypeScript
   "image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:latest",
+  // Use the non-root node user (passwordless sudo in this image)
+  "remoteUser": "node",
   // Mount the node_modules workspace folder to the container's workspace volumes to improve performance
   "mounts": [
-    "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume"
+    "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
+    "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
+    "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume"
   ],
   // On startup, update npm, build matterbridge and link it globally
-  "postCreateCommand": "echo '1 - Installing updates ...' && sudo npm install -g npm npm-check-updates shx && echo '2 - Setting permissions ...' && sudo chown -R node:node . && echo '3 - Building the package ...' && npm install && npm run build && npm outdated || true && npm link && echo '4 - Setup completed!'",
+  "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   "runArgs": [
     // Give the Docker container the same name as the repository (must be unique on host)
     "--name",
