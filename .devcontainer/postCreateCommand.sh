@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+
+# postCreateCommand.sh
+
+# This script runs after the Dev Container is created to set up the dev container environment.
+
 set -euo pipefail
 
 echo "1 - Installing updates and scripts..."
@@ -14,5 +19,6 @@ echo "4 - Building the package..."
 npm install
 npm run build
 npm link
+npm outdated || true
 
 echo "5 - Setup completed!"
