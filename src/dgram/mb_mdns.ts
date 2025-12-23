@@ -29,10 +29,11 @@ import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
 import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '../utils/commandLine.js';
+import { getIpv4InterfaceAddress, getIpv6InterfaceAddress } from '../utils/network.js';
 
 // Net imports
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
-import { DnsClass, DnsRecordType, Mdns } from './mdns.js';
+import { DnsClass, DnsClassFlag, DnsRecordType, Mdns } from './mdns.js';
 
 // istanbul ignore next
 {
@@ -123,8 +124,44 @@ Examples:
    */
   const advertiseUdp4 = () => {
     mdnsIpv4.log.info('Sending mDNS advertisement for matterbridge service...');
-    const ptrRdata = mdnsIpv4.encodeDnsName('matterbridge._http._tcp.local');
-    mdnsIpv4.sendResponse('_http._tcp.local', DnsRecordType.PTR, DnsClass.IN, 120, ptrRdata);
+    const serviceType = '_http._tcp.local';
+    const instanceName = 'matterbridge._http._tcp.local';
+    const hostName = 'matterbridge.local';
+    const port = 8283;
+    const ttl = 120;
+
+    const ptrInstanceRdata = mdnsIpv4.encodeDnsName(instanceName);
+    const ptrServiceTypeRdata = mdnsIpv4.encodeDnsName(serviceType);
+    const srvRdata = mdnsIpv4.encodeSrvRdata(0, 0, port, hostName);
+    const txtRdata = mdnsIpv4.encodeTxtRdata(['path=/']);
+
+    const answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[] = [
+      { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrServiceTypeRdata },
+      { name: serviceType, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrInstanceRdata },
+      { name: instanceName, rtype: DnsRecordType.SRV, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: srvRdata },
+      { name: instanceName, rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: txtRdata },
+    ];
+
+    // Always attempt to add both A and AAAA records (best effort), regardless of the socket family.
+    try {
+      const ipv4 = getIpv4InterfaceAddress();
+      if (ipv4 && ipv4 !== '0.0.0.0') {
+        answers.push({ name: hostName, rtype: DnsRecordType.A, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdnsIpv4.encodeA(ipv4) });
+      }
+    } catch {
+      // Ignore if no external IPv4 is available.
+    }
+
+    try {
+      const ipv6 = getIpv6InterfaceAddress();
+      if (ipv6 && ipv6 !== '::') {
+        answers.push({ name: hostName, rtype: DnsRecordType.AAAA, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdnsIpv4.encodeAAAA(ipv6) });
+      }
+    } catch {
+      // Ignore if no external IPv6 is available.
+    }
+
+    mdnsIpv4.sendResponse(answers);
   };
 
   /**
@@ -146,8 +183,44 @@ Examples:
    */
   const advertiseUdp6 = () => {
     mdnsIpv6.log.info('Sending mDNS advertisement for matterbridge service...');
-    const ptrRdata = mdnsIpv6.encodeDnsName('matterbridge._http._tcp.local');
-    mdnsIpv6.sendResponse('_http._tcp.local', DnsRecordType.PTR, DnsClass.IN, 120, ptrRdata);
+    const serviceType = '_http._tcp.local';
+    const instanceName = 'matterbridge._http._tcp.local';
+    const hostName = 'matterbridge.local';
+    const port = 8283;
+    const ttl = 120;
+
+    const ptrInstanceRdata = mdnsIpv6.encodeDnsName(instanceName);
+    const ptrServiceTypeRdata = mdnsIpv6.encodeDnsName(serviceType);
+    const srvRdata = mdnsIpv6.encodeSrvRdata(0, 0, port, hostName);
+    const txtRdata = mdnsIpv6.encodeTxtRdata(['path=/']);
+
+    const answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[] = [
+      { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrServiceTypeRdata },
+      { name: serviceType, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrInstanceRdata },
+      { name: instanceName, rtype: DnsRecordType.SRV, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: srvRdata },
+      { name: instanceName, rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: txtRdata },
+    ];
+
+    // Always attempt to add both A and AAAA records (best effort), regardless of the socket family.
+    try {
+      const ipv4 = getIpv4InterfaceAddress();
+      if (ipv4) {
+        answers.push({ name: hostName, rtype: DnsRecordType.A, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdnsIpv6.encodeA(ipv4) });
+      }
+    } catch {
+      // Ignore if no external IPv4 is available.
+    }
+
+    try {
+      const ipv6 = getIpv6InterfaceAddress();
+      if (ipv6) {
+        answers.push({ name: hostName, rtype: DnsRecordType.AAAA, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdnsIpv6.encodeAAAA(ipv6) });
+      }
+    } catch {
+      // Ignore if no external IPv6 is available.
+    }
+
+    mdnsIpv6.sendResponse(answers);
   };
 
   // Handle Ctrl+C (SIGINT) to stop and log devices
