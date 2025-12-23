@@ -57,11 +57,11 @@ Examples:
   # List Matter device commissioner service records only on eth0 interface
   mb_mdns --interfaceName eth0 --filter _matterc._udp
 
-  # List Matter device service records only on eth0 interface
+  # List Matter device discovery service records only on eth0 interface
   mb_mdns --interfaceName eth0 --filter _matter._tcp
 
-  # List both Matter commissioner and device service records only on eth0 interface
-  mb_mdns --interfaceName eth0 --filter _matterc._udp _matter._tcp
+  # Listen for Matter commissioner and discovery service records on all interfaces
+  mb_mdns --filter _matterc._udp _matter._tcp
 
   # Query for mDNS devices every 10s on a specific interface
   mb_mdns --interfaceName eth0 --query
@@ -69,12 +69,16 @@ Examples:
   # Advertise matterbridge._http._tcp.local every 5s with filter
   mb_mdns --advertise 5000 --filter matterbridge._http._tcp.local
 
-  # Listen for matterbridge._http._tcp.local service recordsq
-  mb_mdns --filter matterbridge._http._tcp.local
+  # Query each 5s and listen for matterbridge._http._tcp.local service records
+  mb_mdns --query 5000 --filter matterbridge._http._tcp.local
+
 `);
     // eslint-disable-next-line n/no-process-exit
     process.exit(0);
   }
+
+  // Dynamic JSON import (Node >= 20) with import attributes
+  const { default: pkg } = await import('../../package.json', { with: { type: 'json' } });
 
   const mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, getParameter('interfaceName'), getParameter('ipv4InterfaceAddress') || '0.0.0.0', getParameter('outgoingIpv4InterfaceAddress'));
   const mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, getParameter('interfaceName'), getParameter('ipv6InterfaceAddress') || '::', getParameter('outgoingIpv6InterfaceAddress'));
@@ -112,6 +116,7 @@ Examples:
   const queryUdp4 = () => {
     mdnsIpv4.log.info('Sending mDNS query for services...');
     mdnsIpv4.sendQuery([
+      { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
       { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
       { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
       { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
@@ -133,7 +138,7 @@ Examples:
     const ptrInstanceRdata = mdnsIpv4.encodeDnsName(instanceName);
     const ptrServiceTypeRdata = mdnsIpv4.encodeDnsName(serviceType);
     const srvRdata = mdnsIpv4.encodeSrvRdata(0, 0, port, hostName);
-    const txtRdata = mdnsIpv4.encodeTxtRdata(['path=/']);
+    const txtRdata = mdnsIpv4.encodeTxtRdata([`version=${pkg.version}`, 'path=/']);
 
     const answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[] = [
       { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrServiceTypeRdata },
@@ -171,6 +176,7 @@ Examples:
   const queryUdp6 = () => {
     mdnsIpv6.log.info('Sending mDNS query for services...');
     mdnsIpv6.sendQuery([
+      { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
       { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
@@ -192,7 +198,7 @@ Examples:
     const ptrInstanceRdata = mdnsIpv6.encodeDnsName(instanceName);
     const ptrServiceTypeRdata = mdnsIpv6.encodeDnsName(serviceType);
     const srvRdata = mdnsIpv6.encodeSrvRdata(0, 0, port, hostName);
-    const txtRdata = mdnsIpv6.encodeTxtRdata(['path=/']);
+    const txtRdata = mdnsIpv6.encodeTxtRdata([`version=${pkg.version}`, 'path=/']);
 
     const answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[] = [
       { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrServiceTypeRdata },
