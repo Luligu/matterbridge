@@ -221,6 +221,7 @@ export class Mdns extends Multicast {
         this.deviceResponses.set(rinfo.address, { rinfo, response: result, dataPTR: ptr?.type === DnsRecordType.PTR ? ptr?.data : ptr?.name });
         this.onResponse(rinfo, result);
       }
+      // Apply filters if any
       if (this.filters.length > 0) {
         this.log.debug(`mDNS message filtered out by filters: ${this.filters.join(', ')}`);
         for (const filter of this.filters) {
