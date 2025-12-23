@@ -68,6 +68,126 @@ describe('Mdns', () => {
     expect(newOffset).toBe(encoded.length);
   });
 
+  describe('encodeTxtRdata', () => {
+    it('should encode an empty TXT array as an empty buffer', () => {
+      const rdata = mdns.encodeTxtRdata([]);
+      expect(Buffer.isBuffer(rdata)).toBe(true);
+      expect(rdata.length).toBe(0);
+    });
+
+    it('should encode a single ASCII entry', () => {
+      const entry = 'test';
+      const rdata = mdns.encodeTxtRdata([entry]);
+      expect(rdata[0]).toBe(Buffer.from(entry, 'utf8').length);
+      expect(rdata.slice(1).toString('utf8')).toBe(entry);
+    });
+
+    it('should encode multiple entries in sequence', () => {
+      const entries = ['txtvers=1', 'path=/'];
+      const expected = Buffer.concat(
+        entries.map((e) => {
+          const bytes = Buffer.from(e, 'utf8');
+          return Buffer.concat([Buffer.from([bytes.length]), bytes]);
+        }),
+      );
+
+      const rdata = mdns.encodeTxtRdata(entries);
+      expect(rdata.equals(expected)).toBe(true);
+    });
+
+    it('should use UTF-8 byte length (not string length) for the prefix', () => {
+      const entry = 'café';
+      const bytes = Buffer.from(entry, 'utf8');
+      const rdata = mdns.encodeTxtRdata([entry]);
+
+      expect(rdata[0]).toBe(bytes.length);
+      expect(rdata.slice(1).equals(bytes)).toBe(true);
+    });
+
+    it('should allow an empty string entry', () => {
+      const rdata = mdns.encodeTxtRdata(['']);
+      expect(rdata.length).toBe(1);
+      expect(rdata[0]).toBe(0);
+    });
+
+    it('should allow an entry with exactly 255 bytes', () => {
+      const entry = 'a'.repeat(255);
+      const rdata = mdns.encodeTxtRdata([entry]);
+
+      expect(rdata[0]).toBe(255);
+      expect(rdata.slice(1).toString('utf8')).toBe(entry);
+    });
+
+    it('should throw if any entry exceeds 255 bytes', () => {
+      const entry = 'a'.repeat(256);
+      expect(() => mdns.encodeTxtRdata([entry])).toThrow(/TXT entry too long/);
+    });
+  });
+
+  describe('encodeSrvRdata', () => {
+    it('should encode SRV RDATA with priority, weight, port and target', () => {
+      const priority = 1;
+      const weight = 2;
+      const port = 80;
+      const target = 'target.local';
+
+      const rdata = mdns.encodeSrvRdata(priority, weight, port, target);
+
+      expect(rdata.readUInt16BE(0)).toBe(priority);
+      expect(rdata.readUInt16BE(2)).toBe(weight);
+      expect(rdata.readUInt16BE(4)).toBe(port);
+
+      const decodedTarget = mdns.decodeDnsName(rdata, 6);
+      expect(decodedTarget.name).toBe(target);
+      expect(decodedTarget.newOffset).toBe(rdata.length);
+
+      const expectedTarget = mdns.encodeDnsName(target);
+      expect(rdata.slice(6).equals(expectedTarget)).toBe(true);
+    });
+  });
+
+  describe('encodeA', () => {
+    it('should encode a valid IPv4 address into 4 bytes', () => {
+      const rdata = mdns.encodeA('192.168.1.2');
+      expect(rdata.equals(Buffer.from([192, 168, 1, 2]))).toBe(true);
+    });
+
+    it('should throw for invalid IPv4 addresses', () => {
+      expect(() => mdns.encodeA('')).toThrow(/Invalid IPv4 address/);
+      expect(() => mdns.encodeA('1.2.3')).toThrow(/Invalid IPv4 address/);
+      expect(() => mdns.encodeA('1.2.3.4.5')).toThrow(/Invalid IPv4 address/);
+      expect(() => mdns.encodeA('256.0.0.1')).toThrow(/Invalid IPv4 address/);
+      expect(() => mdns.encodeA('1.2.3.-1')).toThrow(/Invalid IPv4 address/);
+      expect(() => mdns.encodeA('a.b.c.d')).toThrow(/Invalid IPv4 address/);
+    });
+  });
+
+  describe('encodeAAAA', () => {
+    it('should encode a full 8-group IPv6 address into 16 bytes', () => {
+      const rdata = mdns.encodeAAAA('2001:0db8:0000:0000:0000:0000:0000:0001');
+      expect(rdata.length).toBe(16);
+      expect(rdata.readUInt16BE(0)).toBe(0x2001);
+      expect(rdata.readUInt16BE(2)).toBe(0x0db8);
+      expect(rdata.readUInt16BE(14)).toBe(0x0001);
+    });
+
+    it('should support :: compression and ignore %scope', () => {
+      const withScope = mdns.encodeAAAA('fe80::1%12');
+      const withoutScope = mdns.encodeAAAA('fe80::1');
+      expect(withScope.equals(withoutScope)).toBe(true);
+
+      // fe80::1 => fe80 0000 0000 0000 0000 0000 0000 0001
+      expect(withoutScope.readUInt16BE(0)).toBe(0xfe80);
+      expect(withoutScope.readUInt16BE(14)).toBe(0x0001);
+    });
+
+    it('should throw for invalid IPv6 addresses', () => {
+      expect(() => mdns.encodeAAAA('abcd')).toThrow(/Invalid IPv6 address/);
+      expect(() => mdns.encodeAAAA('1:2:3:4:5:6:7')).toThrow(/Invalid IPv6 address/);
+      expect(() => mdns.encodeAAAA('gggg::1')).toThrow(/Invalid IPv6 group/);
+    });
+  });
+
   it('should decode a valid mDNS message', () => {
     // Minimal valid DNS query: header + 1 question for _http._tcp.local PTR
     const name = '_http._tcp.local';
@@ -140,9 +260,33 @@ describe('Mdns', () => {
 
   it('should send a response and log', () => {
     const rdata = mdns.encodeDnsName('foo.local');
-    mdns.sendResponse('foo.local', DnsRecordType.PTR, DnsClass.IN, 120, rdata);
+    mdns.sendResponse([{ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }]);
     expect(mockSocket.send).toHaveBeenCalled();
     expect(logger.debug).toHaveBeenCalled();
+  });
+
+  it('should send a multi-answer response with correct ANCOUNT', () => {
+    const rdata1 = mdns.encodeDnsName('instance1._http._tcp.local');
+    const rdata2 = mdns.encodeDnsName('instance2._http._tcp.local');
+
+    mdns.sendResponse([
+      { name: '_http._tcp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: rdata1 },
+      { name: '_http._tcp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: rdata2 },
+    ]);
+
+    const sendArgs = mockSocket.send.mock.calls[0];
+    const responseBuffer = sendArgs[0] as Buffer;
+
+    expect(responseBuffer.readUInt16BE(6)).toBe(2); // ANCOUNT
+    const decoded = mdns.decodeMdnsMessage(responseBuffer);
+    expect(decoded.anCount).toBe(2);
+    expect(decoded.answers?.length).toBe(2);
+    expect(decoded.answers?.[0].name).toBe('_http._tcp.local');
+    expect(decoded.answers?.[0].type).toBe(DnsRecordType.PTR);
+  });
+
+  it('should throw if sendResponse answers array is empty', () => {
+    expect(() => mdns.sendResponse([])).toThrow('sendResponse requires a non-empty answers array');
   });
 
   it('should convert DNS types and classes to string', () => {
@@ -254,7 +398,7 @@ describe('Mdns', () => {
     });
 
     const rdata = mdns.encodeDnsName('foo.local');
-    mdns.sendResponse('foo.local', DnsRecordType.PTR, DnsClass.IN, 120, rdata);
+    mdns.sendResponse([{ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }]);
     expect(mockSocket.send).toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalled();
   });

@@ -167,7 +167,7 @@ describe('Mdns Real Interaction Tests', () => {
       mdnsServer.onQuery = (rinfo: RemoteInfo, query: MdnsMessage) => {
         if (query.questions?.find((q) => q.name === serviceName && q.type === DnsRecordType.PTR)) {
           const ptrRdata = mdnsServer.encodeDnsName(instanceName);
-          mdnsServer.sendResponse(serviceName, DnsRecordType.PTR, DnsClass.IN, 120, ptrRdata);
+          mdnsServer.sendResponse([{ name: serviceName, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: ptrRdata }]);
           resolve();
         }
       };

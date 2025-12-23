@@ -406,6 +406,110 @@ export class Mdns extends Multicast {
   }
 
   /**
+   * Encodes TXT record RDATA.
+   *
+   * In DNS/mDNS, TXT RDATA is a sequence of one or more <character-string>,
+   * each encoded as: [length byte][UTF-8 bytes].
+   *
+   * @param {string[]} txt - Array of TXT entries, e.g. ["key=value", "path=/"].
+   * @returns {Buffer} Encoded TXT RDATA.
+   * @throws {Error} If any entry exceeds 255 bytes.
+   *
+   * @example
+   * const txtRdata = mdns.encodeTxtRdata(['txtvers=1', 'path=/']);
+   * mdns.sendResponse([
+   *   { name: 'example._http._tcp.local', rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl: 120, rdata: txtRdata },
+   * ]);
+   */
+  encodeTxtRdata(txt: string[]): Buffer {
+    const parts = txt.map((entry) => {
+      const value = Buffer.from(entry, 'utf8');
+      if (value.length > 255) throw new Error(`TXT entry too long: ${entry}`);
+      return Buffer.concat([Buffer.from([value.length]), value]);
+    });
+    return Buffer.concat(parts);
+  }
+
+  /**
+   * Encodes SRV record RDATA.
+   *
+   * SRV RDATA layout (RFC 2782):
+   * - priority (2 bytes)
+   * - weight   (2 bytes)
+   * - port     (2 bytes)
+   * - target   (DNS name)
+   *
+   * @param {number} priority - SRV priority.
+   * @param {number} weight - SRV weight.
+   * @param {number} port - Service port.
+   * @param {string} target - Target hostname (e.g. "matterbridge.local").
+   * @returns {Buffer} Encoded SRV RDATA.
+   */
+  encodeSrvRdata(priority: number, weight: number, port: number, target: string): Buffer {
+    const fixed = Buffer.alloc(6);
+    fixed.writeUInt16BE(priority, 0);
+    fixed.writeUInt16BE(weight, 2);
+    fixed.writeUInt16BE(port, 4);
+    return Buffer.concat([fixed, this.encodeDnsName(target)]);
+  }
+
+  /**
+   * Encodes an IPv4 address for an A record RDATA (4 bytes).
+   *
+   * @param {string} ipv4 - IPv4 address, e.g. "192.168.1.10".
+   * @returns {Buffer} 4-byte buffer.
+   * @throws {Error} If the address is not a valid dotted-quad.
+   */
+  encodeA(ipv4: string): Buffer {
+    const parts = ipv4.split('.').map((p) => Number(p));
+    if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) {
+      throw new Error(`Invalid IPv4 address: ${ipv4}`);
+    }
+    return Buffer.from(parts);
+  }
+
+  /**
+   * Encodes an IPv6 address for an AAAA record RDATA (16 bytes).
+   *
+   * Supports the "::" zero-compression form and ignores an optional scope id
+   * suffix (e.g. "fe80::1%12" or "fe80::1%eth0").
+   *
+   * @param {string} ipv6WithOptionalScope - IPv6 address (optionally with scope id).
+   * @returns {Buffer} 16-byte buffer.
+   * @throws {Error} If the address is not a valid IPv6 literal.
+   */
+  encodeAAAA(ipv6WithOptionalScope: string): Buffer {
+    const ipv6 = ipv6WithOptionalScope.split('%')[0];
+
+    // Expand IPv6 to 8 groups of 16-bit words.
+    const [left, right] = ipv6.split('::');
+    const leftParts = left ? left.split(':').filter(Boolean) : [];
+    const rightParts = right ? right.split(':').filter(Boolean) : [];
+    if (ipv6.includes('::')) {
+      const missing = 8 - (leftParts.length + rightParts.length);
+      if (missing < 0) throw new Error(`Invalid IPv6 address: ${ipv6WithOptionalScope}`);
+      const groups = [...leftParts, ...Array(missing).fill('0'), ...rightParts];
+      return Buffer.from(
+        groups.flatMap((g) => {
+          const word = parseInt(g || '0', 16);
+          if (!Number.isFinite(word) || word < 0 || word > 0xffff) throw new Error(`Invalid IPv6 group: ${g}`);
+          return [(word >> 8) & 0xff, word & 0xff];
+        }),
+      );
+    }
+
+    const groups = ipv6.split(':');
+    if (groups.length !== 8) throw new Error(`Invalid IPv6 address: ${ipv6WithOptionalScope}`);
+    return Buffer.from(
+      groups.flatMap((g) => {
+        const word = parseInt(g || '0', 16);
+        if (!Number.isFinite(word) || word < 0 || word > 0xffff) throw new Error(`Invalid IPv6 group: ${g}`);
+        return [(word >> 8) & 0xff, word & 0xff];
+      }),
+    );
+  }
+
+  /**
    * Decodes a DNS resource record.
    *
    * @param {Buffer} msg - The full mDNS message buffer.
@@ -568,56 +672,57 @@ export class Mdns extends Multicast {
   /**
    * Constructs an mDNS response packet and sends it to the multicast address and port.
    *
-   * @param {string} name - The domain name being responded to (e.g., "example.local").
-   * @param {number} rtype - The response type (e.g., 1 for A, 28 for AAAA, etc.).
-   * @param {number} rclass - The response class (typically 1 for IN).
-   * @param {number} ttl - The time-to-live for the answer record.
-   * @param {Buffer} rdata - The resource data for the response (e.g., 4 bytes for an A record IPv4 address).
+   * @param {Array<{ name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }>} answers - Array of answer records.
    *
    * @example
    *   const ptrRdata = mdnsIpv4.encodeDnsName('matterbridge._http._tcp.local');
-   *   mdnsIpv4.sendResponse('_http._tcp.local', DnsRecordType.PTR, DnsClass.IN, 120, ptrRdata);
+   *   mdnsIpv4.sendResponse([{ name: '_http._tcp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: ptrRdata }]);
    */
-  sendResponse(name: string, rtype: number, rclass: number, ttl: number, rdata: Buffer): void {
+  sendResponse(answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[]): void {
+    if (!Array.isArray(answers) || answers.length === 0) {
+      throw new Error('sendResponse requires a non-empty answers array');
+    }
     // Create a 12-byte DNS header.
     const header = Buffer.alloc(12);
     header.writeUInt16BE(0, 0); // ID is set to 0 in mDNS.
     // Set flags: QR (response) bit and AA (authoritative answer) bit.
     header.writeUInt16BE(0x8400, 2);
     header.writeUInt16BE(0, 4); // QDCOUNT: 0 questions in response.
-    header.writeUInt16BE(1, 6); // ANCOUNT: 1 answer record.
+    header.writeUInt16BE(answers.length, 6); // ANCOUNT: number of answer records.
     header.writeUInt16BE(0, 8); // NSCOUNT: 0 authority records.
     header.writeUInt16BE(0, 10); // ARCOUNT: 0 additional records.
 
-    // Encode the domain name in DNS label format.
-    const aname = this.encodeDnsName(name);
+    const answerBuffers = answers.map(({ name, rtype, rclass, ttl, rdata }) => {
+      // Encode the domain name in DNS label format.
+      const aname = this.encodeDnsName(name);
 
-    // Prepare the fixed part of the answer record:
-    // - 2 bytes for qtype,
-    // - 2 bytes for qclass,
-    // - 4 bytes for TTL,
-    // - 2 bytes for RDLENGTH (length of the rdata).
-    const answerFixed = Buffer.alloc(10);
-    answerFixed.writeUInt16BE(rtype, 0); // Record type.
-    answerFixed.writeUInt16BE(rclass, 2); // Record class.
-    answerFixed.writeUInt32BE(ttl, 4); // Time-to-live.
-    answerFixed.writeUInt16BE(rdata.length, 8); // RDLENGTH.
+      // Prepare the fixed part of the answer record:
+      // - 2 bytes for qtype,
+      // - 2 bytes for qclass,
+      // - 4 bytes for TTL,
+      // - 2 bytes for RDLENGTH (length of the rdata).
+      const answerFixed = Buffer.alloc(10);
+      answerFixed.writeUInt16BE(rtype, 0); // Record type.
+      answerFixed.writeUInt16BE(rclass, 2); // Record class.
+      answerFixed.writeUInt32BE(ttl, 4); // Time-to-live.
+      answerFixed.writeUInt16BE(rdata.length, 8); // RDLENGTH.
 
-    // Concatenate the answer: encoded name, fixed fields, and resource data.
-    const answer = Buffer.concat([aname, answerFixed, rdata]);
+      // Concatenate the answer: encoded name, fixed fields, and resource data.
+      return Buffer.concat([aname, answerFixed, rdata]);
+    });
 
-    // Concatenate header and answer to form the complete mDNS response packet.
-    const response = Buffer.concat([header, answer]);
+    // Concatenate header and answers to form the complete mDNS response packet.
+    const response = Buffer.concat([header, ...answerBuffers]);
 
     // Send the response packet via the socket.
     this.socket.send(response, 0, response.length, this.multicastPort, this.multicastAddress, (error: Error | null) => {
       if (error) {
-        this.log.error(
-          `Dgram mDNS server failed to send response message for ${MAGENTA}${name}${er} type ${MAGENTA}${this.dnsTypeToString(rtype)}${er} class ${MAGENTA}${this.dnsResponseClassToString(rclass)}${er} ttl ${MAGENTA}${ttl}${er}: ${error instanceof Error ? error.message : error}`,
-        );
+        const items = answers.map((a) => `- name ${MAGENTA}${a.name}${er} type ${MAGENTA}${this.dnsTypeToString(a.rtype)}${er} class ${MAGENTA}${this.dnsResponseClassToString(a.rclass)}${er} ttl ${MAGENTA}${a.ttl}${er}`).join('\n');
+        this.log.error(`Dgram mDNS server failed to send response message (${MAGENTA}${answers.length}${er} answers): ${error instanceof Error ? error.message : error}\n${items}`);
         this.emit('error', error);
       } else {
-        this.log.debug(`Dgram mDNS server sent response message for ${MAGENTA}${name}${db} type ${MAGENTA}${this.dnsTypeToString(rtype)}${db} class ${MAGENTA}${this.dnsResponseClassToString(rclass)}${db} ttl ${MAGENTA}${ttl}${db}`);
+        const items = answers.map((a) => `- name ${MAGENTA}${a.name}${db} type ${MAGENTA}${this.dnsTypeToString(a.rtype)}${db} class ${MAGENTA}${this.dnsResponseClassToString(a.rclass)}${db} ttl ${MAGENTA}${a.ttl}${db}`).join('\n');
+        this.log.debug(`Dgram mDNS server sent response message:\n${items}`);
         this.emit('sent', response, this.multicastAddress, this.multicastPort);
       }
     });
