@@ -106,9 +106,15 @@ Examples:
   /**
    * Cleanup and log device information before exiting.
    */
-  function cleanupAndLogAndExit() {
+  async function cleanupAndLogAndExit() {
+    if (hasParameter('advertise')) {
+      advertise(mdnsIpv4, 0); // Send goodbye with TTL 0
+      advertise(mdnsIpv6, 0); // Send goodbye with TTL 0
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250)); // Wait for 250ms to allow goodbye messages to be sent
     mdnsIpv4.stop();
     mdnsIpv6.stop();
+    await new Promise((resolve) => setTimeout(resolve, 250)); // Wait for 250ms to allow sockets to close
     mdnsIpv4.logDevices();
     mdnsIpv6.logDevices();
     // eslint-disable-next-line n/no-process-exit
@@ -131,25 +137,38 @@ Examples:
    * Sends an mDNS advertisement for the HTTP service over UDP IPv4.
    *
    * @param {Mdns} mdns - The Mdns instance to use for sending the advertisement.
+   * @param {number} [ttl] - The time-to-live for the advertisement records. Defaults to 120 seconds. Send 0 for goodbye.
    */
-  const advertise = (mdns: Mdns) => {
-    mdns.log.info('Sending mDNS advertisement for matterbridge service...');
-    const serviceType = '_http._tcp.local';
-    const instanceName = 'matterbridge._http._tcp.local';
+  const advertise = (mdns: Mdns, ttl: number = 120) => {
+    mdns.log.info(`Sending mDNS advertisement for matterbridge service with TTL ${ttl ? ttl.toString() : 'goodbye'}...`);
+    const httpServiceType = '_http._tcp.local';
+    const matterbridgeServiceType = '_matterbridge._tcp.local';
+    const httpInstanceName = 'matterbridge._http._tcp.local';
+    const matterbridgeInstanceName = 'matterbridge._matterbridge._tcp.local';
     const hostName = 'matterbridge.local';
     const port = 8283;
-    const ttl = 120;
 
-    const ptrInstanceRdata = mdns.encodeDnsName(instanceName);
-    const ptrServiceTypeRdata = mdns.encodeDnsName(serviceType);
+    const ptrHttpServiceTypeRdata = mdns.encodeDnsName(httpServiceType);
+    const ptrMatterbridgeServiceTypeRdata = mdns.encodeDnsName(matterbridgeServiceType);
+    const ptrHttpInstanceRdata = mdns.encodeDnsName(httpInstanceName);
+    const ptrMatterbridgeInstanceRdata = mdns.encodeDnsName(matterbridgeInstanceName);
     const srvRdata = mdns.encodeSrvRdata(0, 0, port, hostName);
     const txtRdata = mdns.encodeTxtRdata([`version=${pkg.version}`, 'path=/']);
 
     const answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[] = [
-      { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrServiceTypeRdata },
-      { name: serviceType, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrInstanceRdata },
-      { name: instanceName, rtype: DnsRecordType.SRV, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: srvRdata },
-      { name: instanceName, rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: txtRdata },
+      // PTR records for service types and instances
+      { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrHttpServiceTypeRdata },
+      { name: httpServiceType, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrHttpInstanceRdata },
+      { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrMatterbridgeServiceTypeRdata },
+      { name: matterbridgeServiceType, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrMatterbridgeInstanceRdata },
+      // SRV record for the HTTP instance
+      { name: httpInstanceName, rtype: DnsRecordType.SRV, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: srvRdata },
+      // SRV record for the matterbridge instance
+      { name: matterbridgeInstanceName, rtype: DnsRecordType.SRV, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: srvRdata },
+      // TXT record for the HTTP instance
+      { name: httpInstanceName, rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: txtRdata },
+      // TXT record for the matterbridge instance
+      { name: matterbridgeInstanceName, rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: txtRdata },
     ];
 
     // Always attempt to add both A and AAAA records (best effort), regardless of the socket family.
@@ -192,8 +211,8 @@ Examples:
   };
 
   // Handle Ctrl+C (SIGINT) to stop and log devices
-  process.on('SIGINT', () => {
-    cleanupAndLogAndExit();
+  process.on('SIGINT', async () => {
+    await cleanupAndLogAndExit();
   });
 
   mdnsIpv4.start();
@@ -242,8 +261,8 @@ Examples:
     }
   });
 
-  setTimeout(() => {
-    cleanupAndLogAndExit();
+  setTimeout(async () => {
+    await cleanupAndLogAndExit();
   }, 600000); // 10 minutes timeout to exit if no activity
 }
 

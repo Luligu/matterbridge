@@ -38,6 +38,7 @@ Advantages:
 - [mb_mdns]: Advertise full DNS-SD record set (PTR/SRV/TXT/A/AAAA) for matterbridge.\_http.\_tcp.local on port 8283.
 - [mdns]: Added TXT/SRV/A/AAAA encoders into the Mdns class.
 - [mb_mdns]: Added broadcast parameter to allow advertising when multicast is not available.
+- [mb_mdns]: Added \_matterbridge.\_tcp.local to query and advertise.
 
 ### Changed
 
