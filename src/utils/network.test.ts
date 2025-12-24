@@ -126,9 +126,7 @@ describe('getInterfaceDetails() / getInterfaceName() / getIpv4InterfaceAddress /
   it('returns the first non-internal IPv6 address with scope on Windows (uses %scopeid)', () => {
     const platformSpy = jest.spyOn(os, 'platform').mockReturnValue('win32');
     (os.networkInterfaces as jest.Mock).mockReturnValue({
-      eth0: [
-        { family: 'IPv6', internal: false, address: 'fe80::1', scopeid: 11, mac: 'aa' },
-      ],
+      eth0: [{ family: 'IPv6', internal: false, address: 'fe80::1', scopeid: 11, mac: 'aa' }],
     } as any);
 
     expect(getIpv6InterfaceAddress(true)).toBe('fe80::1%11');
@@ -139,9 +137,7 @@ describe('getInterfaceDetails() / getInterfaceName() / getIpv4InterfaceAddress /
   it('returns the first non-internal IPv6 address with scope on non-Windows (uses %interfaceName)', () => {
     const platformSpy = jest.spyOn(os, 'platform').mockReturnValue('linux');
     (os.networkInterfaces as jest.Mock).mockReturnValue({
-      eth0: [
-        { family: 'IPv6', internal: false, address: 'fe80::1', mac: 'aa' },
-      ],
+      eth0: [{ family: 'IPv6', internal: false, address: 'fe80::1', mac: 'aa' }],
     } as any);
 
     expect(getIpv6InterfaceAddress(true)).toBe('fe80::1%eth0');
