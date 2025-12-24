@@ -29,7 +29,6 @@ import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
 import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '../utils/commandLine.js';
-import { getIpv4InterfaceAddress, getIpv6InterfaceAddress } from '../utils/network.js';
 
 // Net imports
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
@@ -94,13 +93,16 @@ Examples:
     mdnsIpv6.log.logLevel = LogLevel.INFO;
   }
 
+  // List network interfaces
   mdnsIpv4.listNetworkInterfaces();
 
+  // Apply filters if any
   const filters = getStringArrayParameter('filter');
   if (filters) {
     mdnsIpv4.filters.push(...filters);
     mdnsIpv6.filters.push(...filters);
   }
+
   /**
    * Cleanup and log device information before exiting.
    */
@@ -113,73 +115,9 @@ Examples:
     process.exit(0);
   }
 
-  /**
-   *  Queries mDNS services over UDP IPv4 and sends a response for a specific service instance.
-   *  This function sends a query for Shelly, HTTP, and services, and responds with the appropriate PTR records.
-   */
-  const queryUdp4 = () => {
-    mdnsIpv4.log.info('Sending mDNS query for services...');
-    mdnsIpv4.sendQuery([
-      { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
-      { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
-      { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
-      { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
-      { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
-    ]);
-  };
-
-  /**
-   * Sends an mDNS advertisement for the HTTP service over UDP IPv4.
-   */
-  const advertiseUdp4 = () => {
-    mdnsIpv4.log.info('Sending mDNS advertisement for matterbridge service...');
-    const serviceType = '_http._tcp.local';
-    const instanceName = 'matterbridge._http._tcp.local';
-    const hostName = 'matterbridge.local';
-    const port = 8283;
-    const ttl = 120;
-
-    const ptrInstanceRdata = mdnsIpv4.encodeDnsName(instanceName);
-    const ptrServiceTypeRdata = mdnsIpv4.encodeDnsName(serviceType);
-    const srvRdata = mdnsIpv4.encodeSrvRdata(0, 0, port, hostName);
-    const txtRdata = mdnsIpv4.encodeTxtRdata([`version=${pkg.version}`, 'path=/']);
-
-    const answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[] = [
-      { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrServiceTypeRdata },
-      { name: serviceType, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrInstanceRdata },
-      { name: instanceName, rtype: DnsRecordType.SRV, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: srvRdata },
-      { name: instanceName, rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: txtRdata },
-    ];
-
-    // Always attempt to add both A and AAAA records (best effort), regardless of the socket family.
-    try {
-      const ipv4 = getIpv4InterfaceAddress();
-      if (ipv4 && ipv4 !== '0.0.0.0') {
-        answers.push({ name: hostName, rtype: DnsRecordType.A, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdnsIpv4.encodeA(ipv4) });
-      }
-    } catch {
-      // Ignore if no external IPv4 is available.
-    }
-
-    try {
-      const ipv6 = getIpv6InterfaceAddress();
-      if (ipv6 && ipv6 !== '::') {
-        answers.push({ name: hostName, rtype: DnsRecordType.AAAA, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdnsIpv4.encodeAAAA(ipv6) });
-      }
-    } catch {
-      // Ignore if no external IPv6 is available.
-    }
-
-    mdnsIpv4.sendResponse(answers);
-  };
-
-  /**
-   *  Queries mDNS services over UDP IPv6 and sends a response for a specific service instance.
-   *  This function sends a query for Shelly, HTTP, and services, and responds with the appropriate PTR records.
-   */
-  const queryUdp6 = () => {
-    mdnsIpv6.log.info('Sending mDNS query for services...');
-    mdnsIpv6.sendQuery([
+  const query = (mdns: Mdns) => {
+    mdns.log.info('Sending mDNS query for services...');
+    mdns.sendQuery([
       { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
@@ -189,20 +127,22 @@ Examples:
   };
 
   /**
-   * Sends an mDNS advertisement for the HTTP service over UDP IPv6.
+   * Sends an mDNS advertisement for the HTTP service over UDP IPv4.
+   *
+   * @param {Mdns} mdns - The Mdns instance to use for sending the advertisement.
    */
-  const advertiseUdp6 = () => {
-    mdnsIpv6.log.info('Sending mDNS advertisement for matterbridge service...');
+  const advertise = (mdns: Mdns) => {
+    mdns.log.info('Sending mDNS advertisement for matterbridge service...');
     const serviceType = '_http._tcp.local';
     const instanceName = 'matterbridge._http._tcp.local';
     const hostName = 'matterbridge.local';
     const port = 8283;
     const ttl = 120;
 
-    const ptrInstanceRdata = mdnsIpv6.encodeDnsName(instanceName);
-    const ptrServiceTypeRdata = mdnsIpv6.encodeDnsName(serviceType);
-    const srvRdata = mdnsIpv6.encodeSrvRdata(0, 0, port, hostName);
-    const txtRdata = mdnsIpv6.encodeTxtRdata([`version=${pkg.version}`, 'path=/']);
+    const ptrInstanceRdata = mdns.encodeDnsName(instanceName);
+    const ptrServiceTypeRdata = mdns.encodeDnsName(serviceType);
+    const srvRdata = mdns.encodeSrvRdata(0, 0, port, hostName);
+    const txtRdata = mdns.encodeTxtRdata([`version=${pkg.version}`, 'path=/']);
 
     const answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[] = [
       { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrServiceTypeRdata },
@@ -213,24 +153,41 @@ Examples:
 
     // Always attempt to add both A and AAAA records (best effort), regardless of the socket family.
     try {
-      const ipv4 = getIpv4InterfaceAddress();
+      const ipv4 = mdns.getIpv4InterfaceAddress(mdns.interfaceName); // getIpv4InterfaceAddress();
       if (ipv4) {
-        answers.push({ name: hostName, rtype: DnsRecordType.A, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdnsIpv6.encodeA(ipv4) });
+        answers.push({ name: hostName, rtype: DnsRecordType.A, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeA(ipv4) });
       }
-    } catch {
-      // Ignore if no external IPv4 is available.
+    } catch (error) {
+      mdns.log.warn(`Error sending mDNS advertisement for matterbridge service A record: ${(error as Error).message}`);
     }
 
     try {
-      const ipv6 = getIpv6InterfaceAddress();
+      const ipv6 = mdns.getIpv6InterfaceAddress(mdns.interfaceName); // getIpv6InterfaceAddress();
       if (ipv6) {
-        answers.push({ name: hostName, rtype: DnsRecordType.AAAA, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdnsIpv6.encodeAAAA(ipv6) });
+        answers.push({ name: hostName, rtype: DnsRecordType.AAAA, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeAAAA(ipv6) });
       }
-    } catch {
-      // Ignore if no external IPv6 is available.
+    } catch (error) {
+      mdns.log.warn(`Error sending mDNS advertisement for matterbridge service AAAA record: ${(error as Error).message}`);
     }
 
-    mdnsIpv6.sendResponse(answers);
+    const response = mdns.sendResponse(answers);
+    if (hasParameter('broadcast')) {
+      try {
+        const address = mdns.socketType === 'udp4' ? mdns.getIpv4InterfaceAddress(mdns.interfaceName) : mdns.getIpv6InterfaceAddress(mdns.interfaceName);
+        const mask = mdns.socketType === 'udp4' ? mdns.getNetmask(address as string) : undefined;
+        const broadcastAddress = mdns.socketType === 'udp4' ? mdns.getIpv4BroadcastAddress(address, mask) : mdns.getIpv6BroadcastAddress();
+        mdns.log.info(`Broadcasting mDNS advertisement for matterbridge service to ${broadcastAddress}...`);
+        mdns.socket.send(response, 0, response.length, mdns.multicastPort, broadcastAddress, (error: Error | null) => {
+          if (error) {
+            mdns.log.error(`Error broadcasting mDNS advertisement: ${error.message}`);
+          } else {
+            mdns.log.info(`mDNS advertisement broadcasted successfully to ${broadcastAddress}`);
+          }
+        });
+      } catch (error) {
+        mdns.log.error(`Error broadcasting mDNS advertisement: ${(error as Error).message}`);
+      }
+    }
   };
 
   // Handle Ctrl+C (SIGINT) to stop and log devices
@@ -242,19 +199,19 @@ Examples:
   mdnsIpv4.on('ready', (address: AddressInfo) => {
     mdnsIpv4.log.info(`mdnsIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
     if (hasParameter('advertise')) {
-      advertiseUdp4();
+      advertise(mdnsIpv4);
       setInterval(
         () => {
-          advertiseUdp4();
+          advertise(mdnsIpv4);
         },
         getIntParameter('advertise') || 10000,
       ).unref();
     }
     if (hasParameter('query')) {
-      queryUdp4();
+      query(mdnsIpv4);
       setInterval(
         () => {
-          queryUdp4();
+          query(mdnsIpv4);
         },
         getIntParameter('query') || 10000,
       ).unref();
@@ -265,19 +222,19 @@ Examples:
   mdnsIpv6.on('ready', (address: AddressInfo) => {
     mdnsIpv6.log.info(`mdnsIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
     if (hasParameter('advertise')) {
-      advertiseUdp6();
+      advertise(mdnsIpv6);
       setInterval(
         () => {
-          advertiseUdp6();
+          advertise(mdnsIpv6);
         },
         getIntParameter('advertise') || 10000,
       ).unref();
     }
     if (hasParameter('query')) {
-      queryUdp6();
+      query(mdnsIpv6);
       setInterval(
         () => {
-          queryUdp6();
+          query(mdnsIpv6);
         },
         getIntParameter('query') || 10000,
       ).unref();

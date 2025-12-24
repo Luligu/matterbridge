@@ -34,9 +34,10 @@ Advantages:
 
 - [DevContainer]: Refactored Dev Container setup. The Matterbridge instance can now be paired on native Linux hosts or WSL 2 with Docker engine CLI integration. On Docker Desktop on Windows or macOS is not possible cause Docker Desktop runs inside a VM and not directly on the host so mDNS is not supported.
 - [DevContainer]: Since is now possible to pair from Dev Container, named volumes have been added to persist storage and plugins across rebuilds.
-- [mb_mdns]: Add query and advertise interval. Improved help for easy mDNS testing.
+- [mb_mdns]: Added query and advertise interval. Improved help for easy mDNS testing.
 - [mb_mdns]: Advertise full DNS-SD record set (PTR/SRV/TXT/A/AAAA) for matterbridge.\_http.\_tcp.local on port 8283.
 - [mdns]: Added TXT/SRV/A/AAAA encoders into the Mdns class.
+- [mb_mdns]: Added broadcast parameter to allow advertising when multicast is not available.
 
 ### Changed
 

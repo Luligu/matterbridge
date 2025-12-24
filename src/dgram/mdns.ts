@@ -27,9 +27,11 @@ import dgram from 'node:dgram';
 // AnsiLogger imports
 import { BLUE, CYAN, db, er, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
 
+// Utils imports
+import { hasParameter } from '../utils/commandLine.js';
+
 // Net imports
 import { Multicast } from './multicast.js';
-
 export const enum DnsRecordType {
   A = 1,
   NS = 2,
@@ -629,12 +631,14 @@ export class Mdns extends Multicast {
    * Sends a DNS query with multiple questions.
    *
    * @param {Array<{ name: string; type: number; class: number; unicastResponse?: boolean }>} questions - Array of questions
+   * to include in the query.
+   * @returns {Buffer<ArrayBuffer>} The constructed query buffer.
    *
    * @remarks
    * Each question should have a name (e.g., "_http._tcp.local"), type (e.g., DnsRecordType.PTR), class (e.g., DnsClass.IN),
    * and an optional unicastResponse flag (this will add the DnsClassFlag.QU flag to the query).
    */
-  sendQuery(questions: { name: string; type: number; class: number; unicastResponse?: boolean }[]): void {
+  sendQuery(questions: { name: string; type: number; class: number; unicastResponse?: boolean }[]): Buffer<ArrayBuffer> {
     const header = Buffer.alloc(12);
     header.writeUInt16BE(0, 0); // ID
     header.writeUInt16BE(0, 2); // Flags
@@ -652,8 +656,10 @@ export class Mdns extends Multicast {
     });
 
     const query = Buffer.concat([header, ...questionBuffers]);
-    const decoded = this.decodeMdnsMessage(query);
-    this.logMdnsMessage(decoded);
+    if (hasParameter('v') || hasParameter('verbose')) {
+      const decoded = this.decodeMdnsMessage(query);
+      this.logMdnsMessage(decoded);
+    }
 
     this.socket.send(query, 0, query.length, this.multicastPort, this.multicastAddress, (error: Error | null) => {
       if (error) {
@@ -667,18 +673,20 @@ export class Mdns extends Multicast {
         this.emit('sent', query, this.multicastAddress, this.multicastPort);
       }
     });
+    return query;
   }
 
   /**
    * Constructs an mDNS response packet and sends it to the multicast address and port.
    *
    * @param {Array<{ name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }>} answers - Array of answer records.
+   * @returns {Buffer<ArrayBuffer>} The constructed response buffer.
    *
    * @example
    *   const ptrRdata = mdnsIpv4.encodeDnsName('matterbridge._http._tcp.local');
    *   mdnsIpv4.sendResponse([{ name: '_http._tcp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: ptrRdata }]);
    */
-  sendResponse(answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[]): void {
+  sendResponse(answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[]): Buffer<ArrayBuffer> {
     if (!Array.isArray(answers) || answers.length === 0) {
       throw new Error('sendResponse requires a non-empty answers array');
     }
@@ -713,6 +721,10 @@ export class Mdns extends Multicast {
 
     // Concatenate header and answers to form the complete mDNS response packet.
     const response = Buffer.concat([header, ...answerBuffers]);
+    if (hasParameter('v') || hasParameter('verbose')) {
+      const decoded = this.decodeMdnsMessage(response);
+      this.logMdnsMessage(decoded);
+    }
 
     // Send the response packet via the socket.
     this.socket.send(response, 0, response.length, this.multicastPort, this.multicastAddress, (error: Error | null) => {
@@ -726,6 +738,7 @@ export class Mdns extends Multicast {
         this.emit('sent', response, this.multicastAddress, this.multicastPort);
       }
     });
+    return response;
   }
 
   /**
