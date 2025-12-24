@@ -69,12 +69,11 @@ Examples:
   # Query for mDNS devices every 10s on a specific interface
   mb_mdns --interfaceName eth0 --query
 
-  # Advertise matterbridge._http._tcp.local every 5s with filter
-  mb_mdns --advertise 5000 --filter matterbridge._http._tcp.local
+  # Advertise _matterbridge._tcp.local every 5s with filter
+  mb_mdns --advertise 5000 --filter _matterbridge._tcp.local
 
-  # Query each 5s and listen for matterbridge._http._tcp.local service records
-  mb_mdns --query 5000 --filter matterbridge._http._tcp.local
-
+  # Query each 5s and listen for _matterbridge._tcp.local service records
+  mb_mdns --query 5000 --filter _matterbridge._tcp.local
 `);
     // eslint-disable-next-line n/no-process-exit
     process.exit(0);
@@ -82,6 +81,11 @@ Examples:
 
   // Dynamic JSON import (Node >= 20) with import attributes
   const { default: pkg } = await import('../../package.json', { with: { type: 'json' } });
+
+  let mdnsIpv4QueryInterval: NodeJS.Timeout | undefined;
+  let mdnsIpv6QueryInterval: NodeJS.Timeout | undefined;
+  let mdnsIpv4AdvertiseInterval: NodeJS.Timeout | undefined;
+  let mdnsIpv6AdvertiseInterval: NodeJS.Timeout | undefined;
 
   const mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, getParameter('interfaceName'), getParameter('ipv4InterfaceAddress') || '0.0.0.0', getParameter('outgoingIpv4InterfaceAddress'));
   const mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, getParameter('interfaceName'), getParameter('ipv6InterfaceAddress') || '::', getParameter('outgoingIpv6InterfaceAddress'));
@@ -112,6 +116,10 @@ Examples:
       advertise(mdnsIpv6, 0); // Send goodbye with TTL 0
     }
     await new Promise((resolve) => setTimeout(resolve, 250)); // Wait for 250ms to allow goodbye messages to be sent
+    clearInterval(mdnsIpv4QueryInterval);
+    clearInterval(mdnsIpv6QueryInterval);
+    clearInterval(mdnsIpv4AdvertiseInterval);
+    clearInterval(mdnsIpv6AdvertiseInterval);
     mdnsIpv4.stop();
     mdnsIpv6.stop();
     await new Promise((resolve) => setTimeout(resolve, 250)); // Wait for 250ms to allow sockets to close
@@ -220,7 +228,7 @@ Examples:
     mdnsIpv4.log.info(`mdnsIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
     if (hasParameter('advertise')) {
       advertise(mdnsIpv4);
-      setInterval(
+      mdnsIpv4AdvertiseInterval = setInterval(
         () => {
           advertise(mdnsIpv4);
         },
@@ -229,7 +237,7 @@ Examples:
     }
     if (hasParameter('query')) {
       query(mdnsIpv4);
-      setInterval(
+      mdnsIpv4QueryInterval = setInterval(
         () => {
           query(mdnsIpv4);
         },
@@ -243,7 +251,7 @@ Examples:
     mdnsIpv6.log.info(`mdnsIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
     if (hasParameter('advertise')) {
       advertise(mdnsIpv6);
-      setInterval(
+      mdnsIpv6AdvertiseInterval = setInterval(
         () => {
           advertise(mdnsIpv6);
         },
@@ -252,7 +260,7 @@ Examples:
     }
     if (hasParameter('query')) {
       query(mdnsIpv6);
-      setInterval(
+      mdnsIpv6QueryInterval = setInterval(
         () => {
           query(mdnsIpv6);
         },
@@ -263,7 +271,7 @@ Examples:
 
   setTimeout(async () => {
     await cleanupAndLogAndExit();
-  }, 600000); // 10 minutes timeout to exit if no activity
+  }, 600000).unref(); // 10 minutes timeout to exit if no activity
 }
 
 /*
@@ -279,7 +287,7 @@ Examples:
   for query
   sudo tcpdump -i eth0 -nn -s0 udp port 5353 | grep _matter._tcp
   for matterbridge
-  sudo tcpdump -i eth0 -nn -s0 udp port 5353 | grep matterbridge._http._tcp.local
+  sudo tcpdump -i eth0 -nn -s0 udp port 5353 | grep _matterbridge._tcp
 
   Example (filter commissioner service on specific Wi-Fi interface):
   mb_mdns --interfaceName "Wi-Fi" --filter _matterc._udp
