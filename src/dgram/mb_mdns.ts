@@ -39,25 +39,29 @@ import { DnsClass, DnsClassFlag, DnsRecordType, Mdns } from './mdns.js';
 {
   if (hasParameter('h') || hasParameter('help')) {
     // eslint-disable-next-line no-console
-    console.log(`Usage: mb_mdns [options]
+    console.log(`Copyright (c) Matterbridge. All rights reserved.\n`);
+    // eslint-disable-next-line no-console
+    console.log(`Usage: mb_mdns [options...]
+
+If no command line is provided, mb_mdns shows all incoming mDNS records.
 
 Options:
   -h, --help                                Show this help message and exit.
   --interfaceName <name>                    Network interface name to bind to (default all interfaces).
   --ipv4InterfaceAddress <address>          IPv4 address of the network interface to bind to (default: 0.0.0.0).
   --ipv6InterfaceAddress <address>          IPv6 address of the network interface to bind to (default: ::).
-  --outgoingIpv4InterfaceAddress <address>  Outgoing IPv4 address (default first external address).
-  --outgoingIpv6InterfaceAddress <address>  Outgoing IPv6 address (default first external address).
-  --advertise <interval>                    Enable mDNS advertisement each ms (default interval: 10000ms).
-  --query <interval>                        Enable mDNS query each ms (default interval: 10000ms).
-  --filter <string>                         Filter string to match in the mDNS record name (can be repeated).
+  --outgoingIpv4InterfaceAddress <address>  Outgoing IPv4 address of the network interface (default first external address).
+  --outgoingIpv6InterfaceAddress <address>  Outgoing IPv6 address of the network interface (default first external address).
+  --advertise <interval>                    Enable matterbridge mDNS advertisement each ms (default interval: 10000ms).
+  --query <interval>                        Enable common mDNS services query each ms (default interval: 10000ms).
+  --filter <string...>                      Filter strings to match in the mDNS record name (default: no filter).
   -v, --verbose                             Enable verbose logging (default: disabled).
 
 Examples:
-  # List Matter device commissioner service records only on eth0 interface
+  # Listen for Matter device commissioner service records only on eth0 interface
   mb_mdns --interfaceName eth0 --filter _matterc._udp
 
-  # List Matter device discovery service records only on eth0 interface
+  # Listen for Matter device discovery service records only on eth0 interface
   mb_mdns --interfaceName eth0 --filter _matter._tcp
 
   # Listen for Matter commissioner and discovery service records on all interfaces
@@ -176,7 +180,7 @@ Examples:
   const queryUdp6 = () => {
     mdnsIpv6.log.info('Sending mDNS query for services...');
     mdnsIpv6.sendQuery([
-      { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false },
+      { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
