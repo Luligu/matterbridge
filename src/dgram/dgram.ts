@@ -61,7 +61,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    *
    * @param {string} name - The name of the socket.
    * @param {'udp4' | 'udp6'} socketType - The type of the socket (IPv4 or IPv6).
-   * @param {boolean | undefined} reuseAddr - Whether to allow address reuse.
+   * @param {boolean | undefined} reuseAddr - Whether to allow address reuse. Defaults to true.
    * @param {string} [interfaceName] - The name of the network interface to bind to.
    * @param {string} [interfaceAddress] - The address of the network interface to bind to.
    */
@@ -72,6 +72,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     this.socketType = socketType;
     this.interfaceName = interfaceName;
     this.interfaceAddress = interfaceAddress;
+    this.log.debug(`Created socket of type ${BLUE}${socketType}${db} on interface ${BLUE}${interfaceName || 'any'}${db} with address ${BLUE}${interfaceAddress || 'any'}${db} reuseAddr=${BLUE}${reuseAddr}${db}`);
 
     this.socket.on('error', (error) => {
       this.log.debug(`Socket error: ${error instanceof Error ? error.message : error}`);
@@ -337,7 +338,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    */
   getNetmask(interfaceAddress: string): string | undefined {
     // Remove zone index if present (e.g. for IPv6 "fe80::1%eth0")
-    const cleanedAddress = interfaceAddress.includes('%') ? interfaceAddress.split('%')[0] : interfaceAddress;
+    const noZoneAddress = interfaceAddress.includes('%') ? interfaceAddress.split('%')[0] : interfaceAddress;
 
     // Iterate over all interfaces.
     const nets = os.networkInterfaces();
@@ -345,7 +346,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
       const ifaceAddresses = nets[ifaceName];
       if (!ifaceAddresses) continue;
       for (const addr of ifaceAddresses) {
-        if (addr.address === cleanedAddress) {
+        if (addr.address === noZoneAddress) {
           return addr.netmask;
         }
       }

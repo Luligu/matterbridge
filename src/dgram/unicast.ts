@@ -23,6 +23,7 @@
 
 // Node.js imports
 import { AddressInfo } from 'node:net';
+import { RemoteInfo } from 'node:dgram';
 
 // AnsiLogger imports
 import { BLUE, db } from 'node-ansi-logger';
@@ -68,6 +69,7 @@ export class Unicast extends Dgram {
     // Bind to the local address and port:
     // port 0 or undefined means "assign any available port"
     // address 0.0.0.0 or :: means "bind to all available addresses"
+    this.log.debug(`Binding dgram unicast socket to ${BLUE}${this.interfaceAddress || 'all available addresses'}${db} on port ${BLUE}${this.port || 'any available port'}${db}...`);
     this.socket.bind(this.port, this.interfaceAddress, () => {
       const address = this.socket.address();
       this.log.debug(`Dgram unicast socket bound to ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
@@ -85,7 +87,16 @@ export class Unicast extends Dgram {
     this.socket.setBroadcast(true);
     this.log.debug(`Dgram unicast socket broadcast enabled`);
     this.emit('ready', address);
-    this.onReady(address);
+  }
+
+  /**
+   * Event handler for the 'message' event. This event is emitted when a datagram message is received.
+   *
+   * @param {Buffer} msg - The message buffer.
+   * @param {RemoteInfo} rinfo - The remote info.
+   */
+  override onMessage(msg: Buffer, rinfo: RemoteInfo) {
+    this.log.debug(`Socket received a message from ${BLUE}${rinfo.family}${db} ${BLUE}${rinfo.address}${db}:${BLUE}${rinfo.port}${db}`);
   }
 
   /**

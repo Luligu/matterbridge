@@ -18,6 +18,8 @@ import { getMacAddress } from '../utils/network.js';
 import { Mdns, DnsRecordType, DnsClass, MdnsMessage } from './mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
 
+process.argv.push('--verbose');
+
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;

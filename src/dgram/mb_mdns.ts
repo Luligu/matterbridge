@@ -34,6 +34,7 @@ import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } 
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
 import { DnsClass, DnsClassFlag, DnsRecordType, Mdns } from './mdns.js';
 import { Unicast } from './unicast.js';
+import { MDNS_REFLECTOR_ADDRESS, MDNS_REFLECTOR_PORT } from './mMdnsReflector.js';
 
 // istanbul ignore next
 {
@@ -94,7 +95,7 @@ Examples:
 
   const mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, getParameter('interfaceName'), getParameter('ipv4InterfaceAddress') || '0.0.0.0', getParameter('outgoingIpv4InterfaceAddress'));
   const mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, getParameter('interfaceName'), getParameter('ipv6InterfaceAddress') || '::', getParameter('outgoingIpv6InterfaceAddress'));
-  const unicast = new Unicast('mDNS Unicast Server', 'udp4', true, undefined, 'localhost', MDNS_MULTICAST_PORT);
+  const unicast = new Unicast('mDNS Unicast Server', 'udp4', false, undefined, MDNS_REFLECTOR_ADDRESS, MDNS_REFLECTOR_PORT);
 
   if (hasParameter('v') || hasParameter('verbose')) {
     mdnsIpv4.log.logLevel = LogLevel.DEBUG;
@@ -231,7 +232,7 @@ Examples:
     if (mdns.socketType === 'udp4' && hasParameter('localhost')) {
       try {
         mdns.log.info(`**Sending mDNS advertisement for matterbridge service to localhost...`);
-        mdns.socket.send(response, 0, response.length, MDNS_MULTICAST_PORT, 'localhost', (error: Error | null) => {
+        mdns.socket.send(response, 0, response.length, MDNS_REFLECTOR_PORT, MDNS_REFLECTOR_ADDRESS, (error: Error | null) => {
           if (error) {
             mdns.log.error(`**Error sending mDNS advertisement to localhost: ${error.message}`);
           } else {
@@ -279,7 +280,7 @@ Examples:
     await cleanupAndLogAndExit();
   });
 
-  mdnsIpv4.start();
+  if (!hasParameter('noIpv4')) mdnsIpv4.start();
   mdnsIpv4.on('ready', (address: AddressInfo) => {
     mdnsIpv4.log.info(`mdnsIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
     if (hasParameter('advertise')) {
@@ -302,7 +303,7 @@ Examples:
     }
   });
 
-  mdnsIpv6.start();
+  if (!hasParameter('noIpv6')) mdnsIpv6.start();
   mdnsIpv6.on('ready', (address: AddressInfo) => {
     mdnsIpv6.log.info(`mdnsIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
     if (hasParameter('advertise')) {
@@ -325,9 +326,9 @@ Examples:
     }
   });
 
-  unicast.start();
-  unicast.on('ready', (address: AddressInfo) => {
-    unicast.log.info(`**Ready on ${address.family} ${address.address}:${address.port}`);
+  if (hasParameter('reflector')) unicast.start();
+  unicast.on('bound', (address: AddressInfo) => {
+    unicast.log.info(`**Bound on ${address.family} ${address.address}:${address.port}`);
   });
   unicast.on('message', (msg: Buffer, rinfo: AddressInfo) => {
     unicast.log.info(`**Received message from ${rinfo.address}:${rinfo.port} - ${msg.length} bytes`);

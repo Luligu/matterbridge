@@ -14,6 +14,8 @@ import { jest } from '@jest/globals';
 
 import { Mdns, DnsRecordType, DnsClass, DnsClassFlag } from './mdns.js';
 
+process.argv.push('--verbose');
+
 jest.mock('node:dgram');
 
 const BLUE = '';
