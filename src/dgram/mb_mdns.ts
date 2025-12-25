@@ -33,6 +33,7 @@ import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } 
 // Net imports
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
 import { DnsClass, DnsClassFlag, DnsRecordType, Mdns } from './mdns.js';
+import { Unicast } from './unicast.js';
 
 // istanbul ignore next
 {
@@ -51,6 +52,10 @@ Options:
   --ipv6InterfaceAddress <address>          IPv6 address of the network interface to bind to (default: ::).
   --outgoingIpv4InterfaceAddress <address>  Outgoing IPv4 address of the network interface (default first external address).
   --outgoingIpv6InterfaceAddress <address>  Outgoing IPv6 address of the network interface (default first external address).
+  --unicastIpv4 <address>                   Unicast IPv4 address to send mDNS advertisements to (default: disabled).
+  --unicastIpv6 <address>                   Unicast IPv6 address to send mDNS advertisements to (default: disabled).
+  --broadcast                               Enable broadcasting of mDNS advertisements (default: disabled).
+  --localhost                               Enable sending mDNS advertisements to localhost (default: disabled).
   --advertise <interval>                    Enable matterbridge mDNS advertisement each ms (default interval: 10000ms).
   --query <interval>                        Enable common mDNS services query each ms (default interval: 10000ms).
   --filter <string...>                      Filter strings to match in the mDNS record name (default: no filter).
@@ -89,12 +94,16 @@ Examples:
 
   const mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, getParameter('interfaceName'), getParameter('ipv4InterfaceAddress') || '0.0.0.0', getParameter('outgoingIpv4InterfaceAddress'));
   const mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, getParameter('interfaceName'), getParameter('ipv6InterfaceAddress') || '::', getParameter('outgoingIpv6InterfaceAddress'));
+  const unicast = new Unicast('mDNS Unicast Server', 'udp4', true, undefined, 'localhost', MDNS_MULTICAST_PORT);
+
   if (hasParameter('v') || hasParameter('verbose')) {
     mdnsIpv4.log.logLevel = LogLevel.DEBUG;
     mdnsIpv6.log.logLevel = LogLevel.DEBUG;
+    unicast.log.logLevel = LogLevel.DEBUG;
   } else {
     mdnsIpv4.log.logLevel = LogLevel.INFO;
     mdnsIpv6.log.logLevel = LogLevel.INFO;
+    unicast.log.logLevel = LogLevel.INFO;
   }
 
   // List network interfaces
@@ -122,6 +131,7 @@ Examples:
     clearInterval(mdnsIpv6AdvertiseInterval);
     mdnsIpv4.stop();
     mdnsIpv6.stop();
+    unicast.stop();
     await new Promise((resolve) => setTimeout(resolve, 250)); // Wait for 250ms to allow sockets to close
     mdnsIpv4.logDevices();
     mdnsIpv6.logDevices();
@@ -136,6 +146,7 @@ Examples:
       { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_matterbridge._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+      { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
     ]);
@@ -181,7 +192,7 @@ Examples:
 
     // Always attempt to add both A and AAAA records (best effort), regardless of the socket family.
     try {
-      const ipv4 = mdns.getIpv4InterfaceAddress(mdns.interfaceName); // getIpv4InterfaceAddress();
+      const ipv4 = mdns.getIpv4InterfaceAddress(mdns.interfaceName);
       if (ipv4) {
         answers.push({ name: hostName, rtype: DnsRecordType.A, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeA(ipv4) });
       }
@@ -190,7 +201,7 @@ Examples:
     }
 
     try {
-      const ipv6 = mdns.getIpv6InterfaceAddress(mdns.interfaceName); // getIpv6InterfaceAddress();
+      const ipv6 = mdns.getIpv6InterfaceAddress(mdns.interfaceName);
       if (ipv6) {
         answers.push({ name: hostName, rtype: DnsRecordType.AAAA, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeAAAA(ipv6) });
       }
@@ -199,21 +210,66 @@ Examples:
     }
 
     const response = mdns.sendResponse(answers);
+
     if (hasParameter('broadcast')) {
       try {
         const address = mdns.socketType === 'udp4' ? mdns.getIpv4InterfaceAddress(mdns.interfaceName) : mdns.getIpv6InterfaceAddress(mdns.interfaceName);
         const mask = mdns.socketType === 'udp4' ? mdns.getNetmask(address as string) : undefined;
         const broadcastAddress = mdns.socketType === 'udp4' ? mdns.getIpv4BroadcastAddress(address, mask) : mdns.getIpv6BroadcastAddress();
-        mdns.log.info(`Broadcasting mDNS advertisement for matterbridge service to ${broadcastAddress}...`);
-        mdns.socket.send(response, 0, response.length, mdns.multicastPort, broadcastAddress, (error: Error | null) => {
+        mdns.log.info(`***Broadcasting mDNS advertisement for matterbridge service to ${broadcastAddress}...`);
+        mdns.socket.send(response, 0, response.length, MDNS_MULTICAST_PORT, broadcastAddress, (error: Error | null) => {
           if (error) {
-            mdns.log.error(`Error broadcasting mDNS advertisement: ${error.message}`);
+            mdns.log.error(`Error broadcasting mDNS advertisement to ${broadcastAddress}: ${error.message}`);
           } else {
-            mdns.log.info(`mDNS advertisement broadcasted successfully to ${broadcastAddress}`);
+            mdns.log.info(`**mDNS advertisement broadcasted successfully to ${broadcastAddress}`);
           }
         });
       } catch (error) {
         mdns.log.error(`Error broadcasting mDNS advertisement: ${(error as Error).message}`);
+      }
+    }
+    if (mdns.socketType === 'udp4' && hasParameter('localhost')) {
+      try {
+        mdns.log.info(`**Sending mDNS advertisement for matterbridge service to localhost...`);
+        mdns.socket.send(response, 0, response.length, MDNS_MULTICAST_PORT, 'localhost', (error: Error | null) => {
+          if (error) {
+            mdns.log.error(`**Error sending mDNS advertisement to localhost: ${error.message}`);
+          } else {
+            mdns.log.info(`**mDNS advertisement sent successfully to localhost`);
+          }
+        });
+      } catch (error) {
+        mdns.log.error(`**Error sending mDNS advertisement to localhost: ${(error as Error).message}`);
+      }
+    }
+    if (mdns.socketType === 'udp4' && getParameter('unicastIpv4')) {
+      const unicastAddress = getParameter('unicastIpv4') as string;
+      try {
+        mdns.log.info(`**Sending mDNS advertisement for matterbridge service to unicast ${unicastAddress}...`);
+        mdns.socket.send(response, 0, response.length, MDNS_MULTICAST_PORT, unicastAddress, (error: Error | null) => {
+          if (error) {
+            mdns.log.error(`Error sending mDNS advertisement to unicast ${unicastAddress}: ${error.message}`);
+          } else {
+            mdns.log.info(`**mDNS advertisement sent successfully to unicast ${unicastAddress}`);
+          }
+        });
+      } catch (error) {
+        mdns.log.error(`Error sending mDNS advertisement to unicast ${unicastAddress}: ${(error as Error).message}`);
+      }
+    }
+    if (mdns.socketType === 'udp6' && getParameter('unicastIpv6')) {
+      const unicastAddress = getParameter('unicastIpv6') as string;
+      try {
+        mdns.log.info(`**Sending mDNS advertisement for matterbridge service to unicast ${unicastAddress}...`);
+        mdns.socket.send(response, 0, response.length, MDNS_MULTICAST_PORT, unicastAddress, (error: Error | null) => {
+          if (error) {
+            mdns.log.error(`Error sending mDNS advertisement to unicast ${unicastAddress}: ${error.message}`);
+          } else {
+            mdns.log.info(`**mDNS advertisement sent successfully to unicast ${unicastAddress}`);
+          }
+        });
+      } catch (error) {
+        mdns.log.error(`Error sending mDNS advertisement to unicast ${unicastAddress}: ${(error as Error).message}`);
       }
     }
   };
@@ -269,12 +325,23 @@ Examples:
     }
   });
 
+  unicast.start();
+  unicast.on('ready', (address: AddressInfo) => {
+    unicast.log.info(`**Ready on ${address.family} ${address.address}:${address.port}`);
+  });
+  unicast.on('message', (msg: Buffer, rinfo: AddressInfo) => {
+    unicast.log.info(`**Received message from ${rinfo.address}:${rinfo.port} - ${msg.length} bytes`);
+  });
+
+  // Exit after a timeout to avoid running indefinitely in test environments
   setTimeout(async () => {
     await cleanupAndLogAndExit();
   }, 600000).unref(); // 10 minutes timeout to exit if no activity
 }
 
 /*
+  mb_mdns --filter _matterbridge._tcp.local --advertise 10000 --unicastIpv4 192.168.1.41 --unicastIpv6 fd78:cbf8:4939:46e2:4476:1c1b:be8f:87e4
+  mb_mdns --filter _matterbridge._tcp.local --advertise 10000 --unicastIpv4 192.168.1.41 --unicastIpv6 fd78:cbf8:4939:46e2:134f:d72a:cf08:a5d5
   avahi-browse -pr _matterc._udp for advertise
   avahi-browse -pr _matter._tcp for query
 

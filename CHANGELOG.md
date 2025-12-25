@@ -39,6 +39,9 @@ Advantages:
 - [mdns]: Added TXT/SRV/A/AAAA encoders into the Mdns class.
 - [mb_mdns]: Added broadcast parameter to allow advertising when multicast is not available.
 - [mb_mdns]: Added \_matterbridge.\_tcp.local to query and advertise.
+- [mb_mdns]: Added localhost parameter to send unicast messages to localhost.
+- [mb_mdns]: Added unicastIpv4 parameter to send unicast messages.
+- [mb_mdns]: Added unicastIpv6 parameter to send unicast messages.
 
 ### Changed
 
