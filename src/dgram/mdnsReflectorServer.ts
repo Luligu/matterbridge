@@ -64,6 +64,9 @@ export class MdnsReflectorServer {
 
   /**
    * Decode and upgrade the A and AAAA records from Docker environment to point the host machine.
+   * Matterbridge running inside Docker Desktop containers register mDNS records with the container's IP address,
+   * which is not reachable from outside the Docker network.
+   * To make these services reachable, we need to upgrade the A and AAAA records.
    *
    * @param {Buffer<ArrayBufferLike>} msg - The mDNS message buffer.
    * @returns {Buffer<ArrayBufferLike>} The upgraded mDNS message buffer.
