@@ -36,12 +36,9 @@ Advantages:
 - [DevContainer]: Since is now possible to pair from Dev Container, named volumes have been added to persist storage and plugins across rebuilds.
 - [mb_mdns]: Added query and advertise interval. Improved help for easy mDNS testing.
 - [mb_mdns]: Advertise full DNS-SD record set (PTR/SRV/TXT/A/AAAA) for matterbridge.\_http.\_tcp.local on port 8283.
-- [mdns]: Added TXT/SRV/A/AAAA encoders into the Mdns class.
-- [mb_mdns]: Added broadcast parameter to allow advertising when multicast is not available.
-- [mb_mdns]: Added \_matterbridge.\_tcp.local to query and advertise.
-- [mb_mdns]: Added localhost parameter to send unicast messages to localhost.
-- [mb_mdns]: Added unicastIpv4 parameter to send unicast messages.
-- [mb_mdns]: Added unicastIpv6 parameter to send unicast messages.
+- [Mdns]: Added TXT/SRV/A/AAAA encoders into the Mdns class.
+- [MdnsReflectorClient]: Added MdnsReflectorClient class.
+- [MdnsReflectorServer]: Added MdnsReflectorServer class.
 
 ### Changed
 
