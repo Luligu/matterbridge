@@ -26,16 +26,8 @@ await setupTest('Multicast', false);
 describe('Multicast', () => {
   let mcast: Multicast;
 
-  beforeAll(() => {
-    //
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   afterEach(() => {
-    //
+    jest.clearAllMocks();
   });
 
   afterAll(() => {

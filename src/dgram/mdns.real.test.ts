@@ -10,6 +10,8 @@
 
 import { RemoteInfo } from 'node:dgram';
 
+import { jest } from '@jest/globals';
+
 import { getMacAddress } from '../utils/network.js';
 import { setupTest } from '../jestutils/jestHelpers.js';
 
@@ -59,6 +61,10 @@ describe('Mdns Real Interaction Tests', () => {
     if (!mdnsServer.bound || !mdnsClient.bound) throw new Error('mdnsServer or mdnsClient not bound after start()');
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   afterAll(async () => {
     if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
 
@@ -88,6 +94,7 @@ describe('Mdns Real Interaction Tests', () => {
     await Promise.all([serverClosedPromise, clientClosedPromise]);
 
     if (mdnsServer.bound || mdnsClient.bound) throw new Error('mdnsServer or mdnsClient is still bound after stop()');
+    jest.restoreAllMocks();
   });
 
   test('should have both mDNS instances ready', () => {

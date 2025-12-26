@@ -16,8 +16,6 @@ import { setupTest } from '../jestutils/jestHelpers.js';
 
 import { MdnsReflectorClient } from './mdnsReflectorClient.js';
 
-process.argv.push('--verbose');
-
 jest.mock('node:dgram');
 
 // Setup the test environment
@@ -34,6 +32,13 @@ describe('MdnsReflectorClient', () => {
     send = jest.fn();
     log = { error: jest.fn() };
   }
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
 
   it('start/stop should bind and close all sockets', async () => {
     const client = new MdnsReflectorClient();

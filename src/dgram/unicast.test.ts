@@ -25,16 +25,8 @@ await setupTest('Unicast', false);
 describe('Unicast', () => {
   let ucast: Unicast;
 
-  beforeAll(() => {
-    //
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   afterEach(() => {
-    //
+    jest.clearAllMocks();
   });
 
   afterAll(() => {

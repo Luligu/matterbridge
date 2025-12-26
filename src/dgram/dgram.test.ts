@@ -23,7 +23,7 @@ await setupTest('Dgram', false);
 describe('Dgram', () => {
   let dgram: Dgram;
 
-  beforeEach(() => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 

@@ -54,6 +54,10 @@ describe('Coap', () => {
     jest.clearAllMocks();
   });
 
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('decodeCoapMessage', () => {
     it('should decode a simple CoAP message', () => {
       // Create a simple CoAP message: Version 1, Type CON, Token Length 0, Code GET, Message ID 1234

@@ -1,5 +1,5 @@
 /**
- * @description MdnsReflectorServer upgradeAddressForDocker() test
+ * @description MdnsReflectorServer upgradeAddress() test
  * @file mdnsReflectorServer.test.ts
  * @author Luca Liguori
  * @created 2025-12-26
@@ -9,16 +9,15 @@
  */
 
 import EventEmitter from 'node:events';
+import os from 'node:os';
 
 import { LogLevel } from 'node-ansi-logger';
 import { jest } from '@jest/globals';
 
-import { setupTest } from '../jestutils/jestHelpers.js';
+import { loggerErrorSpy, setupTest } from '../jestutils/jestHelpers.js';
 
 import { DnsClass, DnsRecordType, Mdns } from './mdns.js';
 import { MdnsReflectorServer } from './mdnsReflectorServer.js';
-
-process.argv.push('--verbose');
 
 jest.mock('node:dgram');
 
@@ -39,7 +38,6 @@ describe('MdnsReflectorServer', () => {
   class FakeMdns extends FakeEndpoint {
     socketType: 'udp4' | 'udp6' = 'udp4';
     interfaceName: string | undefined = undefined;
-    log = { error: jest.fn() };
     getIpv4InterfaceAddress = jest.fn(() => '192.168.1.10');
     getIpv6InterfaceAddress = jest.fn(() => 'fe80::1');
     getNetmask = jest.fn(() => '255.255.255.0');
@@ -70,12 +68,29 @@ describe('MdnsReflectorServer', () => {
   const buildARecord = (mdns: Mdns, name: string, ttl: number, ipBytes: number[]) => Buffer.concat([mdns.encodeDnsName(name), buildFixed(DnsRecordType.A, ttl, 4), Buffer.from(ipBytes)]);
   const buildAAAARecord = (mdns: Mdns, name: string, ttl: number, ipv6: string) => Buffer.concat([mdns.encodeDnsName(name), buildFixed(DnsRecordType.AAAA, ttl, 16), mdns.encodeAAAA(ipv6)]);
 
-  it('upgradeAddressForDocker should rewrite A and AAAA RDATA to host addresses', () => {
+  const mockNetworkInterfaces = (value: ReturnType<typeof os.networkInterfaces>) => {
+    return jest.spyOn(os, 'networkInterfaces').mockReturnValue(value);
+  };
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    const maybeNetworkInterfacesSpy = os.networkInterfaces as unknown as { mockRestore?: () => void };
+    maybeNetworkInterfacesSpy.mockRestore?.();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('upgradeAddress should rewrite A and AAAA RDATA to host addresses', () => {
     const server = new MdnsReflectorServer();
 
-    // Make host addresses deterministic for the test.
-    (server.mdnsIpv4.getIpv4InterfaceAddress as unknown as jest.Mock) = jest.fn(() => '192.168.1.10');
-    (server.mdnsIpv6.getIpv6InterfaceAddress as unknown as jest.Mock) = jest.fn(() => 'fd00::1');
+    mockNetworkInterfaces({
+      eth0: [
+        { address: '192.168.1.10', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '192.168.1.10/24' },
+        { address: 'fd00::1', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:01', internal: false, cidr: 'fd00::1/64', scopeid: 0 },
+      ],
+    } as any);
 
     // Reuse existing encoder helpers.
     const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
@@ -88,7 +103,7 @@ describe('MdnsReflectorServer', () => {
     const rrAAAA = buildAAAARecord(mdns, name, ttl, 'fd00::2');
     const msg = Buffer.concat([header, rrA, rrAAAA]);
 
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
     const decoded = mdns.decodeMdnsMessage(upgraded as unknown as Buffer);
 
     const a = decoded.answers?.find((r) => r.type === DnsRecordType.A);
@@ -98,26 +113,150 @@ describe('MdnsReflectorServer', () => {
     expect(aaaa?.data).toBe('fd00:0:0:0:0:0:0:1');
   });
 
-  it('upgradeAddressForDocker should return same buffer if message is shorter than DNS header', () => {
+  it('upgradeAddress should prefer mdnsIpv4.interfaceName when it has external addresses', () => {
     const server = new MdnsReflectorServer();
-    const msg = Buffer.alloc(11);
+
+    // Force the "preferred interface" branch to run.
+    (server.mdnsIpv4 as any).interfaceName = 'preferred0';
+
+    mockNetworkInterfaces({
+      preferred0: [{ address: '10.10.10.10', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:aa', internal: false, cidr: '10.10.10.10/24' }],
+      eth0: [{ address: '20.20.20.20', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:bb', internal: false, cidr: '20.20.20.20/24' }],
+    } as any);
+
+    const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
+    const name = 'matterbridge.local';
+    const ttl = 120;
+
+    const msg = Buffer.concat([buildHeader({ anCount: 1 }), buildARecord(mdns, name, ttl, [172, 17, 0, 2])]);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+    const decoded = mdns.decodeMdnsMessage(upgraded as unknown as Buffer);
+
+    expect(decoded.answers?.find((r) => r.type === DnsRecordType.A)?.data).toBe('10.10.10.10');
+  });
+
+  it('upgradeAddress should fall back when preferred interface has only internal addresses', () => {
+    const server = new MdnsReflectorServer();
+
+    // Force the "preferred interface" branch to run.
+    (server.mdnsIpv4 as any).interfaceName = 'preferred0';
+
+    mockNetworkInterfaces({
+      preferred0: [{ address: '127.0.0.1', netmask: '255.0.0.0', family: 'IPv4', mac: '00:00:00:00:00:cc', internal: true, cidr: '127.0.0.1/8' }],
+      eth0: [{ address: '30.30.30.30', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:dd', internal: false, cidr: '30.30.30.30/24' }],
+    } as any);
+
+    const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
+    const name = 'matterbridge.local';
+    const ttl = 120;
+
+    const msg = Buffer.concat([buildHeader({ anCount: 1 }), buildARecord(mdns, name, ttl, [172, 17, 0, 2])]);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+    const decoded = mdns.decodeMdnsMessage(upgraded as unknown as Buffer);
+
+    expect(decoded.answers?.find((r) => r.type === DnsRecordType.A)?.data).toBe('30.30.30.30');
+  });
+
+  it('upgradeAddress should map duplicated AAAA records to different host IPv6 addresses when available', () => {
+    const server = new MdnsReflectorServer();
+
+    mockNetworkInterfaces({
+      eth0: [
+        { address: 'fd00::1', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:01', internal: false, cidr: 'fd00::1/64', scopeid: 0 },
+        { address: 'fd00::2', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:01', internal: false, cidr: 'fd00::2/64', scopeid: 0 },
+      ],
+    } as any);
+
+    const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
+    const name = 'matterbridge.local';
+    const ttl = 120;
+
+    // Two AAAA records with the same (container) address, which the upgrader should de-duplicate by mapping to fd00::1 and fd00::2.
+    const header = buildHeader({ anCount: 2 });
+    const rrAAAA1 = buildAAAARecord(mdns, name, ttl, 'fd00::99');
+    const rrAAAA2 = buildAAAARecord(mdns, name, ttl, 'fd00::99');
+    const msg = Buffer.concat([header, rrAAAA1, rrAAAA2]);
+
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+    const decoded = mdns.decodeMdnsMessage(upgraded as unknown as Buffer);
+
+    const aaaa = decoded.answers?.filter((r) => r.type === DnsRecordType.AAAA).map((r) => r.data) ?? [];
+    expect(aaaa.length).toBe(2);
+    expect(new Set(aaaa).size).toBe(2);
+    expect(aaaa).toContain('fd00:0:0:0:0:0:0:1');
+    expect(aaaa).toContain('fd00:0:0:0:0:0:0:2');
+  });
+
+  it('upgradeAddressForDocker should delegate to upgradeAddress', () => {
+    const server = new MdnsReflectorServer();
+    const msg = Buffer.alloc(12);
+    const spy = jest.spyOn(server, 'upgradeAddress').mockReturnValue(msg as unknown as Buffer<ArrayBufferLike>);
+
     const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>);
+    expect(spy).toHaveBeenCalledWith(msg);
     expect(upgraded).toBe(msg);
   });
 
-  it('upgradeAddressForDocker should rewrite only A when only host IPv4 is available', () => {
+  it('upgradeAddress should decode/log the upgraded message when debug is enabled', () => {
     const server = new MdnsReflectorServer();
-    (server.mdnsIpv4.getIpv4InterfaceAddress as any) = jest.fn(() => '10.0.0.5');
-    (server.mdnsIpv6.getIpv6InterfaceAddress as any) = jest.fn(() => {
-      throw new Error('no ipv6');
+    (server as any).debug = true;
+
+    mockNetworkInterfaces({
+      eth0: [{ address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' }],
+    } as any);
+
+    const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
+    const name = 'matterbridge.local';
+    const ttl = 120;
+    const msg = Buffer.concat([buildHeader({ anCount: 1 }), buildARecord(mdns, name, ttl, [172, 17, 0, 2])]);
+
+    const decodeSpy = jest.spyOn((server as any).mdnsIpv4, 'decodeMdnsMessage').mockReturnValue({} as any);
+    const logSpy = jest.spyOn((server as any).mdnsIpv4, 'logMdnsMessage').mockImplementation(() => {});
+
+    server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+    expect(decodeSpy).toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalled();
+  });
+
+  it('upgradeAddress should ignore decode errors when debug is enabled', () => {
+    const server = new MdnsReflectorServer();
+    (server as any).debug = true;
+
+    mockNetworkInterfaces({
+      eth0: [{ address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' }],
+    } as any);
+
+    const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
+    const name = 'matterbridge.local';
+    const ttl = 120;
+    const msg = Buffer.concat([buildHeader({ anCount: 1 }), buildARecord(mdns, name, ttl, [172, 17, 0, 2])]);
+
+    jest.spyOn((server as any).mdnsIpv4, 'decodeMdnsMessage').mockImplementation(() => {
+      throw new Error('decode boom');
     });
+
+    expect(() => server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>)).not.toThrow();
+  });
+
+  it('upgradeAddress should return same buffer if message is shorter than DNS header', () => {
+    const server = new MdnsReflectorServer();
+    const msg = Buffer.alloc(11);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+    expect(upgraded).toBe(msg);
+  });
+
+  it('upgradeAddress should rewrite only A when only host IPv4 is available', () => {
+    const server = new MdnsReflectorServer();
+    const networkInterfacesMock = mockNetworkInterfaces({
+      eth0: [{ address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' }],
+    } as any);
 
     const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
     const name = 'matterbridge.local';
     const ttl = 120;
     const msg = Buffer.concat([buildHeader({ anCount: 2 }), buildARecord(mdns, name, ttl, [172, 17, 0, 2]), buildAAAARecord(mdns, name, ttl, 'fd00::2')]);
 
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
     expect(upgraded).not.toBe(msg);
 
     const decoded = mdns.decodeMdnsMessage(upgraded as unknown as Buffer);
@@ -127,19 +266,18 @@ describe('MdnsReflectorServer', () => {
     expect(aaaa?.data).toBe('fd00:0:0:0:0:0:0:2');
   });
 
-  it('upgradeAddressForDocker should rewrite only AAAA when only host IPv6 is available', () => {
+  it('upgradeAddress should rewrite only AAAA when only host IPv6 is available', () => {
     const server = new MdnsReflectorServer();
-    (server.mdnsIpv4.getIpv4InterfaceAddress as any) = jest.fn(() => {
-      throw new Error('no ipv4');
-    });
-    (server.mdnsIpv6.getIpv6InterfaceAddress as any) = jest.fn(() => 'fd00::1234');
+    mockNetworkInterfaces({
+      eth0: [{ address: 'fd00::1234', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:01', internal: false, cidr: 'fd00::1234/64', scopeid: 0 }],
+    } as any);
 
     const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
     const name = 'matterbridge.local';
     const ttl = 120;
     const msg = Buffer.concat([buildHeader({ anCount: 2 }), buildARecord(mdns, name, ttl, [172, 17, 0, 2]), buildAAAARecord(mdns, name, ttl, 'fd00::2')]);
 
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
     expect(upgraded).not.toBe(msg);
 
     const decoded = mdns.decodeMdnsMessage(upgraded as unknown as Buffer);
@@ -149,49 +287,63 @@ describe('MdnsReflectorServer', () => {
     expect(aaaa?.data).toBe('fd00:0:0:0:0:0:0:1234');
   });
 
-  it('upgradeAddressForDocker should rewrite A/AAAA in authority and additional sections', () => {
+  it('upgradeAddress should rewrite A/AAAA in authority and additional sections', () => {
     const server = new MdnsReflectorServer();
-    (server.mdnsIpv4.getIpv4InterfaceAddress as any) = jest.fn(() => '192.168.50.10');
-    (server.mdnsIpv6.getIpv6InterfaceAddress as any) = jest.fn(() => 'fd00::abcd');
+    mockNetworkInterfaces({
+      eth0: [
+        { address: '192.168.50.10', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '192.168.50.10/24' },
+        { address: 'fd00::abcd', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:01', internal: false, cidr: 'fd00::abcd/64', scopeid: 0 },
+      ],
+    } as any);
 
     const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
     const name = 'matterbridge.local';
     const ttl = 120;
     const msg = Buffer.concat([buildHeader({ nsCount: 1, arCount: 1 }), buildARecord(mdns, name, ttl, [172, 17, 0, 2]), buildAAAARecord(mdns, name, ttl, 'fd00::2')]);
 
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
     const decoded = mdns.decodeMdnsMessage(upgraded as unknown as Buffer);
     expect(decoded.authorities?.find((r) => r.type === DnsRecordType.A)?.data).toBe('192.168.50.10');
     expect(decoded.additionals?.find((r) => r.type === DnsRecordType.AAAA)?.data).toBe('fd00:0:0:0:0:0:0:abcd');
   });
 
-  it('upgradeAddressForDocker should return original message on decode errors (catch path)', () => {
+  it('upgradeAddress should return original message on decode errors (catch path)', () => {
     const server = new MdnsReflectorServer();
-    (server.mdnsIpv4.getIpv4InterfaceAddress as any) = jest.fn(() => '10.0.0.5');
-    (server.mdnsIpv6.getIpv6InterfaceAddress as any) = jest.fn(() => 'fd00::1');
+    mockNetworkInterfaces({
+      eth0: [
+        { address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' },
+        { address: 'fd00::1', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:01', internal: false, cidr: 'fd00::1/64', scopeid: 0 },
+      ],
+    } as any);
 
     // qdCount=1 but message does not contain the question section -> decodeDnsName throws.
     const msg = buildHeader({ qdCount: 1 });
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
     expect(upgraded).toBe(msg);
   });
 
-  it('upgradeAddressForDocker should return original message when question section is truncated after name', () => {
+  it('upgradeAddress should return original message when question section is truncated after name', () => {
     const server = new MdnsReflectorServer();
-    (server.mdnsIpv4.getIpv4InterfaceAddress as any) = jest.fn(() => '10.0.0.5');
-    (server.mdnsIpv6.getIpv6InterfaceAddress as any) = jest.fn(() => 'fd00::1');
+    mockNetworkInterfaces({
+      eth0: [
+        { address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' },
+        { address: 'fd00::1', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:01', internal: false, cidr: 'fd00::1/64', scopeid: 0 },
+      ],
+    } as any);
 
     const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
     const qname = mdns.encodeDnsName('_http._tcp.local');
     // Missing QTYPE/QCLASS bytes -> triggers offset > length early return.
     const msg = Buffer.concat([buildHeader({ qdCount: 1 }), qname]);
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
     expect(upgraded).toBe(msg);
   });
 
-  it('upgradeAddressForDocker should not modify A record when RDLENGTH is not 4', () => {
+  it('upgradeAddress should not modify A record when RDLENGTH is not 4', () => {
     const server = new MdnsReflectorServer();
-    (server.mdnsIpv4.getIpv4InterfaceAddress as any) = jest.fn(() => '10.0.0.5');
+    mockNetworkInterfaces({
+      eth0: [{ address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' }],
+    } as any);
 
     const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
     const name = 'matterbridge.local';
@@ -203,7 +355,7 @@ describe('MdnsReflectorServer', () => {
     const rr = Buffer.concat([mdns.encodeDnsName(name), fixed, rdata]);
     const msg = Buffer.concat([buildHeader({ anCount: 1 }), rr]);
 
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>) as unknown as Buffer;
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>) as unknown as Buffer;
     expect(upgraded).not.toBe(msg);
 
     // RDATA starts after header + encoded name + fixed(10)
@@ -211,9 +363,11 @@ describe('MdnsReflectorServer', () => {
     expect(upgraded.slice(rdataOffset, rdataOffset + rdlength).equals(rdata)).toBe(true);
   });
 
-  it('upgradeAddressForDocker should stop safely when RDLENGTH points past buffer end', () => {
+  it('upgradeAddress should stop safely when RDLENGTH points past buffer end', () => {
     const server = new MdnsReflectorServer();
-    (server.mdnsIpv4.getIpv4InterfaceAddress as any) = jest.fn(() => '10.0.0.5');
+    mockNetworkInterfaces({
+      eth0: [{ address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' }],
+    } as any);
 
     const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
     const name = 'matterbridge.local';
@@ -223,37 +377,39 @@ describe('MdnsReflectorServer', () => {
     const rrTruncated = Buffer.concat([mdns.encodeDnsName(name), fixed, Buffer.from([172, 17, 0, 2])]);
     const msg = Buffer.concat([buildHeader({ anCount: 1 }), rrTruncated]);
 
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>) as unknown as Buffer;
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>) as unknown as Buffer;
     expect(upgraded).not.toBe(msg);
     expect(upgraded.equals(msg)).toBe(true);
   });
 
-  it('upgradeAddressForDocker should stop safely when RR fixed fields are truncated (offset + 10 guard)', () => {
+  it('upgradeAddress should stop safely when RR fixed fields are truncated (offset + 10 guard)', () => {
     const server = new MdnsReflectorServer();
-    (server.mdnsIpv4.getIpv4InterfaceAddress as any) = jest.fn(() => '10.0.0.5');
+    mockNetworkInterfaces({
+      eth0: [{ address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' }],
+    } as any);
 
     const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
     const name = 'matterbridge.local';
     const rrNameOnly = mdns.encodeDnsName(name); // missing TYPE/CLASS/TTL/RDLENGTH
     const msg = Buffer.concat([buildHeader({ anCount: 1 }), rrNameOnly]);
 
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>) as unknown as Buffer;
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>) as unknown as Buffer;
     expect(upgraded).not.toBe(msg);
     expect(upgraded.equals(msg)).toBe(true);
   });
 
-  it('upgradeAddressForDocker should return original message when no host addresses are available', () => {
+  it('upgradeAddress should return original message when no host addresses are available', () => {
     const server = new MdnsReflectorServer();
 
-    (server.mdnsIpv4.getIpv4InterfaceAddress as unknown as jest.Mock) = jest.fn(() => {
-      throw new Error('no ipv4');
-    });
-    (server.mdnsIpv6.getIpv6InterfaceAddress as unknown as jest.Mock) = jest.fn(() => {
-      throw new Error('no ipv6');
-    });
+    mockNetworkInterfaces({
+      lo: [
+        { address: '127.0.0.1', netmask: '255.0.0.0', family: 'IPv4', mac: '00:00:00:00:00:00', internal: true, cidr: '127.0.0.1/8' },
+        { address: '::1', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:00', internal: true, cidr: '::1/128', scopeid: 0 },
+      ],
+    } as any);
 
     const msg = Buffer.alloc(12);
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
     expect(upgraded).toBe(msg);
   });
 
@@ -293,15 +449,14 @@ describe('MdnsReflectorServer', () => {
 
   it('getBroadcastAddress should log error and return undefined on failure', () => {
     const server = new MdnsReflectorServer();
-    const mdns = new FakeMdns();
-    mdns.socketType = 'udp4';
-    mdns.getIpv4InterfaceAddress = jest.fn(() => {
+    const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
+    jest.spyOn(mdns, 'getIpv4InterfaceAddress').mockImplementation(() => {
       throw new Error('boom');
     });
 
     const broadcast = server.getBroadcastAddress(mdns as unknown as Mdns);
     expect(broadcast).toBeUndefined();
-    expect(mdns.log.error).toHaveBeenCalled();
+    expect(loggerErrorSpy).toHaveBeenCalledWith('Error getting broadcast address: boom');
   });
 
   it('start/stop should bind and close all sockets', async () => {

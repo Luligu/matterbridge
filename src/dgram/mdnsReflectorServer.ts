@@ -21,9 +21,11 @@
  * limitations under the License.
  */
 
+import os from 'node:os';
+
 import { AnsiLogger, LogLevel, TimestampFormat, BLUE, nt } from 'node-ansi-logger';
 
-import { hasParameter } from '../utils/commandLine.js';
+import { hasParameter, getStringArrayParameter } from '../utils/commandLine.js';
 
 import { DnsRecordType, Mdns } from './mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
@@ -48,6 +50,10 @@ export class MdnsReflectorServer {
     this.mdnsIpv6.log.logNameColor = '\x1b[38;5;115m';
     this.unicastIpv4.log.logNameColor = '\x1b[38;5;115m';
     this.unicastIpv6.log.logNameColor = '\x1b[38;5;115m';
+    // Apply filters if any
+    const filters = getStringArrayParameter('filter');
+    if (filters) this.mdnsIpv4.filters.push(...filters);
+    if (filters) this.mdnsIpv6.filters.push(...filters);
   }
 
   getBroadcastAddress(mdns: Mdns): string | undefined {
@@ -71,24 +77,39 @@ export class MdnsReflectorServer {
    * @param {Buffer<ArrayBufferLike>} msg - The mDNS message buffer.
    * @returns {Buffer<ArrayBufferLike>} The upgraded mDNS message buffer.
    */
-  upgradeAddressForDocker(msg: Buffer<ArrayBufferLike>): Buffer<ArrayBufferLike> {
+  upgradeAddress(msg: Buffer<ArrayBufferLike>): Buffer<ArrayBufferLike> {
     // Safety: if it's not even a DNS header, do nothing.
     if (!msg || msg.length < 12) return msg;
 
-    let hostIpv4: string | undefined;
-    let hostIpv6: string | undefined;
-    try {
-      hostIpv4 = this.mdnsIpv4.getIpv4InterfaceAddress(this.mdnsIpv4.interfaceName);
-    } catch {
-      hostIpv4 = undefined;
-    }
-    try {
-      hostIpv6 = this.mdnsIpv6.getIpv6InterfaceAddress(this.mdnsIpv6.interfaceName);
-    } catch {
-      hostIpv6 = undefined;
-    }
+    const preferredInterfaceName = this.mdnsIpv4.interfaceName ?? this.mdnsIpv6.interfaceName;
+    const interfaces = os.networkInterfaces();
 
-    if (!hostIpv4 && !hostIpv6) return msg;
+    const pickInterface = (): string | undefined => {
+      if (preferredInterfaceName) {
+        const preferred = interfaces[preferredInterfaceName];
+        if (preferred?.some((info) => info && !info.internal)) return preferredInterfaceName;
+      }
+      for (const [name, infos] of Object.entries(interfaces)) {
+        if (infos?.some((info) => info && !info.internal)) return name;
+      }
+      return undefined;
+    };
+
+    const selectedInterfaceName = pickInterface();
+    const selectedInfos = selectedInterfaceName ? (interfaces[selectedInterfaceName] ?? []) : [];
+
+    const hostIpv4 = selectedInfos.find((info) => info && !info.internal && info.family === 'IPv4')?.address;
+    const hostIpv6List = (() => {
+      const set = new Set<string>();
+      for (const info of selectedInfos) {
+        if (!info || info.internal || info.family !== 'IPv6') continue;
+        const normalized = info.address.split('%')[0].toLowerCase();
+        if (normalized) set.add(normalized);
+      }
+      return [...set];
+    })();
+
+    if (!hostIpv4 && hostIpv6List.length === 0) return msg;
 
     // Copy the message so callers can safely re-use the original buffer.
     const upgradedMsg = Buffer.from(msg);
@@ -111,7 +132,8 @@ export class MdnsReflectorServer {
       }
 
       const hostA = hostIpv4 ? this.mdnsIpv4.encodeA(hostIpv4) : undefined;
-      const hostAAAA = hostIpv6 ? this.mdnsIpv6.encodeAAAA(hostIpv6) : undefined;
+      const hostAAAAs = hostIpv6List.map((ipv6) => this.mdnsIpv6.encodeAAAA(ipv6));
+      let hostAAAAIndex = 0;
 
       const upgradeResourceRecords = (count: number) => {
         for (let i = 0; i < count; i++) {
@@ -134,8 +156,10 @@ export class MdnsReflectorServer {
 
           if (type === DnsRecordType.A && rdlength === 4 && hostA) {
             hostA.copy(upgradedMsg, rdataOffset);
-          } else if (type === DnsRecordType.AAAA && rdlength === 16 && hostAAAA) {
+          } else if (type === DnsRecordType.AAAA && rdlength === 16 && hostAAAAs.length > 0) {
+            const hostAAAA = hostAAAAs[Math.min(hostAAAAIndex, hostAAAAs.length - 1)];
             hostAAAA.copy(upgradedMsg, rdataOffset);
+            hostAAAAIndex++;
           }
 
           offset = endOfRdata;
@@ -147,11 +171,25 @@ export class MdnsReflectorServer {
       upgradeResourceRecords(nsCount);
       upgradeResourceRecords(arCount);
     } catch (error) {
-      this.log.debug(`upgradeAddressForDocker() failed to parse message: ${(error as Error).message}`);
+      this.log.error(`UpgradeAddress() failed to parse message: ${(error as Error).message}`);
       return msg;
     }
 
+    this.log.notice(`UpgradeAddress message for Docker completed. Interface: ${selectedInterfaceName || 'N/A'}, Host IPv4: ${hostIpv4 || 'N/A'}, Host IPv6: ${hostIpv6List.length > 0 ? hostIpv6List.join(', ') : 'N/A'}`);
+    if (this.debug) {
+      try {
+        const decodedMessage = this.mdnsIpv4.decodeMdnsMessage(upgradedMsg); // For logging purposes only.
+        this.mdnsIpv4.logMdnsMessage(decodedMessage);
+      } catch {
+        // Ignore decode errors: this should never break reflection.
+      }
+    }
+
     return upgradedMsg;
+  }
+
+  upgradeAddressForDocker(msg: Buffer<ArrayBufferLike>): Buffer<ArrayBufferLike> {
+    return this.upgradeAddress(msg);
   }
 
   async start() {
@@ -194,12 +232,13 @@ export class MdnsReflectorServer {
 
     this.unicastIpv4.on('message', (msg, rinfo) => {
       this.log.notice(`Reflecting message from unicast client ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv4 multicast`);
-      this.mdnsIpv4.send(msg, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT);
+      const upgradedMsg = this.upgradeAddress(msg);
+      this.mdnsIpv4.send(upgradedMsg, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT);
       if (hasParameter('broadcast')) {
         const broadcastAddress = this.getBroadcastAddress(this.mdnsIpv4);
         if (broadcastAddress) {
           this.log.notice(`Reflecting message from unicast client ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ipv4 broadcast address ${BLUE}${broadcastAddress}${nt}`);
-          this.mdnsIpv4.send(msg, broadcastAddress, MDNS_MULTICAST_PORT);
+          this.mdnsIpv4.send(upgradedMsg, broadcastAddress, MDNS_MULTICAST_PORT);
         }
       }
       this.unicastIpv4.send(Buffer.from('Received on ipv4'), rinfo.address, rinfo.port);
@@ -207,12 +246,13 @@ export class MdnsReflectorServer {
 
     this.unicastIpv6.on('message', (msg, rinfo) => {
       this.log.notice(`Reflecting message from unicast client ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv6 multicast`);
-      this.mdnsIpv6.send(msg, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT);
+      const upgradedMsg = this.upgradeAddress(msg);
+      this.mdnsIpv6.send(upgradedMsg, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT);
       if (hasParameter('broadcast')) {
         const broadcastAddress = this.getBroadcastAddress(this.mdnsIpv6);
         if (broadcastAddress) {
           this.log.notice(`Reflecting message from unicast client ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ipv6 broadcast address ${BLUE}${broadcastAddress}${nt}`);
-          this.mdnsIpv6.send(msg, broadcastAddress, MDNS_MULTICAST_PORT);
+          this.mdnsIpv6.send(upgradedMsg, broadcastAddress, MDNS_MULTICAST_PORT);
         }
       }
       this.unicastIpv6.send(Buffer.from('Received on ipv6'), rinfo.address, rinfo.port);

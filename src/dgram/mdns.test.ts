@@ -41,6 +41,14 @@ describe('Mdns', () => {
     (mdns as any).socket = mockSocket;
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should construct and initialize properties', () => {
     expect(mdns.deviceQueries).toBeInstanceOf(Map);
     expect(mdns.deviceResponses).toBeInstanceOf(Map);
