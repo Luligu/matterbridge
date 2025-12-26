@@ -10,58 +10,15 @@
 
 import os from 'node:os';
 
-import { AnsiLogger, BLUE, db, LogLevel } from 'node-ansi-logger';
+import { BLUE, db, LogLevel } from 'node-ansi-logger';
 import { jest } from '@jest/globals';
+
+import { loggerDebugSpy, loggerLogSpy, setupTest } from '../jestutils/jestHelpers.js';
 
 import { Dgram } from './dgram.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-function setDebug(debug: boolean) {
-  if (debug) {
-    loggerLogSpy.mockRestore();
-    consoleLogSpy.mockRestore();
-    consoleDebugSpy.mockRestore();
-    consoleInfoSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    consoleLogSpy = jest.spyOn(console, 'log');
-    consoleDebugSpy = jest.spyOn(console, 'debug');
-    consoleInfoSpy = jest.spyOn(console, 'info');
-    consoleWarnSpy = jest.spyOn(console, 'warn');
-    consoleErrorSpy = jest.spyOn(console, 'error');
-  } else {
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-  }
-}
+// Setup the test environment
+await setupTest('Dgram', false);
 
 describe('Dgram', () => {
   let dgram: Dgram;
@@ -489,7 +446,6 @@ describe('Dgram', () => {
 
   test('List network interfaces', async () => {
     dgram = new Dgram('Dgram', 'udp4');
-    const logSpy = jest.spyOn(dgram.log, 'debug');
     jest.spyOn(os, 'networkInterfaces').mockReturnValue({
       eth0: [
         { address: '192.168.1.120', family: 'IPv4', internal: false, netmask: '255.255.255.0', mac: '00:00:00:00:00:00', cidr: null },
@@ -499,9 +455,9 @@ describe('Dgram', () => {
 
     dgram.listNetworkInterfaces();
 
-    expect(logSpy).toHaveBeenCalledTimes(3);
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('192.168.1.120'));
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('fe80::1'));
+    expect(loggerDebugSpy).toHaveBeenCalledTimes(4);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('192.168.1.120'));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('fe80::1'));
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);

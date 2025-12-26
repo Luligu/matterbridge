@@ -12,6 +12,8 @@ import dgram from 'node:dgram';
 
 import { jest } from '@jest/globals';
 
+import { setupTest } from '../jestutils/jestHelpers.js';
+
 import { Mdns, DnsRecordType, DnsClass, DnsClassFlag } from './mdns.js';
 
 process.argv.push('--verbose');
@@ -36,6 +38,9 @@ class MockLogger {
 }
 
 const mockRinfo: dgram.RemoteInfo = { family: 'IPv4', address: '1.2.3.4', port: 5353, size: 32 };
+
+// Setup the test environment
+await setupTest('Mdns', false);
 
 describe('Mdns', () => {
   let mdns: Mdns;
