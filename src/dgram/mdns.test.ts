@@ -12,30 +12,13 @@ import dgram from 'node:dgram';
 
 import { jest } from '@jest/globals';
 
-import { setupTest } from '../jestutils/jestHelpers.js';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '../jestutils/jestHelpers.js';
 
 import { Mdns, DnsRecordType, DnsClass, DnsClassFlag } from './mdns.js';
 
 process.argv.push('--verbose');
 
 jest.mock('node:dgram');
-
-const BLUE = '';
-const MAGENTA = '';
-const CYAN = '';
-const GREEN = '';
-const nf = '';
-const db = '';
-const er = '';
-const idn = '';
-const rs = '';
-
-// Mock logger
-class MockLogger {
-  info = jest.fn();
-  debug = jest.fn();
-  error = jest.fn();
-}
 
 const mockRinfo: dgram.RemoteInfo = { family: 'IPv4', address: '1.2.3.4', port: 5353, size: 32 };
 
@@ -45,7 +28,6 @@ await setupTest('Mdns', false);
 describe('Mdns', () => {
   let mdns: Mdns;
   let mockSocket: any;
-  let logger: MockLogger;
 
   beforeEach(() => {
     mockSocket = {
@@ -54,11 +36,9 @@ describe('Mdns', () => {
         if (typeof cb === 'function') cb(null);
       }),
     };
-    logger = new MockLogger();
     mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
     // Override protected for test
     (mdns as any).socket = mockSocket;
-    (mdns as any).log = logger;
   });
 
   it('should construct and initialize properties', () => {
@@ -262,14 +242,14 @@ describe('Mdns', () => {
   it('should send a query and log', () => {
     mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
     expect(mockSocket.send).toHaveBeenCalled();
-    expect(logger.debug).toHaveBeenCalled();
+    expect(loggerDebugSpy).toHaveBeenCalled();
   });
 
   it('should send a response and log', () => {
     const rdata = mdns.encodeDnsName('foo.local');
     mdns.sendResponse([{ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }]);
     expect(mockSocket.send).toHaveBeenCalled();
-    expect(logger.debug).toHaveBeenCalled();
+    expect(loggerDebugSpy).toHaveBeenCalled();
   });
 
   it('should send a multi-answer response with correct ANCOUNT', () => {
@@ -327,13 +307,13 @@ describe('Mdns', () => {
     mdns.deviceQueries.set('1.2.3.4', { rinfo: mockRinfo, query: msg as any });
     mdns.deviceResponses.set('1.2.3.4', { rinfo: mockRinfo, response: msg as any, dataPTR: 'foo.local' });
     mdns.logDevices();
-    expect(logger.info).toHaveBeenCalled();
+    expect(loggerInfoSpy).toHaveBeenCalled();
   });
 
   it('should handle errors in onMessage', () => {
     const badMsg = Buffer.from([0, 1, 2]);
     mdns.onMessage(badMsg, mockRinfo);
-    expect(logger.error).toHaveBeenCalled();
+    expect(loggerErrorSpy).toHaveBeenCalled();
   });
 
   it('should handle decodeDnsName error cases', () => {
@@ -391,7 +371,7 @@ describe('Mdns', () => {
     });
     mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
     expect(mockSocket.send).toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith('Dgram mDNS server failed to send query message: Network error');
+    expect(loggerErrorSpy).toHaveBeenCalledWith('Dgram mDNS server failed to send query message: Network error');
   });
 
   it('should handle sendResponse error callback', () => {
@@ -407,7 +387,7 @@ describe('Mdns', () => {
     const rdata = mdns.encodeDnsName('foo.local');
     mdns.sendResponse([{ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }]);
     expect(mockSocket.send).toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalled();
+    expect(loggerErrorSpy).toHaveBeenCalled();
   });
 
   it('should handle response messages in onMessage', () => {
@@ -487,7 +467,7 @@ describe('Mdns', () => {
     mdns.deviceResponses.set(ipv6Style, { rinfo: { ...mockRinfo, address: ipv6Style }, response, dataPTR: 'test' });
 
     mdns.logDevices();
-    expect(logger.info).toHaveBeenCalled();
+    expect(loggerInfoSpy).toHaveBeenCalled();
   });
 
   it('should handle authorities and additionals in logMdnsMessage', () => {
@@ -512,7 +492,7 @@ describe('Mdns', () => {
     };
 
     mdns.logMdnsMessage(msg as any);
-    expect(logger.info).toHaveBeenCalled();
+    expect(loggerInfoSpy).toHaveBeenCalled();
   });
 
   it('should decode mDNS message with authorities and additionals', () => {
@@ -644,11 +624,11 @@ describe('Mdns', () => {
     mdns.logDevices();
 
     // Verify that the forEach loop was executed by checking log calls
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Discovered response devices:'));
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('192.168.1.100'));
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('192.168.1.50'));
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('10.0.0.5'));
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('PTR'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Discovered response devices:'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('192.168.1.100'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('192.168.1.50'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('10.0.0.5'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('PTR'));
   });
 
   it('should cover return 0 in sort comparison (line 819)', () => {
@@ -682,6 +662,6 @@ describe('Mdns', () => {
     // Call logDevices to trigger sorting and the return 0 case
     mdns.logDevices();
 
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Discovered response devices:'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Discovered response devices:'));
   });
 });
