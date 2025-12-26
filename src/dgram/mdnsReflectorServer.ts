@@ -25,12 +25,11 @@ import { AnsiLogger, LogLevel, TimestampFormat, BLUE, nt } from 'node-ansi-logge
 
 import { hasParameter } from '../utils/commandLine.js';
 
-import { Mdns } from './mdns.js';
+import { DnsRecordType, Mdns } from './mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
 import { Unicast } from './unicast.js';
 import { MDNS_REFLECTOR_BIND_ADDRESS_IPV4, MDNS_REFLECTOR_BIND_ADDRESS_IPV6, MDNS_REFLECTOR_PORT } from './mdnsReflectorTypes.js';
 
-// istanbul ignore next
 export class MdnsReflectorServer {
   verbose = hasParameter('v') || hasParameter('verbose');
   debug = hasParameter('d') || hasParameter('debug') || hasParameter('v') || hasParameter('verbose');
@@ -66,13 +65,92 @@ export class MdnsReflectorServer {
    * Decode and upgrade the A and AAAA records from Docker environment to point the host machine.
    * Matterbridge running inside Docker Desktop containers register mDNS records with the container's IP address,
    * which is not reachable from outside the Docker network.
-   * To make these services reachable, we need to upgrade the A and AAAA records.
+   * To make these services reachable, we need to upgrade the A and AAAA records using the host machine IP addresses.
+   * The reflector server runs on the host, while mDNS advertisements come from containers.
    *
    * @param {Buffer<ArrayBufferLike>} msg - The mDNS message buffer.
    * @returns {Buffer<ArrayBufferLike>} The upgraded mDNS message buffer.
    */
   upgradeAddressForDocker(msg: Buffer<ArrayBufferLike>): Buffer<ArrayBufferLike> {
-    const upgradedMsg = msg;
+    // Safety: if it's not even a DNS header, do nothing.
+    if (!msg || msg.length < 12) return msg;
+
+    let hostIpv4: string | undefined;
+    let hostIpv6: string | undefined;
+    try {
+      hostIpv4 = this.mdnsIpv4.getIpv4InterfaceAddress(this.mdnsIpv4.interfaceName);
+    } catch {
+      hostIpv4 = undefined;
+    }
+    try {
+      hostIpv6 = this.mdnsIpv6.getIpv6InterfaceAddress(this.mdnsIpv6.interfaceName);
+    } catch {
+      hostIpv6 = undefined;
+    }
+
+    if (!hostIpv4 && !hostIpv6) return msg;
+
+    // Copy the message so callers can safely re-use the original buffer.
+    const upgradedMsg = Buffer.from(msg);
+
+    const qdCount = upgradedMsg.readUInt16BE(4);
+    const anCount = upgradedMsg.readUInt16BE(6);
+    const nsCount = upgradedMsg.readUInt16BE(8);
+    const arCount = upgradedMsg.readUInt16BE(10);
+
+    let offset = 12;
+
+    try {
+      // Skip questions
+      for (let i = 0; i < qdCount; i++) {
+        const qnameResult = this.mdnsIpv4.decodeDnsName(upgradedMsg, offset);
+        offset = qnameResult.newOffset;
+        // QTYPE + QCLASS
+        offset += 4;
+        if (offset > upgradedMsg.length) return msg;
+      }
+
+      const hostA = hostIpv4 ? this.mdnsIpv4.encodeA(hostIpv4) : undefined;
+      const hostAAAA = hostIpv6 ? this.mdnsIpv6.encodeAAAA(hostIpv6) : undefined;
+
+      const upgradeResourceRecords = (count: number) => {
+        for (let i = 0; i < count; i++) {
+          const nameResult = this.mdnsIpv4.decodeDnsName(upgradedMsg, offset);
+          offset = nameResult.newOffset;
+
+          if (offset + 10 > upgradedMsg.length) return;
+          const type = upgradedMsg.readUInt16BE(offset);
+          offset += 2;
+          // class (unused)
+          offset += 2;
+          // ttl (unused)
+          offset += 4;
+          const rdlength = upgradedMsg.readUInt16BE(offset);
+          offset += 2;
+
+          const rdataOffset = offset;
+          const endOfRdata = rdataOffset + rdlength;
+          if (endOfRdata > upgradedMsg.length) return;
+
+          if (type === DnsRecordType.A && rdlength === 4 && hostA) {
+            hostA.copy(upgradedMsg, rdataOffset);
+          } else if (type === DnsRecordType.AAAA && rdlength === 16 && hostAAAA) {
+            hostAAAA.copy(upgradedMsg, rdataOffset);
+          }
+
+          offset = endOfRdata;
+        }
+      };
+
+      // Walk RR sections and patch A/AAAA in-place.
+      upgradeResourceRecords(anCount);
+      upgradeResourceRecords(nsCount);
+      upgradeResourceRecords(arCount);
+    } catch (error) {
+      this.log.debug(`upgradeAddressForDocker() failed to parse message: ${(error as Error).message}`);
+      return msg;
+    }
+
     return upgradedMsg;
   }
 

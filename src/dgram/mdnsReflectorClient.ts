@@ -30,7 +30,6 @@ import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAS
 import { Unicast } from './unicast.js';
 import { MDNS_REFLECTOR_ADDRESS, MDNS_REFLECTOR_BIND_ADDRESS_IPV4, MDNS_REFLECTOR_BIND_ADDRESS_IPV6, MDNS_REFLECTOR_HOST_DOCKER, MDNS_REFLECTOR_PORT } from './mdnsReflectorTypes.js';
 
-// istanbul ignore next
 export class MdnsReflectorClient {
   verbose = hasParameter('v') || hasParameter('verbose');
   debug = hasParameter('d') || hasParameter('debug') || hasParameter('v') || hasParameter('verbose');
