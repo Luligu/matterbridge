@@ -3,7 +3,7 @@
  * @file dgram.ts
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -30,10 +30,12 @@ import os from 'node:os';
 // AnsiLogger imports
 import { AnsiLogger, BLUE, db, idn, LogLevel, nf, rs, TimestampFormat } from 'node-ansi-logger';
 
+import { hasParameter } from '../utils/commandLine.js';
+
 /**
  * Represents the Dgram events.
  */
-interface DgramEvents {
+export interface DgramEvents {
   error: [error: Error];
   close: [];
   connect: [];
@@ -48,7 +50,10 @@ interface DgramEvents {
  * This class implements a dgram socket.
  */
 export class Dgram extends EventEmitter<DgramEvents> {
-  log;
+  verbose = hasParameter('v') || hasParameter('verbose');
+  debug = hasParameter('d') || hasParameter('debug') || hasParameter('v') || hasParameter('verbose');
+  silent = hasParameter('s') || hasParameter('silent');
+  log: AnsiLogger;
   socket: dgram.Socket;
   bound = false;
   socketType: 'udp4' | 'udp6';
@@ -67,7 +72,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    */
   constructor(name: string, socketType: 'udp4' | 'udp6', reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string) {
     super();
-    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug ? LogLevel.DEBUG : this.silent ? LogLevel.NOTICE : LogLevel.INFO });
     this.socket = dgram.createSocket({ type: socketType, reuseAddr });
     this.socketType = socketType;
     this.interfaceName = interfaceName;
