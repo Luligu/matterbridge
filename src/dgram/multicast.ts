@@ -28,7 +28,7 @@ import os from 'node:os';
 // AnsiLogger imports
 import { BLUE, CYAN, db, RED, YELLOW } from 'node-ansi-logger';
 
-// Net imports
+// Dgram imports
 import { Dgram } from './dgram.js';
 
 export const MDNS_MULTICAST_IPV4_ADDRESS = '224.0.0.251';
