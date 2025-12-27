@@ -13,17 +13,19 @@ We use here named volumes for storage, plugins and mattercert.
 We use matter port range 5550-5559 to allow childbridge mode and server node devices (RVCs).
 
 ```bash
-docker run -it --name matterbridge-test & \
+docker run -dit --name matterbridge-test & \
   -p 8283:8283 -p 5550-5559:5550-5559/udp & \
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert & \
   luligu/matterbridge:latest matterbridge --docker --port 5550
+docker logs --tail 1000 -f matterbridge-test
 ```
 
 ```powershell
-docker run -it --name matterbridge-test `
+docker run -dit --name matterbridge-test `
   -p 8283:8283 -p 5550-5559:5550-5559/udp `
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert `
   luligu/matterbridge:latest matterbridge --docker --port 5550
+docker logs --tail 1000 -f matterbridge-test
 ```
 
 You will see that the frontend inside the container is listening on the conainer address
