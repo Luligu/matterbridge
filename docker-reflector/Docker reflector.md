@@ -13,24 +13,17 @@ We use here named volumes for storage, plugins and mattercert.
 We use matter port range 5550-5559 to allow childbridge mode and server node devices (RVCs).
 
 ```bash
-docker run -it --name node24slim & \
+docker run -it --name matterbridge-test & \
   -p 8283:8283 -p 5550-5559:5550-5559/udp & \
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert & \
-  node:24-slim bash
+  luligu/matterbridge:latest matterbridge --docker --port 5550
 ```
 
 ```powershell
-docker run -it --name node24slim `
+docker run -it --name matterbridge-test `
   -p 8283:8283 -p 5550-5559:5550-5559/udp `
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert `
-  node:24-slim bash
-```
-
-Inside the container install and run matterbridge with start matter port 5550.
-
-```bash
-npm install -g matterbridge
-matterbridge --port 5550
+  luligu/matterbridge:latest matterbridge --docker --port 5550
 ```
 
 You will see that the frontend inside the container is listening on the conainer address
@@ -49,22 +42,22 @@ In the same way the Matter port range 5550-5559 is mapped outside the container.
 From another terminal run mb_mdns inside the container we created and run before
 
 ```bash
-docker exec -it node24slim mb_mdns
+docker exec -it matterbridge-test mb_mdns --no-timeout
 ```
 
 In a while you will see what Matterbridge mDNS packet advertised from the Docker Desktop container
 
 ![alt text](mDnsPacket.png)
 
-## Optional if you want to see ip inside the container
+## Optional if you want to see ip and routing table inside the container
 
 From another terminal run ip a and ip r inside the container we created and run before
 
 ```bash
-docker exec -it node24slim apt-get update
-docker exec -it node24slim apt-get install -y --no-install-recommends iproute2 iputils-ping net-tools dnsutils tcpdump netcat-openbsd
-docker exec -it node24slim ip a
-docker exec -it node24slim ip r
+docker exec -it matterbridge-test apt-get update
+docker exec -it matterbridge-test apt-get install -y --no-install-recommends iproute2 iputils-ping net-tools dnsutils tcpdump netcat-openbsd
+docker exec -it matterbridge-test ip a
+docker exec -it matterbridge-test ip r
 ```
 
 ### Issues we have there
@@ -79,7 +72,7 @@ docker exec -it node24slim ip r
 ## Run the Madderbridge reflector client in the container we created and run before
 
 ```bash
-docker exec -it node24slim mb_mdns --reflector-client
+docker exec -it matterbridge-test mb_mdns --reflector-client
 ```
 
 In a while you will see
@@ -90,7 +83,7 @@ In a while you will see
 
 ```bash
 npm install -g matterbridge
-mb_mdns --reflector-server --filter _matterc._udp _matter._tcp
+mb_mdns --reflector-server --log-reflector-messages
 ```
 
 In a while you will see
@@ -99,42 +92,6 @@ In a while you will see
 
 # Run Home Assistant and Matter Server in Docker compose with Docker Desktop
 
-Use this docker-compose.yml
-
-```text
-services:
-  homeassistant:
-    container_name: homeassistant
-    image: ghcr.io/home-assistant/home-assistant:stable
-    restart: unless-stopped
-    depends_on:
-      - matterserver
-    ports:
-      - "8123:8123"
-    volumes:
-      - ./DockerVolumes/homeassistant:/config
-    environment:
-      - TZ=Europe/Paris
-
-  matterserver:
-    container_name: matterserver
-    image: ghcr.io/home-assistant-libs/python-matter-server:stable
-    restart: unless-stopped
-    ports:
-      - "5580:5580"
-      - "5540:5540/udp"
-    volumes:
-      - ./DockerVolumes/matterserver:/data
-    environment:
-      - TZ=Europe/Paris
-
-  mb_mdns:
-    container_name: mb_mdns
-    image: luligu/matterbridge:dev
-    restart: unless-stopped
-    command: ["mb_mdns", "--no-timeout"]
-    environment:
-      - TZ=Europe/Paris
-```
+Use the [docker-compose.yml](https://github.com/Luligu/matterbridge/blob/main/docker-reflector/docker-compose.yml) in the docker-reflector directory.
 
 When asked by Home Assistant connect to Matter Server with **ws://matterserver:5580/ws**
