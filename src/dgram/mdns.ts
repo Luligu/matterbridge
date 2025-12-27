@@ -25,7 +25,7 @@
 import dgram from 'node:dgram';
 
 // AnsiLogger imports
-import { BLUE, CYAN, db, er, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, CYAN, db, er, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
 
 // Utils imports
 import { hasParameter } from '../utils/commandLine.js';
@@ -911,28 +911,30 @@ export class Mdns extends Multicast {
    * Logs the decoded mDNS message header.
    *
    * @param {MdnsMessage} msg - The mDNS message header object.
+   * @param {AnsiLogger} [log] - The logger to use (defaults to this.log).
+   * @param {string} [text] - Optional additional text to include in the log.
    */
-  logMdnsMessage(msg: MdnsMessage) {
-    this.log.info(
-      `Decoded mDNS message: ID ${MAGENTA}${msg.id}${nf}, QR ${GREEN}${msg.qr === 0 ? 'Query' : 'Response'}${nf}, OPCODE ${MAGENTA}${msg.opcode}${nf}, AA ${MAGENTA}${msg.aa}${nf}, TC ${MAGENTA}${msg.tc}${nf}, RD ${MAGENTA}${msg.rd}${nf}, RA ${MAGENTA}${msg.ra}${nf}, Z ${MAGENTA}${msg.z}${nf}, RCODE ${MAGENTA}${msg.rcode}${nf}, QDCount ${MAGENTA}${msg.qdCount}${nf}, ANCount ${MAGENTA}${msg.anCount}${nf}, NSCount ${MAGENTA}${msg.nsCount}${nf}, ARCount ${MAGENTA}${msg.arCount}${nf}`,
+  logMdnsMessage(msg: MdnsMessage, log: AnsiLogger = this.log, text: string = 'Decoded mDNS message'): void {
+    log.info(
+      `${text}: ID ${MAGENTA}${msg.id}${nf}, QR ${GREEN}${msg.qr === 0 ? 'Query' : 'Response'}${nf}, OPCODE ${MAGENTA}${msg.opcode}${nf}, AA ${MAGENTA}${msg.aa}${nf}, TC ${MAGENTA}${msg.tc}${nf}, RD ${MAGENTA}${msg.rd}${nf}, RA ${MAGENTA}${msg.ra}${nf}, Z ${MAGENTA}${msg.z}${nf}, RCODE ${MAGENTA}${msg.rcode}${nf}, QDCount ${MAGENTA}${msg.qdCount}${nf}, ANCount ${MAGENTA}${msg.anCount}${nf}, NSCount ${MAGENTA}${msg.nsCount}${nf}, ARCount ${MAGENTA}${msg.arCount}${nf}`,
     );
     msg.questions?.forEach((question) => {
-      this.log.info(`Question: ${CYAN}${question.name}${nf} type ${idn}${this.dnsTypeToString(question.type)}${rs}${nf} class ${CYAN}${this.dnsQuestionClassToString(question.class)}${nf}`);
+      log.info(`Question: ${CYAN}${question.name}${nf} type ${idn}${this.dnsTypeToString(question.type)}${rs}${nf} class ${CYAN}${this.dnsQuestionClassToString(question.class)}${nf}`);
     });
     msg.answers?.forEach((answer) => {
-      this.log.info(`Answer: ${CYAN}${answer.name}${nf} type ${idn}${this.dnsTypeToString(answer.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(answer.class)}${nf} ttl ${CYAN}${answer.ttl}${nf} data ${CYAN}${answer.data}${nf}`);
+      log.info(`Answer: ${CYAN}${answer.name}${nf} type ${idn}${this.dnsTypeToString(answer.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(answer.class)}${nf} ttl ${CYAN}${answer.ttl}${nf} data ${CYAN}${answer.data}${nf}`);
     });
     msg.authorities?.forEach((authority) => {
-      this.log.info(
+      log.info(
         `Authority: ${CYAN}${authority.name}${nf} type ${idn}${this.dnsTypeToString(authority.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(authority.class)}${nf} ttl ${CYAN}${authority.ttl}${nf} data ${CYAN}${authority.data}${nf}`,
       );
     });
     msg.additionals?.forEach((additional) => {
-      this.log.info(
+      log.info(
         `Additional: ${CYAN}${additional.name}${nf} type ${idn}${this.dnsTypeToString(additional.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(additional.class)}${nf} ttl ${CYAN}${additional.ttl}${nf} data ${CYAN}${additional.data}${nf}`,
       );
     });
-    this.log.info(`---\n`);
+    log.info(`---\n`);
   }
 
   /**

@@ -22,6 +22,7 @@
  */
 
 import os from 'node:os';
+import { RemoteInfo } from 'node:dgram';
 
 import { AnsiLogger, LogLevel, TimestampFormat, BLUE, nt } from 'node-ansi-logger';
 
@@ -44,12 +45,19 @@ export class MdnsReflectorServer {
   unicastIpv4 = new Unicast('mDNS udp4 Reflector Server', 'udp4', true, undefined, MDNS_REFLECTOR_BIND_ADDRESS_IPV4, MDNS_REFLECTOR_PORT);
   unicastIpv6 = new Unicast('mDNS udp6 Reflector Server', 'udp6', true, undefined, MDNS_REFLECTOR_BIND_ADDRESS_IPV6, MDNS_REFLECTOR_PORT);
 
+  ipv4Clients = new Map<string, RemoteInfo>();
+  ipv6Clients = new Map<string, RemoteInfo>();
+
   constructor() {
     this.log.logNameColor = '\x1b[38;5;115m';
     this.mdnsIpv4.log.logNameColor = '\x1b[38;5;115m';
+    this.mdnsIpv4.log.logLevel = LogLevel.WARN;
     this.mdnsIpv6.log.logNameColor = '\x1b[38;5;115m';
+    this.mdnsIpv6.log.logLevel = LogLevel.WARN;
     this.unicastIpv4.log.logNameColor = '\x1b[38;5;115m';
+    this.unicastIpv4.log.logLevel = LogLevel.WARN;
     this.unicastIpv6.log.logNameColor = '\x1b[38;5;115m';
+    this.unicastIpv6.log.logLevel = LogLevel.WARN;
     // Apply filters if any
     const filters = getStringArrayParameter('filter');
     if (filters) this.mdnsIpv4.filters.push(...filters);
@@ -178,21 +186,19 @@ export class MdnsReflectorServer {
       return msg;
     }
 
-    this.log.notice(`**UpgradeAddress message for Docker completed. Interface: ${selectedInterfaceName || 'N/A'}, Host IPv4: ${hostIpv4 || 'N/A'}, Host IPv6: ${hostIpv6List.length > 0 ? hostIpv6List.join(', ') : 'N/A'}`);
-    if (this.debug) {
+    this.log.info(`**UpgradeAddress message completed. Interface: ${selectedInterfaceName || 'N/A'}, Host IPv4: ${hostIpv4 || 'N/A'}, Host IPv6: ${hostIpv6List.length > 0 ? hostIpv6List.join(', ') : 'N/A'}`);
+    if (hasParameter('log-reflector-messages')) {
       try {
-        const decodedMessage = this.mdnsIpv4.decodeMdnsMessage(upgradedMsg); // For logging purposes only.
-        this.mdnsIpv4.logMdnsMessage(decodedMessage);
-      } catch {
-        // Ignore decode errors: this should never break reflection.
+        let decodedMessage = this.mdnsIpv4.decodeMdnsMessage(msg);
+        this.mdnsIpv4.logMdnsMessage(decodedMessage, this.log, '**Original mDNS message');
+        decodedMessage = this.mdnsIpv4.decodeMdnsMessage(upgradedMsg);
+        this.mdnsIpv4.logMdnsMessage(decodedMessage, this.log, '**Upgraded mDNS message');
+      } catch (error) {
+        this.log.error(`**UpgradeAddress failed to decode message: ${(error as Error).message}`);
       }
     }
 
     return upgradedMsg;
-  }
-
-  upgradeAddressForDocker(msg: Buffer<ArrayBufferLike>): Buffer<ArrayBufferLike> {
-    return this.upgradeAddress(msg);
   }
 
   async start() {
@@ -234,31 +240,41 @@ export class MdnsReflectorServer {
     await Promise.all(promises);
 
     this.unicastIpv4.on('message', (msg, rinfo) => {
+      this.ipv4Clients.set(`${rinfo.address}:${rinfo.port}`, rinfo);
       this.log.notice(`Reflecting message from unicast client ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv4 multicast`);
       const upgradedMsg = this.upgradeAddress(msg);
       this.mdnsIpv4.send(upgradedMsg, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT);
       if (hasParameter('broadcast')) {
         const broadcastAddress = this.getBroadcastAddress(this.mdnsIpv4);
         if (broadcastAddress) {
-          this.log.notice(`Reflecting message from unicast client ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ipv4 broadcast address ${BLUE}${broadcastAddress}${nt}`);
+          this.log.notice(`Reflecting message from unicast client ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ipv4 broadcast address ${BLUE}${broadcastAddress}${nt}:${BLUE}${MDNS_MULTICAST_PORT}${nt}`);
           this.mdnsIpv4.send(upgradedMsg, broadcastAddress, MDNS_MULTICAST_PORT);
         }
       }
-      this.unicastIpv4.send(Buffer.from('Received on ipv4'), rinfo.address, rinfo.port);
+      if (hasParameter('localhost')) {
+        this.log.notice(`Reflecting message from unicast client ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ipv4 localhost address ${BLUE}localhost${nt}:${BLUE}${MDNS_MULTICAST_PORT}${nt}`);
+        this.mdnsIpv4.send(upgradedMsg, 'localhost', MDNS_MULTICAST_PORT);
+      }
+      this.unicastIpv4.send(Buffer.from('mDNS Reflector Server reflected your message'), rinfo.address, rinfo.port);
     });
 
     this.unicastIpv6.on('message', (msg, rinfo) => {
+      this.ipv6Clients.set(`${rinfo.address}:${rinfo.port}`, rinfo);
       this.log.notice(`Reflecting message from unicast client ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv6 multicast`);
       const upgradedMsg = this.upgradeAddress(msg);
       this.mdnsIpv6.send(upgradedMsg, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT);
       if (hasParameter('broadcast')) {
         const broadcastAddress = this.getBroadcastAddress(this.mdnsIpv6);
         if (broadcastAddress) {
-          this.log.notice(`Reflecting message from unicast client ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ipv6 broadcast address ${BLUE}${broadcastAddress}${nt}`);
+          this.log.notice(`Reflecting message from unicast client ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ipv6 broadcast address ${BLUE}${broadcastAddress}${nt}:${BLUE}${MDNS_MULTICAST_PORT}${nt}`);
           this.mdnsIpv6.send(upgradedMsg, broadcastAddress, MDNS_MULTICAST_PORT);
         }
       }
-      this.unicastIpv6.send(Buffer.from('Received on ipv6'), rinfo.address, rinfo.port);
+      if (hasParameter('localhost')) {
+        this.log.notice(`Reflecting message from unicast client ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ipv6 localhost address ${BLUE}localhost${nt}:${BLUE}${MDNS_MULTICAST_PORT}${nt}`);
+        this.mdnsIpv6.send(upgradedMsg, 'localhost', MDNS_MULTICAST_PORT);
+      }
+      this.unicastIpv6.send(Buffer.from('mDNS Reflector Server reflected your message'), rinfo.address, rinfo.port);
     });
 
     this.log.notice('mDNS Reflector Server started.');
@@ -266,6 +282,16 @@ export class MdnsReflectorServer {
 
   async stop() {
     this.log.notice('mDNS Reflector Server stopping...');
+
+    for (const client of this.ipv4Clients.values()) {
+      this.log.debug(`Notifying ipv4 client ${client.address}:${client.port} about server stopping`);
+      this.unicastIpv4.send(Buffer.from('mDNS Reflector Server is stopping'), client.address, client.port);
+    }
+    for (const client of this.ipv6Clients.values()) {
+      this.log.debug(`Notifying ipv6 client ${client.address}:${client.port} about server stopping`);
+      this.unicastIpv6.send(Buffer.from('mDNS Reflector Server is stopping'), client.address, client.port);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Wait a bit to allow messages to be sent
 
     const promises: Promise<void>[] = [];
     promises[0] = new Promise((resolve) => {

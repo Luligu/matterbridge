@@ -56,6 +56,7 @@ Options:
   --filter <string...>                      Filter strings to match in the mDNS record name (default: no filter).
   --noIpv4                                  Disable IPv4 mDNS server (default: enabled).
   --noIpv6                                  Disable IPv6 mDNS server (default: enabled).
+  --no-timeout                              Disable automatic timeout of 10 minutes. Reflector mode disables timeout automatically.
   --reflector-client                        Enable mDNS reflector client (default: disabled).
   --reflector-server                        Enable mDNS reflector server (default: disabled).
   -d, --debug                               Enable debug logging (default: disabled).
@@ -204,7 +205,7 @@ Examples:
     const _response = mdns.sendResponse(answers);
   };
 
-  if (!hasParameter('noIpv4') && !hasParameter('reflector-server')) {
+  if (!hasParameter('noIpv4') && !hasParameter('reflector-server') && !hasParameter('reflector-client')) {
     mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, getParameter('interfaceName'), getParameter('ipv4InterfaceAddress') || '0.0.0.0', getParameter('outgoingIpv4InterfaceAddress'));
     if (hasParameter('v') || hasParameter('verbose')) mdnsIpv4.listNetworkInterfaces();
 
@@ -227,7 +228,7 @@ Examples:
     });
   }
 
-  if (!hasParameter('noIpv6') && !hasParameter('reflector-server')) {
+  if (!hasParameter('noIpv6') && !hasParameter('reflector-server') && !hasParameter('reflector-client')) {
     mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, getParameter('interfaceName'), getParameter('ipv6InterfaceAddress') || '::', getParameter('outgoingIpv6InterfaceAddress'));
     if (hasParameter('v') || hasParameter('verbose')) mdnsIpv6.listNetworkInterfaces();
 
@@ -269,7 +270,9 @@ Examples:
   });
 
   // Exit after a timeout to avoid running indefinitely in test environments
-  setTimeout(async () => {
-    await cleanupAndLogAndExit();
-  }, 600000).unref(); // 10 minutes timeout to exit if no activity
+  if (!hasParameter('no-timeout') && !hasParameter('reflector-server') && !hasParameter('reflector-client')) {
+    setTimeout(async () => {
+      await cleanupAndLogAndExit();
+    }, 600000).unref(); // 10 minutes timeout to exit if no activity
+  }
 }

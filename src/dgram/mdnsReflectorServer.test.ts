@@ -14,7 +14,7 @@ import os from 'node:os';
 import { LogLevel } from 'node-ansi-logger';
 import { jest } from '@jest/globals';
 
-import { loggerErrorSpy, setupTest } from '../jestutils/jestHelpers.js';
+import { loggerErrorSpy, originalProcessArgv, setupTest } from '../jestutils/jestHelpers.js';
 
 import { DnsClass, DnsRecordType, Mdns } from './mdns.js';
 import { MdnsReflectorServer } from './mdnsReflectorServer.js';
@@ -192,12 +192,13 @@ describe('MdnsReflectorServer', () => {
     const msg = Buffer.alloc(12);
     const spy = jest.spyOn(server, 'upgradeAddress').mockReturnValue(msg as unknown as Buffer<ArrayBufferLike>);
 
-    const upgraded = server.upgradeAddressForDocker(msg as unknown as Buffer<ArrayBufferLike>);
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
     expect(spy).toHaveBeenCalledWith(msg);
     expect(upgraded).toBe(msg);
   });
 
   it('upgradeAddress should decode/log the upgraded message when debug is enabled', () => {
+    process.argv.push('--log-reflector-messages');
     const server = new MdnsReflectorServer();
     (server as any).debug = true;
 
@@ -216,6 +217,34 @@ describe('MdnsReflectorServer', () => {
     server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
     expect(decodeSpy).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalled();
+    process.argv.pop();
+  });
+
+  it('upgradeAddress should log an error when log-reflector-messages decoding fails', () => {
+    const argvBefore = [...process.argv];
+    try {
+      if (!process.argv.includes('--log-reflector-messages')) process.argv.push('--log-reflector-messages');
+      const server = new MdnsReflectorServer();
+
+      mockNetworkInterfaces({
+        eth0: [{ address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' }],
+      } as any);
+
+      const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
+      const name = 'matterbridge.local';
+      const ttl = 120;
+      const msg = Buffer.concat([buildHeader({ anCount: 1 }), buildARecord(mdns, name, ttl, [172, 17, 0, 2])]);
+
+      jest.spyOn((server as any).mdnsIpv4, 'decodeMdnsMessage').mockImplementation(() => {
+        throw new Error('decode boom');
+      });
+
+      const errorSpy = jest.spyOn((server as any).log, 'error');
+      expect(() => server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>)).not.toThrow();
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('**UpgradeAddress failed to decode message:'));
+    } finally {
+      process.argv = argvBefore;
+    }
   });
 
   it('upgradeAddress should ignore decode errors when debug is enabled', () => {
@@ -559,6 +588,74 @@ describe('MdnsReflectorServer', () => {
 
       expect(mdnsIpv6.send).toHaveBeenCalledWith(payload, 'ff02::fb', 5353);
       expect(mdnsIpv6.send).toHaveBeenCalledWith(payload, 'ff02::1', 5353);
+      expect(unicastIpv6.send).toHaveBeenCalledWith(expect.any(Buffer), 'fd00::2', 6666);
+
+      await server.stop();
+    } finally {
+      process.argv = argvBefore;
+    }
+  });
+
+  it('start should reflect ipv4 unicast message to multicast and localhost when --localhost is set', async () => {
+    const argvBefore = [...process.argv];
+    if (!process.argv.includes('--localhost')) process.argv.push('--localhost');
+
+    try {
+      const server = new MdnsReflectorServer();
+
+      const mdnsIpv4 = new FakeMdns();
+      mdnsIpv4.socketType = 'udp4';
+      const mdnsIpv6 = new FakeMdns();
+      mdnsIpv6.socketType = 'udp6';
+      const unicastIpv4 = new FakeEndpoint();
+      const unicastIpv6 = new FakeEndpoint();
+
+      (server as any).mdnsIpv4 = mdnsIpv4;
+      (server as any).mdnsIpv6 = mdnsIpv6;
+      (server as any).unicastIpv4 = unicastIpv4;
+      (server as any).unicastIpv6 = unicastIpv6;
+
+      await server.start();
+
+      const payload = Buffer.from([1, 2, 3]);
+      (unicastIpv4 as any).emit('message', payload, { family: 'IPv4', address: '10.0.0.2', port: 5555, size: payload.length });
+
+      expect(mdnsIpv4.send).toHaveBeenCalledWith(payload, '224.0.0.251', 5353);
+      expect(mdnsIpv4.send).toHaveBeenCalledWith(payload, 'localhost', 5353);
+      expect(unicastIpv4.send).toHaveBeenCalledWith(expect.any(Buffer), '10.0.0.2', 5555);
+
+      await server.stop();
+    } finally {
+      process.argv = argvBefore;
+    }
+  });
+
+  it('start should reflect ipv6 unicast message to multicast and localhost when --localhost is set', async () => {
+    const argvBefore = [...process.argv];
+    if (!process.argv.includes('--localhost')) process.argv.push('--localhost');
+
+    try {
+      const server = new MdnsReflectorServer();
+
+      const mdnsIpv4 = new FakeMdns();
+      mdnsIpv4.socketType = 'udp4';
+      const mdnsIpv6 = new FakeMdns();
+      mdnsIpv6.socketType = 'udp6';
+      const unicastIpv4 = new FakeEndpoint();
+      const unicastIpv6 = new FakeEndpoint();
+
+      (server as any).mdnsIpv4 = mdnsIpv4;
+      (server as any).mdnsIpv6 = mdnsIpv6;
+      (server as any).unicastIpv4 = unicastIpv4;
+      (server as any).unicastIpv6 = unicastIpv6;
+
+      await server.start();
+
+      const payload = Buffer.from([9, 8, 7]);
+      (unicastIpv6 as any).emit('message', payload, { family: 'IPv6', address: 'fd00::2', port: 6666, size: payload.length });
+
+      expect(mdnsIpv6.send).toHaveBeenCalledWith(payload, 'ff02::fb', 5353);
+      expect(mdnsIpv6.send).toHaveBeenCalledWith(payload, 'localhost', 5353);
       expect(unicastIpv6.send).toHaveBeenCalledWith(expect.any(Buffer), 'fd00::2', 6666);
 
       await server.stop();

@@ -49,15 +49,23 @@ In the same way the Matter port range 5550-5559 is mapped outside the container.
 From another terminal run mb_mdns inside the container we created and run before
 
 ```bash
-docker exec -it node24slim apt-get update
-docker exec -it node24slim apt-get install -y --no-install-recommends iproute2 iputils-ping net-tools dnsutils tcpdump netcat-openbsd
-docker exec -it node24slim ip a
 docker exec -it node24slim mb_mdns
 ```
 
 In a while you will see what Matterbridge mDNS packet advertised from the Docker Desktop container
 
 ![alt text](mDnsPacket.png)
+
+## Optional if you want to see ip inside the container
+
+From another terminal run ip a and ip r inside the container we created and run before
+
+```bash
+docker exec -it node24slim apt-get update
+docker exec -it node24slim apt-get install -y --no-install-recommends iproute2 iputils-ping net-tools dnsutils tcpdump netcat-openbsd
+docker exec -it node24slim ip a
+docker exec -it node24slim ip r
+```
 
 ### Issues we have there
 
@@ -104,7 +112,7 @@ services:
     ports:
       - "8123:8123"
     volumes:
-      - ./homeassistant:/config
+      - ./DockerVolumes/homeassistant:/config
     environment:
       - TZ=Europe/Paris
 
@@ -115,9 +123,16 @@ services:
     ports:
       - "5580:5580"
       - "5540:5540/udp"
-      - "5353:5353/udp"
     volumes:
-      - ./matterserver:/data
+      - ./DockerVolumes/matterserver:/data
+    environment:
+      - TZ=Europe/Paris
+
+  mb_mdns:
+    container_name: mb_mdns
+    image: luligu/matterbridge:dev
+    restart: unless-stopped
+    command: ["mb_mdns", "--no-timeout"]
     environment:
       - TZ=Europe/Paris
 ```

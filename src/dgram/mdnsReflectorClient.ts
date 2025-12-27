@@ -23,7 +23,7 @@
 
 import { AnsiLogger, LogLevel, TimestampFormat, BLUE, nt } from 'node-ansi-logger';
 
-import { hasParameter } from '../utils/commandLine.js';
+import { getStringArrayParameter, hasParameter } from '../utils/commandLine.js';
 
 import { Mdns } from './mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
@@ -45,9 +45,17 @@ export class MdnsReflectorClient {
   constructor() {
     this.log.logNameColor = '\x1b[38;5;97m';
     this.mdnsIpv4.log.logNameColor = '\x1b[38;5;97m';
+    this.mdnsIpv4.log.logLevel = LogLevel.WARN;
     this.mdnsIpv6.log.logNameColor = '\x1b[38;5;97m';
+    this.mdnsIpv6.log.logLevel = LogLevel.WARN;
     this.unicastIpv4.log.logNameColor = '\x1b[38;5;97m';
+    this.unicastIpv4.log.logLevel = LogLevel.WARN;
     this.unicastIpv6.log.logNameColor = '\x1b[38;5;97m';
+    this.unicastIpv6.log.logLevel = LogLevel.WARN;
+    // Apply filters if any
+    const filters = getStringArrayParameter('filter');
+    if (filters) this.mdnsIpv4.filters.push(...filters);
+    if (filters) this.mdnsIpv6.filters.push(...filters);
   }
 
   async start() {
@@ -101,11 +109,11 @@ export class MdnsReflectorClient {
     });
 
     this.unicastIpv4.on('message', (msg, rinfo) => {
-      this.log.notice(`Received message from unicast ipv4 reflector ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt}: ${msg.toString()}`);
+      this.log.notice(`Received message from unicast reflector on ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt}: ${msg.toString()}`);
     });
 
     this.unicastIpv6.on('message', (msg, rinfo) => {
-      this.log.notice(`Received message from unicast ipv6 reflector ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt}: ${msg.toString()}`);
+      this.log.notice(`Received message from unicast reflector on ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt}: ${msg.toString()}`);
     });
 
     this.log.notice('mDNS Reflector Client started.');

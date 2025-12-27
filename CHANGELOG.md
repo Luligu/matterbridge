@@ -28,7 +28,7 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.4.5] - Dev branch
+## [3.4.5] - 2025-12-27
 
 ### Added
 
@@ -37,13 +37,13 @@ Advantages:
 - [mb_mdns]: Added query and advertise interval. Improved help for easy mDNS testing.
 - [mb_mdns]: Advertise full DNS-SD record set (PTR/SRV/TXT/A/AAAA) for matterbridge.\_http.\_tcp.local on port 8283.
 - [Mdns]: Added TXT/SRV/A/AAAA encoders into the Mdns class.
+- [Mdns]: Mdns.sendResponse now accepts an array and sends multi-answer responses.
 - [MdnsReflectorClient]: Added MdnsReflectorClient class.
 - [MdnsReflectorServer]: Added MdnsReflectorServer class.
 
 ### Changed
 
 - [package]: Updated dependencies.
-- [mdns]: Mdns.sendResponse now accepts an array and sends multi-answer responses.
 
 ### Fixed
 
