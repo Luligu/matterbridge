@@ -145,6 +145,28 @@ describe('getInterfaceDetails() / getInterfaceName() / getIpv4InterfaceAddress /
     (os.networkInterfaces as jest.Mock).mockReturnValue(fakeIfaces as any);
   });
 
+  it('returns the IPv6 address unchanged when it already contains a zone id', () => {
+    const platformSpy = jest.spyOn(os, 'platform').mockReturnValue('win32');
+    (os.networkInterfaces as jest.Mock).mockReturnValue({
+      eth0: [{ family: 'IPv6', internal: false, address: 'fe80::1%11', scopeid: 11, mac: 'aa' }],
+    } as any);
+
+    expect(getIpv6InterfaceAddress(true)).toBe('fe80::1%11');
+    platformSpy.mockRestore();
+    (os.networkInterfaces as jest.Mock).mockReturnValue(fakeIfaces as any);
+  });
+
+  it('returns the IPv6 address without scope when scope id is not available on Windows', () => {
+    const platformSpy = jest.spyOn(os, 'platform').mockReturnValue('win32');
+    (os.networkInterfaces as jest.Mock).mockReturnValue({
+      eth0: [{ family: 'IPv6', internal: false, address: 'fe80::1', mac: 'aa' }],
+    } as any);
+
+    expect(getIpv6InterfaceAddress(true)).toBe('fe80::1');
+    platformSpy.mockRestore();
+    (os.networkInterfaces as jest.Mock).mockReturnValue(fakeIfaces as any);
+  });
+
   it('returns the MAC address from the first non-internal interface', () => {
     expect(getMacAddress()).toBe('aa:bb:cc:dd:ee:ff');
   });
