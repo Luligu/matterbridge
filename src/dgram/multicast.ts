@@ -28,7 +28,7 @@ import os from 'node:os';
 // AnsiLogger imports
 import { BLUE, CYAN, db, RED, YELLOW } from 'node-ansi-logger';
 
-// Net imports
+// Dgram imports
 import { Dgram } from './dgram.js';
 
 export const MDNS_MULTICAST_IPV4_ADDRESS = '224.0.0.251';
@@ -55,10 +55,10 @@ export class Multicast extends Dgram {
    * @param {string} multicastAddress - The multicast address to join.
    * @param {number} multicastPort - The port number to bind to.
    * @param {'udp4' | 'udp6'} socketType - The type of the socket (IPv4 or IPv6).
-   * @param {boolean | undefined} reuseAddr - Whether to allow address reuse.
-   * @param {string} [interfaceName] - The name of the network interface to bind to.
-   * @param {string} [interfaceAddress] - The address of the network interface to bind to.
-   * @param {string} [outgoingInterfaceAddress] - The address of the outgoing network interface.
+   * @param {boolean | undefined} reuseAddr - Whether to allow address reuse. Defaults to true.
+   * @param {string} [interfaceName] - The name of the network interface to bind to. If provided, the interfaceAddress will be determined based on this name if not explicitly provided.
+   * @param {string} [interfaceAddress] - The address of the network interface to bind to. If not provided, it will be determined based on the interfaceName.
+   * @param {string} [outgoingInterfaceAddress] - The address of the outgoing network interface. If not provided, it will use the interfaceAddress.
    */
   constructor(name: string, multicastAddress: string, multicastPort: number, socketType: 'udp4' | 'udp6', reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string, outgoingInterfaceAddress?: string) {
     super(name, socketType, reuseAddr, interfaceName, interfaceAddress);

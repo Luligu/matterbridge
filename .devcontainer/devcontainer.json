@@ -1,34 +1,62 @@
 // .devcontainer/devcontainer.json
-// This file defines the development container configuration for a Matterbridge project.
-// WARNING: since the dev container doesn't have network host and ipv6, you can run matterbridge inside the container and test it but is not possible to pair the Matterbridge instance.
+// This file defines the development container configuration for Matterbridge.
+/* 
+************************************************* WARNING *************************************************
+Dev containers have networking limitations depending on the host OS and Docker setup.
+
+• Docker Desktop on Windows or macOS:
+  - Runs inside a VM
+  - Host networking mode is NOT available and mDNS is not supported
+  - Matterbridge and plugins can run but:
+    ❌ Pairing with Matter controllers will NOT work cause of missing mDNS support
+    ✅ Remote and local network access (cloud services, internet APIs) works normally
+    ✅ Matterbridge frontend works normally
+
+• Native Linux or WSL 2 with Docker Engine CLI integration:
+  - Host networking IS available
+  - Full local network access is supported
+  - Matterbridge and plugins work correctly, including pairing
+  - Matterbridge frontend works normally
+************************************************* WARNING *************************************************
+*/
 {
   // Name of the dev container
   "name": "Matterbridge",
   // Use the pre-built image with Node+TypeScript
   "image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:latest",
-  // Mount the local matterbridge and node_modules workspace folder to the container's workspace volumes to improve performance
-  "mounts": ["source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume"],
-  /* At the moment not working in WSL 2
+  // Use the non-root node user (passwordless sudo in this image)
+  "remoteUser": "node",
+  // Mount the node_modules workspace folder to the container's workspace volumes to improve performance
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
+    "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
+    "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume"
+  ],
+  // On startup, update npm, build matterbridge and link it globally
+  "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   "runArgs": [
-    // Use the host's network to allow Matterbridge to communicate with other devices on the network
+    // Give the Docker container the same name as the repository (must be unique on host)
+    "--name",
+    "${localWorkspaceFolderBasename}",
+    // Remove network host mode if on Docker Desktop for Windows or macOS
     "--network=host"
   ],
-  */
-  // On startup, update npm, pnpm, install the dev of matterbridge and install the dependencies from package.json
-  "postCreateCommand": "echo '1 - Installing updates ...' && sudo npm install -g npm@latest pnpm@latest npm-check-updates shx && echo '2 - Setting permissions ...' && sudo chown -R node:node . && echo '3 - Building the package ...' && npm install && npm run build && npm outdated || true",
-  // Give the Docker container the same name as the repository (must be unique on host)
-  "runArgs": ["--name", "${localWorkspaceFolderBasename}"],
   "customizations": {
     "vscode": {
       // Extensions to install in the dev container
-      "extensions": ["ms-vscode.vscode-typescript-next", "ms-azuretools.vscode-containers", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "github.vscode-github-actions", "github.vscode-pull-request-github"],
+      "extensions": ["ms-vscode.vscode-typescript-next", "ms-azuretools.vscode-containers", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "github.copilot-chat", "github.vscode-github-actions", "github.vscode-pull-request-github"],
       // Settings for the VS Code environment
       "settings": {
-        "eslint.format.enable": true,
-        "eslint.useFlatConfig": true,
-        "editor.formatOnSave": true,
         "terminal.integrated.shell.linux": "/bin/bash",
-        "terminal.integrated.scrollback": 10000
+        "terminal.integrated.scrollback": 10000,
+        "editor.tabSize": 2,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "eslint.format.enable": true,
+        "eslint.useFlatConfig": true
       }
     }
   }

@@ -533,6 +533,17 @@ Examples:
 /error|warning/   -> match either "error" OR "warning" (double search)
 ```
 
+## Window Covering cluster and position explained
+
+In Matter spec the Window Covering cluster uses:
+
+- 10000 = fully closed
+- 0 = fully opened
+
+So depending on the controller you pair with, you should see 100 for fully closed and 0 for fully open.
+
+Some controllers invert the position so you need to verify your controller.
+
 # Known general issues
 
 ## Session XYZ does not exist or Cannot find a session for ID XYZ
@@ -577,11 +588,15 @@ So far is the only controller supporting all Matter 1.2, 1.3 and 1.4 device type
 
 ## Google Home
 
-If you face a problem pairing to Google Home from Ios app the solution is there https://github.com/Luligu/matterbridge/issues/61.
+If you face a problem pairing to Google Home from iOS app the solution is there https://github.com/Luligu/matterbridge/issues/61.
 
 If you face a problem changing the brightness check this for the explanation: https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80
 
-No other issues reported so far.
+If you encounter a “Something Went Wrong” screen while commissioning MatterBridge devices in Google Home on Android, it’s due to an Android bug. Android fails to send the country code, which is mandatory under the Matter specification.
+
+### Workaround
+
+Install Google Home on an iPhone and complete the commissioning there. Once set up, the devices will appear and function normally on your Android phone and other Nest devices in your home. By [Artem Kovalov](https://github.com/artemkovalyov).
 
 ## Alexa
 

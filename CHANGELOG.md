@@ -28,6 +28,27 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.4.5] - 2025-12-27
+
+### Added
+
+- [DevContainer]: Refactored Dev Container setup. The Matterbridge instance can now be paired on native Linux hosts or WSL 2 with Docker engine CLI integration. On Docker Desktop on Windows or macOS is not possible cause Docker Desktop runs inside a VM and not directly on the host so mDNS is not supported.
+- [DevContainer]: Since is now possible to pair from Dev Container, named volumes have been added to persist storage and plugins across rebuilds.
+- [mb_mdns]: Added query and advertise interval. Improved help for easy mDNS testing.
+- [mb_mdns]: Advertise full DNS-SD record set (PTR/SRV/TXT/A/AAAA) for matterbridge.\_http.\_tcp.local on port 8283.
+- [Mdns]: Added TXT/SRV/A/AAAA encoders into the Mdns class.
+- [Mdns]: Mdns.sendResponse now accepts an array and sends multi-answer responses.
+- [MdnsReflectorClient]: Added MdnsReflectorClient class.
+- [MdnsReflectorServer]: Added MdnsReflectorServer class.
+
+### Changed
+
+- [package]: Updated dependencies.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.4.4] - 2025-12-19
 
 ### Added

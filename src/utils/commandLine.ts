@@ -59,7 +59,7 @@ export function getParameter(name: string): string | undefined {
   const commandArguments = process.argv.slice(2);
   let markerIndex = commandArguments.indexOf(`-${name}`);
   if (markerIndex === -1) markerIndex = commandArguments.indexOf(`--${name}`);
-  if (markerIndex === -1 || markerIndex + 1 === commandArguments.length) return undefined;
+  if (markerIndex === -1 || markerIndex + 1 === commandArguments.length || commandArguments[markerIndex + 1].startsWith('-')) return undefined;
   return commandArguments[markerIndex + 1];
 }
 

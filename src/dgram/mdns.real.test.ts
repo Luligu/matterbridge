@@ -10,61 +10,18 @@
 
 import { RemoteInfo } from 'node:dgram';
 
-import { AnsiLogger } from 'node-ansi-logger';
 import { jest } from '@jest/globals';
 
 import { getMacAddress } from '../utils/network.js';
+import { setupTest } from '../jestutils/jestHelpers.js';
 
 import { Mdns, DnsRecordType, DnsClass, MdnsMessage } from './mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false; // Set to true to enable debug logging
+process.argv.push('--verbose');
 
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
-
-function setDebug(debug: boolean) {
-  if (debug) {
-    loggerLogSpy.mockRestore();
-    consoleLogSpy.mockRestore();
-    consoleDebugSpy.mockRestore();
-    consoleInfoSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    consoleLogSpy = jest.spyOn(console, 'log');
-    consoleDebugSpy = jest.spyOn(console, 'debug');
-    consoleInfoSpy = jest.spyOn(console, 'info');
-    consoleWarnSpy = jest.spyOn(console, 'warn');
-    consoleErrorSpy = jest.spyOn(console, 'error');
-  } else {
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-  }
-}
+// Setup the test environment
+await setupTest('MdnsReal', false);
 
 describe('Mdns Real Interaction Tests', () => {
   let mdnsServer: Mdns;
@@ -104,6 +61,10 @@ describe('Mdns Real Interaction Tests', () => {
     if (!mdnsServer.bound || !mdnsClient.bound) throw new Error('mdnsServer or mdnsClient not bound after start()');
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   afterAll(async () => {
     if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
 
@@ -133,6 +94,7 @@ describe('Mdns Real Interaction Tests', () => {
     await Promise.all([serverClosedPromise, clientClosedPromise]);
 
     if (mdnsServer.bound || mdnsClient.bound) throw new Error('mdnsServer or mdnsClient is still bound after stop()');
+    jest.restoreAllMocks();
   });
 
   test('should have both mDNS instances ready', () => {
@@ -167,7 +129,7 @@ describe('Mdns Real Interaction Tests', () => {
       mdnsServer.onQuery = (rinfo: RemoteInfo, query: MdnsMessage) => {
         if (query.questions?.find((q) => q.name === serviceName && q.type === DnsRecordType.PTR)) {
           const ptrRdata = mdnsServer.encodeDnsName(instanceName);
-          mdnsServer.sendResponse(serviceName, DnsRecordType.PTR, DnsClass.IN, 120, ptrRdata);
+          mdnsServer.sendResponse([{ name: serviceName, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: ptrRdata }]);
           resolve();
         }
       };

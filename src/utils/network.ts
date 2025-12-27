@@ -80,13 +80,32 @@ export function getIpv4InterfaceAddress(): string | undefined {
 /**
  * Retrieves the IPv6 address of the first non-internal network interface.
  *
- * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
+ * If `scope` is true, appends a zone id (scope) for link-local addresses when
+ * available:
+ * - On Windows: uses `%<scopeid>` (e.g. `%11`)
+ * - On other platforms: uses `%<interfaceName>` (e.g. `%eth0`)
+ *
+ * @param {boolean} [scope] - Whether to append a zone id when available.
+ * @returns {string | undefined} The IPv6 address of the selected network interface, or undefined if not found.
  */
-export function getIpv6InterfaceAddress(): string | undefined {
+export function getIpv6InterfaceAddress(scope: boolean = false): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
     if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
     for (const detail of interfaceDetails) {
-      if (detail.family === 'IPv6' && !detail.internal) return detail.address;
+      if (detail.family === 'IPv6' && !detail.internal) {
+        const address = detail.address;
+        if (!scope) return address;
+
+        // If already has a zone id, keep it.
+        if (address.includes('%')) return address;
+
+        const isWindows = os.platform() === 'win32';
+        const zoneId = isWindows ? detail.scopeid : interfaceName;
+        if (zoneId !== undefined && zoneId !== null && `${zoneId}`.length > 0) {
+          return `${address}%${zoneId}`;
+        }
+        return address;
+      }
     }
   }
 }

@@ -3,7 +3,7 @@
  * @file dgram.ts
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -30,10 +30,12 @@ import os from 'node:os';
 // AnsiLogger imports
 import { AnsiLogger, BLUE, db, idn, LogLevel, nf, rs, TimestampFormat } from 'node-ansi-logger';
 
+import { hasParameter } from '../utils/commandLine.js';
+
 /**
  * Represents the Dgram events.
  */
-interface DgramEvents {
+export interface DgramEvents {
   error: [error: Error];
   close: [];
   connect: [];
@@ -48,7 +50,10 @@ interface DgramEvents {
  * This class implements a dgram socket.
  */
 export class Dgram extends EventEmitter<DgramEvents> {
-  log;
+  verbose = hasParameter('v') || hasParameter('verbose');
+  debug = hasParameter('d') || hasParameter('debug') || hasParameter('v') || hasParameter('verbose');
+  silent = hasParameter('s') || hasParameter('silent');
+  log: AnsiLogger;
   socket: dgram.Socket;
   bound = false;
   socketType: 'udp4' | 'udp6';
@@ -61,17 +66,18 @@ export class Dgram extends EventEmitter<DgramEvents> {
    *
    * @param {string} name - The name of the socket.
    * @param {'udp4' | 'udp6'} socketType - The type of the socket (IPv4 or IPv6).
-   * @param {boolean | undefined} reuseAddr - Whether to allow address reuse.
+   * @param {boolean | undefined} reuseAddr - Whether to allow address reuse. Defaults to true.
    * @param {string} [interfaceName] - The name of the network interface to bind to.
    * @param {string} [interfaceAddress] - The address of the network interface to bind to.
    */
   constructor(name: string, socketType: 'udp4' | 'udp6', reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string) {
     super();
-    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug ? LogLevel.DEBUG : this.silent ? LogLevel.NOTICE : LogLevel.INFO });
     this.socket = dgram.createSocket({ type: socketType, reuseAddr });
     this.socketType = socketType;
     this.interfaceName = interfaceName;
     this.interfaceAddress = interfaceAddress;
+    this.log.debug(`Created socket of type ${BLUE}${socketType}${db} on interface ${BLUE}${interfaceName || 'any'}${db} with address ${BLUE}${interfaceAddress || 'any'}${db} reuseAddr=${BLUE}${reuseAddr}${db}`);
 
     this.socket.on('error', (error) => {
       this.log.debug(`Socket error: ${error instanceof Error ? error.message : error}`);
@@ -337,7 +343,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    */
   getNetmask(interfaceAddress: string): string | undefined {
     // Remove zone index if present (e.g. for IPv6 "fe80::1%eth0")
-    const cleanedAddress = interfaceAddress.includes('%') ? interfaceAddress.split('%')[0] : interfaceAddress;
+    const noZoneAddress = interfaceAddress.includes('%') ? interfaceAddress.split('%')[0] : interfaceAddress;
 
     // Iterate over all interfaces.
     const nets = os.networkInterfaces();
@@ -345,7 +351,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
       const ifaceAddresses = nets[ifaceName];
       if (!ifaceAddresses) continue;
       for (const addr of ifaceAddresses) {
-        if (addr.address === cleanedAddress) {
+        if (addr.address === noZoneAddress) {
           return addr.netmask;
         }
       }

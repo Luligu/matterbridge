@@ -52,12 +52,32 @@ To start the Dev Container, simply open the project folder in [Visual Studio Cod
 
 > **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as fast as from the local folder.
 
-Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
+## Dev containers networking limitations
 
-When you want to test your plugin with a paired controller, you have several options:
+Dev containers have networking limitations depending on the host OS and Docker setup.
+
+• Docker Desktop on Windows or macOS:
+
+- Runs inside a VM
+- Host networking mode is NOT available
+- Matterbridge and plugins can run but:
+  ❌ Pairing with Matter controllers will NOT work cause of missing mDNS support
+  ✅ Remote and local network access (cloud services, internet APIs) works normally
+  ✅ Matterbridge frontend works normally
+
+• Native Linux or WSL 2 with Docker Engine CLI integration:
+
+- Host networking IS available
+- Full local network access is supported with mDNS
+- Matterbridge and plugins work correctly, including pairing
+- Matterbridge frontend works normally
+
+## How to pair the plugin
+
+When you want to test your plugin with a paired controller and you cannot use native Linux or WSL 2 with Docker Engine, you have several other options:
 
 - create a tgz (npm run npmPack) and upload it to a running instance of matterbridge.
-- publish it with tag dev and install it (matterbridge-yourplugin@dev in Install plugins) in a running instance of matterbridge.
+- publish the plugin with tag dev and install it (matterbridge-yourplugin@dev in Install plugins) in a running instance of matterbridge.
 - use a local instance of matterbridge running outside the dev container and install (../matterbridge-yourplugin in Install plugins) or add (../matterbridge-yourplugin in Install plugins) your plugin to it (easiest way). Adjust the path if matterbridge dir and your plugin dir are not in the same parent directory.
 
 ## Guidelines on imports/exports

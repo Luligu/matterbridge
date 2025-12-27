@@ -66,6 +66,11 @@ describe('Parameter Functions', () => {
       process.argv = [...process.argv, '--empty'];
       expect(getParameter('empty')).toBeUndefined();
     });
+
+    test('returns undefined if value missing with next flag', () => {
+      process.argv = [...process.argv, '--empty', '--next'];
+      expect(getParameter('empty')).toBeUndefined();
+    });
   });
 
   describe('getIntParameter', () => {
