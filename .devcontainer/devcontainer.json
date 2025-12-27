@@ -45,15 +45,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
   "customizations": {
     "vscode": {
       // Extensions to install in the dev container
-      "extensions": [
-        "ms-vscode.vscode-typescript-next",
-        "ms-azuretools.vscode-containers",
-        "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode",
-        "github.copilot-chat",
-        "github.vscode-github-actions",
-        "github.vscode-pull-request-github"
-      ],
+      "extensions": ["ms-vscode.vscode-typescript-next", "ms-azuretools.vscode-containers", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "github.copilot-chat", "github.vscode-github-actions", "github.vscode-pull-request-github"],
       // Settings for the VS Code environment
       "settings": {
         "terminal.integrated.shell.linux": "/bin/bash",
