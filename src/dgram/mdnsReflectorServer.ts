@@ -96,8 +96,9 @@ export class MdnsReflectorServer {
     };
 
     const selectedInterfaceName = pickInterface();
-    const selectedInfos = selectedInterfaceName ? (interfaces[selectedInterfaceName] ?? []) : [];
+    this.log.info(`**UpgradeAddress selected interface for address upgrade: ${selectedInterfaceName || 'N/A'}`);
 
+    const selectedInfos = selectedInterfaceName ? (interfaces[selectedInterfaceName] ?? []) : [];
     const hostIpv4 = selectedInfos.find((info) => info && !info.internal && info.family === 'IPv4')?.address;
     const hostIpv6List = (() => {
       const set = new Set<string>();
@@ -108,6 +109,8 @@ export class MdnsReflectorServer {
       }
       return [...set];
     })();
+    this.log.info(`**UpgradeAddress Host IPv4 for address upgrade: ${hostIpv4 || 'N/A'}`);
+    this.log.info(`**UpgradeAddress Host IPv6 for address upgrade: ${hostIpv6List.length > 0 ? hostIpv6List.join(', ') : 'N/A'}`);
 
     if (!hostIpv4 && hostIpv6List.length === 0) return msg;
 
@@ -171,11 +174,11 @@ export class MdnsReflectorServer {
       upgradeResourceRecords(nsCount);
       upgradeResourceRecords(arCount);
     } catch (error) {
-      this.log.error(`UpgradeAddress() failed to parse message: ${(error as Error).message}`);
+      this.log.error(`**UpgradeAddress failed to parse message: ${(error as Error).message}`);
       return msg;
     }
 
-    this.log.notice(`UpgradeAddress message for Docker completed. Interface: ${selectedInterfaceName || 'N/A'}, Host IPv4: ${hostIpv4 || 'N/A'}, Host IPv6: ${hostIpv6List.length > 0 ? hostIpv6List.join(', ') : 'N/A'}`);
+    this.log.notice(`**UpgradeAddress message for Docker completed. Interface: ${selectedInterfaceName || 'N/A'}, Host IPv4: ${hostIpv4 || 'N/A'}, Host IPv6: ${hostIpv6List.length > 0 ? hostIpv6List.join(', ') : 'N/A'}`);
     if (this.debug) {
       try {
         const decodedMessage = this.mdnsIpv4.decodeMdnsMessage(upgradedMsg); // For logging purposes only.

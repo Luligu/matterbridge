@@ -42,6 +42,7 @@ vite.config.*
 # Package specific directories and files that should be ignored
 chip
 docker
+docker-reflector
 systemd
 heap_profile
 heap_profiles
