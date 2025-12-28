@@ -535,8 +535,10 @@ export class Mdns extends Multicast {
       const groups = [...leftParts, ...Array(missing).fill('0'), ...rightParts];
       return Buffer.from(
         groups.flatMap((g) => {
-          const word = parseInt(g || '0', 16);
-          if (!Number.isFinite(word) || word < 0 || word > 0xffff) throw new Error(`Invalid IPv6 group: ${g}`);
+          const word = parseInt(g, 16);
+          if (!Number.isFinite(word) || word < 0 || word > 0xffff) {
+            throw new Error(`Invalid IPv6 group: ${g}`);
+          }
           return [(word >> 8) & 0xff, word & 0xff];
         }),
       );
@@ -546,7 +548,8 @@ export class Mdns extends Multicast {
     if (groups.length !== 8) throw new Error(`Invalid IPv6 address: ${ipv6WithOptionalScope}`);
     return Buffer.from(
       groups.flatMap((g) => {
-        const word = parseInt(g || '0', 16);
+        if (!g) throw new Error(`Invalid IPv6 group: ${g}`);
+        const word = parseInt(g, 16);
         if (!Number.isFinite(word) || word < 0 || word > 0xffff) throw new Error(`Invalid IPv6 group: ${g}`);
         return [(word >> 8) & 0xff, word & 0xff];
       }),

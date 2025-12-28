@@ -14,7 +14,7 @@ import { jest } from '@jest/globals';
 
 import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '../jestutils/jestHelpers.js';
 
-import { Mdns, DnsRecordType, DnsClass, DnsClassFlag } from './mdns.js';
+import { Mdns, DnsRecordType, DnsClass, DnsClassFlag, isMdns, isMdnsQuery, isMdnsResponse } from './mdns.js';
 
 process.argv.push('--verbose');
 
@@ -52,6 +52,48 @@ describe('Mdns', () => {
   it('should construct and initialize properties', () => {
     expect(mdns.deviceQueries).toBeInstanceOf(Map);
     expect(mdns.deviceResponses).toBeInstanceOf(Map);
+  });
+
+  describe('mDNS helper guards', () => {
+    it('isMdns should return false for undefined or too-short buffers', () => {
+      expect(isMdns(undefined as any)).toBe(false);
+      expect(isMdns(Buffer.alloc(0))).toBe(false);
+      expect(isMdns(Buffer.alloc(11))).toBe(false);
+    });
+
+    it('isMdns should return true only when id == 0', () => {
+      const msg = Buffer.alloc(12);
+      msg.writeUInt16BE(0, 0);
+      expect(isMdns(msg)).toBe(true);
+
+      msg.writeUInt16BE(1, 0);
+      expect(isMdns(msg)).toBe(false);
+    });
+
+    it('isMdnsQuery / isMdnsResponse should validate length, id and QR bit', () => {
+      expect(isMdnsQuery(Buffer.alloc(0))).toBe(false);
+      expect(isMdnsResponse(Buffer.alloc(0))).toBe(false);
+
+      const msg = Buffer.alloc(12);
+      msg.writeUInt16BE(0, 0); // id
+
+      // Query (QR=0)
+      msg.writeUInt16BE(0x0000, 2);
+      expect(isMdnsQuery(msg)).toBe(true);
+      expect(isMdnsResponse(msg)).toBe(false);
+
+      // Response (QR=1)
+      msg.writeUInt16BE(0x8000, 2);
+      expect(isMdnsQuery(msg)).toBe(false);
+      expect(isMdnsResponse(msg)).toBe(true);
+
+      // Non-mDNS id
+      msg.writeUInt16BE(2, 0);
+      msg.writeUInt16BE(0x0000, 2);
+      expect(isMdnsQuery(msg)).toBe(false);
+      msg.writeUInt16BE(0x8000, 2);
+      expect(isMdnsResponse(msg)).toBe(false);
+    });
   });
 
   it('should encode and decode DNS names', () => {
@@ -180,6 +222,28 @@ describe('Mdns', () => {
       expect(() => mdns.encodeAAAA('abcd')).toThrow(/Invalid IPv6 address/);
       expect(() => mdns.encodeAAAA('1:2:3:4:5:6:7')).toThrow(/Invalid IPv6 address/);
       expect(() => mdns.encodeAAAA('gggg::1')).toThrow(/Invalid IPv6 group/);
+    });
+
+    it('should support an address with empty left part (::1)', () => {
+      const rdata = mdns.encodeAAAA('::1');
+      expect(rdata.length).toBe(16);
+      expect(rdata.readUInt16BE(14)).toBe(0x0001);
+    });
+
+    it('should throw for out-of-range IPv6 group in full 8-group form', () => {
+      expect(() => mdns.encodeAAAA('10000:0:0:0:0:0:0:1')).toThrow('Invalid IPv6 group: 10000');
+    });
+
+    it('should throw for out-of-range IPv6 group in :: form', () => {
+      expect(() => mdns.encodeAAAA('10000::1')).toThrow('Invalid IPv6 group: 10000');
+    });
+
+    it('should throw when :: expansion would exceed 8 groups (missing < 0)', () => {
+      expect(() => mdns.encodeAAAA('1:2:3:4:5:6:7:8:9::1')).toThrow(/Invalid IPv6 address/);
+    });
+
+    it('should throw for an empty group when no :: is present', () => {
+      expect(() => mdns.encodeAAAA(':1:2:3:4:5:6:7')).toThrow(/Invalid IPv6 group/);
     });
   });
 
@@ -324,6 +388,47 @@ describe('Mdns', () => {
     expect(loggerErrorSpy).toHaveBeenCalled();
   });
 
+  it('should handle onMessage when decodeMdnsMessage throws a non-Error', () => {
+    const saved = (mdns as any).decodeMdnsMessage;
+    (mdns as any).decodeMdnsMessage = () => {
+      throw 'boom';
+    };
+
+    mdns.onMessage(Buffer.alloc(12), mockRinfo);
+
+    (mdns as any).decodeMdnsMessage = saved;
+    expect(loggerErrorSpy).toHaveBeenCalledWith('Error decoding mDNS message: boom');
+  });
+
+  it('should handle onMessage response when answers are undefined (fallback ptr branch)', () => {
+    const saved = (mdns as any).decodeMdnsMessage;
+    (mdns as any).decodeMdnsMessage = () => ({
+      id: 0,
+      qr: 1,
+      opcode: 0,
+      aa: false,
+      tc: false,
+      rd: false,
+      ra: false,
+      z: 0,
+      rcode: 0,
+      qdCount: 0,
+      anCount: 0,
+      nsCount: 0,
+      arCount: 0,
+      answers: undefined,
+      questions: undefined,
+      authorities: undefined,
+      additionals: undefined,
+    });
+
+    mdns.onMessage(Buffer.alloc(12), mockRinfo);
+
+    (mdns as any).decodeMdnsMessage = saved;
+    expect(mdns.deviceResponses.has('1.2.3.4')).toBe(true);
+    expect(mdns.deviceResponses.get('1.2.3.4')?.dataPTR).toBeUndefined();
+  });
+
   it('should handle decodeDnsName error cases', () => {
     // Test iterations limit
     const malformedMsg = Buffer.alloc(10);
@@ -342,6 +447,14 @@ describe('Mdns', () => {
     // Test offset bounds
     const emptyMsg = Buffer.alloc(0);
     expect(() => mdns.decodeDnsName(emptyMsg, 0)).toThrow('Offset exceeds buffer length while decoding DNS name');
+  });
+
+  it('should decode a compressed DNS name and return originalOffset when jumped', () => {
+    // Build: [3]foo[0] then pointer back to 0
+    const buf = Buffer.from([3, 0x66, 0x6f, 0x6f, 0x00, 0xc0, 0x00]);
+    const decoded = mdns.decodeDnsName(buf, 5);
+    expect(decoded.name).toBe('foo');
+    expect(decoded.newOffset).toBe(7);
   });
 
   it('should handle all DNS class types in string conversion', () => {
@@ -382,6 +495,37 @@ describe('Mdns', () => {
     expect(loggerErrorSpy).toHaveBeenCalledWith('Dgram mDNS server failed to send query message: Network error');
   });
 
+  it('should handle sendQuery error callback with non-Error value', () => {
+    mockSocket.send = jest.fn((...args: any[]) => {
+      const cb = args[args.length - 1];
+      if (typeof cb === 'function') cb('Network error');
+    });
+    mdns.on('error', () => {
+      // swallow
+    });
+    mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
+    expect(loggerErrorSpy).toHaveBeenCalledWith('Dgram mDNS server failed to send query message: Network error');
+  });
+
+  it('should set QU bit when sending query with unicastResponse=true', () => {
+    const query = mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true }]);
+    const decoded = mdns.decodeMdnsMessage(query as any);
+    expect(decoded.questions?.[0].class).toBe(DnsClass.IN | DnsClassFlag.QU);
+  });
+
+  it('should skip verbose logging in sendQuery/sendResponse when no -v/--verbose flags are present', () => {
+    const savedArgv = [...process.argv];
+    try {
+      process.argv = ['node', 'jest'];
+
+      mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
+      const rdata = mdns.encodeDnsName('foo.local');
+      mdns.sendResponse([{ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }]);
+    } finally {
+      process.argv = savedArgv;
+    }
+  });
+
   it('should handle sendResponse error callback', () => {
     // Mock socket to call callback with error
     mockSocket.send = jest.fn((...args: any[]) => {
@@ -396,6 +540,63 @@ describe('Mdns', () => {
     mdns.sendResponse([{ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }]);
     expect(mockSocket.send).toHaveBeenCalled();
     expect(loggerErrorSpy).toHaveBeenCalled();
+  });
+
+  it('should handle sendResponse error callback with non-Error value', () => {
+    mockSocket.send = jest.fn((...args: any[]) => {
+      const cb = args[args.length - 1];
+      if (typeof cb === 'function') cb('Network error');
+    });
+    mdns.on('error', () => {
+      // swallow
+    });
+
+    const rdata = mdns.encodeDnsName('foo.local');
+    mdns.sendResponse([{ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }]);
+    expect(loggerErrorSpy).toHaveBeenCalledWith('Dgram mDNS server failed to send response message: Network error');
+  });
+
+  it('should cover logDevices sorting fallbacks for uneven IPv4 and IPv6 ::', () => {
+    const dummyMsg: any = {
+      id: 0,
+      qr: 0,
+      opcode: 0,
+      aa: false,
+      tc: false,
+      rd: false,
+      ra: false,
+      z: 0,
+      rcode: 0,
+      qdCount: 0,
+      anCount: 0,
+      nsCount: 0,
+      arCount: 0,
+      questions: [],
+      answers: [],
+      authorities: [],
+      additionals: [],
+    };
+
+    // Include zero octets and a shorter address so (partsA[i] || 0) and (partsB[i] || 0)
+    // can both take the RHS branch depending on sort comparison order.
+    mdns.deviceQueries.clear();
+    mdns.deviceQueries.set('1.2.3.4', { rinfo: mockRinfo, query: dummyMsg });
+    mdns.deviceQueries.set('0.0.0.0', { rinfo: mockRinfo, query: dummyMsg });
+    mdns.deviceQueries.set('1.2.3', { rinfo: mockRinfo, query: dummyMsg });
+
+    mdns.deviceResponses.set('fe80::1', { rinfo: mockRinfo, response: dummyMsg, dataPTR: 'x' });
+    mdns.deviceResponses.set('fe80::2', { rinfo: mockRinfo, response: dummyMsg, dataPTR: 'y' });
+
+    mdns.logDevices();
+
+    // Run again with a different insertion order to force different (A,B) comparisons.
+    mdns.deviceQueries.clear();
+    mdns.deviceQueries.set('0.0.0.0', { rinfo: mockRinfo, query: dummyMsg });
+    mdns.deviceQueries.set('1.2.3', { rinfo: mockRinfo, query: dummyMsg });
+    mdns.deviceQueries.set('1.2.3.4', { rinfo: mockRinfo, query: dummyMsg });
+    mdns.logDevices();
+
+    expect(loggerInfoSpy).toHaveBeenCalled();
   });
 
   it('should handle response messages in onMessage', () => {
