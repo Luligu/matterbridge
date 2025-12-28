@@ -3,7 +3,7 @@
  * @file src/dgram/mdnsReflectorClient.ts
  * @author Luca Liguori
  * @created 2025-12-25
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -50,6 +50,15 @@ export class MdnsReflectorClient {
   reflectedIpv6: RecentCache = new Map();
   TTL_MS = 1500;
 
+  /**
+   * Creates an instance of MdnsReflectorClient.
+   * The MdnsReflectorClient must run inside a Docker container.
+   * The MdnsReflectorClient sends mDNS messages from the container to the MdnsReflectorServer running on the host machine.
+   * The MdnsReflectorClient also reflects mDNS messages from the MdnsReflectorServer to the container.
+   * Parameters:
+   * --filter <string[]> - filters to apply to incoming mDNS messages.
+   * --localhost - use localhost addresses to send messages to the container.
+   */
   constructor() {
     this.log.logNameColor = '\x1b[38;5;97m';
     this.mdnsIpv4.log.logNameColor = '\x1b[38;5;97m';
@@ -114,6 +123,9 @@ export class MdnsReflectorClient {
     for (const [k, exp] of cache) if (exp < now) cache.delete(k);
   }
 
+  /**
+   * Starts the mDNS Reflector Client.
+   */
   async start() {
     this.log.notice('mDNS Reflector Client starting...');
 
@@ -161,7 +173,7 @@ export class MdnsReflectorClient {
         return;
       }
       //   if (rinfo.address === '127.0.0.1') return; // Ignore messages coming from the reflector itself
-      this.log.notice(`Sending ${isMdnsQuery(msg) ? 'query' : 'response'} message from mDNS ipv4 multicast ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to unicast ipv4 reflector`);
+      this.log.notice(`Sending ${isMdnsQuery(msg) ? 'query' : 'response'} message from mDNS ipv4 multicast ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ipv4 reflector server`);
       this.unicastIpv4.send(msg, MDNS_REFLECTOR_HOST_DOCKER, MDNS_REFLECTOR_PORT);
       this.unicastIpv4.send(msg, MDNS_REFLECTOR_ADDRESS, MDNS_REFLECTOR_PORT);
     });
@@ -172,7 +184,7 @@ export class MdnsReflectorClient {
         return;
       }
       //   if (rinfo.address === '::1') return; // Ignore messages coming from the reflector itself
-      this.log.notice(`Sending ${isMdnsQuery(msg) ? 'query' : 'response'} message from mDNS ipv6 multicast ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to unicast ipv6 reflector`);
+      this.log.notice(`Sending ${isMdnsQuery(msg) ? 'query' : 'response'} message from mDNS ipv6 multicast ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ipv6 reflector server`);
       this.unicastIpv6.send(msg, MDNS_REFLECTOR_HOST_DOCKER, MDNS_REFLECTOR_PORT);
       this.unicastIpv6.send(msg, MDNS_REFLECTOR_ADDRESS, MDNS_REFLECTOR_PORT);
     });
@@ -181,14 +193,14 @@ export class MdnsReflectorClient {
       if (isMdns(msg)) {
         this.remember(this.reflectedIpv4, this.fingerprint(msg), this.TTL_MS);
         this.prune(this.reflectedIpv4);
-        this.log.notice(`Reflecting ${isMdnsQuery(msg) ? 'query' : 'response'} message from reflector on ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv4 multicast`);
+        this.log.notice(`Reflecting ${isMdnsQuery(msg) ? 'query' : 'response'} message from reflector server on ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv4 multicast`);
         this.mdnsIpv4.send(msg, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT);
         if (hasParameter('localhost')) {
-          this.log.notice(`Reflecting ${isMdnsQuery(msg) ? 'query' : 'response'} message from reflector on ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv4 localhost`);
+          this.log.notice(`Reflecting ${isMdnsQuery(msg) ? 'query' : 'response'} message from reflector server on ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv4 localhost`);
           this.mdnsIpv4.send(msg, 'localhost', MDNS_MULTICAST_PORT);
         }
       } else {
-        this.log.info(`Received message from unicast reflector on ipv4 ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}: ${msg.toString()}`);
+        this.log.info(`Received message from reflector server on ipv4 ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}: ${msg.toString()}`);
       }
     });
 
@@ -196,20 +208,27 @@ export class MdnsReflectorClient {
       if (isMdns(msg)) {
         this.remember(this.reflectedIpv6, this.fingerprint(msg), this.TTL_MS);
         this.prune(this.reflectedIpv6);
-        this.log.notice(`Reflecting ${isMdnsQuery(msg) ? 'query' : 'response'} message from reflector on ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv6 multicast`);
+        this.log.notice(`Reflecting ${isMdnsQuery(msg) ? 'query' : 'response'} message from reflector server on ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv6 multicast`);
         this.mdnsIpv6.send(msg, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT);
         if (hasParameter('localhost')) {
-          this.log.notice(`Reflecting ${isMdnsQuery(msg) ? 'query' : 'response'} message from reflector on ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv6 localhost`);
+          this.log.notice(`Reflecting ${isMdnsQuery(msg) ? 'query' : 'response'} message from reflector server on ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv6 localhost`);
           this.mdnsIpv6.send(msg, 'localhost', MDNS_MULTICAST_PORT);
         }
       } else {
-        this.log.info(`Received message from unicast reflector on ipv6 ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}: ${msg.toString()}`);
+        this.log.info(`Received message from reflector server on ipv6 ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}: ${msg.toString()}`);
       }
     });
 
+    this.unicastIpv4.send(Buffer.from('Ipv4 reflector client started'), MDNS_REFLECTOR_HOST_DOCKER, MDNS_REFLECTOR_PORT);
+    this.unicastIpv4.send(Buffer.from('Ipv4 reflector client started'), MDNS_REFLECTOR_ADDRESS, MDNS_REFLECTOR_PORT);
+    this.unicastIpv6.send(Buffer.from('Ipv6 reflector client started'), MDNS_REFLECTOR_HOST_DOCKER, MDNS_REFLECTOR_PORT);
+    this.unicastIpv6.send(Buffer.from('Ipv6 reflector client started'), MDNS_REFLECTOR_ADDRESS, MDNS_REFLECTOR_PORT);
     this.log.notice('mDNS Reflector Client started.');
   }
 
+  /**
+   * Stops the mDNS Reflector Client.
+   */
   async stop() {
     this.log.notice('mDNS Reflector Client stopping...');
 

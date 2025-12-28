@@ -26,16 +26,16 @@ services:
 
   mb_mdns:
     container_name: mb_mdns
-    image: luligu/matterbridge:latest
+    image: luligu/matterbridge:dev
     restart: unless-stopped
     command: [ "mb_mdns", "--no-timeout" ]
     environment:
       - TZ=Europe/Paris
 
-  mb_reflector:
-    container_name: mb_reflector
-    image: luligu/matterbridge:latest
+  reflector:
+    container_name: reflector
+    image: luligu/matterbridge:dev
     restart: unless-stopped
-    command: [ "mb_mdns", "--reflector-client" ]
+    command: [ "mb_mdns", "--reflector-client", "--localhost" ]
     environment:
       - TZ=Europe/Paris

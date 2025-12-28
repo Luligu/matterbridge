@@ -1,3 +1,19 @@
+Matterbridge docker reflector
+
+This project aims to use Matterbridge in these configurations:
+
+| Docker type    | Docker network | OS      | Ipv4 Ipv6 | Share (3) |
+| -------------- | -------------- | ------- | --------- | --------- |
+| Docker Desktop | bridge (1)     | Windows | ✅        | ✅        |
+| Docker Desktop | bridge (1)     | macOS   | ✅        | ✅        |
+| Docker Engine  | bridge (2)     | Linux   | ✅        | ✅        |
+
+(1) - Network host in this configuration is useless cause Docker runs inside a VM.
+(2) - Network host in this configuration works already out of the box cause Docker runs on the host.
+(3) - Share mDNS between separate containers.
+
+It can also be used to run Home Assistant inside Docker Desktop on Windows and macOS (with network bridge).
+
 # Prerequisites
 
 - Docker Desktop
@@ -10,21 +26,23 @@
 
 We use named volumes for storage, plugins and mattercert.
 
-We use matter port range 5550-5559 to allow childbridge mode and server node devices (RVCs).
+We publish the default matterbridge frontend port 8283.
 
-```bash
-docker run -dit --name matterbridge-test \
+We publish the matter port range 5550-5559 to allow childbridge mode and server node devices (RVCs).
+
+```zsh
+docker run -dit --restart unless-stopped --name matterbridge-test \
   -p 8283:8283 -p 5550-5559:5550-5559/udp \
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert \
-  luligu/matterbridge:latest matterbridge --docker --port 5550
+  luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5550
 docker logs --tail 1000 -f matterbridge-test
 ```
 
 ```powershell
-docker run -dit --name matterbridge-test `
+docker run -dit --restart unless-stopped --name matterbridge-test `
   -p 8283:8283 -p 5550-5559:5550-5559/udp `
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert `
-  luligu/matterbridge:latest matterbridge --docker --port 5550
+  luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5550
 docker logs --tail 1000 -f matterbridge-test
 ```
 
@@ -35,11 +53,13 @@ You will see that the frontend inside the container is listening on the conainer
 [09:02:10.140] [Frontend] The frontend http server is listening on http://[fd3d:8954:ffe5::2]:8283
 ```
 
-But since we mapped the port 8283, the frontend is available on the host with localhost your host ip or hostname and on the lan with your host ip or hostname.
+But since we mapped the port 8283, the frontend is available on the host with localhost, your host ip or your hostname.
+
+On the lan is available with your host ip or your hostname.
 
 In the same way the Matter port range 5550-5559 is mapped outside the container.
 
-## Optional: if you want to see what happens inside a Docker Desktop container
+## Optional: if you want to see the mDNS inside the Docker Desktop container
 
 From another terminal run mb_mdns inside the container we created and run before
 
@@ -47,11 +67,11 @@ From another terminal run mb_mdns inside the container we created and run before
 docker exec -it matterbridge-test mb_mdns --no-timeout
 ```
 
-In a while you will see what Matterbridge mDNS packet advertised from the Docker Desktop container
+In a while you will see what mDNS packets are advertised inside the container
 
 ![alt text](mDnsPacket.png)
 
-## Optional: if you want to see ip and routing table inside the container
+## Optional: if you want to see ip and routing table inside the Docker Desktop container
 
 From another terminal run ip a and ip r inside the container we created and run before
 
@@ -73,8 +93,8 @@ docker exec -it matterbridge-test ip r
 
 ## Run the Madderbridge reflector client in the container we created and run before
 
-```powershell
-docker exec -it matterbridge-test mb_mdns --reflector-client
+```bash
+docker exec -it matterbridge-test mb_mdns --reflector-client --localhost
 ```
 
 In a while you will see
@@ -83,7 +103,7 @@ In a while you will see
 
 ## Run the Madderbridge reflector server on the host
 
-```powershell
+```shell
 npm install -g matterbridge
 mb_mdns --reflector-server --log-reflector-messages
 ```
@@ -94,18 +114,19 @@ In a while you will see
 
 # Run Home Assistant and Matter Server in Docker compose with Docker Desktop
 
-Use the [docker-compose.yml](https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/docker-compose.yml) in the docker-reflector directory.
+To test the sharing feature (it shares mDNS between all reflector clients),
+use the [docker-compose.yml](https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/docker-compose.yml) in the docker-reflector directory.
+
+With this configuration Home Assistant works inside a Docker Desktop container without network host. When asked by Home Assistant connect to Matter Server with **ws://matterserver:5580/ws**
 
 ```powershell
 docker compose up -d
 ```
 
-## Optional: if you want to see all mDNS inside a Docker Desktop container with compose
+## Optional: if you want to see all mDNS packets inside a Docker Desktop container with compose
 
 docker logs --tail 1000 -f mb_mdns
 
 ## Optional: if you want to see the reflector client inside a Docker Desktop container with compose
 
-docker logs --tail 1000 -f mb_reflector
-
-When asked by Home Assistant connect to Matter Server with **ws://matterserver:5580/ws**
+docker logs --tail 1000 -f reflector

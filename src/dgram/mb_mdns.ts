@@ -58,7 +58,13 @@ Options:
   --noIpv6                                  Disable IPv6 mDNS server (default: enabled).
   --no-timeout                              Disable automatic timeout of 10 minutes. Reflector mode disables timeout automatically.
   --reflector-client                        Enable mDNS reflector client (default: disabled).
+    --filter <string[]>                     Filters to apply to incoming mDNS messages.
+    --localhost                             Use localhost addresses to send messages to the container.
   --reflector-server                        Enable mDNS reflector server (default: disabled).
+    --filter <string[]>                     Filters to apply to incoming mDNS messages.
+    --broadcast                             Use broadcast addresses to reflect messages to the lan.
+    --localhost                             Use localhost addresses to reflect messages to the lan.
+    --share-with-clients                    Share messages between reflector clients.
   -d, --debug                               Enable debug logging (default: disabled).
   -v, --verbose                             Enable verbose logging (default: disabled).
   -s, --silent                              Enable silent mode, only log notices, warnings and errors.
