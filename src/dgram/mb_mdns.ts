@@ -124,7 +124,7 @@ Examples:
   }
 
   const query = (mdns: Mdns) => {
-    mdns.log.info('Sending mDNS query for services...');
+    mdns.log.info('Sending mDNS query for common services...');
     mdns.sendQuery([
       { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
@@ -216,6 +216,7 @@ Examples:
     // Start the IPv4 mDNS server
     mdnsIpv4.start();
     mdnsIpv4.on('ready', (address: AddressInfo) => {
+      mdnsIpv4?.socket.setMulticastLoopback(false);
       mdnsIpv4?.log.info(`mdnsIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
       if (hasParameter('advertise')) {
         advertise(mdnsIpv4 as Mdns);
@@ -239,6 +240,7 @@ Examples:
     // Start the IPv6 mDNS server
     mdnsIpv6.start();
     mdnsIpv6.on('ready', (address: AddressInfo) => {
+      mdnsIpv6?.socket.setMulticastLoopback(false);
       mdnsIpv6?.log.info(`mdnsIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
       if (hasParameter('advertise')) {
         advertise(mdnsIpv6 as Mdns);
