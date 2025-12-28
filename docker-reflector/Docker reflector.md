@@ -2,11 +2,11 @@
 
 This project aims to use Matterbridge in these configurations:
 
-| Docker type    | Docker network | OS      | Ipv4 Ipv6 | Share (3) |
-| -------------- | -------------- | ------- | --------- | --------- |
-| Docker Desktop | bridge (1)     | Windows | ✅        | ✅        |
-| Docker Desktop | bridge (1)     | macOS   | ✅        | ✅        |
-| Docker Engine  | bridge (2)     | Linux   | ✅        | ✅        |
+| Docker type    | Docker network | OS      | Ipv4 | Ipv6 | Share (3) | Home Assistant | Matter Server |
+| -------------- | -------------- | ------- | ---- | ---- | --------- | -------------- | ------------- |
+| Docker Desktop | bridge (1)     | Windows | ✅   | ✅   | ✅        | ✅             | ✅            |
+| Docker Desktop | bridge (1)     | macOS   | ✅   | ✅   | ✅        | ✅             | ✅            |
+| Docker Engine  | bridge (2)     | Linux   | ✅   | ✅   | ✅        | ✅             | ✅            |
 
 (1) - Network host in this configuration is useless cause Docker runs inside a VM.
 
@@ -14,11 +14,15 @@ This project aims to use Matterbridge in these configurations:
 
 (3) - Share mDNS between separate containers.
 
-It can also be used to run Home Assistant inside Docker Desktop on Windows and macOS (with network bridge).
+It can also be used to run Home Assistant and Matter Server inside Docker Desktop on Windows and macOS (with network bridge) without using complex VM. You just copy paste the [docker-compose.yml](https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/docker-compose.yml).
 
 # Prerequisites
 
 - Docker Desktop
+
+## Docker Desktop requirements for Windows and macOS
+
+See Docker Desktop docs.
 
 ## Dual Stack IPv4/IPv6 mDNS enabled and No filtering
 
@@ -32,6 +36,8 @@ We publish the default matterbridge frontend port 8283.
 
 We publish the matter port range 5550-5559 to allow childbridge mode and server node devices (RVCs).
 
+macOS
+
 ```zsh
 docker run -dit --restart unless-stopped --name matterbridge-test \
   -p 8283:8283 -p 5550-5559:5550-5559/udp \
@@ -39,6 +45,8 @@ docker run -dit --restart unless-stopped --name matterbridge-test \
   luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
 docker logs --tail 1000 -f matterbridge-test
 ```
+
+powerShell
 
 ```powershell
 docker run -dit --restart unless-stopped --name matterbridge-test `
@@ -57,7 +65,7 @@ You will see that the frontend inside the container is listening on the conainer
 
 But since we mapped the port 8283, the frontend is available on the host with localhost, your host ip or your hostname.
 
-On the lan is available with your host ip or your hostname.
+On the lan it is available with your host ip or your hostname.
 
 In the same way the Matter port range 5550-5559 is mapped outside the container.
 
@@ -103,7 +111,7 @@ In a while you will see
 
 ![alt text](ReflectorClient.png)
 
-## Run the Madderbridge reflector server on the host
+## Run the Madderbridge reflector server on the host (you need node.js)
 
 ```shell
 npm install -g matterbridge@dev
@@ -119,13 +127,13 @@ In a while you will see
 To test the sharing feature (it shares mDNS between all reflector clients),
 use the [docker-compose.yml](https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/docker-compose.yml) in the docker-reflector directory.
 
-With this configuration Home Assistant works inside a Docker Desktop container without network host. When asked by Home Assistant connect to Matter Server with **ws://matterserver:5580/ws**
+With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with **ws://matterserver:5580/ws**
 
-```powershell
+```bash
 docker compose up -d
 ```
 
-You need the reflector server running on the host from above.
+You need the Matterbridge reflector server running on the host from the tutorial above.
 
 ## Optional: if you want to see all mDNS packets inside a Docker Desktop container with compose
 
