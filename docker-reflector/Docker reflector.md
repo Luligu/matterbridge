@@ -9,7 +9,9 @@ This project aims to use Matterbridge in these configurations:
 | Docker Engine  | bridge (2)     | Linux   | ✅        | ✅        |
 
 (1) - Network host in this configuration is useless cause Docker runs inside a VM.
+
 (2) - Network host in this configuration works already out of the box cause Docker runs on the host.
+
 (3) - Share mDNS between separate containers.
 
 It can also be used to run Home Assistant inside Docker Desktop on Windows and macOS (with network bridge).
@@ -105,7 +107,7 @@ In a while you will see
 
 ```shell
 npm install -g matterbridge
-mb_mdns --reflector-server --log-reflector-messages
+mb_mdns --reflector-server --log-reflector-messages --localhost --share-with-clients
 ```
 
 In a while you will see
@@ -122,6 +124,8 @@ With this configuration Home Assistant works inside a Docker Desktop container w
 ```powershell
 docker compose up -d
 ```
+
+You need the reflector server running on the host from above.
 
 ## Optional: if you want to see all mDNS packets inside a Docker Desktop container with compose
 
