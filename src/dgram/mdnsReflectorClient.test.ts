@@ -30,7 +30,9 @@ describe('MdnsReflectorClient', () => {
       setImmediate(() => this.emit('closed'));
     });
     send = jest.fn();
-    log = { error: jest.fn() };
+    socket = {
+      setMulticastLoopback: jest.fn(),
+    };
   }
   afterEach(() => {
     jest.clearAllMocks();

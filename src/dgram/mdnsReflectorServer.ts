@@ -28,7 +28,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, BLUE, nt } from 'node-ansi-logge
 
 import { hasParameter, getStringArrayParameter } from '../utils/commandLine.js';
 
-import { DnsRecordType, Mdns } from './mdns.js';
+import { DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns } from './mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
 import { Unicast } from './unicast.js';
 import { MDNS_REFLECTOR_BIND_ADDRESS_IPV4, MDNS_REFLECTOR_BIND_ADDRESS_IPV6, MDNS_REFLECTOR_PORT } from './mdnsReflectorTypes.js';
@@ -51,13 +51,13 @@ export class MdnsReflectorServer {
   constructor() {
     this.log.logNameColor = '\x1b[38;5;115m';
     this.mdnsIpv4.log.logNameColor = '\x1b[38;5;115m';
-    this.mdnsIpv4.log.logLevel = LogLevel.WARN;
+    if (!this.debug && !this.verbose && !this.silent) this.mdnsIpv4.log.logLevel = LogLevel.WARN;
     this.mdnsIpv6.log.logNameColor = '\x1b[38;5;115m';
-    this.mdnsIpv6.log.logLevel = LogLevel.WARN;
+    if (!this.debug && !this.verbose && !this.silent) this.mdnsIpv6.log.logLevel = LogLevel.WARN;
     this.unicastIpv4.log.logNameColor = '\x1b[38;5;115m';
-    this.unicastIpv4.log.logLevel = LogLevel.WARN;
+    if (!this.debug && !this.verbose && !this.silent) this.unicastIpv4.log.logLevel = LogLevel.WARN;
     this.unicastIpv6.log.logNameColor = '\x1b[38;5;115m';
-    this.unicastIpv6.log.logLevel = LogLevel.WARN;
+    if (!this.debug && !this.verbose && !this.silent) this.unicastIpv6.log.logLevel = LogLevel.WARN;
     // Apply filters if any
     const filters = getStringArrayParameter('filter');
     if (filters) this.mdnsIpv4.filters.push(...filters);
@@ -239,10 +239,30 @@ export class MdnsReflectorServer {
     });
     await Promise.all(promises);
 
+    this.mdnsIpv4.socket.setMulticastLoopback(false);
+    this.mdnsIpv6.socket.setMulticastLoopback(false);
+
+    this.mdnsIpv4.on('message', (msg, rinfo) => {
+      if (this.ipv4Clients.size === 0) return;
+      this.log.notice(`Sending ${isMdnsQuery(msg) ? 'query' : 'response'} message from mDNS ipv4 multicast ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ${this.ipv4Clients.size} ipv4 reflector clients`);
+      for (const client of this.ipv4Clients.values()) {
+        this.unicastIpv4.send(msg, client.address, client.port);
+      }
+    });
+
+    this.mdnsIpv6.on('message', (msg, rinfo) => {
+      if (this.ipv6Clients.size === 0) return;
+      this.log.notice(`Sending ${isMdnsQuery(msg) ? 'query' : 'response'} message from mDNS ipv6 multicast ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to ${this.ipv6Clients.size} ipv6 reflector clients`);
+      for (const client of this.ipv6Clients.values()) {
+        this.unicastIpv6.send(msg, client.address, client.port);
+      }
+    });
+
     this.unicastIpv4.on('message', (msg, rinfo) => {
       this.ipv4Clients.set(`${rinfo.address}:${rinfo.port}`, rinfo);
+      if (!isMdns(msg)) return;
       this.log.notice(`Reflecting message from unicast client ipv4 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv4 multicast`);
-      const upgradedMsg = this.upgradeAddress(msg);
+      const upgradedMsg = isMdnsResponse(msg) ? this.upgradeAddress(msg) : msg;
       this.mdnsIpv4.send(upgradedMsg, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT);
       if (hasParameter('broadcast')) {
         const broadcastAddress = this.getBroadcastAddress(this.mdnsIpv4);
@@ -260,8 +280,9 @@ export class MdnsReflectorServer {
 
     this.unicastIpv6.on('message', (msg, rinfo) => {
       this.ipv6Clients.set(`${rinfo.address}:${rinfo.port}`, rinfo);
+      if (!isMdns(msg)) return;
       this.log.notice(`Reflecting message from unicast client ipv6 ${BLUE}${rinfo.address}${nt}:${BLUE}${rinfo.port}${nt} to mDNS ipv6 multicast`);
-      const upgradedMsg = this.upgradeAddress(msg);
+      const upgradedMsg = isMdnsResponse(msg) ? this.upgradeAddress(msg) : msg;
       this.mdnsIpv6.send(upgradedMsg, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT);
       if (hasParameter('broadcast')) {
         const broadcastAddress = this.getBroadcastAddress(this.mdnsIpv6);
@@ -295,19 +316,19 @@ export class MdnsReflectorServer {
 
     const promises: Promise<void>[] = [];
     promises[0] = new Promise((resolve) => {
-      this.mdnsIpv4.once('closed', () => resolve());
+      this.mdnsIpv4.once('close', () => resolve());
       this.mdnsIpv4.stop();
     });
     promises[1] = new Promise((resolve) => {
-      this.mdnsIpv6.once('closed', () => resolve());
+      this.mdnsIpv6.once('close', () => resolve());
       this.mdnsIpv6.stop();
     });
     promises[2] = new Promise((resolve) => {
-      this.unicastIpv4.once('closed', () => resolve());
+      this.unicastIpv4.once('close', () => resolve());
       this.unicastIpv4.stop();
     });
     promises[3] = new Promise((resolve) => {
-      this.unicastIpv6.once('closed', () => resolve());
+      this.unicastIpv6.once('close', () => resolve());
       this.unicastIpv6.stop();
     });
     await Promise.all(promises);

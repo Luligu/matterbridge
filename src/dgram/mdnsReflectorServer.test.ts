@@ -33,6 +33,9 @@ describe('MdnsReflectorServer', () => {
       setImmediate(() => this.emit('closed'));
     });
     send = jest.fn();
+    socket = {
+      setMulticastLoopback: jest.fn(),
+    };
   }
 
   class FakeMdns extends FakeEndpoint {
