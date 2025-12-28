@@ -25,7 +25,7 @@
 import dgram from 'node:dgram';
 
 // AnsiLogger imports
-import { AnsiLogger, BLUE, CYAN, db, er, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, CYAN, db, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
 
 // Utils imports
 import { hasParameter } from '../utils/commandLine.js';
@@ -175,6 +175,48 @@ interface MdnsRecord {
 
 type IpAddress = string;
 
+/**
+ * Checks if a given message is an mDNS message.
+ *
+ * @param {Buffer} message - The message buffer to check.
+ * @returns {boolean} True if the message is an mDNS message, false otherwise.
+ */
+export function isMdns(message: Buffer): boolean {
+  if (!message || message.length < 12) return false;
+  const id = message.readUInt16BE(0);
+  return id === 0;
+}
+
+/**
+ * Checks if a given mDNS message is a query.
+ *
+ * @param {Buffer} message - The mDNS message buffer to check.
+ * @returns {boolean} True if the message is a query, false otherwise.
+ */
+export function isMdnsQuery(message: Buffer): boolean {
+  if (message.length < 12) return false;
+  const id = message.readUInt16BE(0);
+  const flags = message.readUInt16BE(2);
+
+  const qr = (flags & 0x8000) >> 15; // Bit 15: 0=query, 1=response.
+  return id == 0 && qr === 0;
+}
+
+/**
+ * Checks if a given mDNS message is a query.
+ *
+ * @param {Buffer} message - The mDNS message buffer to check.
+ * @returns {boolean} True if the message is a query, false otherwise.
+ */
+export function isMdnsResponse(message: Buffer): boolean {
+  if (message.length < 12) return false;
+  const id = message.readUInt16BE(0);
+  const flags = message.readUInt16BE(2);
+
+  const qr = (flags & 0x8000) >> 15; // Bit 15: 0=query, 1=response.
+  return id == 0 && qr === 1;
+}
+
 export class Mdns extends Multicast {
   deviceQueries = new Map<IpAddress, { rinfo: dgram.RemoteInfo; query: MdnsMessage }>();
   deviceResponses = new Map<IpAddress, { rinfo: dgram.RemoteInfo; response: MdnsMessage; dataPTR?: string }>();
@@ -261,14 +303,14 @@ export class Mdns extends Multicast {
     const id = msg.readUInt16BE(0);
     const flags = msg.readUInt16BE(2);
 
-    const qr = (flags & 0x8000) >> 15; // Bit 15: 0=query, 1=response.
-    const opcode = (flags & 0x7800) >> 11; // Bits 14-11.
-    const aa = Boolean(flags & 0x0400); // Bit 10.
-    const tc = Boolean(flags & 0x0200); // Bit 9.
-    const rd = Boolean(flags & 0x0100); // Bit 8.
-    const ra = Boolean(flags & 0x0080); // Bit 7.
-    const z = (flags & 0x0070) >> 4; // Bits 6-4.
-    const rcode = flags & 0x000f; // Bits 3-0.
+    const qr = (flags & 0x8000) >> 15; // Bit 15: 0=query, 1=response (QR = Query/Response).
+    const opcode = (flags & 0x7800) >> 11; // Bits 14-11 (OPCODE: kind of query; in mDNS this is typically 0 = standard query).
+    const aa = Boolean(flags & 0x0400); // Bit 10 (AA: Authoritative Answer; sender claims authority for the name).
+    const tc = Boolean(flags & 0x0200); // Bit 9 (TC: TrunCation; message was truncated due to length limits).
+    const rd = Boolean(flags & 0x0100); // Bit 8 (RD: Recursion Desired; usually 0 in mDNS).
+    const ra = Boolean(flags & 0x0080); // Bit 7 (RA: Recursion Available; meaningful for recursive resolvers, usually 0 in mDNS).
+    const z = (flags & 0x0070) >> 4; // Bits 6-4 (Z: reserved in DNS; should be 0 in classic DNS/mDNS).
+    const rcode = flags & 0x000f; // Bits 3-0 (RCODE: Response Code; 0 = NoError, 3 = NXDomain, etc).
 
     const qdCount = msg.readUInt16BE(4);
     const anCount = msg.readUInt16BE(6);
@@ -658,18 +700,15 @@ export class Mdns extends Multicast {
     const query = Buffer.concat([header, ...questionBuffers]);
     if (hasParameter('v') || hasParameter('verbose')) {
       const decoded = this.decodeMdnsMessage(query);
-      this.logMdnsMessage(decoded);
+      this.logMdnsMessage(decoded, undefined, 'Sending query mDNS message');
     }
 
     this.socket.send(query, 0, query.length, this.multicastPort, this.multicastAddress, (error: Error | null) => {
       if (error) {
-        this.log.error(`Dgram mDNS server failed to send query message: ${error.message}`);
+        this.log.error(`Dgram mDNS server failed to send query message: ${error instanceof Error ? error.message : error}`);
         this.emit('error', error);
       } else {
-        const names = questions
-          .map((q) => `- name ${MAGENTA}${q.name}${db} type ${MAGENTA}${this.dnsTypeToString(q.type)}${db} class ${MAGENTA}${this.dnsQuestionClassToString(q.class)}${db} unicastResponse ${MAGENTA}${q.unicastResponse}${db}`)
-          .join('\n');
-        this.log.debug(`Dgram mDNS server sent query message:\n${names}`);
+        this.log.debug(`Dgram mDNS server sent query message`);
         this.emit('sent', query, this.multicastAddress, this.multicastPort);
       }
     });
@@ -723,18 +762,16 @@ export class Mdns extends Multicast {
     const response = Buffer.concat([header, ...answerBuffers]);
     if (hasParameter('v') || hasParameter('verbose')) {
       const decoded = this.decodeMdnsMessage(response);
-      this.logMdnsMessage(decoded);
+      this.logMdnsMessage(decoded, undefined, 'Sending response mDNS message');
     }
 
     // Send the response packet via the socket.
     this.socket.send(response, 0, response.length, this.multicastPort, this.multicastAddress, (error: Error | null) => {
       if (error) {
-        const items = answers.map((a) => `- name ${MAGENTA}${a.name}${er} type ${MAGENTA}${this.dnsTypeToString(a.rtype)}${er} class ${MAGENTA}${this.dnsResponseClassToString(a.rclass)}${er} ttl ${MAGENTA}${a.ttl}${er}`).join('\n');
-        this.log.error(`Dgram mDNS server failed to send response message (${MAGENTA}${answers.length}${er} answers): ${error instanceof Error ? error.message : error}\n${items}`);
+        this.log.error(`Dgram mDNS server failed to send response message: ${error instanceof Error ? error.message : error}`);
         this.emit('error', error);
       } else {
-        const items = answers.map((a) => `- name ${MAGENTA}${a.name}${db} type ${MAGENTA}${this.dnsTypeToString(a.rtype)}${db} class ${MAGENTA}${this.dnsResponseClassToString(a.rclass)}${db} ttl ${MAGENTA}${a.ttl}${db}`).join('\n');
-        this.log.debug(`Dgram mDNS server sent response message:\n${items}`);
+        this.log.debug(`Dgram mDNS server sent response message`);
         this.emit('sent', response, this.multicastAddress, this.multicastPort);
       }
     });
