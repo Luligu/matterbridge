@@ -106,7 +106,7 @@ In a while you will see
 ## Run the Madderbridge reflector server on the host
 
 ```shell
-npm install -g matterbridge
+npm install -g matterbridge@dev
 mb_mdns --reflector-server --log-reflector-messages --localhost --share-with-clients
 ```
 
