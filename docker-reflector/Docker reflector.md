@@ -36,7 +36,7 @@ We publish the matter port range 5550-5559 to allow childbridge mode and server 
 docker run -dit --restart unless-stopped --name matterbridge-test \
   -p 8283:8283 -p 5550-5559:5550-5559/udp \
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert \
-  luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5550
+  luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
 docker logs --tail 1000 -f matterbridge-test
 ```
 
@@ -44,7 +44,7 @@ docker logs --tail 1000 -f matterbridge-test
 docker run -dit --restart unless-stopped --name matterbridge-test `
   -p 8283:8283 -p 5550-5559:5550-5559/udp `
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert `
-  luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5550
+  luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
 docker logs --tail 1000 -f matterbridge-test
 ```
 
