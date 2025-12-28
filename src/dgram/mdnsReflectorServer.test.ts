@@ -244,6 +244,34 @@ describe('MdnsReflectorServer', () => {
     process.argv.pop();
   });
 
+  it('upgradeAddress should skip decode/log when --log-reflector-messages is not set (false branch)', () => {
+    const argvBefore = [...process.argv];
+    try {
+      process.argv = ['node', 'jest'];
+
+      const server = new MdnsReflectorServer();
+
+      mockNetworkInterfaces({
+        eth0: [{ address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' }],
+      } as any);
+
+      const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
+      const name = 'matterbridge.local';
+      const ttl = 120;
+      const msg = Buffer.concat([buildHeader({ anCount: 1 }), buildARecord(mdns, name, ttl, [172, 17, 0, 2])]);
+
+      const decodeSpy = jest.spyOn((server as any).mdnsIpv4, 'decodeMdnsMessage');
+      const logSpy = jest.spyOn((server as any).mdnsIpv4, 'logMdnsMessage');
+
+      const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+      expect(upgraded).not.toBe(msg);
+      expect(decodeSpy).not.toHaveBeenCalled();
+      expect(logSpy).not.toHaveBeenCalled();
+    } finally {
+      process.argv = argvBefore;
+    }
+  });
+
   it('upgradeAddress should log an error when log-reflector-messages decoding fails', () => {
     const argvBefore = [...process.argv];
     try {
@@ -736,6 +764,85 @@ describe('MdnsReflectorServer', () => {
       expect(mdnsIpv6.send).toHaveBeenCalledWith(payload, 'ff02::fb', 5353);
       expect(mdnsIpv6.send).toHaveBeenCalledWith(payload, 'ff02::1', 5353);
       expect(unicastIpv6.send).toHaveBeenCalledWith(expect.any(Buffer), 'fd00::2', 6666);
+
+      await server.stop();
+    } finally {
+      process.argv = argvBefore;
+    }
+  });
+
+  it('start should share ipv4 unicast messages with other ipv4 clients when --share-with-clients is set', async () => {
+    const argvBefore = [...process.argv];
+    if (!process.argv.includes('--share-with-clients')) process.argv.push('--share-with-clients');
+
+    try {
+      const server = new MdnsReflectorServer();
+
+      const mdnsIpv4 = new FakeMdns();
+      mdnsIpv4.socketType = 'udp4';
+      const mdnsIpv6 = new FakeMdns();
+      mdnsIpv6.socketType = 'udp6';
+      const unicastIpv4 = new FakeEndpoint();
+      const unicastIpv6 = new FakeEndpoint();
+
+      (server as any).mdnsIpv4 = mdnsIpv4;
+      (server as any).mdnsIpv6 = mdnsIpv6;
+      (server as any).unicastIpv4 = unicastIpv4;
+      (server as any).unicastIpv6 = unicastIpv6;
+
+      await server.start();
+
+      const payload = buildQueryHeader();
+      const clientA = { family: 'IPv4', address: '10.0.0.2', port: 5555, size: payload.length };
+      const clientB = { family: 'IPv4', address: '10.0.0.3', port: 5556, size: payload.length };
+
+      // Register client A (no share yet).
+      (unicastIpv4 as any).emit('message', payload, clientA);
+
+      // Register client B and ensure the message is shared to A (but not to itself).
+      (unicastIpv4 as any).emit('message', payload, clientB);
+
+      // Shared to the other client (A)
+      expect(unicastIpv4.send).toHaveBeenCalledWith(payload, '10.0.0.2', 5555);
+      // Must not echo the payload back to the sender via share-with-clients
+      expect(unicastIpv4.send).not.toHaveBeenCalledWith(payload, '10.0.0.3', 5556);
+
+      await server.stop();
+    } finally {
+      process.argv = argvBefore;
+    }
+  });
+
+  it('start should share ipv6 unicast messages with other ipv6 clients when --share-with-clients is set', async () => {
+    const argvBefore = [...process.argv];
+    if (!process.argv.includes('--share-with-clients')) process.argv.push('--share-with-clients');
+
+    try {
+      const server = new MdnsReflectorServer();
+
+      const mdnsIpv4 = new FakeMdns();
+      mdnsIpv4.socketType = 'udp4';
+      const mdnsIpv6 = new FakeMdns();
+      mdnsIpv6.socketType = 'udp6';
+      const unicastIpv4 = new FakeEndpoint();
+      const unicastIpv6 = new FakeEndpoint();
+
+      (server as any).mdnsIpv4 = mdnsIpv4;
+      (server as any).mdnsIpv6 = mdnsIpv6;
+      (server as any).unicastIpv4 = unicastIpv4;
+      (server as any).unicastIpv6 = unicastIpv6;
+
+      await server.start();
+
+      const payload = buildQueryHeader();
+      const clientA = { family: 'IPv6', address: 'fd00::2', port: 6666, size: payload.length };
+      const clientB = { family: 'IPv6', address: 'fd00::3', port: 6667, size: payload.length };
+
+      (unicastIpv6 as any).emit('message', payload, clientA);
+      (unicastIpv6 as any).emit('message', payload, clientB);
+
+      expect(unicastIpv6.send).toHaveBeenCalledWith(payload, 'fd00::2', 6666);
+      expect(unicastIpv6.send).not.toHaveBeenCalledWith(payload, 'fd00::3', 6667);
 
       await server.stop();
     } finally {

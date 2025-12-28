@@ -204,7 +204,7 @@ export class MdnsReflectorServer {
       return msg;
     }
 
-    this.log.info(`**UpgradeAddress message completed. Interface: ${selectedInterfaceName || 'N/A'}, Host IPv4: ${hostIpv4 || 'N/A'}, Host IPv6: ${hostIpv6List.length > 0 ? hostIpv6List.join(', ') : 'N/A'}`);
+    this.log.info(`**UpgradeAddress message completed. Interface: ${selectedInterfaceName}, Host IPv4: ${hostIpv4 || 'N/A'}, Host IPv6: ${hostIpv6List.length > 0 ? hostIpv6List.join(', ') : 'N/A'}`);
     if (hasParameter('log-reflector-messages')) {
       try {
         let decodedMessage = this.mdnsIpv4.decodeMdnsMessage(msg);
