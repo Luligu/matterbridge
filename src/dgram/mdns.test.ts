@@ -521,6 +521,7 @@ describe('Mdns', () => {
       mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
       const rdata = mdns.encodeDnsName('foo.local');
       mdns.sendResponse([{ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }]);
+      expect(loggerInfoSpy).not.toHaveBeenCalled();
     } finally {
       process.argv = savedArgv;
     }
