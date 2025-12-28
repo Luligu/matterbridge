@@ -30,7 +30,7 @@ describe('MdnsReflectorServer', () => {
       setImmediate(() => this.emit('bound', { family: 'IPv4', address: '0.0.0.0', port: 1 }));
     });
     stop = jest.fn(() => {
-      setImmediate(() => this.emit('closed'));
+      setImmediate(() => this.emit('close'));
     });
     send = jest.fn();
     socket = {
@@ -56,6 +56,27 @@ describe('MdnsReflectorServer', () => {
     header.writeUInt16BE(anCount, 6);
     header.writeUInt16BE(nsCount, 8);
     header.writeUInt16BE(arCount, 10);
+    return header;
+  };
+
+  const buildQueryHeader = () => {
+    const header = Buffer.alloc(12);
+    header.writeUInt16BE(0, 0);
+    header.writeUInt16BE(0x0000, 2); // query
+    return header;
+  };
+
+  const buildResponseHeader = () => {
+    const header = Buffer.alloc(12);
+    header.writeUInt16BE(0, 0);
+    header.writeUInt16BE(0x8000, 2); // response (QR=1)
+    return header;
+  };
+
+  const buildNotMdnsHeader = () => {
+    const header = Buffer.alloc(12);
+    header.writeUInt16BE(1, 0); // non-zero id => not mDNS
+    header.writeUInt16BE(0x0000, 2);
     return header;
   };
 
@@ -339,6 +360,28 @@ describe('MdnsReflectorServer', () => {
     expect(decoded.additionals?.find((r) => r.type === DnsRecordType.AAAA)?.data).toBe('fd00:0:0:0:0:0:0:abcd');
   });
 
+  it('upgradeAddress should ignore empty IPv6 entries when normalizing host IPv6 list', () => {
+    const server = new MdnsReflectorServer();
+
+    mockNetworkInterfaces({
+      eth0: [
+        { address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' },
+        // Empty IPv6 address should be ignored by `if (normalized)`.
+        { address: '', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:01', internal: false, cidr: '::/64', scopeid: 0 },
+      ],
+    } as any);
+
+    const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
+    const name = 'matterbridge.local';
+    const ttl = 120;
+    const msg = Buffer.concat([buildHeader({ anCount: 1 }), buildARecord(mdns, name, ttl, [172, 17, 0, 2])]);
+
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+    const decoded = mdns.decodeMdnsMessage(upgraded as unknown as Buffer);
+
+    expect(decoded.answers?.find((r) => r.type === DnsRecordType.A)?.data).toBe('10.0.0.5');
+  });
+
   it('upgradeAddress should return original message on decode errors (catch path)', () => {
     const server = new MdnsReflectorServer();
     mockNetworkInterfaces({
@@ -445,6 +488,22 @@ describe('MdnsReflectorServer', () => {
     expect(upgraded).toBe(msg);
   });
 
+  it('upgradeAddress should return original message when no external interfaces are found (pickInterface undefined)', () => {
+    const server = new MdnsReflectorServer();
+
+    // Force preferred interface lookup, but provide no matching/external interface.
+    (server.mdnsIpv4 as any).interfaceName = 'nonexistent0';
+
+    mockNetworkInterfaces({} as any);
+
+    const msg = Buffer.alloc(12);
+    msg.writeUInt16BE(0, 0); // mDNS id
+    msg.writeUInt16BE(0x8000, 2); // response
+
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+    expect(upgraded).toBe(msg);
+  });
+
   it('constructor should use NOTICE log level when --silent is set and debug is off', () => {
     const argvBefore = [...process.argv];
     try {
@@ -454,6 +513,52 @@ describe('MdnsReflectorServer', () => {
     } finally {
       process.argv = argvBefore;
     }
+  });
+
+  it('constructor should use DEBUG log level when --debug is set', () => {
+    const argvBefore = [...process.argv];
+    try {
+      process.argv = ['node', 'test', '--debug'];
+      const server = new MdnsReflectorServer();
+      expect((server as any).log.logLevel).toBe(LogLevel.DEBUG);
+    } finally {
+      process.argv = argvBefore;
+    }
+  });
+
+  it('constructor should apply --filter values to mdnsIpv4 and mdnsIpv6 filters', () => {
+    const argvBefore = [...process.argv];
+    try {
+      process.argv = ['node', 'test', '--filter', 'alpha', 'beta'];
+      const server = new MdnsReflectorServer();
+
+      expect((server as any).mdnsIpv4.filters).toEqual(expect.arrayContaining(['alpha', 'beta']));
+      expect((server as any).mdnsIpv6.filters).toEqual(expect.arrayContaining(['alpha', 'beta']));
+    } finally {
+      process.argv = argvBefore;
+    }
+  });
+
+  it('upgradeAddress should parse a valid question section when qdCount > 0', () => {
+    const server = new MdnsReflectorServer();
+
+    mockNetworkInterfaces({
+      eth0: [{ address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' }],
+    } as any);
+
+    const mdns = new Mdns('test', '224.0.0.251', 5353, 'udp4');
+    const name = 'matterbridge.local';
+    const ttl = 120;
+
+    const question = Buffer.concat([mdns.encodeDnsName(name), Buffer.from([0x00, DnsRecordType.A, 0x00, DnsClass.IN])]);
+    const answer = buildARecord(mdns, name, ttl, [172, 17, 0, 2]);
+    const msg = Buffer.concat([buildHeader({ qdCount: 1, anCount: 1 }), question, answer]);
+
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+    expect(upgraded).not.toBe(msg);
+
+    const decoded = mdns.decodeMdnsMessage(upgraded as unknown as Buffer);
+    expect(decoded.answers?.find((r) => r.type === DnsRecordType.A)?.data).toBe('10.0.0.5');
   });
 
   it('getBroadcastAddress should return IPv4 broadcast address', () => {
@@ -550,7 +655,7 @@ describe('MdnsReflectorServer', () => {
 
       await server.start();
 
-      const payload = Buffer.from([1, 2, 3]);
+      const payload = buildQueryHeader();
       (unicastIpv4 as any).emit('message', payload, { family: 'IPv4', address: '10.0.0.2', port: 5555, size: payload.length });
 
       // Expect: multicast send + broadcast send.
@@ -558,6 +663,45 @@ describe('MdnsReflectorServer', () => {
       expect(mdnsIpv4.send).toHaveBeenCalledWith(payload, '192.168.1.255', 5353);
       // Acknowledge reply to client.
       expect(unicastIpv4.send).toHaveBeenCalledWith(expect.any(Buffer), '10.0.0.2', 5555);
+
+      await server.stop();
+    } finally {
+      process.argv = argvBefore;
+    }
+  });
+
+  it('start should not broadcast when --broadcast is set but broadcast address is undefined', async () => {
+    const argvBefore = [...process.argv];
+    if (!process.argv.includes('--broadcast')) process.argv.push('--broadcast');
+
+    try {
+      const server = new MdnsReflectorServer();
+
+      const mdnsIpv4 = new FakeMdns();
+      mdnsIpv4.socketType = 'udp4';
+      const mdnsIpv6 = new FakeMdns();
+      mdnsIpv6.socketType = 'udp6';
+      const unicastIpv4 = new FakeEndpoint();
+      const unicastIpv6 = new FakeEndpoint();
+
+      (server as any).mdnsIpv4 = mdnsIpv4;
+      (server as any).mdnsIpv6 = mdnsIpv6;
+      (server as any).unicastIpv4 = unicastIpv4;
+      (server as any).unicastIpv6 = unicastIpv6;
+
+      // Force the inner `if (broadcastAddress)` branch to be false.
+      jest.spyOn(server as any, 'getBroadcastAddress').mockReturnValue(undefined);
+
+      await server.start();
+
+      const payload = buildQueryHeader();
+      (unicastIpv4 as any).emit('message', payload, { family: 'IPv4', address: '10.0.0.2', port: 5555, size: payload.length });
+      expect(mdnsIpv4.send).toHaveBeenCalledWith(payload, '224.0.0.251', 5353);
+      expect(mdnsIpv4.send).not.toHaveBeenCalledWith(payload, '192.168.1.255', 5353);
+
+      (unicastIpv6 as any).emit('message', payload, { family: 'IPv6', address: 'fd00::2', port: 6666, size: payload.length });
+      expect(mdnsIpv6.send).toHaveBeenCalledWith(payload, 'ff02::fb', 5353);
+      expect(mdnsIpv6.send).not.toHaveBeenCalledWith(payload, 'ff02::1', 5353);
 
       await server.stop();
     } finally {
@@ -586,7 +730,7 @@ describe('MdnsReflectorServer', () => {
 
       await server.start();
 
-      const payload = Buffer.from([9, 8, 7]);
+      const payload = buildQueryHeader();
       (unicastIpv6 as any).emit('message', payload, { family: 'IPv6', address: 'fd00::2', port: 6666, size: payload.length });
 
       expect(mdnsIpv6.send).toHaveBeenCalledWith(payload, 'ff02::fb', 5353);
@@ -620,7 +764,7 @@ describe('MdnsReflectorServer', () => {
 
       await server.start();
 
-      const payload = Buffer.from([1, 2, 3]);
+      const payload = buildQueryHeader();
       (unicastIpv4 as any).emit('message', payload, { family: 'IPv4', address: '10.0.0.2', port: 5555, size: payload.length });
 
       expect(mdnsIpv4.send).toHaveBeenCalledWith(payload, '224.0.0.251', 5353);
@@ -654,7 +798,7 @@ describe('MdnsReflectorServer', () => {
 
       await server.start();
 
-      const payload = Buffer.from([9, 8, 7]);
+      const payload = buildQueryHeader();
       (unicastIpv6 as any).emit('message', payload, { family: 'IPv6', address: 'fd00::2', port: 6666, size: payload.length });
 
       expect(mdnsIpv6.send).toHaveBeenCalledWith(payload, 'ff02::fb', 5353);
@@ -665,6 +809,227 @@ describe('MdnsReflectorServer', () => {
     } finally {
       process.argv = argvBefore;
     }
+  });
+
+  it('start should ignore non-mDNS messages from unicast clients', async () => {
+    const server = new MdnsReflectorServer();
+
+    const mdnsIpv4 = new FakeMdns();
+    mdnsIpv4.socketType = 'udp4';
+    const mdnsIpv6 = new FakeMdns();
+    mdnsIpv6.socketType = 'udp6';
+    const unicastIpv4 = new FakeEndpoint();
+    const unicastIpv6 = new FakeEndpoint();
+
+    (server as any).mdnsIpv4 = mdnsIpv4;
+    (server as any).mdnsIpv6 = mdnsIpv6;
+    (server as any).unicastIpv4 = unicastIpv4;
+    (server as any).unicastIpv6 = unicastIpv6;
+
+    await server.start();
+
+    const bad = buildNotMdnsHeader();
+    (unicastIpv4 as any).emit('message', bad, { family: 'IPv4', address: '10.0.0.2', port: 5555, size: bad.length });
+    expect(mdnsIpv4.send).not.toHaveBeenCalled();
+
+    (unicastIpv6 as any).emit('message', bad, { family: 'IPv6', address: 'fd00::2', port: 6666, size: bad.length });
+    expect(mdnsIpv6.send).not.toHaveBeenCalled();
+
+    await server.stop();
+  });
+
+  it('upgradeAddress should log N/A when no interface is selected (selectedInterfaceName undefined)', () => {
+    const server = new MdnsReflectorServer();
+
+    mockNetworkInterfaces({} as any);
+
+    const infoSpy = jest.spyOn((server as any).log, 'info');
+
+    const msg = Buffer.alloc(12);
+    msg.writeUInt16BE(0, 0); // mDNS id
+    msg.writeUInt16BE(0x8000, 2); // response
+
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+    expect(upgraded).toBe(msg);
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('selected interface'));
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('N/A'));
+  });
+
+  it('upgradeAddress should tolerate a selected interface resolving to undefined (interfaces[name] ?? [])', () => {
+    const server = new MdnsReflectorServer();
+    // Force the preferred-interface branch.
+    (server.mdnsIpv4 as any).interfaceName = 'eth0';
+
+    const infos = [{ address: '10.0.0.5', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:01', internal: false, cidr: '10.0.0.5/24' }];
+    let accessCount = 0;
+    const interfacesWithFlakyGetter: any = {};
+    Object.defineProperty(interfacesWithFlakyGetter, 'eth0', {
+      enumerable: true,
+      get() {
+        accessCount++;
+        return accessCount === 1 ? infos : undefined;
+      },
+    });
+
+    mockNetworkInterfaces(interfacesWithFlakyGetter);
+
+    const msg = Buffer.alloc(12);
+    msg.writeUInt16BE(0, 0); // mDNS id
+    msg.writeUInt16BE(0x8000, 2); // response
+
+    const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
+    expect(upgraded).toBe(msg);
+    expect(accessCount).toBeGreaterThanOrEqual(2);
+  });
+
+  it('start should upgrade only responses (isMdnsResponse path)', async () => {
+    const server = new MdnsReflectorServer();
+
+    const mdnsIpv4 = new FakeMdns();
+    mdnsIpv4.socketType = 'udp4';
+    const mdnsIpv6 = new FakeMdns();
+    mdnsIpv6.socketType = 'udp6';
+    const unicastIpv4 = new FakeEndpoint();
+    const unicastIpv6 = new FakeEndpoint();
+
+    (server as any).mdnsIpv4 = mdnsIpv4;
+    (server as any).mdnsIpv6 = mdnsIpv6;
+    (server as any).unicastIpv4 = unicastIpv4;
+    (server as any).unicastIpv6 = unicastIpv6;
+
+    const upgradeSpy = jest.spyOn(server as any, 'upgradeAddress');
+    await server.start();
+
+    // Query should not be upgraded
+    const query = buildQueryHeader();
+    (unicastIpv4 as any).emit('message', query, { family: 'IPv4', address: '10.0.0.2', port: 5555, size: query.length });
+    (unicastIpv6 as any).emit('message', query, { family: 'IPv6', address: 'fd00::2', port: 6666, size: query.length });
+    // Response should be upgraded
+    const response = buildResponseHeader();
+    (unicastIpv4 as any).emit('message', response, { family: 'IPv4', address: '10.0.0.2', port: 5555, size: response.length });
+    (unicastIpv6 as any).emit('message', response, { family: 'IPv6', address: 'fd00::2', port: 6666, size: response.length });
+
+    expect(upgradeSpy).toHaveBeenCalledTimes(2);
+    await server.stop();
+  });
+
+  it('start should forward multicast messages to registered ipv4 clients', async () => {
+    const server = new MdnsReflectorServer();
+
+    const mdnsIpv4 = new FakeMdns();
+    mdnsIpv4.socketType = 'udp4';
+    const mdnsIpv6 = new FakeMdns();
+    mdnsIpv6.socketType = 'udp6';
+    const unicastIpv4 = new FakeEndpoint();
+    const unicastIpv6 = new FakeEndpoint();
+
+    (server as any).mdnsIpv4 = mdnsIpv4;
+    (server as any).mdnsIpv6 = mdnsIpv6;
+    (server as any).unicastIpv4 = unicastIpv4;
+    (server as any).unicastIpv6 = unicastIpv6;
+
+    await server.start();
+
+    // Register client via unicast.
+    const query = buildQueryHeader();
+    (unicastIpv4 as any).emit('message', query, { family: 'IPv4', address: '10.0.0.2', port: 5555, size: query.length });
+
+    // Now multicast messages (query + response) should be forwarded to that client.
+    const q = buildQueryHeader();
+    (mdnsIpv4 as any).emit('message', q, { family: 'IPv4', address: '224.0.0.251', port: 5353, size: q.length });
+    expect(unicastIpv4.send).toHaveBeenCalledWith(q, '10.0.0.2', 5555);
+
+    const resp = buildResponseHeader();
+    (mdnsIpv4 as any).emit('message', resp, { family: 'IPv4', address: '224.0.0.251', port: 5353, size: resp.length });
+    expect(unicastIpv4.send).toHaveBeenCalledWith(resp, '10.0.0.2', 5555);
+
+    await server.stop();
+  });
+
+  it('start should not forward multicast messages when no clients are registered (ipv4+ipv6)', async () => {
+    const server = new MdnsReflectorServer();
+
+    const mdnsIpv4 = new FakeMdns();
+    mdnsIpv4.socketType = 'udp4';
+    const mdnsIpv6 = new FakeMdns();
+    mdnsIpv6.socketType = 'udp6';
+    const unicastIpv4 = new FakeEndpoint();
+    const unicastIpv6 = new FakeEndpoint();
+
+    (server as any).mdnsIpv4 = mdnsIpv4;
+    (server as any).mdnsIpv6 = mdnsIpv6;
+    (server as any).unicastIpv4 = unicastIpv4;
+    (server as any).unicastIpv6 = unicastIpv6;
+
+    await server.start();
+
+    const q = buildQueryHeader();
+    const r = buildResponseHeader();
+
+    (mdnsIpv4 as any).emit('message', q, { family: 'IPv4', address: '224.0.0.251', port: 5353, size: q.length });
+    (mdnsIpv6 as any).emit('message', r, { family: 'IPv6', address: 'ff02::fb', port: 5353, size: r.length });
+
+    expect(unicastIpv4.send).not.toHaveBeenCalled();
+    expect(unicastIpv6.send).not.toHaveBeenCalled();
+
+    await server.stop();
+  });
+
+  it('stop should notify registered clients', async () => {
+    const server = new MdnsReflectorServer();
+
+    const mdnsIpv4 = new FakeMdns();
+    mdnsIpv4.socketType = 'udp4';
+    const mdnsIpv6 = new FakeMdns();
+    mdnsIpv6.socketType = 'udp6';
+    const unicastIpv4 = new FakeEndpoint();
+    const unicastIpv6 = new FakeEndpoint();
+
+    (server as any).mdnsIpv4 = mdnsIpv4;
+    (server as any).mdnsIpv6 = mdnsIpv6;
+    (server as any).unicastIpv4 = unicastIpv4;
+    (server as any).unicastIpv6 = unicastIpv6;
+
+    await server.start();
+
+    const query = buildQueryHeader();
+    (unicastIpv4 as any).emit('message', query, { family: 'IPv4', address: '10.0.0.2', port: 5555, size: query.length });
+    (unicastIpv6 as any).emit('message', query, { family: 'IPv6', address: 'fd00::2', port: 6666, size: query.length });
+
+    await server.stop();
+
+    expect(unicastIpv4.send).toHaveBeenCalledWith(expect.any(Buffer), '10.0.0.2', 5555);
+    expect(unicastIpv6.send).toHaveBeenCalledWith(expect.any(Buffer), 'fd00::2', 6666);
+  });
+
+  it('start should forward multicast messages to registered ipv6 clients', async () => {
+    const server = new MdnsReflectorServer();
+
+    const mdnsIpv4 = new FakeMdns();
+    mdnsIpv4.socketType = 'udp4';
+    const mdnsIpv6 = new FakeMdns();
+    mdnsIpv6.socketType = 'udp6';
+    const unicastIpv4 = new FakeEndpoint();
+    const unicastIpv6 = new FakeEndpoint();
+
+    (server as any).mdnsIpv4 = mdnsIpv4;
+    (server as any).mdnsIpv6 = mdnsIpv6;
+    (server as any).unicastIpv4 = unicastIpv4;
+    (server as any).unicastIpv6 = unicastIpv6;
+
+    await server.start();
+
+    const query = buildQueryHeader();
+    (unicastIpv6 as any).emit('message', query, { family: 'IPv6', address: 'fd00::2', port: 6666, size: query.length });
+    const q = buildQueryHeader();
+    (mdnsIpv6 as any).emit('message', q, { family: 'IPv6', address: 'ff02::fb', port: 5353, size: q.length });
+    expect(unicastIpv6.send).toHaveBeenCalledWith(q, 'fd00::2', 6666);
+
+    const resp = buildResponseHeader();
+    (mdnsIpv6 as any).emit('message', resp, { family: 'IPv6', address: 'ff02::fb', port: 5353, size: resp.length });
+    expect(unicastIpv6.send).toHaveBeenCalledWith(resp, 'fd00::2', 6666);
+
+    await server.stop();
   });
 
   it('start should attach error handlers for all sockets', async () => {
