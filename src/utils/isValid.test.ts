@@ -1,4 +1,4 @@
-// src\utils\isvalid.test.ts
+// src\utils\isValid.test.ts
 
 import { isValidIpv4Address, isValidNumber, isValidBoolean, isValidString, isValidObject, isValidArray, isValidNull, isValidUndefined, parseVersionString, isValidRegExp } from './isValid.js';
 

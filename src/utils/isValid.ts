@@ -1,7 +1,7 @@
 /**
  * This file contains the validation functions.
  *
- * @file isvalid.ts
+ * @file isValid.ts
  * @author Luca Liguori
  * @created 2025-02-16
  * @version 1.0.1
