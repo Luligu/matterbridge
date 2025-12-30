@@ -47,7 +47,7 @@ import { SharedMatterbridge, ApiMatter, Plugin, SanitizedExposedFabricInformatio
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { getIntParameter, getParameter, hasParameter } from './utils/commandLine.js';
 import { copyDirectory } from './utils/copyDirectory.js';
-import { isValidNumber, isValidString, parseVersionString } from './utils/isvalid.js';
+import { isValidNumber, isValidString, parseVersionString } from './utils/is-Valid.js';
 import { wait, withTimeout } from './utils/wait.js';
 import { inspectError } from './utils/error.js';
 import { BroadcastServer } from './broadcastServer.js';

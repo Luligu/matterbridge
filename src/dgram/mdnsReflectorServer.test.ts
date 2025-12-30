@@ -14,7 +14,7 @@ import os from 'node:os';
 import { LogLevel } from 'node-ansi-logger';
 import { jest } from '@jest/globals';
 
-import { loggerErrorSpy, originalProcessArgv, setupTest } from '../jestutils/jestHelpers.js';
+import { loggerDebugSpy, loggerErrorSpy, setupTest } from '../jestutils/jestHelpers.js';
 
 import { DnsClass, DnsRecordType, Mdns } from './mdns.js';
 import { MdnsReflectorServer } from './mdnsReflectorServer.js';
@@ -291,9 +291,8 @@ describe('MdnsReflectorServer', () => {
         throw new Error('decode boom');
       });
 
-      const errorSpy = jest.spyOn((server as any).log, 'error');
       expect(() => server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>)).not.toThrow();
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('**UpgradeAddress failed to decode message:'));
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('UpgradeAddress failed to decode message:'));
     } finally {
       process.argv = argvBefore;
     }
@@ -950,16 +949,14 @@ describe('MdnsReflectorServer', () => {
 
     mockNetworkInterfaces({} as any);
 
-    const infoSpy = jest.spyOn((server as any).log, 'info');
-
     const msg = Buffer.alloc(12);
     msg.writeUInt16BE(0, 0); // mDNS id
     msg.writeUInt16BE(0x8000, 2); // response
 
     const upgraded = server.upgradeAddress(msg as unknown as Buffer<ArrayBufferLike>);
     expect(upgraded).toBe(msg);
-    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('selected interface'));
-    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('N/A'));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('selected interface'));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('N/A'));
   });
 
   it('upgradeAddress should tolerate a selected interface resolving to undefined (interfaces[name] ?? [])', () => {
