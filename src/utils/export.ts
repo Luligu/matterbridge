@@ -1,6 +1,6 @@
 export * from './network.js';
 export * from './commandLine.js';
-export * from './is-Valid.js';
+export * from './isValid.js';
 export * from './colorUtils.js';
 export * from './deepCopy.js';
 export * from './deepEqual.js';

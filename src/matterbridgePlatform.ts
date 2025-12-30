@@ -41,7 +41,7 @@ import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-de
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
-import { isValidArray, isValidObject, isValidString } from './utils/is-Valid.js';
+import { isValidArray, isValidObject, isValidString } from './utils/isValid.js';
 import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
 import { SystemInformation } from './matterbridgeTypes.js';
 import { hasParameter } from './utils/commandLine.js';

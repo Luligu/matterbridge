@@ -115,7 +115,7 @@ import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@ma
 // Matterbridge
 import { deepCopy } from './utils/deepCopy.js';
 import { deepEqual } from './utils/deepEqual.js';
-import { isValidArray } from './utils/is-Valid.js';
+import { isValidArray } from './utils/isValid.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
 import {
