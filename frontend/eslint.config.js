@@ -3,8 +3,8 @@
 // This ESLint configuration is designed for a mixed JavaScript and TypeScript project with React.
 // @ts-check
 
-import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
+import url from 'node:url';
+import path from 'node:path';
 
 import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
@@ -15,6 +15,9 @@ import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import prettierPlugin from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
+
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
@@ -43,7 +46,7 @@ export default defineConfig([
       parser: tsParser,
       parserOptions: {
         project: './tsconfig.json',
-        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
+        tsconfigRootDir: __dirname,
         ecmaFeatures: { jsx: true },
       },
     },
@@ -60,8 +63,11 @@ export default defineConfig([
     ...reactPlugin.configs.flat['jsx-runtime'], // Add this if you are using React 17+
     ...reactHooks.configs['recommended-latest'],
     plugins: {
+      react: reactPlugin,
       prettier: prettierPlugin,
-      'react-hooks': reactHooks,
+      // eslint-plugin-react-hooks exports `configs.flat.*` which doesn't currently match ESLint's `Plugin` type.
+      // Runtime is fine; this cast only quiets VS Code's @ts-check diagnostics.
+      'react-hooks': /** @type {import('eslint').ESLint.Plugin} */ (reactHooks),
     },
     rules: {
       'prettier/prettier': 'warn',
