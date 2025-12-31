@@ -3,8 +3,8 @@
 // This ESLint configuration is designed for a TypeScript project.
 // @ts-check
 
-import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
+import url from 'node:url';
+import path from 'node:path';
 
 import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
@@ -16,6 +16,9 @@ import pluginJsdoc from 'eslint-plugin-jsdoc';
 import pluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import pluginJest from 'eslint-plugin-jest';
 import pluginVitest from '@vitest/eslint-plugin';
+
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
@@ -41,6 +44,9 @@ export default defineConfig([
     languageOptions: {
       sourceType: 'module',
       ecmaVersion: 'latest',
+      parserOptions: {
+        tsconfigRootDir: __dirname,
+      },
     },
     linterOptions: {
       reportUnusedDisableDirectives: 'error', // Report unused eslint-disable directives
@@ -77,12 +83,12 @@ export default defineConfig([
     files: ['src/**/*.ts'],
     ignores: ['src/**/*.test.ts', 'src/**/*.spec.ts'], // Ignore test files
     languageOptions: {
+      sourceType: 'module',
+      ecmaVersion: 'latest',
       parser: tseslint.parser,
       parserOptions: {
+        tsconfigRootDir: __dirname,
         project: './tsconfig.json',
-        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
-        sourceType: 'module',
-        ecmaVersion: 'latest',
       },
     },
     rules: {
@@ -106,12 +112,12 @@ export default defineConfig([
     files: ['**/*.spec.ts', '**/*.test.ts', 'test/**/*.ts'],
     ignores: ['vitest'], // Ignore Vitest test files
     languageOptions: {
+      sourceType: 'module',
+      ecmaVersion: 'latest',
       parser: tseslint.parser,
       parserOptions: {
+        tsconfigRootDir: __dirname,
         project: './tsconfig.jest.json', // Use a separate tsconfig for Jest tests with "isolatedModules": true
-        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
-        sourceType: 'module',
-        ecmaVersion: 'latest',
       },
     },
     plugins: {
@@ -133,12 +139,12 @@ export default defineConfig([
     name: 'Vitest Test Files',
     files: ['vitest/*.spec.ts', 'vitest/*.test.ts'],
     languageOptions: {
+      sourceType: 'module',
+      ecmaVersion: 'latest',
       parser: tseslint.parser,
       parserOptions: {
+        tsconfigRootDir: __dirname,
         project: './tsconfig.jest.json',
-        tsconfigRootDir: dirname(fileURLToPath(import.meta.url)),
-        sourceType: 'module',
-        ecmaVersion: 'latest',
       },
     },
     plugins: {
