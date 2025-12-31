@@ -35,6 +35,8 @@ Advantages:
 - [MdnsReflectorClient]: Added already seen cache.
 - [MdnsReflectorServer]: Added --share-with-clients to share mDNS between all reflector clients.
 - [reflector]: [Full guide](https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/Docker%20reflector.md).
+- [jest]: Refactored configuration with cross-env.
+- [eslint]: Refactored configuration.
 
 ### Changed
 
