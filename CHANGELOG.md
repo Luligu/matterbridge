@@ -36,7 +36,7 @@ Advantages:
 - [MdnsReflectorServer]: Added --share-with-clients to share mDNS between all reflector clients.
 - [reflector]: [Full guide](https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/Docker%20reflector.md).
 - [package]: Moved to monorepo and workspaces.
-- [jest]: Refactored configuration with cross-env.
+- [package]: Refactored scripts for jest with cross-env.
 - [jest]: Typed jest config.
 - [vitest]: Refactored configuration.
 - [eslint]: Refactored configuration.

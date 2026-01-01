@@ -2,7 +2,7 @@ FROM node:24-alpine AS base
 
 # Build Matterbridge
 WORKDIR /matterbridge
-COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
+COPY ./package.json ./package-lock.json ./tsconfig.base.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci && \

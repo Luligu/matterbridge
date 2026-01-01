@@ -12,7 +12,7 @@ RUN apt update && \
 
 # Build Matterbridge for production
 WORKDIR /matterbridge
-COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
+COPY ./package.json ./package-lock.json ./tsconfig.base.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/package.json ./frontend/package.json
 COPY ./frontend/build ./frontend/build
