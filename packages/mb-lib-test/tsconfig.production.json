@@ -10,6 +10,6 @@
     "sourceMap": false,
     "removeComments": true
   },
-  "include": ["src/**/*.ts", "package.json"],
-  "exclude": ["packages/**", "**/*.spec.ts", "**/*.test.ts", "**/__test__/*"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/*"]
 }

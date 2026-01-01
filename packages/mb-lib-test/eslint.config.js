@@ -1,10 +1,9 @@
 // eslint.config.js
 
 // This ESLint configuration is designed for a TypeScript project.
-// @ts-check
 
-import url from 'node:url';
 import path from 'node:path';
+import url from 'node:url';
 
 import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
@@ -20,22 +19,17 @@ import pluginVitest from '@vitest/eslint-plugin';
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
   {
     name: 'Global Ignores',
-    ignores: ['dist', 'node_modules', 'coverage', 'build', 'frontend', 'bin', 'packages'],
+    ignores: ['dist', 'node_modules', 'coverage', 'build', 'scripts'],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,
-  // Spread strict type-aware configs directly
-  // ...tseslint.configs.strictTypeChecked.map((config) => ({
-  //   ...config,
-  //   files: ['src/**/*.{ts,tsx}'],
-  // })),
+  // Comment the previous line and uncomment the following line if you want to use strict with type checking
+  // ...tseslint.configs.strictTypeChecked,
   pluginImport.flatConfigs.recommended,
   pluginN.configs['flat/recommended-script'],
-  // @ts-expect-error: Missing types for pluginPromise
   pluginPromise.configs['flat/recommended'],
   pluginJsdoc.configs['flat/recommended'],
   pluginPrettierRecommended, // Prettier plugin must be the last plugin in the list
@@ -68,8 +62,6 @@ export default defineConfig([
       'jsdoc/tag-lines': ['error', 'any', { startLines: 1, endLines: 0 }], // Require a blank line before JSDoc comments
       'jsdoc/check-tag-names': ['warn', { definedTags: ['created', 'contributor', 'remarks'] }], // Allow custom tags
       'jsdoc/no-undefined-types': 'off',
-      'jsdoc/reject-any-type': 'off', // Allow 'any' type in JSDoc
-      'jsdoc/reject-function-type': 'off', // Allow function types in JSDoc
       'prettier/prettier': 'warn', // Use Prettier for formatting
     },
   },
@@ -93,7 +85,7 @@ export default defineConfig([
     },
     rules: {
       // Override/add rules specific to typescript files here
-      'no-unused-vars': 'off', // Disable base rule for unused variables
+      'no-unused-vars': 'off', // Disable base rule for unused variables in test files
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -144,7 +136,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         tsconfigRootDir: __dirname,
-        project: './tsconfig.vitest.json',
+        project: './tsconfig.vitest.json', // Use a separate tsconfig for Vitest tests
       },
     },
     plugins: {
