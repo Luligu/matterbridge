@@ -1,4 +1,4 @@
-name: Build Docker Image edge with buildx
+name: Build Docker Image alpine with buildx
 
 on:
   # Allow manual dispatch
@@ -6,7 +6,7 @@ on:
 
 # Cancel previous runs when a new one is triggered
 concurrency:
-  group: docker-build-edge
+  group: docker-build-alpine
   cancel-in-progress: true
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: '24.x'
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -49,12 +49,12 @@ jobs:
         run: |
           echo "Extracted version is: $VERSION ${{ env.VERSION }}"
 
-      - name: Run Docker Buildx on edge
+      - name: Run Docker Buildx with Dockerfile.alpine
         run: |
           docker buildx build \
-            --platform linux/amd64,linux/arm64,linux/arm/v7 \
-            -f docker/Dockerfile.edge \
-            -t luligu/matterbridge:edge \
+            --platform linux/amd64,linux/arm64 \
+            -f docker/Dockerfile.alpine \
+            -t luligu/matterbridge:alpine \
             --push .
-          docker manifest inspect luligu/matterbridge:edge
+          docker manifest inspect luligu/matterbridge:alpine
         timeout-minutes: 60

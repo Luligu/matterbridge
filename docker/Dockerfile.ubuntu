@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install node from NodeSource
 RUN apt update && \
   apt install -y --no-install-recommends ca-certificates curl && \
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+  curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt install -y --no-install-recommends nodejs
 
 # Build Matterbridge for production
@@ -34,7 +34,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install node from NodeSource
 RUN apt update && \
   apt install -y --no-install-recommends ca-certificates curl && \
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+  curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt install -y --no-install-recommends nodejs && \
   apt update && apt upgrade -y && \
   apt purge -y apt-transport-https gnupg && \

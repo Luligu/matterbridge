@@ -40,6 +40,7 @@ Advantages:
 - [jest]: Typed jest config.
 - [vitest]: Refactored configuration.
 - [eslint]: Refactored configuration.
+- [docker]: Prepare to release also alpine and ubuntu images on Docker Hub. Both only for amd64 arm64 and based on node 24.
 
 ### Changed
 
