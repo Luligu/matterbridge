@@ -54,7 +54,7 @@ import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { PlatformConfig } from './matterbridgePlatform.js';
 import type { ApiSettings, RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
 import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from './matterbridgeTypes.js';
-import { isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean } from './utils/isvalid.js';
+import { isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean } from './utils/isValid.js';
 import { createZip } from './utils/createZip.js';
 import { hasParameter } from './utils/commandLine.js';
 import { withTimeout, wait } from './utils/wait.js';

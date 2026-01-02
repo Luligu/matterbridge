@@ -7,12 +7,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install node from NodeSource
 RUN apt update && \
   apt install -y --no-install-recommends ca-certificates curl && \
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+  curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt install -y --no-install-recommends nodejs
 
 # Build Matterbridge for production
 WORKDIR /matterbridge
-COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
+COPY ./package.json ./package-lock.json ./tsconfig.base.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/package.json ./frontend/package.json
 COPY ./frontend/build ./frontend/build
@@ -34,7 +34,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install node from NodeSource
 RUN apt update && \
   apt install -y --no-install-recommends ca-certificates curl && \
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+  curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt install -y --no-install-recommends nodejs && \
   apt update && apt upgrade -y && \
   apt purge -y apt-transport-https gnupg && \
@@ -42,10 +42,10 @@ RUN apt update && \
   apt clean && \
   rm -rf /var/lib/apt/lists/*
 
-# Install matterbridge and npm@latest
+# Install matterbridge
 WORKDIR /matterbridge    
 COPY --from=base /matterbridge/*.tgz .
-RUN npm install npm@latest *.tgz --global --omit=dev && rm *.tgz
+RUN npm install *.tgz --global --verbose --omit=dev && rm *.tgz
 
 # Add Docker HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \

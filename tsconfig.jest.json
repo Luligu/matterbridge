@@ -3,6 +3,6 @@
   "compilerOptions": {
     "isolatedModules": true
   },
-  "include": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/*"],
-  "exclude": []
+  "include": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/*.ts"],
+  "exclude": ["packages/**"]
 }

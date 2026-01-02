@@ -69,6 +69,7 @@ const FILES_TO_RENDER = [
   { source: 'README-SERVICE.md', target: 'README-SERVICE.html' },
   { source: 'README.md', target: 'README.html' },
   { source: 'CHANGELOG.md', target: 'CHANGELOG.html' },
+  { source: 'docker-reflector/Docker reflector.md', target: 'docker-reflector/Docker reflector.html' },
 ];
 
 /**

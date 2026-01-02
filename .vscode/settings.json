@@ -8,6 +8,7 @@
   "eslint.useFlatConfig": true,
   "eslint.workingDirectories": [
     { "directory": "./", "changeProcessCWD": true },
-    { "directory": "./frontend", "changeProcessCWD": true }
+    { "directory": "./frontend", "changeProcessCWD": true },
+    { "directory": "./packages/mb-lib-test", "changeProcessCWD": true }
   ]
 }

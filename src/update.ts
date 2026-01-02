@@ -29,7 +29,7 @@ import { AnsiLogger, db, debugStringify, nt, TimestampFormat, wr } from 'node-an
 import { ApiPlugin, plg, SharedMatterbridge } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { hasParameter } from './utils/commandLine.js';
-import { isValidString } from './utils/isvalid.js';
+import { isValidString } from './utils/isValid.js';
 
 /**
  * Checks for updates for Matterbridge and its plugins.

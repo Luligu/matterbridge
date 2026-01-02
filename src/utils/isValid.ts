@@ -1,10 +1,10 @@
 /**
  * This file contains the validation functions.
  *
- * @file isvalid.ts
+ * @file isValid.ts
  * @author Luca Liguori
  * @created 2025-02-16
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -36,13 +36,12 @@ export function isValidIpv4Address(ipv4Address: string): boolean {
 /**
  * Checks if a value is a valid number within the specified range.
  *
- * @param {any} value - The value to be checked.
+ * @param {unknown} value - The value to be checked.
  * @param {number} min - The minimum value allowed (optional).
  * @param {number} max - The maximum value allowed (optional).
  * @returns {value is number} Returns true if the value is a valid number within the specified range, otherwise false.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidNumber(value: any, min?: number, max?: number): value is number {
+export function isValidNumber(value: unknown, min?: number, max?: number): value is number {
   if (value === undefined || value === null || typeof value !== 'number' || Number.isNaN(value) || !Number.isFinite(value)) return false;
   if (min !== undefined && value < min) return false;
   if (max !== undefined && value > max) return false;
@@ -52,24 +51,22 @@ export function isValidNumber(value: any, min?: number, max?: number): value is 
 /**
  * Checks if a value is a valid boolean.
  *
- * @param {any} value - The value to be checked.
+ * @param {unknown} value - The value to be checked.
  * @returns {value is boolean} `true` if the value is a valid boolean, `false` otherwise.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidBoolean(value: any): value is boolean {
+export function isValidBoolean(value: unknown): value is boolean {
   return value !== undefined && value !== null && typeof value === 'boolean';
 }
 
 /**
  * Checks if a value is a valid string.
  *
- * @param {any} value - The value to be checked.
+ * @param {unknown} value - The value to be checked.
  * @param {number} minLength - The min string length (optional).
  * @param {number} maxLength - The max string length (optional).
  * @returns {value is string} A boolean indicating whether the value is a valid string.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidString(value: any, minLength?: number, maxLength?: number): value is string {
+export function isValidString(value: unknown, minLength?: number, maxLength?: number): value is string {
   if (value === undefined || value === null || typeof value !== 'string') return false;
   if (minLength !== undefined && value.length < minLength) return false;
   if (maxLength !== undefined && value.length > maxLength) return false;
@@ -79,24 +76,22 @@ export function isValidString(value: any, minLength?: number, maxLength?: number
 /**
  * Checks if a value is a valid RegExp.
  *
- * @param {any} value - The value to be checked.
+ * @param {unknown} value - The value to be checked.
  * @returns {value is RegExp} A boolean indicating whether the value is a valid RegExp.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidRegExp(value: any): value is RegExp {
+export function isValidRegExp(value: unknown): value is RegExp {
   return value !== undefined && value !== null && value instanceof RegExp;
 }
 
 /**
  * Checks if a value is a valid object.
  *
- * @param {any} value - The value to be checked.
+ * @param {unknown} value - The value to be checked.
  * @param {number} minLength - The min number of keys (optional).
  * @param {number} maxLength - The max number of keys (optional).
  * @returns {value is object} A boolean indicating whether the value is a valid object.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidObject(value: any, minLength?: number, maxLength?: number): value is object {
+export function isValidObject(value: unknown, minLength?: number, maxLength?: number): value is object {
   if (value === undefined || value === null || typeof value !== 'object' || Array.isArray(value)) return false;
   const keys = Object.keys(value);
   if (minLength !== undefined && keys.length < minLength) return false;
@@ -107,13 +102,12 @@ export function isValidObject(value: any, minLength?: number, maxLength?: number
 /**
  * Checks if a value is a valid array.
  *
- * @param {any} value - The value to be checked.
+ * @param {unknown} value - The value to be checked.
  * @param {number} minLength - The min number of elements (optional).
  * @param {number} maxLength - The max number of elements (optional).
  * @returns {value is unknown[]} A boolean indicating whether the value is a valid array.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidArray(value: any, minLength?: number, maxLength?: number): value is unknown[] {
+export function isValidArray(value: unknown, minLength?: number, maxLength?: number): value is unknown[] {
   if (value === undefined || value === null || !Array.isArray(value)) return false;
   if (minLength !== undefined && value.length < minLength) return false;
   if (maxLength !== undefined && value.length > maxLength) return false;
@@ -123,22 +117,20 @@ export function isValidArray(value: any, minLength?: number, maxLength?: number)
 /**
  * Checks if the given value is null.
  *
- * @param {any} value - The value to check.
+ * @param {unknown} value - The value to check.
  * @returns {value is null} `true` if the value is null, `false` otherwise.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidNull(value: any): value is null {
+export function isValidNull(value: unknown): value is null {
   return value === null;
 }
 
 /**
  * Checks if a value is undefined.
  *
- * @param {any} value - The value to check.
+ * @param {unknown} value - The value to check.
  * @returns {value is undefined} `true` if the value is undefined, `false` otherwise.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidUndefined(value: any): value is undefined {
+export function isValidUndefined(value: unknown): value is undefined {
   return value === undefined;
 }
 

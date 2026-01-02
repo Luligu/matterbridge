@@ -111,11 +111,29 @@
 <blockquote>
 <p><strong>Note:</strong> The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as fast as from the local folder.</p>
 </blockquote>
-<p>Since Dev Container doesn&#39;t run in network mode &#39;host&#39;, it is not possible to pair Mattebridge running inside the Dev Container.</p>
-<p>When you want to test your plugin with a paired controller, you have several options:</p>
+<h2 id="dev-containers-networking-limitations">Dev containers networking limitations</h2>
+<p>Dev containers have networking limitations depending on the host OS and Docker setup.</p>
+<p>• Docker Desktop on Windows or macOS:</p>
+<ul>
+<li>Runs inside a VM</li>
+<li>Host networking mode is NOT available</li>
+<li>Matterbridge and plugins can run but:
+❌ Pairing with Matter controllers will NOT work cause of missing mDNS support
+✅ Remote and local network access (cloud services, internet APIs) works normally
+✅ Matterbridge frontend works normally</li>
+</ul>
+<p>• Native Linux or WSL 2 with Docker Engine CLI integration:</p>
+<ul>
+<li>Host networking IS available</li>
+<li>Full local network access is supported with mDNS</li>
+<li>Matterbridge and plugins work correctly, including pairing</li>
+<li>Matterbridge frontend works normally</li>
+</ul>
+<h2 id="how-to-pair-the-plugin">How to pair the plugin</h2>
+<p>When you want to test your plugin with a paired controller and you cannot use native Linux or WSL 2 with Docker Engine, you have several other options:</p>
 <ul>
 <li>create a tgz (npm run npmPack) and upload it to a running instance of matterbridge.</li>
-<li>publish it with tag dev and install it (matterbridge-yourplugin@dev in Install plugins) in a running instance of matterbridge.</li>
+<li>publish the plugin with tag dev and install it (matterbridge-yourplugin@dev in Install plugins) in a running instance of matterbridge.</li>
 <li>use a local instance of matterbridge running outside the dev container and install (../matterbridge-yourplugin in Install plugins) or add (../matterbridge-yourplugin in Install plugins) your plugin to it (easiest way). Adjust the path if matterbridge dir and your plugin dir are not in the same parent directory.</li>
 </ul>
 <h2 id="guidelines-on-importsexports">Guidelines on imports/exports</h2>

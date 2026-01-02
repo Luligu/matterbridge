@@ -28,6 +28,27 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.4.6] - 2026-01-02
+
+### Added
+
+- [MdnsReflectorClient]: Added already seen cache.
+- [MdnsReflectorServer]: Added --share-with-clients to share mDNS between all reflector clients.
+- [reflector]: [Full guide](https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/Docker%20reflector.md).
+- [package]: Moved to monorepo and workspaces.
+- [package]: Refactored scripts for jest with cross-env.
+- [jest]: Typed jest config.
+- [vitest]: Refactored configuration.
+- [eslint]: Refactored configuration.
+- [docker]: Prepare to release also alpine and ubuntu images on Docker Hub. Both only for amd64 arm64 and based on node 24.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [reflector]: Bumped `reflector` version to v.1.1.0.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.4.5] - 2025-12-27
 
 ### Added
@@ -44,8 +65,6 @@ Advantages:
 ### Changed
 
 - [package]: Updated dependencies.
-
-### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

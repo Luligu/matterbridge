@@ -1,6 +1,28 @@
+# Matterbridge docker reflector
+
+This project aims to use Matterbridge in these configurations:
+
+| Docker type    | Docker network | OS      | Ipv4 | Ipv6 | Share (3) | Home Assistant | Matter Server |
+| -------------- | -------------- | ------- | ---- | ---- | --------- | -------------- | ------------- |
+| Docker Desktop | bridge (1)     | Windows | ✅   | ✅   | ✅        | ✅             | ✅            |
+| Docker Desktop | bridge (1)     | macOS   | ✅   | ✅   | ✅        | ✅             | ✅            |
+| Docker Engine  | bridge (2)     | Linux   | ✅   | ✅   | ✅        | ✅             | ✅            |
+
+(1) - Network host in this configuration is useless cause Docker runs inside a VM.
+
+(2) - Network host in this configuration works already out of the box cause Docker runs on the host.
+
+(3) - Share mDNS between separate containers.
+
+It can also be used to run Home Assistant and Matter Server inside Docker Desktop on Windows and macOS (with network bridge) without using complex VM. You just copy paste the [docker-compose.yml](https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/docker-compose.yml).
+
 # Prerequisites
 
 - Docker Desktop
+
+## Docker Desktop requirements for Windows and macOS
+
+See Docker Desktop docs.
 
 ## Dual Stack IPv4/IPv6 mDNS enabled and No filtering
 
@@ -8,29 +30,30 @@
 
 # Run Matterbridge in a Docker Desktop container
 
-We use here named volumes for storage, plugins and mattercert.
+We use named volumes for storage, plugins and mattercert.
 
-We use matter port range 5550-5559 to allow childbridge mode and server node devices (RVCs).
+We publish the default matterbridge frontend port 8283.
 
-```bash
-docker run -it --name node24slim & \
-  -p 8283:8283 -p 5550-5559:5550-5559/udp & \
-  -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert & \
-  node:24-slim bash
+We publish the matter port range 5550-5559 to allow childbridge mode and server node devices (RVCs).
+
+macOS
+
+```zsh
+docker run -dit --restart unless-stopped --name matterbridge-test \
+  -p 8283:8283 -p 5550-5559:5550-5559/udp \
+  -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert \
+  luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
+docker logs --tail 1000 -f matterbridge-test
 ```
+
+powerShell
 
 ```powershell
-docker run -it --name node24slim `
+docker run -dit --restart unless-stopped --name matterbridge-test `
   -p 8283:8283 -p 5550-5559:5550-5559/udp `
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert `
-  node:24-slim bash
-```
-
-Inside the container install and run matterbridge with start matter port 5550.
-
-```bash
-npm install -g matterbridge
-matterbridge --port 5550
+  luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
+docker logs --tail 1000 -f matterbridge-test
 ```
 
 You will see that the frontend inside the container is listening on the conainer address
@@ -40,38 +63,42 @@ You will see that the frontend inside the container is listening on the conainer
 [09:02:10.140] [Frontend] The frontend http server is listening on http://[fd3d:8954:ffe5::2]:8283
 ```
 
-But since we mapped the port 8283, the frontend is available on the host with localhost your host ip or hostname and on the lan with your host ip or hostname.
+But since we mapped the port 8283:
 
-In the same way the Matter port range 5550-5559 is mapped outside the container.
+- the frontend is available on the host with localhost:8283, <your_host_ip>:8283 or <your_hostname>:8283.
 
-## What happens inside a Docker Desktop container
+- the frontend is available on the lan with <your_host_ip>:8283 or <your_hostname>:8283.
+
+In the same way the Matter port range 5550-5559 is mapped outside the container to allow the controllers on the lan to discover and connect.
+
+## Optional: if you want to see the mDNS inside the Docker Desktop container
 
 From another terminal run mb_mdns inside the container we created and run before
 
 ```bash
-docker exec -it node24slim mb_mdns
+docker exec -it matterbridge-test mb_mdns --no-timeout
 ```
 
-In a while you will see what Matterbridge mDNS packet advertised from the Docker Desktop container
+In a while you will see what mDNS packets are advertised inside the container
 
 ![alt text](mDnsPacket.png)
 
-## Optional if you want to see ip inside the container
+## Optional: if you want to see ip and routing table inside the Docker Desktop container
 
 From another terminal run ip a and ip r inside the container we created and run before
 
 ```bash
-docker exec -it node24slim apt-get update
-docker exec -it node24slim apt-get install -y --no-install-recommends iproute2 iputils-ping net-tools dnsutils tcpdump netcat-openbsd
-docker exec -it node24slim ip a
-docker exec -it node24slim ip r
+docker exec -it matterbridge-test apt-get update
+docker exec -it matterbridge-test apt-get install -y --no-install-recommends iproute2 iputils-ping net-tools dnsutils tcpdump netcat-openbsd
+docker exec -it matterbridge-test ip a
+docker exec -it matterbridge-test ip r
 ```
 
 ### Issues we have there
 
-1. The advertised mDNS cannot reach the host and the lan cause mDNS are not routed inside Docker Desktop
+1. The advertised mDNS packets cannot reach the host and the lan cause mDNS are not routed inside Docker Desktop
 
-2. The advertised mDNS packet contains wrong A and AAAA records:
+2. The advertised mDNS packets contain wrong A and AAAA records:
 
 - the advertised address are relative to the container
 - those address are not reachable from the host and from the lan
@@ -79,18 +106,18 @@ docker exec -it node24slim ip r
 ## Run the Madderbridge reflector client in the container we created and run before
 
 ```bash
-docker exec -it node24slim mb_mdns --reflector-client
+docker exec -it matterbridge-test mb_mdns --reflector-client --localhost
 ```
 
 In a while you will see
 
 ![alt text](ReflectorClient.png)
 
-## Run the Madderbridge reflector server on the host
+## Run the Madderbridge reflector server directly on the host (you need node.js installed on Windows or macOS)
 
-```bash
-npm install -g matterbridge
-mb_mdns --reflector-server --filter _matterc._udp _matter._tcp
+```shell
+npm install -g matterbridge@dev
+mb_mdns --reflector-server --log-reflector-messages --localhost --share-with-clients
 ```
 
 In a while you will see
@@ -99,42 +126,21 @@ In a while you will see
 
 # Run Home Assistant and Matter Server in Docker compose with Docker Desktop
 
-Use this docker-compose.yml
+To test the sharing feature (it shares mDNS between all reflector clients),
+use the [docker-compose.yml](https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/docker-compose.yml) in the docker-reflector directory.
 
-```text
-services:
-  homeassistant:
-    container_name: homeassistant
-    image: ghcr.io/home-assistant/home-assistant:stable
-    restart: unless-stopped
-    depends_on:
-      - matterserver
-    ports:
-      - "8123:8123"
-    volumes:
-      - ./DockerVolumes/homeassistant:/config
-    environment:
-      - TZ=Europe/Paris
+With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with **ws://matterserver:5580/ws**
 
-  matterserver:
-    container_name: matterserver
-    image: ghcr.io/home-assistant-libs/python-matter-server:stable
-    restart: unless-stopped
-    ports:
-      - "5580:5580"
-      - "5540:5540/udp"
-    volumes:
-      - ./DockerVolumes/matterserver:/data
-    environment:
-      - TZ=Europe/Paris
-
-  mb_mdns:
-    container_name: mb_mdns
-    image: luligu/matterbridge:dev
-    restart: unless-stopped
-    command: ["mb_mdns", "--no-timeout"]
-    environment:
-      - TZ=Europe/Paris
+```bash
+docker compose up -d
 ```
 
-When asked by Home Assistant connect to Matter Server with **ws://matterserver:5580/ws**
+You need the Matterbridge reflector server running on the host from the tutorial above.
+
+## Optional: if you want to see all mDNS packets inside a Docker Desktop container with compose
+
+docker logs --tail 1000 -f mb_mdns
+
+## Optional: if you want to see the reflector client inside a Docker Desktop container with compose
+
+docker logs --tail 1000 -f reflector

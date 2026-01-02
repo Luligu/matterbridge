@@ -49,7 +49,7 @@ import { BasicInformationServer } from '@matter/node/behaviors/basic-information
 import { getParameter, getIntParameter, hasParameter } from './utils/commandLine.js';
 import { copyDirectory } from './utils/copyDirectory.js';
 import { createDirectory } from './utils/createDirectory.js';
-import { isValidString, parseVersionString, isValidNumber, isValidObject } from './utils/isvalid.js';
+import { isValidString, parseVersionString, isValidNumber, isValidObject } from './utils/isValid.js';
 import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
 import { ApiMatter, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, MaybePromise, NODE_STORAGE_DIR, plg, Plugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';

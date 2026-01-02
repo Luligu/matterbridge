@@ -381,6 +381,22 @@ matterbridge --add matterbridge-zigbee2mqtt
 <p>Race condition can cause missing configuration or missed devices on the controller side. All Matterbridge official plugins already wait for system and network components to be ready so there is no need of delay.</p>
 <p>To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart cause the delay is applied only in the first 5 minutes from system reboot.</p>
 <p>To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed so use it only if strictly necessary.</p>
+<h2 id="how-to-use-the-regex-search-in-the-log-page">How to use the regex search in the Log page</h2>
+<p>The regex search is activated when the search string starts with <code>/</code> and ends with <code>/</code>.</p>
+<p>Examples:</p>
+<pre><code class="language-text">/^error/          -&gt; match log names (the part with [...]) or lines that start with &quot;error&quot;
+/timeout/         -&gt; match &quot;timeout&quot; anywhere in the line (beginning/middle/end)
+/disconnected$/   -&gt; match lines that end with &quot;disconnected&quot;
+/error|warning/   -&gt; match either &quot;error&quot; OR &quot;warning&quot; (double search)
+</code></pre>
+<h2 id="window-covering-cluster-and-position-explained">Window Covering cluster and position explained</h2>
+<p>In Matter spec the Window Covering cluster uses:</p>
+<ul>
+<li>10000 = fully closed</li>
+<li>0 = fully opened</li>
+</ul>
+<p>So depending on the controller you pair with, you should see 100 for fully closed and 0 for fully open.</p>
+<p>Some controllers invert the position so you need to verify your controller.</p>
 <h1 id="known-general-issues">Known general issues</h1>
 <h2 id="session-xyz-does-not-exist-or-cannot-find-a-session-for-id-xyz">Session XYZ does not exist or Cannot find a session for ID XYZ</h2>
 <p>This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
@@ -407,9 +423,11 @@ In this context, the message is not indicative of a problem.</p>
 <li>Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.</li>
 </ul>
 <h2 id="google-home">Google Home</h2>
-<p>If you face a problem pairing to Google Home from Ios app the solution is there <a href="https://github.com/Luligu/matterbridge/issues/61">https://github.com/Luligu/matterbridge/issues/61</a>.</p>
+<p>If you face a problem pairing to Google Home from iOS app the solution is there <a href="https://github.com/Luligu/matterbridge/issues/61">https://github.com/Luligu/matterbridge/issues/61</a>.</p>
 <p>If you face a problem changing the brightness check this for the explanation: <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80">https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80</a></p>
-<p>No other issues reported so far.</p>
+<p>If you encounter a “Something Went Wrong” screen while commissioning MatterBridge devices in Google Home on Android, it’s due to an Android bug. Android fails to send the country code, which is mandatory under the Matter specification.</p>
+<h3 id="workaround">Workaround</h3>
+<p>Install Google Home on an iPhone and complete the commissioning there. Once set up, the devices will appear and function normally on your Android phone and other Nest devices in your home. By <a href="https://github.com/artemkovalyov">Artem Kovalov</a>.</p>
 <h2 id="alexa">Alexa</h2>
 <p>Tested by Tamer Salah</p>
 <p>Alexa needs the standard port 5540 to pair (from matter.js readme).</p>

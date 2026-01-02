@@ -98,7 +98,7 @@ import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behavio
 // Matterbridge
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import { CommandHandlerFunction, MatterbridgeEndpointCommands, MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
-import { isValidNumber, isValidObject, isValidString } from './utils/isvalid.js';
+import { isValidNumber, isValidObject, isValidString } from './utils/isValid.js';
 import {
   MatterbridgeServer,
   MatterbridgeIdentifyServer,

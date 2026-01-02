@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+<h1 id="matterbridge-docker-reflector">Matterbridge docker reflector</h1>
+<p>This project aims to use Matterbridge in these configurations:</p>
+<table>
+<thead>
+<tr>
+<th>Docker type</th>
+<th>Docker network</th>
+<th>OS</th>
+<th>Ipv4</th>
+<th>Ipv6</th>
+<th>Share (3)</th>
+<th>Home Assistant</th>
+<th>Matter Server</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Docker Desktop</td>
+<td>bridge (1)</td>
+<td>Windows</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Docker Desktop</td>
+<td>bridge (1)</td>
+<td>macOS</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Docker Engine</td>
+<td>bridge (2)</td>
+<td>Linux</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+</tbody></table>
+<p>(1) - Network host in this configuration is useless cause Docker runs inside a VM.</p>
+<p>(2) - Network host in this configuration works already out of the box cause Docker runs on the host.</p>
+<p>(3) - Share mDNS between separate containers.</p>
+<p>It can also be used to run Home Assistant and Matter Server inside Docker Desktop on Windows and macOS (with network bridge) without using complex VM. You just copy paste the <a href="https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/docker-compose.yml">docker-compose.yml</a>.</p>
+<h1 id="prerequisites">Prerequisites</h1>
+<ul>
+<li>Docker Desktop</li>
+</ul>
+<h2 id="docker-desktop-requirements-for-windows-and-macos">Docker Desktop requirements for Windows and macOS</h2>
+<p>See Docker Desktop docs.</p>
+<h2 id="dual-stack-ipv4ipv6-mdns-enabled-and-no-filtering">Dual Stack IPv4/IPv6 mDNS enabled and No filtering</h2>
+<p><img src="DockerDesktopSetup.png" alt="alt text"></p>
+<h1 id="run-matterbridge-in-a-docker-desktop-container">Run Matterbridge in a Docker Desktop container</h1>
+<p>We use named volumes for storage, plugins and mattercert.</p>
+<p>We publish the default matterbridge frontend port 8283.</p>
+<p>We publish the matter port range 5550-5559 to allow childbridge mode and server node devices (RVCs).</p>
+<p>macOS</p>
+<pre><code class="language-zsh">docker run -dit --restart unless-stopped --name matterbridge-test \
+  -p 8283:8283 -p 5550-5559:5550-5559/udp \
+  -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert \
+  luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
+docker logs --tail 1000 -f matterbridge-test
+</code></pre>
+<p>powerShell</p>
+<pre><code class="language-powershell">docker run -dit --restart unless-stopped --name matterbridge-test `
+  -p 8283:8283 -p 5550-5559:5550-5559/udp `
+  -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert `
+  luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
+docker logs --tail 1000 -f matterbridge-test
+</code></pre>
+<p>You will see that the frontend inside the container is listening on the conainer address</p>
+<pre><code class="language-text">[09:02:10.140] [Frontend] The frontend http server is listening on http://172.17.0.2:8283
+[09:02:10.140] [Frontend] The frontend http server is listening on http://[fd3d:8954:ffe5::2]:8283
+</code></pre>
+<p>But since we mapped the port 8283, the frontend is available on the host with localhost, your host ip or your hostname.</p>
+<p>On the lan it is available with your host ip or your hostname.</p>
+<p>In the same way the Matter port range 5550-5559 is mapped outside the container.</p>
+<h2 id="optional-if-you-want-to-see-the-mdns-inside-the-docker-desktop-container">Optional: if you want to see the mDNS inside the Docker Desktop container</h2>
+<p>From another terminal run mb_mdns inside the container we created and run before</p>
+<pre><code class="language-bash">docker exec -it matterbridge-test mb_mdns --no-timeout
+</code></pre>
+<p>In a while you will see what mDNS packets are advertised inside the container</p>
+<p><img src="mDnsPacket.png" alt="alt text"></p>
+<h2 id="optional-if-you-want-to-see-ip-and-routing-table-inside-the-docker-desktop-container">Optional: if you want to see ip and routing table inside the Docker Desktop container</h2>
+<p>From another terminal run ip a and ip r inside the container we created and run before</p>
+<pre><code class="language-bash">docker exec -it matterbridge-test apt-get update
+docker exec -it matterbridge-test apt-get install -y --no-install-recommends iproute2 iputils-ping net-tools dnsutils tcpdump netcat-openbsd
+docker exec -it matterbridge-test ip a
+docker exec -it matterbridge-test ip r
+</code></pre>
+<h3 id="issues-we-have-there">Issues we have there</h3>
+<ol>
+<li><p>The advertised mDNS cannot reach the host and the lan cause mDNS are not routed inside Docker Desktop</p>
+</li>
+<li><p>The advertised mDNS packet contains wrong A and AAAA records:</p>
+</li>
+</ol>
+<ul>
+<li>the advertised address are relative to the container</li>
+<li>those address are not reachable from the host and from the lan</li>
+</ul>
+<h2 id="run-the-madderbridge-reflector-client-in-the-container-we-created-and-run-before">Run the Madderbridge reflector client in the container we created and run before</h2>
+<pre><code class="language-bash">docker exec -it matterbridge-test mb_mdns --reflector-client --localhost
+</code></pre>
+<p>In a while you will see</p>
+<p><img src="ReflectorClient.png" alt="alt text"></p>
+<h2 id="run-the-madderbridge-reflector-server-on-the-host-you-need-nodejs">Run the Madderbridge reflector server on the host (you need node.js)</h2>
+<pre><code class="language-shell">npm install -g matterbridge@dev
+mb_mdns --reflector-server --log-reflector-messages --localhost --share-with-clients
+</code></pre>
+<p>In a while you will see</p>
+<p><img src="ReflectorServer.png" alt="alt text"></p>
+<h1 id="run-home-assistant-and-matter-server-in-docker-compose-with-docker-desktop">Run Home Assistant and Matter Server in Docker compose with Docker Desktop</h1>
+<p>To test the sharing feature (it shares mDNS between all reflector clients),
+use the <a href="https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/docker-compose.yml">docker-compose.yml</a> in the docker-reflector directory.</p>
+<p>With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with <strong>ws://matterserver:5580/ws</strong></p>
+<pre><code class="language-bash">docker compose up -d
+</code></pre>
+<p>You need the Matterbridge reflector server running on the host from the tutorial above.</p>
+<h2 id="optional-if-you-want-to-see-all-mdns-packets-inside-a-docker-desktop-container-with-compose">Optional: if you want to see all mDNS packets inside a Docker Desktop container with compose</h2>
+<p>docker logs --tail 1000 -f mb_mdns</p>
+<h2 id="optional-if-you-want-to-see-the-reflector-client-inside-a-docker-desktop-container-with-compose">Optional: if you want to see the reflector client inside a Docker Desktop container with compose</h2>
+<p>docker logs --tail 1000 -f reflector</p>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

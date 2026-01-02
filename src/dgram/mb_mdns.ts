@@ -58,7 +58,13 @@ Options:
   --noIpv6                                  Disable IPv6 mDNS server (default: enabled).
   --no-timeout                              Disable automatic timeout of 10 minutes. Reflector mode disables timeout automatically.
   --reflector-client                        Enable mDNS reflector client (default: disabled).
+    --filter <string[]>                     Filters to apply to incoming mDNS messages.
+    --localhost                             Use localhost addresses to send messages to the container.
   --reflector-server                        Enable mDNS reflector server (default: disabled).
+    --filter <string[]>                     Filters to apply to incoming mDNS messages.
+    --broadcast                             Use broadcast addresses to reflect messages to the lan.
+    --localhost                             Use localhost addresses to reflect messages to the lan.
+    --share-with-clients                    Share messages between reflector clients.
   -d, --debug                               Enable debug logging (default: disabled).
   -v, --verbose                             Enable verbose logging (default: disabled).
   -s, --silent                              Enable silent mode, only log notices, warnings and errors.
@@ -124,11 +130,12 @@ Examples:
   }
 
   const query = (mdns: Mdns) => {
-    mdns.log.info('Sending mDNS query for services...');
+    mdns.log.info('Sending mDNS query for common services...');
     mdns.sendQuery([
       { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_matterbridge._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+      { name: '_home-assistant._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
@@ -216,6 +223,7 @@ Examples:
     // Start the IPv4 mDNS server
     mdnsIpv4.start();
     mdnsIpv4.on('ready', (address: AddressInfo) => {
+      mdnsIpv4?.socket.setMulticastLoopback(false);
       mdnsIpv4?.log.info(`mdnsIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
       if (hasParameter('advertise')) {
         advertise(mdnsIpv4 as Mdns);
@@ -239,6 +247,7 @@ Examples:
     // Start the IPv6 mDNS server
     mdnsIpv6.start();
     mdnsIpv6.on('ready', (address: AddressInfo) => {
+      mdnsIpv6?.socket.setMulticastLoopback(false);
       mdnsIpv6?.log.info(`mdnsIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
       if (hasParameter('advertise')) {
         advertise(mdnsIpv6 as Mdns);
