@@ -30,6 +30,10 @@ Advantages:
 
 ## [3.4.7] - Dev branch
 
+### Added
+
+- [docker]: Release also alpine and ubuntu images on Docker Hub. They are for amd64 arm64 and based on node 24. No plugin inside.
+
 ### Changed
 
 - [package]: Updated dependencies.

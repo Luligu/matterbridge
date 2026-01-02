@@ -58,3 +58,27 @@ jobs:
               workflow_id: 'docker-buildx-main.yml',
               ref: 'main'
             })
+
+      - name: Trigger Matterbridge Docker Build Ubuntu
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-ubuntu.yml',
+              ref: 'main'
+            })
+
+      - name: Trigger Matterbridge Docker Build Alpine
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-alpine.yml',
+              ref: 'main'
+            })

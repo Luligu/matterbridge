@@ -39,16 +39,6 @@ jobs:
         with:
           version: latest
 
-      - name: Extract version from package.json
-        id: extract_version
-        run: |
-          VERSION=$(jq -r '.version' package.json)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Echo main version ${{ env.VERSION }}
-        run: |
-          echo "Extracted version is: $VERSION ${{ env.VERSION }}"
-
       - name: Run Docker Buildx with Dockerfile.alpine
         run: |
           docker buildx build \
