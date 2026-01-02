@@ -161,7 +161,15 @@
     "install:vitest": "npm install --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin",
     "buildAll": "npm --workspaces run build",
     "lintAll": "npm --workspaces run lint",
-    "testAll": "npm --workspaces run test"
+    "testAll": "npm --workspaces run test",
+    "docker:build:local:latest": "docker build -f docker/Dockerfile.main -t matterbridge:latest .",
+    "docker:run:local:latest": "docker run --rm -it --name matterbridge-latest matterbridge:latest",
+    "docker:build:local:dev": "docker build -f docker/Dockerfile.dev -t matterbridge:dev .",
+    "docker:run:local:dev": "docker run --rm -it --name matterbridge-dev matterbridge:dev",
+    "docker:build:local:ubuntu": "docker build -f docker/Dockerfile.ubuntu -t matterbridge:ubuntu .",
+    "docker:run:local:ubuntu": "docker run --rm -it --name matterbridge-ubuntu matterbridge:ubuntu",
+    "docker:build:local:alpine": "docker build -f docker/Dockerfile.alpine -t matterbridge:alpine .",
+    "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine matterbridge:alpine"
   },
   "dependencies": {
     "@matter/main": "0.15.6",

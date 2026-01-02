@@ -67,6 +67,12 @@ export function getInterfaceName(): string | undefined {
  * Retrieves the IPv4 address of the first non-internal network interface.
  *
  * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
+ *
+ * @remarks
+ * Type of ipv4 addresses:
+ * 192.168.x.x, 10.x.x.x, 172.16–31.x.x: RFC 1918 = Private networks
+ * 169.254.0.0 – 169.254.255.255: APIPA = Automatic Private IP Addressing
+ * 100.64.0.0 – 100.127.255.255: CGNAT = Carrier-Grade NAT RFC 6598 = Shared Address Space
  */
 export function getIpv4InterfaceAddress(): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
@@ -82,11 +88,28 @@ export function getIpv4InterfaceAddress(): string | undefined {
  *
  * If `scope` is true, appends a zone id (scope) for link-local addresses when
  * available:
- * - On Windows: uses `%<scopeid>` (e.g. `%11`)
- * - On other platforms: uses `%<interfaceName>` (e.g. `%eth0`)
+ * - On Windows: uses `%<scopeid>` (e.g. `...%11`)
+ * - On other platforms: uses `%<interfaceName>` (e.g. `...%eth0`)
  *
  * @param {boolean} [scope] - Whether to append a zone id when available.
  * @returns {string | undefined} The IPv6 address of the selected network interface, or undefined if not found.
+ *
+ * @remarks
+ * Type of IPv6 addresses (preferred order for Matter)
+ *
+ * fd00::/8
+ *   - IPv6 ULA (Unique Local Address)
+ *   - Private IPv6 networks (RFC 4193)
+ *   - ✔ PREFERRED
+ *
+ * 2000::/3
+ *   - Global Unicast IPv6
+ *   - Publicly routable IPv6
+ *   - ⚠ OPTIONAL (advanced setups only)
+ *
+ * fe80::/10
+ *   - IPv6 Link-Local
+ *   - Interface-scoped only, non-routable
  */
 export function getIpv6InterfaceAddress(scope: boolean = false): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
@@ -96,7 +119,7 @@ export function getIpv6InterfaceAddress(scope: boolean = false): string | undefi
         const address = detail.address;
         if (!scope) return address;
 
-        // If already has a zone id, keep it.
+        // Defensive check: if already has a zone id, keep it. Should never happen from os.networkInterfaces().
         if (address.includes('%')) return address;
 
         const isWindows = os.platform() === 'win32';
@@ -165,8 +188,7 @@ export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): 
   try {
     const addresses = await dns.promises.lookup(hostname.toLowerCase() /* + '.local'*/, { family });
     return addresses.address;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }

@@ -63,11 +63,13 @@ You will see that the frontend inside the container is listening on the conainer
 [09:02:10.140] [Frontend] The frontend http server is listening on http://[fd3d:8954:ffe5::2]:8283
 ```
 
-But since we mapped the port 8283, the frontend is available on the host with localhost, your host ip or your hostname.
+But since we mapped the port 8283:
 
-On the lan it is available with your host ip or your hostname.
+- the frontend is available on the host with localhost:8283, <your_host_ip>:8283 or <your_hostname>:8283.
 
-In the same way the Matter port range 5550-5559 is mapped outside the container.
+- the frontend is available on the lan with <your_host_ip>:8283 or <your_hostname>:8283.
+
+In the same way the Matter port range 5550-5559 is mapped outside the container to allow the controllers on the lan to discover and connect.
 
 ## Optional: if you want to see the mDNS inside the Docker Desktop container
 
@@ -94,9 +96,9 @@ docker exec -it matterbridge-test ip r
 
 ### Issues we have there
 
-1. The advertised mDNS cannot reach the host and the lan cause mDNS are not routed inside Docker Desktop
+1. The advertised mDNS packets cannot reach the host and the lan cause mDNS are not routed inside Docker Desktop
 
-2. The advertised mDNS packet contains wrong A and AAAA records:
+2. The advertised mDNS packets contain wrong A and AAAA records:
 
 - the advertised address are relative to the container
 - those address are not reachable from the host and from the lan
@@ -111,7 +113,7 @@ In a while you will see
 
 ![alt text](ReflectorClient.png)
 
-## Run the Madderbridge reflector server on the host (you need node.js)
+## Run the Madderbridge reflector server directly on the host (you need node.js installed on Windows or macOS)
 
 ```shell
 npm install -g matterbridge@dev
