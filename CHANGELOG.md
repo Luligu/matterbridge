@@ -34,6 +34,7 @@ Advantages:
 
 - [docker]: Released for test and development the alpine and ubuntu images on Docker Hub. They are for amd64 arm64 and based on node 24. No plugins inside.
 - [docker]: Updated [README-DOCKER.md](README-DOCKER.md) to include alpine and ubuntu images specifications.
+- [package]: Added scripts for workspaces.
 
 ### Changed
 
