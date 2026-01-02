@@ -12,6 +12,7 @@ mock/
 node_modules/
 public/
 screenshot/
+scripts/
 src/
 temp/
 test/
