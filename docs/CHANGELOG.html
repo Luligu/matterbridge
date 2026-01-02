@@ -109,14 +109,18 @@
 <li>individual plugin isolation in childbridge mode;</li>
 <li>ability to update the plugin in childbridge mode without restarting matterbridge;</li>
 </ul>
-<h2 id="346-dev-branch">[3.4.6] - Dev branch</h2>
+<h2 id="346-2026-01-02">[3.4.6] - 2026-01-02</h2>
 <h3 id="added">Added</h3>
 <ul>
 <li>[MdnsReflectorClient]: Added already seen cache.</li>
 <li>[MdnsReflectorServer]: Added --share-with-clients to share mDNS between all reflector clients.</li>
 <li>[reflector]: <a href="https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/Docker%20reflector.html">Full guide</a>.</li>
-<li>[jest]: Refactored configuration with cross-env.</li>
+<li>[package]: Moved to monorepo and workspaces.</li>
+<li>[package]: Refactored scripts for jest with cross-env.</li>
+<li>[jest]: Typed jest config.</li>
+<li>[vitest]: Refactored configuration.</li>
 <li>[eslint]: Refactored configuration.</li>
+<li>[docker]: Prepare to release also alpine and ubuntu images on Docker Hub. Both only for amd64 arm64 and based on node 24.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>

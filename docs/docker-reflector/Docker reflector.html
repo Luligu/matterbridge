@@ -156,9 +156,14 @@ docker logs --tail 1000 -f matterbridge-test
 <pre><code class="language-text">[09:02:10.140] [Frontend] The frontend http server is listening on http://172.17.0.2:8283
 [09:02:10.140] [Frontend] The frontend http server is listening on http://[fd3d:8954:ffe5::2]:8283
 </code></pre>
-<p>But since we mapped the port 8283, the frontend is available on the host with localhost, your host ip or your hostname.</p>
-<p>On the lan it is available with your host ip or your hostname.</p>
-<p>In the same way the Matter port range 5550-5559 is mapped outside the container.</p>
+<p>But since we mapped the port 8283:</p>
+<ul>
+<li><p>the frontend is available on the host with localhost:8283, <your_host_ip>:8283 or <your_hostname>:8283.</p>
+</li>
+<li><p>the frontend is available on the lan with <your_host_ip>:8283 or <your_hostname>:8283.</p>
+</li>
+</ul>
+<p>In the same way the Matter port range 5550-5559 is mapped outside the container to allow the controllers on the lan to discover and connect.</p>
 <h2 id="optional-if-you-want-to-see-the-mdns-inside-the-docker-desktop-container">Optional: if you want to see the mDNS inside the Docker Desktop container</h2>
 <p>From another terminal run mb_mdns inside the container we created and run before</p>
 <pre><code class="language-bash">docker exec -it matterbridge-test mb_mdns --no-timeout
@@ -174,9 +179,9 @@ docker exec -it matterbridge-test ip r
 </code></pre>
 <h3 id="issues-we-have-there">Issues we have there</h3>
 <ol>
-<li><p>The advertised mDNS cannot reach the host and the lan cause mDNS are not routed inside Docker Desktop</p>
+<li><p>The advertised mDNS packets cannot reach the host and the lan cause mDNS are not routed inside Docker Desktop</p>
 </li>
-<li><p>The advertised mDNS packet contains wrong A and AAAA records:</p>
+<li><p>The advertised mDNS packets contain wrong A and AAAA records:</p>
 </li>
 </ol>
 <ul>
@@ -188,7 +193,7 @@ docker exec -it matterbridge-test ip r
 </code></pre>
 <p>In a while you will see</p>
 <p><img src="ReflectorClient.png" alt="alt text"></p>
-<h2 id="run-the-madderbridge-reflector-server-on-the-host-you-need-nodejs">Run the Madderbridge reflector server on the host (you need node.js)</h2>
+<h2 id="run-the-madderbridge-reflector-server-directly-on-the-host-you-need-nodejs-installed-on-windows-or-macos">Run the Madderbridge reflector server directly on the host (you need node.js installed on Windows or macOS)</h2>
 <pre><code class="language-shell">npm install -g matterbridge@dev
 mb_mdns --reflector-server --log-reflector-messages --localhost --share-with-clients
 </code></pre>
