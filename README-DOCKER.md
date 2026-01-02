@@ -235,3 +235,11 @@ sudo systemctl restart docker
 ```
 
 **Note**: This configuration applies to new containers. Existing containers will need to be recreated to use the new logging settings.
+
+## Development images
+
+On [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge) are also published **for test and development** the Matterbridge ubuntu and alpine images, which include a manifest list for the linux/amd64, linux/arm64 architectures and are based on node 24.x.
+
+The image (tag **ubuntu**) includes only matterbridge with the latest release (as published on npm). The plugins are not included in the image but they will be reinstalled on the first run.
+
+The image (tag **alpine**) includes only matterbridge with the latest release (as published on npm). The plugins are not included in the image but they will be reinstalled on the first run.
