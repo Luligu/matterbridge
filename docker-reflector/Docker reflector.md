@@ -137,7 +137,7 @@ In a while you will see
 # Run Home Assistant and Matter Server in Docker compose with Docker Desktop
 
 To test the sharing feature (it shares mDNS between all reflector clients),
-use the [docker-compose.yml](https://matterbridge.io/docker-reflector/docker-compose.yml) in the docker-reflector directory.
+use the [docker-compose.yml](https://matterbridge.io/docker-reflector/docker-compose.yml).
 
 With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with **ws://matterserver:5580/ws**
 
