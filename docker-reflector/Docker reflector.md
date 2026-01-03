@@ -136,6 +136,12 @@ In a while you will see
 
 # Run Home Assistant and Matter Server in Docker compose with Docker Desktop
 
+## Prerequisites
+
+You need the Matterbridge reflector server running on the host from the tutorial above.
+
+## Run Home Assitant and Matter Server in Docker Compose with Docker Desktop
+
 To test the sharing feature (it shares mDNS between all reflector clients),
 use the [docker-compose.yml](https://matterbridge.io/docker-reflector/docker-compose.yml).
 
@@ -146,13 +152,3 @@ docker compose pull
 docker compose down
 docker compose up -d --force-recreate
 ```
-
-You need the Matterbridge reflector server running on the host from the tutorial above.
-
-## Optional: if you want to see all mDNS packets inside a Docker Desktop container with compose
-
-docker logs --tail 1000 -f mb_mdns
-
-## Optional: if you want to see the reflector client inside a Docker Desktop container with compose
-
-docker logs --tail 1000 -f reflector
