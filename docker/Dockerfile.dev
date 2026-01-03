@@ -15,6 +15,10 @@ COPY ./src ./src
 COPY ./frontend/package.json ./frontend/package.json
 COPY ./frontend/build ./frontend/build
 COPY ./bin ./bin
+
+COPY ./packages/mb-lib-test/package*.json ./packages/mb-lib-test/tsconfig*.json ./packages/mb-lib-test/.npmignore ./packages/mb-lib-test/
+COPY ./packages/mb-lib-test/src ./packages/mb-lib-test/src
+
 RUN npm ci && npm run build && npm link 
 
 WORKDIR /matterbridge-zigbee2mqtt
