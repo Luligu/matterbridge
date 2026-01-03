@@ -148,7 +148,7 @@ use the [docker-compose.yml](https://matterbridge.io/docker-reflector/docker-com
 With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with **ws://matterserver:5580/ws**
 
 ```shell
-docker compose pull
 docker compose down
+docker compose pull
 docker compose up -d --force-recreate
 ```
