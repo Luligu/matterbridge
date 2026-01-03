@@ -39,6 +39,8 @@ Advantages:
 ### Changed
 
 - [package]: Updated dependencies.
+- [dgram]: Bumbed version number to 1.0.2 and excluded Tailscale interfaces in Dgram class.
+- [network]: Bumbed version number to 1.0.2.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
