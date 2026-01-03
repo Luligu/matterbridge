@@ -1,4 +1,4 @@
-# Matterbridge docker reflector
+# Matterbridge mDNS reflector
 
 This project aims to use Matterbridge in these configurations:
 
