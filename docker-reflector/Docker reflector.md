@@ -39,6 +39,9 @@ We publish the matter port range 5550-5559 to allow childbridge mode and server 
 macOS
 
 ```zsh
+docker stop matterbridge-test
+docker rm matterbridge-test
+docker pull luligu/matterbridge:dev
 docker run -dit --restart unless-stopped --name matterbridge-test \
   -p 8283:8283 -p 5550-5559:5550-5559/udp \
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert \
@@ -49,6 +52,9 @@ docker logs --tail 1000 -f matterbridge-test
 powerShell
 
 ```powershell
+docker stop matterbridge-test
+docker rm matterbridge-test
+docker pull luligu/matterbridge:dev
 docker run -dit --restart unless-stopped --name matterbridge-test `
   -p 8283:8283 -p 5550-5559:5550-5559/udp `
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert `
@@ -103,16 +109,6 @@ docker exec -it matterbridge-test ip r
 - the advertised address are relative to the container
 - those address are not reachable from the host and from the lan
 
-## Run the Madderbridge reflector client in the container we created and run before
-
-```bash
-docker exec -it matterbridge-test mb_mdns --reflector-client --localhost
-```
-
-In a while you will see
-
-![alt text](ReflectorClient.png)
-
 ## Run the Madderbridge reflector server directly on the host (you need node.js installed on Windows or macOS)
 
 ```shell
@@ -124,15 +120,31 @@ In a while you will see
 
 ![alt text](ReflectorServer.png)
 
+## Run the Madderbridge reflector client in container
+
+```shell
+docker stop matterbridge-reflector
+docker rm matterbridge-reflector
+docker pull luligu/reflector-client:latest
+docker run -dit --restart unless-stopped --name matterbridge-reflector luligu/reflector-client:latest
+docker logs --tail 1000 -f matterbridge-reflector
+```
+
+In a while you will see
+
+![alt text](ReflectorClient.png)
+
 # Run Home Assistant and Matter Server in Docker compose with Docker Desktop
 
 To test the sharing feature (it shares mDNS between all reflector clients),
-use the [docker-compose.yml](https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/docker-compose.yml) in the docker-reflector directory.
+use the [docker-compose.yml](https://matterbridge.io/docker-reflector/docker-compose.yml) in the docker-reflector directory.
 
 With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with **ws://matterserver:5580/ws**
 
-```bash
-docker compose up -d
+```shell
+docker compose pull
+docker compose down
+docker compose up -d --force-recreate
 ```
 
 You need the Matterbridge reflector server running on the host from the tutorial above.
