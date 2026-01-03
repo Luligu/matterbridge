@@ -2,11 +2,18 @@ FROM node:24-alpine AS base
 
 # Build Matterbridge
 WORKDIR /matterbridge
-COPY ./package.json ./package-lock.json ./tsconfig.base.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
+COPY ./package*.json ./tsconfig*.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm ci && \
-  npm run build && \
+
+COPY ./packages/mb-lib-test/package*.json ./packages/mb-lib-test/tsconfig*.json ./packages/mb-lib-test/.npmignore ./packages/mb-lib-test/
+COPY ./packages/mb-lib-test/src ./packages/mb-lib-test/src
+
+RUN npm ci --no-fund --no-audit && \
+  npm run cleanBuildProduction && \
+  npm pkg delete devDependencies scripts types && \
+  rm -rf ./node_modules && \
+  npm install --no-fund --no-audit --omit=dev && \
   npm shrinkwrap --omit=dev && \
   npm pack
 
@@ -15,7 +22,7 @@ FROM node:24-alpine AS release
 # Install matterbridge
 WORKDIR /matterbridge
 COPY --from=base /matterbridge/*.tgz .
-RUN npm install *.tgz --global --verbose --omit=dev && rm *.tgz
+RUN npm install *.tgz --global --verbose --no-fund --no-audit --omit=dev && rm *.tgz
 
 # Add Docker HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \

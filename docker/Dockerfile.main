@@ -5,16 +5,20 @@ FROM node:22-bookworm-slim AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
-COPY ./package.json ./package-lock.json ./tsconfig.base.json ./tsconfig.json ./tsconfig.production.json ./
+COPY ./package*.json ./tsconfig*.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/package.json ./frontend/package.json
 COPY ./frontend/build ./frontend/build
 COPY ./bin ./bin
-RUN npm ci && \
+
+COPY ./packages/mb-lib-test/package*.json ./packages/mb-lib-test/tsconfig*.json ./packages/mb-lib-test/.npmignore ./packages/mb-lib-test/
+COPY ./packages/mb-lib-test/src ./packages/mb-lib-test/src
+
+RUN npm ci --no-fund --no-audit && \
   npm run buildProduction && \
   npm pkg delete devDependencies scripts types && \
-  npx rimraf ./node_modules && \
-  npm install --omit=dev && \
+  rm -rf ./node_modules && \
+  npm install --no-fund --no-audit --omit=dev && \
   npm shrinkwrap && \
   npm pack 
 
@@ -34,7 +38,7 @@ COPY --from=builder /app/*.tgz .
 RUN apt-get update && \
   apt-get install -y --no-install-recommends curl && \
   apt-get clean && \
-  npm install --global --omit=dev \
+  npm install --global --no-fund --no-audit --omit=dev \
   *.tgz \
   matterbridge-zigbee2mqtt \
   matterbridge-somfy-tahoma \
