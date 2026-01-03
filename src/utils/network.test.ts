@@ -57,35 +57,15 @@ import { PassThrough } from 'node:stream';
 import { ClientRequest, IncomingMessage } from 'node:http';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, BLUE, nf } from 'node-ansi-logger';
+import { LogLevel, BLUE, nf } from 'node-ansi-logger';
+
+import { loggerLogSpy, setupTest } from '../jestutils/jestHelpers.js';
 
 import { getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname, getGlobalNodeModules, getInterfaceName, getInterfaceDetails } from './network.js';
 
 jest.useFakeTimers();
 
-let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
-
-if (!debug) {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
-} else {
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  consoleLogSpy = jest.spyOn(console, 'log');
-  consoleDebugSpy = jest.spyOn(console, 'debug');
-  consoleInfoSpy = jest.spyOn(console, 'info');
-  consoleWarnSpy = jest.spyOn(console, 'warn');
-  consoleErrorSpy = jest.spyOn(console, 'error');
-}
+await setupTest('Network');
 
 describe('getInterfaceDetails() / getInterfaceName() / getIpv4InterfaceAddress / getIpv6InterfaceAddress / getMacAddress', () => {
   const fakeIfaces = {
@@ -246,5 +226,210 @@ describe('getGlobalNodeModules()', () => {
       return {} as ChildProcess;
     });
     await expect(getGlobalNodeModules()).rejects.toThrow('fail');
+  });
+});
+
+describe('getNpmPackageVersion()', () => {
+  afterEach(() => {
+    mockedGet.mockReset();
+  });
+
+  it('returns the latest version on 200 + valid JSON', async () => {
+    const { getNpmPackageVersion } = await import('./network.js');
+    await expect(getNpmPackageVersion('some-package')).resolves.toBe('1.2.3');
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/some-package', expect.any(Object), expect.any(Function));
+  });
+
+  it('rejects when statusCode is not 200', async () => {
+    const { getNpmPackageVersion } = await import('./network.js');
+
+    mockedGet.mockImplementationOnce((_urlOrOptions: string | URL | RequestOptions, optionsOrCallback?: RequestOptions | ((res: IncomingMessage) => void), callback?: (res: IncomingMessage) => void) => {
+      const cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      const mockRes = new PassThrough();
+      // @ts-ignore
+      mockRes.statusCode = 500;
+      // @ts-ignore
+      mockRes.resume = jest.fn();
+      cb?.(mockRes as unknown as IncomingMessage);
+      return { on: jest.fn(), destroy: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
+    });
+
+    await expect(getNpmPackageVersion('some-package')).rejects.toThrow('Status code: 500');
+  });
+
+  it('rejects when tag is missing in dist-tags', async () => {
+    const { getNpmPackageVersion } = await import('./network.js');
+
+    mockedGet.mockImplementationOnce((_urlOrOptions: string | URL | RequestOptions, optionsOrCallback?: RequestOptions | ((res: IncomingMessage) => void), callback?: (res: IncomingMessage) => void) => {
+      const cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      const mockRes = new PassThrough();
+      // @ts-ignore
+      mockRes.statusCode = 200;
+      // @ts-ignore
+      mockRes.resume = jest.fn();
+      cb?.(mockRes as unknown as IncomingMessage);
+      mockRes.emit('data', Buffer.from(JSON.stringify({ 'dist-tags': { other: '9.9.9' } })));
+      mockRes.emit('end');
+      return { on: jest.fn(), destroy: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
+    });
+
+    await expect(getNpmPackageVersion('some-package', 'latest')).rejects.toThrow('Tag "latest" not found');
+  });
+
+  it('rejects when JSON parsing fails', async () => {
+    const { getNpmPackageVersion } = await import('./network.js');
+
+    mockedGet.mockImplementationOnce((_urlOrOptions: string | URL | RequestOptions, optionsOrCallback?: RequestOptions | ((res: IncomingMessage) => void), callback?: (res: IncomingMessage) => void) => {
+      const cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      const mockRes = new PassThrough();
+      // @ts-ignore
+      mockRes.statusCode = 200;
+      // @ts-ignore
+      mockRes.resume = jest.fn();
+      cb?.(mockRes as unknown as IncomingMessage);
+      mockRes.emit('data', Buffer.from('not-json'));
+      mockRes.emit('end');
+      return { on: jest.fn(), destroy: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
+    });
+
+    await expect(getNpmPackageVersion('some-package')).rejects.toThrow('Failed to parse response JSON');
+  });
+
+  it('rejects on request error event', async () => {
+    const { getNpmPackageVersion } = await import('./network.js');
+
+    mockedGet.mockImplementationOnce((_urlOrOptions: string | URL | RequestOptions, _optionsOrCallback?: RequestOptions | ((res: IncomingMessage) => void), _callback?: (res: IncomingMessage) => void) => {
+      const req = {
+        on: jest.fn((event: string, handler: (arg: unknown) => void) => {
+          if (event === 'error') {
+            // Reject immediately; the suite uses fake timers.
+            handler(new Error('req-fail'));
+          }
+          return req;
+        }),
+        destroy: jest.fn(),
+        end: jest.fn(),
+      };
+      return req as unknown as ClientRequest;
+    });
+
+    await expect(getNpmPackageVersion('some-package')).rejects.toThrow('Request failed: req-fail');
+  });
+
+  it('rejects on timeout', async () => {
+    const { getNpmPackageVersion } = await import('./network.js');
+
+    mockedGet.mockImplementationOnce((_urlOrOptions: string | URL | RequestOptions, optionsOrCallback?: RequestOptions | ((res: IncomingMessage) => void), callback?: (res: IncomingMessage) => void) => {
+      const cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      const mockRes = new PassThrough();
+      // @ts-ignore
+      mockRes.statusCode = 200;
+      // @ts-ignore
+      mockRes.resume = jest.fn();
+      cb?.(mockRes as unknown as IncomingMessage);
+      // Do not emit 'end' so the promise remains pending until timeout.
+      return { on: jest.fn(), destroy: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
+    });
+
+    const p = getNpmPackageVersion('some-package', 'latest', 1);
+    void p.catch(() => undefined);
+    await jest.advanceTimersByTimeAsync(2);
+    await expect(p).rejects.toThrow('Request timed out after');
+  });
+});
+
+describe('getGitHubUpdate()', () => {
+  afterEach(() => {
+    mockedGet.mockReset();
+  });
+
+  it('returns parsed JSON on 200', async () => {
+    const { getGitHubUpdate } = await import('./network.js');
+
+    mockedGet.mockImplementationOnce((_urlOrOptions: string | URL | RequestOptions, optionsOrCallback?: RequestOptions | ((res: IncomingMessage) => void), callback?: (res: IncomingMessage) => void) => {
+      const cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      const mockRes = new PassThrough();
+      // @ts-ignore
+      mockRes.statusCode = 200;
+      // @ts-ignore
+      mockRes.resume = jest.fn();
+      cb?.(mockRes as unknown as IncomingMessage);
+      mockRes.emit(
+        'data',
+        Buffer.from(
+          JSON.stringify({
+            latest: '1.0.0',
+            latestDate: '2025-01-01',
+            dev: '1.0.0-dev',
+            devDate: '2025-01-02',
+            latestMessage: 'ok',
+            latestMessageSeverity: 'info',
+            devMessage: 'ok',
+            devMessageSeverity: 'info',
+          }),
+        ),
+      );
+      mockRes.emit('end');
+      return { on: jest.fn(), destroy: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
+    });
+
+    await expect(getGitHubUpdate('main', 'update.json')).resolves.toMatchObject({ latest: '1.0.0', dev: '1.0.0-dev' });
+  });
+
+  it('rejects when statusCode is not 200', async () => {
+    const { getGitHubUpdate } = await import('./network.js');
+
+    mockedGet.mockImplementationOnce((_urlOrOptions: string | URL | RequestOptions, optionsOrCallback?: RequestOptions | ((res: IncomingMessage) => void), callback?: (res: IncomingMessage) => void) => {
+      const cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      const mockRes = new PassThrough();
+      // @ts-ignore
+      mockRes.statusCode = 404;
+      // @ts-ignore
+      mockRes.resume = jest.fn();
+      cb?.(mockRes as unknown as IncomingMessage);
+      return { on: jest.fn(), destroy: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
+    });
+
+    await expect(getGitHubUpdate('main', 'update.json')).rejects.toThrow('Status code: 404');
+  });
+
+  it('rejects when JSON parsing fails', async () => {
+    const { getGitHubUpdate } = await import('./network.js');
+
+    mockedGet.mockImplementationOnce((_urlOrOptions: string | URL | RequestOptions, optionsOrCallback?: RequestOptions | ((res: IncomingMessage) => void), callback?: (res: IncomingMessage) => void) => {
+      const cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      const mockRes = new PassThrough();
+      // @ts-ignore
+      mockRes.statusCode = 200;
+      // @ts-ignore
+      mockRes.resume = jest.fn();
+      cb?.(mockRes as unknown as IncomingMessage);
+      mockRes.emit('data', Buffer.from('not-json'));
+      mockRes.emit('end');
+      return { on: jest.fn(), destroy: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
+    });
+
+    await expect(getGitHubUpdate('main', 'update.json')).rejects.toThrow('Failed to parse response JSON');
+  });
+
+  it('rejects on timeout', async () => {
+    const { getGitHubUpdate } = await import('./network.js');
+
+    mockedGet.mockImplementationOnce((_urlOrOptions: string | URL | RequestOptions, optionsOrCallback?: RequestOptions | ((res: IncomingMessage) => void), callback?: (res: IncomingMessage) => void) => {
+      const cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      const mockRes = new PassThrough();
+      // @ts-ignore
+      mockRes.statusCode = 200;
+      // @ts-ignore
+      mockRes.resume = jest.fn();
+      cb?.(mockRes as unknown as IncomingMessage);
+      // Do not emit 'end' so the promise remains pending until timeout.
+      return { on: jest.fn(), destroy: jest.fn(), end: jest.fn() } as unknown as ClientRequest;
+    });
+
+    const p = getGitHubUpdate('main', 'update.json', 1);
+    void p.catch(() => undefined);
+    await jest.advanceTimersByTimeAsync(2);
+    await expect(p).rejects.toThrow('Request timed out after');
   });
 });
