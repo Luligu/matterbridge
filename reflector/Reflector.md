@@ -14,7 +14,7 @@ This project aims to use Matterbridge in these configurations:
 
 (3) - Share mDNS between separate containers.
 
-It can also be used to run Home Assistant and Matter Server inside Docker Desktop on Windows and macOS (with network bridge) without using complex VM. You just copy paste this [docker-compose.yml](https://matterbridge.io/docker-reflector/docker-compose.yml).
+It can also be used to run Home Assistant and Matter Server inside Docker Desktop on Windows and macOS (with network bridge) without using complex VM. You just copy paste this [docker-compose.yml](https://matterbridge.io/reflector/docker-compose.yml).
 
 # Prerequisites
 
@@ -143,7 +143,7 @@ You need the Matterbridge reflector server running on the host from the tutorial
 ## Run Home Assitant and Matter Server in Docker Compose with Docker Desktop
 
 To test the sharing feature (it shares mDNS between all reflector clients),
-use this [docker-compose.yml](https://matterbridge.io/docker-reflector/docker-compose.yml).
+use this [docker-compose.yml](https://matterbridge.io/reflector/docker-compose.yml).
 
 With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with **ws://matterserver:5580/ws**
 
