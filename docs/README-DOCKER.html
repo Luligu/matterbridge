@@ -220,6 +220,10 @@ docker compose up -d --no-deps --force-recreate matterbridge
 <pre><code class="language-bash">sudo systemctl restart docker
 </code></pre>
 <p><strong>Note</strong>: This configuration applies to new containers. Existing containers will need to be recreated to use the new logging settings.</p>
+<h2 id="development-images">Development images</h2>
+<p>On <a href="https://hub.docker.com/r/luligu/matterbridge"><strong>Docker Hub</strong></a> are also published <strong>for test and development</strong> the Matterbridge ubuntu and alpine images, which include a manifest list for the linux/amd64, linux/arm64 architectures and are based on node 24.x.</p>
+<p>The image (tag <strong>ubuntu</strong>) includes only matterbridge with the latest release (as published on npm). The plugins are not included in the image but they will be reinstalled on the first run.</p>
+<p>The image (tag <strong>alpine</strong>) includes only matterbridge with the latest release (as published on npm). The plugins are not included in the image but they will be reinstalled on the first run.</p>
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';

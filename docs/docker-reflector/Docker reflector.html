@@ -139,14 +139,20 @@
 <p>We publish the default matterbridge frontend port 8283.</p>
 <p>We publish the matter port range 5550-5559 to allow childbridge mode and server node devices (RVCs).</p>
 <p>macOS</p>
-<pre><code class="language-zsh">docker run -dit --restart unless-stopped --name matterbridge-test \
+<pre><code class="language-zsh">docker stop matterbridge-test
+docker rm matterbridge-test
+docker pull luligu/matterbridge:dev
+docker run -dit --restart unless-stopped --name matterbridge-test \
   -p 8283:8283 -p 5550-5559:5550-5559/udp \
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert \
   luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
 docker logs --tail 1000 -f matterbridge-test
 </code></pre>
 <p>powerShell</p>
-<pre><code class="language-powershell">docker run -dit --restart unless-stopped --name matterbridge-test `
+<pre><code class="language-powershell">docker stop matterbridge-test
+docker rm matterbridge-test
+docker pull luligu/matterbridge:dev
+docker run -dit --restart unless-stopped --name matterbridge-test `
   -p 8283:8283 -p 5550-5559:5550-5559/udp `
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert `
   luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
@@ -188,22 +194,28 @@ docker exec -it matterbridge-test ip r
 <li>the advertised address are relative to the container</li>
 <li>those address are not reachable from the host and from the lan</li>
 </ul>
-<h2 id="run-the-madderbridge-reflector-client-in-the-container-we-created-and-run-before">Run the Madderbridge reflector client in the container we created and run before</h2>
-<pre><code class="language-bash">docker exec -it matterbridge-test mb_mdns --reflector-client --localhost
-</code></pre>
-<p>In a while you will see</p>
-<p><img src="ReflectorClient.png" alt="alt text"></p>
 <h2 id="run-the-madderbridge-reflector-server-directly-on-the-host-you-need-nodejs-installed-on-windows-or-macos">Run the Madderbridge reflector server directly on the host (you need node.js installed on Windows or macOS)</h2>
 <pre><code class="language-shell">npm install -g matterbridge@dev
 mb_mdns --reflector-server --log-reflector-messages --localhost --share-with-clients
 </code></pre>
 <p>In a while you will see</p>
 <p><img src="ReflectorServer.png" alt="alt text"></p>
+<h2 id="run-the-madderbridge-reflector-client-in-container">Run the Madderbridge reflector client in container</h2>
+<pre><code class="language-shell">docker stop matterbridge-reflector
+docker rm matterbridge-reflector
+docker pull luligu/reflector-client:latest
+docker run -dit --restart unless-stopped --name matterbridge-reflector luligu/reflector-client:latest
+docker logs --tail 1000 -f matterbridge-reflector
+</code></pre>
+<p>In a while you will see</p>
+<p><img src="ReflectorClient.png" alt="alt text"></p>
 <h1 id="run-home-assistant-and-matter-server-in-docker-compose-with-docker-desktop">Run Home Assistant and Matter Server in Docker compose with Docker Desktop</h1>
 <p>To test the sharing feature (it shares mDNS between all reflector clients),
-use the <a href="https://github.com/Luligu/matterbridge/blob/dev/docker-reflector/docker-compose.yml">docker-compose.yml</a> in the docker-reflector directory.</p>
+use the <a href="https://matterbridge.io/docker-reflector/docker-compose.yml">docker-compose.yml</a> in the docker-reflector directory.</p>
 <p>With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with <strong>ws://matterserver:5580/ws</strong></p>
-<pre><code class="language-bash">docker compose up -d
+<pre><code class="language-shell">docker compose pull
+docker compose down
+docker compose up -d --force-recreate
 </code></pre>
 <p>You need the Matterbridge reflector server running on the host from the tutorial above.</p>
 <h2 id="optional-if-you-want-to-see-all-mdns-packets-inside-a-docker-desktop-container-with-compose">Optional: if you want to see all mDNS packets inside a Docker Desktop container with compose</h2>
