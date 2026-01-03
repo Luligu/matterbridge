@@ -138,6 +138,8 @@
 <p>(2) - Network host in this configuration works already out of the box cause Docker runs on the host.</p>
 <p>(3) - Share mDNS between separate containers.</p>
 <p>It can also be used to run Home Assistant and Matter Server inside Docker Desktop on Windows and macOS (with network bridge) without using complex VM. You just copy paste this <a href="https://matterbridge.io/reflector/docker-compose.yml">docker-compose.yml</a>.</p>
+<p>Since the mDNS are shared between reflector clients, you can pair Matterbridge running with Docker Desktop to Home Assistant running with Docker Desktop. Even on the same machine.</p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h1 id="prerequisites">Prerequisites</h1>
 <ul>
 <li>Docker Desktop</li>
@@ -181,7 +183,7 @@ docker logs --tail 1000 -f matterbridge-test
 <li><p>the frontend is available on the lan with <your_host_ip>:8283 or <your_hostname>:8283.</p>
 </li>
 </ul>
-<p>In the same way the Matter port range 5550-5559 is mapped outside the container to allow the controllers on the lan to discover and connect.</p>
+<p>In the same way the Matter port range 5550-5559 is mapped outside the container to allow the controllers on the lan to discover and connect Matterbridge.</p>
 <h2 id="optional-if-you-want-to-see-the-mdns-inside-the-docker-desktop-container">Optional: if you want to see the mDNS inside the Docker Desktop container</h2>
 <p>From another terminal run mb_mdns inside the container we created and run before</p>
 <pre><code class="language-bash">docker exec -it matterbridge-test mb_mdns --no-timeout

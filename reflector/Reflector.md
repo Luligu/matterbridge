@@ -16,6 +16,10 @@ This project aims to use Matterbridge in these configurations:
 
 It can also be used to run Home Assistant and Matter Server inside Docker Desktop on Windows and macOS (with network bridge) without using complex VM. You just copy paste this [docker-compose.yml](https://matterbridge.io/reflector/docker-compose.yml).
 
+Since the mDNS are shared between reflector clients, you can pair Matterbridge running with Docker Desktop to Home Assistant running with Docker Desktop. Even on the same machine.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
+
 # Prerequisites
 
 - Docker Desktop
@@ -75,7 +79,7 @@ But since we mapped the port 8283:
 
 - the frontend is available on the lan with <your_host_ip>:8283 or <your_hostname>:8283.
 
-In the same way the Matter port range 5550-5559 is mapped outside the container to allow the controllers on the lan to discover and connect.
+In the same way the Matter port range 5550-5559 is mapped outside the container to allow the controllers on the lan to discover and connect Matterbridge.
 
 ## Optional: if you want to see the mDNS inside the Docker Desktop container
 
