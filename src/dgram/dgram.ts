@@ -3,7 +3,7 @@
  * @file dgram.ts
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -187,6 +187,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     // If no interface was specified or the provided one doesn't exist, find the first external IPv4 interface.
     if (!networkInterface) {
       for (const [interfaceName, interfaceDetails] of Object.entries(interfaces)) {
+        if (interfaceName.toLowerCase().includes('tailscale')) continue;
         if (!interfaceDetails) continue;
         // Check if at least one external IPv4 address exists on this interface.
         for (const detail of interfaceDetails) {
@@ -235,6 +236,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     // If no network interface was specified, search for the first external IPv6 interface.
     if (!networkInterface) {
       for (const [interfaceName, interfaceDetails] of Object.entries(interfaces)) {
+        if (interfaceName.toLowerCase().includes('tailscale')) continue;
         if (!interfaceDetails) continue;
         for (const detail of interfaceDetails) {
           if (detail.family === 'IPv6' && !detail.internal) {
