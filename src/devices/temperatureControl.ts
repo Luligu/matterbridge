@@ -76,27 +76,18 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('setTemperature', { request, cluster: TemperatureControlServer.id, attributes: this.state, endpoint: this.endpoint });
-
     let targetTemp = request.targetTemperature;
-
     if (targetTemp !== undefined) {
       const maxC = this.state.maxTemperature;
       const minC = this.state.minTemperature;
-
-      // If supplied temperature is higher than Max Celsius (suggesting it's Fahrenheit)
       if (targetTemp > maxC) {
-        // Convert Fahrenheit to Celsius: (F - 32) * 5/9
-        // We divide by 100 and multiply by 100 to maintain the "centidegree" format
         const converted = Math.round(((targetTemp / 100 - 32) * 5 / 9) * 100);
-
-        // Verify if the converted value falls within the valid Celsius range
         if (converted >= minC && converted <= maxC) {
           device.log.warn(`Detected likely Fahrenheit value (${targetTemp}). Correcting to Celsius (${converted}).`);
           targetTemp = converted;
         }
       }
     }
-
     if (targetTemp !== undefined && targetTemp >= this.state.minTemperature && targetTemp <= this.state.maxTemperature) {
       device.log.debug(`MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to ${targetTemp}`);
       this.state.temperatureSetpoint = targetTemp;
