@@ -1,12 +1,12 @@
 {
-  "name": "mb-lib-test",
+  "name": "mb-lib-utils",
   "version": "0.0.1",
-  "description": "Matterbridge test library",
+  "description": "Matterbridge utils library",
   "author": "https://github.com/Luligu",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Luligu/matterbridge.git",
-    "directory": "packages/mb-lib-test"
+    "directory": "packages/mb-lib-utils"
   },
   "keywords": [],
   "license": "Apache-2.0",
@@ -23,11 +23,8 @@
       "import": "./dist/export.js"
     }
   },
-  "engines": {
-    "node": ">=20.0.0 <21.0.0 || >=22.0.0 <23.0.0 || >=24.0.0 <25.0.0"
-  },
   "scripts": {
-    "start": "node dist/module.js",
+    "start": "node index.js",
     "build": "tsc --project tsconfig.json",
     "buildProduction": "tsc --project tsconfig.production.json",
     "clean": "npx shx rm -rf tsconfig.tsbuildinfo dist",
@@ -76,7 +73,8 @@
     "install:vitest": "npm install --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin"
   },
   "dependencies": {
-    "node-ansi-logger": "3.1.1"
+    "node-ansi-logger": "3.1.1",
+    "mb-lib-test": "^0.0.1"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",

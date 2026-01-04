@@ -1,0 +1,1390 @@
+{
+  "commit": "6c7d52a3",
+  "config": {
+    "advanced": {
+      "adapter_concurrent": null,
+      "adapter_delay": null,
+      "availability_blacklist": [],
+      "availability_blocklist": [],
+      "availability_passlist": [],
+      "availability_whitelist": [],
+      "cache_state": true,
+      "cache_state_persistent": true,
+      "cache_state_send_on_startup": true,
+      "channel": 25,
+      "elapsed": false,
+      "ext_pan_id": [70, 139, 1, 92, 28, 41, 39, 0],
+      "homeassistant_legacy_entity_attributes": false,
+      "last_seen": "ISO_8601_local",
+      "legacy_api": false,
+      "legacy_availability_payload": false,
+      "log_debug_namespace_ignore": "",
+      "log_debug_to_mqtt_frontend": false,
+      "log_directory": "/opt/zigbee2mqtt/data/log/%TIMESTAMP%",
+      "log_file": "log.log",
+      "log_level": "debug",
+      "log_namespaced_levels": {},
+      "log_output": ["console", "file"],
+      "log_rotation": true,
+      "log_symlink_current": false,
+      "log_syslog": {
+        "app_name": "Zigbee2MQTT",
+        "eol": "/n",
+        "host": "localhost",
+        "localhost": "localhost",
+        "path": "/dev/log",
+        "pid": "process.pid",
+        "port": 514,
+        "protocol": "udp4",
+        "type": "5424"
+      },
+      "output": "json",
+      "pan_id": 12396,
+      "report": false,
+      "soft_reset_timeout": 0,
+      "timestamp_format": "YYYY-MM-DD HH:mm:ss",
+      "transmit_power": 20
+    },
+    "automations": "automations.yaml",
+    "availability": {
+      "active": {
+        "timeout": 10
+      },
+      "passive": {
+        "timeout": 1440
+      }
+    },
+    "blocklist": [],
+    "device_options": {
+      "color_sync": true,
+      "legacy": false,
+      "state_action": false,
+      "transition": 0
+    },
+    "devices": {
+      "0x00124b0024e7a729": {
+        "friendly_name": "Toilet Motion sensor"
+      },
+      "0x00124b00250015d8": {
+        "friendly_name": "Bedroom Wardrobe occupancy sensor"
+      },
+      "0x00124b0025001cb3": {
+        "friendly_name": "Shower Occupancy sensor"
+      },
+      "0x00124b0025035e9f": {
+        "friendly_name": "Bathroom Occupancy sensor"
+      },
+      "0x00124b0025038e67": {
+        "friendly_name": "Storage room Motion sensor"
+      },
+      "0x00124b0025047748": {
+        "friendly_name": "Dressing room Occupancy sensor"
+      },
+      "0x00124b00251c89f8": {
+        "friendly_name": "Kitchen Occupancy sensor"
+      },
+      "0x00124b00291123ff": {
+        "friendly_name": "Shower Mirror occupancy sensor"
+      },
+      "0x00124b002a2f191a": {
+        "friendly_name": "Guest room Router"
+      },
+      "0x00124b002a2f1b38": {
+        "friendly_name": "Bedroom Router"
+      },
+      "0x00124b002a2f2fb6": {
+        "friendly_name": "Kitchen Router"
+      },
+      "0x00158d0006d0c254": {
+        "friendly_name": "Dressing room Safe vibration sensor"
+      },
+      "0x00158d0006d0ca99": {
+        "friendly_name": "Living room Cupboard sx vibration sensor"
+      },
+      "0x00158d0006d0cb1b": {
+        "friendly_name": "Living room Drawer vibration sensor"
+      },
+      "0x00158d0006d3422f": {
+        "friendly_name": "Living room Cupboard dx vibration sensor"
+      },
+      "0x00158d000771e939": {
+        "friendly_name": "Bedroom Wireless scenes switch",
+        "legacy": false
+      },
+      "0x00158d0007b6f079": {
+        "friendly_name": "Bedroom Climate sensor"
+      },
+      "0x00158d0007bc1211": {
+        "friendly_name": "Guest room Climate sensor"
+      },
+      "0x00158d0007bef4c6": {
+        "friendly_name": "Living room Cupboard occupancy sensor"
+      },
+      "0x00158d0007c2b057": {
+        "friendly_name": "Kitchen Dishwasher water leak sensor"
+      },
+      "0x00158d0007c64675": {
+        "friendly_name": "Dressing room Laundry water leak sensor"
+      },
+      "0x00158d0007ed136b": {
+        "friendly_name": "Entry hall Entry door contact sensor"
+      },
+      "0x00158d0007efb800": {
+        "friendly_name": "Hallway Bedroom occupancy sensor",
+        "illuminance_lux_calibration": 30,
+        "no_occupancy_since": [
+          {
+            "undefined": 300
+          }
+        ],
+        "occupancy_timeout": 90
+      },
+      "0x00158d0007efc546": {
+        "friendly_name": "Living room Bookshelf occupancy sensor"
+      },
+      "0x00158d0008088680": {
+        "friendly_name": "Hallway Guest room occupancy sensor"
+      },
+      "0x00158d0008103359": {
+        "friendly_name": "Bedroom Wireless scenes button"
+      },
+      "0x00158d0008913fe7": {
+        "availability": {
+          "timeout": 60
+        },
+        "friendly_name": "Dressing room Climate sensor"
+      },
+      "0x00158d000892a722": {
+        "friendly_name": "Storage room Climate sensor"
+      },
+      "0x00158d0008f1099b": {
+        "friendly_name": "Kitchen Sink water leak sensor"
+      },
+      "0x00158d00091e7a12": {
+        "friendly_name": "Bedroom Window dx contact sensor"
+      },
+      "0x00158d00091e7a6f": {
+        "friendly_name": "Living room Table window dx contact sensor"
+      },
+      "0x00158d00091e7b51": {
+        "friendly_name": "Guest room Window dx contact sensor"
+      },
+      "0x00158d00091e8c2c": {
+        "friendly_name": "Living room Bookshelf window dx contact sensor"
+      },
+      "0x00158d00091ea734": {
+        "friendly_name": "Guest room Window sx contact sensor"
+      },
+      "0x00158d00091ea753": {
+        "friendly_name": "Living room Table window sx contact sensor"
+      },
+      "0x00158d00091ea7b2": {
+        "friendly_name": "Bedroom Window sx contact sensor"
+      },
+      "0x00158d00091ea820": {
+        "friendly_name": "Living room Bookshelf window sx contact sensor"
+      },
+      "0x00158d000945ea32": {
+        "availability": {
+          "timeout": 60
+        },
+        "friendly_name": "Living room Climate sensor"
+      },
+      "0x00158d000945f308": {
+        "availability": {
+          "timeout": 60
+        },
+        "friendly_name": "Kitchen Climate sensor"
+      },
+      "0x00158d000977e268": {
+        "friendly_name": "Toilet Climate sensor"
+      },
+      "0x00158d0009d35fd9": {
+        "friendly_name": "Shower Climate sensor"
+      },
+      "0x00158d0009d3a7db": {
+        "friendly_name": "Bathroom Climate sensor"
+      },
+      "0x003c84fffea7fda1": {
+        "color_sync": false,
+        "friendly_name": "Kitchen Cupboard light strip",
+        "state_action": false
+      },
+      "0x003c84fffea7fff8": {
+        "color_sync": false,
+        "friendly_name": "Living room TV light strip",
+        "state_action": false
+      },
+      "0x003c84fffec29bab": {
+        "color_sync": false,
+        "friendly_name": "Living room Shelf light strip",
+        "state_action": false,
+        "transition": 0
+      },
+      "0x04cd15fffeddcc5e": {
+        "friendly_name": "Living room Bookshelf lights"
+      },
+      "0x04cf8cdf3c8f3a7e": {
+        "friendly_name": "Balcony Light sensor"
+      },
+      "0x187a3efffe3557f7": {
+        "friendly_name": "Guest room Lights"
+      },
+      "0x187a3efffe357548": {
+        "friendly_name": "Storage room Light"
+      },
+      "0x187a3efffe35756d": {
+        "friendly_name": "Entry hall Lights"
+      },
+      "0x540f57fffe924652": {
+        "friendly_name": "Balcony Light"
+      },
+      "0x540f57fffe924dd2": {
+        "friendly_name": "Guest room Floor leds"
+      },
+      "0x540f57fffe924df9": {
+        "friendly_name": "Bedroom Floor leds"
+      },
+      "0x54ef4410003ff4f0": {
+        "friendly_name": "Living room Wireless scenes switch"
+      },
+      "0x54ef44100042956a": {
+        "friendly_name": "Balcony Decoration lights"
+      },
+      "0x54ef441000513188": {
+        "friendly_name": "Shower Lights"
+      },
+      "0x54ef4410005e2bf3": {
+        "friendly_name": "Entry hall Occupancy sensor"
+      },
+      "0x54ef441000777289": {
+        "friendly_name": "Guest room Occupancy sensor"
+      },
+      "0x54ef441000799e0a": {
+        "friendly_name": "Bedroom Occupancy sensor"
+      },
+      "0x54ef4410007db760": {
+        "friendly_name": "Toilet Light"
+      },
+      "0x54ef44100080042b": {
+        "friendly_name": "Bathroom Lights",
+        "state_action": false
+      },
+      "0x54ef4410008029a9": {
+        "friendly_name": "Shower Mirror"
+      },
+      "0x54ef441000803072": {
+        "friendly_name": "Bathroom Leds",
+        "state_action": false
+      },
+      "0x60a423fffeae724a": {
+        "friendly_name": "Living room Floor leds"
+      },
+      "0x60a423fffeae7685": {
+        "friendly_name": "Hallway Guest room leds"
+      },
+      "0x70b3d52b600152bb": {
+        "friendly_name": "Guest room Desk sockets",
+        "state_action": false
+      },
+      "0x84ba20fffe67318b": {
+        "friendly_name": "Kitchen Lights"
+      },
+      "0x84fd27fffe39f705": {
+        "friendly_name": "Living room Bookshelf light strip"
+      },
+      "0x84fd27fffe6006b3": {
+        "color_sync": false,
+        "friendly_name": "Guest room Wardrobe light strip",
+        "state_action": false,
+        "transition": 0
+      },
+      "0x84fd27fffe803ae3": {
+        "friendly_name": "Guest room Wireless scene switch"
+      },
+      "0x84fd27fffe83066f": {
+        "color_sync": false,
+        "friendly_name": "Guest room Desk light strip",
+        "state_action": false,
+        "transition": 0
+      },
+      "0x943469fffeee28c1": {
+        "color_sync": true,
+        "disabled": false,
+        "friendly_name": "Hallway Guest room lights",
+        "homeassistant": {},
+        "legacy": false,
+        "optimistic": true,
+        "state_action": false,
+        "transition": 0
+      },
+      "0x943469fffeee28c5": {
+        "friendly_name": "Hallway Bedroom lights"
+      },
+      "0x943469fffeee28f6": {
+        "friendly_name": "Dressing room Lights"
+      },
+      "0x943469fffeee2971": {
+        "friendly_name": "Bedroom Wall light"
+      },
+      "0x943469fffeee2bda": {
+        "friendly_name": "Bedroom Wardrobe lights"
+      },
+      "0x94deb8fffe0c7823": {
+        "friendly_name": "Living room Wall leds"
+      },
+      "0xa4c13801eccf15fd": {
+        "friendly_name": "Guest room Roomba plug"
+      },
+      "0xa4c13839353870ed": {
+        "friendly_name": "Living room Smoke alarm"
+      },
+      "0xa4c1383b2bfe63ac": {
+        "friendly_name": "Guest room Computer plug"
+      },
+      "0xa4c138401dbeb326": {
+        "friendly_name": "Kitchen Dishwasher plug"
+      },
+      "0xa4c1385fff79b693": {
+        "friendly_name": "Guest room Smoke alarm"
+      },
+      "0xa4c13876c0fe9c0d": {
+        "friendly_name": "Toilet Light bulb"
+      },
+      "0xa4c1388082b18782": {
+        "friendly_name": "Kitchen Air fryer plug"
+      },
+      "0xa4c13894df46cbee": {
+        "friendly_name": "Dressing room Laundry plug"
+      },
+      "0xa4c138a96372cd65": {
+        "friendly_name": "Guest room Dyson plug"
+      },
+      "0xa4c138c9bb78fd9c": {
+        "friendly_name": "Bedroom Plug"
+      },
+      "0xa4c138d30bef637c": {
+        "friendly_name": "Kitchen Smoke alarm"
+      },
+      "0xa4c138d822b223d0": {
+        "friendly_name": "Living room Dyson plug",
+        "state_action": false
+      },
+      "0xa4c138db30e7b4a8": {
+        "friendly_name": "Bedroom Smoke alarm"
+      },
+      "0xa4c138e06fa6775f": {
+        "friendly_name": "Living room TV plug"
+      },
+      "0xa4c138f087a167e2": {
+        "color_sync": false,
+        "friendly_name": "Bedroom Ceiling light strip",
+        "state_action": false
+      },
+      "0xdc8e95fffed55153": {
+        "friendly_name": "Hallway Bedroom leds"
+      },
+      "0xdc8e95fffeea9d2c": {
+        "friendly_name": "Kitchen Cupboard lights"
+      },
+      "0xe0798dfffe7467c2": {
+        "friendly_name": "Living room Dining table"
+      }
+    },
+    "external_converters": [],
+    "frontend": {
+      "port": 8080
+    },
+    "groups": {
+      "1": {
+        "devices": ["0x943469fffeee28c5/1", "0x943469fffeee28c1/1"],
+        "friendly_name": "Hallway"
+      },
+      "101": {
+        "friendly_name": "At home",
+        "retain": true
+      },
+      "102": {
+        "friendly_name": "Is night",
+        "retain": true
+      },
+      "103": {
+        "friendly_name": "Is dark",
+        "retain": true
+      },
+      "104": {
+        "friendly_name": "Sleeping",
+        "retain": true
+      },
+      "105": {
+        "friendly_name": "Guests",
+        "retain": true
+      },
+      "110": {
+        "friendly_name": "Master contact",
+        "retain": true
+      },
+      "111": {
+        "friendly_name": "Master motion",
+        "retain": true
+      },
+      "112": {
+        "friendly_name": "Master sensor",
+        "retain": true
+      }
+    },
+    "homeassistant": false,
+    "map_options": {
+      "graphviz": {
+        "colors": {
+          "fill": {
+            "coordinator": "#e04e5d",
+            "enddevice": "#fff8ce",
+            "router": "#4ea3e0"
+          },
+          "font": {
+            "coordinator": "#ffffff",
+            "enddevice": "#000000",
+            "router": "#ffffff"
+          },
+          "line": {
+            "active": "#009900",
+            "inactive": "#994444"
+          }
+        }
+      }
+    },
+    "mqtt": {
+      "base_topic": "zigbee2mqtt",
+      "force_disable_retain": false,
+      "include_device_information": false,
+      "keepalive": 60,
+      "server": "mqtt://localhost",
+      "version": 5
+    },
+    "ota": {
+      "disable_automatic_update_check": false,
+      "update_check_interval": 1440
+    },
+    "passlist": [],
+    "permit_join": false,
+    "serial": {
+      "disable_led": false,
+      "port": "/dev/ttyUSB0"
+    }
+  },
+  "config_schema": {
+    "definitions": {
+      "device": {
+        "properties": {
+          "debounce": {
+            "description": "Debounces messages of this device",
+            "title": "Debounce",
+            "type": "number"
+          },
+          "debounce_ignore": {
+            "description": "Protects unique payload values of specified payload properties from overriding within debounce time",
+            "examples": ["action"],
+            "items": {
+              "type": "string"
+            },
+            "title": "Ignore debounce",
+            "type": "array"
+          },
+          "disabled": {
+            "description": "Disables the device (excludes device from network scans, availability and group state updates)",
+            "requiresRestart": true,
+            "title": "Disabled",
+            "type": "boolean"
+          },
+          "filtered_attributes": {
+            "description": "Filter attributes with regex from published payload.",
+            "examples": ["^temperature$", "^battery$", "^action$"],
+            "items": {
+              "type": "string"
+            },
+            "title": "Filtered publish attributes",
+            "type": "array"
+          },
+          "filtered_cache": {
+            "description": "Filter attributes with regex from being added to the cache, this prevents the attribute from being in the published payload when the value didn't change.",
+            "examples": ["^input_actions$"],
+            "items": {
+              "type": "string"
+            },
+            "title": "Filtered attributes from cache",
+            "type": "array"
+          },
+          "filtered_optimistic": {
+            "description": "Filter attributes with regex from optimistic publish payload when calling /set. (This has no effect if optimistic is set to false).",
+            "examples": ["^color_(mode|temp)$", "color"],
+            "items": {
+              "type": "string"
+            },
+            "title": "Filtered optimistic attributes",
+            "type": "array"
+          },
+          "friendly_name": {
+            "description": "Used in the MQTT topic of a device. By default this is the device ID",
+            "readOnly": true,
+            "title": "Friendly name",
+            "type": "string"
+          },
+          "homeassistant": {
+            "properties": {
+              "name": {
+                "description": "Name of the device in Home Assistant",
+                "title": "Home Assistant name",
+                "type": "string"
+              }
+            },
+            "title": "Home Assistant",
+            "type": ["object", "null"]
+          },
+          "icon": {
+            "description": "The user-defined device icon for the frontend. It can be a full URL link to an image (e.g. https://SOME.SITE/MODEL123.jpg) (you cannot use a path to a local file) or base64 encoded data URL (e.g. image/svg+xml;base64,PHN2ZyB3aW....R0aD)",
+            "title": "Icon",
+            "type": "string"
+          },
+          "optimistic": {
+            "default": true,
+            "description": "Publish optimistic state after set",
+            "title": "Optimistic",
+            "type": "boolean"
+          },
+          "qos": {
+            "description": "QoS level for MQTT messages of this device",
+            "title": "QoS",
+            "type": "number"
+          },
+          "retain": {
+            "description": "Retain MQTT messages of this device",
+            "title": "Retain",
+            "type": "boolean"
+          },
+          "retention": {
+            "description": "Sets the MQTT Message Expiry in seconds, Make sure to set mqtt.version to 5",
+            "title": "Retention",
+            "type": "number"
+          }
+        },
+        "required": ["friendly_name"],
+        "type": "object"
+      },
+      "group": {
+        "properties": {
+          "devices": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "filtered_attributes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "friendly_name": {
+            "type": "string"
+          },
+          "off_state": {
+            "default": "auto",
+            "description": "Control when to publish state OFF for a group. 'all_members_off': only publish state OFF when all group members are in state OFF, 'last_member_state': publish state OFF whenever one of its members changes to OFF",
+            "enum": ["all_members_off", "last_member_state"],
+            "requiresRestart": true,
+            "title": "Group off state",
+            "type": ["string"]
+          },
+          "optimistic": {
+            "type": "boolean"
+          },
+          "qos": {
+            "type": "number"
+          },
+          "retain": {
+            "type": "boolean"
+          }
+        },
+        "required": ["friendly_name"],
+        "type": "object"
+      }
+    },
+    "properties": {
+      "advanced": {
+        "properties": {
+          "adapter_concurrent": {
+            "description": "Adapter concurrency (e.g. 2 for CC2531 or 16 for CC26X2R1) (default: null, uses recommended value)",
+            "requiresRestart": true,
+            "title": "Adapter concurrency",
+            "type": ["number", "null"]
+          },
+          "adapter_delay": {
+            "description": "Adapter delay",
+            "requiresRestart": true,
+            "title": "Adapter delay",
+            "type": ["number", "null"]
+          },
+          "cache_state": {
+            "default": true,
+            "description": "MQTT message payload will contain all attributes, not only changed ones. Has to be true when integrating via Home Assistant",
+            "title": "Cache state",
+            "type": "boolean"
+          },
+          "cache_state_persistent": {
+            "default": true,
+            "description": "Persist cached state, only used when cache_state: true",
+            "title": "Persist cache state",
+            "type": "boolean"
+          },
+          "cache_state_send_on_startup": {
+            "default": true,
+            "description": "Send cached state on startup, only used when cache_state: true",
+            "title": "Send cached state on startup",
+            "type": "boolean"
+          },
+          "channel": {
+            "default": 11,
+            "description": "Zigbee channel, changing requires repairing all devices! (Note: use a ZLL channel: 11, 15, 20, or 25 to avoid Problems)",
+            "examples": [15, 20, 25],
+            "maximum": 26,
+            "minimum": 11,
+            "requiresRestart": true,
+            "title": "ZigBee channel",
+            "type": "number"
+          },
+          "elapsed": {
+            "default": false,
+            "description": "Add an elapsed attribute to MQTT messages, contains milliseconds since the previous msg",
+            "title": "Elapsed",
+            "type": "boolean"
+          },
+          "ext_pan_id": {
+            "description": "Zigbee extended pan ID, changing requires repairing all devices!",
+            "oneOf": [
+              {
+                "title": "Extended pan ID (string)",
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "title": "Extended pan ID (array)",
+                "type": "array"
+              }
+            ],
+            "requiresRestart": true,
+            "title": "Ext Pan ID"
+          },
+          "last_seen": {
+            "default": "disable",
+            "description": "Add a last_seen attribute to MQTT messages, contains date/time of last Zigbee message",
+            "enum": ["disable", "ISO_8601", "ISO_8601_local", "epoch"],
+            "title": "Last seen",
+            "type": "string"
+          },
+          "legacy_api": {
+            "default": true,
+            "description": "Disables the legacy api (false = disable)",
+            "requiresRestart": true,
+            "title": "Legacy API",
+            "type": "boolean"
+          },
+          "legacy_availability_payload": {
+            "default": true,
+            "description": "Payload to be used for device availability and bridge/state topics. true = text, false = JSON",
+            "requiresRestart": true,
+            "title": "Legacy availability payload",
+            "type": "boolean"
+          },
+          "log_debug_namespace_ignore": {
+            "default": "",
+            "description": "Do not log these namespaces (regex-based) for debug level",
+            "examples": ["^zhc:legacy:fz:(tuya|moes)", "^zhc:legacy:fz:(tuya|moes)|^zh:ember:uart:|^zh:controller"],
+            "title": "Log debug namespace ignore",
+            "type": "string"
+          },
+          "log_debug_to_mqtt_frontend": {
+            "default": false,
+            "description": "Log debug level to MQTT and frontend (may decrease overall performance)",
+            "requiresRestart": true,
+            "title": "Log debug to MQTT and frontend",
+            "type": "boolean"
+          },
+          "log_directory": {
+            "description": "Location of log directory",
+            "examples": ["data/log/%TIMESTAMP%"],
+            "requiresRestart": true,
+            "title": "Log directory",
+            "type": "string"
+          },
+          "log_file": {
+            "default": "log.txt",
+            "description": "Log file name, can also contain timestamp",
+            "examples": ["zigbee2mqtt_%TIMESTAMP%.log"],
+            "requiresRestart": true,
+            "title": "Log file",
+            "type": "string"
+          },
+          "log_level": {
+            "default": "info",
+            "description": "Logging level",
+            "enum": ["error", "warning", "info", "debug", "warn"],
+            "title": "Log level",
+            "type": "string"
+          },
+          "log_namespaced_levels": {
+            "additionalProperties": {
+              "enum": ["error", "warning", "info", "debug"],
+              "type": "string"
+            },
+            "default": {},
+            "description": "Set individual log levels for certain namespaces",
+            "examples": [
+              {
+                "z2m:mqtt": "warning"
+              },
+              {
+                "zh:ember:uart:ash": "info"
+              }
+            ],
+            "propertyNames": {
+              "pattern": "^(z2m|zhc|zh)(:[a-z0-9]{1,})*$"
+            },
+            "title": "Log Namespaced Levels",
+            "type": "object"
+          },
+          "log_output": {
+            "description": "Output location of the log, leave empty to suppress logging",
+            "items": {
+              "enum": ["console", "file", "syslog"],
+              "type": "string"
+            },
+            "requiresRestart": true,
+            "title": "Log output",
+            "type": "array"
+          },
+          "log_rotation": {
+            "default": true,
+            "description": "Log rotation",
+            "requiresRestart": true,
+            "title": "Log rotation",
+            "type": "boolean"
+          },
+          "log_symlink_current": {
+            "default": false,
+            "description": "Create symlink to current logs in the log directory",
+            "requiresRestart": true,
+            "title": "Log symlink current",
+            "type": "boolean"
+          },
+          "log_syslog": {
+            "oneOf": [
+              {
+                "title": "syslog (disabled)",
+                "type": "null"
+              },
+              {
+                "properties": {
+                  "app_name": {
+                    "default": "Zigbee2MQTT",
+                    "description": "The name of the application (Default: Zigbee2MQTT).",
+                    "title": "Localhost",
+                    "type": "string"
+                  },
+                  "eol": {
+                    "default": "/n",
+                    "description": "The end of line character to be added to the end of the message (Default: Message without modifications).",
+                    "title": "eol",
+                    "type": "string"
+                  },
+                  "host": {
+                    "default": "localhost",
+                    "description": "The host running syslogd, defaults to localhost.",
+                    "title": "Host",
+                    "type": "string"
+                  },
+                  "localhost": {
+                    "default": "localhost",
+                    "description": "Host to indicate that log messages are coming from (Default: localhost).",
+                    "title": "Localhost",
+                    "type": "string"
+                  },
+                  "path": {
+                    "default": "/dev/log",
+                    "description": "The path to the syslog dgram socket (i.e. /dev/log or /var/run/syslog for OS X).",
+                    "examples": ["/var/run/syslog"],
+                    "title": "Path",
+                    "type": "string"
+                  },
+                  "pid": {
+                    "default": "process.pid",
+                    "description": "PID of the process that log messages are coming from (Default process.pid).",
+                    "title": "PID",
+                    "type": "string"
+                  },
+                  "port": {
+                    "default": 514,
+                    "description": "The port on the host that syslog is running on, defaults to syslogd's default port.",
+                    "title": "Port",
+                    "type": "number"
+                  },
+                  "protocol": {
+                    "default": "udp4",
+                    "description": "The network protocol to log over (e.g. tcp4, udp4, tls4, unix, unix-connect, etc).",
+                    "examples": ["udp4", "tls4", "unix", "unix-connect"],
+                    "title": "Protocol",
+                    "type": "string"
+                  },
+                  "type": {
+                    "default": "5424",
+                    "description": "The type of the syslog protocol to use (Default: BSD, also valid: 5424).",
+                    "title": "Type",
+                    "type": "string"
+                  }
+                },
+                "title": "syslog (enabled)",
+                "type": "object"
+              }
+            ],
+            "requiresRestart": true
+          },
+          "network_key": {
+            "description": "Network encryption key, changing requires repairing all devices!",
+            "oneOf": [
+              {
+                "title": "Network key(string)",
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "title": "Network key(array)",
+                "type": "array"
+              }
+            ],
+            "requiresRestart": true,
+            "title": "Network key"
+          },
+          "output": {
+            "description": "Examples when 'state' of a device is published json: topic: 'zigbee2mqtt/my_bulb' payload '{\"state\": \"ON\"}' attribute: topic 'zigbee2mqtt/my_bulb/state' payload 'ON' attribute_and_json: both json and attribute (see above)",
+            "enum": ["attribute_and_json", "attribute", "json"],
+            "title": "MQTT output type",
+            "type": "string"
+          },
+          "pan_id": {
+            "description": "ZigBee pan ID, changing requires repairing all devices!",
+            "oneOf": [
+              {
+                "title": "Pan ID (string)",
+                "type": "string"
+              },
+              {
+                "title": "Pan ID (number)",
+                "type": "number"
+              }
+            ],
+            "requiresRestart": true,
+            "title": "Pan ID"
+          },
+          "timestamp_format": {
+            "description": "Log timestamp format",
+            "examples": ["YYYY-MM-DD HH:mm:ss"],
+            "requiresRestart": true,
+            "title": "Timestamp format",
+            "type": "string"
+          },
+          "transmit_power": {
+            "description": "Transmit power of adapter, only available for Z-Stack (CC253*/CC2652/CC1352) adapters, CC2652 = 5dbm, CC1352 max is = 20dbm (5dbm default)",
+            "requiresRestart": true,
+            "title": "Transmit power",
+            "type": ["number", "null"]
+          }
+        },
+        "title": "Advanced",
+        "type": "object"
+      },
+      "availability": {
+        "description": "Checks whether devices are online/offline",
+        "oneOf": [
+          {
+            "title": "Availability (simple)",
+            "type": "boolean"
+          },
+          {
+            "properties": {
+              "active": {
+                "description": "Options for active devices (routers/mains powered)",
+                "properties": {
+                  "timeout": {
+                    "default": 10,
+                    "description": "Time after which an active device will be marked as offline in minutes",
+                    "requiresRestart": true,
+                    "title": "Timeout",
+                    "type": "number"
+                  }
+                },
+                "requiresRestart": true,
+                "title": "Active",
+                "type": "object"
+              },
+              "passive": {
+                "description": "Options for passive devices (mostly battery powered)",
+                "properties": {
+                  "timeout": {
+                    "default": 1500,
+                    "description": "Time after which an passive device will be marked as offline in minutes",
+                    "requiresRestart": true,
+                    "title": "Timeout",
+                    "type": "number"
+                  }
+                },
+                "requiresRestart": true,
+                "title": "Passive",
+                "type": "object"
+              }
+            },
+            "title": "Availability (advanced)",
+            "type": "object"
+          }
+        ],
+        "requiresRestart": true,
+        "title": "Availability"
+      },
+      "ban": {
+        "items": {
+          "type": "string"
+        },
+        "readOnly": true,
+        "requiresRestart": true,
+        "title": "Ban (deprecated, use blocklist)",
+        "type": "array"
+      },
+      "blocklist": {
+        "description": "Block devices from the network (by ieeeAddr)",
+        "items": {
+          "type": "string"
+        },
+        "requiresRestart": true,
+        "title": "Blocklist",
+        "type": "array"
+      },
+      "device_options": {
+        "title": "Options that are applied to all devices",
+        "type": "object"
+      },
+      "devices": {
+        "patternProperties": {
+          "^.*$": {
+            "$ref": "#/definitions/device"
+          }
+        },
+        "propertyNames": {
+          "pattern": "^0x[\\d\\w]{16}$"
+        },
+        "type": "object"
+      },
+      "external_converters": {
+        "description": "You can define external converters to e.g. add support for a DiY device",
+        "examples": ["DIYRuZ_FreePad.js"],
+        "items": {
+          "type": "string"
+        },
+        "requiresRestart": true,
+        "title": "External converters",
+        "type": "array"
+      },
+      "frontend": {
+        "oneOf": [
+          {
+            "title": "Frontend (simple)",
+            "type": "boolean"
+          },
+          {
+            "properties": {
+              "auth_token": {
+                "description": "Enables authentication, disabled by default",
+                "requiresRestart": true,
+                "title": "Auth token",
+                "type": ["string", "null"]
+              },
+              "host": {
+                "description": "Frontend binding host. Binds to a unix socket when an absolute path is given instead.",
+                "examples": ["127.0.0.1", "::1", "/run/zigbee2mqtt/zigbee2mqtt.sock"],
+                "requiresRestart": true,
+                "title": "Bind host",
+                "type": ["string", "null"]
+              },
+              "port": {
+                "default": 8080,
+                "description": "Frontend binding port. Ignored when using a unix domain socket",
+                "requiresRestart": true,
+                "title": "Port",
+                "type": "number"
+              },
+              "ssl_cert": {
+                "description": "SSL Certificate file path for exposing HTTPS. The sibling property 'ssl_key' must be set for HTTPS to be activated.",
+                "requiresRestart": true,
+                "title": "Certificate file path",
+                "type": ["string", "null"]
+              },
+              "ssl_key": {
+                "description": "SSL key file path for exposing HTTPS. The sibling property 'ssl_cert' must be set for HTTPS to be activated.",
+                "requiresRestart": true,
+                "title": "key file path",
+                "type": ["string", "null"]
+              },
+              "url": {
+                "description": "URL on which the frontend can be reached, currently only used for the Home Assistant device configuration page",
+                "requiresRestart": true,
+                "title": "URL",
+                "type": ["string", "null"]
+              }
+            },
+            "title": "Frontend (advanced)",
+            "type": "object"
+          }
+        ],
+        "requiresRestart": true,
+        "title": "Frontend"
+      },
+      "groups": {
+        "patternProperties": {
+          "^.*$": {
+            "$ref": "#/definitions/group"
+          }
+        },
+        "propertyNames": {
+          "pattern": "^[\\w].*$"
+        },
+        "type": "object"
+      },
+      "homeassistant": {
+        "default": false,
+        "description": "Home Assistant integration (MQTT discovery)",
+        "oneOf": [
+          {
+            "title": "Home Assistant (simple)",
+            "type": "boolean"
+          },
+          {
+            "properties": {
+              "discovery_topic": {
+                "description": "Home Assistant discovery topic",
+                "examples": ["homeassistant"],
+                "requiresRestart": true,
+                "title": "Homeassistant discovery topic",
+                "type": "string"
+              },
+              "legacy_entity_attributes": {
+                "default": true,
+                "description": "Home Assistant legacy entity attributes, when enabled Zigbee2MQTT will add state attributes to each entity, additional to the separate entities and devices it already creates",
+                "title": "Home Assistant legacy entity attributes",
+                "type": "boolean"
+              },
+              "legacy_triggers": {
+                "default": true,
+                "description": "Home Assistant legacy triggers, when enabled Zigbee2mqt will send an empty 'action' or 'click' after one has been send. A 'sensor_action' and 'sensor_click' will be discoverd",
+                "title": "Home Assistant legacy triggers",
+                "type": "boolean"
+              },
+              "status_topic": {
+                "description": "Home Assistant status topic",
+                "examples": ["homeassistant/status"],
+                "requiresRestart": true,
+                "title": "Home Assistant status topic",
+                "type": "string"
+              }
+            },
+            "title": "Home Assistant (advanced)",
+            "type": "object"
+          }
+        ],
+        "requiresRestart": true,
+        "title": "Home Assistant integration"
+      },
+      "map_options": {
+        "properties": {
+          "graphviz": {
+            "properties": {
+              "colors": {
+                "properties": {
+                  "fill": {
+                    "properties": {
+                      "coordinator": {
+                        "type": "string"
+                      },
+                      "enddevice": {
+                        "type": "string"
+                      },
+                      "router": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "font": {
+                    "properties": {
+                      "coordinator": {
+                        "type": "string"
+                      },
+                      "enddevice": {
+                        "type": "string"
+                      },
+                      "router": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "line": {
+                    "properties": {
+                      "active": {
+                        "type": "string"
+                      },
+                      "inactive": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "title": "Networkmap",
+        "type": "object"
+      },
+      "mqtt": {
+        "properties": {
+          "base_topic": {
+            "default": "zigbee2mqtt",
+            "description": "MQTT base topic for Zigbee2MQTT MQTT messages",
+            "examples": ["zigbee2mqtt"],
+            "requiresRestart": true,
+            "title": "Base topic",
+            "type": "string"
+          },
+          "ca": {
+            "description": "Absolute path to SSL/TLS certificate of CA used to sign server and client certificates",
+            "examples": ["/etc/ssl/mqtt-ca.crt"],
+            "requiresRestart": true,
+            "title": "Certificate authority",
+            "type": "string"
+          },
+          "cert": {
+            "description": "Absolute path to SSL/TLS certificate for client-authentication",
+            "examples": ["/etc/ssl/mqtt-client.crt"],
+            "requiresRestart": true,
+            "title": "SSL/TLS certificate",
+            "type": "string"
+          },
+          "client_id": {
+            "description": "MQTT client ID",
+            "examples": ["MY_CLIENT_ID"],
+            "requiresRestart": true,
+            "title": "Client ID",
+            "type": "string"
+          },
+          "force_disable_retain": {
+            "default": false,
+            "description": "Disable retain for all send messages. ONLY enable if you MQTT broker doesn't support retained message (e.g. AWS IoT core, Azure IoT Hub, Google Cloud IoT core, IBM Watson IoT Platform). Enabling will break the Home Assistant integration",
+            "requiresRestart": true,
+            "title": "Force disable retain",
+            "type": "boolean"
+          },
+          "include_device_information": {
+            "default": false,
+            "description": "Include device information to mqtt messages",
+            "title": "Include device information",
+            "type": "boolean"
+          },
+          "keepalive": {
+            "default": 60,
+            "description": "MQTT keepalive in second",
+            "requiresRestart": true,
+            "title": "Keepalive",
+            "type": "number"
+          },
+          "key": {
+            "description": "Absolute path to SSL/TLS key for client-authentication",
+            "examples": ["/etc/ssl/mqtt-client.key"],
+            "requiresRestart": true,
+            "title": "SSL/TLS key",
+            "type": "string"
+          },
+          "password": {
+            "description": "MQTT server authentication password",
+            "examples": ["ILOVEPELMENI"],
+            "requiresRestart": true,
+            "title": "Password",
+            "type": "string"
+          },
+          "reject_unauthorized": {
+            "default": true,
+            "description": "Disable self-signed SSL certificate",
+            "requiresRestart": true,
+            "title": "Reject unauthorized",
+            "type": "boolean"
+          },
+          "server": {
+            "description": "MQTT server URL (use mqtts:// for SSL/TLS connection)",
+            "examples": ["mqtt://localhost:1883"],
+            "requiresRestart": true,
+            "title": "MQTT server",
+            "type": "string"
+          },
+          "user": {
+            "description": "MQTT server authentication user",
+            "examples": ["johnnysilverhand"],
+            "requiresRestart": true,
+            "title": "User",
+            "type": "string"
+          },
+          "version": {
+            "default": 4,
+            "description": "MQTT protocol version",
+            "examples": [5],
+            "requiresRestart": true,
+            "title": "Version",
+            "type": ["number", "null"]
+          }
+        },
+        "required": ["server"],
+        "title": "MQTT",
+        "type": "object"
+      },
+      "ota": {
+        "properties": {
+          "disable_automatic_update_check": {
+            "default": false,
+            "description": "Zigbee devices may request a firmware update, and do so frequently, causing Zigbee2MQTT to reach out to third party servers. If you disable these device initiated checks, you can still initiate a firmware update check manually.",
+            "title": "Disable automatic update check",
+            "type": "boolean"
+          },
+          "ikea_ota_use_test_url": {
+            "default": false,
+            "description": "Use IKEA TRADFRI OTA test server, see OTA updates documentation",
+            "requiresRestart": true,
+            "title": "IKEA TRADFRI OTA use test url",
+            "type": "boolean"
+          },
+          "update_check_interval": {
+            "default": 1440,
+            "description": "Your device may request a check for a new firmware update. This value determines how frequently third party servers may actually be contacted to look for firmware updates. The value is set in minutes, and the default is 1 day.",
+            "title": "Update check interval",
+            "type": "number"
+          },
+          "zigbee_ota_override_index_location": {
+            "description": "Location of override OTA index file",
+            "examples": ["index.json"],
+            "requiresRestart": true,
+            "title": "OTA index override file name",
+            "type": ["string", "null"]
+          }
+        },
+        "title": "OTA updates",
+        "type": "object"
+      },
+      "passlist": {
+        "description": "Allow only certain devices to join the network (by ieeeAddr). Note that all devices not on the passlist will be removed from the network!",
+        "items": {
+          "type": "string"
+        },
+        "requiresRestart": true,
+        "title": "Passlist",
+        "type": "array"
+      },
+      "permit_join": {
+        "default": false,
+        "description": "Allow new devices to join (re-applied at restart)",
+        "title": "Permit join",
+        "type": "boolean"
+      },
+      "serial": {
+        "properties": {
+          "adapter": {
+            "default": "auto",
+            "description": "Adapter type, not needed unless you are experiencing problems",
+            "enum": ["deconz", "zstack", "zigate", "ezsp", "auto", "ember"],
+            "requiresRestart": true,
+            "title": "Adapter",
+            "type": ["string"]
+          },
+          "baudrate": {
+            "description": "Baud rate speed for serial port, this can be anything firmware support but default is 115200 for Z-Stack and EZSP, 38400 for Deconz, however note that some EZSP firmware need 57600",
+            "examples": [38400, 57600, 115200],
+            "requiresRestart": true,
+            "title": "Baudrate",
+            "type": "number"
+          },
+          "disable_led": {
+            "default": false,
+            "description": "Disable LED of the adapter if supported",
+            "requiresRestart": true,
+            "title": "Disable led",
+            "type": "boolean"
+          },
+          "port": {
+            "description": "Location of the adapter. To autodetect the port, set null",
+            "examples": ["/dev/ttyACM0"],
+            "requiresRestart": true,
+            "title": "Port",
+            "type": ["string", "null"]
+          },
+          "rtscts": {
+            "description": "RTS / CTS Hardware Flow Control for serial port",
+            "requiresRestart": true,
+            "title": "RTS / CTS",
+            "type": "boolean"
+          }
+        },
+        "title": "Serial",
+        "type": "object"
+      },
+      "whitelist": {
+        "items": {
+          "type": "string"
+        },
+        "readOnly": true,
+        "requiresRestart": true,
+        "title": "Whitelist (deprecated, use passlist)",
+        "type": "array"
+      }
+    },
+    "required": ["mqtt"],
+    "type": "object"
+  },
+  "coordinator": {
+    "ieee_address": "0x00124b00257c8fee",
+    "meta": {
+      "maintrel": 1,
+      "majorrel": 2,
+      "minorrel": 7,
+      "product": 1,
+      "revision": 20230507,
+      "transportrev": 2
+    },
+    "type": "zStack3x0"
+  },
+  "log_level": "debug",
+  "network": {
+    "channel": 25,
+    "extended_pan_id": "0x468b015c1c292700",
+    "pan_id": 12396
+  },
+  "permit_join": false,
+  "restart_required": false,
+  "version": "1.38.0",
+  "zigbee_herdsman": {
+    "version": "0.49.2"
+  },
+  "zigbee_herdsman_converters": {
+    "version": "19.47.1"
+  }
+}
