@@ -35,7 +35,9 @@ Advantages:
 - [docker]: Released for test and development the alpine and ubuntu images on Docker Hub. They are for amd64 arm64 and based on node 24. No plugins inside.
 - [docker]: Updated [README-DOCKER.md](README-DOCKER.md) to include alpine and ubuntu images specifications.
 - [package]: Added scripts for workspaces.
-- [reflector]: [Full guide](https://matterbridge.io/docker-reflector/Docker%20reflector.html).
+- [reflector]: [Full guide](https://matterbridge.io/reflector/Reflector.html).
+- [package]: Added mb-lib-test, mb-lid-utils and mb-lib-dgram monorepo packages.
+- [bug_report]: Updated the bug report issue template.
 
 ### Changed
 
