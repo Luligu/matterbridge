@@ -11,7 +11,7 @@
 import { RemoteInfo } from 'node:dgram';
 
 import { jest } from '@jest/globals';
-import { getMacAddress } from 'mb-lib-utils';
+import { getMacAddress } from '@matterbridge/utils';
 import { setupTest } from '@matterbridge/jest-utils';
 
 import { Mdns, DnsRecordType, DnsClass, MdnsMessage } from './mdns.js';
