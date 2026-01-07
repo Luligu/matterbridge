@@ -44,13 +44,18 @@
   "bin": {
     "matterbridge": "bin/matterbridge.js",
     "mb_mdns": "bin/mb_mdns.js",
-    "mb_coap": "bin/mb_coap.js"
+    "mb_coap": "bin/mb_coap.js",
+    "reflector-server": "bin/reflector-server",
+    "reflector-client": "bin/reflector-client"
   },
   "engines": {
     "node": ">=20.0.0 <21.0.0 || >=22.0.0 <23.0.0 || >=24.0.0 <25.0.0"
   },
   "workspaces": [
-    "packages/*"
+    "packages/jest-utils",
+    "packages/vitest-utils",
+    "packages/utils",
+    "packages/dgram"
   ],
   "exports": {
     ".": {
@@ -107,10 +112,10 @@
     }
   },
   "scripts": {
-    "build": "tsc --project tsconfig.json && npm --workspaces run build",
-    "buildProduction": "tsc --project tsconfig.production.json && npm --workspaces run buildProduction",
-    "clean": "npx shx rm -rf tsconfig.tsbuildinfo dist && npm --workspaces run clean",
-    "cleanBuild": "npm run clean && npm run build && npm --workspaces run cleanBuild",
+    "build": "npm --workspaces --if-present run build && tsc --project tsconfig.json",
+    "buildProduction": "npm --workspaces --if-present run buildProduction && tsc --project tsconfig.production.json",
+    "clean": "npm --workspaces --if-present run clean && npx shx rm -rf tsconfig.tsbuildinfo dist",
+    "cleanBuild": "npm run clean && npm run build",
     "cleanBuildProduction": "npm run clean && npm run buildProduction",
     "watch": "tsc --project tsconfig.json --watch",
     "start": "node ./dist/cli.js",
@@ -133,7 +138,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "deepClean": "npx shx rm -rf tsconfig.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json node_modules/* node_modules/.[!.]* node_modules/..?*",
-    "reset": "npm run deepClean && npm install && npm run build && (npm link || sudo npm link) && shx chmod +x bin/matterbridge.js bin/mb_mdns.js bin/mb_coap.js && npx jest --clearCache",
+    "reset": "npm run deepClean && npm install && npm run build && (npm link || sudo npm link) && shx chmod +x bin/*.js && npx jest --clearCache",
     "git:status": "git status && git branch -vv && git diff dev origin/dev && git stash list",
     "git:remote": "git remote -v && git remote show origin",
     "git:hardreset:main": "git fetch origin && git checkout main && git reset --hard origin/main",
@@ -143,7 +148,7 @@
     "fetchChip": "node scripts/fetch-chip.mjs",
     "updateHtmls": "node ./scripts/marked.mjs",
     "prepublishOnly": "npm pkg delete devDependencies scripts && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* && npm install --omit=dev && npm shrinkwrap",
-    "prepublishOnlyProduction": "npm run cleanBuildProduction && npm pkg delete devDependencies scripts types && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* && npm install --omit=dev && npm shrinkwrap",
+    "prepublishOnlyProduction": "npm run cleanBuildProduction && npm pkg delete devDependencies scripts && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* && npm install --omit=dev && npm shrinkwrap",
     "npmPack": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm pack && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagDev": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag dev && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagEdge": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag edge && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
@@ -164,13 +169,13 @@
     "lintAll": "npm run lint && npm --workspaces run lint",
     "testAll": "npm run test && npm --workspaces run test",
     "docker:build:local:latest": "docker build -f docker/Dockerfile.main -t matterbridge:latest .",
-    "docker:run:local:latest": "docker run --rm -it --name matterbridge-latest -p 8283:8283 matterbridge:latest",
+    "docker:run:local:latest": "docker run --rm -it --name matterbridge-latest -p 8585:8283 matterbridge:latest",
     "docker:build:local:dev": "docker build -f docker/Dockerfile.dev -t matterbridge:dev .",
-    "docker:run:local:dev": "docker run --rm -it --name matterbridge-dev -p 8283:8283 matterbridge:dev",
+    "docker:run:local:dev": "docker run --rm -it --name matterbridge-dev -p 8585:8283 matterbridge:dev",
     "docker:build:local:ubuntu": "docker build -f docker/Dockerfile.ubuntu -t matterbridge:ubuntu .",
-    "docker:run:local:ubuntu": "docker run --rm -it --name matterbridge-ubuntu -p 8283:8283 matterbridge:ubuntu",
+    "docker:run:local:ubuntu": "docker run --rm -it --name matterbridge-ubuntu -p 8585:8283 matterbridge:ubuntu",
     "docker:build:local:alpine": "docker build -f docker/Dockerfile.alpine -t matterbridge:alpine .",
-    "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine -p 8283:8283 matterbridge:alpine"
+    "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine -p 8585:8283 matterbridge:alpine"
   },
   "dependencies": {
     "@matter/main": "0.15.6",
@@ -180,7 +185,10 @@
     "multer": "2.0.2",
     "node-ansi-logger": "3.1.1",
     "node-persist-manager": "2.0.0",
-    "ws": "8.18.3"
+    "ws": "8.18.3",
+    "mdns-reflector-server": "file:./vendor/mdns-reflector-server",
+    "mdns-reflector-client": "file:./vendor/mdns-reflector-client",
+    "mdns-reflector-core": "file:./vendor/mdns-reflector-core"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",

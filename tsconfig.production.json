@@ -5,7 +5,7 @@
     "rootDir": "src",
     "incremental": false,
     "composite": false,
-    "declaration": false,
+    "declaration": true,
     "declarationMap": false,
     "sourceMap": false,
     "removeComments": true

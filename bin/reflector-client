@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+import('../vendor/mdns-reflector-client/dist/cli.js');

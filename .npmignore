@@ -51,3 +51,6 @@ heap_snapshots
 crypto
 docs
 STYLEGUIDE.md
+# Allow dist folders inside vendor/
+!vendor/**/dist/
+!vendor/**/dist/**

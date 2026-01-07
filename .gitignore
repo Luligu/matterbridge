@@ -29,3 +29,6 @@ docs/Matter specifications/
 STYLEGUIDE.md
 workers/
 history.html
+# Allow dist folders inside vendor/
+!vendor/**/dist/
+!vendor/**/dist/**

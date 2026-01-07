@@ -139,6 +139,7 @@ Examples:
       { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+      { name: '_googlecast._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
     ]);
   };

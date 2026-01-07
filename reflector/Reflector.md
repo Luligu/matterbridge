@@ -155,4 +155,5 @@ With this configuration Home Assistant (with Matter Server) works inside a Docke
 docker compose down
 docker compose pull
 docker compose up -d --force-recreate
+docker logs --tail 1000 -f reflector
 ```

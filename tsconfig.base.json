@@ -22,5 +22,5 @@
     "noImplicitOverride": true,
     "skipLibCheck": true
   },
-  "references": [{ "path": "./" }, { "path": "./packages/mb-lib-test" }]
+  "references": [ { "path": "./packages/mb-lib-test" }, { "path": "./packages/mb-lib-utils" }, { "path": "./packages/mb-lib-dgram" }, { "path": "./" }]
 }
