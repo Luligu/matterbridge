@@ -2,16 +2,11 @@
 
 FLAG_FILE="/matterbridge/.initialized"
 
-echo "Welcome to the Matterbridge docker image."
+echo "Welcome to the Matterbridge debian docker image."
 
 if [ ! -f "$FLAG_FILE" ]; then
 
-  echo "Installing bluetooth essentials:"
-  apt-get update
-  apt-get install -y --no-install-recommends \
-    bluetooth bluez libbluetooth-dev libudev-dev build-essential libcap2-bin \
-    python3
-  setcap 'cap_net_raw+eip' "$(which node)"
+  # Optional packages
 
   # Create the flag file to indicate initialization has been done
   touch "$FLAG_FILE"
@@ -23,7 +18,6 @@ echo "🖥️ Distro: $DISTRO ($CODENAME)" && \
 echo "👤 User: $(whoami)" && \
 echo "🧱 Architecture: $(uname -m)" && \
 echo "🧩 Kernel Version: $(uname -r)" && \
-echo "⏳ Uptime: $(uptime -p || echo 'unavailable')" && \
 echo "📅 Date: $(date)" && \
 echo "🟢 Node.js version: $(node -v)" && \
 echo "🟣 Npm version: $(npm -v)"

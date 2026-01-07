@@ -18,12 +18,23 @@ COPY ./frontend/package.json ./frontend/package.json
 COPY ./frontend/build ./frontend/build
 COPY ./bin ./bin
 
-COPY ./packages/mb-lib-test/package*.json ./packages/mb-lib-test/tsconfig*.json ./packages/mb-lib-test/.npmignore ./packages/mb-lib-test/
-COPY ./packages/mb-lib-test/src ./packages/mb-lib-test/src
+COPY ./packages/dgram/package*.json ./packages/dgram/tsconfig*.json ./packages/dgram/.npmignore ./packages/dgram/
+COPY ./packages/dgram/src ./packages/dgram/src
+
+COPY ./packages/jest-utils/package*.json ./packages/jest-utils/tsconfig*.json ./packages/jest-utils/.npmignore ./packages/jest-utils/
+COPY ./packages/jest-utils/src ./packages/jest-utils/src
+
+COPY ./packages/utils/package*.json ./packages/utils/tsconfig*.json ./packages/utils/.npmignore ./packages/utils/
+COPY ./packages/utils/src ./packages/utils/src
+
+COPY ./packages/vitest-utils/package*.json ./packages/vitest-utils/tsconfig*.json ./packages/vitest-utils/.npmignore ./packages/vitest-utils/
+COPY ./packages/vitest-utils/src ./packages/vitest-utils/src
+
+COPY ./vendor ./vendor
 
 RUN npm ci --no-fund --no-audit && \
   npm run cleanBuildProduction && \
-  npm pkg delete devDependencies scripts types && \
+  npm pkg delete devDependencies scripts && \
   rm -rf ./node_modules && \
   npm install --no-fund --no-audit --omit=dev && \
   npm shrinkwrap --omit=dev && \
@@ -40,23 +51,20 @@ RUN apt update && \
   apt install -y --no-install-recommends ca-certificates curl && \
   curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt install -y --no-install-recommends nodejs && \
-  apt update && apt upgrade -y && \
-  apt purge -y apt-transport-https gnupg && \
-  apt autoremove -y && \
-  apt clean && \
-  rm -rf /var/lib/apt/lists/*
+  apt update && apt upgrade -y && apt autoremove -y && apt clean
 
 # Install matterbridge
 WORKDIR /matterbridge    
 COPY --from=base /matterbridge/*.tgz .
-RUN npm install *.tgz --global --verbose --no-fund --no-audit --omit=dev && rm *.tgz
+RUN npm install *.tgz --global --verbose --no-fund --no-audit --omit=dev && \
+  rm *.tgz
 
 # Add Docker HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
   CMD curl --fail http://localhost:8283/health || exit 1
 
 # Copy and execute the entrypoint script
-COPY ./docker/entrypoint.sh ./
-RUN chmod +x ./entrypoint.sh
-ENTRYPOINT ["./entrypoint.sh"]
+COPY ./docker/entrypoint.ubuntu.sh ./
+RUN chmod +x ./entrypoint.ubuntu.sh
+ENTRYPOINT ["./entrypoint.ubuntu.sh"]
 CMD ["matterbridge", "-docker"]

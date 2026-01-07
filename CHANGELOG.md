@@ -36,8 +36,10 @@ Advantages:
 - [docker]: Updated [README-DOCKER.md](README-DOCKER.md) to include alpine and ubuntu images specifications.
 - [package]: Added scripts for workspaces.
 - [reflector]: [Full guide](https://matterbridge.io/reflector/Reflector.html).
-- [package]: Added mb-lib-test, mb-lid-utils and mb-lib-dgram monorepo packages.
+- [@matterbridge]: Created scope @matterbridge.
+- [package]: Added @matterbridge/jest-utils, @matterbridge/vitest-utils, @matterbridge/utils and @matterbridge/dgram monorepo scoped packages.
 - [bug_report]: Updated the bug report issue template.
+- [dockerfile]: Refactored dockerfiles and entrypoints for main, dev, ubuntu and alpine.
 
 ### Changed
 
