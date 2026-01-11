@@ -113,14 +113,22 @@ docker exec -it matterbridge-test ip r
 - the advertised address are relative to the container
 - those address are not reachable from the host and from the lan
 
-## Run the Madderbridge reflector server directly on the host (you need node.js installed on Windows or macOS)
+## Download and run the Madderbridge reflector server tray app directly on the host
 
-```shell
-npm install -g matterbridge@dev
-mb_mdns --reflector-server --log-reflector-messages --localhost --share-with-clients
-```
+| OS      | Type          | Dowload   | Link                                                                                                                     |
+| ------- | ------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Windows | Any arch      | .exe      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server.Setup.0.0.1.exe) |
+| macOS   | Apple Silicon | .dmg      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1-arm64.dmg) |
+| macOS   | Intel         | .dmg      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1.dmg)       |
+| Ubuntu  | desktop       | .AppImage | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1.AppImage)  |
+| Ubuntu  | headless      | .deb      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mdns-reflector-server_0.0.1-1_all.deb) |
+| Debian  | Any distro    | .deb      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mdns-reflector-server_0.0.1-1_all.deb) |
 
-In a while you will see
+You may need to approve the install while the try apps are not digitally signed.
+
+Verify also that the firewall, if enabled, allows UDP for the app on public and private networks.
+
+In a while you will see:
 
 ![alt text](ReflectorServer.png)
 
@@ -134,7 +142,7 @@ docker run -dit --restart unless-stopped --name matterbridge-reflector luligu/re
 docker logs --tail 1000 -f matterbridge-reflector
 ```
 
-In a while you will see
+In a while you will see:
 
 ![alt text](ReflectorClient.png)
 
@@ -142,7 +150,7 @@ In a while you will see
 
 ## Prerequisites
 
-You need the Matterbridge reflector server running on the host from the tutorial above.
+You need the Matterbridge reflector server tray app running on the host from the tutorial above.
 
 ## Run Home Assitant and Matter Server in Docker Compose with Docker Desktop
 

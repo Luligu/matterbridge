@@ -25,14 +25,10 @@
 import { AddressInfo } from 'node:net';
 import os from 'node:os';
 
-// Matterbridge
-import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '../utils/commandLine.js';
-
 // Net imports
-import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
-import { DnsClass, DnsClassFlag, DnsRecordType, Mdns } from './mdns.js';
-import { MdnsReflectorClient } from './mdnsReflectorClient.js';
-import { MdnsReflectorServer } from './mdnsReflectorServer.js';
+import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, DnsClass, DnsClassFlag, DnsRecordType, Mdns } from '@matterbridge/dgram';
+// Utils imports
+import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '@matterbridge/utils';
 
 // istanbul ignore next
 {
@@ -57,14 +53,6 @@ Options:
   --noIpv4                                  Disable IPv4 mDNS server (default: enabled).
   --noIpv6                                  Disable IPv6 mDNS server (default: enabled).
   --no-timeout                              Disable automatic timeout of 10 minutes. Reflector mode disables timeout automatically.
-  --reflector-client                        Enable mDNS reflector client (default: disabled).
-    --filter <string[]>                     Filters to apply to incoming mDNS messages.
-    --localhost                             Use localhost addresses to send messages to the container.
-  --reflector-server                        Enable mDNS reflector server (default: disabled).
-    --filter <string[]>                     Filters to apply to incoming mDNS messages.
-    --broadcast                             Use broadcast addresses to reflect messages to the lan.
-    --localhost                             Use localhost addresses to reflect messages to the lan.
-    --share-with-clients                    Share messages between reflector clients.
   -d, --debug                               Enable debug logging (default: disabled).
   -v, --verbose                             Enable verbose logging (default: disabled).
   -s, --silent                              Enable silent mode, only log notices, warnings and errors.
@@ -103,9 +91,6 @@ Examples:
   let mdnsIpv4: Mdns | undefined = undefined;
   let mdnsIpv6: Mdns | undefined = undefined;
 
-  let reflectorClient: MdnsReflectorClient | undefined = undefined;
-  let reflectorServer: MdnsReflectorServer | undefined = undefined;
-
   /**
    * Cleanup and log device information before exiting.
    */
@@ -124,24 +109,25 @@ Examples:
     mdnsIpv4?.logDevices();
     mdnsIpv6?.logDevices();
     await new Promise((resolve) => setTimeout(resolve, 250)); // Wait for 250ms to allow sockets to close
-
-    await reflectorClient?.stop();
-    await reflectorServer?.stop();
   }
 
   const query = (mdns: Mdns) => {
     mdns.log.info('Sending mDNS query for common services...');
-    mdns.sendQuery([
-      { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_matterbridge._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_home-assistant._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_googlecast._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-      { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-    ]);
+    try {
+      mdns.sendQuery([
+        { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_matterbridge._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_home-assistant._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_googlecast._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+      ]);
+    } catch (error) {
+      mdns.log.error(`Error sending mDNS query: ${(error as Error).message}`);
+    }
   };
 
   /**
@@ -197,29 +183,34 @@ Examples:
       }
     }
     // Encode A and AAAA records for all non-internal addresses of the selected interface
-    try {
-      for (const info of interfaceInfos) {
-        if (info.family === 'IPv4' && !info.internal) {
-          const ipv4 = info.address;
-          answers.push({ name: hostName, rtype: DnsRecordType.A, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeA(ipv4) });
-        } else if (info.family === 'IPv6' && !info.internal) {
-          const ipv6 = info.address;
-          answers.push({ name: hostName, rtype: DnsRecordType.AAAA, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeAAAA(ipv6) });
-        }
+    for (const info of interfaceInfos) {
+      if (info.family === 'IPv4' && !info.internal) {
+        const ipv4 = info.address;
+        answers.push({ name: hostName, rtype: DnsRecordType.A, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeA(ipv4) });
+      } else if (info.family === 'IPv6' && !info.internal) {
+        const ipv6 = info.address;
+        answers.push({ name: hostName, rtype: DnsRecordType.AAAA, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeAAAA(ipv6) });
       }
-    } catch (error) {
-      mdns.log.error(`Error encoding network interface addresses: ${(error as Error).message}`);
     }
-    const _response = mdns.sendResponse(answers);
+    try {
+      mdns.sendResponse(answers);
+    } catch (error) {
+      mdns.log.error(`Error sending mDNS advertisement: ${(error as Error).message}`);
+    }
   };
 
-  if (!hasParameter('noIpv4') && !hasParameter('reflector-server') && !hasParameter('reflector-client')) {
+  if (!hasParameter('noIpv4')) {
     mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, getParameter('interfaceName'), getParameter('ipv4InterfaceAddress') || '0.0.0.0', getParameter('outgoingIpv4InterfaceAddress'));
     if (hasParameter('v') || hasParameter('verbose')) mdnsIpv4.listNetworkInterfaces();
 
     // Apply filters if any
     const filters = getStringArrayParameter('filter');
     if (filters) mdnsIpv4.filters.push(...filters);
+
+    // Handle errors
+    mdnsIpv4.on('error', (err) => {
+      mdnsIpv4?.log.error(`mDNS udp4 Server error: ${err.message}\n${err.stack}`);
+    });
 
     // Start the IPv4 mDNS server
     mdnsIpv4.start();
@@ -237,13 +228,18 @@ Examples:
     });
   }
 
-  if (!hasParameter('noIpv6') && !hasParameter('reflector-server') && !hasParameter('reflector-client')) {
+  if (!hasParameter('noIpv6')) {
     mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, getParameter('interfaceName'), getParameter('ipv6InterfaceAddress') || '::', getParameter('outgoingIpv6InterfaceAddress'));
     if (hasParameter('v') || hasParameter('verbose')) mdnsIpv6.listNetworkInterfaces();
 
     // Apply filters if any
     const filters = getStringArrayParameter('filter');
     if (filters) mdnsIpv6.filters.push(...filters);
+
+    // Handle errors
+    mdnsIpv6.on('error', (err) => {
+      mdnsIpv6?.log.error(`mDNS udp6 Server error: ${err.message}\n${err.stack}`);
+    });
 
     // Start the IPv6 mDNS server
     mdnsIpv6.start();
@@ -261,16 +257,6 @@ Examples:
     });
   }
 
-  if (hasParameter('reflector-client')) {
-    reflectorClient = new MdnsReflectorClient();
-    await reflectorClient.start();
-  }
-
-  if (hasParameter('reflector-server')) {
-    reflectorServer = new MdnsReflectorServer();
-    await reflectorServer.start();
-  }
-
   // Handle Ctrl+C (SIGINT) and SIGTERM to stop and log devices
   process.on('SIGINT', async () => {
     await cleanupAndLogAndExit();
@@ -280,7 +266,7 @@ Examples:
   });
 
   // Exit after a timeout to avoid running indefinitely in test environments
-  if (!hasParameter('no-timeout') && !hasParameter('reflector-server') && !hasParameter('reflector-client')) {
+  if (!hasParameter('no-timeout')) {
     setTimeout(async () => {
       await cleanupAndLogAndExit();
     }, 600000).unref(); // 10 minutes timeout to exit if no activity

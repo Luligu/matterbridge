@@ -40,6 +40,7 @@ Advantages:
 - [package]: Added @matterbridge/jest-utils, @matterbridge/vitest-utils, @matterbridge/utils and @matterbridge/dgram monorepo scoped packages.
 - [bug_report]: Updated the bug report issue template.
 - [dockerfile]: Refactored dockerfiles and entrypoints for main, dev, ubuntu and alpine.
+- [docker]: Removed from docker hub all images untagged or tag 1.x.x and 2.x.x (350 GB).
 
 ### Changed
 

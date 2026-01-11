@@ -3,7 +3,7 @@
  * @file dgram.ts
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.2
+ * @version 1.0.3
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -60,6 +60,8 @@ export class Dgram extends EventEmitter<DgramEvents> {
   interfaceName?: string;
   interfaceAddress?: string;
   interfaceNetmask?: string;
+  excludedInterfaceNamePattern =
+    /(tailscale|wireguard|wintun|openvpn|\bwg\d*\b|\btun\d*\b|\btap\d*\b|\butun\d*\b|zerotier|hamachi|hyper-?v|v\s*ethernet|wsl|default switch|vmware|vmnet|vbox|virtualbox|virbr|docker|podman|\bveth\b|\bbr-\b|cni|kube|flannel|calico|teredo|isatap)/i;
 
   /**
    * Creates an instance of Dgram.
@@ -187,7 +189,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     // If no interface was specified or the provided one doesn't exist, find the first external IPv4 interface.
     if (!networkInterface) {
       for (const [interfaceName, interfaceDetails] of Object.entries(interfaces)) {
-        if (interfaceName.toLowerCase().includes('tailscale')) continue;
+        if (!networkInterface && this.excludedInterfaceNamePattern.test(interfaceName)) continue;
         if (!interfaceDetails) continue;
         // Check if at least one external IPv4 address exists on this interface.
         for (const detail of interfaceDetails) {
@@ -306,6 +308,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     const interfaces = os.networkInterfaces();
     for (const name in interfaces) {
       if (interfaceName && name !== interfaceName) continue;
+      if (!interfaceName && this.excludedInterfaceNamePattern.test(name)) continue;
       const iface = interfaces[name];
       if (iface) {
         const ipv6Address = iface.find((addr) => addr.family === 'IPv6' && !addr.internal && addr.scopeid);

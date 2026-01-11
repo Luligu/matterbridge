@@ -60,7 +60,16 @@ export class Multicast extends Dgram {
    * @param {string} [interfaceAddress] - The address of the network interface to bind to. If not provided, it will be determined based on the interfaceName.
    * @param {string} [outgoingInterfaceAddress] - The address of the outgoing network interface. If not provided, it will use the interfaceAddress.
    */
-  constructor(name: string, multicastAddress: string, multicastPort: number, socketType: 'udp4' | 'udp6', reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string, outgoingInterfaceAddress?: string) {
+  constructor(
+    name: string,
+    multicastAddress: string,
+    multicastPort: number,
+    socketType: 'udp4' | 'udp6',
+    reuseAddr: boolean | undefined = true,
+    interfaceName?: string,
+    interfaceAddress?: string,
+    outgoingInterfaceAddress?: string,
+  ) {
     super(name, socketType, reuseAddr, interfaceName, interfaceAddress);
     this.multicastAddress = multicastAddress;
     this.multicastPort = multicastPort;
@@ -128,7 +137,9 @@ export class Multicast extends Dgram {
         membershipInterface = ifaceUla.address + (ifaceUla.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceUla.scopeid) : '%' + name) : '');
       }
       // Find the first Unique Local Address (ULA) IPv6 with prefix length /64 (netmask ffff:ffff:ffff:ffff::)
-      const ifaceUla64 = interfaces.find((iface) => iface.family === 'IPv6' && this.socketType === 'udp6' && iface.address.startsWith('fd') && iface.netmask === 'ffff:ffff:ffff:ffff::');
+      const ifaceUla64 = interfaces.find(
+        (iface) => iface.family === 'IPv6' && this.socketType === 'udp6' && iface.address.startsWith('fd') && iface.netmask === 'ffff:ffff:ffff:ffff::',
+      );
       if (ifaceUla64) {
         iface = ifaceUla64;
         membershipInterface = ifaceUla64.address + (ifaceUla64.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceUla64.scopeid) : '%' + name) : '');
@@ -137,7 +148,8 @@ export class Multicast extends Dgram {
       const ifaceLinkLocal = interfaces.find((iface) => iface.family === 'IPv6' && this.socketType === 'udp6' && iface.address.startsWith('fe80'));
       if (ifaceLinkLocal) {
         iface = ifaceLinkLocal;
-        membershipInterface = ifaceLinkLocal.address + (ifaceLinkLocal.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceLinkLocal.scopeid) : '%' + name) : '');
+        membershipInterface =
+          ifaceLinkLocal.address + (ifaceLinkLocal.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceLinkLocal.scopeid) : '%' + name) : '');
       }
       // Add the interface address to the multicast group
       if (iface && membershipInterface) {
@@ -163,7 +175,9 @@ export class Multicast extends Dgram {
     if (!this.outgoingInterfaceAddress && this.socketType === 'udp6' && this.interfaceAddress === '::') {
       interfaceAddress = '::' + this.getIpv6ScopeId(this.interfaceName);
     }
-    this.log.debug(`Dgram multicast socket setting multicastInterface to ${BLUE}${interfaceAddress}${db} for ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
+    this.log.debug(
+      `Dgram multicast socket setting multicastInterface to ${BLUE}${interfaceAddress}${db} for ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`,
+    );
     this.socket.setMulticastInterface(interfaceAddress as string);
     this.log.debug(`Dgram multicast socket multicastInterface set to ${BLUE}${interfaceAddress}${db}`);
     this.emit('ready', address);

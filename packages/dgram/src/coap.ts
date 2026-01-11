@@ -160,7 +160,15 @@ export const COIOT_REQUEST_STATUS_ID = 56831;
 export const COIOT_REQUEST_DESCRIPTION_ID = 56832;
 
 export class Coap extends Multicast {
-  constructor(name: string, multicastAddress: string, multicastPort: number, socketType: 'udp4' | 'udp6', reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string) {
+  constructor(
+    name: string,
+    multicastAddress: string,
+    multicastPort: number,
+    socketType: 'udp4' | 'udp6',
+    reuseAddr: boolean | undefined = true,
+    interfaceName?: string,
+    interfaceAddress?: string,
+  ) {
     super(name, multicastAddress, multicastPort, socketType, reuseAddr, interfaceName, interfaceAddress);
   }
 
@@ -483,7 +491,9 @@ export class Coap extends Multicast {
         const deviceModel = parts[0];
         const deviceMac = parts[1];
         const protocolRevision = parts[2];
-        this.log.info(`Option: COIOT_OPTION_DEVID => ${option.value} => Model: ${GREEN}${deviceModel}${nf}, MAC: ${GREEN}${deviceMac}${nf}, Protocol: ${GREEN}${protocolRevision}${nf}`);
+        this.log.info(
+          `Option: COIOT_OPTION_DEVID => ${option.value} => Model: ${GREEN}${deviceModel}${nf}, MAC: ${GREEN}${deviceMac}${nf}, Protocol: ${GREEN}${protocolRevision}${nf}`,
+        );
       } else if (option.number === COIOT_OPTION_SERIAL) {
         /*
          * This option is mandatory in status response and publishes. It is a uint16_t in network byte order which indicates a change in the status report.

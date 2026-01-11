@@ -44,9 +44,7 @@
   "bin": {
     "matterbridge": "bin/matterbridge.js",
     "mb_mdns": "bin/mb_mdns.js",
-    "mb_coap": "bin/mb_coap.js",
-    "reflector-server": "bin/reflector-server",
-    "reflector-client": "bin/reflector-client"
+    "mb_coap": "bin/mb_coap.js"
   },
   "engines": {
     "node": ">=20.0.0 <21.0.0 || >=22.0.0 <23.0.0 || >=24.0.0 <25.0.0"

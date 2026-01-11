@@ -309,7 +309,9 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     // Log all history entries
     if (this.debug) {
       this.log.debug(`Tracker history for ${YELLOW}${BRIGHT}${this.name}:${RESET}`);
-      this.log.debug('Timestamp            Host cpu            Process cpu         Rss                   Heap Used             Heap Total            External              ArrayBuffers');
+      this.log.debug(
+        'Timestamp            Host cpu            Process cpu         Rss                   Heap Used             Heap Total            External              ArrayBuffers',
+      );
       //              10/10/2025, 20:52:12   4.76 % (  4.76 %)   0.16 % (  0.16 %)  38.45 MB ( 38.45 MB)   3.75 MB (  3.75 MB)   5.29 MB (  5.29 MB)   1.66 MB (  1.66 MB)  10.25 KB ( 10.25 KB)
       for (let i = 0; i < Tracker.historySize; i++) {
         const index = (Tracker.historyIndex + i) % Tracker.historySize;

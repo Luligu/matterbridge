@@ -36,7 +36,14 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
  * @param {boolean} [debug] - Optional. If true, debug messages will be logged to the console. Default is false.
  * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
  */
-export async function waiter(name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false): Promise<boolean> {
+export async function waiter(
+  name: string,
+  check: () => boolean,
+  exitWithReject: boolean = false,
+  resolveTimeout: number = 5000,
+  resolveInterval: number = 500,
+  debug: boolean = false,
+): Promise<boolean> {
   const log = new AnsiLogger({ logName: 'Waiter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   if (check()) {
     if (debug) log.debug(`Waiter "${name}" already true`);

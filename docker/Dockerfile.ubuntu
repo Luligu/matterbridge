@@ -30,7 +30,7 @@ COPY ./packages/utils/src ./packages/utils/src
 COPY ./packages/vitest-utils/package*.json ./packages/vitest-utils/tsconfig*.json ./packages/vitest-utils/.npmignore ./packages/vitest-utils/
 COPY ./packages/vitest-utils/src ./packages/vitest-utils/src
 
-COPY ./vendor ./vendor
+# COPY ./vendor ./vendor
 
 RUN npm ci --no-fund --no-audit && \
   npm run cleanBuildProduction && \

@@ -11,19 +11,14 @@ const candidateOneDriveRoots = [
   process.env.OneDriveConsumer,
   process.env.OneDrive,
   process.env.ONEDRIVE,
-  process.env.HOMEPATH && process.env.HOMEDRIVE
-    ? path.join(process.env.HOMEDRIVE, process.env.HOMEPATH, 'OneDrive')
-    : undefined,
+  process.env.HOMEPATH && process.env.HOMEDRIVE ? path.join(process.env.HOMEDRIVE, process.env.HOMEPATH, 'OneDrive') : undefined,
   process.env.USERPROFILE ? path.join(process.env.USERPROFILE, 'OneDrive') : undefined,
   process.env.HOME ? path.join(process.env.HOME, 'OneDrive') : undefined,
 ].filter(Boolean);
 
 const defaultAutomatorRelative = path.join('Code', 'repository', 'automator.mjs');
 
-const candidateAutomatorPaths = [
-  process.env.AUTOMATOR_PATH,
-  ...candidateOneDriveRoots.map((root) => path.join(root, defaultAutomatorRelative)),
-].filter(Boolean);
+const candidateAutomatorPaths = [process.env.AUTOMATOR_PATH, ...candidateOneDriveRoots.map((root) => path.join(root, defaultAutomatorRelative))].filter(Boolean);
 
 /** @param {string} filePath */
 const exists = async (filePath) => {
