@@ -19,6 +19,8 @@ test/
 vitest/
 
 # Specific files that should be ignored
+.eslintcache
+.prettiercache
 .gitattributes
 .gitignore
 .npmignore
@@ -43,14 +45,16 @@ vite.config.*
 # Package specific directories and files that should be ignored
 chip
 docker
-docker-reflector
+docs
+reflector
 systemd
 heap_profile
 heap_profiles
 heap_snapshots
 crypto
-docs
+workers
 STYLEGUIDE.md
+
 # Allow dist folders inside vendor/
 !vendor/**/dist/
 !vendor/**/dist/**

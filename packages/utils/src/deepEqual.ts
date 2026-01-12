@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * This file contains the deepEqual function.
  *
@@ -24,6 +23,8 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable jsdoc/reject-any-type */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 /**
  * Performs a deep comparison between two values to determine if they are equivalent.

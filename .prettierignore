@@ -11,7 +11,9 @@ node_modules/
 # Ignore specific files
 **/*.html
 docker-compose.yml
+.eslintcache
+.prettiercache
 
 # Package specific directories and files that should be ignored
 frontend
-
+packages

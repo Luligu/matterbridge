@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/dgram",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Matterbridge dgram library",
   "author": "https://github.com/Luligu",
   "repository": {
@@ -26,7 +26,11 @@
       "import": "./dist/export.js"
     }
   },
+  "engines": {
+    "node": ">=20.0.0 <21.0.0 || >=22.0.0 <23.0.0 || >=24.0.0 <25.0.0"
+  },
   "scripts": {
+    "start": "node ./dist/export.js",
     "build": "tsc --project tsconfig.json",
     "buildProduction": "tsc --project tsconfig.production.json",
     "clean": "npx shx rm -rf tsconfig.tsbuildinfo dist",
@@ -41,12 +45,12 @@
     "test:vitest:watch": "vitest --reporter verbose",
     "test:vitest:verbose": "vitest run --reporter verbose",
     "test:vitest:coverage": "vitest run --reporter verbose --coverage",
-    "deepClean": "npx shx rm -rf tsconfig.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json node_modules/* node_modules/.[!.]* node_modules/..?*",
+    "deepClean": "npx shx rm -rf tsconfig.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json  .eslintcache .prettiercache node_modules/* node_modules/.[!.]* node_modules/..?*",
     "reset": "npm run deepClean && npm install && npm run build && npx jest --clearCache",
-    "lint": "eslint --max-warnings=0 .",
-    "lint:fix": "eslint --fix --max-warnings=0 .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "eslint --cache --cache-location .eslintcache --max-warnings=0 .",
+    "lint:fix": "eslint --cache --cache-location .eslintcache --fix --max-warnings=0 .",
+    "format": "prettier --cache --cache-location .prettiercache --write .",
+    "format:check": "prettier --cache --cache-location .prettiercache --check .",
     "preversion": "npm run runMeBeforePublish",
     "postversion": "git push && git push --tags",
     "version:patch": "npm version patch",
@@ -66,7 +70,7 @@
     "npmPublishTagDev": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag dev && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagEdge": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag edge && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagLatest": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag latest && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
-    "install:dependencies": "npm install --save-exact node-ansi-logger",
+    "install:dependencies": "npm install --save-exact node-ansi-logger @matterbridge/jest-utils",
     "install:scripts": "npm install --save-dev --save-exact npm-check-updates shx cross-env",
     "install:typescript": "npm install --save-dev --save-exact typescript @types/node",
     "install:eslint": "npm install --save-dev --save-exact eslint @eslint/js typescript-eslint eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-jsdoc",
@@ -75,8 +79,8 @@
     "install:vitest": "npm install --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin"
   },
   "dependencies": {
-    "node-ansi-logger": "3.1.1",
-    "@matterbridge/jest-utils": "0.0.1"
+    "@matterbridge/jest-utils": "0.0.1",
+    "node-ansi-logger": "3.1.1"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",

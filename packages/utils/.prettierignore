@@ -10,6 +10,8 @@ node_modules/
 temp/
 
 # Ignore specific files
+.eslintcache
+.prettiercache
 **/*.html
 
 # Package specific directories and files that should be ignored

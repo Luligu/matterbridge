@@ -24,7 +24,6 @@
 
 // Archiver module import types
 import type { ArchiverError, EntryData } from 'archiver';
-
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 

@@ -243,7 +243,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     // If no network interface was specified, search for the first external IPv6 interface.
     if (!networkInterface) {
       for (const [interfaceName, interfaceDetails] of Object.entries(interfaces)) {
-        if (interfaceName.toLowerCase().includes('tailscale')) continue;
+        if (!networkInterface && this.excludedInterfaceNamePattern.test(interfaceName)) continue;
         if (!interfaceDetails) continue;
         for (const detail of interfaceDetails) {
           if (detail.family === 'IPv6' && !detail.internal) {

@@ -17,6 +17,8 @@ test/
 vitest/
 
 # Specific files that should be ignored
+.eslintcache
+.prettiercache
 .gitattributes
 .gitignore
 .gitlocalignore

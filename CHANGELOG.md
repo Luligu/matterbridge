@@ -28,7 +28,7 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.4.7] - Dev branch
+## [3.4.7] - 2026-01-12
 
 ### Added
 
@@ -41,12 +41,14 @@ Advantages:
 - [bug_report]: Updated the bug report issue template.
 - [dockerfile]: Refactored dockerfiles and entrypoints for main, dev, ubuntu and alpine.
 - [docker]: Removed from docker hub all images untagged or tag 1.x.x and 2.x.x (350 GB).
+- [eslint]: Added --cache.
+- [prettier]: Added --cache.
 
 ### Changed
 
 - [package]: Updated dependencies.
-- [dgram]: Bumbed version number to 1.0.2 and excluded Tailscale interfaces in Dgram class.
-- [network]: Bumbed version number to 1.0.2.
+- [dgram]: Bumbed version number to 1.0.3 and excluded virtual, overlay, or tunnel interfaces in Dgram class.
+- [network]: Bumbed version number to 1.0.3.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
