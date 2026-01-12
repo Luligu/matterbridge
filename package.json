@@ -184,9 +184,10 @@
     "node-ansi-logger": "3.1.1",
     "node-persist-manager": "2.0.0",
     "ws": "8.18.3",
-    "mdns-reflector-server": "file:./vendor/mdns-reflector-server",
-    "mdns-reflector-client": "file:./vendor/mdns-reflector-client",
-    "mdns-reflector-core": "file:./vendor/mdns-reflector-core"
+    "@matterbridge/dgram": "0.0.1",
+    "@matterbridge/utils": "0.0.1",
+    "@matterbridge/jest-utils": "0.0.1",
+    "@matterbridge/vitest-utils": "0.0.1"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
