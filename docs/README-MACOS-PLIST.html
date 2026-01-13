@@ -125,7 +125,6 @@ npm -v
 <p>It should output something like:</p>
 <pre><code>/usr/local/bin/node
 </code></pre>
-<p>In this case you will need in the step below to replace <strong><em>MYNODEPATH</em></strong> with /usr/local/bin</p>
 <h3 id="first-create-the-matterbridge-directories">First create the Matterbridge directories</h3>
 <p>This will create the required directories if they don&#39;t exist and install matterbridge in the matterbridge global node_modules directory</p>
 <pre><code class="language-bash">sudo mkdir -p /usr/local/etc/matterbridge
@@ -145,7 +144,7 @@ sudo NPM_CONFIG_PREFIX=/usr/local/etc/matterbridge/.npm-global npm install -g ma
 <pre><code class="language-bash">sudo nano /Library/LaunchDaemons/matterbridge.plist
 </code></pre>
 <ul>
-<li>add the following to the file, replacing <strong><em>MYNODEPATH</em></strong> with the path found in the step before:</li>
+<li>add the following to the file:</li>
 </ul>
 <pre><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
 &lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;
@@ -154,7 +153,7 @@ sudo NPM_CONFIG_PREFIX=/usr/local/etc/matterbridge/.npm-global npm install -g ma
         &lt;key&gt;EnvironmentVariables&lt;/key&gt;
         &lt;dict&gt;
                 &lt;key&gt;PATH&lt;/key&gt;
-                &lt;string&gt;/usr/local/etc/matterbridge/.npm-global/bin:MYNODEPATH&lt;/string&gt;
+                &lt;string&gt;/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/etc/matterbridge/.npm-global/bin&lt;/string&gt;
                 &lt;key&gt;NPM_CONFIG_PREFIX&lt;/key&gt;
                 &lt;string&gt;/usr/local/etc/matterbridge/.npm-global&lt;/string&gt;
                 &lt;key&gt;HOME&lt;/key&gt;

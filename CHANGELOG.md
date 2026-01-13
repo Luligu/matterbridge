@@ -50,6 +50,10 @@ Advantages:
 - [dgram]: Bumbed version number to 1.0.3 and excluded virtual, overlay, or tunnel interfaces in Dgram class.
 - [network]: Bumbed version number to 1.0.3.
 
+### Fixed
+
+- [macOS]: Fixed the macOS launchctl configuration file. Update it from the README-MACOS-PLIST.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.4.6] - 2026-01-02

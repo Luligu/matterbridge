@@ -208,11 +208,56 @@ docker exec -it matterbridge-test ip r
 <li>the advertised address are relative to the container</li>
 <li>those address are not reachable from the host and from the lan</li>
 </ul>
-<h2 id="run-the-madderbridge-reflector-server-directly-on-the-host-you-need-nodejs-installed-on-windows-or-macos">Run the Madderbridge reflector server directly on the host (you need node.js installed on Windows or macOS)</h2>
-<pre><code class="language-shell">npm install -g matterbridge@dev
-mb_mdns --reflector-server --log-reflector-messages --localhost --share-with-clients
-</code></pre>
-<p>In a while you will see</p>
+<h2 id="download-and-run-the-madderbridge-reflector-server-tray-app-directly-on-the-host">Download and run the Madderbridge reflector server tray app directly on the host</h2>
+<table>
+<thead>
+<tr>
+<th>OS</th>
+<th>Type</th>
+<th>Dowload</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Windows</td>
+<td>Any arch</td>
+<td>.exe</td>
+<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server.Setup.0.0.1.exe">download</a></td>
+</tr>
+<tr>
+<td>macOS</td>
+<td>Apple Silicon</td>
+<td>.dmg</td>
+<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1-arm64.dmg">download</a></td>
+</tr>
+<tr>
+<td>macOS</td>
+<td>Intel</td>
+<td>.dmg</td>
+<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1.dmg">download</a></td>
+</tr>
+<tr>
+<td>Ubuntu</td>
+<td>desktop</td>
+<td>.AppImage</td>
+<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1.AppImage">download</a></td>
+</tr>
+<tr>
+<td>Ubuntu</td>
+<td>headless</td>
+<td>.deb</td>
+<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mdns-reflector-server_0.0.1-1_all.deb">download</a></td>
+</tr>
+<tr>
+<td>Debian</td>
+<td>Any distro</td>
+<td>.deb</td>
+<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mdns-reflector-server_0.0.1-1_all.deb">download</a></td>
+</tr>
+</tbody></table>
+<p>You may need to approve the install while the try apps are not digitally signed.</p>
+<p>Verify also that the firewall, if enabled, allows UDP for the app on public and private networks.</p>
+<p>In a while you will see:</p>
 <p><img src="ReflectorServer.png" alt="alt text"></p>
 <h2 id="run-the-madderbridge-reflector-client-in-container">Run the Madderbridge reflector client in container</h2>
 <pre><code class="language-shell">docker stop matterbridge-reflector
@@ -221,11 +266,11 @@ docker pull luligu/reflector-client:latest
 docker run -dit --restart unless-stopped --name matterbridge-reflector luligu/reflector-client:latest
 docker logs --tail 1000 -f matterbridge-reflector
 </code></pre>
-<p>In a while you will see</p>
+<p>In a while you will see:</p>
 <p><img src="ReflectorClient.png" alt="alt text"></p>
 <h1 id="run-home-assistant-and-matter-server-in-docker-compose-with-docker-desktop">Run Home Assistant and Matter Server in Docker compose with Docker Desktop</h1>
 <h2 id="prerequisites-1">Prerequisites</h2>
-<p>You need the Matterbridge reflector server running on the host from the tutorial above.</p>
+<p>You need the Matterbridge reflector server tray app running on the host from the tutorial above.</p>
 <h2 id="run-home-assitant-and-matter-server-in-docker-compose-with-docker-desktop">Run Home Assitant and Matter Server in Docker Compose with Docker Desktop</h2>
 <p>To test the sharing feature (it shares mDNS between all reflector clients),
 use this <a href="https://matterbridge.io/reflector/docker-compose.yml">docker-compose.yml</a>.</p>
@@ -233,6 +278,7 @@ use this <a href="https://matterbridge.io/reflector/docker-compose.yml">docker-c
 <pre><code class="language-shell">docker compose down
 docker compose pull
 docker compose up -d --force-recreate
+docker logs --tail 1000 -f reflector
 </code></pre>
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
