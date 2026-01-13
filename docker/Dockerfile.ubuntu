@@ -5,7 +5,7 @@ FROM ubuntu:latest AS base
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install node from NodeSource
-RUN apt update && \
+RUN apt update || (sleep 10 && apt update) || (sleep 20 && apt update) && \
   apt install -y --no-install-recommends ca-certificates curl && \
   curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt install -y --no-install-recommends nodejs
@@ -47,7 +47,7 @@ FROM ubuntu:latest AS release
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install node from NodeSource
-RUN apt update && \
+RUN apt update || (sleep 10 && apt update) || (sleep 20 && apt update) && \
   apt install -y --no-install-recommends ca-certificates curl && \
   curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt install -y --no-install-recommends nodejs && \
