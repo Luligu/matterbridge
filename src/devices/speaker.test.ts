@@ -131,7 +131,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId });
     });
-    expect(attributes.length).toBe(28);
+    expect(attributes.length).toBe(29);
     expect(attributes).toEqual([
       {
         'attributeId': 65533,
@@ -166,6 +166,12 @@ describe('Matterbridge ' + NAME, () => {
       {
         'attributeId': 3,
         'attributeName': 'partsList',
+        'clusterId': 29,
+        'clusterName': 'descriptor',
+      },
+      {
+        'attributeId': 5,
+        'attributeName': 'endpointUniqueId',
         'clusterId': 29,
         'clusterName': 'descriptor',
       },
@@ -224,14 +230,14 @@ describe('Matterbridge ' + NAME, () => {
         'clusterName': 'onOff',
       },
       {
-        'attributeId': 65533,
-        'attributeName': 'clusterRevision',
+        'attributeId': 65532,
+        'attributeName': 'featureMap',
         'clusterId': 8,
         'clusterName': 'levelControl',
       },
       {
-        'attributeId': 65532,
-        'attributeName': 'featureMap',
+        'attributeId': 65533,
+        'attributeName': 'clusterRevision',
         'clusterId': 8,
         'clusterName': 'levelControl',
       },

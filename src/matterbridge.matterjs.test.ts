@@ -30,7 +30,6 @@ import { jest } from '@jest/globals';
 import { LogLevel } from 'node-ansi-logger';
 import { Environment } from '@matter/general';
 import { FabricIndex } from '@matter/types';
-import { FabricAction } from '@matter/protocol';
 
 import { Matterbridge } from './matterbridge.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
@@ -121,11 +120,11 @@ describe('Matterbridge matterjs', () => {
   });
 
   test('serverNode fabricsChanged', async () => {
-    matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), FabricAction.Added);
+    matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'added');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} added on server node`));
-    matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), FabricAction.Removed);
+    matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'deleted');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} removed on server node`));
-    matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), FabricAction.Updated);
+    matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'updated');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} updated on server node`));
   });
 

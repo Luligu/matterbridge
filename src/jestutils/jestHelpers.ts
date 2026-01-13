@@ -592,7 +592,7 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
   expect(server.lifecycle.isReady).toBeTruthy();
   expect(server.lifecycle.isOnline).toBeTruthy();
   await server.close();
-  expect(server.lifecycle.isReady).toBeTruthy();
+  expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();
 
   // Stop the matter storage
@@ -981,7 +981,7 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   expect(server.lifecycle.isReady).toBeTruthy();
   expect(server.lifecycle.isOnline).toBeTruthy();
   await server.close();
-  expect(server.lifecycle.isReady).toBeTruthy();
+  expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();
 
   // stop the mDNS service

@@ -86,7 +86,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(112);
+    expect(attributes.length).toBe(113);
   });
 
   test('invoke MatterbridgeDeviceEnergyManagementModeServer commands', async () => {

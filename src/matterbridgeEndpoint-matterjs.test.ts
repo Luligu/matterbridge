@@ -665,8 +665,8 @@ describe('Matterbridge ' + NAME, () => {
         expect(oldState).toBeDefined();
         expect(oldState).toEqual({ 'occupied': false });
         expect(context).toBeDefined();
-        expect(context.offline).toBe(true);
-        if (newState.occupied && !oldState.occupied && context.offline) {
+        expect(context?.offline).toBe(true);
+        if (newState.occupied && !oldState.occupied && context?.offline) {
           resolve();
         }
       });
@@ -1038,8 +1038,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
     expect(thermostat.behaviors.has(MatterbridgeThermostatServer)).toBeTruthy();
     expect(thermostat.behaviors.elementsOf(MatterbridgeThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
+    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0, 254]);
+    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([253]);
     await invokeBehaviorCommand(thermostat, 'thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermostat.id}.${thermostat.number})`);
   });
@@ -1115,7 +1115,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(74);
+    expect(count).toBe(75);
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {

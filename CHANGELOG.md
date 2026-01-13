@@ -73,6 +73,10 @@ Advantages:
 - [eslint]: Moved cache in .cache/.eslintcache.
 - [prettier]: Moved cache in .cache/.prettiercache.
 
+### Fixed
+
+- [macOS]: Fixed the EnergyEvse.chargingEnabledUntil attribute that was wrongly set in the disable command (spec 9.3.8.4).
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.4.7] - 2026-01-12
