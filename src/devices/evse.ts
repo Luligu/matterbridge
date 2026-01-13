@@ -140,7 +140,6 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
     if (this.state.state === EnergyEvse.State.PluggedInCharging) {
       this.state.state = EnergyEvse.State.PluggedInDemand;
     }
-    this.state.chargingEnabledUntil = 0;
     // super.disable();
     // disable is not implemented in matter.js
   }
