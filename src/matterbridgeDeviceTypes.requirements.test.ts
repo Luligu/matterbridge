@@ -250,14 +250,6 @@ describe('Matterbridge device cluster mappings', () => {
       'rootNode: required mismatch -> mb=[] md=[40,31,63,48,60,62,51]', // omitted to avoid imports
       'rootNode: optional mismatch -> mb=[] md=[46,56,49,43,44,45,50,52,55,54,53,70]', // omitted to avoid imports
       'bridgedNode: optional mismatch -> mb=[47,1872,60] md=[46,47,1872,60]', // omitted PowerSourceConfiguration cause is deprecated in matter specs but present in matter.js
-      'onOffLight: optional mismatch -> mb=[8] md=[98,8]', // ScenesManagement wrongly set in matter.js as optional
-      'dimmableLight: optional mismatch -> mb=[] md=[98]', // ScenesManagement wrongly set in matter.js as optional
-      'colorTemperatureLight: optional mismatch -> mb=[] md=[98]', // ScenesManagement wrongly set in matter.js as optional
-      'extendedColorLight: optional mismatch -> mb=[] md=[98]', // ScenesManagement wrongly set in matter.js as optional
-      'onOffOutlet: optional mismatch -> mb=[8] md=[98,8]', // ScenesManagement wrongly set in matter.js as optional
-      'dimmableOutlet: optional mismatch -> mb=[] md=[98]', // ScenesManagement wrongly set in matter.js as optional
-      'onOffMountedSwitch: optional mismatch -> mb=[8] md=[98,8]', // ScenesManagement wrongly set in matter.js as optional
-      'dimmableMountedSwitch: optional mismatch -> mb=[] md=[98]', // ScenesManagement wrongly set in matter.js as optional
       'onOffSwitch: required mismatch -> mb=[3,6] md=[3]', // Client clusters as server clusters
       'onOffSwitch: optional mismatch -> mb=[4,98] md=[]', // Client clusters as server clusters
       'dimmableSwitch: required mismatch -> mb=[3,6,8] md=[3]', // Client clusters as server clusters

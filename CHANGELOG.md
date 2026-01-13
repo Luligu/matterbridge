@@ -30,11 +30,48 @@ Advantages:
 
 ## [3.5.0] - Dev branch
 
+### Breaking Changes
+
+- [matter]: This release brings the upgrade to matter 1.4.2 and matter.js 0.16.1.
+
+### Changed device types in Matter 1.4.2
+
+- [all]: Added ScenesManagement Cluster that is no more provisional.
+- [onOffMountedSwitch]: Updated onOffOutlet and onOffMountedSwitch: when using the mounted device types add as well the outlet device types on the same endpoint as subset device type.
+- [dimmableMountedSwitch]: Updated dimmableOutlet and dimmableMountedSwitch: when using the mounted device types add as well the outlet device types on the same endpoint as subset device type.
+- [coverDevice]: Updated coverDevice rev. 4 and removed Scene Management cluster.
+- [roboticVacuumCleaner]: Updated roboticVacuumCleaner rev. 4: OperationCompletion event for RVC Operational State cluster is now mandatory (TODO: check behavior).
+- [laundryWasher]: Updated laundryWasher rev. 2: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [laundryDryer]: Updated laundryDryer rev. 2: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [dishwasher]: Updated dishwasher rev. 2: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [refrigerator]: Updated refrigerator: Temperature Controlled Cabinet with Cooler condition.
+- [microwaveOven]: Updated microwaveOven rev. 2: OperationCompletion event for Operational State cluster is now mandatory (TODO: check behavior).
+- [cookSurface]: Updated cookSurface rev. 2: TemperatureLevel is the only valid temperature control mode.
+- [temperatureControlledCabinetCooler]: Updated temperatureControlledCabinetCooler rev. 5: TemperatureNumber is the only valid temperature control mode.
+- [temperatureControlledCabinetHeater]: Updated temperatureControlledCabinetHeater rev. 5: TemperatureNumber is the only valid temperature control mode and OperationCompletion event for Oven Cavity Operational State cluster is now mandatory (TODO: check behavior).
+
+### Changed clusters in Matter 1.4.2
+
+- [BridgedDeviceBasicInformation]: Revision 5 - ConfigurationVersion attribute added as P O.
+- [DoorLock]: Revision 9 - Removed AlarmMask attribute.
+- [ElectricalPowerMeasurement]: Revision 2 - Changed reactive and apparent power fields to use new data types. Revision 3 - Changed range of apparent current field to allow negative apparent current.
+- [FanControl]: Revision 5 - Clarified attribute usage, added conformance column.
+- [Thermostat]: Revision 9 - Removed AlarmMask attribute and AlarmCodeBitmap Type.
+- [Identify]: Revision 6 - Added Q quality for IdentifyTime attribute.
+- [WindowCovering]: Revision 6 - Marked AbsolutePosition feature and associated elements provisional.
+- [RvcCleanMode]: Revision 4 - Add VacuumThenMop cleaning mode.
+- [RvcOperationalState]: Revision 4 - Add several operational states and errors.
+- [ServiceArea]: Revision 2 - Rename InitialTimeEstimate to EstimatedTime.
+
 ### Added
+
+- [jest]: Added cache inside the repo in .cache/jest.
 
 ### Changed
 
 - [package]: Updated dependencies.
+- [eslint]: Moved cache in .cache/.eslintcache.
+- [prettier]: Moved cache in .cache/.prettiercache.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
