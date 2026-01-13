@@ -20,6 +20,7 @@ const presetConfig = createDefaultEsmPreset(tsJestEsmPresetOptions);
 const jestConfig = {
   ...presetConfig,
   testEnvironment: 'node', // Use Node.js environment for testing
+  cacheDirectory: '<rootDir>/.cache/jest',
   moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' }, // Handle ESM imports by removing the .js extension
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '/vitest/', '/src/mock/'],
   coveragePathIgnorePatterns: ['/node_modules/', '/dist/', '/vitest/', '/src/mock/'],
