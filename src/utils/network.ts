@@ -3,7 +3,7 @@
  * @file network.ts
  * @author Luca Liguori
  * @created 2024-02-17
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -70,9 +70,10 @@ export function getInterfaceName(): string | undefined {
  *
  * @remarks
  * Type of ipv4 addresses:
- * 192.168.x.x, 10.x.x.x, 172.16–31.x.x: RFC 1918 = Private networks
- * 169.254.0.0 – 169.254.255.255: APIPA = Automatic Private IP Addressing
- * 100.64.0.0 – 100.127.255.255: CGNAT = Carrier-Grade NAT RFC 6598 = Shared Address Space
+ * - 192.168.x.x, 10.x.x.x, 172.16–31.x.x: RFC 1918 = Private networks
+ * - 172.16.0.0 → 172.31.255.255: RFC 1918 = Private IP address used inside local networks, VMs, WSL2 and containers
+ * - 169.254.0.0 → 169.254.255.255: APIPA = Automatic Private IP Addressing used when a device fails to obtain an IP address via DHCP
+ * - 100.64.0.0 → 100.127.255.255: CGNAT = Carrier-Grade NAT RFC 6598 = Shared Address Space
  */
 export function getIpv4InterfaceAddress(): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {

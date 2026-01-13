@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "incremental": true,
+    "composite": true,
+    "target": "esnext",
+    "lib": ["ESNext"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "preserveConstEnums": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "alwaysStrict": true,
+    "noImplicitOverride": true,
+    "skipLibCheck": true
+  }
+}

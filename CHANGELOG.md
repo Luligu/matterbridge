@@ -28,6 +28,34 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.4.7] - 2026-01-12
+
+### Added
+
+- [docker]: Released for test and development the alpine and ubuntu images on Docker Hub. They are for amd64 arm64 and based on node 24. No plugins inside.
+- [docker]: Updated [README-DOCKER.md](README-DOCKER.md) to include alpine and ubuntu images specifications.
+- [package]: Added scripts for workspaces.
+- [reflector]: [Full guide](https://matterbridge.io/reflector/Reflector.html).
+- [@matterbridge]: Created scope @matterbridge.
+- [package]: Added @matterbridge/jest-utils, @matterbridge/vitest-utils, @matterbridge/utils and @matterbridge/dgram monorepo scoped packages.
+- [bug_report]: Updated the bug report issue template.
+- [dockerfile]: Refactored dockerfiles and entrypoints for main, dev, ubuntu and alpine.
+- [docker]: Removed from docker hub all images untagged or tag 1.x.x and 2.x.x (350 GB).
+- [eslint]: Added --cache.
+- [prettier]: Added --cache.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [dgram]: Bumbed version number to 1.0.3 and excluded virtual, overlay, or tunnel interfaces in Dgram class.
+- [network]: Bumbed version number to 1.0.3.
+
+### Fixed
+
+- [macOS]: Fixed the macOS launchctl configuration file. Update it from the README-MACOS-PLIST.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.4.6] - 2026-01-02
 
 ### Added

@@ -359,7 +359,11 @@ Matterbridge Roborock Platform Plugin is a dynamic platform plugin for Matterbri
 
 ### [Wyze Robot Vacuum](https://github.com/RMCob/matterbridge-wyze-robovac)
 
-Matterbridge plugin to control and report status of the Wyze S200 Robot Vacuum
+Matterbridge plugin to control and report status of the Wyze S200 Robot Vacuum.
+
+### [Matterbridge Litetouch 2000](https://github.com/signal15/matterbridge-litetouch)
+
+Matterbridge plugin that exposes Litetouch 2000 lighting loads as Matter devices.
 
 ## How to install and add a plugin with the frontend (best option)
 

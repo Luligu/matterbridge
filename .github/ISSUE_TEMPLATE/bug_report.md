@@ -6,6 +6,12 @@ labels: ""
 assignees: ""
 ---
 
+Before opening a new issue, please search existing (including closed) issues to avoid duplicates.
+
+Also check the [FAQ](https://github.com/Luligu/matterbridge/blob/main/README.md#frequently-asked-questions) in the [README](https://github.com/Luligu/matterbridge/blob/main/README.md).
+
+If the issue is about failing to pair with a controller, also verify that you are not running inside an isolated VM and that you don't have a firewall or VPN blocking network traffic on mDNS and port 5540.
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 
@@ -33,9 +39,9 @@ Please always add the debug file to help explain your problem.
 
 **Matterbridge (please complete the following information):**
 
-- Mode [e.g. as a service or docker container]
-- Version [e.g. 1.6.6]
+- Version: [e.g. 1.6.6]
 - OS: [e.g. where you run Matterbridge]
+- Setup used: systemctl, launchctl or docker
 
 **Additional context**
 Add any other context about the problem here.

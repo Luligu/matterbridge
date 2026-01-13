@@ -46,9 +46,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint the project
-        run: npm run lint
-
       - name: Build the project
         run: npm run build
 
@@ -57,6 +54,9 @@ jobs:
 
       - name: Test matterbridge cli
         run: matterbridge -loginterfaces
+
+      - name: Lint the project
+        run: npm run lint
 
       - name: Test the project
         run: npm run test

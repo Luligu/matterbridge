@@ -107,7 +107,7 @@ describe('Multicast', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Dgram multicast socket broadcast enabled'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Dgram multicast socket multicast TTL set to 255'));
     // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Dgram multicast socket multicastInterface set to ${BLUE}${'0.0.0.0'}${db}`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Dgram multicast socket multicastInterface set to ${BLUE}${getIpv4InterfaceAddress()}${db}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Dgram multicast socket multicastInterface set to ${BLUE}${mcast.getIpv4InterfaceAddress()}${db}`));
     // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Dgram multicast socket joined multicast group ${BLUE}${COAP_MULTICAST_IPV4_ADDRESS}${db} on interface ${BLUE}${'0.0.0.0'}${db}`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Dgram multicast socket bound to'));
 

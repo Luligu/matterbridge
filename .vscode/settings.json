@@ -9,6 +9,9 @@
   "eslint.workingDirectories": [
     { "directory": "./", "changeProcessCWD": true },
     { "directory": "./frontend", "changeProcessCWD": true },
-    { "directory": "./packages/mb-lib-test", "changeProcessCWD": true }
+    { "directory": "./packages/jest-utils", "changeProcessCWD": true },
+    { "directory": "./packages/vitest-utils", "changeProcessCWD": true },
+    { "directory": "./packages/utils", "changeProcessCWD": true },
+    { "directory": "./packages/dgram", "changeProcessCWD": true }
   ]
 }

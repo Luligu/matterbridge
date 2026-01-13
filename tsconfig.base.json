@@ -22,5 +22,5 @@
     "noImplicitOverride": true,
     "skipLibCheck": true
   },
-  "references": [{ "path": "./" }, { "path": "./packages/mb-lib-test" }]
+  "references": [{ "path": "./packages/utils" }, { "path": "./packages/dgram" }, { "path": "./packages/jest-utils" }, { "path": "./packages/vitest-utils" }, { "path": "./" }]
 }

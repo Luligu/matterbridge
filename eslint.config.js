@@ -24,7 +24,7 @@ const __dirname = path.dirname(__filename);
 export default defineConfig([
   {
     name: 'Global Ignores',
-    ignores: ['dist', 'node_modules', 'coverage', 'build', 'frontend', 'bin', 'packages'],
+    ignores: ['dist', 'node_modules', 'coverage', 'build', 'frontend', 'bin', 'chip', 'docs', 'docker', 'reflector', 'screenshot', 'systemd', 'packages', 'vendor'],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,

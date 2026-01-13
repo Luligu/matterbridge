@@ -10,6 +10,8 @@ node_modules/
 temp/
 
 # Specific files that should be ignored
+.eslintcache
+.prettiercache
 *.backup
 *.heapsnapshot
 *.heapprofile
@@ -29,3 +31,7 @@ docs/Matter specifications/
 STYLEGUIDE.md
 workers/
 history.html
+
+# Allow dist folders inside vendor/
+!vendor/**/dist/
+!vendor/**/dist/**

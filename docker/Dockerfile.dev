@@ -10,68 +10,84 @@ RUN apt-get update && \
   git 
 
 WORKDIR /app
-COPY ./package.json ./package-lock.json ./tsconfig.base.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
+COPY ./package*.json ./tsconfig*.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/package.json ./frontend/package.json
 COPY ./frontend/build ./frontend/build
 COPY ./bin ./bin
-RUN npm ci && npm run build && npm link 
+
+COPY ./packages/dgram/package*.json ./packages/dgram/tsconfig*.json ./packages/dgram/.npmignore ./packages/dgram/
+COPY ./packages/dgram/src ./packages/dgram/src
+
+COPY ./packages/jest-utils/package*.json ./packages/jest-utils/tsconfig*.json ./packages/jest-utils/.npmignore ./packages/jest-utils/
+COPY ./packages/jest-utils/src ./packages/jest-utils/src
+
+COPY ./packages/utils/package*.json ./packages/utils/tsconfig*.json ./packages/utils/.npmignore ./packages/utils/
+COPY ./packages/utils/src ./packages/utils/src
+
+COPY ./packages/vitest-utils/package*.json ./packages/vitest-utils/tsconfig*.json ./packages/vitest-utils/.npmignore ./packages/vitest-utils/
+COPY ./packages/vitest-utils/src ./packages/vitest-utils/src
+
+# COPY ./vendor ./vendor
+
+RUN npm ci --no-fund --no-audit && \
+  npm run buildProduction && \
+  npm pkg delete devDependencies scripts && \
+  rm -rf ./node_modules && \
+  npm install --no-fund --no-audit --omit=dev && \
+  npm link --no-fund --no-audit && \
+  npm shrinkwrap --omit=dev && \
+  npm pack
 
 WORKDIR /matterbridge-zigbee2mqtt
-RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-somfy-tahoma
-RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-somfy-tahoma.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
-
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-somfy-tahoma.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 WORKDIR /matterbridge-shelly
-RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-shelly.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-shelly.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-hass
-RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-hass.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
-
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-hass.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 WORKDIR /matterbridge-webhooks
-RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-webhooks.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-webhooks.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-test
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-test.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-test.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-example-accessory-platform
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-accessory-platform.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-accessory-platform.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-example-dynamic-platform
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-dynamic-platform.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-dynamic-platform.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-door
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-door.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-door.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-motion
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-motion.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-motion.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-energy
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-energy.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-energy.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-room
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-room.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-room.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-weather
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-weather.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
-
-WORKDIR /app
-RUN rm -rf tsconfig.tsbuildinfo ./dist && npm run buildProduction && npm pkg delete devDependencies scripts types && rm -rf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack 
-
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-weather.git .
+RUN npm ci --no-fund --no-audit && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 # ─────────────── RUNTIME STAGE ───────────────
 FROM node:22-bookworm-slim AS release
@@ -79,7 +95,7 @@ FROM node:22-bookworm-slim AS release
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /app
+WORKDIR /matterbridge
 
 COPY --from=builder \
   /app/*.tgz \
@@ -101,13 +117,10 @@ COPY --from=builder \
 RUN apt-get update && \
   apt-get install -y --no-install-recommends curl && \
   apt-get clean && \
-  npm install -g --omit=dev *.tgz && \
+  npm install -g --no-fund --no-audit --omit=dev *.tgz && \
   npm uninstall -g corepack && \
   npm cache clean --force && \
   rm *.tgz && \
-  node -v && \
-  npm -v && \
-  npm list -g && \
   rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
   find /usr/local/lib/node_modules -type d -name ".github" -exec rm -rf {} + && \
   find /usr/local/lib/node_modules -type d -name ".vscode" -exec rm -rf {} + && \
@@ -120,5 +133,9 @@ RUN apt-get update && \
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
   CMD curl --fail http://localhost:8283/health || exit 1
 
+# Copy and execute the entrypoint script
+COPY ./docker/entrypoint.debian.sh ./
+RUN chmod +x ./entrypoint.debian.sh
+ENTRYPOINT ["./entrypoint.debian.sh"]
 CMD ["matterbridge", "-docker"]
 # ─────────────── END ───────────────

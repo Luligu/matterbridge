@@ -56,8 +56,6 @@ It should output something like:
 /usr/local/bin/node
 ```
 
-In this case you will need in the step below to replace **_MYNODEPATH_** with /usr/local/bin
-
 ### First create the Matterbridge directories
 
 This will create the required directories if they don't exist and install matterbridge in the matterbridge global node_modules directory
@@ -82,7 +80,7 @@ sudo NPM_CONFIG_PREFIX=/usr/local/etc/matterbridge/.npm-global npm install -g ma
 sudo nano /Library/LaunchDaemons/matterbridge.plist
 ```
 
-- add the following to the file, replacing **_MYNODEPATH_** with the path found in the step before:
+- add the following to the file:
 
 ```
 <?xml version="1.0" encoding="UTF-8"?>
@@ -92,7 +90,7 @@ sudo nano /Library/LaunchDaemons/matterbridge.plist
         <key>EnvironmentVariables</key>
         <dict>
                 <key>PATH</key>
-                <string>/usr/local/etc/matterbridge/.npm-global/bin:MYNODEPATH</string>
+                <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/etc/matterbridge/.npm-global/bin</string>
                 <key>NPM_CONFIG_PREFIX</key>
                 <string>/usr/local/etc/matterbridge/.npm-global</string>
                 <key>HOME</key>
