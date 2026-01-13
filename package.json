@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.4.7",
+  "version": "3.5.0",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -147,8 +147,8 @@
     "fetchChip": "node ./scripts/fetch-chip.mjs",
     "updateHtmls": "node ./scripts/marked.mjs",
     "runMeBeforePublish": "npm run lint && npm run format && npm run build && npm run test",
-    "prepublishOnly": "npm pkg delete devDependencies scripts && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* && npm install --omit=dev && npm shrinkwrap",
-    "prepublishOnlyProduction": "npm run cleanBuildProduction && npm pkg delete devDependencies scripts && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* && npm install --omit=dev && npm shrinkwrap",
+    "prepublishOnly": "npm pkg delete devDependencies scripts workspaces && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* package-lock.json npm-shrinkwrap.json && npm install --omit=dev && npm shrinkwrap --omit=dev",
+    "prepublishOnlyProduction": "npm run cleanBuildProduction && npm run prepublishOnly",
     "npmPack": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm pack && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagDev": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag dev && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagEdge": "npx shx cp package.json package.json.backup && npm run prepublishOnlyProduction && npm publish --tag edge && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",

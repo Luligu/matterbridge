@@ -10,6 +10,7 @@ coverage/
 jest/
 mock/
 node_modules/
+packages/
 public/
 screenshot/
 scripts/
@@ -54,6 +55,10 @@ heap_snapshots
 crypto
 workers
 STYLEGUIDE.md
+
+# Frontend specific directories and files that should be ignored
+frontend/index.html
+frontend/package-lock.json
 
 # Allow dist folders inside vendor/
 !vendor/**/dist/
