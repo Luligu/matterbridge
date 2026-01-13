@@ -135,7 +135,7 @@
     "lint:fix": "npm --workspaces --if-present run lint:fix && eslint --cache --cache-location .eslintcache --fix --max-warnings=0 .",
     "format": "npm --workspaces --if-present run format && prettier --cache --cache-location .prettiercache --write .",
     "format:check": "npm --workspaces --if-present run format:check && prettier --cache --cache-location .prettiercache --check .",
-    "deepClean": "npx shx rm -rf tsconfig.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .eslintcache .prettiercache node_modules/* node_modules/.[!.]* node_modules/..?*",
+    "deepClean": "npm --workspaces --if-present run deepClean && npx shx rm -rf tsconfig.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .eslintcache .prettiercache node_modules/* node_modules/.[!.]* node_modules/..?*",
     "reset": "npm run deepClean && npm install && npm run build && (npm link || sudo npm link) && shx chmod +x bin/*.js && npx jest --clearCache",
     "git:status": "git status && git branch -vv && git diff dev origin/dev && git stash list",
     "git:remote": "git remote -v && git remote show origin",

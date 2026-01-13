@@ -48,6 +48,16 @@ jobs:
       - name: Test the project
         run: npm run test
 
+      - name: Stamp build metadata into package.json
+        run: |
+          npm pkg set build.sha="${GITHUB_SHA}"
+          npm pkg set build.event="${GITHUB_EVENT_NAME}"
+          npm pkg set build.workflow="${GITHUB_WORKFLOW}"
+          npm pkg set build.action="${GITHUB_ACTION}"
+          npm pkg set build.type="${GITHUB_REF_TYPE}"
+          npm pkg set build.name="${GITHUB_REF_NAME}"
+          npm pkg set build.docker="false"
+
       - name: Extract version and set tag
         id: vars
         run: |

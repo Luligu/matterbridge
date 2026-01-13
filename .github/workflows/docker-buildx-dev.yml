@@ -38,6 +38,16 @@ jobs:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Stamp build metadata into package.json
+        run: |
+          npm pkg set build.sha="${GITHUB_SHA}"
+          npm pkg set build.event="${GITHUB_EVENT_NAME}"
+          npm pkg set build.workflow="${GITHUB_WORKFLOW}"
+          npm pkg set build.action="${GITHUB_ACTION}"
+          npm pkg set build.type="${GITHUB_REF_TYPE}"
+          npm pkg set build.name="${GITHUB_REF_NAME}"
+          npm pkg set build.docker="true"
+
       - name: Extract base version, date and commit
         id: vars
         run: |
