@@ -1811,7 +1811,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertising: true } });
         }
         if (data.params.removeFabric) {
-          if (serverNode.env.get(FabricManager).has(FabricIndex(data.params.removeFabric as number))) await serverNode.env.get(FabricManager).removeFabric(FabricIndex(data.params.removeFabric as number));
+          const fabricIndex = FabricIndex(data.params.removeFabric as number);
+          const fabricManager = serverNode.env.get(FabricManager);
+          if (fabricManager.has(fabricIndex)) await fabricManager.for(fabricIndex).leave();
           this.log.debug(`*Removed fabric index ${data.params.removeFabric} for node ${data.params.id}`);
           this.wssSendRefreshRequired('matter', { matter: { ...matter } });
         }
