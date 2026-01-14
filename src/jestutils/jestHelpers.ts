@@ -303,7 +303,15 @@ export async function startMatterbridge(
   );
 
   // Load Matterbridge instance and initialize it
+  // @ts-expect-error - access to private member for testing
+  expect(Matterbridge.instance).toBeUndefined();
   matterbridge = await Matterbridge.loadInstance(true);
+  // @ts-expect-error - access to private member for testing
+  expect(matterbridge.environment).toBeDefined();
+  // Setup the mDNS service in the environment
+  // @ts-expect-error - access to private member for testing
+  new MdnsService(matterbridge.environment);
+
   expect(matterbridge).toBeDefined();
   expect(matterbridge.profile).toBeUndefined();
   expect(matterbridge.bridgeMode).toBe(bridgeMode);
@@ -660,12 +668,9 @@ export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: 
  * @returns {Promise<void>} A promise that resolves when the mDNS instance is closed.
  */
 export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<void> {
-  // TODO: matter.js 0.16.0 - provide close method to close the mDNS service
   // @ts-expect-error - accessing private member for testing
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mdns = matterbridge.environment.get(MdnsService) as any;
-  if (mdns && mdns[Symbol.asyncDispose] && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
-  if (mdns && mdns.close && typeof mdns.close === 'function') await mdns.close();
+  const mdns = matterbridge.environment.get(MdnsService);
+  await mdns.close();
 }
 
 /**
@@ -710,10 +715,8 @@ export function createTestEnvironment(name: string): Environment {
  */
 export async function destroyTestEnvironment(): Promise<void> {
   // stop the mDNS service
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mdns = environment.get(MdnsService) as any;
-  if (mdns && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
-  if (mdns && typeof mdns.close === 'function') await mdns.close();
+  const mdns = environment.get(MdnsService);
+  await mdns.close();
 }
 
 /**
