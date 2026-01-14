@@ -640,7 +640,7 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
 
     loggerLogSpy.mockClear();
-    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }, null, 2), 'utf8');
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }, null, 2) + '\n', 'utf8');
     loggerLogSpy.mockImplementationOnce((level: string, message: string, ...parameters: any[]) => {
       throw new Error('Test error');
     });
