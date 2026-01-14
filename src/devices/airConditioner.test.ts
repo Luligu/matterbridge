@@ -85,6 +85,7 @@ describe('Matterbridge ' + NAME, () => {
       absMinCoolSetpointLimit: 0,
       absMinHeatSetpointLimit: 0,
       controlSequenceOfOperation: 4,
+      externalMeasuredIndoorTemperature: 3000,
       localTemperature: 3000,
       maxCoolSetpointLimit: 5000,
       maxHeatSetpointLimit: 5000,
