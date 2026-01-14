@@ -66,6 +66,8 @@ Advantages:
 ### Added
 
 - [jest]: Added cache inside the repo in .cache/jest.
+- [frontend]: Enhanced logging for HTTP/HTTPS server binding in Frontend class.
+- [matterbridge]: Excluded specific network interfaces when looking for the first external interface.
 
 ### Changed
 

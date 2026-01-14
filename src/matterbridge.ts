@@ -1044,20 +1044,29 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   /**
    * Logs the node and system information.
+   *
+   * @remarks
+   * This method retrieves and logs various details about the host system, including:
+   * - IP address information (IPv4, IPv6, MAC address)
+   * - Node.js version
+   * - Hostname and user information
+   * - Operating system details (type, release, platform, architecture)
+   * - Memory usage statistics
+   * - Uptime information for both the system and the process
    */
   private async logNodeAndSystemInfo() {
     // IP address information
+    const excludedInterfaceNamePattern =
+      /(tailscale|wireguard|openvpn|zerotier|hamachi|\bwg\d+\b|\btun\d+\b|\btap\d+\b|\butun\d+\b|docker|podman|\bveth[a-z0-9]*\b|\bbr-[a-z0-9]+\b|cni|kube|flannel|calico|virbr\d*\b|vmware|vmnet\d*\b|virtualbox|vboxnet\d*\b|teredo|isatap)/i;
     const networkInterfaces = os.networkInterfaces();
     this.systemInformation.interfaceName = '';
     this.systemInformation.ipv4Address = '';
     this.systemInformation.ipv6Address = '';
     this.systemInformation.macAddress = '';
     for (const [interfaceName, interfaceDetails] of Object.entries(networkInterfaces)) {
-      // this.log.debug(`Checking interface: '${interfaceName}' for '${this.mdnsInterface}'`);
       if (this.mdnsInterface && interfaceName !== this.mdnsInterface) continue;
-      if (!interfaceDetails) {
-        break;
-      }
+      if (!this.mdnsInterface && excludedInterfaceNamePattern.test(interfaceName)) continue;
+      if (!interfaceDetails) continue;
       for (const detail of interfaceDetails) {
         if (detail.family === 'IPv4' && !detail.internal && this.systemInformation.ipv4Address === '') {
           this.systemInformation.interfaceName = interfaceName;
