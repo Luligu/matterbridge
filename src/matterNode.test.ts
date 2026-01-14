@@ -17,7 +17,7 @@ import url from 'node:url';
 import { jest } from '@jest/globals';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'node-ansi-logger';
 import { Logger } from '@matter/general';
-import { ExposedFabricInformation, FabricAction } from '@matter/protocol';
+import { ExposedFabricInformation } from '@matter/protocol';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
 import { SessionsBehavior } from '@matter/main/node';
 import { NodeStorageManager } from 'node-persist-manager';
@@ -299,9 +299,9 @@ describe('MatterNode', () => {
         },
       ],
       id: 'Matterbridge',
-      manualPairingCode: '35055412360',
+      manualPairingCode: '35792000079',
       online: true,
-      qrPairingCode: 'MT:Y.K90Q1212TG3D0AG00',
+      qrPairingCode: 'MT:Y.K904QI14UIQ663000',
       serialNumber: expect.any(String),
       sessionInformations: [],
       windowStatus: 0,
@@ -319,11 +319,11 @@ describe('MatterNode', () => {
   });
 
   test('Server node fabricsChanged', async () => {
-    matter.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), FabricAction.Added);
+    matter.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'added');
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} added on server node`));
-    matter.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), FabricAction.Removed);
+    matter.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'deleted');
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} removed on server node`));
-    matter.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), FabricAction.Updated);
+    matter.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'updated');
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} updated on server node`));
   });
 
@@ -416,7 +416,6 @@ describe('MatterNode', () => {
   });
 
   test('Remove endpoint from the Matter aggregator node for Matterbridge', async () => {
-    await setDebug(false);
     expect(deviceManager.length).toBe(1);
 
     // Test removing from unknown plugin
@@ -438,7 +437,6 @@ describe('MatterNode', () => {
   });
 
   test('Remove all endpoints from the Matter aggregator node for Matterbridge', async () => {
-    await setDebug(false);
     expect(deviceManager.length).toBe(0);
 
     const tmpSensor = new MatterbridgeEndpoint([temperatureSensor, bridgedNode], { id: 'Temperature sensor' }, true).createDefaultBridgedDeviceBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890').addRequiredClusterServers();
@@ -463,7 +461,6 @@ describe('MatterNode', () => {
   });
 
   test('Add virtual endpoint to the Matter aggregator node for Matterbridge', async () => {
-    await setDebug(false);
     expect(deviceManager.length).toBe(0);
 
     // Test adding to unknown plugin
@@ -499,7 +496,6 @@ describe('MatterNode', () => {
   });
 
   test('Stop server node for Matterbridge', async () => {
-    await setDebug(false);
     expect(matter.serverNode).toBeDefined();
     if (!matter.serverNode) return;
     const stopPromise = matter.stopServerNode();

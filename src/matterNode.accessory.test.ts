@@ -1,6 +1,6 @@
 // src\matterNode.dynamic.test.ts
 
-const MATTER_PORT = 10002;
+const MATTER_PORT = 10040;
 const NAME = 'MatterNodeAccessory';
 const HOMEDIR = path.join('jest', NAME);
 const PASSCODE = 123458;
