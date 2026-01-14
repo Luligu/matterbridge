@@ -68,6 +68,7 @@ Advantages:
 - [jest]: Added cache inside the repo in .cache/jest.
 - [frontend]: Enhanced logging for HTTP/HTTPS server binding in Frontend class.
 - [matterbridge]: Excluded specific network interfaces when looking for the first external interface.
+- [thermostat]: Conformance to new matter.js internal attributes externalMeasuredIndoorTemperature and externallyMeasuredOccupancy (not in Matter 1.4.2).
 
 ### Changed
 
