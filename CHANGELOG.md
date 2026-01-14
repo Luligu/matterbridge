@@ -32,7 +32,7 @@ Advantages:
 
 ### Breaking Changes
 
-- [matter]: This release brings the upgrade to matter 1.4.2 and matter.js 0.16.1.
+- [matter]: This release brings the upgrade to matter 1.4.2 and matter.js 0.16.x.
 
 ### Changed device types in Matter 1.4.2
 
