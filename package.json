@@ -178,7 +178,7 @@
     "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine -p 8585:8283 matterbridge:alpine"
   },
   "dependencies": {
-    "@matter/main": "0.16.3",
+    "@matter/main": "0.16.4",
     "archiver": "7.0.1",
     "express": "5.2.1",
     "glob": "13.0.0",
