@@ -178,7 +178,7 @@
     "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine -p 8585:8283 matterbridge:alpine"
   },
   "dependencies": {
-    "@matter/main": "0.16.2",
+    "@matter/main": "0.16.3",
     "archiver": "7.0.1",
     "express": "5.2.1",
     "glob": "13.0.0",
@@ -214,7 +214,7 @@
     "jest": "30.2.0",
     "marked": "17.0.1",
     "npm-check-updates": "19.3.1",
-    "prettier": "3.7.4",
+    "prettier": "3.8.0",
     "shx": "0.4.0",
     "ts-jest": "29.4.6",
     "typescript": "5.9.3",
