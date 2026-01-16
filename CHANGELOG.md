@@ -68,12 +68,13 @@ Advantages:
 - [jest]: Added cache inside the repo in .cache/jest.
 - [frontend]: Enhanced logging for HTTP/HTTPS server binding in Frontend class.
 - [matterbridge]: Excluded specific network interfaces when looking for the first external interface.
-- [thermostat]: Conformance to new matter.js internal attributes externalMeasuredIndoorTemperature and externallyMeasuredOccupancy (not in Matter 1.4.2).
+- [thermostat]: Conformance to new matter.js internal attributes externalMeasuredIndoorTemperature and externallyMeasuredOccupancy (not in Matter 1.4.2 specs).
 - [matter.js]: Bump to matter.j v. 0.16.0.
 - [matter.js]: Bump to matter.j v. 0.16.1.
 - [matter.js]: Bump to matter.j v. 0.16.2.
 - [matter.js]: Bump to matter.j v. 0.16.3.
 - [matter.js]: Bump to matter.j v. 0.16.4.
+- [matter.js]: Bump to matter.j v. 0.16.5.
 
 ### Changed
 
@@ -83,7 +84,8 @@ Advantages:
 
 ### Fixed
 
-- [macOS]: Fixed the EnergyEvse.chargingEnabledUntil attribute that was wrongly set in the disable command (spec 9.3.8.4).
+- [evse]: Fixed the EnergyEvse.chargingEnabledUntil attribute that was wrongly set in the disable command (spec 9.3.8.4).
+- [package]: Fixed the devDependencies that slipped in for a bug in 3.4.7.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

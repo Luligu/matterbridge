@@ -33,7 +33,7 @@ import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, 
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
-import { MdnsService } from '@matter/main/protocol';
+import { MdnsService } from '@matter/protocol';
 import { NodeStorageManager } from 'node-persist-manager';
 
 // Imports from Matterbridge

@@ -85,7 +85,7 @@
     "@eslint/js": "9.39.2",
     "@jest/globals": "30.2.0",
     "@types/jest": "30.0.0",
-    "@types/node": "25.0.8",
+    "@types/node": "25.0.9",
     "@vitest/coverage-v8": "4.0.17",
     "@vitest/eslint-plugin": "1.6.6",
     "cross-env": "10.1.0",

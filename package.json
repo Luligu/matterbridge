@@ -178,7 +178,7 @@
     "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine -p 8585:8283 matterbridge:alpine"
   },
   "dependencies": {
-    "@matter/main": "0.16.4",
+    "@matter/main": "0.16.5",
     "archiver": "7.0.1",
     "express": "5.2.1",
     "glob": "13.0.0",
@@ -198,7 +198,7 @@
     "@types/express": "5.0.6",
     "@types/jest": "30.0.0",
     "@types/multer": "2.0.0",
-    "@types/node": "25.0.8",
+    "@types/node": "25.0.9",
     "@types/ws": "8.18.1",
     "@vitest/coverage-v8": "4.0.17",
     "@vitest/eslint-plugin": "1.6.6",

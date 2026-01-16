@@ -18,7 +18,7 @@ import url from 'node:url';
 import { jest } from '@jest/globals';
 import { er, LogLevel, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
-import { ServerNodeStore } from '@matter/main/node';
+import { ServerNodeStore } from '@matter/node';
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, NODE_STORAGE_DIR, dev, plg } from './matterbridgeTypes.js';

@@ -19,9 +19,9 @@ import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'nod
 import { Logger } from '@matter/general';
 import { ExposedFabricInformation } from '@matter/protocol';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
-import { SessionsBehavior } from '@matter/main/node';
+import { SessionsBehavior } from '@matter/node';
 import { NodeStorageManager } from 'node-persist-manager';
-import { Identify, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/main/clusters';
+import { Identify, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, Plugin, plg, dev, MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from './matterbridgeTypes.js';
