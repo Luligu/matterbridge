@@ -2568,8 +2568,10 @@ const commissioningController = new CommissioningController({
       this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: plugin not found`);
       return;
     }
-    // Unregister and remove the device from the matterbridge aggregator node
-    if (this.bridgeMode === 'bridge') {
+    if (device.mode === 'server') {
+      this.log.debug(`Removing server node device ${dev}${device.deviceName}${db} of plugin ${plg}${plugin.name}${db}...`);
+    } else if (this.bridgeMode === 'bridge') {
+      // Unregister and remove the device from the matterbridge aggregator node
       if (!this.aggregatorNode) {
         this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator node not found`);
         return;

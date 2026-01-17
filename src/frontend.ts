@@ -1638,15 +1638,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           plugin.matter = undefined;
           await this.matterbridge.plugins.enable(data.params.pluginName);
           this.wssSendSnackbarMessage(`Enabled plugin ${data.params.pluginName}`, 5, 'success');
-          this.matterbridge.plugins
-            .load(plugin, true, 'The plugin has been enabled', true)
-            .then(() => {
-              this.wssSendRefreshRequired('plugins');
-              this.wssSendRefreshRequired('devices');
-              this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginName}`, 5, 'success');
-              return;
-            })
-            .catch(/* istanbul ignore next */ (_error) => {});
+          setImmediate(async () => {
+            await this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true);
+            // @ts-expect-error Accessing private method
+            if (plugin.serverNode) await this.matterbridge.startServerNode(plugin.serverNode);
+            // @ts-expect-error Accessing private method
+            for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name && d.serverNode)) await this.matterbridge.startServerNode(device.serverNode);
+            this.wssSendRefreshRequired('plugins');
+            this.wssSendRefreshRequired('devices');
+            this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginName}`, 5, 'success');
+          });
+          return;
         }
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/disableplugin') {
@@ -1655,8 +1657,16 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
+        for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name && d.serverNode)) {
+          // @ts-expect-error Accessing private method
+          await this.matterbridge.stopServerNode(device.serverNode);
+          device.serverNode = undefined;
+        }
         await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true);
         await this.matterbridge.plugins.disable(data.params.pluginName);
+        // @ts-expect-error Accessing private method
+        if (plugin.serverNode) await this.matterbridge.stopServerNode(plugin.serverNode);
+        plugin.serverNode = undefined;
         this.wssSendSnackbarMessage(`Disabled plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
