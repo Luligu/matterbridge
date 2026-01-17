@@ -691,7 +691,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           action = 'added';
           break;
         case 'deleted':
-          action = 'deleted';
+          action = 'removed';
           break;
         case 'updated':
           action = 'updated';
