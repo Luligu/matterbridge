@@ -759,8 +759,8 @@ describe('Matterbridge ' + NAME, () => {
 
   test('createDefaultPresetsThermostatClusterServer', async () => {
     const presetTypes = [
-      { presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied' },
-      { presetScenario: Thermostat.PresetScenario.Unoccupied, name: 'Unoccupied' },
+      { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, name: 'Occupied' },
+      { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, name: 'Unoccupied' },
     ];
     const presetsList = [
       { presetHandle: 0, presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied', coolingSetpoint: 2500, heatingSetpoint: 2100 },
@@ -805,8 +805,8 @@ describe('Matterbridge ' + NAME, () => {
 
   test('createDefaultPresetsThermostatClusterServer with occupancy and presets', async () => {
     const presetTypes = [
-      { presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied' },
-      { presetScenario: Thermostat.PresetScenario.Unoccupied, name: 'Unoccupied' },
+      { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, name: 'Occupied' },
+      { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, name: 'Unoccupied' },
     ];
     const presetsList = [
       { presetHandle: 0, presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied', coolingSetpoint: 2500, heatingSetpoint: 2100 },
