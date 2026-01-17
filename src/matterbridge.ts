@@ -39,7 +39,7 @@ import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
 import { Logger, Diagnostic, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, UINT32_MAX, UINT16_MAX, Crypto, Environment, StorageContext, StorageManager, StorageService } from '@matter/general';
-import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
+import { DeviceCertification, ExposedFabricInformation, FabricAction, PaseClient } from '@matter/protocol';
 import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
@@ -2278,14 +2278,14 @@ const commissioningController = new CommissioningController({
     serverNode.events.commissioning.fabricsChanged.on((fabricIndex, fabricAction) => {
       let action = '';
       switch (fabricAction) {
-        case 'added':
+        case FabricAction.Added:
           this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
           action = 'added';
           break;
-        case 'deleted':
+        case FabricAction.Removed:
           action = 'removed';
           break;
-        case 'updated':
+        case FabricAction.Updated:
           action = 'updated';
           break;
       }

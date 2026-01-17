@@ -34,7 +34,7 @@ import { NodeStorageManager } from 'node-persist-manager';
 // @matter
 import '@matter/nodejs';
 import { Logger, Diagnostic, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, StorageContext, StorageManager, StorageService, UINT32_MAX, UINT16_MAX, Environment } from '@matter/general';
-import { DeviceCertification, ExposedFabricInformation, MdnsService } from '@matter/protocol';
+import { DeviceCertification, ExposedFabricInformation, FabricAction, MdnsService } from '@matter/protocol';
 import { VendorId, DeviceTypeId } from '@matter/types';
 import { ServerNode, Endpoint, SessionsBehavior } from '@matter/node';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
@@ -242,7 +242,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     // Close mDNS service
     if (closeMdns) {
       if (this.verbose) this.log.debug(`Closing Matter MdnsService for ${this.storeId}...`);
-      await this.matterMdnsService?.close();
+      await this.matterMdnsService?.[Symbol.asyncDispose]();
       if (this.verbose) this.log.debug(`Closed Matter MdnsService for ${this.storeId}`);
     }
 
@@ -686,14 +686,14 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     serverNode.events.commissioning.fabricsChanged.on((fabricIndex, fabricAction) => {
       let action = '';
       switch (fabricAction) {
-        case 'added':
+        case FabricAction.Added:
           this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
           action = 'added';
           break;
-        case 'deleted':
+        case FabricAction.Removed:
           action = 'removed';
           break;
-        case 'updated':
+        case FabricAction.Updated:
           action = 'updated';
           break;
       }

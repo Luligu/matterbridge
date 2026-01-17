@@ -1827,7 +1827,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (data.params.removeFabric) {
           const fabricIndex = FabricIndex(data.params.removeFabric as number);
           const fabricManager = serverNode.env.get(FabricManager);
-          if (fabricManager.has(fabricIndex)) await fabricManager.for(fabricIndex).leave();
+          if (fabricManager.has(fabricIndex)) await fabricManager.for(fabricIndex).remove();
           this.log.debug(`*Removed fabric index ${data.params.removeFabric} for node ${data.params.id}`);
           this.wssSendRefreshRequired('matter', { matter: { ...matter } });
         }
