@@ -26,7 +26,8 @@ Dev containers have networking limitations depending on the host OS and Docker s
   "image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:latest",
   // Use the non-root node user (passwordless sudo in this image)
   "remoteUser": "node",
-  // Mount the node_modules workspace folder to the container's workspace volumes to improve performance
+  // Mount the node_modules folder to the container's volumes to improve performance
+  // Mount the matterbridge folders to the container's volumes to persist the storages between container restarts and rebuilds
   "mounts": [
     "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
@@ -39,8 +40,16 @@ Dev containers have networking limitations depending on the host OS and Docker s
     // Give the Docker container the same name as the repository (must be unique on host)
     "--name",
     "${localWorkspaceFolderBasename}",
-    // Remove network host mode if on Docker Desktop for Windows or macOS
-    "--network=host"
+    // Publish Matterbridge frontend port
+    "-p",
+    "8283:8283/tcp",
+    // Publish Matter port range (to allow childbridge mode and devices with mode server) to the host
+    "-p",
+    "5540-5549:5540-5549/udp"
+    // Use network host mode if on Docker Engine on Linux or WSL 2 to allow full local network access and mDNS support
+    // "--network=host"
+    // Use a shared bridge network to allow to access other containers with their names (dns resolution). With the default bridge, dns resolution does not work (only ip:port).
+    // "--network=shared_bridge"
   ],
   "customizations": {
     "vscode": {
