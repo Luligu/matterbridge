@@ -26,10 +26,13 @@ npm install --global --no-fund --no-audit npm npm-check-updates shx cross-env
 echo "2 - Creating directories..."
 mkdir -p /home/node/Matterbridge /home/node/.matterbridge /home/node/.mattercert
 
-echo "3 - Building the package..."
-npm install
+echo "3 - Setting ownership of directories..."
+sudo chown -R node:node . /home/node/Matterbridge /home/node/.matterbridge /home/node/.mattercert
+
+echo "4 - Building the package..."
+npm install --no-fund --no-audit
 npm run build
-npm link
+npm link --no-fund --no-audit
 npm outdated || true
 
-echo "4 - Setup completed!"
+echo "5 - Setup completed!"

@@ -30,6 +30,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
   // Mount the matterbridge folders to the container's volumes to persist the storages between container restarts and rebuilds
   "mounts": [
     "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=${localWorkspaceFolderBasename}-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume"
