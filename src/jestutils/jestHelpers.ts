@@ -670,7 +670,7 @@ export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: 
 export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<void> {
   // @ts-expect-error - accessing private member for testing
   const mdns = matterbridge.environment.get(MdnsService);
-  await mdns[Symbol.asyncDispose]();
+  await mdns.close();
 }
 
 /**
@@ -716,7 +716,7 @@ export function createTestEnvironment(name: string): Environment {
 export async function destroyTestEnvironment(): Promise<void> {
   // stop the mDNS service
   const mdns = environment.get(MdnsService);
-  await mdns[Symbol.asyncDispose]();
+  await mdns.close();
 }
 
 /**
