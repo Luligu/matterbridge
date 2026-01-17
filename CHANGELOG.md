@@ -70,6 +70,7 @@ Advantages:
 - [matterbridge]: Excluded specific network interfaces when looking for the first external interface.
 - [thermostat]: Conformance to new matter.js internal attributes externalMeasuredIndoorTemperature and externallyMeasuredOccupancy (not in Matter 1.4.2 specs).
 - [scenes]: Added SceneManagement when required.
+- [server]: Added start and stop devices server mode in plugin restart.
 - [matter.js]: Bump to matter.j v. 0.16.0.
 - [matter.js]: Bump to matter.j v. 0.16.1.
 - [matter.js]: Bump to matter.j v. 0.16.2.

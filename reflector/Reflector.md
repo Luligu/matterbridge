@@ -7,12 +7,17 @@ This project aims to use Matterbridge in these configurations:
 | Docker Desktop | bridge (1)     | Windows | ✅   | ✅   | ✅        | ✅             | ✅            |
 | Docker Desktop | bridge (1)     | macOS   | ✅   | ✅   | ✅        | ✅             | ✅            |
 | Docker Engine  | bridge (2)     | Linux   | ✅   | ✅   | ✅        | ✅             | ✅            |
+| Dev Container  | bridge         | Windows | ✅   | ✅   | ✅        | ✅             | ✅            |
+| Dev Container  | bridge         | macOS   | ✅   | ✅   | ✅        | ✅             | ✅            |
+| Wsl            | Nat mode (4)   | Windows | ✅   | ✅   | ✅        | ✅             | ✅            |
 
 (1) - Network host in this configuration is useless cause Docker runs inside a VM.
 
 (2) - Network host in this configuration works already out of the box cause Docker runs on the host.
 
 (3) - Share mDNS between separate containers.
+
+(4) - The mirrored mode works already out of the box cause is on the host.
 
 It can also be used to run Home Assistant and Matter Server inside Docker Desktop on Windows and macOS (with network bridge) without using complex VM. You just copy paste this [docker-compose.yml](https://matterbridge.io/reflector/docker-compose.yml).
 
@@ -115,14 +120,14 @@ docker exec -it matterbridge-test ip r
 
 ## Download and run the Madderbridge reflector server tray app directly on the host
 
-| OS      | Type          | Dowload   | Link                                                                                                                     |
-| ------- | ------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Windows | Any arch      | .exe      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server.Setup.0.0.1.exe) |
-| macOS   | Apple Silicon | .dmg      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1-arm64.dmg) |
-| macOS   | Intel         | .dmg      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1.dmg)       |
-| Ubuntu  | desktop       | .AppImage | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1.AppImage)  |
-| Ubuntu  | headless      | .deb      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mdns-reflector-server_0.0.1-1_all.deb) |
-| Debian  | Any distro    | .deb      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mdns-reflector-server_0.0.1-1_all.deb) |
+| OS      | Type          | Dowload   | Link                                                                                                                           |
+| ------- | ------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Windows | Any arch      | .exe      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector.Setup.0.0.1.exe) |
+| macOS   | Apple Silicon | .dmg      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector-0.0.1-arm64.dmg) |
+| macOS   | Intel         | .dmg      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector-0.0.1.dmg)       |
+| Ubuntu  | desktop       | .AppImage | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector-0.0.1.AppImage)  |
+| Ubuntu  | headless      | .deb      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mdns-reflector-server_0.0.1-1_all.deb)       |
+| Debian  | Any distro    | .deb      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mdns-reflector-server_0.0.1-1_all.deb)       |
 
 You may need to approve the install while the try apps are not digitally signed.
 
@@ -160,8 +165,8 @@ use this [docker-compose.yml](https://matterbridge.io/reflector/docker-compose.y
 With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with **ws://matterserver:5580/ws**
 
 ```shell
-docker compose down
-docker compose pull
-docker compose up -d --force-recreate
+docker compose -p reflector-test down
+docker compose -p reflector-test pull
+docker compose -p reflector-test up -d --force-recreate
 docker logs --tail 1000 -f reflector
 ```
