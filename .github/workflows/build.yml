@@ -34,9 +34,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Clean cache
-        run: npm cache clean --force
-
       - name: Verify Node.js version
         run: node -v
 
@@ -44,13 +41,13 @@ jobs:
         run: npm -v
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-fund --no-audit
 
       - name: Build the project
         run: npm run build
 
       - name: Install matterbridge
-        run: npm install -g .
+        run: npm install --no-fund --no-audit --global .
 
       - name: Test matterbridge cli
         run: matterbridge -loginterfaces

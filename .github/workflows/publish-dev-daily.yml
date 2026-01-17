@@ -24,9 +24,6 @@ jobs:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Clean npm cache
-        run: npm cache clean --force
-
       - name: Verify Node.js version
         run: node -v
 
@@ -34,13 +31,13 @@ jobs:
         run: npm -v
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-fund --no-audit
 
       - name: Build the project for production
         run: npm run buildProduction
 
       - name: Install matterbridge
-        run: npm install -g .
+        run: npm install --no-fund --no-audit --global .
 
       - name: Lint the project
         run: npm run lint
