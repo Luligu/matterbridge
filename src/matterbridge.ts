@@ -2359,10 +2359,10 @@ const commissioningController = new CommissioningController({
    * Stops the specified server node.
    *
    * @param {ServerNode} matterServerNode - The server node to stop.
-   * @param {number} [timeout] - The timeout in milliseconds for stopping the server node. Defaults to 30 seconds.
+   * @param {number} [timeout] - The timeout in milliseconds for stopping the server node. Defaults to 10 seconds.
    * @returns {Promise<void>} A promise that resolves when the server node has stopped.
    */
-  private async stopServerNode(matterServerNode: ServerNode, timeout: number = 30000): Promise<void> {
+  private async stopServerNode(matterServerNode: ServerNode, timeout: number = 10000): Promise<void> {
     const { withTimeout } = await import('./utils/wait.js');
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
