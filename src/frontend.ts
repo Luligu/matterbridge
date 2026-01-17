@@ -1666,21 +1666,23 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/restartplugin' });
           return;
         }
+        this.wssSendSnackbarMessage(`Restarting plugin ${data.params.pluginName}`, 5, 'info');
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         await this.matterbridge.plugins.shutdown(plugin, 'The plugin is restarting.', false, true);
         if (plugin.serverNode) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (this.matterbridge as any).stopServerNode(plugin.serverNode);
+          // @ts-expect-error Accessing private method
+          await this.matterbridge.stopServerNode(plugin.serverNode);
           plugin.serverNode = undefined;
         }
-        for (const device of this.matterbridge.devices) {
-          if (device.plugin === plugin.name) {
-            this.log.debug(`Removing device ${device.deviceName} from plugin ${plugin.name}`);
-            this.matterbridge.devices.remove(device);
-          }
+        for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name)) {
+          this.log.debug(`Removing device ${device.deviceName} from plugin ${plugin.name}`);
+          // @ts-expect-error Accessing private method
+          if (device.serverNode) await this.matterbridge.stopServerNode(device.serverNode);
+          device.serverNode = undefined;
+          this.matterbridge.devices.remove(device);
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (plugin.type === 'DynamicPlatform' && !plugin.locked) await (this.matterbridge as any).createDynamicPlugin(plugin);
+        // @ts-expect-error Accessing private method
+        if (plugin.type === 'DynamicPlatform' && !plugin.locked) await this.matterbridge.createDynamicPlugin(plugin);
         await this.matterbridge.plugins.load(plugin, true, 'The plugin has been restarted', true);
         plugin.restartRequired = false; // Reset plugin restartRequired
         let needRestart = 0;
@@ -1690,8 +1692,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (needRestart === 0) {
           this.wssSendRestartNotRequired(true); // Reset global restart required message
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (plugin.serverNode) await (this.matterbridge as any).startServerNode(plugin.serverNode);
+        // @ts-expect-error Accessing private method
+        if (plugin.serverNode) await this.matterbridge.startServerNode(plugin.serverNode);
+        // @ts-expect-error Accessing private method
+        for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name && d.serverNode)) await this.matterbridge.startServerNode(device.serverNode);
         this.wssSendSnackbarMessage(`Restarted plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
