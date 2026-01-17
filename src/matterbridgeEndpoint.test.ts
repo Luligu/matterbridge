@@ -632,7 +632,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     await device.addFixedLabel('composed', 'Light');
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff', 'fixedLabel']);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'scenesManagement', 'onOff', 'fixedLabel']);
     expect(device.hasAttributeServer(FixedLabel.Cluster, 'labelList')).toBe(true);
     expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(false);
     const options = device.getClusterServerOptions(FixedLabel.Cluster);
@@ -658,7 +658,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     await device.addUserLabel('composed', 'Light');
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff', 'userLabel']);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'scenesManagement', 'onOff', 'userLabel']);
     expect(device.hasAttributeServer(FixedLabel.Cluster, 'labelList')).toBe(false);
     expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(true);
     const options = device.getClusterServerOptions(UserLabel.Cluster);

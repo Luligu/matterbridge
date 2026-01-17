@@ -220,7 +220,7 @@ describe('Matterbridge ' + NAME, () => {
   test('createDefaultScenesClusterServer', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight13', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
-    device.createDefaultScenesClusterServer();
+    device.createDefaultScenesManagementClusterServer();
     expect(device.hasClusterServer(ScenesManagement.Cluster)).toBe(true);
 
     await add(device);
