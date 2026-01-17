@@ -1262,9 +1262,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
-   * @remarks The scenes management cluster server is still provisional and so not yet implemented.
+   * @remarks The scenes management cluster server is mandatory since Matter 1.4.2.
    */
-  createDefaultScenesClusterServer(): this {
+  createDefaultScenesManagementClusterServer(): this {
     this.behaviors.require(ScenesManagementServer);
     return this;
   }
