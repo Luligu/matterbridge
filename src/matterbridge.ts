@@ -2282,8 +2282,8 @@ const commissioningController = new CommissioningController({
           this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
           action = 'added';
           break;
-        case 'removed':
-          action = 'removed';
+        case 'deleted':
+          action = 'deleted';
           break;
         case 'updated':
           action = 'updated';

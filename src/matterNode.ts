@@ -684,20 +684,20 @@ export class MatterNode extends EventEmitter<MatterEvents> {
      * information is needed.
      */
     serverNode.events.commissioning.fabricsChanged.on((fabricIndex, fabricAction) => {
-        let action = '';
-        switch (fabricAction) {
-          case 'added':
-            this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
-            action = 'added';
-            break;
-          case 'removed':
-            action = 'removed';
-            break;
-          case 'updated':
-            action = 'updated';
-            break;
-        }
-        this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
+      let action = '';
+      switch (fabricAction) {
+        case 'added':
+          this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
+          action = 'added';
+          break;
+        case 'deleted':
+          action = 'deleted';
+          break;
+        case 'updated':
+          action = 'updated';
+          break;
+      }
+      this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...this.getServerNodeData(serverNode) } } });
     });
 
