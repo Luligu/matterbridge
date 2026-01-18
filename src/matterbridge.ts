@@ -2599,7 +2599,7 @@ const commissioningController = new CommissioningController({
       return;
     }
     if (device.mode === 'server') {
-      this.log.debug(`Removing server node device ${dev}${device.deviceName}${db} of plugin ${plg}${plugin.name}${db}...`);
+      this.log.info(`Removed mode server bridged endpoint(${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
     } else if (this.bridgeMode === 'bridge') {
       // Unregister and remove the device from the matterbridge aggregator node
       if (!this.aggregatorNode) {

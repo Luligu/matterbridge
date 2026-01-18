@@ -56,7 +56,7 @@ import { PluginManager } from './pluginManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
 import { MATTER_STORAGE_NAME, plg } from './matterbridgeTypes.js';
-import { loggerLogSpy, setupTest, flushAsync, destroyInstance, closeMdnsInstance } from './jestutils/jestHelpers.js';
+import { loggerLogSpy, setupTest, flushAsync, destroyInstance, closeMdnsInstance, loggerErrorSpy } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -165,6 +165,23 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);
     expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error adding bridged endpoint`));
+  });
+
+  test('addVirtualEndpoint', async () => {
+    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    const plugin = plugins.get('matterbridge-mock1');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+
+    await matterbridge.addVirtualEndpoint('matterbridge-unknown', 'Virtual', 'outlet', {} as any);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`plugin not found`));
+    jest.clearAllMocks();
+
+    matterbridge.aggregatorNode = { parts: { has: () => true } } as any;
+    await matterbridge.addVirtualEndpoint('matterbridge-mock1', 'Virtual', 'outlet', {} as any);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`Please use a different name`));
+
+    expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
   });
 
   test('add plugin', async () => {
