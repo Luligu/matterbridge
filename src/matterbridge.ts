@@ -685,7 +685,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (!fs.existsSync(plugin.path) && !hasParameter('add') && !hasParameter('remove') && !hasParameter('enable') && !hasParameter('disable') && !hasParameter('reset') && !hasParameter('factoryreset')) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
         const { spawnCommand } = await import('./utils/spawn.js');
-        if (await spawnCommand('npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose'], 'install', plugin.name)) {
+        if (await spawnCommand('npm', ['install', '-g', `${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}`, '--omit=dev', '--verbose'], 'install', plugin.name)) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } else {
@@ -751,10 +751,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       let index = 0;
       for (const plugin of this.plugins) {
         if (index !== this.plugins.length - 1) {
-          this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled${nf}`);
+          this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} version: ${plg}${plugin.version}${nf} ${plugin.enabled ? GREEN : RED}enabled${nf}`);
           this.log.info(`│ └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         } else {
-          this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}disabled${nf}`);
+          this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} version: ${plg}${plugin.version}${nf} ${plugin.enabled ? GREEN : RED}disabled${nf}`);
           this.log.info(`  └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         }
         index++;

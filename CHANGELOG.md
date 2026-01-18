@@ -33,6 +33,7 @@ Advantages:
 ### Breaking Changes
 
 - [matter]: This release brings the upgrade to matter 1.4.2 and matter.js 0.16.x.
+- [matterbridge]: On restart (typically on the Home Assistant addon), when the plugin is not found and is reinstalled, it is reinstalled from the latest dev if it was on the dev branch.
 
 ### Changed device types in Matter 1.4.2
 
