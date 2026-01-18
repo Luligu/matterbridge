@@ -71,7 +71,7 @@ Advantages:
 - [frontend]: Enhanced logging for HTTP/HTTPS server binding in Frontend class.
 - [matterbridge]: Excluded specific network interfaces when looking for the first external interface.
 - [thermostat]: Conformance to new matter.js internal attributes externalMeasuredIndoorTemperature and externallyMeasuredOccupancy (not in Matter 1.4.2 specs).
-- [scenes]: Added SceneManagement when required.
+- [scenes]: Added SceneManagement cluster when required.
 - [server]: Added start and stop devices server mode in plugin restart.
 - [server]: Added start and stop devices server mode in plugin enable and disable.
 - [matter.js]: Bump to matter.j v. 0.16.0.
@@ -80,7 +80,7 @@ Advantages:
 - [matter.js]: Bump to matter.j v. 0.16.3.
 - [matter.js]: Bump to matter.j v. 0.16.4.
 - [matter.js]: Bump to matter.j v. 0.16.5.
-- [frontend]: Added the --bind parameter to bind the frontend to a specific address. Default is all addresses.
+- [frontend]: Added the --bind parameter to bind the frontend to a specific address. Defaults to all addresses.
 
 ### Changed
 
