@@ -326,7 +326,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         });
       } else {
         // We listen to all available addresses
-        this.httpServer.listen(this.port, () => {
+        this.httpServer.listen(this.port, getParameter('bind'), () => {
           const addr = this.httpServer?.address();
           // istanbul ignore else
           if (addr && typeof addr !== 'string') {
@@ -476,7 +476,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         });
       } else {
         // We listen to all available addresses
-        this.httpsServer.listen(this.port, () => {
+        this.httpsServer.listen(this.port, getParameter('bind'), () => {
           const addr = this.httpsServer?.address();
           // istanbul ignore else
           if (addr && typeof addr !== 'string') {

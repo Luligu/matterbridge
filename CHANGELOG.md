@@ -78,6 +78,7 @@ Advantages:
 - [matter.js]: Bump to matter.j v. 0.16.3.
 - [matter.js]: Bump to matter.j v. 0.16.4.
 - [matter.js]: Bump to matter.j v. 0.16.5.
+- [frontend]: Added the --bind parameter to bind the frontend to a specific address. Default is all addresses.
 
 ### Changed
 
