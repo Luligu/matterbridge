@@ -56,7 +56,7 @@ import type { ApiSettings, RefreshRequiredChanged, WsMessageApiRequest, WsMessag
 import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from './matterbridgeTypes.js';
 import { isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean } from './utils/isValid.js';
 import { createZip } from './utils/createZip.js';
-import { hasParameter } from './utils/commandLine.js';
+import { hasParameter, getParameter } from './utils/commandLine.js';
 import { withTimeout, wait } from './utils/wait.js';
 import { inspectError } from './utils/error.js';
 import { formatBytes, formatUptime, formatPercent } from './utils/format.js';
