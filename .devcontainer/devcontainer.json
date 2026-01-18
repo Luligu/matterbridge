@@ -24,6 +24,10 @@ Dev containers have networking limitations depending on the host OS and Docker s
   "name": "Matterbridge",
   // Use the pre-built image with Node+TypeScript
   "image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:latest",
+  // Inherit timezone from the host environment (set TZ on the host, e.g. Europe/Paris)
+  "containerEnv": {
+    "TZ": "${localEnv:TZ}"
+  },
   // Use the non-root node user (passwordless sudo in this image)
   "remoteUser": "node",
   // Mount the node_modules folder to the container's volumes to improve performance
