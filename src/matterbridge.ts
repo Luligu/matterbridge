@@ -1479,16 +1479,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         }
       }
       // Remove the resumption records for Matterbridge (bridge mode)
+      this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
       unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
       unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
       for (const plugin of this.plugins.array()) {
         // Remove the resumption records for the plugins (childbridge mode)
+        this.log.debug(`Cleaning matter storage context for plugin ${plg}${plugin.name}${db}...`);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'sessions.resumptionRecords'), this.log);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'root.subscriptions.subscriptions'), this.log);
       }
       for (const device of this.devices.array().filter((d) => d.mode === 'server')) {
         if (!device.deviceName) continue;
         // Remove the resumption records for the server mode devices
+        this.log.debug(`Cleaning matter storage context for server node device ${dev}${device.deviceName}${db}...`);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'sessions.resumptionRecords'), this.log);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'root.subscriptions.subscriptions'), this.log);
       }

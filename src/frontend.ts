@@ -333,9 +333,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.log.info(`The frontend http server is bound to ${addr.family} ${addr.address}:${addr.port}`);
           }
           // istanbul ignore else
-          if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
+          if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
+            this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
           // istanbul ignore else
-          if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+          if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
+            this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
           this.listening = true;
           this.emit('server_listening', 'http', this.port);
         });
@@ -483,9 +485,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.log.info(`The frontend https server is bound to ${addr.family} ${addr.address}:${addr.port}`);
           }
           // istanbul ignore else
-          if (this.matterbridge.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
+          if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
+            this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
           // istanbul ignore else
-          if (this.matterbridge.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+          if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
+            this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
           this.listening = true;
           this.emit('server_listening', 'https', this.port);
         });
@@ -1627,30 +1631,27 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
-        if (plugin && !plugin.enabled) {
-          plugin.locked = undefined;
-          plugin.error = undefined;
-          plugin.loaded = undefined;
-          plugin.started = undefined;
-          plugin.configured = undefined;
-          plugin.platform = undefined;
-          plugin.registeredDevices = undefined;
-          plugin.matter = undefined;
-          await this.matterbridge.plugins.enable(data.params.pluginName);
-          this.wssSendSnackbarMessage(`Enabled plugin ${data.params.pluginName}`, 5, 'success');
-          setImmediate(async () => {
-            await this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true);
-            // @ts-expect-error Accessing private method
-            if (plugin.serverNode) await this.matterbridge.startServerNode(plugin.serverNode);
-            // @ts-expect-error Accessing private method
-            for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name && d.serverNode)) await this.matterbridge.startServerNode(device.serverNode);
-            this.wssSendRefreshRequired('plugins');
-            this.wssSendRefreshRequired('devices');
-            this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginName}`, 5, 'success');
-          });
-          return;
-        }
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        plugin.locked = undefined;
+        plugin.error = undefined;
+        plugin.loaded = undefined;
+        plugin.started = undefined;
+        plugin.configured = undefined;
+        plugin.platform = undefined;
+        plugin.registeredDevices = undefined;
+        plugin.matter = undefined;
+        await this.matterbridge.plugins.enable(data.params.pluginName);
+        this.wssSendSnackbarMessage(`Enabled plugin ${data.params.pluginName}`, 5, 'success');
+        setImmediate(async () => {
+          await this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true);
+          // @ts-expect-error Accessing private method
+          if (plugin.serverNode) await this.matterbridge.startServerNode(plugin.serverNode);
+          // @ts-expect-error Accessing private method
+          for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name && d.serverNode)) await this.matterbridge.startServerNode(device.serverNode);
+          this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginName}`, 5, 'success');
+          this.wssSendRefreshRequired('plugins');
+          this.wssSendRefreshRequired('devices');
+          sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: localData.src, success: true });
+        });
       } else if (data.method === '/api/disableplugin') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/disableplugin' });
@@ -1662,11 +1663,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           await this.matterbridge.stopServerNode(device.serverNode);
           device.serverNode = undefined;
         }
-        await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true);
-        await this.matterbridge.plugins.disable(data.params.pluginName);
         // @ts-expect-error Accessing private method
         if (plugin.serverNode) await this.matterbridge.stopServerNode(plugin.serverNode);
         plugin.serverNode = undefined;
+        await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true);
+        await this.matterbridge.plugins.disable(data.params.pluginName);
         this.wssSendSnackbarMessage(`Disabled plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
@@ -1679,16 +1680,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendSnackbarMessage(`Restarting plugin ${data.params.pluginName}`, 5, 'info');
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         await this.matterbridge.plugins.shutdown(plugin, 'The plugin is restarting.', false, true);
+        // Stop server nodes
         if (plugin.serverNode) {
           // @ts-expect-error Accessing private method
           await this.matterbridge.stopServerNode(plugin.serverNode);
           plugin.serverNode = undefined;
         }
         for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name)) {
-          this.log.debug(`Removing device ${device.deviceName} from plugin ${plugin.name}`);
           // @ts-expect-error Accessing private method
           if (device.serverNode) await this.matterbridge.stopServerNode(device.serverNode);
           device.serverNode = undefined;
+          this.log.debug(`Removing device ${device.deviceName} from plugin ${plugin.name}`);
           this.matterbridge.devices.remove(device);
         }
         // @ts-expect-error Accessing private method
@@ -1699,9 +1701,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         for (const plugin of this.matterbridge.plugins) {
           if (plugin.restartRequired) needRestart++;
         }
-        if (needRestart === 0) {
-          this.wssSendRestartNotRequired(true); // Reset global restart required message
-        }
+        if (needRestart === 0) this.wssSendRestartNotRequired(true); // Reset global restart required message
+        // Start server nodes
         // @ts-expect-error Accessing private method
         if (plugin.serverNode) await this.matterbridge.startServerNode(plugin.serverNode);
         // @ts-expect-error Accessing private method

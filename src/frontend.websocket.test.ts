@@ -735,6 +735,34 @@ describe('Matterbridge frontend', () => {
     await waitMessageId(++WS_ID, '/api/enableplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/enableplugin', params: { pluginName: '' } });
   });
 
+  test('Websocket API /api/disableplugin /api/enableplugin device mode server', async () => {
+    // Add a new plugin in device mode server
+    const plugin = await matterbridge.plugins.add('./src/mock/pluginserverdevice');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    await matterbridge.plugins.load(plugin, true, 'Jest test', true);
+    expect(plugin.configured).toBe(true);
+
+    startServerNodeSpy.mockImplementation(async () => {
+      return Promise.resolve();
+    });
+    stopServerNodeSpy.mockImplementation(async () => {
+      return Promise.resolve();
+    });
+
+    await waitMessageId(++WS_ID, '/api/disableplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/disableplugin', params: { pluginName: plugin.name } });
+    expect(stopServerNodeSpy).toHaveBeenCalled();
+
+    await waitMessageId(++WS_ID, '/api/enableplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/enableplugin', params: { pluginName: plugin.name } });
+    expect(startServerNodeSpy).toHaveBeenCalled();
+
+    startServerNodeSpy.mockRestore();
+    stopServerNodeSpy.mockRestore();
+
+    await matterbridge.plugins.shutdown(plugin.name, 'Jest test');
+    await matterbridge.plugins.remove(plugin.name);
+  });
+
   test('Websocket API /api/savepluginconfig', async () => {
     const pluginName = 'matterbridge-mock4';
     const formData = { name: 'matterbridge-mock4', type: 'AccessoryPlatform', debug: false, unregisterOnShutdown: false, version: '1.2.2' };
