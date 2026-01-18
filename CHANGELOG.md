@@ -87,7 +87,7 @@ Advantages:
 - [package]: Updated dependencies.
 - [eslint]: Moved cache in .cache/.eslintcache.
 - [prettier]: Moved cache in .cache/.prettiercache.
-- [DevContainer]: Refactor DevContainer to use bridge mode.
+- [DevContainer]: Refactor DevContainer to use bridge mode and matterbridge docker network.
 
 ### Fixed
 
