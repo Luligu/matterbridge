@@ -35,6 +35,8 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume"
   ],
+  // Create the matterbridge Docker network if it doesn't exist (runs on the HOST before the container starts).
+  "initializeCommand": "docker network inspect matterbridge || docker network create matterbridge",
   // On startup, update npm, build matterbridge and link it globally
   "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   "runArgs": [
@@ -46,11 +48,11 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "8283:8283/tcp",
     // Publish Matter port range (to allow childbridge mode and devices with mode server) to the host
     "-p",
-    "5540-5549:5540-5549/udp"
+    "5540-5549:5540-5549/udp",
     // Use network host mode if on Docker Engine on Linux or WSL 2 to allow full local network access and mDNS support
     // "--network=host"
     // Use a shared bridge network to allow to access other containers with their names (dns resolution). With the default bridge, dns resolution does not work (only ip:port).
-    // "--network=shared_bridge"
+    "--network=matterbridge"
   ],
   "customizations": {
     "vscode": {
