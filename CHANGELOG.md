@@ -62,9 +62,9 @@ Advantages:
 - [Thermostat]: Revision 9 - Removed AlarmMask attribute and AlarmCodeBitmap Type.
 - [Identify]: Revision 6 - Added Q quality for IdentifyTime attribute.
 - [WindowCovering]: Revision 6 - Marked AbsolutePosition feature and associated elements provisional.
-- [RvcCleanMode]: Revision 4 - Add VacuumThenMop cleaning mode.
-- [RvcOperationalState]: Revision 4 - Add several operational states and errors.
-- [ServiceArea]: Revision 2 - Rename InitialTimeEstimate to EstimatedTime.
+- [RvcCleanMode]: Revision 4 - Added VacuumThenMop cleaning mode.
+- [RvcOperationalState]: Revision 4 - Added several operational states and errors.
+- [ServiceArea]: Revision 2 - Renamed InitialTimeEstimate to EstimatedTime.
 
 ### Added
 
