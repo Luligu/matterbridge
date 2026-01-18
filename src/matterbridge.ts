@@ -28,7 +28,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // Node.js modules
 import os from 'node:os';
 import path from 'node:path';
-import fs from 'node:fs';
+import fs, { unlinkSync } from 'node:fs';
 import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
@@ -1463,6 +1463,35 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Stop matter storage
       await this.stopMatterStorage();
+      /**
+       * Unlink a file safely, ignoring errors.
+       *
+       * @param {string} path - The path to the file to unlink.
+       * @param {AnsiLogger} log - The logger to use for logging.
+       */
+      function unlinkSafe(path: string, log: AnsiLogger) {
+        try {
+          log.debug(`Removing ${path}...`);
+          unlinkSync(path);
+          log.debug(`Removed ${path}`);
+        } catch {
+          // Ignore errors if the file does not exist
+        }
+      }
+      // Remove the resumption records for Matterbridge (bridge mode)
+      unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
+      unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
+      for (const plugin of this.plugins.array()) {
+        // Remove the resumption records for the plugins (childbridge mode)
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'sessions.resumptionRecords'), this.log);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'root.subscriptions.subscriptions'), this.log);
+      }
+      for (const device of this.devices.array().filter((d) => d.mode === 'server')) {
+        if (!device.deviceName) continue;
+        // Remove the resumption records for the server mode devices
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'sessions.resumptionRecords'), this.log);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'root.subscriptions.subscriptions'), this.log);
+      }
 
       // Stop the frontend
       await this.frontend.stop();
