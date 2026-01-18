@@ -2152,8 +2152,8 @@ const commissioningController = new CommissioningController({
     await storageContext.set('vendorName', vendorName.slice(0, 32));
     await storageContext.set('productId', productId);
     await storageContext.set('productName', productName.slice(0, 32));
-    await storageContext.set('nodeLabel', productName.slice(0, 32));
     await storageContext.set('productLabel', productName.slice(0, 32));
+    await storageContext.set('nodeLabel', deviceName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
     await storageContext.set('softwareVersion', isValidNumber(parseVersionString(this.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridgeVersion) : 1);
@@ -2169,8 +2169,8 @@ const commissioningController = new CommissioningController({
     this.log.debug(`- vendorName: ${await storageContext.get('vendorName')}`);
     this.log.debug(`- productId: ${await storageContext.get('productId')}`);
     this.log.debug(`- productName: ${await storageContext.get('productName')}`);
-    this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
     this.log.debug(`- productLabel: ${await storageContext.get('productLabel')}`);
+    this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
     this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
     this.log.debug(`- uniqueId: ${await storageContext.get('uniqueId')}`);
     this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
@@ -2233,13 +2233,14 @@ const commissioningController = new CommissioningController({
 
       // Provide defaults for the BasicInformation cluster on the Root endpoint
       basicInformation: {
+        nodeLabel: await storageContext.get<string>('nodeLabel'),
+
         vendorId: VendorId(await storageContext.get<number>('vendorId')),
         vendorName: await storageContext.get<string>('vendorName'),
 
         productId: await storageContext.get<number>('productId'),
         productName: await storageContext.get<string>('productName'),
         productLabel: await storageContext.get<string>('productName'),
-        nodeLabel: await storageContext.get<string>('productName'),
 
         serialNumber: await storageContext.get<string>('serialNumber'),
         uniqueId: await storageContext.get<string>('uniqueId'),

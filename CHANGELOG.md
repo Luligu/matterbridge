@@ -34,6 +34,7 @@ Advantages:
 
 - [matter]: This release brings the upgrade to matter 1.4.2 and matter.js 0.16.x.
 - [matterbridge]: On restart (typically on the Home Assistant addon), when the plugin is not found and is reinstalled, it is reinstalled from the latest dev if it was on the dev branch.
+- [childbridge]: Fixed nodeLabel from deviceName. It may cause the controller to see a new device.
 
 ### Changed device types in Matter 1.4.2
 
