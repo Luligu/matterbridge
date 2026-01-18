@@ -1030,8 +1030,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     const plugin = this.pluginManager.get(pluginName);
     if (!plugin) throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`);
 
-    // Remove the device from the Matter aggregator node
-    if (this.matterbridge.bridgeMode === 'bridge') {
+    if (device.serverNode) {
+      // TODO: Close and remove the MatterNode managing the device
+    } else if (this.matterbridge.bridgeMode === 'bridge') {
       if (!this.aggregatorNode) throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`);
       await device.delete();
     } else if (this.matterbridge.bridgeMode === 'childbridge') {
