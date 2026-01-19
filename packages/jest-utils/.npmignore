@@ -11,7 +11,7 @@ coverage/
 jest/
 mock/
 node_modules/
-screenshot/
+screenshots/
 src/
 temp/
 test/

@@ -165,13 +165,13 @@ From the frontend you can do all operations in an easy way.
 
 Home page
 
-![Home page](./screenshot/Screenshot%20home.jpg)
+![Home page](./screenshots/Screenshot%20home.jpg)
 
-[Devices page](./screenshot/Screenshot%20devices.jpg)
+[Devices page](./screenshots/Screenshot%20devices.jpg)
 
-[Logs page](./screenshot/Screenshot%20logs.jpg)
+[Logs page](./screenshots/Screenshot%20logs.jpg)
 
-[Config editor](./screenshot/Screenshot%20config%20editor.jpg)
+[Config editor](./screenshots/Screenshot%20config%20editor.jpg)
 
 ## Advanced configurations
 
@@ -216,7 +216,7 @@ The other Home Assistant Community Add-ons and plugins are not verified to work 
 ### Shelly
 
 <a href="https://github.com/Luligu/matterbridge-shelly">
-  <img src="./screenshot/Shelly.svg" alt="Shelly plugin logo" width="100" />
+  <img src="./screenshots/Shelly.svg" alt="Shelly plugin logo" width="100" />
 </a>
 
 Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and Gen 4 and BLU devices to Matter.
@@ -245,7 +245,7 @@ Features:
 ### Zigbee2MQTT
 
 <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">
-  <img src="./screenshot/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
+  <img src="./screenshots/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
 </a>
 
 Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.
@@ -255,7 +255,7 @@ No hub or dedicated hardware needed.
 ### Somfy tahoma
 
 <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
-  <img src="./screenshot/Somfy.svg" alt="Somfy plugin logo" width="100" />
+  <img src="./screenshots/Somfy.svg" alt="Somfy plugin logo" width="100" />
 </a>
 
 Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.
@@ -263,7 +263,7 @@ Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose 
 ### Home Assistant
 
 <a href="https://github.com/Luligu/matterbridge-hass">
-  <img src="./screenshot/HomeAssistant.svg" alt="Hass logo" width="100" />
+  <img src="./screenshots/HomeAssistant.svg" alt="Hass logo" width="100" />
 </a>
 
 Matterbridge Home Assistant plugin allows you to expose the Home Assistant devices and entities to Matter.
@@ -445,7 +445,7 @@ Place your own certificates in the `.matterbridge/cert` directory:
 - `key.pem`
 - `ca.pem` (optional)
 
-![image](./screenshot/Screenshot%20Certificates.png)
+![image](./screenshots/Screenshot%20Certificates.png)
 
 Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
 
@@ -480,7 +480,7 @@ matterbridge --ssl --mtls --frontend 443
 
 If the certificate are correctly configured, you will be able to connect with https to the frontend.
 
-![image](./screenshot/Screenshot%20Browser%20Secured.png)
+![image](./screenshots/Screenshot%20Browser%20Secured.png)
 
 ## How to send the debug log files
 
@@ -488,9 +488,9 @@ If the certificate are correctly configured, you will be able to connect with ht
 
 In the frontend, go to settings and enable debug mode as shown below:
 
-![Debug Matterbridge Settings](./screenshot/Screenshot%20Matterbridge%20Logger%20Debug.png)
+![Debug Matterbridge Settings](./screenshots/Screenshot%20Matterbridge%20Logger%20Debug.png)
 
-![Debug Matter Settings](./screenshot/Screenshot%20Matter%20Logger%20Debug.png)
+![Debug Matter Settings](./screenshots/Screenshot%20Matter%20Logger%20Debug.png)
 
 ### Restart
 
@@ -498,7 +498,7 @@ Wait a few minutes to allow the logs to to accumulate.
 
 Then, from the dots menu in the frontend, download the `matterbridge.log` and `matter.log` files.
 
-![image](./screenshot/Screenshot%20Debug%20Download%20Logs.png)
+![image](./screenshots/Screenshot%20Debug%20Download%20Logs.png)
 
 Don't forget to unselect the debug mode when is no more needed. The network traffic and cpu usage is very high in debug mode.
 
@@ -510,7 +510,7 @@ There are two ways to pair a second controller:
 
 - from Matterbridge frontend click `Turn on pairing mode` in the `Paired fabrics` panel and proceed like for the first controller.
 
-![alt text](./screenshot/Turn%20on%20pairing%20mode.png)
+![alt text](./screenshots/Turn%20on%20pairing%20mode.png)
 
 Be patient cause the procedure can fail sometimes.
 

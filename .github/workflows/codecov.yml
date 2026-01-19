@@ -5,13 +5,13 @@ on:
     branches: [main]
     paths-ignore:
       - 'docs/**' # any file under docs/
-      - 'screenshot/**' # any file under screenshot/
+      - 'screenshots/**' # any file under screenshots/
       - '**/*.md' # any .md anywhere
   pull_request:
     branches: [main]
     paths-ignore:
       - 'docs/**' # any file under docs/
-      - 'screenshot/**' # any file under screenshot/
+      - 'screenshots/**' # any file under screenshots/
       - '**/*.md' # any .md anywhere
   workflow_dispatch:
 

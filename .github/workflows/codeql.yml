@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths-ignore:
       - 'docs/**' # any file under docs/
-      - 'screenshot/**' # any file under screenshot/
+      - 'screenshots/**' # any file under screenshots/
       - 'scripts/**' # any file under scripts/
       - 'chip/**' # any file under chip/
       - 'systemd/**' # any file under systemd/
@@ -15,7 +15,7 @@ on:
     branches: [main]
     paths-ignore:
       - 'docs/**' # any file under docs/
-      - 'screenshot/**' # any file under screenshot/
+      - 'screenshots/**' # any file under screenshots/
       - 'scripts/**' # any file under scripts/
       - 'chip/**' # any file under chip/
       - 'systemd/**' # any file under systemd/

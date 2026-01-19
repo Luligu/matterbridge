@@ -13,7 +13,7 @@ mock/
 node_modules/
 packages/
 public/
-screenshot/
+screenshots/
 scripts/
 src/
 temp/
