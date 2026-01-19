@@ -66,7 +66,7 @@ jobs:
           echo "ORIG_SHA=$SHA"    >> $GITHUB_ENV
 
       - name: Bump to date-stamped dev version tag ${{ env.DEV_TAG }} sha ${{ env.ORIG_SHA }}
-        run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version
+        run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version --ignore-scripts
 
       - name: Check if a new dev-publish is needed
         id: check_new
