@@ -89,6 +89,7 @@ Advantages:
 - [eslint]: Moved cache in .cache/.eslintcache.
 - [prettier]: Moved cache in .cache/.prettiercache.
 - [DevContainer]: Refactor DevContainer to use bridge mode and matterbridge docker network.
+- [frontend]: Bumped `frontend` version to v. 3.4.2.
 
 ### Fixed
 

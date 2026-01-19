@@ -301,6 +301,7 @@ function Header() {
         setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
         setFixedRestart(msg.response.matterbridgeInformation.fixedRestartRequired);
         setUpdate(msg.response.matterbridgeInformation.updateRequired);
+        setUpdateDev(false);
       } else if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
         if (debug) console.log(`Header received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
         sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
