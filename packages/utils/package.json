@@ -45,7 +45,7 @@
     "test:vitest:watch": "vitest --reporter verbose",
     "test:vitest:verbose": "vitest run --reporter verbose",
     "test:vitest:coverage": "vitest run --reporter verbose --coverage",
-    "deepClean": "npx shx rm -rf tsconfig.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .cache node_modules/* node_modules/.[!.]* node_modules/..?*",
+    "deepClean": "npx shx rm -rf tsconfig.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .cache/* .cache/.[!.]* .cache/..?* node_modules/* node_modules/.[!.]* node_modules/..?*",
     "reset": "npm run deepClean && npm install --no-fund --no-audit && npm run build",
     "lint": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 .",
     "lint:fix": "eslint --cache --cache-location .cache/.eslintcache --fix --max-warnings=0 .",
