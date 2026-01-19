@@ -115,7 +115,7 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
     <div style={containerStyle}>
       <form onSubmit={handleSubmit} style={formStyle}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '64px', width: '64px' }} />
+          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
           <h3 style={{ color: 'var(--div-text-color)' }}>Welcome to Matterbridge</h3>
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
