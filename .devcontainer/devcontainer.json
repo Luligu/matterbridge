@@ -40,7 +40,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume"
   ],
   // Create the matterbridge Docker network if it doesn't exist (runs on the HOST before the container starts).
-  "initializeCommand": "docker network inspect matterbridge || docker network create matterbridge",
+  "initializeCommand": "docker network inspect matterbridge  >/dev/null 2>&1 || docker network create matterbridge",
   // On startup, update npm, build matterbridge and link it globally
   "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   "runArgs": [
