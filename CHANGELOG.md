@@ -36,6 +36,7 @@ Advantages:
 - [childbridge]: Fixed nodeLabel from deviceName in childbridge mode. It may cause the controllers to see a new device.
 - [modeserver]: Fixed nodeLabel from deviceName for server node devices. It may cause the controllers to see a new device.
 - [matterbridge]: On restart (typically on the Home Assistant addon), when the plugin is not found and is reinstalled, it is reinstalled from the latest dev if it was on the dev branch.
+- [docker]: Removed the arch linux/arm/v7 from all docker images.
 
 ### Changed device types in Matter 1.4.2
 
