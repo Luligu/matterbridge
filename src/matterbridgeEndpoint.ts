@@ -3231,3 +3231,4 @@ export class MatterbridgeEndpoint extends Endpoint {
     return this;
   }
 }
+
