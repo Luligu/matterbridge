@@ -2051,7 +2051,11 @@ export class MatterbridgeEndpoint extends Endpoint {
         numberOfPresets: Array.isArray(presetsList) ? presetsList.length : 0,
         activePresetHandle: activePresetHandle !== undefined ? new Uint8Array([activePresetHandle]) : null,
         presets: presetsList ?? [],
-        presetTypes: presetTypes ?? [],
+        presetTypes: (presetTypes ?? []).map((pt) => ({
+          presetScenario: pt.presetScenario,
+          numberOfPresets: pt.numberOfPresets ?? 0,
+          presetTypeFeatures: pt.presetTypeFeatures ?? { automatic: false, supportsNames: false },
+        })),
       },
     );
     return this;
