@@ -113,11 +113,8 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { deepCopy, deepEqual, isValidArray } from '@matterbridge/utils';
 
-// Matterbridge
-import { deepCopy } from './utils/deepCopy.js';
-import { deepEqual } from './utils/deepEqual.js';
-import { isValidArray } from './utils/isValid.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
 import {

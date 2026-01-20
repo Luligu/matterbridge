@@ -8,15 +8,6 @@ process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
-// Mock the getGlobalNodeModules logInterfaces from network module before importing it
-jest.unstable_mockModule('./utils/network.js', () => ({
-  getGlobalNodeModules: jest.fn(() => {
-    return Promise.resolve('./node_modules'); // Mock the getGlobalNodeModules function to resolve immediately
-  }),
-}));
-const networkModule = await import('./utils/network.js');
-const getGlobalNodeModulesMock = networkModule.getGlobalNodeModules as jest.MockedFunction<typeof networkModule.getGlobalNodeModules>;
-
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('./workers.js', () => ({
   createESMWorker: jest.fn(() => {
@@ -33,7 +24,6 @@ import { Environment } from '@matter/general';
 import { db, er, LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { dev, plg } from './matterbridgeTypes.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
@@ -42,7 +32,6 @@ await setupTest(NAME, false);
 
 describe('Matterbridge  Device serverMode=matter', () => {
   let matterbridge: Matterbridge;
-  let matterDevice: MatterbridgeEndpoint;
 
   beforeEach(async () => {
     // Clear all mocks
@@ -214,9 +203,8 @@ describe('Matterbridge  Device serverMode=matter', () => {
       expect(device.uniqueId).toBeDefined();
       expect(device.mode).toBe('matter');
       expect(device.serverNode).toBeUndefined();
-      matterDevice = device;
     }
-  }, 60000);
+  }, 10000);
 
   test('Should log error if addBridgedEndpoint fails', async () => {
     // Simulate no server node

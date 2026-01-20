@@ -59,9 +59,9 @@ import { jest } from '@jest/globals';
 import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Environment } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { waiter } from '@matterbridge/utils';
 
 import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/export.js';
 import { PluginManager } from './pluginManager.js';
 import { dev, MATTER_STORAGE_NAME, plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -478,7 +478,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       expect(plugin.serverNode).toBeDefined();
     }
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 0, 0);
+    await destroyInstance(matterbridge, 10, 10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
 
     // Close mDNS instance

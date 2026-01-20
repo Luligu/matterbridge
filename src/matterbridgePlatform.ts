@@ -36,15 +36,14 @@ import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { EndpointNumber, VendorId } from '@matter/types/datatype';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
-
 // Matterbridge
+import { hasParameter, isValidArray, isValidObject, isValidString } from '@matterbridge/utils';
+
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
-import { isValidArray, isValidObject, isValidString } from './utils/isValid.js';
 import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
 import { SystemInformation } from './matterbridgeTypes.js';
-import { hasParameter } from './utils/commandLine.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Platform types

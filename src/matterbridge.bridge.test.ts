@@ -49,9 +49,9 @@ import { jest } from '@jest/globals';
 import { Environment } from '@matter/general';
 import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { BridgedDeviceBasicInformationServer, PressureMeasurementServer } from '@matter/node/behaviors';
+import { waiter } from '@matterbridge/utils';
 
 import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/export.js';
 import { PluginManager } from './pluginManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
@@ -229,7 +229,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 250, 250);
+    await destroyInstance(matterbridge, 10, 10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   });
 
@@ -322,7 +322,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
   test('Finally Matterbridge.destroyInstance() -bridge mode', async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 250, 250);
+    await destroyInstance(matterbridge, 10, 10);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
 
     // Close mDNS instance

@@ -16,12 +16,12 @@ import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitor
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
 import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-monitoring';
 import { FanControl } from '@matter/types/clusters';
-
 // Matterbridge
+import { wait } from '@matterbridge/utils';
+
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand, invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeActivatedCarbonFilterMonitoringServer, MatterbridgeHepaFilterMonitoringServer } from '../matterbridgeBehaviors.js';
-import { wait } from '../utils/wait.js';
 import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { ExtractorHood } from './extractorHood.js';

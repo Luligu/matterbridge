@@ -3,9 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { Tracker, type TrackerSnapshot } from '@matterbridge/utils';
 
 import { generateHistoryPage } from './cliHistory.js';
-import { Tracker, type TrackerSnapshot } from './utils/tracker.js';
 
 const zeroEntry: TrackerSnapshot = {
   timestamp: 0,

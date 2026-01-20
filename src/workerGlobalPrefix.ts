@@ -25,12 +25,10 @@
 import { threadId, isMainThread, parentPort, workerData } from 'node:worker_threads';
 
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { getGlobalNodeModules, hasParameter, inspectError } from '@matterbridge/utils';
 
-import { getGlobalNodeModules } from './utils/network.js';
 import { BroadcastServer } from './broadcastServer.js';
-import { inspectError } from './utils/error.js';
 import { logWorkerInfo, parentLog, parentPost } from './workers.js';
-import { hasParameter } from './utils/commandLine.js';
 
 const debug = hasParameter('debug') || hasParameter('verbose');
 const verbose = hasParameter('verbose');

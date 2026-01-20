@@ -3,24 +3,31 @@
 const NAME = 'MatterbridgeMocked';
 const HOMEDIR = path.join('jest', NAME);
 
-// Mock the getGlobalNodeModules logInterfaces from network module before importing it
-jest.unstable_mockModule('./utils/network.js', () => ({
-  getGlobalNodeModules: jest.fn(() => {
-    return Promise.resolve('usr/local/lib/node_modules'); // Mock the getGlobalNodeModules function to resolve immediately
-  }),
-  logInterfaces: jest.fn(() => {
-    return;
-  }),
-  formatMemoryUsage: jest.fn(() => {
-    return '';
-  }),
-  formatOsUpTime: jest.fn(() => {
-    return '';
-  }),
-}));
-const networkModule = await import('./utils/network.js');
-const getGlobalNodeModulesMock = networkModule.getGlobalNodeModules as jest.MockedFunction<typeof networkModule.getGlobalNodeModules>;
-const logInterfacesMock = networkModule.logInterfaces as jest.MockedFunction<typeof networkModule.logInterfaces>;
+// Mock selected functions from @matterbridge/utils before importing Matterbridge
+const originalUtilsModule = await import('../packages/utils/src/export.js');
+jest.unstable_mockModule('@matterbridge/utils', async () => {
+  return {
+    ...originalUtilsModule,
+    getGlobalNodeModules: jest.fn(() => Promise.resolve('usr/local/lib/node_modules')),
+    logInterfaces: jest.fn(() => undefined),
+    waiter: jest.fn((name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false) => {
+      return Promise.resolve(true); // Mock the waiter function to resolve immediately
+    }),
+    wait: jest.fn((timeout: number = 1000, name?: string, debug: boolean = false) => {
+      return Promise.resolve(); // Mock the wait function to resolve immediately
+    }),
+    withTimeout: jest.fn((promise: Promise<any>, timeoutMillisecs: number = 10000, reThrow: boolean = true) => {
+      return Promise.resolve(); // Mock the withTimeout function to resolve immediately
+    }),
+  };
+});
+const utilsModule = await import('@matterbridge/utils');
+
+const getGlobalNodeModulesMock = utilsModule.getGlobalNodeModules as jest.MockedFunction<typeof utilsModule.getGlobalNodeModules>;
+const logInterfacesMock = utilsModule.logInterfaces as jest.MockedFunction<typeof utilsModule.logInterfaces>;
+const wait = utilsModule.wait as jest.MockedFunction<typeof utilsModule.wait>;
+const waiter = utilsModule.waiter as jest.MockedFunction<typeof utilsModule.waiter>;
+const withTimeout = utilsModule.withTimeout as jest.MockedFunction<typeof utilsModule.withTimeout>;
 
 // Mock the spawnCommand from spawn module before importing it
 jest.unstable_mockModule('./spawn.js', () => ({
@@ -30,23 +37,6 @@ jest.unstable_mockModule('./spawn.js', () => ({
 }));
 const spawnModule = await import('./spawn.js');
 const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
-
-// Mock the wait from wait module before importing it
-jest.unstable_mockModule('./utils/wait.js', () => ({
-  waiter: jest.fn((name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false) => {
-    return Promise.resolve(true); // Mock the waiter function to resolve immediately
-  }),
-  wait: jest.fn((timeout: number = 1000, name?: string, debug: boolean = false) => {
-    return Promise.resolve(); // Mock the wait function to resolve immediately
-  }),
-  withTimeout: jest.fn((promise: Promise<any>, timeoutMillisecs: number = 10000, reThrow: boolean = true) => {
-    return Promise.resolve(); // Mock the withTimeout function to resolve immediately
-  }),
-}));
-const waitModule = await import('./utils/wait.js');
-const wait = waitModule.wait as jest.MockedFunction<typeof waitModule.wait>;
-const waiter = waitModule.waiter as jest.MockedFunction<typeof waitModule.waiter>;
-const withTimeout = waitModule.withTimeout as jest.MockedFunction<typeof waitModule.withTimeout>;
 
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('./workers.js', () => ({
@@ -66,15 +56,15 @@ import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 import { LogLevel as MatterLogLevel, Logger } from '@matter/general';
 import { VendorId } from '@matter/types';
-
 const { Matterbridge } = await import('./matterbridge.js');
 const { PluginManager } = await import('./pluginManager.js');
 const { DeviceManager } = await import('./deviceManager.js');
+import { getParameter } from '@matterbridge/utils';
+
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { PluginManager as PluginManagerType } from './pluginManager.js';
 import type { DeviceManager as DeviceManagerType } from './deviceManager.js';
 import { plg, Plugin } from './matterbridgeTypes.js';
-import { getParameter } from './utils/commandLine.js';
 import { closeMdnsInstance, configurePluginSpy, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment

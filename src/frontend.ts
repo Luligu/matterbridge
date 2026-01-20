@@ -46,20 +46,15 @@ import { EndpointNumber, FabricIndex } from '@matter/types/datatype';
 import { CommissioningOptions } from '@matter/types/commissioning';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { PowerSource } from '@matter/types/clusters/power-source';
-
 // Matterbridge
+import { createZip, formatBytes, formatPercent, formatUptime, getParameter, hasParameter, inspectError, isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString, wait, withTimeout } from '@matterbridge/utils';
+
 import type { Cluster, ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, Plugin } from './matterbridgeTypes.js';
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { PlatformConfig } from './matterbridgePlatform.js';
 import type { ApiSettings, RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
 import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from './matterbridgeTypes.js';
-import { isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean } from './utils/isValid.js';
-import { createZip } from './utils/createZip.js';
-import { hasParameter, getParameter } from './utils/commandLine.js';
-import { withTimeout, wait } from './utils/wait.js';
-import { inspectError } from './utils/error.js';
-import { formatBytes, formatUptime, formatPercent } from './utils/format.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
 import { generateHistoryPage } from './cliHistory.js';

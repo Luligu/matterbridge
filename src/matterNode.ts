@@ -40,16 +40,12 @@ import { ServerNode, Endpoint, SessionsBehavior } from '@matter/node';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
-
 // Matterbridge
+import { copyDirectory, getIntParameter, getParameter, hasParameter, inspectError, isValidNumber, isValidString, parseVersionString, wait, withTimeout } from '@matterbridge/utils';
+
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { SharedMatterbridge, ApiMatter, Plugin, SanitizedExposedFabricInformation, SanitizedSession, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, plg, PluginName, NODE_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE } from './matterbridgeTypes.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
-import { getIntParameter, getParameter, hasParameter } from './utils/commandLine.js';
-import { copyDirectory } from './utils/copyDirectory.js';
-import { isValidNumber, isValidString, parseVersionString } from './utils/isValid.js';
-import { wait, withTimeout } from './utils/wait.js';
-import { inspectError } from './utils/error.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
 import { toBaseDevice } from './deviceManager.js';

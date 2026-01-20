@@ -17,10 +17,11 @@ import { ApiPlugin, plg } from './matterbridgeTypes.js';
 import { flushAsync, loggerDebugSpy, loggerNoticeSpy, loggerWarnSpy, matterbridge, setupTest, startMatterbridge, stopMatterbridge, wssSendRefreshRequiredSpy, wssSendSnackbarMessageSpy, wssSendUpdateRequiredSpy } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
-// Mock the function getNpmPackageVersion
-jest.unstable_mockModule('./utils/network.js', () => ({
+// Mock selected functions from @matterbridge/utils
+jest.unstable_mockModule('@matterbridge/utils', () => ({
   getNpmPackageVersion: jest.fn(),
   getGitHubUpdate: jest.fn(),
+  wait: jest.fn(),
 }));
 
 // Mock the function getShellySysUpdate and getShellyMainUpdate
@@ -67,7 +68,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should check updates', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
     const { getShellySysUpdate, getShellyMainUpdate } = await import('./shelly.js');
 
     // Set the return value for this specific test case
@@ -85,7 +86,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should update to the latest version if versions differ', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.1.0');
@@ -101,7 +102,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should log a debug message if the current version is up to date', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce(matterbridge.matterbridgeVersion);
@@ -118,7 +119,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should log a warning on error fetching the latest version', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockRejectedValueOnce(new Error('Network error'));
@@ -131,7 +132,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should update to the dev version if versions differ', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     matterbridge.matterbridgeVersion = '1.0.0-dev-1';
 
@@ -149,7 +150,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should log a debug message if the dev version is up to date', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     matterbridge.matterbridgeVersion = '1.0.0-dev-1';
 
@@ -168,7 +169,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should log a warning on error fetching the dev version', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockRejectedValueOnce(new Error('Network error'));
@@ -181,7 +182,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should update to the plugin latest version if versions differ', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.1.0');
@@ -197,7 +198,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should log a debug message if the plugin current version is up to date', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.0.1');
@@ -213,7 +214,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should log a warning on error fetching the plugin latest version', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockRejectedValueOnce(new Error('Network error'));
@@ -228,7 +229,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should update to the plugin dev version and log if versions differ', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     expect(plugin).not.toBeNull();
     if (plugin === null) return;
@@ -247,7 +248,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should update to the plugin dev version and log if the plugin current version is up to date', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     expect(plugin).not.toBeNull();
     if (plugin === null) return;
@@ -266,7 +267,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should log a warning on error fetching the plugin dev version', async () => {
-    const { getNpmPackageVersion } = await import('./utils/network.js');
+    const { getNpmPackageVersion } = await import('@matterbridge/utils');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockRejectedValueOnce(new Error('Network error'));
@@ -281,7 +282,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should check GitHub for updates and log', async () => {
-    const { getGitHubUpdate } = await import('./utils/network.js');
+    const { getGitHubUpdate } = await import('@matterbridge/utils');
 
     // Set the return value for this specific test case
     (getGitHubUpdate as jest.MockedFunction<(branch: string, file: string, timeout?: number) => Promise<any>>).mockResolvedValue({
@@ -307,7 +308,7 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should check GitHub and fail', async () => {
-    const { getGitHubUpdate } = await import('./utils/network.js');
+    const { getGitHubUpdate } = await import('@matterbridge/utils');
 
     // Set the return value for this specific test case
     (getGitHubUpdate as jest.MockedFunction<(branch: string, file: string, timeout?: number) => Promise<any>>).mockRejectedValue(new Error('Network error'));

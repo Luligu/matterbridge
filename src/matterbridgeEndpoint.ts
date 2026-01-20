@@ -94,11 +94,11 @@ import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/rado
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import { FanControlServer } from '@matter/node/behaviors/fan-control';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
-
 // Matterbridge
+import { inspectError, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils';
+
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import { CommandHandlerFunction, MatterbridgeEndpointCommands, MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
-import { isValidNumber, isValidObject, isValidString } from './utils/isValid.js';
 import {
   MatterbridgeServer,
   MatterbridgeIdentifyServer,
@@ -162,7 +162,6 @@ import {
   getDefaultDeviceEnergyManagementModeClusterServer,
   getDefaultPowerSourceBatteryClusterServer,
 } from './matterbridgeEndpointHelpers.js';
-import { inspectError } from './utils/error.js';
 
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */

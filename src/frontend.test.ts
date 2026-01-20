@@ -33,12 +33,12 @@ const { Frontend } = await import('./frontend.ts');
 import { Lifecycle } from '@matter/general';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
+import { wait, waiter } from '@matterbridge/utils';
 
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
 import { BroadcastServer } from './broadcastServer.js';
-import { wait, waiter } from './utils/wait.js';
 import { closeMdnsInstance, destroyInstance, flushAsync, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 
 // Mock BroadcastServer methods

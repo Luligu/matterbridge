@@ -6,15 +6,6 @@ const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.matterjs.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
-// Mock the getGlobalNodeModules logInterfaces from network module before importing it
-jest.unstable_mockModule('./utils/network.js', () => ({
-  getGlobalNodeModules: jest.fn(() => {
-    return Promise.resolve('./node_modules'); // Mock the getGlobalNodeModules function to resolve immediately
-  }),
-}));
-const networkModule = await import('./utils/network.js');
-const getGlobalNodeModulesMock = networkModule.getGlobalNodeModules as jest.MockedFunction<typeof networkModule.getGlobalNodeModules>;
-
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('./workers.js', () => ({
   createESMWorker: jest.fn(() => {

@@ -49,6 +49,7 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
+import { waiter, wait } from '@matterbridge/utils';
 
 import { Matterbridge } from './matterbridge.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
@@ -56,7 +57,6 @@ import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js'
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import { ApiPlugin, plg, Plugin, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
-import { waiter, wait } from './utils/export.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 

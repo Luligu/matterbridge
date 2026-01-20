@@ -36,6 +36,7 @@ import WebSocket from 'ws';
 import { LogLevel as MatterLogLevel } from '@matter/general';
 import { Identify } from '@matter/types/clusters';
 import { EndpointNumber } from '@matter/types/datatype';
+import { wait, waiter } from '@matterbridge/utils';
 
 import { Matterbridge } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
@@ -43,7 +44,6 @@ import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matte
 import { plg, Plugin } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Frontend } from './frontend.js';
-import { wait, waiter } from './utils/wait.js';
 import {
   closeMdnsInstance,
   destroyInstance,

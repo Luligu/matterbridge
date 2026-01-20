@@ -5,12 +5,11 @@ const HOMEDIR = path.join('jest', NAME);
 import path from 'node:path/posix';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { LogLevel } from 'node-ansi-logger';
+import { Inspector, Tracker } from '@matterbridge/utils';
 
 import { Matterbridge } from './matterbridge.js';
 import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
-import { Inspector } from './utils/inspector.js';
-import { Tracker } from './utils/tracker.js';
 
 const loadInstance = jest.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
   return undefined as never; // Simulate an error by returning undefined
