@@ -123,6 +123,18 @@ Examples:
         { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
         { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
         { name: '_googlecast._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_airplay._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_amzn-alexa._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_companion-link._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_hap._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_hap._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_ipp._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_ipps._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_meshcop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_printer._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_raop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_sleep-proxy._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_ssh._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
         { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       ]);
     } catch (error) {
