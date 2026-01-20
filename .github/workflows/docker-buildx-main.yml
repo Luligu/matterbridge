@@ -72,7 +72,7 @@ jobs:
 
       - name: Echo main version ${{ env.VERSION }}
         run: |
-          echo "Extracted version is: $VERSION ${{ env.VERSION }}"
+          echo "Extracted version is: ${{ env.VERSION }}"
 
       - name: Run Docker Buildx on latest
         run: |

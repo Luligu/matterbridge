@@ -50,12 +50,23 @@ jobs:
         with:
           version: latest
 
+      - name: Extract version from package.json
+        id: extract_version
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Echo main version ${{ env.VERSION }}
+        run: |
+          echo "Extracted version is: ${{ env.VERSION }}"
+
       - name: Run Docker Buildx with Dockerfile.ubuntu
         run: |
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             -f docker/Dockerfile.ubuntu \
             -t luligu/matterbridge:ubuntu \
+            -t luligu/matterbridge:ubuntu-${{ env.VERSION }} \
             --push .
           docker manifest inspect luligu/matterbridge:ubuntu
         timeout-minutes: 60
