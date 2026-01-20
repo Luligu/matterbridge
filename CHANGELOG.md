@@ -32,7 +32,8 @@ Advantages:
 
 ### Added
 
-- [mb_mdns]: Add additional mDNS service types for discovery.
+- [mb_mdns]: Added additional mDNS service types for discovery.
+- [workflows]: Added npm registry URL and caching to Node.js setup in workflow files.
 
 ### Changed
 
