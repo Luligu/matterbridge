@@ -1883,6 +1883,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
       localTemperature: localTemperature * 100,
+      externalMeasuredIndoorTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
       systemMode: Thermostat.SystemMode.Auto,
@@ -1946,6 +1947,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
       localTemperature: localTemperature * 100,
+      externalMeasuredIndoorTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
       systemMode: Thermostat.SystemMode.Heat,
@@ -2022,6 +2024,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       ),
       {
         localTemperature: localTemperature * 100,
+        externalMeasuredIndoorTemperature: localTemperature * 100,
         ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
         systemMode: Thermostat.SystemMode.Auto,
         controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
