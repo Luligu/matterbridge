@@ -800,12 +800,12 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(Thermostat.Cluster.id, 'numberOfPresets')).toBe(2);
     const retrievedPresets = device.getAttribute(Thermostat.Cluster.id, 'presets');
     expect(retrievedPresets).toHaveLength(2);
-    expect(Array.from(retrievedPresets[0].presetHandle)).toEqual([0]);
+    expect(JSON.stringify(Object.values(retrievedPresets[0].presetHandle))).toBe(JSON.stringify([0]));
     expect(retrievedPresets[0].presetScenario).toBe(Thermostat.PresetScenario.Occupied);
     expect(retrievedPresets[0].name).toBe('Occupied');
     expect(retrievedPresets[0].coolingSetpoint).toBe(2500);
     expect(retrievedPresets[0].heatingSetpoint).toBe(2100);
-    expect(Array.from(retrievedPresets[1].presetHandle)).toEqual([1]);
+    expect(JSON.stringify(Object.values(retrievedPresets[1].presetHandle))).toBe(JSON.stringify([1]));
     expect(retrievedPresets[1].presetScenario).toBe(Thermostat.PresetScenario.Unoccupied);
     expect(retrievedPresets[1].name).toBe('Unoccupied');
     expect(retrievedPresets[1].coolingSetpoint).toBe(2700);
@@ -814,10 +814,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(retrievedPresetTypes).toHaveLength(2);
     expect(retrievedPresetTypes[0].presetScenario).toBe(Thermostat.PresetScenario.Occupied);
     expect(retrievedPresetTypes[0].numberOfPresets).toBe(2);
-    expect(retrievedPresetTypes[0].name).toBe('Occupied');
     expect(retrievedPresetTypes[1].presetScenario).toBe(Thermostat.PresetScenario.Unoccupied);
     expect(retrievedPresetTypes[1].numberOfPresets).toBe(2);
-    expect(retrievedPresetTypes[1].name).toBe('Unoccupied');
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 

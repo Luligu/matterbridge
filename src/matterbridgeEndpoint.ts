@@ -2049,12 +2049,20 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
         // Thermostat.Feature.Presets
         numberOfPresets: Array.isArray(presetsList) ? presetsList.length : 0,
-        activePresetHandle: activePresetHandle !== undefined ? new Uint8Array([activePresetHandle]) : null,
-        presets: presetsList ?? [],
+        activePresetHandle: activePresetHandle !== undefined ? Uint8Array.from([activePresetHandle]) : null,
+        // Ensure presetHandle is a proper Uint8Array by creating a new instance
+        presets: (presetsList ?? []).map((p) => ({
+          presetHandle: Uint8Array.from(p.presetHandle || [0]),
+          presetScenario: p.presetScenario,
+          name: p.name,
+          coolingSetpoint: p.coolingSetpoint,
+          heatingSetpoint: p.heatingSetpoint,
+          builtIn: p.builtIn ?? true,
+        })),
         presetTypes: (presetTypes ?? []).map((pt) => ({
-          presetScenario: pt.presetScenario,
+          ...pt,
           numberOfPresets: pt.numberOfPresets ?? 0,
-          presetTypeFeatures: pt.presetTypeFeatures ?? { automatic: false, supportsNames: false },
+          presetTypeFeatures: pt.presetTypeFeatures ?? { automatic: false, supportsNames: true },
         })),
       },
     );
