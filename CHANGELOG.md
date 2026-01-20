@@ -34,6 +34,7 @@ Advantages:
 
 - [mb_mdns]: Added additional mDNS service types for discovery.
 - [workflows]: Added npm registry URL and caching to Node.js setup in workflow files.
+- [workflows]: Added concurrency settings in build.yml to cancel previous runs in GitHub Actions.
 
 ### Changed
 

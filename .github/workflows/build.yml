@@ -15,6 +15,11 @@ on:
       - '**/*.md' # any .md anywhere
   workflow_dispatch:
 
+# Cancel previous runs when a new one is triggered (same branch/PR)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
