@@ -91,7 +91,7 @@
 <h1 id="img-srchttpsmatterbridgeiomatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge-changelog"><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog</h1>
 <p>All notable changes to this project will be documented in this file.</p>
 <p>If you like this project and find it useful, please consider giving it a star on GitHub at <a href="https://github.com/Luligu/matterbridge">https://github.com/Luligu/matterbridge</a> and sponsoring it.</p>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="project-evolution">Project evolution</h2>
 <p>The project will evolve to a multi-threaded architecture (the CLI will become the thread manager) with these initial threads:</p>
 <ul>
@@ -121,10 +121,14 @@
 <li>individual plugin isolation in childbridge mode;</li>
 <li>ability to update the plugin in childbridge mode without restarting matterbridge;</li>
 </ul>
-<h2 id="350-dev-branch">[3.5.0] - Dev branch</h2>
+<h2 id="350-2026-01-20">[3.5.0] - 2026-01-20</h2>
 <h3 id="breaking-changes">Breaking Changes</h3>
 <ul>
-<li>[matter]: This release brings the upgrade to matter 1.4.2 and matter.js 0.16.x.</li>
+<li>[matter]: This release brings the upgrade to matter 1.4.2 and matter.js 0.16.x. It may cause the controllers to see a new device.</li>
+<li>[childbridge]: Fixed nodeLabel from deviceName in childbridge mode. It may cause the controllers to see a new device.</li>
+<li>[modeserver]: Fixed nodeLabel from deviceName for server node devices. It may cause the controllers to see a new device.</li>
+<li>[matterbridge]: On restart (typically on the Home Assistant addon), when the plugin is not found and is reinstalled, it is now reinstalled from the latest dev if it was on the dev branch.</li>
+<li>[docker]: Removed the arch linux/arm/v7 from all docker images.</li>
 </ul>
 <h3 id="changed-device-types-in-matter-142">Changed device types in Matter 1.4.2</h3>
 <ul>
@@ -151,9 +155,9 @@
 <li>[Thermostat]: Revision 9 - Removed AlarmMask attribute and AlarmCodeBitmap Type.</li>
 <li>[Identify]: Revision 6 - Added Q quality for IdentifyTime attribute.</li>
 <li>[WindowCovering]: Revision 6 - Marked AbsolutePosition feature and associated elements provisional.</li>
-<li>[RvcCleanMode]: Revision 4 - Add VacuumThenMop cleaning mode.</li>
-<li>[RvcOperationalState]: Revision 4 - Add several operational states and errors.</li>
-<li>[ServiceArea]: Revision 2 - Rename InitialTimeEstimate to EstimatedTime.</li>
+<li>[RvcCleanMode]: Revision 4 - Added VacuumThenMop cleaning mode.</li>
+<li>[RvcOperationalState]: Revision 4 - Added several operational states and errors.</li>
+<li>[ServiceArea]: Revision 2 - Renamed InitialTimeEstimate to EstimatedTime.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
@@ -161,25 +165,31 @@
 <li>[frontend]: Enhanced logging for HTTP/HTTPS server binding in Frontend class.</li>
 <li>[matterbridge]: Excluded specific network interfaces when looking for the first external interface.</li>
 <li>[thermostat]: Conformance to new matter.js internal attributes externalMeasuredIndoorTemperature and externallyMeasuredOccupancy (not in Matter 1.4.2 specs).</li>
+<li>[scenes]: Added SceneManagement cluster when required.</li>
+<li>[server]: Added start and stop devices server mode in plugin restart.</li>
+<li>[server]: Added start and stop devices server mode in plugin enable and disable.</li>
 <li>[matter.js]: Bump to matter.j v. 0.16.0.</li>
 <li>[matter.js]: Bump to matter.j v. 0.16.1.</li>
 <li>[matter.js]: Bump to matter.j v. 0.16.2.</li>
 <li>[matter.js]: Bump to matter.j v. 0.16.3.</li>
 <li>[matter.js]: Bump to matter.j v. 0.16.4.</li>
 <li>[matter.js]: Bump to matter.j v. 0.16.5.</li>
+<li>[frontend]: Added the --bind parameter to bind the frontend to a specific address. Defaults to all addresses.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[package]: Updated dependencies.</li>
 <li>[eslint]: Moved cache in .cache/.eslintcache.</li>
 <li>[prettier]: Moved cache in .cache/.prettiercache.</li>
+<li>[DevContainer]: Refactor DevContainer to use bridge mode and matterbridge docker network.</li>
+<li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.2.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
 <li>[evse]: Fixed the EnergyEvse.chargingEnabledUntil attribute that was wrongly set in the disable command (spec 9.3.8.4).</li>
 <li>[package]: Fixed the devDependencies that slipped in for a bug in 3.4.7.</li>
 </ul>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="347-2026-01-12">[3.4.7] - 2026-01-12</h2>
 <h3 id="added-1">Added</h3>
 <ul>
@@ -205,7 +215,7 @@
 <ul>
 <li>[macOS]: Fixed the macOS launchctl configuration file. Update it from the README-MACOS-PLIST.</li>
 </ul>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="346-2026-01-02">[3.4.6] - 2026-01-02</h2>
 <h3 id="added-2">Added</h3>
 <ul>
@@ -224,7 +234,7 @@
 <li>[package]: Updated dependencies.</li>
 <li>[reflector]: Bumped <code>reflector</code> version to v.1.1.0.</li>
 </ul>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="345-2025-12-27">[3.4.5] - 2025-12-27</h2>
 <h3 id="added-3">Added</h3>
 <ul>
@@ -241,7 +251,7 @@
 <ul>
 <li>[package]: Updated dependencies.</li>
 </ul>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="344-2025-12-19">[3.4.4] - 2025-12-19</h2>
 <h3 id="added-4">Added</h3>
 <ul>
@@ -264,7 +274,7 @@
 <li>[frontend]: Fixed mobileMode menu navigation. Thanks Calimerorulez (<a href="https://github.com/Luligu/matterbridge/issues/457">https://github.com/Luligu/matterbridge/issues/457</a>).</li>
 <li>[matterbridge]: Fixed debug level of matter logger.</li>
 </ul>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="343-2025-12-12">[3.4.3] - 2025-12-12</h2>
 <h3 id="breaking-changes-1">Breaking Changes</h3>
 <ul>
@@ -295,7 +305,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[matterbridge]: Fixed default delay and fixed_delay to 120 seconds.</li>
 <li>[frontend]: Fixed resize in desktop mode.</li>
 </ul>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="342-2025-12-05">[3.4.2] - 2025-12-05</h2>
 <h3 id="race-condition">Race condition</h3>
 <p>We have a race condition when, after a blackout or with docker compose or with other systems that start more then one process, Matterbridge starts before other required system or network components.</p>
@@ -323,7 +333,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Fixed persistance of autoScroll.</li>
 <li>[frontend]: Fixed parameters info of Log panel in the Home page.</li>
 </ul>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="341-2025-12-01">[3.4.1] - 2025-12-01</h2>
 <h3 id="added-7">Added</h3>
 <ul>
@@ -347,7 +357,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Fixed when the user put special characters in password. Thanks Dabern (<a href="https://github.com/Luligu/matterbridge/issues/443">https://github.com/Luligu/matterbridge/issues/443</a>).</li>
 <li>[frontend]: Fixed minimum size to 1300x1024 and add a max width to Url. Thanks Ricardo B. (<a href="https://github.com/Luligu/matterbridge-home-assistant-addon/issues/23">https://github.com/Luligu/matterbridge-home-assistant-addon/issues/23</a>).</li>
 </ul>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="340-2025-11-26">[3.4.0] - 2025-11-26</h2>
 <h3 id="development-breaking-changes">Development Breaking Changes</h3>
 <p>Removed the following long deprecated elements:</p>
@@ -378,7 +388,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[jest]: Bumped jestHelpers v.1.0.13.</li>
 <li>[spawn]: Bumped spawn module v.1.2.0.</li>
 </ul>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="338-2025-11-15">[3.3.8] - 2025-11-15</h2>
 <h3 id="development-breaking-changes-1">Development Breaking Changes</h3>
 <p>This will be the last release with the following long deprecated elements:</p>
@@ -409,7 +419,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[endpoint]: Changed logger level of single device classes.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="337-2025-11-08">[3.3.7] - 2025-11-08</h2>
@@ -435,7 +445,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Fixed route fallback and cross platform path failing randomly with node prefix.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="336-2025-11-01">[3.3.6] - 2025-11-01</h2>
@@ -451,7 +461,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[ingress]: Fixed websocket connection from Ingress.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="335-2025-10-31">[3.3.5] - 2025-10-31</h2>
@@ -475,7 +485,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[service]: Fixed systemd <a href="README-SERVICE-LOCAL.html">configuration</a> with local global node_modules.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="334-2025-10-24">[3.3.4] - 2025-10-24</h2>
@@ -505,7 +515,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[thrmostat]: Fixed minSetpointDeadBand data type. Thanks Apollon!</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="333-2025-10-18">[3.3.3] - 2025-10-18</h2>
@@ -531,7 +541,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[history]: Added external and array buffers to the history chart.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="332-2025-10-13">[3.3.2] - 2025-10-13</h2>
@@ -540,7 +550,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Fixed update to latest.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="331-2025-10-12">[3.3.1] - 2025-10-12</h2>
@@ -579,7 +589,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Fixed matter log on file not setting correctly.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="330-2025-10-03">[3.3.0] - 2025-10-03</h2>
@@ -657,7 +667,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: General improvements and small bug fixes.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="329-2025-09-27">[3.2.9] - 2025-09-27</h2>
@@ -687,7 +697,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Fix default values (devices) for homePageMode (logs/devices) in MatterbridgeSettings.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="328-2025-09-20">[3.2.8] - 2025-09-20</h2>
@@ -715,7 +725,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[shutdown]: Fixed the case when shutting down the http(s) server took 10 seconds.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="327-2025-09-14">[3.2.7] - 2025-09-14</h2>
@@ -738,7 +748,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[matterbridge.io]: Updated web site <a href="matterbridge.io">matterbridge.io</a>.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="326-2025-09-06">[3.2.6] - 2025-09-06</h2>
@@ -773,7 +783,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[jest]: Fixed cli test failing with Jest v. 30.1.3.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="325-2025-09-02">[3.2.5] - 2025-09-02</h2>
@@ -795,7 +805,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Fixed padding in QRDivDevice (devices in &#39;server&#39; mode).</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="324-2025-08-29">[3.2.4] - 2025-08-29</h2>
@@ -808,7 +818,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[package]: Updated dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="323-2025-08-20">[3.2.3] - 2025-08-20</h2>
@@ -827,7 +837,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[package]: Updated dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="322-2025-08-10">[3.2.2] - 2025-08-10</h2>
@@ -840,7 +850,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Fixed new Matterbridge frontend version message on the Home page.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="321-2025-08-10">[3.2.1] - 2025-08-10</h2>
@@ -869,7 +879,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Fixed new Matterbridge version message on the Home page.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="320-2025-08-01">[3.2.0] - 2025-08-01</h2>
@@ -894,7 +904,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[node.js]: Removed node 18 support.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="318-2025-07-28">[3.1.8] - 2025-07-28</h2>
@@ -923,7 +933,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[advertise]: Changed the message advertise stopped to work also in childbridge mode.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="317-2025-07-25">[3.1.7] - 2025-07-25</h2>
@@ -946,7 +956,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[package]: Updated dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="316-2025-07-22">[3.1.6] - 2025-07-22</h2>
@@ -965,7 +975,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[package]: Updated dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="315-2025-07-19">[3.1.5] - 2025-07-19</h2>
@@ -983,7 +993,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[readme-dev]: Added <a href="README-DEV.html">documentation</a> for default plugin config and schema files.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="314-2025-07-16">[3.1.4] - 2025-07-16</h2>
@@ -1003,7 +1013,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[bin]: Updated matterbridge bin.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="313-2025-07-14">[3.1.3] - 2025-07-14</h2>
@@ -1024,7 +1034,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[shutdown]: Fixed error messages from frontend when Matterbridge is shutting down.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="312-2025-07-06">[3.1.2] - 2025-07-06</h2>
@@ -1043,7 +1053,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[package]: Updated dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="311-2025-07-04">[3.1.1] - 2025-07-04</h2>
@@ -1070,7 +1080,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[imports]: Added dynamic imports to Matterbridge and Frontend classes.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="310-2025-06-28">[3.1.0] - 2025-06-28</h2>
@@ -1098,7 +1108,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[matter.js]: Bumped <code>matter.js</code> to 0.15.0 (<a href="https://github.com/project-chip/matter.js/discussions/2203">https://github.com/project-chip/matter.js/discussions/2203</a>). Great job matter.js!</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="307-2025-06-21">[3.0.7] - 2025-06-21</h2>
@@ -1119,7 +1129,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[platform]: Removed long deprecated methods: validateEntityBlackList and validateDeviceWhiteBlackList. Use validateDevice and validateEntity.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="306-2025-06-13">[3.0.6] - 2025-06-13</h2>
@@ -1147,7 +1157,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[evse]: Fixed jsdoc on Evse.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="305-2025-06-07">[3.0.5] - 2025-06-07</h2>
@@ -1170,7 +1180,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[selectAreas]: Fixed MatterbridgeServiceAreaServer.selectAreas.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="304-2025-05-26">[3.0.4] - 2025-05-26</h2>
@@ -1190,7 +1200,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[virtualDevice]: Fixed possible vulnerability in the length of the nodeLabel.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="303-2025-05-19">[3.0.3] - 2025-05-19</h2>
@@ -1216,7 +1226,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[rvc]: Added the parameters in the RoboticVacuumCleaner class constructor.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="302-2025-05-14">[3.0.2] - 2025-05-14</h2>
@@ -1238,7 +1248,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Fixed refresh of start/stop sharing.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="301-2025-05-06">[3.0.1] - 2025-05-06</h2>
@@ -1268,7 +1278,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Fixed refresh and postfix for select in HomeDevices.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="300-2025-04-29">[3.0.0] - 2025-04-29</h2>
@@ -1335,7 +1345,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Fixed download logs that broke with express v5.1.0.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="229-2025-04-18">[2.2.9] - 2025-04-18</h2>
@@ -1353,7 +1363,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Fixed wrong notification when the server node has been paired.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="228-2025-04-10">[2.2.8] - 2025-04-10</h2>
@@ -1376,7 +1386,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[DevicesIcon]: Fixed rendering of rain, freeze and leak sensors.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="227-2025-04-06">[2.2.7] - 2025-04-06</h2>
@@ -1396,7 +1406,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[platform]: Fix getSelectDevices and getSelectEntities on node &lt; 22.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="226-2025-04-01">[2.2.6] - 2025-04-01</h2>
@@ -1419,7 +1429,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[onOff]: The onOff cluster created from createOnOffClusterServer() is now correct (no Lighting feature).</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="225-2025-03-19">[2.2.5] - 2025-03-19</h2>
@@ -1444,7 +1454,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Fixed case where more then one plugin has select in the Home page Devices panel.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="224-2025-03-10">[2.2.4] - 2025-03-10</h2>
@@ -1458,7 +1468,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="223-2025-03-05">[2.2.3] - 2025-03-05</h2>
@@ -1475,7 +1485,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[matterbridge]: False error notification on configure plugin.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="222-2025-03-05">[2.2.2] - 2025-03-05</h2>
@@ -1492,7 +1502,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: The config editor cannot be opened a second time before the restart.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="221-2025-03-02">[2.2.1] - 2025-03-02</h2>
@@ -1510,7 +1520,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[package]: Update matter.js to 0.12.5.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="220-2025-02-27">[2.2.0] - 2025-02-27</h2>
@@ -1538,7 +1548,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[matterbridge]: Check endpoint state in /api/devices.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="215-2025-02-11">[2.1.5] - 2025-02-11</h2>
@@ -1562,7 +1572,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[matterbridge]: Refactor reset devices adding a wait of 1 sec to allow matter to deliver all messages before shutting down.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="214-2025-02-07">[2.1.4] - 2025-02-07</h2>
@@ -1578,7 +1588,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[matter.js]: Since matter.js storage cannot properly encode non latin names, they are encoded before passing them to matter.js.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="213-2025-02-04">[2.1.3] - 2025-02-04</h2>
@@ -1591,7 +1601,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="212-2025-02-03">[2.1.2] - 2025-02-03</h2>
@@ -1607,7 +1617,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Fixed update matterbridge.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="211-2025-02-02">[2.1.1] - 2025-02-02</h2>
@@ -1616,7 +1626,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[matter.js]: Fix close server nodes.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="210-2025-02-02">[2.1.0] - 2025-02-02</h2>
@@ -1637,7 +1647,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[package]: Update matter.js to 0.12.2.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="200-2025-01-20">[2.0.0] - 2025-01-20</h2>
@@ -1667,7 +1677,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[sessions]: Fixed the case when Active session was not reporting correctly.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="173-2025-01-11">[1.7.3] - 2025-01-11</h2>
@@ -1681,7 +1691,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[package]: Workflows use node 22.x.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="172-2025-01-11">[1.7.2] - 2025-01-11</h2>
@@ -1707,7 +1717,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Fixed restart that was not working correctly in Ingress.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="171-2025-01-07">[1.7.1] - 2025-01-07</h2>
@@ -1729,7 +1739,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Fixed WebSocketProvider online.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="170-2025-01-04">[1.7.0] - 2025-01-04</h2>
@@ -1761,7 +1771,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Fixed device/cluster api that was not working in Ingress.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="167-2024-12-15">[1.6.7] - 2024-12-15</h2>
@@ -1787,7 +1797,7 @@ It is possible that some controllers see them as new devices or need time to rea
 <li>[Device]: Fix addChildDeviceType methods to include debug parameter in MatterbridgeDevice instantiation.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="166-2024-12-12">[1.6.6] - 2024-12-12</h2>
@@ -1823,7 +1833,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[device]: Fix typos in Device and Endpoint.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="165-2024-12-02">[1.6.5] - 2024-12-02</h2>
@@ -1834,7 +1844,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="164-2024-11-29">[1.6.4] - 2024-11-29</h2>
@@ -1843,7 +1853,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matter.js]: Update to matter.js 0.11.7.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="163-2024-11-27">[1.6.3] - 2024-11-27</h2>
@@ -1857,7 +1867,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matter.js]: Update to matter.js 0.11.6.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="162-2024-11-25">[1.6.2] - 2024-11-25</h2>
@@ -1890,7 +1900,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[energySensor]: Fixed wrong types on ElectricalEnergyMeasurementCluster ElectricalPowerMeasurementCluster.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="161-2024-11-02">[1.6.1] - 2024-11-02</h2>
@@ -1907,7 +1917,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="160-2024-10-28">[1.6.0] - 2024-10-28</h2>
@@ -1926,7 +1936,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1510-2024-10-01">[1.5.10] - 2024-10-01</h2>
@@ -1937,7 +1947,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="159-2024-09-23">[1.5.9] - 2024-09-23</h2>
@@ -1952,7 +1962,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="158-2024-09-21">[1.5.8] - 2024-09-21</h2>
@@ -1972,7 +1982,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matterbridge]: Reset session informations when the controllers are not connected.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="157-2024-09-17">[1.5.7] - 2024-09-17</h2>
@@ -1988,7 +1998,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="156-2024-09-13">[1.5.6] - 2024-09-13</h2>
@@ -2004,7 +2014,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Updated dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="155-2024-09-09">[1.5.5] - 2024-09-09</h2>
@@ -2016,7 +2026,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="154-2024-09-05">[1.5.4] - 2024-09-05</h2>
@@ -2027,7 +2037,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Removed all local matter 1.3 clusters now present in matter.js.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="153-2024-09-04">[1.5.3] - 2024-09-04</h2>
@@ -2043,7 +2053,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Removed long deprecated exports.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="152-2024-08-30">[1.5.2] - 2024-08-30</h2>
@@ -2071,7 +2081,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[spawn]: Modified the install or update function to add more info in the log.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="151-2024-08-28">[1.5.1] - 2024-08-28</h2>
@@ -2083,7 +2093,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="150-2024-08-27">[1.5.0] - 2024-08-27</h2>
@@ -2103,7 +2113,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="143-2024-08-22">[1.4.3] - 2024-08-22</h2>
@@ -2124,7 +2134,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Update matter-history to 1.1.7.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="142-2024-08-20">[1.4.2] - 2024-08-20</h2>
@@ -2144,7 +2154,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[package]: Fixed dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="141-2024-07-28">[1.4.1] - 2024-07-28</h2>
@@ -2160,7 +2170,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matter]: Update matter.js to 0.9.4.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="140-2024-07-23">[1.4.0] - 2024-07-23</h2>
@@ -2181,7 +2191,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matterbridge]: Fixed utils export</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1313-2024-07-11">[1.3.13] - 2024-07-11</h2>
@@ -2198,7 +2208,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matterbridge]: Fixed load plugin when the don&#39;t have author and description.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1312-2024-07-10">[1.3.12] - 2024-07-10</h2>
@@ -2213,7 +2223,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[frontend]: Fix Home for mobile.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1311-2024-07-08">[1.3.11] - 2024-07-08</h2>
@@ -2229,7 +2239,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[dependencies]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1310-2024-07-05">[1.3.10] - 2024-07-05</h2>
@@ -2247,7 +2257,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[dependencies]: Update dependencies.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="139-2024-07-02">[1.3.9] - 2024-07-02</h2>
@@ -2257,7 +2267,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matterbridge]: Fixed MeasurementClusters</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="138-2024-07-01">[1.3.8] - 2024-07-01</h2>
@@ -2266,7 +2276,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matterbridge]: Fixed crash in childbridge mode</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="137-2024-06-30">[1.3.7] - 2024-06-30</h2>
@@ -2281,7 +2291,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[dependencies]: Update matter.js to 0.9.3.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="136-2024-06-28">[1.3.6] - 2024-06-28</h2>
@@ -2297,7 +2307,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matterbridgeDevice]: Fixed ElectricalEnergyMeasurement and ElectricalPowerMeasurement</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="135-2024-06-26">[1.3.5] - 2024-06-26</h2>
@@ -2316,7 +2326,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matterbridge]: The &quot;plugin add&quot; method now loads, starts, and configures the plugin</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="134-2024-06-23">[1.3.4] - 2024-06-23</h2>
@@ -2325,7 +2335,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matterbridge]: Fixed exports</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="133-2024-06-22">[1.3.3] - 2024-06-22</h2>
@@ -2335,7 +2345,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matterbridge]: When a plugin is in an error state, the bridge does not start to avoid causing the controllers to delete the registered devices and lose the configuration (e.g. room and automations).</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="132-2024-06-22">[1.3.2] - 2024-06-22</h2>
@@ -2372,7 +2382,7 @@ RadonConcentrationMeasurement,</li>
 <li>[matter.js]: Updated matter.js to 0.9.2</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="131-2024-06-20">[1.3.1] - 2024-06-20</h2>
@@ -2383,7 +2393,7 @@ RadonConcentrationMeasurement,</li>
 <li>[matterbridge]: Moved getPluginVersion to the start also for disabled plugins.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="130-2024-06-16">[1.3.0] - 2024-06-16</h2>
@@ -2413,7 +2423,7 @@ RadonConcentrationMeasurement,</li>
 <li>[frontend]: Added logger level settings to reflect -matterlogger [debug | info | notice | warn | error | fatal]</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1222-2024-06-04">[1.2.22] - 2024-06-04</h2>
@@ -2423,7 +2433,7 @@ RadonConcentrationMeasurement,</li>
 <li>[matterbridge]: Default config and schema for the new plugin matterbridge-shelly</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1221-2024-06-04">[1.2.21] - 2024-06-04</h2>
@@ -2437,7 +2447,7 @@ RadonConcentrationMeasurement,</li>
 <li>[matterbridge]: Fixed the error that caused -add plugin to fail at the first run of matterbridge</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1220-2024-06-03">[1.2.20] - 2024-06-03</h2>
@@ -2451,7 +2461,7 @@ RadonConcentrationMeasurement,</li>
 <li>[matterbridge]: Log level of Plugin already configured is now info</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1219-2024-06-01">[1.2.19] - 2024-06-01</h2>
@@ -2470,7 +2480,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Added tooltip to the plugin update badge in the registered plugins window</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1218-2024-05-28">[1.2.18] - 2024-05-28</h2>
@@ -2488,7 +2498,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Added a dropdown menu in Add Remove plugin to select the plugins</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1217-2024-05-25">[1.2.17] - 2024-05-25</h2>
@@ -2511,7 +2521,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[matterbridge]: Added vendorId for Alexa</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1216-2024-05-15">[1.2.16] - 2024-05-15</h2>
@@ -2529,7 +2539,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Added version information badge for Matterbridge.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1215-2024-05-14">[1.2.15] - 2024-05-14</h2>
@@ -2543,7 +2553,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Fixed the case when the latest version of Matterbridge or a plugin is not available.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1214-2024-05-09">[1.2.14] - 2024-05-09</h2>
@@ -2556,7 +2566,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Added Error state to registered plugins</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1213-2024-05-05">[1.2.13] - 2024-05-05</h2>
@@ -2571,7 +2581,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[docker]: Added the docker image:dev on the docker hub with architectures: linux/amd64, linux/arm64, linux/arm/v7</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1212-2024-04-30">[1.2.12] - 2024-04-30</h2>
@@ -2586,7 +2596,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Added factoryreset in the Settings page. Matterbridge will shutdown to allow the factoryreset.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="80">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a>
 
 <h2 id="1211-2024-04-25">[1.2.11] - 2024-04-25</h2>
