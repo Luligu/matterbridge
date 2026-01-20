@@ -2084,6 +2084,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
       localTemperature: localTemperature * 100,
+      externalMeasuredIndoorTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
       systemMode: Thermostat.SystemMode.Cool,
