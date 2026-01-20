@@ -1,7 +1,7 @@
 // src\matterbridgePlatform.initialized.test.ts
 
 const NAME = 'MatterbridgePlatformInitialized';
-const MATTER_PORT = 7001;
+const MATTER_PORT = 7100;
 const FRONTEND_PORT = 8501;
 
 process.argv = [...originalProcessArgv, '--verbose', '--loader'];

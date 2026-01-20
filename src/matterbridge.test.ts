@@ -1,6 +1,6 @@
 // src\matterbridge.test.ts
 
-const MATTER_PORT = 6001;
+const MATTER_PORT = 6000;
 const NAME = 'MatterbridgeGlobal';
 const HOMEDIR = path.join('jest', NAME);
 

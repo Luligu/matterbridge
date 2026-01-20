@@ -1,6 +1,6 @@
 // src\pluginManager.test.ts
 
-const MATTER_PORT = 6006;
+const MATTER_PORT = 12000;
 const NAME = 'PluginManager';
 const HOMEDIR = path.join('jest', NAME);
 const NPM_CONFIG_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-global'));

@@ -1,6 +1,6 @@
 // src\matterbridge.device.server.test.ts
 
-const MATTER_PORT = 6018;
+const MATTER_PORT = 6200;
 const NAME = 'MatterbridgeDeviceServer';
 const HOMEDIR = path.join('jest', NAME);
 

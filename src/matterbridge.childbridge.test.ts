@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 /* eslint-disable jest/no-conditional-expect */
 
-const MATTER_PORT = 6100;
+const MATTER_PORT = 6400;
 const FRONTEND_PORT = 8802;
 const NAME = 'MatterbridgeChildBridge';
 const HOMEDIR = path.join('jest', NAME);

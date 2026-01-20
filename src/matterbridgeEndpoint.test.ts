@@ -2,7 +2,7 @@
 
 /* eslint-disable no-console */
 
-const MATTER_PORT = 6009;
+const MATTER_PORT = 11000;
 const NAME = 'Endpoint';
 const HOMEDIR = path.join('jest', NAME);
 

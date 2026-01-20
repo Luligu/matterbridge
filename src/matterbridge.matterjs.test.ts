@@ -1,6 +1,6 @@
 // src\matterbridge.matterjs.test.ts
 
-const MATTER_PORT = 6010;
+const MATTER_PORT = 6100;
 const NAME = 'MatterbridgeMatterjs';
 const HOMEDIR = path.join('jest', NAME);
 

@@ -1,6 +1,6 @@
 // src\update.test.ts
 
-const MATTER_PORT = 6020;
+const MATTER_PORT = 13000;
 const FRONTEND_PORT = 8810;
 const NAME = 'MatterbridgeUpdate';
 const HOMEDIR = path.join('jest', NAME);

@@ -1,7 +1,7 @@
 // src\helpers.test.ts
 
 /* eslint-disable no-console */
-const MATTER_PORT = 6004;
+const MATTER_PORT = 6600;
 const NAME = 'Helpers';
 const HOMEDIR = path.join('jest', NAME);
 
