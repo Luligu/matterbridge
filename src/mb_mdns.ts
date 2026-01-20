@@ -81,7 +81,7 @@ Examples:
   }
 
   // Dynamic JSON import (Node >= 20) with import attributes
-  const { default: pkg } = await import('../../package.json', { with: { type: 'json' } });
+  const { default: pkg } = await import('../package.json', { with: { type: 'json' } });
 
   let mdnsIpv4QueryInterval: NodeJS.Timeout | undefined;
   let mdnsIpv6QueryInterval: NodeJS.Timeout | undefined;

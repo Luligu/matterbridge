@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-import('../dist/dgram/mb_mdns.js');
+import('../dist/mb_mdns.js');
