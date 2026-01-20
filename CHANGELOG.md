@@ -28,6 +28,18 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.5.1] - Dev branch
+
+### Added
+
+- [mb_mdns]: Add additional mDNS service types for discovery.
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.5.0] - 2026-01-20
 
 ### Breaking Changes
