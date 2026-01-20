@@ -1974,6 +1974,101 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a default thermostat cluster server with features **Heating**, **Cooling**, **AutoMode** and **Presets**.
+   *
+   * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
+   * - When the outdoorTemperature parameter is provided (either null or a number), the outdoorTemperature attribute is also added (defaults to undefined).
+   *
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 2°.
+   * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @param {number | undefined} [unoccupiedHeatingSetpoint] - The unoccupied heating setpoint value in degrees Celsius. Defaults to 19° (it will be ignored if occupied is not provided).
+   * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
+   * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
+   * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
+   * @param {number | undefined} [activePresetHandle] - The active preset handle. Defaults to undefined.
+   * @param {Thermostat.Preset[] | null | undefined} [presetsList] - The list of thermostat presets. Defaults to undefined.
+   * @param {Thermostat.PresetType[] | null | undefined} [presetTypes] - The list of thermostat preset types. Defaults to undefined.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultPresetsThermostatClusterServer(
+    localTemperature: number = 23,
+    occupiedHeatingSetpoint: number = 21,
+    occupiedCoolingSetpoint: number = 25,
+    minSetpointDeadBand: number = 2,
+    minHeatSetpointLimit: number = 0,
+    maxHeatSetpointLimit: number = 50,
+    minCoolSetpointLimit: number = 0,
+    maxCoolSetpointLimit: number = 50,
+    unoccupiedHeatingSetpoint: number | undefined = undefined,
+    unoccupiedCoolingSetpoint: number | undefined = undefined,
+    occupied: boolean | undefined = undefined,
+    outdoorTemperature: number | null | undefined = undefined,
+    activePresetHandle: number | undefined = undefined,
+    presetsList: Thermostat.Preset[] | null | undefined = undefined,
+    presetTypes: Thermostat.PresetType[] | null | undefined = undefined,
+  ): this {
+    this.behaviors.require(
+      MatterbridgeThermostatServer.with(
+        Thermostat.Feature.Heating,
+        Thermostat.Feature.Cooling,
+        Thermostat.Feature.AutoMode,
+        ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : []),
+        ...(presetsList !== undefined || presetTypes !== undefined ? [Thermostat.Feature.Presets] : []),
+      ),
+      {
+        localTemperature: localTemperature * 100,
+        externalMeasuredIndoorTemperature: localTemperature * 100,
+        ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
+        systemMode: Thermostat.SystemMode.Auto,
+        controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+        // Thermostat.Feature.Heating
+        occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
+        minHeatSetpointLimit: minHeatSetpointLimit * 100,
+        maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
+        absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        // Thermostat.Feature.Cooling
+        occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
+        minCoolSetpointLimit: minCoolSetpointLimit * 100,
+        maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
+        absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        // Thermostat.Feature.AutoMode
+        minSetpointDeadBand: minSetpointDeadBand * 10,
+        thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
+        // Thermostat.Feature.Occupancy
+        ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
+        ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
+        ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+        // Thermostat.Feature.Presets
+        numberOfPresets: Array.isArray(presetsList) ? presetsList.length : 0,
+        activePresetHandle: activePresetHandle !== undefined ? Uint8Array.from([activePresetHandle]) : null,
+        // Ensure presetHandle is a proper Uint8Array by creating a new instance
+        presets: (presetsList ?? []).map((p) => ({
+          presetHandle: Uint8Array.from(p.presetHandle || [0]),
+          presetScenario: p.presetScenario,
+          name: p.name,
+          coolingSetpoint: p.coolingSetpoint,
+          heatingSetpoint: p.heatingSetpoint,
+          builtIn: p.builtIn ?? true,
+        })),
+        presetTypes: (presetTypes ?? []).map((pt) => ({
+          ...pt,
+          numberOfPresets: pt.numberOfPresets ?? 0,
+          presetTypeFeatures: pt.presetTypeFeatures ?? { automatic: false, supportsNames: true },
+        })),
+      },
+    );
+    return this;
+  }
+
+  /**
    * Creates a default cooling thermostat cluster server with feature **Cooling**.
    *
    * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
