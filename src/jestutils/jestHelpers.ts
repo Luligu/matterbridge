@@ -33,7 +33,7 @@ import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, 
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
-import { MdnsService } from '@matter/main/protocol';
+import { MdnsService } from '@matter/protocol';
 import { NodeStorageManager } from 'node-persist-manager';
 
 // Imports from Matterbridge
@@ -303,7 +303,15 @@ export async function startMatterbridge(
   );
 
   // Load Matterbridge instance and initialize it
+  // @ts-expect-error - access to private member for testing
+  expect(Matterbridge.instance).toBeUndefined();
   matterbridge = await Matterbridge.loadInstance(true);
+  // @ts-expect-error - access to private member for testing
+  expect(matterbridge.environment).toBeDefined();
+  // Setup the mDNS service in the environment
+  // @ts-expect-error - access to private member for testing
+  new MdnsService(matterbridge.environment);
+
   expect(matterbridge).toBeDefined();
   expect(matterbridge.profile).toBeUndefined();
   expect(matterbridge.bridgeMode).toBe(bridgeMode);
@@ -592,7 +600,7 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
   expect(server.lifecycle.isReady).toBeTruthy();
   expect(server.lifecycle.isOnline).toBeTruthy();
   await server.close();
-  expect(server.lifecycle.isReady).toBeTruthy();
+  expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();
 
   // Stop the matter storage
@@ -660,12 +668,9 @@ export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: 
  * @returns {Promise<void>} A promise that resolves when the mDNS instance is closed.
  */
 export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<void> {
-  // TODO: matter.js 0.16.0 - provide close method to close the mDNS service
   // @ts-expect-error - accessing private member for testing
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mdns = matterbridge.environment.get(MdnsService) as any;
-  if (mdns && mdns[Symbol.asyncDispose] && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
-  if (mdns && mdns.close && typeof mdns.close === 'function') await mdns.close();
+  const mdns = matterbridge.environment.get(MdnsService);
+  await mdns.close();
 }
 
 /**
@@ -710,10 +715,8 @@ export function createTestEnvironment(name: string): Environment {
  */
 export async function destroyTestEnvironment(): Promise<void> {
   // stop the mDNS service
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mdns = environment.get(MdnsService) as any;
-  if (mdns && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
-  if (mdns && typeof mdns.close === 'function') await mdns.close();
+  const mdns = environment.get(MdnsService);
+  await mdns.close();
 }
 
 /**
@@ -981,7 +984,7 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   expect(server.lifecycle.isReady).toBeTruthy();
   expect(server.lifecycle.isOnline).toBeTruthy();
   await server.close();
-  expect(server.lifecycle.isReady).toBeTruthy();
+  expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();
 
   // stop the mDNS service

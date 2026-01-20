@@ -2,6 +2,7 @@
 # This file specifies directories and files that should be ignored when publishing the package to npm.
 
 # Specific directories that should be ignored
+.cache/
 .devcontainer/
 .git/
 .github/
@@ -10,15 +11,13 @@ coverage/
 jest/
 mock/
 node_modules/
-screenshot/
+screenshots/
 src/
 temp/
 test/
 vitest/
 
 # Specific files that should be ignored
-.eslintcache
-.prettiercache
 .gitattributes
 .gitignore
 .gitlocalignore

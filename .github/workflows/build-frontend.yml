@@ -24,10 +24,6 @@ jobs:
         with:
           node-version: 22.x
 
-      - name: Clean cache
-        run: npm cache clean --force
-        working-directory: frontend
-
       - name: Verify Node.js version
         run: node -v
         working-directory: frontend
@@ -37,7 +33,7 @@ jobs:
         working-directory: frontend
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-fund --no-audit
         working-directory: frontend
 
       - name: Lint the project

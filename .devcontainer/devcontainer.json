@@ -24,23 +24,39 @@ Dev containers have networking limitations depending on the host OS and Docker s
   "name": "Matterbridge",
   // Use the pre-built image with Node+TypeScript
   "image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:latest",
+  // Inherit timezone from the host environment (set TZ on the host, e.g. Europe/Paris)
+  "containerEnv": {
+    "TZ": "${localEnv:TZ}"
+  },
   // Use the non-root node user (passwordless sudo in this image)
   "remoteUser": "node",
-  // Mount the node_modules workspace folder to the container's workspace volumes to improve performance
+  // Mount the node_modules folder to the container's volumes to improve performance
+  // Mount the matterbridge folders to the container's volumes to persist the storages between container restarts and rebuilds
   "mounts": [
     "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=${localWorkspaceFolderBasename}-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume"
   ],
+  // Create the matterbridge Docker network if it doesn't exist (runs on the HOST before the container starts).
+  "initializeCommand": "docker network inspect matterbridge || docker network create matterbridge",
   // On startup, update npm, build matterbridge and link it globally
   "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   "runArgs": [
     // Give the Docker container the same name as the repository (must be unique on host)
     "--name",
     "${localWorkspaceFolderBasename}",
-    // Remove network host mode if on Docker Desktop for Windows or macOS
-    "--network=host"
+    // Publish Matterbridge frontend port
+    "-p",
+    "8283:8283/tcp",
+    // Publish Matter port range (to allow childbridge mode and devices with mode server) to the host
+    "-p",
+    "5540-5549:5540-5549/udp",
+    // Use network host mode if on Docker Engine on Linux or WSL 2 to allow full local network access and mDNS support
+    // "--network=host"
+    // Use a shared bridge network to allow to access other containers with their names (dns resolution). With the default bridge, dns resolution does not work (only ip:port).
+    "--network=matterbridge"
   ],
   "customizations": {
     "vscode": {
@@ -56,7 +72,12 @@ Dev containers have networking limitations depending on the host OS and Docker s
           "source.fixAll.eslint": "explicit"
         },
         "eslint.format.enable": true,
-        "eslint.useFlatConfig": true
+        "eslint.useFlatConfig": true,
+        "diffEditor.ignoreTrimWhitespace": false,
+        "git.autofetch": true,
+        "files.eol": "\n",
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true
       }
     }
   }

@@ -429,7 +429,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(light).toBeDefined();
     light.createDefaultOnOffClusterServer(true, false, 10, 14);
     light.addRequiredClusterServers();
-    expect(light.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'identify', 'groups', 'levelControl', 'colorControl']);
+    expect(light.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'identify', 'groups', 'scenesManagement', 'levelControl', 'colorControl']);
     expect(light.behaviors.supported.descriptor).toBeDefined();
     expect(light.behaviors.has(DescriptorBehavior)).toBeTruthy();
     expect(light.behaviors.has(DescriptorServer)).toBeTruthy();
@@ -459,13 +459,12 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.hasClusterServer(GroupsCluster.id)).toBeTruthy();
     expect(light.hasClusterServer(GroupsCluster.name)).toBeTruthy();
 
-    expect(light.behaviors.supported['scenesManagement']).not.toBeDefined();
-    expect(light.behaviors.has(ScenesManagementBehavior)).toBeFalsy();
-    expect(light.behaviors.has(ScenesManagementServer)).toBeFalsy();
-    expect(light.hasClusterServer(ScenesManagementCluster)).toBeFalsy();
-    expect(light.hasClusterServer(ScenesManagementCluster.id)).toBeFalsy();
-    expect(light.hasClusterServer(ScenesManagementCluster.name)).toBeFalsy();
-
+    expect(light.behaviors.supported['scenesManagement']).toBeDefined();
+    expect(light.behaviors.has(ScenesManagementBehavior)).toBeTruthy();
+    expect(light.behaviors.has(ScenesManagementServer)).toBeTruthy();
+    expect(light.hasClusterServer(ScenesManagementCluster)).toBeTruthy();
+    expect(light.hasClusterServer(ScenesManagementCluster.id)).toBeTruthy();
+    expect(light.hasClusterServer(ScenesManagementCluster.name)).toBeTruthy();
     expect(light.behaviors.supported['onOff']).toBeDefined();
     expect(light.behaviors.has(OnOffBehavior)).toBeTruthy();
     expect(light.behaviors.has(OnOffServer)).toBeTruthy();
@@ -479,7 +478,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.hasClusterServer(DescriptorCluster)).toBe(true);
     expect(light.hasClusterServer(IdentifyCluster)).toBe(true);
     expect(light.hasClusterServer(GroupsCluster)).toBe(true);
-    expect(light.hasClusterServer(ScenesManagementCluster)).toBe(false);
+    expect(light.hasClusterServer(ScenesManagementCluster)).toBe(true);
     expect(light.hasClusterServer(OnOffCluster)).toBe(true);
   });
 
@@ -488,7 +487,7 @@ describe('Matterbridge ' + NAME, () => {
     enhancedLight.createDefaultOnOffClusterServer(true, false, 10, 14);
     enhancedLight.createEnhancedColorControlClusterServer();
     enhancedLight.addRequiredClusterServers();
-    expect(enhancedLight.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'colorControl', 'identify', 'groups', 'levelControl']);
+    expect(enhancedLight.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'colorControl', 'identify', 'groups', 'scenesManagement', 'levelControl']);
     expect(enhancedLight.behaviors.supported.descriptor).toBeDefined();
     expect(enhancedLight.behaviors.has(DescriptorBehavior)).toBeTruthy();
     expect(enhancedLight.behaviors.has(DescriptorServer)).toBeTruthy();
@@ -516,12 +515,12 @@ describe('Matterbridge ' + NAME, () => {
     expect(enhancedLight.hasClusterServer(GroupsCluster.id)).toBeTruthy();
     expect(enhancedLight.hasClusterServer(GroupsCluster.name)).toBeTruthy();
 
-    expect(enhancedLight.behaviors.supported['scenesManagement']).not.toBeDefined();
-    expect(enhancedLight.behaviors.has(ScenesManagementBehavior)).toBeFalsy();
-    expect(enhancedLight.behaviors.has(ScenesManagementServer)).toBeFalsy();
-    expect(enhancedLight.hasClusterServer(ScenesManagementCluster)).toBeFalsy();
-    expect(enhancedLight.hasClusterServer(ScenesManagementCluster.id)).toBeFalsy();
-    expect(enhancedLight.hasClusterServer(ScenesManagementCluster.name)).toBeFalsy();
+    expect(enhancedLight.behaviors.supported['scenesManagement']).toBeDefined();
+    expect(enhancedLight.behaviors.has(ScenesManagementBehavior)).toBeTruthy();
+    expect(enhancedLight.behaviors.has(ScenesManagementServer)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(ScenesManagementCluster)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(ScenesManagementCluster.id)).toBeTruthy();
+    expect(enhancedLight.hasClusterServer(ScenesManagementCluster.name)).toBeTruthy();
 
     expect(enhancedLight.behaviors.supported['onOff']).toBeDefined();
     expect(enhancedLight.behaviors.has(OnOffBehavior)).toBeTruthy();
@@ -536,7 +535,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(enhancedLight.hasClusterServer(DescriptorCluster)).toBe(true);
     expect(enhancedLight.hasClusterServer(IdentifyCluster)).toBe(true);
     expect(enhancedLight.hasClusterServer(GroupsCluster)).toBe(true);
-    expect(enhancedLight.hasClusterServer(ScenesManagementCluster)).toBe(false);
+    expect(enhancedLight.hasClusterServer(ScenesManagementCluster)).toBe(true);
     expect(enhancedLight.hasClusterServer(OnOffCluster)).toBe(true);
     expect(enhancedLight.hasClusterServer(LevelControlCluster)).toBe(true);
     expect(enhancedLight.hasClusterServer(ColorControlCluster)).toBe(true);
@@ -665,8 +664,8 @@ describe('Matterbridge ' + NAME, () => {
         expect(oldState).toBeDefined();
         expect(oldState).toEqual({ 'occupied': false });
         expect(context).toBeDefined();
-        expect(context.offline).toBe(true);
-        if (newState.occupied && !oldState.occupied && context.offline) {
+        expect(context?.offline).toBe(true);
+        if (newState.occupied && !oldState.occupied && context?.offline) {
           resolve();
         }
       });
@@ -1038,8 +1037,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
     expect(thermostat.behaviors.has(MatterbridgeThermostatServer)).toBeTruthy();
     expect(thermostat.behaviors.elementsOf(MatterbridgeThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
+    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0, 254]);
+    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([253]);
     await invokeBehaviorCommand(thermostat, 'thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermostat.id}.${thermostat.number})`);
   });
@@ -1115,7 +1114,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(74);
+    expect(count).toBe(75);
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {

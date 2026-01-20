@@ -87,7 +87,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(61); // 61 attributes for the microwave oven device
+    expect(attributes.length).toBe(62);
   });
 
   test('invoke MatterbridgeMicrowaveOvenControlServer commands', async () => {

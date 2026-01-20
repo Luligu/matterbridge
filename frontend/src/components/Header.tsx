@@ -91,10 +91,12 @@ function Header() {
 
   const handleUpdateClick = () => {
     sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: 'matterbridge', restart: true } });
+    setUpdate(false);
   };
 
   const handleUpdateDevClick = () => {
     sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: 'matterbridge@dev', restart: true } });
+    setUpdateDev(false);
   };
 
   const handleUpdateCheckClick = () => {

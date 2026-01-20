@@ -52,7 +52,7 @@ import {
 process.argv.push('--debug');
 
 describe('Matter.js test environment', () => {
-  const MATTER_PORT = 8502;
+  const MATTER_PORT = 8501;
   const NAME = 'JestHelpersMatterjs';
   const HOMEDIR = path.join('jest', NAME);
 
@@ -153,8 +153,8 @@ describe('Matter.js test environment', () => {
 });
 
 describe('Matterbridge not initialized test environment', () => {
-  const MATTER_PORT = 8501;
-  const NAME = 'JestHelpersMatterbridge';
+  const MATTER_PORT = 8502;
+  const NAME = 'JestHelpersMatterbridgeNotInitialized';
   const HOMEDIR = path.join('jest', NAME);
 
   let deviceServer: MatterbridgeEndpoint;
@@ -269,9 +269,7 @@ describe('Matterbridge not initialized test environment', () => {
 });
 
 describe('Matterbridge initialized test environment', () => {
-  beforeAll(async () => {
-    await setupTest('MatterbridgeInitialized', false);
-  });
+  beforeAll(async () => {});
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -286,7 +284,8 @@ describe('Matterbridge initialized test environment', () => {
   });
 
   test('should start the active Matterbridge instance in bridge mode', async () => {
-    await startMatterbridge('bridge', 9500, 9600);
+    await setupTest('JestHelpersMatterbridgeInitializedBridge', false);
+    await startMatterbridge('bridge', 9501, 9601);
     expect(matterbridge).toBeDefined();
   });
 
@@ -297,7 +296,8 @@ describe('Matterbridge initialized test environment', () => {
   });
 
   test('should start the active Matterbridge instance in childbridge mode', async () => {
-    await startMatterbridge('childbridge', 9500, 9600);
+    await setupTest('JestHelpersMatterbridgeInitializedChildbridge', false);
+    await startMatterbridge('childbridge', 9502, 9602);
     expect(matterbridge).toBeDefined();
   });
 

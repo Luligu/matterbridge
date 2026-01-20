@@ -28,7 +28,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // Node.js modules
 import os from 'node:os';
 import path from 'node:path';
-import fs from 'node:fs';
+import fs, { unlinkSync } from 'node:fs';
 import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
@@ -39,7 +39,7 @@ import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
 import { Logger, Diagnostic, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, UINT32_MAX, UINT16_MAX, Crypto, Environment, StorageContext, StorageManager, StorageService } from '@matter/general';
-import { DeviceCertification, ExposedFabricInformation, FabricAction, PaseClient } from '@matter/protocol';
+import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
 import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
@@ -685,7 +685,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (!fs.existsSync(plugin.path) && !hasParameter('add') && !hasParameter('remove') && !hasParameter('enable') && !hasParameter('disable') && !hasParameter('reset') && !hasParameter('factoryreset')) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
         const { spawnCommand } = await import('./utils/spawn.js');
-        if (await spawnCommand('npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose'], 'install', plugin.name)) {
+        if (await spawnCommand('npm', ['install', '-g', `${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}`, '--omit=dev', '--verbose'], 'install', plugin.name)) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } else {
@@ -751,10 +751,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       let index = 0;
       for (const plugin of this.plugins) {
         if (index !== this.plugins.length - 1) {
-          this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled${nf}`);
+          this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} version: ${plg}${plugin.version}${nf} ${plugin.enabled ? GREEN : RED}enabled${nf}`);
           this.log.info(`│ └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         } else {
-          this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}disabled${nf}`);
+          this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} version: ${plg}${plugin.version}${nf} ${plugin.enabled ? GREEN : RED}disabled${nf}`);
           this.log.info(`  └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         }
         index++;
@@ -1044,20 +1044,29 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   /**
    * Logs the node and system information.
+   *
+   * @remarks
+   * This method retrieves and logs various details about the host system, including:
+   * - IP address information (IPv4, IPv6, MAC address)
+   * - Node.js version
+   * - Hostname and user information
+   * - Operating system details (type, release, platform, architecture)
+   * - Memory usage statistics
+   * - Uptime information for both the system and the process
    */
   private async logNodeAndSystemInfo() {
     // IP address information
+    const excludedInterfaceNamePattern =
+      /(tailscale|wireguard|openvpn|zerotier|hamachi|\bwg\d+\b|\btun\d+\b|\btap\d+\b|\butun\d+\b|docker|podman|\bveth[a-z0-9]*\b|\bbr-[a-z0-9]+\b|cni|kube|flannel|calico|virbr\d*\b|vmware|vmnet\d*\b|virtualbox|vboxnet\d*\b|teredo|isatap)/i;
     const networkInterfaces = os.networkInterfaces();
     this.systemInformation.interfaceName = '';
     this.systemInformation.ipv4Address = '';
     this.systemInformation.ipv6Address = '';
     this.systemInformation.macAddress = '';
     for (const [interfaceName, interfaceDetails] of Object.entries(networkInterfaces)) {
-      // this.log.debug(`Checking interface: '${interfaceName}' for '${this.mdnsInterface}'`);
       if (this.mdnsInterface && interfaceName !== this.mdnsInterface) continue;
-      if (!interfaceDetails) {
-        break;
-      }
+      if (!this.mdnsInterface && excludedInterfaceNamePattern.test(interfaceName)) continue;
+      if (!interfaceDetails) continue;
       for (const detail of interfaceDetails) {
         if (detail.family === 'IPv4' && !detail.internal && this.systemInformation.ipv4Address === '') {
           this.systemInformation.interfaceName = interfaceName;
@@ -1454,6 +1463,38 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Stop matter storage
       await this.stopMatterStorage();
+      /**
+       * Unlink a file safely, ignoring errors.
+       *
+       * @param {string} path - The path to the file to unlink.
+       * @param {AnsiLogger} log - The logger to use for logging.
+       */
+      function unlinkSafe(path: string, log: AnsiLogger) {
+        try {
+          log.debug(`Removing ${path}...`);
+          unlinkSync(path);
+          log.debug(`Removed ${path}`);
+        } catch {
+          // Ignore errors if the file does not exist
+        }
+      }
+      // Remove the resumption records for Matterbridge (bridge mode)
+      this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
+      unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
+      unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
+      for (const plugin of this.plugins.array()) {
+        // Remove the resumption records for the plugins (childbridge mode)
+        this.log.debug(`Cleaning matter storage context for plugin ${plg}${plugin.name}${db}...`);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'sessions.resumptionRecords'), this.log);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'root.subscriptions.subscriptions'), this.log);
+      }
+      for (const device of this.devices.array().filter((d) => d.mode === 'server')) {
+        if (!device.deviceName) continue;
+        // Remove the resumption records for the server mode devices
+        this.log.debug(`Cleaning matter storage context for server node device ${dev}${device.deviceName}${db}...`);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'sessions.resumptionRecords'), this.log);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'root.subscriptions.subscriptions'), this.log);
+      }
 
       // Stop the frontend
       await this.frontend.stop();
@@ -2114,8 +2155,8 @@ const commissioningController = new CommissioningController({
     await storageContext.set('vendorName', vendorName.slice(0, 32));
     await storageContext.set('productId', productId);
     await storageContext.set('productName', productName.slice(0, 32));
-    await storageContext.set('nodeLabel', productName.slice(0, 32));
     await storageContext.set('productLabel', productName.slice(0, 32));
+    await storageContext.set('nodeLabel', deviceName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
     await storageContext.set('softwareVersion', isValidNumber(parseVersionString(this.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridgeVersion) : 1);
@@ -2131,8 +2172,8 @@ const commissioningController = new CommissioningController({
     this.log.debug(`- vendorName: ${await storageContext.get('vendorName')}`);
     this.log.debug(`- productId: ${await storageContext.get('productId')}`);
     this.log.debug(`- productName: ${await storageContext.get('productName')}`);
-    this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
     this.log.debug(`- productLabel: ${await storageContext.get('productLabel')}`);
+    this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
     this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
     this.log.debug(`- uniqueId: ${await storageContext.get('uniqueId')}`);
     this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
@@ -2195,13 +2236,14 @@ const commissioningController = new CommissioningController({
 
       // Provide defaults for the BasicInformation cluster on the Root endpoint
       basicInformation: {
+        nodeLabel: await storageContext.get<string>('nodeLabel'),
+
         vendorId: VendorId(await storageContext.get<number>('vendorId')),
         vendorName: await storageContext.get<string>('vendorName'),
 
         productId: await storageContext.get<number>('productId'),
         productName: await storageContext.get<string>('productName'),
         productLabel: await storageContext.get<string>('productName'),
-        nodeLabel: await storageContext.get<string>('productName'),
 
         serialNumber: await storageContext.get<string>('serialNumber'),
         uniqueId: await storageContext.get<string>('uniqueId'),
@@ -2269,14 +2311,14 @@ const commissioningController = new CommissioningController({
     serverNode.events.commissioning.fabricsChanged.on((fabricIndex, fabricAction) => {
       let action = '';
       switch (fabricAction) {
-        case FabricAction.Added:
+        case 'added':
           this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
           action = 'added';
           break;
-        case FabricAction.Removed:
+        case 'deleted':
           action = 'removed';
           break;
-        case FabricAction.Updated:
+        case 'updated':
           action = 'updated';
           break;
       }
@@ -2350,10 +2392,10 @@ const commissioningController = new CommissioningController({
    * Stops the specified server node.
    *
    * @param {ServerNode} matterServerNode - The server node to stop.
-   * @param {number} [timeout] - The timeout in milliseconds for stopping the server node. Defaults to 30 seconds.
+   * @param {number} [timeout] - The timeout in milliseconds for stopping the server node. Defaults to 10 seconds.
    * @returns {Promise<void>} A promise that resolves when the server node has stopped.
    */
-  private async stopServerNode(matterServerNode: ServerNode, timeout: number = 30000): Promise<void> {
+  private async stopServerNode(matterServerNode: ServerNode, timeout: number = 10000): Promise<void> {
     const { withTimeout } = await import('./utils/wait.js');
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
@@ -2408,7 +2450,7 @@ const commissioningController = new CommissioningController({
     if (!plugin.locked) {
       plugin.locked = true;
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} server node...`);
-      plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', this.aggregatorDeviceType, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
+      plugin.storageContext = await this.createServerNodeContext(plugin.name, plugin.description, this.aggregatorDeviceType, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, this.aggregatorProductName);
       plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
       plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
@@ -2559,8 +2601,10 @@ const commissioningController = new CommissioningController({
       this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: plugin not found`);
       return;
     }
-    // Unregister and remove the device from the matterbridge aggregator node
-    if (this.bridgeMode === 'bridge') {
+    if (device.mode === 'server') {
+      this.log.info(`Removed mode server bridged endpoint(${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+    } else if (this.bridgeMode === 'bridge') {
+      // Unregister and remove the device from the matterbridge aggregator node
       if (!this.aggregatorNode) {
         this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator node not found`);
         return;

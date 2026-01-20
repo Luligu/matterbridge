@@ -1,6 +1,6 @@
 // src\matterNode.bridge.test.ts
 
-const MATTER_PORT = 10004;
+const MATTER_PORT = 10020;
 const NAME = 'MatterNodeServer';
 const HOMEDIR = path.join('jest', NAME);
 const PASSCODE = 123460;
@@ -21,7 +21,7 @@ import { NodeStorageManager } from 'node-persist-manager';
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, NODE_STORAGE_DIR } from './matterbridgeTypes.js';
-import { originalProcessArgv, setupTest } from './jestutils/jestHelpers.js';
+import { originalProcessArgv, setupTest, setDebug } from './jestutils/jestHelpers.js';
 import { getInterfaceDetails } from './utils/network.js';
 import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

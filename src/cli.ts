@@ -283,6 +283,7 @@ function help(): void {
       --ipv4address [address]: set the ipv4 interface address to use for the matter server listener (default all addresses)
       --ipv6address [address]: set the ipv6 interface address to use for the matter server listener (default all addresses)
       --frontend [port]:       start the frontend on the given port (default 8283)
+      --bind [address]:        bind the frontend to the given address (default all addresses)
       --logger:                set the matterbridge logger level: debug | info | notice | warn | error | fatal (default info)
       --filelogger:            enable the matterbridge file logger (matterbridge.log)
       --matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)

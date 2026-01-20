@@ -5,13 +5,13 @@ on:
     branches: [main]
     paths-ignore:
       - 'docs/**' # any file under docs/
-      - 'screenshot/**' # any file under screenshot/
+      - 'screenshots/**' # any file under screenshots/
       - '**/*.md' # any .md anywhere
   pull_request:
     branches: [main]
     paths-ignore:
       - 'docs/**' # any file under docs/
-      - 'screenshot/**' # any file under screenshot/
+      - 'screenshots/**' # any file under screenshots/
       - '**/*.md' # any .md anywhere
   workflow_dispatch:
 
@@ -32,13 +32,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install matterbridge dependencies
-        run: npm ci
+        run: npm ci --no-fund --no-audit
 
       - name: Build matterbridge
         run: npm run build
 
       - name: Link matterbridge globally
-        run: npm link
+        run: npm link --no-fund --no-audit
 
       - name: Run matterbridge tests
         run: npm run test:coverage

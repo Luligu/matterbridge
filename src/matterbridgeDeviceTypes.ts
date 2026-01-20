@@ -337,7 +337,7 @@ export const onOffLight = DeviceTypeDefinition({
   code: 0x0100,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id],
   optionalServerClusters: [LevelControl.Cluster.id],
 });
 
@@ -357,7 +357,7 @@ export const dimmableLight = DeviceTypeDefinition({
   code: 0x0101,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
   optionalServerClusters: [],
 });
 
@@ -379,7 +379,7 @@ export const colorTemperatureLight = DeviceTypeDefinition({
   code: 0x010c,
   deviceClass: DeviceClasses.Simple,
   revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
   optionalServerClusters: [],
 });
 
@@ -402,13 +402,21 @@ export const extendedColorLight = DeviceTypeDefinition({
   code: 0x010d,
   deviceClass: DeviceClasses.Simple,
   revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
   optionalServerClusters: [],
 });
 
 // Chapter 5. Smart plugs/Outlets and other Actuators device types
 
 /**
+ * An On/Off Plug-in Unit is a device that provides power to another device that is plugged into it, and
+ * is capable of switching that provided power on or off.
+ * The Mounted On/Off Control (added in Matter 1.4) has identical cluster requirements as the On/Off
+ * Plug-In Unit, and is marked as superset of this device type (since Matter 1.4.2). For devices intended
+ * to be mounted permanently, the Mounted On/Off Control device type SHALL be used, with the
+ * On/Off Plug-In Unit device type optionally added in the DeviceTypeList of the Descriptor cluster in
+ * addition to the On/Off Plug-In Unit device type (see [ref_MountedOnOffControlServerGuidance]).
+ *
  * Element Requirements:
  * - Identify Command TriggerEffect
  * - Scenes Management Command CopyScene
@@ -423,12 +431,22 @@ export const onOffOutlet = DeviceTypeDefinition({
   name: 'MA-onoffpluginunit',
   code: 0x010a,
   deviceClass: DeviceClasses.Simple,
-  revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id],
+  revision: 4,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id],
   optionalServerClusters: [LevelControl.Cluster.id],
 });
 
 /**
+ * A Dimmable Plug-In Unit is a device that provides power to another device that is plugged into it,
+ * and is capable of being switched on or off and have its level adjusted. The Dimmable Plug-in Unit is
+ * typically used to control a conventional non-communicating light through its mains connection
+ * using phase cutting.
+ * The Mounted Dimmable Load Control (added in Matter 1.4) has identical cluster requirements as
+ * the Dimmable Plug-In Unit, and is marked as a superset of this device type (since Matter 1.4.2). For
+ * devices intended to be mounted permanently, the Mounted Dimmable Load Control device type
+ * SHALL be used, with the Dimmable Plug-In Unit device type optionally added to the DeviceTypeList
+ * of the Descriptor cluster in addition to the Mounted Dimmable Load Control device type (see [ref_MountedDimmableLoadControlServerGuidance]).
+ *
  * Element Requirements:
  * - Identify Command TriggerEffect
  * - Scenes Management Command CopyScene
@@ -443,15 +461,22 @@ export const dimmableOutlet = DeviceTypeDefinition({
   name: 'MA-dimmablepluginunit',
   code: 0x010b,
   deviceClass: DeviceClasses.Simple,
-  revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
+  revision: 5,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
   optionalServerClusters: [],
 });
 
 /**
  * A Mounted On/Off Control is a fixed device that provides power to another device that is plugged
  * into it, and is capable of switching that provided power on or off.
- * It is a simple device type that does not require any client clusters.
+ * This device type is intended for any wall-mounted or hardwired load controller, while On/Off Plugin
+ * Unit is intended only for smart plugs and other power switching devices that are not permaMatter
+ * Device Library Specification R1.4.2 Connectivity Standards Alliance Document 23-27351 July 16, 2025
+ * Copyright © Connectivity Standards Alliance, Inc. All rights reserved. Page 53
+ * nently connected, and which can be unplugged from their power source.
+ *
+ * It is a simple device type that does not require any client clusters. As per matter 1.4.2 it should be added also on/Off Plug-In Unit for backward compatibility.
+ *
  * Element Requirements:
  * - Identify Command TriggerEffect
  * - Scenes Management Command CopyScene
@@ -466,17 +491,22 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
   name: 'MA-onoffmountedswitch',
   code: 0x010f,
   deviceClass: DeviceClasses.Simple,
-  revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id],
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id],
   optionalServerClusters: [LevelControl.Cluster.id],
 });
 
 /**
- * A Mounted Dimmable Load Control is a fixed device that provides power to another device that is
- * plugged into it, and is capable of being switched on or off and have its level adjusted. The Mounted
- * Dimmable Load Control is typically used to control a conventional non-communicating light
- * through its mains connection using phase cutting.
- * It is a simple device type that does not require any client clusters.
+ * A Mounted Dimmable Load Control is a fixed device that provides power to a load connected to it,
+ * and is capable of being switched on or off and have its level adjusted. The Mounted Dimmable Load
+ * Control is typically used to control a conventional non-communicating light through its mains connection
+ * using phase cutting.
+ * This device type is intended for any wall-mounted or hardwired dimmer-capable load controller,
+ * while Dimmable Plug-In Unit is intended only for dimmer-capable smart plugs that are not permanently
+ * connected, and which can be unplugged from their power source.
+ *
+ * It is a simple device type that does not require any client clusters. As per matter 1.4.2 it should be added also dimmable Plug-In Unit for backward compatibility.
+ *
  * Element Requirements:
  * - Identify Command TriggerEffect
  * - Scenes Management Command CopyScene
@@ -491,8 +521,8 @@ export const dimmableMountedSwitch = DeviceTypeDefinition({
   name: 'MA-dimmablemountedswitch',
   code: 0x0110,
   deviceClass: DeviceClasses.Simple,
-  revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
   optionalServerClusters: [],
 });
 
@@ -715,7 +745,7 @@ export const coverDevice = DeviceTypeDefinition({
   name: 'MA-windowCovering',
   code: 0x202,
   deviceClass: DeviceClasses.Simple,
-  revision: 3,
+  revision: 4,
   requiredServerClusters: [Identify.Cluster.id, WindowCovering.Cluster.id],
   optionalServerClusters: [Groups.Cluster.id],
 });
@@ -973,7 +1003,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
   name: 'MA-roboticvacuumcleaner',
   code: 0x74,
   deviceClass: DeviceClasses.Simple,
-  revision: 3,
+  revision: 4,
   requiredServerClusters: [Identify.Cluster.id, RvcRunMode.Cluster.id, RvcOperationalState.Cluster.id],
   optionalServerClusters: [RvcCleanMode.Cluster.id, ServiceArea.Cluster.id],
 });
@@ -983,12 +1013,13 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
 /**
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
+ * Operational State Event OperationCompletion
  */
 export const laundryWasher = DeviceTypeDefinition({
   name: 'MA-laundrywasher',
   code: 0x73,
   deviceClass: DeviceClasses.Simple,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id],
   optionalServerClusters: [Identify.Cluster.id, LaundryWasherMode.Cluster.id, OnOff.Cluster.id, LaundryWasherControls.Cluster.id, TemperatureControl.Cluster.id],
 });
@@ -996,9 +1027,10 @@ export const laundryWasher = DeviceTypeDefinition({
 /**
  * A refrigerator represents a device that contains one or more cabinets that are capable of chilling or freezing food.
  * A Refrigerator SHALL be composed of at least one endpoint with the Temperature Controlled Cabinet device type.
+ * A Refrigerator SHALL have the Cooler condition applied to at least one endpoint containing the Temperature Control Cluster.
  *
  * Device Type Requirements:
- * 0x0071 Temperature Controlled Cabinet
+ * 0x0071 Temperature Controlled Cabinet with Cooler condition
  */
 export const refrigerator = DeviceTypeDefinition({
   name: 'MA-refrigerator',
@@ -1041,14 +1073,18 @@ export const airConditioner = DeviceTypeDefinition({
  * chilling or freezing food, for example as part of a refrigerator, freezer, wine chiller, or other similar
  * device. Equally, such a cabinet may be warming or heating food, for example as part of an oven,
  * range, or similar device.
+ *
  * Conditions:
  * Cooler The device has cooling functionality.
+ *
+ * Cluster Restrictions:
+ * TemperatureNumber is the only valid temperature control mode
  */
 export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetcooler',
   code: 0x71,
   deviceClass: DeviceClasses.Simple,
-  revision: 3,
+  revision: 5,
   requiredServerClusters: [TemperatureControl.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id],
   optionalServerClusters: [TemperatureMeasurement.Cluster.id],
 });
@@ -1059,14 +1095,19 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
  * chilling or freezing food, for example as part of a refrigerator, freezer, wine chiller, or other similar
  * device. Equally, such a cabinet may be warming or heating food, for example as part of an oven,
  * range, or similar device.
+ *
  * Conditions:
  * Heater The device has heating functionality.
+ *
+ * Cluster Restrictions:
+ * TemperatureNumber is the only valid temperature control mode
+ * OperationCompletion event for Oven Cavity Operational State cluster
  */
 export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetheater',
   code: 0x71,
   deviceClass: DeviceClasses.Simple,
-  revision: 3,
+  revision: 5,
   requiredServerClusters: [TemperatureControl.Cluster.id, OvenMode.Cluster.id, OvenCavityOperationalState.Cluster.id],
   optionalServerClusters: [TemperatureMeasurement.Cluster.id],
 });
@@ -1074,12 +1115,13 @@ export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
 /**
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
+ * Operational State Event OperationCompletion
  */
 export const dishwasher = DeviceTypeDefinition({
   name: 'MA-dishwasher',
   code: 0x75,
   deviceClass: DeviceClasses.Simple,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id],
   optionalServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, TemperatureControl.Cluster.id, DishwasherMode.Cluster.id, DishwasherAlarm.Cluster.id],
 });
@@ -1087,12 +1129,13 @@ export const dishwasher = DeviceTypeDefinition({
 /**
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
+ * Operational State Event OperationCompletion
  */
 export const laundryDryer = DeviceTypeDefinition({
   name: 'MA-laundrydryer',
   code: 0x7c,
   deviceClass: DeviceClasses.Simple,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id],
   optionalServerClusters: [Identify.Cluster.id, LaundryWasherMode.Cluster.id, OnOff.Cluster.id, LaundryDryerControls.Cluster.id, TemperatureControl.Cluster.id],
 });
@@ -1102,13 +1145,14 @@ export const laundryDryer = DeviceTypeDefinition({
  * SHALL only be used when composed as part of another device type (cooktop).
  *
  * Cluster Restrictions:
- * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements.
+ * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements. OnOff Cluster is optional.
+ * The TemperatureLevel feature is the only valid temperature control feature.
  */
 export const cookSurface = DeviceTypeDefinition({
   name: 'MA-cooksurface',
   code: 0x77,
   deviceClass: DeviceClasses.Simple,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [],
   optionalServerClusters: [TemperatureControl.Cluster.id, TemperatureMeasurement.Cluster.id, OnOff.Cluster.id],
 });
@@ -1141,7 +1185,7 @@ export const cooktop = DeviceTypeDefinition({
  * An Oven SHALL have the Heater condition applied to at least one endpoint containing the Temperature Control Cluster.
  * Device Type Requirements:
  * - 0x0071 Temperature Controlled Cabinet min 1
- * - 0x0078 Cooktop
+ * - 0x0078 Cooktop max 1 Optional
  */
 export const oven = DeviceTypeDefinition({
   name: 'MA-oven',
@@ -1178,12 +1222,14 @@ export const extractorHood = DeviceTypeDefinition({
  * A Microwave Oven is a device which at a minimum is capable of being started and stopped and of setting a power level.
  * A Microwave Oven MAY also support additional capabilities via endpoint composition.
  *
+ * Element Requirements:
+ * Operational State Event OperationCompletion
  */
 export const microwaveOven = DeviceTypeDefinition({
   name: 'MA-microwaveoven',
   code: 0x79,
   deviceClass: DeviceClasses.Simple,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id, MicrowaveOvenMode.Cluster.id, MicrowaveOvenControl.Cluster.id],
   optionalServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
 });

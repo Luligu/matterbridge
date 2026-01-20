@@ -133,10 +133,41 @@
 <td>✅</td>
 <td>✅</td>
 </tr>
+<tr>
+<td>Dev Container</td>
+<td>bridge</td>
+<td>Windows</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Dev Container</td>
+<td>bridge</td>
+<td>macOS</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Wsl</td>
+<td>Nat mode (4)</td>
+<td>Windows</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
 </tbody></table>
 <p>(1) - Network host in this configuration is useless cause Docker runs inside a VM.</p>
 <p>(2) - Network host in this configuration works already out of the box cause Docker runs on the host.</p>
 <p>(3) - Share mDNS between separate containers.</p>
+<p>(4) - The mirrored mode works already out of the box cause is on the host.</p>
 <p>It can also be used to run Home Assistant and Matter Server inside Docker Desktop on Windows and macOS (with network bridge) without using complex VM. You just copy paste this <a href="https://matterbridge.io/reflector/docker-compose.yml">docker-compose.yml</a>.</p>
 <p>Since the mDNS are shared between reflector clients, you can pair Matterbridge running with Docker Desktop to Home Assistant running with Docker Desktop. Even on the same machine.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
@@ -222,25 +253,25 @@ docker exec -it matterbridge-test ip r
 <td>Windows</td>
 <td>Any arch</td>
 <td>.exe</td>
-<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server.Setup.0.0.1.exe">download</a></td>
+<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector.Setup.0.0.1.exe">download</a></td>
 </tr>
 <tr>
 <td>macOS</td>
 <td>Apple Silicon</td>
 <td>.dmg</td>
-<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1-arm64.dmg">download</a></td>
+<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector-0.0.1-arm64.dmg">download</a></td>
 </tr>
 <tr>
 <td>macOS</td>
 <td>Intel</td>
 <td>.dmg</td>
-<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1.dmg">download</a></td>
+<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector-0.0.1.dmg">download</a></td>
 </tr>
 <tr>
 <td>Ubuntu</td>
 <td>desktop</td>
 <td>.AppImage</td>
-<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mDNS.Reflector.Server-0.0.1.AppImage">download</a></td>
+<td><a href="https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector-0.0.1.AppImage">download</a></td>
 </tr>
 <tr>
 <td>Ubuntu</td>
@@ -275,9 +306,9 @@ docker logs --tail 1000 -f matterbridge-reflector
 <p>To test the sharing feature (it shares mDNS between all reflector clients),
 use this <a href="https://matterbridge.io/reflector/docker-compose.yml">docker-compose.yml</a>.</p>
 <p>With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with <strong>ws://matterserver:5580/ws</strong></p>
-<pre><code class="language-shell">docker compose down
-docker compose pull
-docker compose up -d --force-recreate
+<pre><code class="language-shell">docker compose -p reflector-test down
+docker compose -p reflector-test pull
+docker compose -p reflector-test up -d --force-recreate
 docker logs --tail 1000 -f reflector
 </code></pre>
   <script>

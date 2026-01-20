@@ -632,7 +632,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     await device.addFixedLabel('composed', 'Light');
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff', 'fixedLabel']);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'scenesManagement', 'onOff', 'fixedLabel']);
     expect(device.hasAttributeServer(FixedLabel.Cluster, 'labelList')).toBe(true);
     expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(false);
     const options = device.getClusterServerOptions(FixedLabel.Cluster);
@@ -658,7 +658,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     await device.addUserLabel('composed', 'Light');
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff', 'userLabel']);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'scenesManagement', 'onOff', 'userLabel']);
     expect(device.hasAttributeServer(FixedLabel.Cluster, 'labelList')).toBe(false);
     expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(true);
     const options = device.getClusterServerOptions(UserLabel.Cluster);
@@ -933,7 +933,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(59);
+    expect(count).toBe(60);
   });
 
   test('forEachAttribute DishWasher', async () => {
@@ -954,7 +954,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(20);
+    expect(count).toBe(21);
   });
 
   test('forEachAttribute LaundryWasher', async () => {
@@ -978,7 +978,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(26);
+    expect(count).toBe(27);
   });
 
   test('forEachAttribute ExtractorHood', async () => {
@@ -1002,7 +1002,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(44);
+    expect(count).toBe(45);
   });
 
   test('forEachAttribute AirQuality', async () => {
@@ -1042,7 +1042,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(150);
+    expect(count).toBe(151);
 
     loggerLogSpy.mockClear();
     expect(await device.setAttribute(TemperatureMeasurementServer, 'measuredValue', 2500, device.log)).toBeTruthy();

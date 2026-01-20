@@ -1,6 +1,6 @@
 // src\matterNode.dynamic.test.ts
 
-const MATTER_PORT = 10002;
+const MATTER_PORT = 10040;
 const NAME = 'MatterNodeAccessory';
 const HOMEDIR = path.join('jest', NAME);
 const PASSCODE = 123458;
@@ -18,7 +18,7 @@ import url from 'node:url';
 import { jest } from '@jest/globals';
 import { er, LogLevel, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
-import { ServerNodeStore } from '@matter/main/node';
+import { ServerNodeStore } from '@matter/node';
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, NODE_STORAGE_DIR, plg, dev } from './matterbridgeTypes.js';

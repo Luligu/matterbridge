@@ -1262,9 +1262,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
-   * @remarks The scenes management cluster server is still provisional and so not yet implemented.
+   * @remarks The scenes management cluster server is mandatory since Matter 1.4.2.
    */
-  createDefaultScenesClusterServer(): this {
+  createDefaultScenesManagementClusterServer(): this {
     this.behaviors.require(ScenesManagementServer);
     return this;
   }
@@ -1883,6 +1883,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
       localTemperature: localTemperature * 100,
+      externalMeasuredIndoorTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
       systemMode: Thermostat.SystemMode.Auto,
@@ -1914,6 +1915,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
       ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+      ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
     });
     return this;
   }
@@ -1945,6 +1947,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
       localTemperature: localTemperature * 100,
+      externalMeasuredIndoorTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
       systemMode: Thermostat.SystemMode.Heat,
@@ -1966,6 +1969,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+      ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
     });
     return this;
   }
@@ -1997,6 +2001,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
       localTemperature: localTemperature * 100,
+      externalMeasuredIndoorTemperature: localTemperature * 100,
       ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
       systemMode: Thermostat.SystemMode.Cool,
@@ -2018,6 +2023,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Thermostat.Feature.Occupancy
       ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
       ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+      ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
     });
     return this;
   }

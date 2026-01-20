@@ -27,8 +27,8 @@ COPY ./packages/vitest-utils/src ./packages/vitest-utils/src
 
 RUN npm ci --no-fund --no-audit && \
   npm run buildProduction && \
-  npm pkg delete devDependencies scripts && \
-  rm -rf ./node_modules && \
+  npm pkg delete devDependencies scripts workspaces && \
+  rm -rf node_modules package-lock.json npm-shrinkwrap.json && \
   npm install --no-fund --no-audit --omit=dev && \
   npm shrinkwrap --omit=dev && \
   npm pack 

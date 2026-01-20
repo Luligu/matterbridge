@@ -16,7 +16,7 @@ const candidateOneDriveRoots = [
   process.env.HOME ? path.join(process.env.HOME, 'OneDrive') : undefined,
 ].filter(Boolean);
 
-const defaultAutomatorRelative = path.join('Code', 'repository', 'automator.mjs');
+const defaultAutomatorRelative = path.join('Code', 'automator', 'automator.mjs');
 
 const candidateAutomatorPaths = [process.env.AUTOMATOR_PATH, ...candidateOneDriveRoots.map((root) => path.join(root, defaultAutomatorRelative))].filter(Boolean);
 

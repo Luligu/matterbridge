@@ -123,7 +123,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(39); // 39 attributes for the oven device
+    expect(attributes.length).toBe(40);
   });
 
   test('cabinet1 forEachAttribute', async () => {
@@ -144,7 +144,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(48); // 48 attributes for the cabinet1 device
+    expect(attributes.length).toBe(49);
   });
 
   test('cabinet2 forEachAttribute', async () => {
@@ -165,7 +165,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(48); // 48 attributes for the cabinet2 device
+    expect(attributes.length).toBe(49);
   });
 
   test('invoke MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer commands', async () => {

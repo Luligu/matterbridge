@@ -85,6 +85,7 @@ describe('Matterbridge ' + NAME, () => {
       absMinCoolSetpointLimit: 0,
       absMinHeatSetpointLimit: 0,
       controlSequenceOfOperation: 4,
+      externalMeasuredIndoorTemperature: 3000,
       localTemperature: 3000,
       maxCoolSetpointLimit: 5000,
       maxHeatSetpointLimit: 5000,
@@ -196,7 +197,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(99);
+    expect(attributes.length).toBe(100);
   });
 
   test('close the server node', async () => {

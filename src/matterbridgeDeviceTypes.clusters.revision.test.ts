@@ -115,7 +115,7 @@ describe('Matter clusters revision (guard against upstream changes)', () => {
     ['AudioOutput', AudioOutput, 1],
     ['BooleanState', BooleanState, 1],
     ['BooleanStateConfiguration', BooleanStateConfiguration, 1],
-    ['BridgedDeviceBasicInformation', BridgedDeviceBasicInformation, 4],
+    ['BridgedDeviceBasicInformation', BridgedDeviceBasicInformation, 5], // ConfigurationVersion attribute added in rev 5 like P O
     ['CarbonDioxideConcentrationMeasurement', CarbonDioxideConcentrationMeasurement, 3],
     ['CarbonMonoxideConcentrationMeasurement', CarbonMonoxideConcentrationMeasurement, 3],
     ['Channel', Channel, 2],
@@ -127,19 +127,19 @@ describe('Matter clusters revision (guard against upstream changes)', () => {
     ['DeviceEnergyManagementMode', DeviceEnergyManagementMode, 2],
     ['DishwasherAlarm', DishwasherAlarm, 1],
     ['DishwasherMode', DishwasherMode, 3],
-    ['DoorLock', DoorLock, 8],
+    ['DoorLock', DoorLock, 9], // Revision 9 removed AlarmMask attribute
     ['EcosystemInformation', EcosystemInformation, 1],
     ['ElectricalEnergyMeasurement', ElectricalEnergyMeasurement, 1],
-    ['ElectricalPowerMeasurement', ElectricalPowerMeasurement, 1],
+    ['ElectricalPowerMeasurement', ElectricalPowerMeasurement, 3], // Revision 2 changed reactive and apparent power fields to use new data types. Revision 3 changed range of apparent current field to allow negative apparent current
     ['EnergyEvse', EnergyEvse, 3],
     ['EnergyEvseMode', EnergyEvseMode, 2],
     ['EnergyPreference', EnergyPreference, 1],
-    ['FanControl', FanControl, 4],
+    ['FanControl', FanControl, 5], // Revision 5 Clarified attribute usage, added conformance column
     ['FlowMeasurement', FlowMeasurement, 3],
     ['FormaldehydeConcentrationMeasurement', FormaldehydeConcentrationMeasurement, 3],
     ['Groups', Groups, 4],
     ['HepaFilterMonitoring', HepaFilterMonitoring, 1],
-    ['Identify', Identify, 5],
+    ['Identify', Identify, 6], // Revision 6 added Q quality for IdentifyTime attribute
     ['IlluminanceMeasurement', IlluminanceMeasurement, 3],
     ['KeypadInput', KeypadInput, 1],
     ['LaundryDryerControls', LaundryDryerControls, 1],
@@ -173,23 +173,23 @@ describe('Matter clusters revision (guard against upstream changes)', () => {
     ['RefrigeratorAlarm', RefrigeratorAlarm, 1],
     ['RefrigeratorAndTemperatureControlledCabinetMode', RefrigeratorAndTemperatureControlledCabinetMode, 3],
     ['RelativeHumidityMeasurement', RelativeHumidityMeasurement, 3],
-    ['RvcCleanMode', RvcCleanMode, 3],
-    ['RvcOperationalState', RvcOperationalState, 2],
+    ['RvcCleanMode', RvcCleanMode, 4], // Revision 4 add Vacuum then Mop cleaning mode
+    ['RvcOperationalState', RvcOperationalState, 3], // Revision 3 add several operational states and errors
     ['RvcRunMode', RvcRunMode, 3],
-    ['ServiceArea', ServiceArea, 1],
+    ['ServiceArea', ServiceArea, 2], // Revision 2 rename InitialTimeEstimate to EstimatedTime
     ['SmokeCoAlarm', SmokeCoAlarm, 1],
     ['Switch', Switch, 2],
     ['TargetNavigator', TargetNavigator, 2],
     ['TemperatureControl', TemperatureControl, 1],
     ['TemperatureMeasurement', TemperatureMeasurement, 4],
-    ['Thermostat', Thermostat, 8],
+    ['Thermostat', Thermostat, 9], // Revision 9 removed AlarmMask attribute and AlarmCodeBitmap Type.
     ['ThermostatUserInterfaceConfiguration', ThermostatUserInterfaceConfiguration, 2],
     ['TotalVolatileOrganicCompoundsConcentrationMeasurement', TotalVolatileOrganicCompoundsConcentrationMeasurement, 3],
     ['ValveConfigurationAndControl', ValveConfigurationAndControl, 1],
     ['WakeOnLan', WakeOnLan, 1],
     ['WaterHeaterManagement', WaterHeaterManagement, 2],
     ['WaterHeaterMode', WaterHeaterMode, 1],
-    ['WindowCovering', WindowCovering, 5],
+    ['WindowCovering', WindowCovering, 6], // Revision 6 marked AbsolutePosition feature and associated elements provisional.
   ];
 
   test.each(cases)('Cluster %s revision should match expected', (_name, entry, expected) => {

@@ -178,10 +178,10 @@ After follow the guidelines for the <a href="README-DOCKER.html">Docker configur
 <p>To use the frontend with ssl see below.</p>
 <p>From the frontend you can do all operations in an easy way.</p>
 <p>Home page</p>
-<p><img src="./screenshot/Screenshot%20home.jpg" alt="Home page"></p>
-<p><a href="./screenshot/Screenshot%20devices.jpg">Devices page</a></p>
-<p><a href="./screenshot/Screenshot%20logs.jpg">Logs page</a></p>
-<p><a href="./screenshot/Screenshot%20config%20editor.jpg">Config editor</a></p>
+<p><img src="./screenshots/Screenshot%20home.jpg" alt="Home page"></p>
+<p><a href="./screenshots/Screenshot%20devices.jpg">Devices page</a></p>
+<p><a href="./screenshots/Screenshot%20logs.jpg">Logs page</a></p>
+<p><a href="./screenshots/Screenshot%20config%20editor.jpg">Config editor</a></p>
 <h2 id="advanced-configurations">Advanced configurations</h2>
 <h3 id="run-matterbridge-as-a-daemon-with-systemctl-linux-only">Run matterbridge as a daemon with systemctl (Linux only)</h3>
 <p>Traditional configuration: <a href="README-SERVICE.html">configuration</a></p>
@@ -204,7 +204,7 @@ After follow the guidelines for the <a href="README-DOCKER.html">Docker configur
 <h2 id="plugins">Plugins</h2>
 <h3 id="shelly">Shelly</h3>
 <a href="https://github.com/Luligu/matterbridge-shelly">
-  <img src="./screenshot/Shelly.svg" alt="Shelly plugin logo" width="100" />
+  <img src="./screenshots/Shelly.svg" alt="Shelly plugin logo" width="100" />
 </a>
 
 <p>Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and Gen 4 and BLU devices to Matter.</p>
@@ -231,20 +231,20 @@ After follow the guidelines for the <a href="README-DOCKER.html">Docker configur
 </ul>
 <h3 id="zigbee2mqtt">Zigbee2MQTT</h3>
 <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">
-  <img src="./screenshot/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
+  <img src="./screenshots/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
 </a>
 
 <p>Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.</p>
 <p>No hub or dedicated hardware needed.</p>
 <h3 id="somfy-tahoma">Somfy tahoma</h3>
 <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
-  <img src="./screenshot/Somfy.svg" alt="Somfy plugin logo" width="100" />
+  <img src="./screenshots/Somfy.svg" alt="Somfy plugin logo" width="100" />
 </a>
 
 <p>Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.</p>
 <h3 id="home-assistant">Home Assistant</h3>
 <a href="https://github.com/Luligu/matterbridge-hass">
-  <img src="./screenshot/HomeAssistant.svg" alt="Hass logo" width="100" />
+  <img src="./screenshots/HomeAssistant.svg" alt="Hass logo" width="100" />
 </a>
 
 <p>Matterbridge Home Assistant plugin allows you to expose the Home Assistant devices and entities to Matter.</p>
@@ -349,7 +349,7 @@ matterbridge --add matterbridge-zigbee2mqtt
 <li><code>key.pem</code></li>
 <li><code>ca.pem</code> (optional)</li>
 </ul>
-<p><img src="./screenshot/Screenshot%20Certificates.png" alt="image"></p>
+<p><img src="./screenshots/Screenshot%20Certificates.png" alt="image"></p>
 <p>Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.</p>
 <h3 id="provide-your-own-pkcs12-certificate-and-the-passphrase">Provide your own &#39;PKCS#12&#39; certificate and the passphrase</h3>
 <p>Place your own p12 certificate (binary file) and the passphrase (text file) in the <code>.matterbridge/cert</code> directory:</p>
@@ -369,16 +369,16 @@ matterbridge --add matterbridge-zigbee2mqtt
 </code></pre>
 <h3 id="restart">Restart</h3>
 <p>If the certificate are correctly configured, you will be able to connect with https to the frontend.</p>
-<p><img src="./screenshot/Screenshot%20Browser%20Secured.png" alt="image"></p>
+<p><img src="./screenshots/Screenshot%20Browser%20Secured.png" alt="image"></p>
 <h2 id="how-to-send-the-debug-log-files">How to send the debug log files</h2>
 <h3 id="enable-debug-and-log-on-file">Enable debug and log on file</h3>
 <p>In the frontend, go to settings and enable debug mode as shown below:</p>
-<p><img src="./screenshot/Screenshot%20Matterbridge%20Logger%20Debug.png" alt="Debug Matterbridge Settings"></p>
-<p><img src="./screenshot/Screenshot%20Matter%20Logger%20Debug.png" alt="Debug Matter Settings"></p>
+<p><img src="./screenshots/Screenshot%20Matterbridge%20Logger%20Debug.png" alt="Debug Matterbridge Settings"></p>
+<p><img src="./screenshots/Screenshot%20Matter%20Logger%20Debug.png" alt="Debug Matter Settings"></p>
 <h3 id="restart-1">Restart</h3>
 <p>Wait a few minutes to allow the logs to to accumulate.</p>
 <p>Then, from the dots menu in the frontend, download the <code>matterbridge.log</code> and <code>matter.log</code> files.</p>
-<p><img src="./screenshot/Screenshot%20Debug%20Download%20Logs.png" alt="image"></p>
+<p><img src="./screenshots/Screenshot%20Debug%20Download%20Logs.png" alt="image"></p>
 <p>Don&#39;t forget to unselect the debug mode when is no more needed. The network traffic and cpu usage is very high in debug mode.</p>
 <h2 id="how-to-pair-a-second-controller">How to pair a second controller</h2>
 <p>There are two ways to pair a second controller:</p>
@@ -388,7 +388,7 @@ matterbridge --add matterbridge-zigbee2mqtt
 <li><p>from Matterbridge frontend click <code>Turn on pairing mode</code> in the <code>Paired fabrics</code> panel and proceed like for the first controller.</p>
 </li>
 </ul>
-<p><img src="./screenshot/Turn%20on%20pairing%20mode.png" alt="alt text"></p>
+<p><img src="./screenshots/Turn%20on%20pairing%20mode.png" alt="alt text"></p>
 <p>Be patient cause the procedure can fail sometimes.</p>
 <h2 id="how-to-avoid-race-condition-on-start-restart">How to avoid race condition on start / restart</h2>
 <p>We have a race condition when, after a blackout or with docker compose or with other systems that start more then one process, Matterbridge always starts before other required system or network components.</p>

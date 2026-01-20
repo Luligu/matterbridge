@@ -1,6 +1,6 @@
 // src\matterNode.bridge.test.ts
 
-const MATTER_PORT = 10001;
+const MATTER_PORT = 10010;
 const NAME = 'MatterNodeBridge';
 const HOMEDIR = path.join('jest', NAME);
 const PASSCODE = 123457;
@@ -255,7 +255,6 @@ describe('MatterNode bridge', () => {
   }, 30000);
 
   test('Start MatterNode in bridge mode', async () => {
-    await setDebug(false);
     await matter.start();
     expect(matter.matterStorageService).toBeDefined();
     expect(matter.serverNode).toBeDefined();
