@@ -919,7 +919,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
         // Install the plugin package
         if (filename.endsWith('.tgz')) {
-          const { spawnCommand } = await import('./utils/spawn.js');
+          const { spawnCommand } = await import('./spawn.js');
           if (await spawnCommand('npm', ['install', '-g', filePath, '--omit=dev', '--verbose'], 'install', filename)) {
             this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
             this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);

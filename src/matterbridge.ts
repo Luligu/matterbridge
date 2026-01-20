@@ -684,7 +684,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
       if (!fs.existsSync(plugin.path) && !hasParameter('add') && !hasParameter('remove') && !hasParameter('enable') && !hasParameter('disable') && !hasParameter('reset') && !hasParameter('factoryreset')) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
-        const { spawnCommand } = await import('./utils/spawn.js');
+        const { spawnCommand } = await import('./spawn.js');
         if (await spawnCommand('npm', ['install', '-g', `${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}`, '--omit=dev', '--verbose'], 'install', plugin.name)) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
@@ -1291,7 +1291,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   async updateProcess(): Promise<void> {
     this.log.info('Updating matterbridge...');
-    const { spawnCommand } = await import('./utils/spawn.js');
+    const { spawnCommand } = await import('./spawn.js');
     if (await spawnCommand('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge')) {
       this.log.info('Matterbridge has been updated. Full restart required.');
     } else {

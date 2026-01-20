@@ -23,12 +23,12 @@ const getGlobalNodeModulesMock = networkModule.getGlobalNodeModules as jest.Mock
 const logInterfacesMock = networkModule.logInterfaces as jest.MockedFunction<typeof networkModule.logInterfaces>;
 
 // Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('./utils/spawn.js', () => ({
+jest.unstable_mockModule('./spawn.js', () => ({
   spawnCommand: jest.fn((command: string, args: string[]) => {
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
-const spawnModule = await import('./utils/spawn.js');
+const spawnModule = await import('./spawn.js');
 const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
 
 // Mock the wait from wait module before importing it
@@ -118,7 +118,7 @@ describe('Matterbridge mocked', () => {
   });
 
   test('verify mocked spawnCommand', async () => {
-    const { spawnCommand } = await import('./utils/spawn.js');
+    const { spawnCommand } = await import('./spawn.js');
     const result = await spawnCommand('echo', ['Hello, World!'], 'install', 'echo');
     expect(result).toBe(true);
     expect(spawnCommand).toHaveBeenCalledWith('echo', ['Hello, World!'], 'install', 'echo');

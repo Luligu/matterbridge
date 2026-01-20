@@ -602,7 +602,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   async install(packageName: string): Promise<boolean> {
     this.log.debug(`Installing plugin ${plg}${packageName}${db}...`);
-    const { spawnCommand } = await import('./utils/spawn.js');
+    const { spawnCommand } = await import('./spawn.js');
     if (await spawnCommand('npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName)) {
       this.matterbridge.restartRequired = true;
       this.matterbridge.fixedRestartRequired = true;
@@ -632,7 +632,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   async uninstall(packageName: string): Promise<boolean> {
     this.log.debug(`Uninstalling plugin ${plg}${packageName}${db}...`);
-    const { spawnCommand } = await import('./utils/spawn.js');
+    const { spawnCommand } = await import('./spawn.js');
     packageName = packageName.replace(/@.*$/, '');
     if (packageName === 'matterbridge') return false;
     if (this.has(packageName)) {

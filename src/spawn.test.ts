@@ -21,8 +21,7 @@ import { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_pro
 
 import { jest } from '@jest/globals';
 
-import { flushAsync, loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setDebug, setupTest } from '../jestutils/jestHelpers.js';
-
+import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { spawnCommand } from './spawn.js';
 
 await setupTest('SpawnCommand', false);

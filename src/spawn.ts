@@ -23,9 +23,8 @@
 
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { BroadcastServer } from '../broadcastServer.js';
-
-import { hasParameter } from './commandLine.js';
+import { BroadcastServer } from './broadcastServer.js';
+import { hasParameter } from './utils/commandLine.js';
 
 /**
  * Spawns a child process with the given command and arguments.

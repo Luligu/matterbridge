@@ -51,12 +51,12 @@ const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').m
 });
 
 // Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('./utils/spawn.js', () => ({
+jest.unstable_mockModule('./spawn.js', () => ({
   spawnCommand: jest.fn((command: string, args: string[]) => {
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
-const spawnModule = await import('./utils/spawn.js');
+const spawnModule = await import('./spawn.js');
 const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
 
 // Setup the test environment

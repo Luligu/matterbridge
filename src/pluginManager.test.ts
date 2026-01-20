@@ -13,12 +13,12 @@ process.env.npm_config_prefix = NPM_CONFIG_PREFIX;
 process.env.npm_config_cache = NPM_CONFIG_CACHE;
 
 // Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('./utils/spawn.js', () => ({
+jest.unstable_mockModule('./spawn.js', () => ({
   spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
-const spawnModule = await import('./utils/spawn.js');
+const spawnModule = await import('./spawn.js');
 const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
 
 const jsonParseSpy = jest.spyOn(JSON, 'parse');
