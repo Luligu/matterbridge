@@ -35,6 +35,7 @@ Advantages:
 - [mb_mdns]: Added additional mDNS service types for discovery.
 - [workflows]: Added npm registry URL and caching to Node.js setup in workflow files.
 - [workflows]: Added concurrency settings in build.yml to cancel previous runs in GitHub Actions.
+- [preset]: Added Thermostat with preset feature. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/482).
 
 ### Changed
 
