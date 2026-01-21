@@ -18,11 +18,13 @@
 
 ## Run matterbridge with docker and docker compose
 
-The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
+The Matterbridge Docker image, which includes a manifest list for the linux/amd64 and linux/arm64 architectures, is published on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
 
 The image (tag **latest**) includes matterbridge and all official plugins with the latest release (as published on npm). You can just pull the new image and matterbridge with all plugins will be the latest release published on npm.
 
 The image (tag **dev**) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest dev release pushed on GitHub. It is possible that the devs are outdated by published latests.
+
+For development and testing see the [Development Images](README-DOCKER.md#development-images).
 
 You can directly select and add a plugin without installing it.
 
@@ -240,6 +242,6 @@ sudo systemctl restart docker
 
 On [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge) are also published **for test and development** the Matterbridge ubuntu and alpine images, which include a manifest list for the linux/amd64, linux/arm64 architectures and are based on node 24.x.
 
-The image (tag **ubuntu**) includes only matterbridge with the latest release (as published on npm). The plugins are not included in the image but they will be reinstalled on the first run.
+The image (tag **ubuntu**) includes only matterbridge with the latest release (as published on npm). The plugins are not included in the image but they will be reinstalled on the first run. This image has preinstalled bluetooth essentials and python (it can be used with plugins that require bluetooth, build-essential and python).
 
 The image (tag **alpine**) includes only matterbridge with the latest release (as published on npm). The plugins are not included in the image but they will be reinstalled on the first run.
