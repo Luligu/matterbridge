@@ -72,11 +72,14 @@ https://blog.adafruit.com/2025/11/03/matterbridge-a-matter-plugin-manager/
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
 
 If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions.
-The supported versions of node are 20 and 22. Please install Node.js 22 LTS. Don't use Node.js Current but always the Node.js LTS.
+The supported versions of node are 20, 22 and 24. Please install Node.js 22 LTS. Don't use Node.js Current but always the Node.js LTS.
 Node.js 23, like all odd-numbered versions, is not supported.
 Nvm is not a good choice and should not be used for production.
 
 If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/engine/install.
+
+If you don't have Docker already install, please use this method to install it on a Windows or macOS: https://docs.docker.com/get-started/introduction/get-docker-desktop/.
+
 After follow the guidelines for the [Docker configurations](README-DOCKER.md).
 
 I suggest using Docker for its simplicity.

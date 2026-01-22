@@ -24,7 +24,7 @@ The image (tag **latest**) includes matterbridge and all official plugins with t
 
 The image (tag **dev**) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest dev release pushed on GitHub. It is possible that the devs are outdated by published latests.
 
-For development and testing see the [Development Images](README-DOCKER.md#development-images).
+For development and testing see also the [Development Images](README-DOCKER.md#development-images).
 
 You can directly select and add a plugin without installing it.
 
