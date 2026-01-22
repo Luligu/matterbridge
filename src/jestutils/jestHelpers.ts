@@ -961,7 +961,7 @@ export async function startServerNode(name: string, port: number, deviceType: De
   expect(aggregator.lifecycle.hasNumber).toBeTruthy();
 
   // Ensure the queue is empty and pause 250ms
-  await flushAsync();
+  await flushAsync(3, 3, 10);
 
   return [server, aggregator];
 }
@@ -987,14 +987,8 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();
 
-  // stop the mDNS service
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mdns = environment.get(MdnsService) as any;
-  if (mdns && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
-  if (mdns && typeof mdns.close === 'function') await mdns.close();
-
   // Ensure the queue is empty and pause 250ms
-  await flushAsync();
+  await flushAsync(3, 3, 10);
 }
 
 /**
