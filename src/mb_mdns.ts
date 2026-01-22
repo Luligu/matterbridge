@@ -50,7 +50,7 @@ Options:
   --advertise <interval>                    Enable matterbridge mDNS advertisement each ms (default interval: 10000ms).
   --query <interval>                        Enable common mDNS services query each ms (default interval: 10000ms).
   --filter <string...>                      Filter strings to match in the mDNS record name (default: no filter).
-  --ip-filter <string...>                   Filter strings to match in the mDNS sender IP address (default: no filter).
+  --ip-filter <string...>                   Filter strings to match in the mDNS sender ip address (default: no filter).
   --noIpv4                                  Disable IPv4 mDNS server (default: enabled).
   --noIpv6                                  Disable IPv6 mDNS server (default: enabled).
   --no-timeout                              Disable automatic timeout of 10 minutes. Reflector mode disables timeout automatically.
@@ -67,6 +67,9 @@ Examples:
 
   # Listen for Matter commissioner and discovery service records on all interfaces
   mb_mdns --filter _matterc._udp _matter._tcp
+
+  # Listen for Matter commissioner and discovery service records on all interfaces from specific ipv4 and ipv6 ips
+  mb_mdns --filter _matterc._udp _matter._tcp --ip-filter 192.168.69.20 fe80::1077:2e0d:2c91:aa90
 
   # Query for mDNS devices every 10s on a specific interface
   mb_mdns --interfaceName eth0 --query
