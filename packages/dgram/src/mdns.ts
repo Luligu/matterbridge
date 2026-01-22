@@ -256,19 +256,16 @@ export class Mdns extends Multicast {
   }
 
   override onMessage(msg: Buffer, rinfo: dgram.RemoteInfo): void {
-    if (this.filters.length === 0)
-      this.log.info(`Dgram mDNS server received a mDNS message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
     // Apply ip filters if any
     if (this.ipFilters.length > 0) {
-      for (const filter of this.ipFilters) {
-        if (rinfo.address === filter) {
-          this.log.debug(`mDNS message filtered out by ip filters: ${this.ipFilters.join(', ')}`);
-          return;
-        }
+      const matched = this.ipFilters.some((filter) => rinfo.address.includes(filter));
+      if (!matched) {
+        this.log.debug(`mDNS message does not match any ip filter, ignoring.`);
+        return;
       }
-      this.log.debug(`mDNS message does not match any ip filter, ignoring.`);
-      return;
     }
+    if (this.filters.length === 0)
+      this.log.info(`Dgram mDNS server received a mDNS message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
     try {
       const result = this.decodeMdnsMessage(msg);
       if (result.qr === 0) {
