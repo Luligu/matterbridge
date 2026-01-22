@@ -285,7 +285,6 @@ export class Mdns extends Multicast {
       }
       // Apply filters if any
       if (this.filters.length > 0) {
-        this.log.debug(`mDNS message filtered out by filters: ${this.filters.join(', ')}`);
         for (const filter of this.filters) {
           const foundInQuestions = result.questions?.some((q) => q.name.includes(filter));
           const foundInAnswers = result.answers?.some((a) => a.name.includes(filter) || a.data.includes(filter));

@@ -78,6 +78,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private port = 8283;
   private listening = false;
   private storedPassword: string | undefined = undefined;
+  private authClients: string[] = [];
 
   private expressApp: Express | undefined;
   private httpServer: HttpServer | undefined;
@@ -190,6 +191,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.logLevel = logLevel;
   }
 
+  validateReq(req: import('express').Request<unknown, unknown, unknown, { password?: string }>, res: import('express').Response): boolean {
+    if (req.ip && !this.authClients.includes(req.ip)) {
+      this.log.warn(`Warning blocked unauthorized access request ${req.originalUrl ?? req.url} from ${req.ip}`);
+      res.status(401).json({ error: 'Unauthorized' });
+      return false;
+    }
+    return true;
+  }
+
   async start(port = 8283) {
     this.port = port;
     this.storedPassword = await this.matterbridge.nodeContext?.get('password', '');
@@ -273,6 +283,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (this.webSocketServer?.clients.size === 0) {
           AnsiLogger.setGlobalCallback(undefined);
           this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
+          this.authClients = [];
         }
       });
 
@@ -560,6 +571,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (this.storedPassword === '' || password === this.storedPassword) {
         this.log.debug('/api/login password valid');
         res.json({ valid: true });
+        if (req.ip) this.authClients.push(req.ip);
       } else {
         this.log.warn('/api/login error wrong password');
         res.json({ valid: false });
@@ -627,24 +639,28 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to provide settings
     this.expressApp.get('/api/settings', express.json(), async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
+      if (!this.validateReq(req, res)) return;
       res.json(await this.getApiSettings());
     });
 
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
+      if (!this.validateReq(req, res)) return;
       res.json(this.matterbridge.hasCleanupStarted ? [] : this.getPlugins());
     });
 
     // Endpoint to provide devices
     this.expressApp.get('/api/devices', async (req, res) => {
       this.log.debug('The frontend sent /api/devices');
+      if (!this.validateReq(req, res)) return;
       res.json(this.matterbridge.hasCleanupStarted ? [] : this.getDevices());
     });
 
     // Endpoint to view the matterbridge log
     this.expressApp.get('/api/view-mblog', async (req, res) => {
       this.log.debug('The frontend sent /api/view-mblog');
+      if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
@@ -659,6 +675,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to view the matter.js log
     this.expressApp.get('/api/view-mjlog', async (req, res) => {
       this.log.debug('The frontend sent /api/view-mjlog');
+      if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
@@ -673,6 +690,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to view the diagnostic.log
     this.expressApp.get('/api/view-diagnostic', async (req, res) => {
       this.log.debug('The frontend sent /api/view-diagnostic');
+      if (!this.validateReq(req, res)) return;
       await this.generateDiagnostic();
       try {
         const fs = await import('node:fs');
@@ -690,6 +708,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the diagnostic.log
     this.expressApp.get('/api/download-diagnostic', async (req, res) => {
       this.log.debug(`The frontend sent /api/download-diagnostic`);
+      if (!this.validateReq(req, res)) return;
       await this.generateDiagnostic();
       try {
         const fs = await import('node:fs');
@@ -713,6 +732,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to view the history.html
     this.expressApp.get('/api/viewhistory', async (req, res) => {
       this.log.debug('The frontend sent /api/viewhistory');
+      if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'utf8');
@@ -727,6 +747,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the history.html
     this.expressApp.get('/api/downloadhistory', async (req, res) => {
       this.log.debug(`The frontend sent /api/downloadhistory`);
+      if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
         await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), fs.constants.F_OK);
@@ -749,6 +770,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to view the shelly log
     this.expressApp.get('/api/shellyviewsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellyviewsystemlog');
+      if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
@@ -763,6 +785,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matterbridge log
     this.expressApp.get('/api/download-mblog', async (req, res) => {
       this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE)}`);
+      if (!this.validateReq(req, res)) return;
       const fs = await import('node:fs');
       try {
         await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), fs.constants.F_OK);
@@ -785,6 +808,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matter log
     this.expressApp.get('/api/download-mjlog', async (req, res) => {
       this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE)}`);
+      if (!this.validateReq(req, res)) return;
       const fs = await import('node:fs');
       try {
         await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), fs.constants.F_OK);
@@ -807,6 +831,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the shelly log
     this.expressApp.get('/api/shellydownloadsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellydownloadsystemlog');
+      if (!this.validateReq(req, res)) return;
       const fs = await import('node:fs');
       try {
         await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), fs.constants.F_OK);
@@ -829,6 +854,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matterbridge storage directory
     this.expressApp.get('/api/download-mbstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mbstorage');
+      if (!this.validateReq(req, res)) return;
       await createZip(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), path.join(this.matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR));
       res.download(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), `matterbridge.${NODE_STORAGE_DIR}.zip`, (error) => {
         /* istanbul ignore if */
@@ -842,6 +868,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matter storage file
     this.expressApp.get('/api/download-mjstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mjstorage');
+      if (!this.validateReq(req, res)) return;
       await createZip(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`), path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
       res.download(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`), `matterbridge.${MATTER_STORAGE_NAME}.zip`, (error) => {
         /* istanbul ignore if */
@@ -855,6 +882,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matterbridge plugin directory
     this.expressApp.get('/api/download-pluginstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginstorage');
+      if (!this.validateReq(req, res)) return;
       await createZip(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), this.matterbridge.matterbridgePluginDirectory);
       res.download(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), `matterbridge.pluginstorage.zip`, (error) => {
         /* istanbul ignore if */
@@ -868,6 +896,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matterbridge plugin config files
     this.expressApp.get('/api/download-pluginconfig', async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginconfig');
+      if (!this.validateReq(req, res)) return;
       await createZip(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), path.relative(process.cwd(), path.join(this.matterbridge.matterbridgeDirectory, '*.config.json')));
       res.download(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), `matterbridge.pluginconfig.zip`, (error) => {
         /* istanbul ignore if */
@@ -881,6 +910,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Endpoint to download the matterbridge backup (created with the backup command)
     this.expressApp.get('/api/download-backup', async (req, res) => {
       this.log.debug('The frontend sent /api/download-backup');
+      if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.backup.zip`), `matterbridge.backup.zip`, (error) => {
         /* istanbul ignore if */
         if (error) {
@@ -892,6 +922,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Endpoint to upload a package
     this.expressApp.post('/api/uploadpackage', upload.single('file'), async (req, res) => {
+      if (!this.validateReq(req, res)) return;
       const { filename } = req.body;
       const file = req.file;
 

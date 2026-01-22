@@ -38,6 +38,7 @@ Advantages:
 - [preset]: Added Thermostat with preset feature. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/482).
 - [matter.js]: Bump to matter.j v. 0.16.6.
 - [mb_mdns]: Added --ip-filter params to filter incoming mDns messages by sender ip.
+- [express]: Added a login check for internal express api. Now only /health and /memory are opened. Thanks Rogibaer (https://github.com/Luligu/matterbridge-hass/issues/149).
 
 ### Changed
 

@@ -414,7 +414,7 @@ export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, clu
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  await endpoint.act((agent) => agent[behaviorId].events[event].emit(newValue, oldValue, { ...agent.context, offline: false }));
+  await endpoint.act((agent) => agent[behaviorId].events[event].emit(newValue, oldValue, { ...agent.context, offline: false, fabric: 1 }));
   return true;
 }
 

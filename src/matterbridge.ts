@@ -2173,8 +2173,10 @@ const commissioningController = new CommissioningController({
     this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
     this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
     this.log.debug(`- uniqueId: ${await storageContext.get('uniqueId')}`);
-    this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
-    this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
+    this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')}`);
+    this.log.debug(`- softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
+    this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')}`);
+    this.log.debug(`- hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
     return storageContext;
   }
 
@@ -2190,12 +2192,21 @@ const commissioningController = new CommissioningController({
   private async createServerNode(storageContext: StorageContext, port: number = 5540, passcode: number = 20242025, discriminator: number = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
     const storeId = await storageContext.get<string>('storeId');
     this.log.notice(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
+    this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
     this.log.debug(`- deviceName: ${await storageContext.get('deviceName')}`);
     this.log.debug(`- deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
+    this.log.debug(`- vendorId: ${await storageContext.get('vendorId')}`);
+    this.log.debug(`- vendorName: ${await storageContext.get('vendorName')}`);
+    this.log.debug(`- productId: ${await storageContext.get('productId')}`);
+    this.log.debug(`- productName: ${await storageContext.get('productName')}`);
+    this.log.debug(`- productLabel: ${await storageContext.get('productLabel')}`);
+    this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
     this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
     this.log.debug(`- uniqueId: ${await storageContext.get('uniqueId')}`);
-    this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
-    this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
+    this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')}`);
+    this.log.debug(`- softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
+    this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')}`);
+    this.log.debug(`- hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
 
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration

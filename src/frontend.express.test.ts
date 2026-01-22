@@ -233,6 +233,12 @@ describe('Matterbridge frontend express with http', () => {
   });
 
   test('GET /api/settings', async () => {
+    // @ts-expect-error accessing private property
+    frontend.authClients = [];
+    await makeRequest('/api/settings', 'GET');
+    // @ts-expect-error accessing private property
+    frontend.authClients = ['::1', '127.0.0.1'];
+
     const response = await makeRequest('/api/settings', 'GET');
 
     expect(response.status).toBe(200);
