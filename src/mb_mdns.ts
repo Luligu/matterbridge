@@ -50,6 +50,7 @@ Options:
   --advertise <interval>                    Enable matterbridge mDNS advertisement each ms (default interval: 10000ms).
   --query <interval>                        Enable common mDNS services query each ms (default interval: 10000ms).
   --filter <string...>                      Filter strings to match in the mDNS record name (default: no filter).
+  --ip-filter <string...>                   Filter strings to match in the mDNS sender IP address (default: no filter).
   --noIpv4                                  Disable IPv4 mDNS server (default: enabled).
   --noIpv6                                  Disable IPv6 mDNS server (default: enabled).
   --no-timeout                              Disable automatic timeout of 10 minutes. Reflector mode disables timeout automatically.
@@ -219,6 +220,10 @@ Examples:
     const filters = getStringArrayParameter('filter');
     if (filters) mdnsIpv4.filters.push(...filters);
 
+    // Apply ip filters if any
+    const ipFilters = getStringArrayParameter('ip-filter');
+    if (ipFilters) mdnsIpv4.ipFilters.push(...ipFilters);
+
     // Handle errors
     mdnsIpv4.on('error', (err) => {
       mdnsIpv4?.log.error(`mDNS udp4 Server error: ${err.message}\n${err.stack}`);
@@ -247,6 +252,10 @@ Examples:
     // Apply filters if any
     const filters = getStringArrayParameter('filter');
     if (filters) mdnsIpv6.filters.push(...filters);
+
+    // Apply ip filters if any
+    const ipFilters = getStringArrayParameter('ip-filter');
+    if (ipFilters) mdnsIpv6.ipFilters.push(...ipFilters);
 
     // Handle errors
     mdnsIpv6.on('error', (err) => {
