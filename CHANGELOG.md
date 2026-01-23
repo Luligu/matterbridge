@@ -28,7 +28,7 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.5.1] - Dev branch
+## [3.5.1] - 2026-01-24
 
 ### Added
 
@@ -39,8 +39,9 @@ Advantages:
 - [matter.js]: Bump to matter.j v. 0.16.6.
 - [matter.js]: Bump to matter.j v. 0.16.7.
 - [mb_mdns]: Added --ip-filter params to filter incoming mDns messages by sender ip.
-- [express]: Added a login check for internal express api. Now only /health and /memory are opened. Thanks Rogibaer (https://github.com/Luligu/matterbridge-hass/issues/149).
+- [express]: Added a login check for internal express api. The /health and /memory api don't need a login. Thanks Rogibaer (https://github.com/Luligu/matterbridge-hass/issues/149).
 - [readme]: Added a section with the data structure and backup/restore guidelines.
+- [matterbridge]: Add brand to MatterbridgePlatform and MatterbridgeEndpoint.
 
 ### Changed
 
