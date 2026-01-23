@@ -372,6 +372,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
           // Complete the WebSocket handshake
           this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
+          // istanbul ignore else
           if (req.socket.remoteAddress) this.authClients.push(req.socket.remoteAddress);
           this.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
             this.webSocketServer?.emit('connection', ws, req);
@@ -524,8 +525,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
           // Complete the WebSocket handshake
           this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
+          // istanbul ignore else
           if (req.socket.remoteAddress) this.authClients.push(req.socket.remoteAddress);
-          this.authClients.push(url.host);
           this.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
             this.webSocketServer?.emit('connection', ws, req);
           });
