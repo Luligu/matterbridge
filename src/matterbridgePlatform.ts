@@ -106,6 +106,43 @@ export type PlatformMatterbridge = {
   readonly aggregatorProductName: string;
 };
 
+// Module-private brand
+const MATTERBRIDGE_PLATFORM_BRAND = Symbol('MatterbridgePlatform.brand');
+
+/**
+ * Type guard to check whether a value is a MatterbridgePlatform instance.
+ *
+ * @param {unknown} value - the value to check
+ * @returns { value is MatterbridgePlatform } - true if the value is a MatterbridgePlatform instance
+ */
+export function isMatterbridgePlatform(value: unknown): value is MatterbridgePlatform {
+  if (!value || typeof value !== 'object') return false;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const v = value as any;
+
+  // 1. Brand: must be branded by *this* module instance.
+  if (v[MATTERBRIDGE_PLATFORM_BRAND] !== true) return false;
+
+  // 2. instanceof: strengthen guarantee when there aren't multiple copies of the package.
+  if (!(v instanceof MatterbridgePlatform)) return false;
+
+  return true;
+}
+
+/**
+ * Assert that a value is a MatterbridgePlatform instance.
+ *
+ * @param {unknown} value - the value to check
+ * @param {string} [context] - optional context for error message
+ * @returns {asserts value is MatterbridgePlatform} - asserts that the value is a MatterbridgePlatform instance
+ * @throws {TypeError} - if the value is not a MatterbridgePlatform instance
+ */
+export function assertMatterbridgePlatform(value: unknown, context?: string): asserts value is MatterbridgePlatform {
+  if (isMatterbridgePlatform(value)) return;
+  throw new TypeError(`Invalid MatterbridgePlatform received${context ? ` in ${context}` : ''}`);
+}
+
 /**
  * Represents the base Matterbridge platform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
  *

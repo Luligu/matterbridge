@@ -163,6 +163,43 @@ import {
   getDefaultPowerSourceBatteryClusterServer,
 } from './matterbridgeEndpointHelpers.js';
 
+// Module-private brand
+const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
+
+/**
+ * Type guard to check whether a value is a MatterbridgeEndpoint instance.
+ *
+ * @param {unknown} value - the value to check
+ * @returns { value is MatterbridgeEndpoint } - true if the value is a MatterbridgeEndpoint instance
+ */
+export function isMatterbridgeEndpoint(value: unknown): value is MatterbridgeEndpoint {
+  if (!value || typeof value !== 'object') return false;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const v = value as any;
+
+  // 1. Brand: must be branded by *this* module instance.
+  if (v[MATTERBRIDGE_ENDPOINT_BRAND] !== true) return false;
+
+  // 2. instanceof: strengthen guarantee when there aren't multiple copies of the package.
+  if (!(v instanceof MatterbridgeEndpoint)) return false;
+
+  return true;
+}
+
+/**
+ * Assert that a value is a MatterbridgeEndpoint instance.
+ *
+ * @param {unknown} value - the value to check
+ * @param {string} [context] - optional context for error message
+ * @returns {asserts value is MatterbridgeEndpoint} - asserts that the value is a MatterbridgeEndpoint instance
+ * @throws {TypeError} - if the value is not a MatterbridgeEndpoint instance
+ */
+export function assertMatterbridgeEndpoint(value: unknown, context?: string): asserts value is MatterbridgeEndpoint {
+  if (isMatterbridgeEndpoint(value)) return;
+  throw new TypeError(`Invalid MatterbridgeEndpoint received${context ? ` in ${context}` : ''}`);
+}
+
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
