@@ -55,7 +55,7 @@ import {
 import { BLUE, CYAN, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 import { ActionContext } from '@matter/node';
 
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { assertMatterbridgeEndpoint, MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   airQualitySensor,
   bridgedNode,
@@ -288,6 +288,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
     expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
+
+    expect(() => assertMatterbridgeEndpoint(device)).not.toThrow();
 
     await add(device);
   });

@@ -140,6 +140,7 @@ export function isMatterbridgePlatform(value: unknown): value is MatterbridgePla
  */
 export function assertMatterbridgePlatform(value: unknown, context?: string): asserts value is MatterbridgePlatform {
   if (isMatterbridgePlatform(value)) return;
+  // istanbul ignore next
   throw new TypeError(`Invalid MatterbridgePlatform received${context ? ` in ${context}` : ''}`);
 }
 
@@ -247,6 +248,14 @@ export class MatterbridgePlatform {
     this.log = log;
     this.config = config;
     this.#server = new BroadcastServer('platform', this.log);
+
+    // Set the brand
+    Object.defineProperty(this, MATTERBRIDGE_PLATFORM_BRAND, {
+      value: true,
+      writable: false,
+      enumerable: false,
+      configurable: false,
+    });
 
     if (this.#debug && !this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name}`);
     if (this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name} with config:\n${JSON.stringify(this.config, null, 2)}\n`);

@@ -197,6 +197,7 @@ export function isMatterbridgeEndpoint(value: unknown): value is MatterbridgeEnd
  */
 export function assertMatterbridgeEndpoint(value: unknown, context?: string): asserts value is MatterbridgeEndpoint {
   if (isMatterbridgeEndpoint(value)) return;
+  // istanbul ignore next
   throw new TypeError(`Invalid MatterbridgeEndpoint received${context ? ` in ${context}` : ''}`);
 }
 
@@ -313,6 +314,14 @@ export class MatterbridgeEndpoint extends Endpoint {
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
 
     super(endpointV8, optionsV8);
+
+    // Set the brand
+    Object.defineProperty(this, MATTERBRIDGE_ENDPOINT_BRAND, {
+      value: true,
+      writable: false,
+      enumerable: false,
+      configurable: false,
+    });
 
     this.mode = options.mode;
     this.originalId = originalId;
