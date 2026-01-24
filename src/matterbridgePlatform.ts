@@ -122,12 +122,15 @@ export function isMatterbridgePlatform(value: unknown): value is MatterbridgePla
   const v = value as any;
 
   // 1. Brand: must be branded by *this* module instance.
+  if (v[MATTERBRIDGE_PLATFORM_BRAND] !== true) console.error(`MatterbridgePlatform brand check failed:`);
   if (v[MATTERBRIDGE_PLATFORM_BRAND] !== true) return false;
 
   // 2. instanceof: strengthen guarantee when there aren't multiple copies of the package.
+  if (!(v instanceof MatterbridgePlatform)) console.error(`MatterbridgePlatform instanceof check failed:`);
   if (!(v instanceof MatterbridgePlatform)) return false;
 
   // 3. Shape checks: basic sanity for API surface.
+  if (typeof v.name !== 'string' || typeof v.type !== 'string' || typeof v.version !== 'string' || typeof v.config !== 'object') console.error(`MatterbridgePlatform shape check failed:`);
   if (typeof v.name !== 'string' || typeof v.type !== 'string' || typeof v.version !== 'string' || typeof v.config !== 'object') return false;
 
   return true;

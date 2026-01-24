@@ -31,10 +31,12 @@ import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, d
 import { hasParameter, inspectError, logError } from '@matterbridge/utils';
 
 import type { Matterbridge } from './matterbridge.js';
-import type { MatterbridgePlatform, PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatform.js';
+import { assertMatterbridgePlatform, type MatterbridgePlatform, type PlatformConfig, type PlatformMatterbridge, type PlatformSchema } from './matterbridgePlatform.js';
 import { ApiPlugin, plg, Plugin, PluginName, StoragePlugin, typ } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
+import { isMatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
+import { isMatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 
 interface PluginManagerEvents {
   added: [name: string];
@@ -1063,7 +1065,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         config.version = packageJson.version;
 
         const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.logLevel });
-        const platform = pluginInstance.default(this.matterbridge, log, config);
+        const platform = pluginInstance.default(this.matterbridge.getPlatformMatterbridge(), log, config);
+        assertMatterbridgePlatform(platform, `Plugin ${plugin.name} does not export a valid MatterbridgePlatform`);
+        if (!isMatterbridgeAccessoryPlatform(platform) && !isMatterbridgeDynamicPlatform(platform)) throw new Error(`Plugin ${plugin.name} does not export a valid MatterbridgeAccessoryPlatform or MatterbridgeDynamicPlatform`);
         config.type = platform.type;
         platform.name = packageJson.name;
         platform.config = config;

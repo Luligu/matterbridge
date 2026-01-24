@@ -11,7 +11,7 @@ import { jest } from '@jest/globals';
 import { PlatformSchema } from './matterbridgePlatform.js';
 import { MatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
-import { flushAsync, matterbridge, originalProcessArgv, plugins, setupTest, startMatterbridge, stopMatterbridge } from './jestutils/jestHelpers.js';
+import { flushAsync, matterbridge, originalProcessArgv, plugins, setupTest, setDebug, startMatterbridge, stopMatterbridge } from './jestutils/jestHelpers.js';
 import { Frontend } from './frontend.js';
 
 const wssSendRestartRequired = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
@@ -69,7 +69,6 @@ describe('Matterbridge platform', () => {
   }, 10000);
 
   test('Constructor accessory', async () => {
-    expect(accessoryPlatform.matterbridge).toBe(matterbridge);
     expect(accessoryPlatform.log.logName).toBe('Matterbridge accessory test plugin');
     expect(accessoryPlatform.config).toEqual({ name: 'matterbridge-accessory-test', type: 'AccessoryPlatform', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await accessoryPlatform.ready;
@@ -80,7 +79,6 @@ describe('Matterbridge platform', () => {
   });
 
   test('Constructor dynamic', async () => {
-    expect(dynamicPlatform.matterbridge).toBe(matterbridge);
     expect(dynamicPlatform.log.logName).toBe('Matterbridge dynamic test plugin');
     expect(dynamicPlatform.config).toEqual({ name: 'matterbridge-dynamic-test', type: 'DynamicPlatform', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     await dynamicPlatform.ready;

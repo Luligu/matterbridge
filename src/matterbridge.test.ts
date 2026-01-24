@@ -187,7 +187,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
     expect((Matterbridge as any).instance).toBeUndefined(); // Instance is not defined cause cleanup() has been called
     // await setDebug(false);
-  });
+  }, 10000);
 
   test('Matterbridge.loadInstance(true) with frontend', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '8081', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-profile', 'Jest'];

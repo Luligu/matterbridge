@@ -106,6 +106,9 @@ describe('MatterNode accessory', () => {
   (matterbridge as any).addVirtualEndpoint = async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
     return await matter.addVirtualEndpoint(pluginName, name, type, callback);
   };
+  (matterbridge as any).getPlatformMatterbridge = () => {
+    return matterbridge;
+  };
 
   // Create PluginManager and DeviceManager to simulate the normal environment
   /* Simulate normal environment in test */

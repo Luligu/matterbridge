@@ -57,6 +57,7 @@ import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
+import { PlatformMatterbridge } from './matterbridgePlatform.js';
 
 /**
  * Represents the Matterbridge events.
@@ -251,6 +252,29 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   destroy(): void {
     this.server.close();
+  }
+
+  getPlatformMatterbridge(): PlatformMatterbridge {
+    return {
+      systemInformation: { ...this.systemInformation },
+      rootDirectory: this.rootDirectory,
+      homeDirectory: this.homeDirectory,
+      matterbridgeDirectory: this.matterbridgeDirectory,
+      matterbridgePluginDirectory: this.matterbridgePluginDirectory,
+      matterbridgeCertDirectory: this.matterbridgeCertDirectory,
+      globalModulesDirectory: this.globalModulesDirectory,
+      matterbridgeVersion: this.matterbridgeVersion,
+      matterbridgeLatestVersion: this.matterbridgeLatestVersion,
+      matterbridgeDevVersion: this.matterbridgeDevVersion,
+      frontendVersion: this.frontendVersion,
+      bridgeMode: this.bridgeMode,
+      restartMode: this.restartMode,
+      virtualMode: this.virtualMode,
+      aggregatorVendorId: this.aggregatorVendorId,
+      aggregatorVendorName: this.aggregatorVendorName,
+      aggregatorProductId: this.aggregatorProductId,
+      aggregatorProductName: this.aggregatorProductName,
+    };
   }
 
   private async msgHandler(msg: WorkerMessage) {

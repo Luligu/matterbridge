@@ -999,11 +999,10 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       }
     }
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-    // Add the device to the DeviceManager
-    await this.server.fetch({ type: 'devices_set', src: this.server.name, dst: 'devices', params: { device: toBaseDevice(device) } });
 
     // Add the device to the DeviceManager
     await device.construction.ready;
+    await this.server.fetch({ type: 'devices_set', src: this.server.name, dst: 'devices', params: { device: toBaseDevice(device) } });
 
     // Subscribe to the attributes changed event
     await this.subscribeAttributeChanged(plugin, device);
