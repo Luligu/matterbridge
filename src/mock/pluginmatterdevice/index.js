@@ -1,5 +1,7 @@
-// eslint-disable-next-line n/no-missing-import
-import { MatterbridgeDynamicPlatform, MatterbridgeEndpoint, pressureSensor } from 'matterbridge';
+/* eslint-disable n/no-missing-import */
+import { MatterbridgeDynamicPlatform } from '../../matterbridgeDynamicPlatform.js';
+import { MatterbridgeEndpoint } from '../../matterbridgeEndpoint.js';
+import { pressureSensor } from '../../matterbridgeDeviceTypes.js';
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 export default function initializePlugin(matterbridge, log, config) {
