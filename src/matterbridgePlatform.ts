@@ -36,9 +36,9 @@ import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { EndpointNumber, VendorId } from '@matter/types/datatype';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
-// Matterbridge
 import { hasParameter, isValidArray, isValidObject, isValidString } from '@matterbridge/utils';
 
+// Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
@@ -127,6 +127,9 @@ export function isMatterbridgePlatform(value: unknown): value is MatterbridgePla
   // 2. instanceof: strengthen guarantee when there aren't multiple copies of the package.
   if (!(v instanceof MatterbridgePlatform)) return false;
 
+  // 3. Shape checks: basic sanity for API surface.
+  if (typeof v.name !== 'string' || typeof v.type !== 'string' || typeof v.version !== 'string' || typeof v.config !== 'object') return false;
+
   return true;
 }
 
@@ -140,7 +143,6 @@ export function isMatterbridgePlatform(value: unknown): value is MatterbridgePla
  */
 export function assertMatterbridgePlatform(value: unknown, context?: string): asserts value is MatterbridgePlatform {
   if (isMatterbridgePlatform(value)) return;
-  // istanbul ignore next
   throw new TypeError(`Invalid MatterbridgePlatform received${context ? ` in ${context}` : ''}`);
 }
 

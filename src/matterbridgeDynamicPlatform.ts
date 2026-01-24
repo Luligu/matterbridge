@@ -31,6 +31,33 @@ import { AnsiLogger } from 'node-ansi-logger';
 // Matterbridge
 import { MatterbridgePlatform, PlatformConfig, PlatformMatterbridge } from './matterbridgePlatform.js';
 
+// Module-private brand
+const MATTERBRIDGE_DYNAMIC_PLATFORM_BRAND = Symbol('MatterbridgeDynamicPlatform.brand');
+
+/**
+ * Type guard to check whether a value is a MatterbridgeDynamicPlatform instance.
+ *
+ * @param {unknown} value - the value to check
+ * @returns { value is MatterbridgeDynamicPlatform } - true if the value is a MatterbridgeDynamicPlatform instance
+ */
+export function isMatterbridgeDynamicPlatform(value: unknown): value is MatterbridgeDynamicPlatform {
+  if (!value || typeof value !== 'object') return false;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const v = value as any;
+
+  // 1. Brand: must be branded by *this* module instance.
+  if (v[MATTERBRIDGE_DYNAMIC_PLATFORM_BRAND] !== true) return false;
+
+  // 2. instanceof: strengthen guarantee when there aren't multiple copies of the package.
+  if (!(v instanceof MatterbridgePlatform)) return false;
+
+  // 3. Shape checks: basic sanity for API surface.
+  if (typeof v.name !== 'string' || typeof v.type !== 'string' || typeof v.version !== 'string' || typeof v.config !== 'object') return false;
+
+  return true;
+}
+
 /**
  * Represents a dynamic platform for Matterbridge.
  *
@@ -46,6 +73,14 @@ export class MatterbridgeDynamicPlatform extends MatterbridgePlatform {
    */
   constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
     super(matterbridge, log, config);
+
+    // Set the brand
+    Object.defineProperty(this, MATTERBRIDGE_DYNAMIC_PLATFORM_BRAND, {
+      value: true,
+      writable: false,
+      enumerable: false,
+      configurable: false,
+    });
 
     this.type = 'DynamicPlatform';
     config.type = this.type;

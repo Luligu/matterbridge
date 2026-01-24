@@ -4,7 +4,7 @@ const NAME = 'MatterbridgeDynamicPlatform';
 
 import { jest } from '@jest/globals';
 
-import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
+import { isMatterbridgeDynamicPlatform, MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, log, matterbridge, setupTest } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
@@ -32,6 +32,7 @@ describe('Matterbridge dynamic platform', () => {
     const platform = new MatterbridgeDynamicPlatform(matterbridge, log, { name: 'test', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
     expect(platform.type).toBe('DynamicPlatform');
     expect(platform.config.type).toBe('DynamicPlatform');
+    expect(isMatterbridgeDynamicPlatform(platform)).toBe(true);
     await platform.onShutdown();
   });
 });

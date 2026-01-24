@@ -28,6 +28,18 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.5.2] - Dev branch
+
+### Added
+
+- [matterbridge]: Added brand to MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.5.1] - 2026-01-24
 
 ### Added

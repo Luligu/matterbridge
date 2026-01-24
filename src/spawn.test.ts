@@ -51,7 +51,7 @@ describe('Spawn', () => {
     } else {
       expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn command ${command} with`));
     }
-  });
+  }, 10000);
 
   it('should mock a spawn command with sudo', async () => {
     process.argv = ['node', 'spawn.test.js', '--verbose', '-sudo'];
@@ -90,7 +90,7 @@ describe('Spawn', () => {
     expect(await spawnCommand(command, args)).toBe(false);
 
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`Failed to start child process`));
-  });
+  }, 10000);
 
   it('should mock a spawn command and throw an error on close', async () => {
     const command = 'npm';

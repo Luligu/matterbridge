@@ -197,7 +197,6 @@ export function isMatterbridgeEndpoint(value: unknown): value is MatterbridgeEnd
  */
 export function assertMatterbridgeEndpoint(value: unknown, context?: string): asserts value is MatterbridgeEndpoint {
   if (isMatterbridgeEndpoint(value)) return;
-  // istanbul ignore next
   throw new TypeError(`Invalid MatterbridgeEndpoint received${context ? ` in ${context}` : ''}`);
 }
 

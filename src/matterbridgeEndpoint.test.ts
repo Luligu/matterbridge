@@ -290,6 +290,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
 
     expect(() => assertMatterbridgeEndpoint(device)).not.toThrow();
+    expect(() => assertMatterbridgeEndpoint({})).toThrow();
 
     await add(device);
   });
