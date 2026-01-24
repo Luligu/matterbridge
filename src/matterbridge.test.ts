@@ -138,9 +138,11 @@ describe('Matterbridge', () => {
     matterbridge.plugins.clear();
     await matterbridge.plugins.saveToStorage();
 
-    await new Promise((resolve) => {
-      matterbridge.once('online', resolve);
-    });
+    if (!matterbridge.serverNode?.lifecycle.isOnline === true) {
+      await new Promise((resolve) => {
+        matterbridge.once('online', resolve);
+      });
+    }
     await Promise.resolve();
 
     expect(matterbridge).toBeDefined();
