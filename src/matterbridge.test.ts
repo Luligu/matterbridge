@@ -1,6 +1,6 @@
 // src\matterbridge.test.ts
 
-const MATTER_PORT = 6001;
+const MATTER_PORT = 6000;
 const NAME = 'MatterbridgeGlobal';
 const HOMEDIR = path.join('jest', NAME);
 
@@ -17,8 +17,8 @@ import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types';
 import { SessionsBehavior } from '@matter/node';
 import { ExposedFabricInformation } from '@matter/protocol';
 import { LogLevel, nf } from 'node-ansi-logger';
+import { getParameter, hasParameter } from '@matterbridge/utils';
 
-import { getParameter, hasParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
 import { plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

@@ -22,10 +22,9 @@
  */
 
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { hasParameter } from '@matterbridge/utils';
 
-import { BroadcastServer } from '../broadcastServer.js';
-
-import { hasParameter } from './commandLine.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 /**
  * Spawns a child process with the given command and arguments.

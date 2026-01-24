@@ -18,12 +18,11 @@ import url from 'node:url';
 import { jest } from '@jest/globals';
 import { LogLevel } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
+import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, NODE_STORAGE_DIR } from './matterbridgeTypes.js';
 import { originalProcessArgv, setupTest, setDebug } from './jestutils/jestHelpers.js';
-import { getInterfaceDetails } from './utils/network.js';
-import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PluginManager } from './pluginManager.js';
 import type { Matterbridge } from './matterbridge.js';

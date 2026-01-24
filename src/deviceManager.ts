@@ -24,13 +24,13 @@
 
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
-
 // Matterbridge
+import { hasParameter } from '@matterbridge/utils';
+
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { type BaseDevice, dev } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
-import { hasParameter } from './utils/commandLine.js';
 
 /**
  * Converts a MatterbridgeEndpoint to a BaseDevice.

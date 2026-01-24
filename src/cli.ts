@@ -29,16 +29,12 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-
 // Cli
+import { formatBytes, formatUptime, hasAnyParameter, hasParameter, Inspector, inspectError, Tracker, TrackerSnapshot } from '@matterbridge/utils';
+
 import { cliEmitter } from './cliEmitter.js';
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';
-import { hasParameter, hasAnyParameter } from './utils/commandLine.js';
-import { inspectError } from './utils/error.js';
-import { Tracker, TrackerSnapshot } from './utils/tracker.js';
-import { Inspector } from './utils/inspector.js';
-import { formatBytes, formatUptime } from './utils/format.js';
 
 export let instance: Matterbridge | undefined;
 export const tracker = new Tracker('Cli', false, false);

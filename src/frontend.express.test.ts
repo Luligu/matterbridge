@@ -32,10 +32,10 @@ import os from 'node:os';
 
 import { jest } from '@jest/globals';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { waiter } from '@matterbridge/utils';
 
 import { Matterbridge } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
-import { waiter } from './utils/export.js';
 import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { MATTER_LOGGER_FILE, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
@@ -51,12 +51,12 @@ const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').m
 });
 
 // Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('./utils/spawn.js', () => ({
+jest.unstable_mockModule('./spawn.js', () => ({
   spawnCommand: jest.fn((command: string, args: string[]) => {
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
-const spawnModule = await import('./utils/spawn.js');
+const spawnModule = await import('./spawn.js');
 const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
 
 // Setup the test environment
@@ -233,6 +233,12 @@ describe('Matterbridge frontend express with http', () => {
   });
 
   test('GET /api/settings', async () => {
+    // @ts-expect-error accessing private property
+    frontend.authClients = [];
+    await makeRequest('/api/settings', 'GET');
+    // @ts-expect-error accessing private property
+    frontend.authClients = ['::1', '127.0.0.1'];
+
     const response = await makeRequest('/api/settings', 'GET');
 
     expect(response.status).toBe(200);

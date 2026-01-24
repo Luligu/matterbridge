@@ -28,6 +28,27 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.5.1] - 2026-01-24
+
+### Added
+
+- [mb_mdns]: Added additional mDNS service types for discovery.
+- [workflows]: Added npm registry URL and caching to Node.js setup in workflow files.
+- [workflows]: Added concurrency settings in build.yml to cancel previous runs in GitHub Actions.
+- [preset]: Added Thermostat with preset feature. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/482).
+- [matter.js]: Bump to matter.j v. 0.16.6.
+- [matter.js]: Bump to matter.j v. 0.16.7.
+- [mb_mdns]: Added --ip-filter params to filter incoming mDns messages by sender ip.
+- [express]: Added a login check for internal express api. The /health and /memory api don't need a login. Thanks Rogibaer (https://github.com/Luligu/matterbridge-hass/issues/149).
+- [readme]: Added a section with the data structure and backup/restore guidelines.
+- [matterbridge]: Add brand to MatterbridgePlatform and MatterbridgeEndpoint.
+
+### Changed
+
+- [package]: Updated dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.5.0] - 2026-01-20
 
 ### Breaking Changes

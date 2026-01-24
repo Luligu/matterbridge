@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-import('../dist/dgram/mb_coap.js');
+import('../dist/mb_coap.js');

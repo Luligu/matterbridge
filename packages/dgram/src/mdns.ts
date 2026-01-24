@@ -3,7 +3,7 @@
  * @file mdns.ts
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -220,6 +220,7 @@ export class Mdns extends Multicast {
   deviceQueries = new Map<IpAddress, { rinfo: dgram.RemoteInfo; query: MdnsMessage }>();
   deviceResponses = new Map<IpAddress, { rinfo: dgram.RemoteInfo; response: MdnsMessage; dataPTR?: string }>();
   filters: string[] = [];
+  ipFilters: string[] = [];
 
   /**
    * Creates an instance of the Mdns class.
@@ -255,6 +256,14 @@ export class Mdns extends Multicast {
   }
 
   override onMessage(msg: Buffer, rinfo: dgram.RemoteInfo): void {
+    // Apply ip filters if any
+    if (this.ipFilters.length > 0) {
+      const matched = this.ipFilters.some((filter) => rinfo.address.includes(filter));
+      if (!matched) {
+        this.log.debug(`mDNS message does not match any ip filter, ignoring.`);
+        return;
+      }
+    }
     if (this.filters.length === 0)
       this.log.info(`Dgram mDNS server received a mDNS message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
     try {
@@ -276,7 +285,6 @@ export class Mdns extends Multicast {
       }
       // Apply filters if any
       if (this.filters.length > 0) {
-        this.log.debug(`mDNS message filtered out by filters: ${this.filters.join(', ')}`);
         for (const filter of this.filters) {
           const foundInQuestions = result.questions?.some((q) => q.name.includes(filter));
           const foundInAnswers = result.answers?.some((a) => a.name.includes(filter) || a.data.includes(filter));

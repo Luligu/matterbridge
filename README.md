@@ -72,11 +72,14 @@ https://blog.adafruit.com/2025/11/03/matterbridge-a-matter-plugin-manager/
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
 
 If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions.
-The supported versions of node are 20 and 22. Please install Node.js 22 LTS. Don't use Node.js Current but always the Node.js LTS.
+The supported versions of node are 20, 22 and 24. Please install Node.js 22 LTS. Don't use Node.js Current but always the Node.js LTS.
 Node.js 23, like all odd-numbered versions, is not supported.
 Nvm is not a good choice and should not be used for production.
 
 If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/engine/install.
+
+If you don't have Docker already install, please use this method to install it on a Windows or macOS: https://docs.docker.com/get-started/introduction/get-docker-desktop/.
+
 After follow the guidelines for the [Docker configurations](README-DOCKER.md).
 
 I suggest using Docker for its simplicity.
@@ -159,7 +162,13 @@ Here's how to specify a different port number:
 matterbridge --frontend [port number]
 ```
 
-To use the frontend with ssl see below.
+The frontend binds, by default, to all IPv4 and IPv6 addresses. You can override this and bind to a specific address:
+
+```bash
+matterbridge --bind [address]
+```
+
+To use the frontend with SSL, see below.
 
 From the frontend you can do all operations in an easy way.
 
@@ -548,6 +557,37 @@ So depending on the controller you pair with, you should see 100 for fully close
 
 Some controllers invert the position so you need to verify your controller.
 
+## Data structure
+
+Matterbridge uses three directories. These are the default locations (some advanced setups may change them, so check your configuration):
+
+```text
+~/.matterbridge
+~/Matterbridge
+~/.mattercert
+```
+
+### Backup
+
+From the frontend (three-dots menu), select **Create backup**, then **Download backup** when it is ready.
+The backup file is a standard `.zip` archive.
+
+### Restore
+
+Restore must be done manually because the archive paths depend on your setup.
+
+Make sure Matterbridge is not running. Stop it if needed.
+
+Extract the backup and replace the corresponding directories on your system with the ones from the backup:
+
+```text
+.matterbridge
+Matterbridge
+.mattercert
+```
+
+Ensure permissions are correct for the restored directories.
+
 # Known general issues
 
 ## Session XYZ does not exist or Cannot find a session for ID XYZ
@@ -564,17 +604,13 @@ All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now th
 
 If you have more then one Apple TV or Home Pod, you can herve better results setting to disabled "Automatic Selection" in "Home Setting", "Home Hubs & Bridges". When "Automatic selection" is disabled, select your Apple Tv if you have one or any of your Home Pod. In this way you should not have anymore more then one session for fabric.
 
-### Manufacturer Serial Number and Model
-
-The Home app forgets about them when you restart the node.
-
 ### Appliances
 
 As of version 18.4.x, all Appliances device types are not supported by the Home app. They don't even appear like unsupported accessories.
 
 ### Robot
 
-As of version 18.4.x, the Robot is supported by the Home app only as a single, non-bridged device or if it is the only device in the bridge.
+As of version 18.4.x, the Robot is supported by the Home app only as a single, non-bridged device or if it is the only device in the bridge. Furthermore the device cannot be a composed device. The only device type supported is the rvc.
 
 If a Robot is present alongside other devices in the bridge, the entire bridge becomes unstable in the Home app.
 
@@ -588,7 +624,6 @@ So far is the only controller supporting all Matter 1.2, 1.3 and 1.4 device type
 
 - If HA doesn't show all devices, reload the Matter Server Integration or reboot HA
 - Home Assistant doesn't seem to always react when a device is removed from the bridge: they remain in HA unavailable forever. A full Home Assistant restart solves the problem.
-- Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
 
 ## Google Home
 
@@ -597,6 +632,8 @@ If you face a problem pairing to Google Home from iOS app the solution is there 
 If you face a problem changing the brightness check this for the explanation: https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80
 
 If you encounter a “Something Went Wrong” screen while commissioning MatterBridge devices in Google Home on Android, it’s due to an Android bug. Android fails to send the country code, which is mandatory under the Matter specification.
+
+There is also a known issue with the thermostat Fahrenheit to Celsius Conversion (https://github.com/Luligu/matterbridge/issues/462).
 
 ### Workaround
 

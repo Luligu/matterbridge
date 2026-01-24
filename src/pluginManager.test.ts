@@ -1,6 +1,6 @@
 // src\pluginManager.test.ts
 
-const MATTER_PORT = 6006;
+const MATTER_PORT = 12000;
 const NAME = 'PluginManager';
 const HOMEDIR = path.join('jest', NAME);
 const NPM_CONFIG_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-global'));
@@ -13,12 +13,12 @@ process.env.npm_config_prefix = NPM_CONFIG_PREFIX;
 process.env.npm_config_cache = NPM_CONFIG_CACHE;
 
 // Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('./utils/spawn.js', () => ({
+jest.unstable_mockModule('./spawn.js', () => ({
   spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
     return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
   }),
 }));
-const spawnModule = await import('./utils/spawn.js');
+const spawnModule = await import('./spawn.js');
 const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
 
 const jsonParseSpy = jest.spyOn(JSON, 'parse');
@@ -49,6 +49,7 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
+import { waiter, wait } from '@matterbridge/utils';
 
 import { Matterbridge } from './matterbridge.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
@@ -56,7 +57,6 @@ import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js'
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import { ApiPlugin, plg, Plugin, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
-import { waiter, wait } from './utils/export.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 

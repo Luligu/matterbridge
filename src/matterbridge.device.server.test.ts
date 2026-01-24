@@ -1,21 +1,12 @@
 // src\matterbridge.device.server.test.ts
 
-const MATTER_PORT = 6018;
+const MATTER_PORT = 6200;
 const NAME = 'MatterbridgeDeviceServer';
 const HOMEDIR = path.join('jest', NAME);
 
 process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
-
-// Mock the getGlobalNodeModules logInterfaces from network module before importing it
-jest.unstable_mockModule('./utils/network.js', () => ({
-  getGlobalNodeModules: jest.fn(() => {
-    return Promise.resolve('./node_modules'); // Mock the getGlobalNodeModules function to resolve immediately
-  }),
-}));
-const networkModule = await import('./utils/network.js');
-const getGlobalNodeModulesMock = networkModule.getGlobalNodeModules as jest.MockedFunction<typeof networkModule.getGlobalNodeModules>;
 
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('./workers.js', () => ({

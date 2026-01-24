@@ -29,7 +29,7 @@ import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-import { Tracker, TrackerSnapshot } from './utils/tracker.js';
+import { Tracker, TrackerSnapshot } from '@matterbridge/utils';
 
 export type GenerateHistoryPageOptions = {
   /**

@@ -10,7 +10,7 @@ import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { EndpointNumber } from '@matter/types/datatype';
 
-import { MatterbridgePlatform } from './matterbridgePlatform.js';
+import { assertMatterbridgePlatform, MatterbridgePlatform } from './matterbridgePlatform.js';
 import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
@@ -101,6 +101,8 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Loaded 0 selectDevice for plugin test'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Loaded 0 selectEntity for plugin test'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('MatterbridgePlatform for plugin test is fully initialized'));
+
+    expect(() => assertMatterbridgePlatform(platform)).not.toThrow();
   });
 
   test('onStart should throw an error if not overridden', async () => {

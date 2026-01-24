@@ -130,11 +130,12 @@
 <h2 id="prerequisites">Prerequisites</h2>
 <p>To run Matterbridge, you need either a <a href="https://nodejs.org/en">Node.js</a> environment or <a href="https://docs.docker.com/get-started/get-docker/">Docker</a> installed on your system.</p>
 <p>If you don&#39;t have Node.js already install, please use this method to install it on a debian device: <a href="https://github.com/nodesource/distributions">https://github.com/nodesource/distributions</a>.
-The supported versions of node are 20 and 22. Please install Node.js 22 LTS. Don&#39;t use Node.js Current but always the Node.js LTS.
+The supported versions of node are 20, 22 and 24. Please install Node.js 22 LTS. Don&#39;t use Node.js Current but always the Node.js LTS.
 Node.js 23, like all odd-numbered versions, is not supported.
 Nvm is not a good choice and should not be used for production.</p>
-<p>If you don&#39;t have Docker already install, please use this method to install it on a debian device: <a href="https://docs.docker.com/engine/install">https://docs.docker.com/engine/install</a>.
-After follow the guidelines for the <a href="README-DOCKER.html">Docker configurations</a>.</p>
+<p>If you don&#39;t have Docker already install, please use this method to install it on a debian device: <a href="https://docs.docker.com/engine/install">https://docs.docker.com/engine/install</a>.</p>
+<p>If you don&#39;t have Docker already install, please use this method to install it on a Windows or macOS: <a href="https://docs.docker.com/get-started/introduction/get-docker-desktop/">https://docs.docker.com/get-started/introduction/get-docker-desktop/</a>.</p>
+<p>After follow the guidelines for the <a href="README-DOCKER.html">Docker configurations</a>.</p>
 <p>I suggest using Docker for its simplicity.</p>
 <p>Since Matter is designed as &quot;a universal IPv6-based communication protocol for smart home devices&quot; (per the Matter specifications), <strong>IPv6 must be enabled on your local network (LAN)</strong>.</p>
 <p><strong>Important:</strong> You only need IPv6 on your local network - it doesn&#39;t matter if your internet provider doesn&#39;t provide IPv6 on the internet side (WAN).</p>
@@ -175,7 +176,10 @@ After follow the guidelines for the <a href="README-DOCKER.html">Docker configur
 <p>Here&#39;s how to specify a different port number:</p>
 <pre><code class="language-bash">matterbridge --frontend [port number]
 </code></pre>
-<p>To use the frontend with ssl see below.</p>
+<p>The frontend binds, by default, to all IPv4 and IPv6 addresses. You can override this and bind to a specific address:</p>
+<pre><code class="language-bash">matterbridge --bind [address]
+</code></pre>
+<p>To use the frontend with SSL, see below.</p>
 <p>From the frontend you can do all operations in an easy way.</p>
 <p>Home page</p>
 <p><img src="./screenshots/Screenshot%20home.jpg" alt="Home page"></p>
@@ -411,6 +415,24 @@ matterbridge --add matterbridge-zigbee2mqtt
 </ul>
 <p>So depending on the controller you pair with, you should see 100 for fully closed and 0 for fully open.</p>
 <p>Some controllers invert the position so you need to verify your controller.</p>
+<h2 id="data-structure">Data structure</h2>
+<p>Matterbridge uses three directories. These are the default locations (some advanced setups may change them, so check your configuration):</p>
+<pre><code class="language-text">~/.matterbridge
+~/Matterbridge
+~/.mattercert
+</code></pre>
+<h3 id="backup">Backup</h3>
+<p>From the frontend (three-dots menu), select <strong>Create backup</strong>, then <strong>Download backup</strong> when it is ready.
+The backup file is a standard <code>.zip</code> archive.</p>
+<h3 id="restore">Restore</h3>
+<p>Restore must be done manually because the archive paths depend on your setup.</p>
+<p>Make sure Matterbridge is not running. Stop it if needed.</p>
+<p>Extract the backup and replace the corresponding directories on your system with the ones from the backup:</p>
+<pre><code class="language-text">.matterbridge
+Matterbridge
+.mattercert
+</code></pre>
+<p>Ensure permissions are correct for the restored directories.</p>
 <h1 id="known-general-issues">Known general issues</h1>
 <h2 id="session-xyz-does-not-exist-or-cannot-find-a-session-for-id-xyz">Session XYZ does not exist or Cannot find a session for ID XYZ</h2>
 <p>This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
@@ -420,12 +442,10 @@ In this context, the message is not indicative of a problem.</p>
 <p>The HomePods, being a WiFi devices, sometimes pruduce message trasmission errors. The Apple TV with network cable is more reliable (but also more expensive).</p>
 <p>All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now they are stable.</p>
 <p>If you have more then one Apple TV or Home Pod, you can herve better results setting to disabled &quot;Automatic Selection&quot; in &quot;Home Setting&quot;, &quot;Home Hubs &amp; Bridges&quot;. When &quot;Automatic selection&quot; is disabled, select your Apple Tv if you have one or any of your Home Pod. In this way you should not have anymore more then one session for fabric.</p>
-<h3 id="manufacturer-serial-number-and-model">Manufacturer Serial Number and Model</h3>
-<p>The Home app forgets about them when you restart the node.</p>
 <h3 id="appliances">Appliances</h3>
 <p>As of version 18.4.x, all Appliances device types are not supported by the Home app. They don&#39;t even appear like unsupported accessories.</p>
 <h3 id="robot">Robot</h3>
-<p>As of version 18.4.x, the Robot is supported by the Home app only as a single, non-bridged device or if it is the only device in the bridge.</p>
+<p>As of version 18.4.x, the Robot is supported by the Home app only as a single, non-bridged device or if it is the only device in the bridge. Furthermore the device cannot be a composed device. The only device type supported is the rvc.</p>
 <p>If a Robot is present alongside other devices in the bridge, the entire bridge becomes unstable in the Home app.</p>
 <p>A workaround has been released in Matterbridge 3.1.1. Ask the plugin authors to update the code.</p>
 <h2 id="home-assistant-1">Home Assistant</h2>
@@ -434,12 +454,12 @@ In this context, the message is not indicative of a problem.</p>
 <ul>
 <li>If HA doesn&#39;t show all devices, reload the Matter Server Integration or reboot HA</li>
 <li>Home Assistant doesn&#39;t seem to always react when a device is removed from the bridge: they remain in HA unavailable forever. A full Home Assistant restart solves the problem.</li>
-<li>Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.</li>
 </ul>
 <h2 id="google-home">Google Home</h2>
 <p>If you face a problem pairing to Google Home from iOS app the solution is there <a href="https://github.com/Luligu/matterbridge/issues/61">https://github.com/Luligu/matterbridge/issues/61</a>.</p>
 <p>If you face a problem changing the brightness check this for the explanation: <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80">https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80</a></p>
 <p>If you encounter a “Something Went Wrong” screen while commissioning MatterBridge devices in Google Home on Android, it’s due to an Android bug. Android fails to send the country code, which is mandatory under the Matter specification.</p>
+<p>There is also a known issue with the thermostat Fahrenheit to Celsius Conversion (<a href="https://github.com/Luligu/matterbridge/issues/462">https://github.com/Luligu/matterbridge/issues/462</a>).</p>
 <h3 id="workaround">Workaround</h3>
 <p>Install Google Home on an iPhone and complete the commissioning there. Once set up, the devices will appear and function normally on your Android phone and other Nest devices in your home. By <a href="https://github.com/artemkovalyov">Artem Kovalov</a>.</p>
 <h2 id="alexa">Alexa</h2>

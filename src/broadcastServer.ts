@@ -29,10 +29,9 @@ import { EventEmitter } from 'node:events';
 import { BroadcastChannel } from 'node:worker_threads';
 
 import { type AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
+import { hasParameter, logError } from '@matterbridge/utils';
 
 import type { WorkerMessage, WorkerMessageRequest, WorkerMessageRequestAny, WorkerMessageResponse, WorkerMessageResponseSuccess, WorkerMessageTypes, WorkerSrcType } from './broadcastServerTypes.js';
-import { hasParameter } from './utils/commandLine.js';
-import { logError } from './utils/error.js';
 
 interface BroadcastServerEvents {
   'broadcast_message': [msg: WorkerMessage];

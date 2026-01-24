@@ -32,9 +32,9 @@ import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
-
 // Matterbridge
-import { hasParameter } from './utils/commandLine.js';
+import { hasParameter } from '@matterbridge/utils';
+
 import { Matterbridge } from './matterbridge.js';
 
 /**

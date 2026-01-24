@@ -44,13 +44,10 @@ import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
+// @matterbridge
+import { copyDirectory, createDirectory, formatBytes, formatPercent, formatUptime, getIntParameter, getParameter, hasParameter, isValidNumber, isValidObject, isValidString, parseVersionString } from '@matterbridge/utils';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter } from './utils/commandLine.js';
-import { copyDirectory } from './utils/copyDirectory.js';
-import { createDirectory } from './utils/createDirectory.js';
-import { isValidString, parseVersionString, isValidNumber, isValidObject } from './utils/isValid.js';
-import { formatBytes, formatPercent, formatUptime } from './utils/format.js';
 import { ApiMatter, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, MaybePromise, NODE_STORAGE_DIR, plg, Plugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -484,7 +481,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
       // Set the certification for matter.js if it is present in the pairing file
       if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
-        const { hexToBuffer } = await import('./utils/hex.js');
+        const { hexToBuffer } = await import('@matterbridge/utils');
         this.certification = {
           privateKey: hexToBuffer(pairingFileJson.privateKey),
           certificate: hexToBuffer(pairingFileJson.certificate),
@@ -684,7 +681,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
       if (!fs.existsSync(plugin.path) && !hasParameter('add') && !hasParameter('remove') && !hasParameter('enable') && !hasParameter('disable') && !hasParameter('reset') && !hasParameter('factoryreset')) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
-        const { spawnCommand } = await import('./utils/spawn.js');
+        const { spawnCommand } = await import('./spawn.js');
         if (await spawnCommand('npm', ['install', '-g', `${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}`, '--omit=dev', '--verbose'], 'install', plugin.name)) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
@@ -788,7 +785,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     if (hasParameter('loginterfaces')) {
-      const { logInterfaces } = await import('./utils/network.js');
+      const { logInterfaces } = await import('@matterbridge/utils');
       logInterfaces();
       this.shutdown = true;
       return;
@@ -914,7 +911,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Wait delay if specified (default 2 minutes) and the system uptime is less than 5 minutes. It solves race conditions on system startup.
     if (hasParameter('delay') && os.uptime() <= 60 * 5) {
-      const { wait } = await import('./utils/wait.js');
+      const { wait } = await import('@matterbridge/utils');
       const delay = getIntParameter('delay') || 120;
       this.log.warn('Delay switch found with system uptime less then 5 minutes. Waiting for ' + delay + ' seconds before starting matterbridge...');
       await wait(delay * 1000, 'Race condition delay', true);
@@ -922,7 +919,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Wait delay if specified (default 2 minutes). It solves race conditions on docker compose startup.
     if (hasParameter('fixed_delay')) {
-      const { wait } = await import('./utils/wait.js');
+      const { wait } = await import('@matterbridge/utils');
       const delay = getIntParameter('fixed_delay') || 120;
       this.log.warn('Fixed delay switch found. Waiting for ' + delay + ' seconds before starting matterbridge...');
       await wait(delay * 1000, 'Fixed race condition delay', true);
@@ -1144,7 +1141,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // First run of Matterbridge so the node storage is empty
       this.log.debug(`Getting global node_modules directory...`);
       try {
-        const { getGlobalNodeModules } = await import('./utils/network.js');
+        const { getGlobalNodeModules } = await import('@matterbridge/utils');
         this.globalModulesDirectory = await getGlobalNodeModules();
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
@@ -1291,7 +1288,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   async updateProcess(): Promise<void> {
     this.log.info('Updating matterbridge...');
-    const { spawnCommand } = await import('./utils/spawn.js');
+    const { spawnCommand } = await import('./spawn.js');
     if (await spawnCommand('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge')) {
       this.log.info('Matterbridge has been updated. Full restart required.');
     } else {
@@ -1309,7 +1306,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
   async unregisterAndShutdownProcess(timeout: number = 1000): Promise<void> {
-    const { wait } = await import('./utils/wait.js');
+    const { wait } = await import('@matterbridge/utils');
     this.log.info('Unregistering all devices and shutting down...');
     for (const plugin of this.plugins.array()) {
       if (plugin.error || !plugin.enabled) continue;
@@ -1406,7 +1403,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Stop matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
       if (pause > 0) {
-        const { wait } = await import('./utils/wait.js');
+        const { wait } = await import('@matterbridge/utils');
         this.log.debug(`Waiting ${pause}ms for the MessageExchange to finish...`);
         await wait(pause, `Waiting ${pause}ms for the MessageExchange to finish...`, false);
       }
@@ -1721,7 +1718,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   private async startChildbridge(delay: number = 1000): Promise<void> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
-    const { wait } = await import('./utils/wait.js');
+    const { wait } = await import('@matterbridge/utils');
 
     // Load with await all plugins but don't start them. We get the platform.type to pre-create server nodes for DynamicPlatform plugins
     this.log.debug('Loading all plugins in childbridge mode...');
@@ -2176,8 +2173,10 @@ const commissioningController = new CommissioningController({
     this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
     this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
     this.log.debug(`- uniqueId: ${await storageContext.get('uniqueId')}`);
-    this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
-    this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
+    this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')}`);
+    this.log.debug(`- softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
+    this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')}`);
+    this.log.debug(`- hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
     return storageContext;
   }
 
@@ -2193,12 +2192,21 @@ const commissioningController = new CommissioningController({
   private async createServerNode(storageContext: StorageContext, port: number = 5540, passcode: number = 20242025, discriminator: number = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
     const storeId = await storageContext.get<string>('storeId');
     this.log.notice(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
+    this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
     this.log.debug(`- deviceName: ${await storageContext.get('deviceName')}`);
     this.log.debug(`- deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
+    this.log.debug(`- vendorId: ${await storageContext.get('vendorId')}`);
+    this.log.debug(`- vendorName: ${await storageContext.get('vendorName')}`);
+    this.log.debug(`- productId: ${await storageContext.get('productId')}`);
+    this.log.debug(`- productName: ${await storageContext.get('productName')}`);
+    this.log.debug(`- productLabel: ${await storageContext.get('productLabel')}`);
+    this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
     this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
     this.log.debug(`- uniqueId: ${await storageContext.get('uniqueId')}`);
-    this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
-    this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
+    this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')}`);
+    this.log.debug(`- softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
+    this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')}`);
+    this.log.debug(`- hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
 
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
@@ -2396,7 +2404,7 @@ const commissioningController = new CommissioningController({
    * @returns {Promise<void>} A promise that resolves when the server node has stopped.
    */
   private async stopServerNode(matterServerNode: ServerNode, timeout: number = 10000): Promise<void> {
-    const { withTimeout } = await import('./utils/wait.js');
+    const { withTimeout } = await import('@matterbridge/utils');
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
 
@@ -2485,7 +2493,7 @@ const commissioningController = new CommissioningController({
    * @returns {Promise<void>} A promise that resolves when the bridged endpoint has been added.
    */
   async addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
-    const { waiter } = await import('./utils/wait.js');
+    const { waiter } = await import('@matterbridge/utils');
     // Check if the plugin is registered
     const plugin = this.plugins.get(pluginName);
     if (!plugin) {
@@ -2643,7 +2651,7 @@ const commissioningController = new CommissioningController({
    * The delay is useful to allow the controllers to receive a single subscription for each device removed.
    */
   async removeAllBridgedEndpoints(pluginName: string, delay: number = 0): Promise<void> {
-    const { wait } = await import('./utils/wait.js');
+    const { wait } = await import('@matterbridge/utils');
     this.log.debug(`Removing all bridged endpoints for plugin ${plg}${pluginName}${db}${delay > 0 ? ` with delay ${delay} ms` : ''}`);
     for (const device of this.devices.array().filter((device) => device.plugin === pluginName)) {
       await this.removeBridgedEndpoint(pluginName, device);

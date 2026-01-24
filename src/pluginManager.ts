@@ -27,13 +27,12 @@ import EventEmitter from 'node:events';
 
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr, debugStringify, CYAN } from 'node-ansi-logger';
-
 // Matterbridge
+import { hasParameter, inspectError, logError } from '@matterbridge/utils';
+
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgePlatform, PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatform.js';
 import { ApiPlugin, plg, Plugin, PluginName, StoragePlugin, typ } from './matterbridgeTypes.js';
-import { inspectError, logError } from './utils/error.js';
-import { hasParameter } from './utils/commandLine.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
 
@@ -602,7 +601,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   async install(packageName: string): Promise<boolean> {
     this.log.debug(`Installing plugin ${plg}${packageName}${db}...`);
-    const { spawnCommand } = await import('./utils/spawn.js');
+    const { spawnCommand } = await import('./spawn.js');
     if (await spawnCommand('npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName)) {
       this.matterbridge.restartRequired = true;
       this.matterbridge.fixedRestartRequired = true;
@@ -632,7 +631,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   async uninstall(packageName: string): Promise<boolean> {
     this.log.debug(`Uninstalling plugin ${plg}${packageName}${db}...`);
-    const { spawnCommand } = await import('./utils/spawn.js');
+    const { spawnCommand } = await import('./spawn.js');
     packageName = packageName.replace(/@.*$/, '');
     if (packageName === 'matterbridge') return false;
     if (this.has(packageName)) {

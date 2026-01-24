@@ -642,7 +642,17 @@ describe('Mdns', () => {
 
     mdns.filters.push('nope-device._shelly._tcp.local');
     mdns.onMessage(responseMsg, mockRinfo);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`mDNS message does not match any filter, ignoring.`);
     mdns.filters = [];
+
+    mdns.ipFilters.push('1.2.3.4');
+    mdns.onMessage(responseMsg, mockRinfo);
+    mdns.ipFilters = [];
+
+    mdns.ipFilters.push('100.200.3.4');
+    mdns.onMessage(responseMsg, mockRinfo);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`mDNS message does not match any ip filter, ignoring.`);
+    mdns.ipFilters = [];
   });
 
   it('should decode NSEC record with bitmap data', () => {

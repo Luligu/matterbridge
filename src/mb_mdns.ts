@@ -50,6 +50,7 @@ Options:
   --advertise <interval>                    Enable matterbridge mDNS advertisement each ms (default interval: 10000ms).
   --query <interval>                        Enable common mDNS services query each ms (default interval: 10000ms).
   --filter <string...>                      Filter strings to match in the mDNS record name (default: no filter).
+  --ip-filter <string...>                   Filter strings to match in the mDNS sender ip address (default: no filter).
   --noIpv4                                  Disable IPv4 mDNS server (default: enabled).
   --noIpv6                                  Disable IPv6 mDNS server (default: enabled).
   --no-timeout                              Disable automatic timeout of 10 minutes. Reflector mode disables timeout automatically.
@@ -67,6 +68,9 @@ Examples:
   # Listen for Matter commissioner and discovery service records on all interfaces
   mb_mdns --filter _matterc._udp _matter._tcp
 
+  # Listen for Matter commissioner and discovery service records on all interfaces from specific ipv4 and ipv6 ips
+  mb_mdns --filter _matterc._udp _matter._tcp --ip-filter 192.168.69.20 fe80::1077:2e0d:2c91:aa90
+
   # Query for mDNS devices every 10s on a specific interface
   mb_mdns --interfaceName eth0 --query
 
@@ -81,7 +85,7 @@ Examples:
   }
 
   // Dynamic JSON import (Node >= 20) with import attributes
-  const { default: pkg } = await import('../../package.json', { with: { type: 'json' } });
+  const { default: pkg } = await import('../package.json', { with: { type: 'json' } });
 
   let mdnsIpv4QueryInterval: NodeJS.Timeout | undefined;
   let mdnsIpv6QueryInterval: NodeJS.Timeout | undefined;
@@ -123,6 +127,18 @@ Examples:
         { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
         { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
         { name: '_googlecast._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_airplay._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_amzn-alexa._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_companion-link._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_hap._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_hap._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_ipp._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_ipps._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_meshcop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_printer._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_raop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_sleep-proxy._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_ssh._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
         { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
       ]);
     } catch (error) {
@@ -207,6 +223,10 @@ Examples:
     const filters = getStringArrayParameter('filter');
     if (filters) mdnsIpv4.filters.push(...filters);
 
+    // Apply ip filters if any
+    const ipFilters = getStringArrayParameter('ip-filter');
+    if (ipFilters) mdnsIpv4.ipFilters.push(...ipFilters);
+
     // Handle errors
     mdnsIpv4.on('error', (err) => {
       mdnsIpv4?.log.error(`mDNS udp4 Server error: ${err.message}\n${err.stack}`);
@@ -235,6 +255,10 @@ Examples:
     // Apply filters if any
     const filters = getStringArrayParameter('filter');
     if (filters) mdnsIpv6.filters.push(...filters);
+
+    // Apply ip filters if any
+    const ipFilters = getStringArrayParameter('ip-filter');
+    if (ipFilters) mdnsIpv6.ipFilters.push(...ipFilters);
 
     // Handle errors
     mdnsIpv6.on('error', (err) => {

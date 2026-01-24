@@ -36,15 +36,14 @@ import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { EndpointNumber, VendorId } from '@matter/types/datatype';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
-
 // Matterbridge
+import { hasParameter, isValidArray, isValidObject, isValidString } from '@matterbridge/utils';
+
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
-import { isValidArray, isValidObject, isValidString } from './utils/isValid.js';
 import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
 import { SystemInformation } from './matterbridgeTypes.js';
-import { hasParameter } from './utils/commandLine.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Platform types
@@ -106,6 +105,44 @@ export type PlatformMatterbridge = {
   readonly aggregatorProductId: number;
   readonly aggregatorProductName: string;
 };
+
+// Module-private brand
+const MATTERBRIDGE_PLATFORM_BRAND = Symbol('MatterbridgePlatform.brand');
+
+/**
+ * Type guard to check whether a value is a MatterbridgePlatform instance.
+ *
+ * @param {unknown} value - the value to check
+ * @returns { value is MatterbridgePlatform } - true if the value is a MatterbridgePlatform instance
+ */
+export function isMatterbridgePlatform(value: unknown): value is MatterbridgePlatform {
+  if (!value || typeof value !== 'object') return false;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const v = value as any;
+
+  // 1. Brand: must be branded by *this* module instance.
+  if (v[MATTERBRIDGE_PLATFORM_BRAND] !== true) return false;
+
+  // 2. instanceof: strengthen guarantee when there aren't multiple copies of the package.
+  if (!(v instanceof MatterbridgePlatform)) return false;
+
+  return true;
+}
+
+/**
+ * Assert that a value is a MatterbridgePlatform instance.
+ *
+ * @param {unknown} value - the value to check
+ * @param {string} [context] - optional context for error message
+ * @returns {asserts value is MatterbridgePlatform} - asserts that the value is a MatterbridgePlatform instance
+ * @throws {TypeError} - if the value is not a MatterbridgePlatform instance
+ */
+export function assertMatterbridgePlatform(value: unknown, context?: string): asserts value is MatterbridgePlatform {
+  if (isMatterbridgePlatform(value)) return;
+  // istanbul ignore next
+  throw new TypeError(`Invalid MatterbridgePlatform received${context ? ` in ${context}` : ''}`);
+}
 
 /**
  * Represents the base Matterbridge platform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
@@ -211,6 +248,14 @@ export class MatterbridgePlatform {
     this.log = log;
     this.config = config;
     this.#server = new BroadcastServer('platform', this.log);
+
+    // Set the brand
+    Object.defineProperty(this, MATTERBRIDGE_PLATFORM_BRAND, {
+      value: true,
+      writable: false,
+      enumerable: false,
+      configurable: false,
+    });
 
     if (this.#debug && !this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name}`);
     if (this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name} with config:\n${JSON.stringify(this.config, null, 2)}\n`);

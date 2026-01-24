@@ -11,5 +11,8 @@ export * from './hex.js';
 export * from './inspector.js';
 export * from './isValid.js';
 export * from './network.js';
+export * from './npmRoot.js';
+export * from './npmVersion.js';
+export * from './githubVersion.js';
 export * from './tracker.js';
 export * from './wait.js';
