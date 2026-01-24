@@ -4,9 +4,7 @@ const MATTER_PORT = 12000;
 const NAME = 'PluginManager';
 const HOMEDIR = path.join('jest', NAME);
 const NPM_CONFIG_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-global'));
-await fs.mkdir(NPM_CONFIG_PREFIX, { recursive: true });
 const NPM_CONFIG_CACHE = path.resolve(path.join(HOMEDIR, '.npm-cache'));
-await fs.mkdir(NPM_CONFIG_CACHE, { recursive: true });
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 process.env.npm_config_prefix = NPM_CONFIG_PREFIX;
@@ -62,6 +60,8 @@ import { BroadcastServer } from './broadcastServer.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
+await fs.mkdir(NPM_CONFIG_PREFIX, { recursive: true });
+await fs.mkdir(NPM_CONFIG_CACHE, { recursive: true });
 
 describe('PluginManager', () => {
   let matterbridge: Matterbridge;
