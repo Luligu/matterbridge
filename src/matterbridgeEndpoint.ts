@@ -2091,6 +2091,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
         ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
         ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+        ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.Presets
         numberOfPresets: Array.isArray(presetsList) ? presetsList.length : 0,
         activePresetHandle: activePresetHandle !== undefined ? Uint8Array.from([activePresetHandle]) : null,
