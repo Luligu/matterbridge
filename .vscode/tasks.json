@@ -251,16 +251,7 @@
       "label": "Test: Workers",
       "type": "shell",
       "command": "node",
-      "args": [
-        "--no-warnings",
-        "--experimental-vm-modules",
-        "node_modules/jest/bin/jest.js",
-        "--verbose",
-        "--coverage",
-        "--maxWorkers=100%",
-        "src/broadcastServer.test.ts",
-        "src/workers.test.ts"
-      ],
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "src/broadcastServer.test.ts", "src/workers.test.ts"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
