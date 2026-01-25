@@ -627,6 +627,9 @@ describe('Matterbridge mocked', () => {
   }, 10000);
 
   test('Matterbridge.initialize() update', async () => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+      return Promise.resolve();
+    });
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     // Mock the checkUpdates from update module before importing it
@@ -644,6 +647,12 @@ describe('Matterbridge mocked', () => {
   }, 10000);
 
   test('Matterbridge.initialize() registerProcessHandlers and matter file logger', async () => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+      return Promise.resolve();
+    });
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+      return Promise.resolve();
+    });
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger'];
     const createDestinationMatterLoggerSpy = jest.spyOn(Matterbridge.prototype as any, 'createDestinationMatterLogger');

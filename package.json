@@ -145,6 +145,7 @@
     "version:major": "npm version major -m \"Release %s\"",
     "git:status": "git status && git branch -vv && git diff dev origin/dev && git stash list",
     "git:remote": "git remote -v && git remote show origin",
+    "git:prune": "git fetch --prune --prune-tags",
     "git:hardreset:main": "git fetch origin && git checkout main && git reset --hard origin/main",
     "git:hardreset:dev": "git fetch origin && git checkout dev && git reset --hard origin/dev",
     "git:hardreset:edge": "git fetch origin && git checkout edge && git reset --hard origin/edge",
