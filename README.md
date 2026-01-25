@@ -652,7 +652,7 @@ There is no support for these Matter device types:
 
 Known issues:
 
-- the cover position is inverted in Alexa ()
+- the cover position is inverted in Alexa
 - humidity takes long to update
 
 In the zigbee2mqtt and shelly plugins select the option to expose the switch devices like light or outlet cause they don't show up like switch
