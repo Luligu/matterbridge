@@ -421,8 +421,6 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
       this.state.occupiedCoolingSetpoint = setpoint * 100;
       device.log.debug(`Set occupiedCoolingSetpoint to ${setpoint}`);
     }
-
-    // setpointRaiseLower is not implemented in matter.js
     // super.setpointRaiseLower(request);
   }
 }
@@ -451,7 +449,6 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(Th
       device.log.debug(`Set occupiedCoolingSetpoint to ${setpoint}`);
     }
 
-    // setpointRaiseLower is not implemented in matter.js
     // super.setpointRaiseLower(request);
   }
 
@@ -459,9 +456,9 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(Th
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting preset to ${request.presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('setActivePresetRequest', { request, cluster: ThermostatServer.id, attributes: this.state, endpoint: this.endpoint });
+
     device.log.debug(`MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${request.presetHandle}`);
 
-    // setActivePresetRequest is not implemented in matter.js
     // super.setActivePresetRequest(request);
   }
 }
