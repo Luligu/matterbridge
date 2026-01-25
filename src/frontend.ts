@@ -1860,12 +1860,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertiseTime: 0, advertising: false } });
         }
         if (data.params.advertise) {
-          // TODO: matter.js 0.16.0
-          // await serverNode.env.get(DeviceAdvertiser)?.advertise(true);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const advertiser = serverNode.env.get(DeviceAdvertiser) as any;
-          if (advertiser && advertiser.advertise && typeof advertiser.advertise === 'function') await advertiser.advertise(true);
-          if (advertiser && advertiser.restartAdvertisement && typeof advertiser.restartAdvertisement === 'function') advertiser.restartAdvertisement();
+          serverNode.env.get(DeviceAdvertiser)?.restartAdvertisement();
           this.log.debug(`*Advertising has been sent for node ${data.params.id}`);
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertising: true } });
         }
