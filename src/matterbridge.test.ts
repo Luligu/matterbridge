@@ -22,7 +22,7 @@ import { getParameter, hasParameter } from '@matterbridge/utils';
 import { Matterbridge } from './matterbridge.js';
 import { plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Mock BroadcastServer methods
@@ -143,7 +143,7 @@ describe('Matterbridge', () => {
         matterbridge.once('online', resolve);
       });
     }
-    await Promise.resolve();
+    await flushAsync(undefined, undefined, 100);
 
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('Jest');

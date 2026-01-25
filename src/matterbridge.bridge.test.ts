@@ -123,7 +123,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
         matterbridge.once('online', resolve);
       });
     }
-    await Promise.resolve();
+    await flushAsync(undefined, undefined, 100);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
