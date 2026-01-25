@@ -39,7 +39,7 @@ import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-de
 import { hasParameter, isValidArray, isValidObject, isValidString } from '@matterbridge/utils';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { assertMatterbridgeEndpoint, MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
@@ -628,6 +628,7 @@ export class MatterbridgePlatform {
    * @param {MatterbridgeEndpoint} device - The device to register.
    */
   async registerDevice(device: MatterbridgeEndpoint) {
+    assertMatterbridgeEndpoint(device, `MatterbridgePlatform.registerDevice for plugin ${this.name}`);
     device.plugin = this.name;
     if (!device.uniqueId) {
       this.log.error(
@@ -693,6 +694,7 @@ export class MatterbridgePlatform {
    * @param {MatterbridgeEndpoint} device - The device to unregister.
    */
   async unregisterDevice(device: MatterbridgeEndpoint) {
+    assertMatterbridgeEndpoint(device, `MatterbridgePlatform.unregisterDevice for plugin ${this.name}`);
     await this.#removeBridgedEndpoint?.(this.name, device);
     if (device.uniqueId) this.#registeredEndpoints.delete(device.uniqueId);
   }
