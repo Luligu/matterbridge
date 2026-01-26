@@ -35,8 +35,7 @@ Advantages:
 - [matterbridge]: Added brand to MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
 - [PluginManager]: Verify brand of MatterbridgePlatform, MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
 - [MatterbridgePlatform]: Verify brand of MatterbridgeEndpoint.
-- [BasicVideoPlayer]: Added Basic Video Player class.
-- [CastingVideoPlayer]: Added Casting Video Player class.
+- [BasicVideoPlayer]: Added Basic Video Player class (suported by SmartThings).
 
 ### Changed
 

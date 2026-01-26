@@ -149,6 +149,10 @@ export interface MatterbridgeEndpointCommands {
   play: HandlerFunction;
   // pause: HandlerFunction; Already defined
   // stop: HandlerFunction; Already defined
+  previous: HandlerFunction;
+  next: HandlerFunction;
+  skipForward: HandlerFunction;
+  skipBackward: HandlerFunction;
 
   // KeypadInput Control
   sendKey: HandlerFunction;
