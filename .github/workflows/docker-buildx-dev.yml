@@ -48,6 +48,7 @@ jobs:
           npm pkg set build.type="${GITHUB_REF_TYPE}"
           npm pkg set build.name="${GITHUB_REF_NAME}"
           npm pkg set build.docker="true"
+          npm pkg set build.dev="true"
 
       - name: Extract base version, date and commit
         id: vars
