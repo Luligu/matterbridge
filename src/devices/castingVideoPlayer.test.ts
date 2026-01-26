@@ -1,7 +1,7 @@
-// src/basicVideoPlayer.test.ts
+// src/castingVideoPlayer.test.ts
 
-const MATTER_PORT = 8017;
-const NAME = 'BasicVideoPlayer';
+const MATTER_PORT = 8018;
+const NAME = 'CastingVideoPlayer';
 const HOMEDIR = path.join('jest', NAME);
 
 import path from 'node:path';
@@ -15,6 +15,8 @@ import { KeypadInputServer } from '@matter/node/behaviors/keypad-input';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { KeypadInput } from '@matter/types/clusters/keypad-input';
+import { ContentLauncher } from '@matter/types/clusters/content-launcher';
+import { ContentLauncherServer } from '@matter/node/behaviors/content-launcher';
 
 // Matterbridge
 import { basicVideoPlayer } from '../matterbridgeDeviceTypes.js';
@@ -22,7 +24,7 @@ import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { addDevice, aggregator, createTestEnvironment, deleteDevice, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
-import { BasicVideoPlayer } from './basicVideoPlayer.js';
+import { CastingVideoPlayer } from './castingVideoPlayer.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -53,18 +55,19 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   }, 10000);
 
-  test('create a basic video player device', async () => {
-    device = new BasicVideoPlayer('BasicVideoPlayer Test Device', 'BVP123456');
+  test('create a casting video player device', async () => {
+    device = new CastingVideoPlayer('CastingVideoPlayer Test Device', 'CVP123456');
     expect(device).toBeDefined();
-    expect(device.id).toBe('BasicVideoPlayerTestDevice-BVP123456');
+    expect(device.id).toBe('CastingVideoPlayerTestDevice-CVP123456');
     expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(MediaPlayback.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(KeypadInput.Cluster.id)).toBeTruthy();
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'powerSource', 'onOff', 'mediaPlayback', 'keypadInput']);
+    expect(device.hasClusterServer(ContentLauncher.Cluster.id)).toBeTruthy();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'powerSource', 'onOff', 'mediaPlayback', 'keypadInput', 'contentLauncher']);
   });
 
-  test('add a basic video player device', async () => {
+  test('add a casting video player device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
@@ -86,12 +89,13 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(44);
+    expect(attributes.length).toBe(49);
   });
 
   test('invoke commands', async () => {
     expect(device.behaviors.has(MediaPlaybackServer)).toBeTruthy();
     expect(device.behaviors.has(KeypadInputServer)).toBeTruthy();
+    expect(device.behaviors.has(ContentLauncherServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(MediaPlaybackServer).commands.has('play')).toBeTruthy();
     expect(device.behaviors.elementsOf(MediaPlaybackServer).commands.has('pause')).toBeTruthy();
     expect(device.behaviors.elementsOf(MediaPlaybackServer).commands.has('stop')).toBeTruthy();
@@ -100,6 +104,8 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['mediaPlayback'].generatedCommandList).toEqual([0xa]);
     expect((device as any).state['keypadInput'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['keypadInput'].generatedCommandList).toEqual([1]);
+    expect((device as any).state['contentLauncher'].acceptedCommandList).toEqual([]);
+    expect((device as any).state['contentLauncher'].generatedCommandList).toEqual([]);
 
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'onOff', 'on', {});
@@ -137,7 +143,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
   });
 
-  test('remove the basic video player device', async () => {
+  test('remove the casting video player device', async () => {
     expect(await deleteDevice(server, device)).toBeTruthy();
   });
 
