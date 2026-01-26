@@ -145,6 +145,14 @@ export interface MatterbridgeEndpointCommands {
   setCookingParameters: HandlerFunction;
   addMoreTime: HandlerFunction;
 
+  // MediaPlayback Control
+  play: HandlerFunction;
+  // pause: HandlerFunction; Already defined
+  // stop: HandlerFunction; Already defined
+
+  // KeypadInput Control
+  sendKey: HandlerFunction;
+
   // Resource Monitoring
   resetCondition: HandlerFunction;
 }
