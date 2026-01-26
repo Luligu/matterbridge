@@ -175,8 +175,8 @@ HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
   CMD curl --fail http://localhost:8283/health || exit 1
 
 # Copy and execute the entrypoint script
-COPY ./docker/entrypoint.debian.sh ./
-RUN chmod +x ./entrypoint.debian.sh
-ENTRYPOINT ["./entrypoint.debian.sh"]
+COPY ./docker/entrypoint.dev.sh ./
+RUN chmod +x ./entrypoint.dev.sh
+ENTRYPOINT ["./entrypoint.dev.sh"]
 CMD ["matterbridge", "-docker"]
 # ─────────────── END ───────────────

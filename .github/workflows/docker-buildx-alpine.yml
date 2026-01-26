@@ -65,6 +65,8 @@ jobs:
       - name: Run Docker Buildx with Dockerfile.alpine
         run: |
           docker buildx build \
+            --no-cache \
+            --pull \
             --platform linux/amd64,linux/arm64 \
             -f docker/Dockerfile.alpine \
             -t luligu/matterbridge:alpine \

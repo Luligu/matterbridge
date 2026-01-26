@@ -1,5 +1,5 @@
 # ─────────────── BUILD STAGE ───────────────
-FROM ubuntu:latest AS base
+FROM ubuntu:latest AS builder
 
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
@@ -55,7 +55,7 @@ RUN apt update || (sleep 10 && apt update) || (sleep 20 && apt update) && \
 
 # Install matterbridge
 WORKDIR /matterbridge    
-COPY --from=base /matterbridge/*.tgz .
+COPY --from=builder /matterbridge/*.tgz .
 RUN npm install *.tgz --global --verbose --no-fund --no-audit --omit=dev && \
   rm *.tgz
 

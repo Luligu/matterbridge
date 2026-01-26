@@ -19,7 +19,7 @@ on:
 
 # Cancel previous runs when a new one is triggered
 concurrency:
-  group: docker-build-main
+  group: docker-build-latest
   cancel-in-progress: true
 
 jobs:
@@ -79,8 +79,10 @@ jobs:
       - name: Run Docker Buildx on latest
         run: |
           docker buildx build \
+            --no-cache \
+            --pull \
             --platform linux/amd64,linux/arm64 \
-            -f docker/Dockerfile.main \
+            -f docker/Dockerfile.latest \
             -t luligu/matterbridge:latest \
             -t luligu/matterbridge:${{ env.VERSION }} \
             --push .

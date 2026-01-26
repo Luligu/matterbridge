@@ -175,14 +175,14 @@
     "buildAll": "npm run build && npm --workspaces run build",
     "lintAll": "npm run lint && npm --workspaces run lint",
     "testAll": "npm run test && npm --workspaces run test",
-    "docker:build:local:latest": "docker build -f docker/Dockerfile.main -t matterbridge:latest .",
-    "docker:run:local:latest": "docker run --rm -it --name matterbridge-latest -p 8585:8283 matterbridge:latest",
-    "docker:build:local:dev": "docker build -f docker/Dockerfile.dev -t matterbridge:dev .",
-    "docker:run:local:dev": "docker run --rm -it --name matterbridge-dev -p 8585:8283 matterbridge:dev",
-    "docker:build:local:ubuntu": "docker build -f docker/Dockerfile.ubuntu -t matterbridge:ubuntu .",
-    "docker:run:local:ubuntu": "docker run --rm -it --name matterbridge-ubuntu -p 8585:8283 matterbridge:ubuntu",
-    "docker:build:local:alpine": "docker build -f docker/Dockerfile.alpine -t matterbridge:alpine .",
-    "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine -p 8585:8283 matterbridge:alpine"
+    "docker:build:local:latest": "docker build --no-cache --pull -f docker/Dockerfile.latest -t matterbridge:latest .",
+    "docker:run:local:latest": "docker run --rm -it --name matterbridge-latest-local -p 8585:8283 matterbridge:latest",
+    "docker:build:local:dev": "docker build --no-cache --pull -f docker/Dockerfile.dev -t matterbridge:dev .",
+    "docker:run:local:dev": "docker run --rm -it --name matterbridge-dev-local -p 8585:8283 matterbridge:dev",
+    "docker:build:local:ubuntu": "docker build --no-cache --pull -f docker/Dockerfile.ubuntu -t matterbridge:ubuntu .",
+    "docker:run:local:ubuntu": "docker run --rm -it --name matterbridge-ubuntu-local -p 8585:8283 matterbridge:ubuntu",
+    "docker:build:local:alpine": "docker build --no-cache --pull -f docker/Dockerfile.alpine -t matterbridge:alpine .",
+    "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine-local -p 8585:8283 matterbridge:alpine"
   },
   "dependencies": {
     "@matter/main": "0.16.7",

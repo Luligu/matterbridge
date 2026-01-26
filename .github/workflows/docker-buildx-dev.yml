@@ -59,6 +59,7 @@ jobs:
           DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
           echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
           echo "ORIG_SHA=$SHA"    >> $GITHUB_ENV
+          echo "BASE=$BASE" >> $GITHUB_ENV
 
       - name: Bump to date-commit-stamped version --no-git-tag-version tag ${{ env.DEV_TAG }} sha ${{ env.ORIG_SHA }}
         run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version --ignore-scripts
@@ -82,9 +83,12 @@ jobs:
       - name: Run Docker Buildx on dev
         run: |
           docker buildx build \
+            --no-cache \
+            --pull \
             --platform linux/amd64,linux/arm64 \
             -f docker/Dockerfile.dev \
             -t luligu/matterbridge:dev \
+            -t luligu/matterbridge:dev-${{ env.BASE }} \
             --push .
         timeout-minutes: 60
 

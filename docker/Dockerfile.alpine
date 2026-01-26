@@ -1,4 +1,4 @@
-FROM node:24-alpine AS base
+FROM node:24-alpine AS builder
 
 # Build Matterbridge
 WORKDIR /matterbridge
@@ -34,7 +34,7 @@ FROM node:24-alpine AS release
 
 # Install matterbridge
 WORKDIR /matterbridge
-COPY --from=base /matterbridge/*.tgz .
+COPY --from=builder /matterbridge/*.tgz .
 RUN npm install *.tgz --global --verbose --no-fund --no-audit --omit=dev && rm *.tgz
 
 # Add Docker HEALTHCHECK

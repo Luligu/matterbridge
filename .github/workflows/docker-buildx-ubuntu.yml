@@ -65,6 +65,8 @@ jobs:
       - name: Run Docker Buildx with Dockerfile.ubuntu
         run: |
           docker buildx build \
+            --no-cache \
+            --pull \
             --platform linux/amd64,linux/arm64 \
             -f docker/Dockerfile.ubuntu \
             -t luligu/matterbridge:ubuntu \

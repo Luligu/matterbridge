@@ -2,17 +2,13 @@
 
 FLAG_FILE="/matterbridge/.initialized"
 
-echo "Welcome to the Matterbridge ubuntu docker image."
-echo "It is based on ubuntu:latest and node 24 (https://deb.nodesource.com) and includes matterbridge built from the source (GitHub main branch)."
+echo "Welcome to the Matterbridge dev docker image."
+echo "This image is intended for development and testing purposes only."
+echo "It is based on node:22-bookworm-slim and includes matterbridge and all official plugins built from the source (GitHub dev branch when available)."
 
 if [ ! -f "$FLAG_FILE" ]; then
 
-  echo "Installing bluetooth essentials:"
-  apt-get update
-  apt-get install -y --no-install-recommends \
-    bluetooth bluez libbluetooth-dev libudev-dev build-essential libcap2-bin \
-    python3
-  setcap 'cap_net_raw+eip' "$(which node)"
+  # Optional packages
 
   # Create the flag file to indicate initialization has been done
   touch "$FLAG_FILE"
