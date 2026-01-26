@@ -46,9 +46,10 @@ import { EndpointNumber, FabricIndex } from '@matter/types/datatype';
 import { CommissioningOptions } from '@matter/types/commissioning';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { PowerSource } from '@matter/types/clusters/power-source';
-// Matterbridge
+// @matterbridge
 import { createZip, formatBytes, formatPercent, formatUptime, getParameter, hasParameter, inspectError, isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString, wait, withTimeout } from '@matterbridge/utils';
 
+// Matterbridge
 import type { Cluster, ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, Plugin } from './matterbridgeTypes.js';
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

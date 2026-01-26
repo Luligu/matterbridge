@@ -25,7 +25,7 @@
 import { LogLevel } from 'node-ansi-logger';
 import { EndpointNumber } from '@matter/types/datatype';
 
-import { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
+import type { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, Plugin, StoragePlugin } from './matterbridgeTypes.js';
 

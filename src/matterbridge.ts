@@ -1175,7 +1175,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     } else {
       // The global node_modules directory is already set in the node storage and we check if it is still valid
       this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-      const { createESMWorker } = await import('./workers.js');
+      const { createESMWorker } = await import('./worker.js');
       createESMWorker('NpmGlobalPrefix', path.join(this.rootDirectory, 'dist/workerGlobalPrefix.js'));
     }
 

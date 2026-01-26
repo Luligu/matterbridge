@@ -28,7 +28,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { getGlobalNodeModules, hasParameter, inspectError } from '@matterbridge/utils';
 
 import { BroadcastServer } from './broadcastServer.js';
-import { logWorkerInfo, parentLog, parentPost } from './workers.js';
+import { logWorkerInfo, parentLog, parentPost } from './worker.js';
 
 const debug = hasParameter('debug') || hasParameter('verbose');
 const verbose = hasParameter('verbose');

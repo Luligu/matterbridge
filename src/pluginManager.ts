@@ -27,9 +27,10 @@ import EventEmitter from 'node:events';
 
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr, debugStringify, CYAN } from 'node-ansi-logger';
-// Matterbridge
+// @matterbridge
 import { hasParameter, inspectError, logError } from '@matterbridge/utils';
 
+// Matterbridge
 import type { Matterbridge } from './matterbridge.js';
 import { assertMatterbridgePlatform, type MatterbridgePlatform, type PlatformConfig, type PlatformMatterbridge, type PlatformSchema } from './matterbridgePlatform.js';
 import { ApiPlugin, plg, Plugin, PluginName, StoragePlugin, typ } from './matterbridgeTypes.js';

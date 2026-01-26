@@ -11,7 +11,7 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 
 import { loggerDebugSpy, setupTest } from './jestutils/jestHelpers.js';
-import { createESMWorker, logWorkerInfo } from './workers.js';
+import { createESMWorker, logWorkerInfo } from './worker.js';
 import type { ParentPortMessage } from './workerTypes.js';
 
 // Setup the test environment
@@ -65,7 +65,7 @@ describe('Workers', () => {
       expect(workerId).toBeGreaterThan(0);
       worker.on('online', resolve);
       worker.on('error', (error) => {
-        log.error(`Worker thread ${workerName}:${workerId} encountered an error: ${error.message}`);
+        log.error(`Worker thread ${workerName}:${workerId} encountered an error: ${error}`);
         reject(error);
       });
     });
@@ -74,7 +74,7 @@ describe('Workers', () => {
       expect(worker).toBeDefined();
       worker.on('exit', resolve);
       worker.on('error', (error) => {
-        log.error(`Worker thread ${workerName}:${workerId} encountered an error: ${error.message}`);
+        log.error(`Worker thread ${workerName}:${workerId} encountered an error: ${error}`);
         reject(error);
       });
     });
