@@ -143,7 +143,7 @@
     "version:patch": "npm version patch -m \"Release %s\"",
     "version:minor": "npm version minor -m \"Release %s\"",
     "version:major": "npm version major -m \"Release %s\"",
-    "git:status": "git status && git branch -vv && git diff dev origin/dev && git stash list",
+    "git:status": "git status && git branch -vv && git --no-pager diff dev origin/dev && git stash list && git fsck --full --no-reflogs",
     "git:remote": "git remote -v && git remote show origin",
     "git:prune": "git fetch --prune --prune-tags",
     "git:hardreset:main": "git fetch origin && git checkout main && git reset --hard origin/main",
