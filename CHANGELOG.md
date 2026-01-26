@@ -41,7 +41,7 @@ Advantages:
 
 - [package]: Updated dependencies.
 - [docker]: Clarified in docker readme the content of the matterbridge docker images on Docker Hub.
-- [frontend]: The frontend shows when the plugin is from the matterbridge docker image with tag dev.
+- [frontend]: The frontend now shows when the plugin version is from the matterbridge docker image with tag dev.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

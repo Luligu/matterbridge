@@ -100,7 +100,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.elementsOf(MediaPlaybackServer).commands.has('pause')).toBeTruthy();
     expect(device.behaviors.elementsOf(MediaPlaybackServer).commands.has('stop')).toBeTruthy();
     expect(device.behaviors.elementsOf(KeypadInputServer).commands.has('sendKey')).toBeTruthy();
-    expect((device as any).state['mediaPlayback'].acceptedCommandList).toEqual([0, 1, 2]);
+    expect((device as any).state['mediaPlayback'].acceptedCommandList).toEqual([0, 1, 2, 4, 5, 8, 9]);
     expect((device as any).state['mediaPlayback'].generatedCommandList).toEqual([0xa]);
     expect((device as any).state['keypadInput'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['keypadInput'].generatedCommandList).toEqual([1]);
