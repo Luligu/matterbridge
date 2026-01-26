@@ -1,5 +1,7 @@
 // Chapter 10. Media Device Types - Single class device types
 export * from './speaker.js';
+export * from './basicVideoPlayer.js';
+export * from './castingVideoPlayer.js';
 
 // Chapter 12. Robotic Device Types - Single class device types
 export * from './roboticVacuumCleaner.js';
