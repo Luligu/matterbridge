@@ -18,17 +18,17 @@
 
 ## Run matterbridge with docker and docker compose
 
-The Matterbridge Docker image, which includes a manifest list for the linux/amd64 and linux/arm64 architectures, is published on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
+The Matterbridge Docker images, which include a manifest list for the linux/amd64 and linux/arm64 architectures, are published on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge). If you use the matterbridge docker images, please consider giving them a star on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
 
-The image (tag **latest**) includes matterbridge and all official plugins with the latest release (as published on npm). You can just pull the new image and matterbridge with all plugins will be the latest release published on npm.
+The image (tag **latest**) includes matterbridge and all official plugins with the latest release as published on npm. The image is based on node:22-bookworm-slim. Since all official plugins are included, you can directly select and add a plugin without installing it.
 
-The image (tag **dev**) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest dev release pushed on GitHub. It is possible that the devs are outdated by published latests.
+The image (tag **dev**) includes matterbridge and all official plugins with the latest push on GitHub. The image is based on node:22-bookworm-slim. Since all official plugins are included, you can directly select and add a plugin without installing it. If you update to the latest dev from the frontend, you override the latest push on GitHub with the latest dev published on npm.
 
-For development and testing see also the [Development Images](README-DOCKER.md#development-images).
+For development and testing see also the **ubuntu** and **alpine** [Development Images](README-DOCKER.md#development-images).
 
-You can directly select and add a plugin without installing it.
+### Docker health check
 
-It is based on node:22-bookworm-slim and integrates the health check.
+All images integrate the health check.
 
 How Health Checks Work in Different Scenarios
 
@@ -46,8 +46,6 @@ You can manually check the health status:
 ```bash
 docker exec -it matterbridge curl -v http://localhost:8283/health
 ```
-
-If you use the docker image, please consider giving it a star on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
 
 ### First create the Matterbridge directories
 

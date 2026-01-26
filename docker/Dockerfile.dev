@@ -40,55 +40,94 @@ RUN npm ci --no-fund --no-audit && \
   npm pack
 
 WORKDIR /matterbridge-zigbee2mqtt
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-somfy-tahoma
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-somfy-tahoma.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-somfy-tahoma.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-shelly
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-shelly.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-shelly.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-hass
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-hass.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-hass.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-webhooks
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-webhooks.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-webhooks.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-test
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-test.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-test.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-example-accessory-platform
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-accessory-platform.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-accessory-platform.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-example-dynamic-platform
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-dynamic-platform.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-dynamic-platform.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-door
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-door.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-door.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-motion
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-motion.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-motion.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-energy
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-energy.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-energy.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-room
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-room.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-room.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-weather
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-weather.git .
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-weather.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-dev-${SHA7}"
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf ./node_modules && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 # ─────────────── RUNTIME STAGE ───────────────
