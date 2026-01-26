@@ -197,7 +197,6 @@ export async function getPluginLatestVersion(log: AnsiLogger, server: BroadcastS
     if (plugin.version !== plugin.latestVersion) {
       log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
       server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
-      // matterbridge.frontend.wssSendRefreshRequired('plugins');
     } else {
       log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
     }
@@ -223,10 +222,9 @@ export async function getPluginDevVersion(log: AnsiLogger, server: BroadcastServ
     const version = await getNpmPackageVersion(plugin.name, 'dev');
     plugin.devVersion = version;
     server.request({ type: 'plugins_set_dev_version', src: server.name, dst: 'plugins', params: { plugin, version } });
-    if (plugin.version.includes('-dev-') && plugin.version !== plugin.devVersion) {
+    if ((plugin.version.includes('-dev-') || plugin.version.includes('-git-')) && plugin.version !== plugin.devVersion) {
       log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest dev version: ${plugin.devVersion}.`);
       server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
-      // matterbridge.frontend.wssSendRefreshRequired('plugins');
     } else if (plugin.version.includes('-dev-') && plugin.version === plugin.devVersion) {
       log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest dev version: ${plugin.devVersion}.`);
     }

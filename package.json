@@ -72,6 +72,10 @@
       "import": "./dist/utils/export.js",
       "types": "./dist/utils/export.d.ts"
     },
+    "./dgram": {
+      "import": "./dist/dgram/export.js",
+      "types": "./dist/dgram/export.d.ts"
+    },
     "./jestutils": {
       "import": "./dist/jestutils/export.js",
       "types": "./dist/jestutils/export.d.ts"
@@ -153,7 +157,7 @@
     "dataModel": "node ./scripts/data-model.mjs",
     "fetchChip": "node ./scripts/fetch-chip.mjs",
     "updateHtmls": "node ./scripts/marked.mjs",
-    "runMeBeforePublish": "npm run build && npm run lint && npm run format && npm run test && npm run build",
+    "runMeBeforePublish": "npm run build && npm run lint && npm run format && npm run test && npm run build && npm run updateHtmls",
     "prepublishOnly": "npm pkg delete devDependencies scripts workspaces && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap --omit=dev",
     "prepublishOnlyProduction": "npm run cleanBuildProduction && npm run prepublishOnly",
     "npmPack": "npx shx cp package.json package.json.backup && node scripts/version.mjs dev && npm run prepublishOnlyProduction && npm pack && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
@@ -214,7 +218,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest": "29.12.1",
-    "eslint-plugin-jsdoc": "62.4.0",
+    "eslint-plugin-jsdoc": "62.4.1",
     "eslint-plugin-n": "17.23.2",
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-promise": "7.2.1",
@@ -225,7 +229,7 @@
     "shx": "0.4.0",
     "ts-jest": "29.4.6",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.53.1",
+    "typescript-eslint": "8.54.0",
     "vitest": "4.0.18"
   }
 }

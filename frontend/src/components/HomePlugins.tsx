@@ -197,7 +197,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
               </IconButton>
             </Tooltip>
           )}
-          {plugin.version.includes('-dev-') && plugin.devVersion !== undefined && plugin.devVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
+          {(plugin.version.includes('-dev-') || plugin.version.includes('-git-')) && plugin.devVersion !== undefined && plugin.devVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
             <Tooltip title='Update the plugin to the latest dev version' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton style={{ color: 'var(--secondary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleUpdateDevPlugin(plugin)} size='small'>
                 <SystemUpdateAltIcon />
