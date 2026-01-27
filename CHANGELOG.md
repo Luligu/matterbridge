@@ -1,4 +1,4 @@
-# <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
+# <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -35,7 +35,8 @@ Advantages:
 - [matterbridge]: Added brand to MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
 - [PluginManager]: Verify brand of MatterbridgePlatform, MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
 - [MatterbridgePlatform]: Verify brand of MatterbridgeEndpoint.
-- [BasicVideoPlayer]: Added Basic Video Player class (suported by SmartThings).
+- [BasicVideoPlayer]: Added **Basic Video Player** class (suported by SmartThings).
+- [frontend]: Added **pluginIgnoreList** to avoid to install a plugin that is only a test or a name reservation on npm.
 
 ### Changed
 
@@ -59,7 +60,7 @@ Advantages:
 - [mb_mdns]: Added --ip-filter params to filter incoming mDns messages by sender ip.
 - [express]: Added a login check for internal express api. The /health and /memory api don't need a login. Thanks Rogibaer (https://github.com/Luligu/matterbridge-hass/issues/149).
 - [readme]: Added a section with the data structure and backup/restore guidelines.
-- [matterbridge]: Add brand to MatterbridgePlatform and MatterbridgeEndpoint.
+- [matterbridge]: Added brand to MatterbridgePlatform and MatterbridgeEndpoint.
 
 ### Changed
 

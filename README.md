@@ -1,9 +1,9 @@
-# <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
+# <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
-[![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver)](https://hub.docker.com/r/luligu/matterbridge)
-[![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge.svg)](https://hub.docker.com/r/luligu/matterbridge)
+[![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge/latest?label=docker%20version)](https://hub.docker.com/r/luligu/matterbridge)
+[![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
@@ -39,7 +39,7 @@ It runs perfectly on Linux, macOS and Windows.
 
 If you like this project and find it useful, please consider giving it a star on [GitHub](https://github.com/Luligu/matterbridge) and sponsoring it.
 
-<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
 ## Acknowledgements
 
@@ -282,7 +282,7 @@ It is the ideal companion of the official [Matterbridge Home Assistant Add-on](h
 ### Webhooks
 
 <a href="https://github.com/Luligu/matterbridge-webhooks">
-  <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge logo" width="100" />
+  <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge logo" width="100" />
 </a>
 
 Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.
@@ -290,7 +290,7 @@ Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.
 ### BTHome
 
 <a href="https://github.com/Luligu/matterbridge-webhooks">
-  <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge logo" width="100" />
+  <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge logo" width="100" />
 </a>
 
 Matterbridge BTHome allows you to expose any BTHome device to Matter using the native bluetooth of the host machine.
@@ -687,7 +687,7 @@ On my side I sponsor the packages that I use in this project and single develope
 Click on the badge below to get started:
 
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
 Thank you for your support!
