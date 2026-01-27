@@ -40,8 +40,8 @@ Advantages:
 ### Changed
 
 - [package]: Updated dependencies.
-- [docker]: Clarified in docker readme the content of the matterbridge docker images on Docker Hub.
-- [frontend]: The frontend now shows when the plugin version is from the matterbridge docker image with tag dev.
+- [docker]: Clarified in [README-DOCKER.md](README-DOCKER.md) the content of the matterbridge docker images on Docker Hub.
+- [frontend]: In the matterbridge docker image with tag dev, the frontend now shows the versions with the tag git.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
