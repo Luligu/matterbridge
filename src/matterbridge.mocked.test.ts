@@ -633,10 +633,10 @@ describe('Matterbridge mocked', () => {
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     // Mock the checkUpdates from update module before importing it
-    jest.unstable_mockModule('./update.js', () => ({
+    jest.unstable_mockModule('./checkUpdates.js', () => ({
       checkUpdates: jest.fn().mockImplementation(() => Promise.resolve()), // Mock the checkUpdates function to resolve immediately
     }));
-    const update = await import('./update.js');
+    const update = await import('./checkUpdates.js');
     const checkUpdatesMock = update.checkUpdates;
     jest.useFakeTimers();
     await (matterbridge as any).initialize();

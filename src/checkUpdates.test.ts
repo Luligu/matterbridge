@@ -1,4 +1,4 @@
-// src\update.test.ts
+// src\checkUpdates.test.ts
 
 const MATTER_PORT = 13000;
 const FRONTEND_PORT = 8810;
@@ -12,7 +12,7 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-logger';
 
-import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './update.js';
+import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './checkUpdates.js';
 import { ApiPlugin, plg } from './matterbridgeTypes.js';
 import { flushAsync, loggerDebugSpy, loggerNoticeSpy, loggerWarnSpy, matterbridge, setupTest, startMatterbridge, stopMatterbridge, wssSendRefreshRequiredSpy, wssSendSnackbarMessageSpy, wssSendUpdateRequiredSpy } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';

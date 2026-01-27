@@ -1,7 +1,7 @@
 /**
  * This file contains the check updates functions.
  *
- * @file update.ts
+ * @file checkUpdates.ts
  * @author Luca Liguori
  * @created 2025-02-24
  * @version 2.0.1

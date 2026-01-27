@@ -79,4 +79,45 @@ describe('Workers', () => {
       });
     });
   });
+
+  test('Run workerCheckUpdates in the mainThread', async () => {
+    // process.argv.push('--verbose');
+    await import('./workerCheckUpdates.js');
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/Check updates succeeded/));
+    // process.argv.pop();
+  });
+
+  test('Run workerCheckUpdates as a worker thread', async () => {
+    let worker: Worker;
+    let workerName: string | null;
+    let workerId: number;
+
+    function messageHandler(message: ParentPortMessage): void {
+      log.notice(`Main thread received message from worker ${message.threadName}:${message.threadId}:${rs}\n${inspect(message, false, 2, true)}`);
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      worker = createESMWorker('CheckUpdates', './dist/workerCheckUpdates.js');
+      worker.on('message', messageHandler);
+      workerName = 'CheckUpdates';
+      workerId = worker.threadId;
+      expect(worker).toBeDefined();
+      expect(workerName).toBeDefined();
+      expect(workerId).toBeGreaterThan(0);
+      worker.on('online', resolve);
+      worker.on('error', (error) => {
+        log.error(`Worker thread ${workerName}:${workerId} encountered an error: ${error}`);
+        reject(error);
+      });
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      expect(worker).toBeDefined();
+      worker.on('exit', resolve);
+      worker.on('error', (error) => {
+        log.error(`Worker thread ${workerName}:${workerId} encountered an error: ${error}`);
+        reject(error);
+      });
+    });
+  });
 });
