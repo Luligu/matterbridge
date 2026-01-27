@@ -1,4 +1,4 @@
-# <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge docker configuration
+# <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge Docker configuration
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -8,38 +8,34 @@
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
 
-[![power by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
-[![power by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
-[![power by](https://img.shields.io/badge/powered%20by-node--persist--manager-blue)](https://www.npmjs.com/package/node-persist-manager)
+[![powered by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
+[![powered by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
+[![powered by](https://img.shields.io/badge/powered%20by-node--persist--manager-blue)](https://www.npmjs.com/package/node-persist-manager)
 
 ---
 
 # Advanced configuration
 
-## Run matterbridge with docker and docker compose
+## Run Matterbridge with Docker and Docker Compose
 
-The Matterbridge Docker images, which include a manifest list for the linux/amd64 and linux/arm64 architectures, are published on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge). If you use the matterbridge docker images, please consider giving them a star on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
+The Matterbridge Docker images (multi-arch manifest list for **linux/amd64** and **linux/arm64**) are published on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge). If you use them, please consider starring the project on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
 
-The image (tag **latest**) includes matterbridge and all official plugins with the latest release as published on npm. The image is based on node:22-bookworm-slim. Since all official plugins are included, you can directly select and add a plugin without installing it.
+The image (tag **latest**) includes Matterbridge and all official plugins, using the latest release published on npm. It is based on `node:22-bookworm-slim`. Since all official plugins are included, you can select and add a plugin without installing anything.
 
-The image (tag **dev**) includes matterbridge and all official plugins with the latest push on GitHub. The image is based on node:22-bookworm-slim. Since all official plugins are included, you can directly select and add a plugin without installing it. If you update to the latest dev from the frontend, you override the latest push on GitHub with the latest dev published on npm.
+The image (tag **dev**) includes Matterbridge and all official plugins from the latest push on GitHub. It is based on `node:22-bookworm-slim`. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest **dev** from the frontend, you will override the GitHub version with the latest **dev** published on npm.
 
-For development and testing see also the **ubuntu** and **alpine** [Development Images](README-DOCKER.md#development-images).
+The image (tag **ubuntu**) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image; they will be installed on first run. This image preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
+
+The image (tag **alpine**) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `node:24-alpine`. Plugins are not included in the image; they will be installed on first run.
 
 ### Docker health check
 
-All images integrate the health check.
+All images include a health check.
 
-How Health Checks Work in Different Scenarios
+How health checks work in different scenarios:
 
-With docker-compose:
-
-Docker monitors the health check and can restart the container if needed.
-
-With docker run:
-
-The health check still runs in the background, but:
-The container doesn’t restart automatically if it becomes unhealthy.
+- With Docker Compose: Docker monitors the health check and can restart the container (depending on your restart policy).
+- With `docker run`: the health check still runs, but the container will not restart automatically when it becomes unhealthy.
 
 You can manually check the health status:
 
@@ -47,9 +43,9 @@ You can manually check the health status:
 docker exec -it matterbridge curl -v http://localhost:8283/health
 ```
 
-### First create the Matterbridge directories
+### Create the Matterbridge directories first
 
-This will create the required directories in your home directory if they don't exist
+This creates the required directories in your home directory (if they don't already exist):
 
 ```bash
 cd ~
@@ -59,9 +55,9 @@ mkdir -p ~/.mattercert
 sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert
 ```
 
-You may need to adapt the script to your setup.
+You may need to adapt the paths to your setup.
 
-### Add your user to docker group
+### Add your user to the docker group
 
 If you don't want to use sudo with docker commands, run this command:
 
@@ -70,11 +66,11 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
 
-After adding your user to the docker group, you need to log out and log back in for the changes to take effect. This ensures that your current session recognizes the group membership change.
+After adding your user to the `docker` group, log out and log back in so your current session picks up the new group membership.
 
-### Run the Docker container and start it
+### Run the container
 
-The container must have full access to the host network (needed for mdns and Matter protocol).
+The container must have full access to the host network (needed for mDNS and the Matter protocol).
 
 ```bash
 sudo docker run --name matterbridge \
@@ -84,9 +80,9 @@ sudo docker run --name matterbridge \
   --network host --restart always -d luligu/matterbridge:latest
 ```
 
-You may need to adapt the script to your setup.
+You may need to adapt the paths to your setup.
 
-### Run the Docker container and start it adding different parameters (i.e. frontend on port 8585)
+### Run the container with extra parameters (e.g. frontend on port 8585)
 
 ```bash
 sudo docker run --name matterbridge \
@@ -97,18 +93,18 @@ sudo docker run --name matterbridge \
   matterbridge --docker --frontend 8585
 ```
 
-If you override, always use `matterbridge --docker` like first part of the command.
+If you override the command, always start it with `matterbridge --docker`.
 
-### Run with docker compose
+### Run with Docker Compose
 
-The docker-compose.yml file is available in the docker directory of the package
+The `docker-compose.yml` file is available in the `docker` directory of this repository:
 
 ```yaml
 services:
   matterbridge:
     container_name: matterbridge
     image: luligu/matterbridge:latest                         # Matterbridge image with the tag latest
-    network_mode: host                                        # Ensures the Matter mdns works
+    network_mode: host                                        # Ensures the Matter mDNS works
     restart: always                                           # Ensures the container always restarts automatically
     volumes:
       - "${HOME}/Matterbridge:/root/Matterbridge"             # Mounts the Matterbridge plugin directory
@@ -116,21 +112,21 @@ services:
       - "${HOME}/.mattercert:/root/.mattercert"               # Mounts the Matterbridge certificate directory
 ```
 
-Copy it in the home directory or edit the existing one to add the matterbridge service.
+Copy it to your home directory or edit your existing compose file to add the Matterbridge service.
 
-Then start docker compose with:
+Then start Docker Compose with:
 
 ```bash
 docker compose up -d
 ```
 
-or start only the matterbridge container with:
+Or start only the Matterbridge container with:
 
 ```bash
 docker compose up -d matterbridge
 ```
 
-If you need to start matterbridge adding different parameters (i.e. frontend on port 8585), you can override the default command adding the line command to the service:
+If you need to start Matterbridge with extra parameters (e.g. frontend on port 8585), override the default command by adding a `command` line to the service:
 
 ```yaml
 services:
@@ -139,17 +135,17 @@ services:
     command: ["matterbridge", "--docker", "--frontend", "8585"]
 ```
 
-If you override, always use `["matterbridge", "--docker"]` like first part of the command.
+If you override the command, always start it with `["matterbridge", "--docker"]`.
 
-### Stop with docker compose
+### Stop with Docker Compose
 
 ```bash
 docker compose down
 ```
 
-### Update with docker compose
+### Update with Docker Compose
 
-This will pull the new matterbridge image and restart only the matterbridge container.
+This pulls the new Matterbridge image and restarts only the Matterbridge container:
 
 ```bash
 docker compose pull matterbridge
@@ -180,13 +176,13 @@ docker stop matterbridge
 docker restart matterbridge
 ```
 
-### Shows the logs
+### Show the logs
 
 ```bash
 docker logs matterbridge
 ```
 
-### Shows the logs for a time interval
+### Show the logs for a time interval
 
 ```bash
 docker logs \
@@ -195,15 +191,15 @@ docker logs \
   matterbridge
 ```
 
-### Shows the logs real time (tail)
+### Show the logs in real time (tail)
 
 ```bash
 docker logs --tail 1000 -f matterbridge
 ```
 
-### Prevent the logs to grow
+### Prevent log growth
 
-If you want to prevent the docker logs to grow too much, you can configure Docker's logging options globally.
+If you want to prevent Docker logs from growing too much, you can configure Docker's logging options globally.
 
 **Warning**: This will restart Docker and affect all running containers.
 
@@ -211,7 +207,7 @@ If you want to prevent the docker logs to grow too much, you can configure Docke
 sudo nano /etc/docker/daemon.json
 ```
 
-Add or update the logging configuration in the daemon.json file:
+Add or update the logging configuration in `daemon.json`:
 
 ```json
 {
@@ -234,12 +230,4 @@ Save the file and restart Docker:
 sudo systemctl restart docker
 ```
 
-**Note**: This configuration applies to new containers. Existing containers will need to be recreated to use the new logging settings.
-
-## Development images
-
-On [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge) are also published **for test and development** the Matterbridge ubuntu and alpine images, which include a manifest list for the linux/amd64, linux/arm64 architectures and are based on node 24.x.
-
-The image (tag **ubuntu**) includes only matterbridge with the latest release (as published on npm). The plugins are not included in the image but they will be reinstalled on the first run. This image has preinstalled bluetooth essentials and python (it can be used with plugins that require bluetooth, build-essential and python).
-
-The image (tag **alpine**) includes only matterbridge with the latest release (as published on npm). The plugins are not included in the image but they will be reinstalled on the first run.
+**Note**: This configuration applies to new containers. Existing containers must be recreated to use the new logging settings.
