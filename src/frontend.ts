@@ -1760,7 +1760,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         }
       } else if (data.method === '/api/checkupdates') {
-        const { checkUpdates } = await import('./update.js');
+        const { checkUpdates } = await import('./checkUpdates.js');
         checkUpdates(this.matterbridge);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellysysupdate') {

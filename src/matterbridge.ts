@@ -48,7 +48,22 @@ import { BasicInformationServer } from '@matter/node/behaviors/basic-information
 import { copyDirectory, createDirectory, formatBytes, formatPercent, formatUptime, getIntParameter, getParameter, hasParameter, isValidNumber, isValidObject, isValidString, parseVersionString } from '@matterbridge/utils';
 
 // Matterbridge
-import { ApiMatter, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, MaybePromise, NODE_STORAGE_DIR, plg, Plugin, SanitizedExposedFabricInformation, SanitizedSession, SystemInformation, typ } from './matterbridgeTypes.js';
+import {
+  ApiMatter,
+  dev,
+  MATTER_LOGGER_FILE,
+  MATTER_STORAGE_NAME,
+  MATTERBRIDGE_LOGGER_FILE,
+  MaybePromise,
+  NODE_STORAGE_DIR,
+  plg,
+  Plugin,
+  SanitizedExposedFabricInformation,
+  SanitizedSession,
+  SharedMatterbridge,
+  SystemInformation,
+  typ,
+} from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -250,10 +265,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.server.on('broadcast_message', this.msgHandler.bind(this));
   }
 
+  /** Close the broadcast server */
   destroy(): void {
     this.server.close();
   }
 
+  /**
+   * Get a platform matterbridge object
+   *
+   * @returns {PlatformMatterbridge} The platform matterbridge object.
+   */
   getPlatformMatterbridge(): PlatformMatterbridge {
     return {
       systemInformation: { ...this.systemInformation },
@@ -274,6 +295,43 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       aggregatorVendorName: this.aggregatorVendorName,
       aggregatorProductId: this.aggregatorProductId,
       aggregatorProductName: this.aggregatorProductName,
+    };
+  }
+
+  /**
+   *  Get a shared matterbridge object
+   *
+   * @returns {SharedMatterbridge} The shared matterbridge object.
+   */
+  getSharedMatterbridge(): SharedMatterbridge {
+    return {
+      systemInformation: { ...this.systemInformation },
+      rootDirectory: this.rootDirectory,
+      homeDirectory: this.homeDirectory,
+      matterbridgeDirectory: this.matterbridgeDirectory,
+      matterbridgePluginDirectory: this.matterbridgePluginDirectory,
+      matterbridgeCertDirectory: this.matterbridgeCertDirectory,
+      globalModulesDirectory: this.globalModulesDirectory,
+      matterbridgeVersion: this.matterbridgeVersion,
+      matterbridgeLatestVersion: this.matterbridgeLatestVersion,
+      matterbridgeDevVersion: this.matterbridgeDevVersion,
+      frontendVersion: this.frontendVersion,
+      bridgeMode: this.bridgeMode,
+      restartMode: this.restartMode,
+      virtualMode: this.virtualMode,
+      profile: this.profile,
+      logLevel: this.logLevel,
+      fileLogger: this.fileLogger,
+      matterLogLevel: this.matterLogLevel,
+      matterFileLogger: this.matterFileLogger,
+      mdnsInterface: this.mdnsInterface,
+      ipv4Address: this.ipv4Address,
+      ipv6Address: this.ipv6Address,
+      port: this.port,
+      discriminator: this.discriminator,
+      passcode: this.passcode,
+      shellySysUpdate: this.shellySysUpdate,
+      shellyMainUpdate: this.shellyMainUpdate,
     };
   }
 
@@ -900,7 +958,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Check in 5 minutes the latest and dev versions of matterbridge and the plugins
     clearTimeout(this.checkUpdateTimeout);
     this.checkUpdateTimeout = setTimeout(async () => {
-      const { checkUpdates } = await import('./update.js');
+      const { checkUpdates } = await import('./checkUpdates.js');
       checkUpdates(this);
     }, 300 * 1000).unref();
 
@@ -908,7 +966,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     clearInterval(this.checkUpdateInterval);
     this.checkUpdateInterval = setInterval(
       async () => {
-        const { checkUpdates } = await import('./update.js');
+        const { checkUpdates } = await import('./checkUpdates.js');
         checkUpdates(this);
       },
       12 * 60 * 60 * 1000, // 12 hours
