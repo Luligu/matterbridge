@@ -1,52 +1,15 @@
-# ─────────────── BUILD STAGE ───────────────
-FROM node:22-bookworm-slim AS builder
-
-# 🛠️ Set noninteractive frontend
-ENV DEBIAN_FRONTEND=noninteractive
-
-WORKDIR /app
-COPY ./package*.json ./tsconfig*.json ./.npmignore ./
-COPY ./src ./src
-COPY ./frontend/package.json ./frontend/package.json
-COPY ./frontend/build ./frontend/build
-COPY ./bin ./bin
-
-COPY ./packages/dgram/package*.json ./packages/dgram/tsconfig*.json ./packages/dgram/.npmignore ./packages/dgram/
-COPY ./packages/dgram/src ./packages/dgram/src
-
-COPY ./packages/jest-utils/package*.json ./packages/jest-utils/tsconfig*.json ./packages/jest-utils/.npmignore ./packages/jest-utils/
-COPY ./packages/jest-utils/src ./packages/jest-utils/src
-
-COPY ./packages/utils/package*.json ./packages/utils/tsconfig*.json ./packages/utils/.npmignore ./packages/utils/
-COPY ./packages/utils/src ./packages/utils/src
-
-COPY ./packages/vitest-utils/package*.json ./packages/vitest-utils/tsconfig*.json ./packages/vitest-utils/.npmignore ./packages/vitest-utils/
-COPY ./packages/vitest-utils/src ./packages/vitest-utils/src
-
-# COPY ./vendor ./vendor
-
-RUN npm ci --no-fund --no-audit && \
-  npm run buildProduction && \
-  npm pkg delete devDependencies scripts workspaces && \
-  rm -rf node_modules package-lock.json npm-shrinkwrap.json && \
-  npm install --no-fund --no-audit --omit=dev && \
-  npm shrinkwrap --omit=dev && \
-  npm pack 
-
-# ─────────────── RUNTIME STAGE ───────────────
-FROM node:22-bookworm-slim AS release
+FROM node:22-bookworm-slim
 
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /matterbridge
-COPY --from=builder /app/*.tgz .
 
 RUN apt-get update && \
   apt-get install -y --no-install-recommends curl && \
   apt-get clean && \
   npm install --global --no-fund --no-audit --omit=dev \
-  *.tgz \
+  matterbridge \
   matterbridge-zigbee2mqtt \
   matterbridge-somfy-tahoma \
   matterbridge-shelly \
@@ -62,7 +25,6 @@ RUN apt-get update && \
   matterbridge-eve-weather && \
   npm uninstall -g corepack && \
   npm cache clean --force && \
-  rm *.tgz && \
   rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
   find /usr/local/lib/node_modules -type d -name ".github" -exec rm -rf {} + && \
   find /usr/local/lib/node_modules -type d -name ".vscode" -exec rm -rf {} + && \
@@ -80,4 +42,3 @@ COPY ./docker/entrypoint.latest.sh ./
 RUN chmod +x ./entrypoint.latest.sh
 ENTRYPOINT ["./entrypoint.latest.sh"]
 CMD ["matterbridge", "-docker"]
-# ─────────────── END ───────────────
