@@ -14,7 +14,7 @@
 
 ---
 
-# Advanced configuration
+# Production configuration
 
 ## Install Podman if it is not already installed
 

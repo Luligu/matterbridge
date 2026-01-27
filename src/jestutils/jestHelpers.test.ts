@@ -1,5 +1,5 @@
 // Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('../workers.js', () => ({
+jest.unstable_mockModule('../worker.js', () => ({
   createESMWorker: jest.fn(() => {
     return undefined; // Mock the createESMWorker function to return immediately
   }),

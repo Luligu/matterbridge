@@ -14,7 +14,7 @@
 
 ---
 
-# Advanced configuration
+# Production configuration
 
 ## Run Matterbridge with Docker and Docker Compose
 

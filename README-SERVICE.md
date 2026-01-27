@@ -14,7 +14,7 @@
 
 ---
 
-# Advanced configuration
+# Production configuration
 
 ## Run matterbridge as a daemon with systemctl (Linux only)
 

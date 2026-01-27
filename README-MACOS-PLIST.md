@@ -14,7 +14,7 @@
 
 ---
 
-# Advanced configuration
+# Production configuration
 
 ## Run matterbridge as system service with launchctl (macOS) and its own global node_modules directory
 
