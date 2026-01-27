@@ -22,16 +22,28 @@ import { WebSocketContext } from './WebSocketProvider';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { debug, enableMobile } from '../App';
 
+export const pluginIgnoreList = [
+  'matterbridge-',
+  'matterbridge-plugin-template',
+  'matterbridge-dyson',
+  'matterbridge-irobot',
+  'matterbridge-tuya',
+  'matterbridge-mqtt',
+  'matterbridge-matter',
+  'matterbridge-security',
+  'matterbridge-automations',
+  'matterbridge-securitysystem',
+];
+
 function HomeInstallAddPlugins() {
   // Contexts
-  const { mobile } = useContext(UiContext);
+  const { mobile, showSnackbarMessage } = useContext(UiContext);
   const { logMessage, sendMessage, getUniqueId } = useContext(WebSocketContext);
 
   // States
   const [pluginName, setPluginName] = useState('matterbridge-');
   const [_dragging, setDragging] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  // @mui/material
   // Refs
   const uniqueId = useRef(getUniqueId());
 
@@ -98,6 +110,10 @@ function HomeInstallAddPlugins() {
   };
 
   const handleInstallPluginClick = () => {
+    if (pluginIgnoreList.includes(pluginName.split('@')[0])) {
+      showSnackbarMessage(`Installation of plugin "${pluginName}" is blocked by the ignore list.`);
+      return;
+    }
     sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: pluginName, restart: false } });
   };
 
@@ -110,6 +126,10 @@ function HomeInstallAddPlugins() {
   };
 
   const handleAddPluginClick = () => {
+    if (pluginIgnoreList.includes(pluginName.split('@')[0])) {
+      showSnackbarMessage(`Addition of plugin "${pluginName}" is blocked by the ignore list.`);
+      return;
+    }
     sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/addplugin', src: 'Frontend', dst: 'Matterbridge', params: { pluginNameOrPath: pluginName } });
   };
 
