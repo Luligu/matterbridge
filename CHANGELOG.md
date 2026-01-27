@@ -40,6 +40,7 @@ Advantages:
 - [frontend]: Added **pluginIgnoreList** to avoid to install a plugin that is only a test or a name reservation on npm.
 - [docker]: Added instructions about how to disable the health check when you override the frontend port.
 - [Alexa]: Added a full review of supported device types and known issues. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+- [virtual]: Added outlet to mounted switch device type in virtual devices (Matter .1.4.2).
 
 ### Changed
 
