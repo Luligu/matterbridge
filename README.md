@@ -553,11 +553,15 @@ In Matter spec the Window Covering cluster uses:
 - 10000 = fully closed
 - 0 = fully opened
 
-So depending on the controller you pair with, you should see 100 for fully closed and 0 for fully open.
+So you should see 100% for fully closed and 0% for fully open.
 
-Some controllers invert the position so you need to verify your controller.
+Some controllers interpret the position the other way around (they show “open” as “closed” and vice versa). If the percentages look reversed, it’s a controller-specific UI behavior. Alexa is a common example.
 
-## Data structure
+## How to disable Restart matterbridge and update matterbridge
+
+In the settings page of the frontend, set virtual devices to Disabled.
+
+## Data structure for backup and restore
 
 Matterbridge uses three directories. These are the default locations (some advanced setups may change them, so check your configuration):
 
@@ -641,14 +645,22 @@ Install Google Home on an iPhone and complete the commissioning there. Once set 
 
 ## Alexa
 
-Tested by Tamer Salah
+Tested by [Tamer Salah](https://github.com/tammeryousef1006).
 
-Alexa needs the standard port 5540 to pair (from matter.js readme).
-
-There is no support for these Matter device types:
-
-- pressure sensor
-- flow sensor
+Alexa integrates with Matterbridge to locally control non-native devices by acting as a Matter Controller. While Amazon has expanded support to include core categories like lighting, plugs, thermostats, locks, and sensors, many advanced or specialized device types defined in the latest Matter specifications are not yet recognized by the Alexa ecosystem.
+Alexa Support vs. Matterbridge Test Results
+During testing, Alexa successfully managed most standard smart home categories but failed to recognize or fully support the following types exposed via Matterbridge:
+Appliances & Kitchen: Cooktop, Microwave Oven, Oven, Refrigerator, Laundry Washer/Dryer, and Extractor Hood.
+Energy & Utilities: Battery Storage, EVSE (Electric Vehicle Supply Equipment), and Solar Power.
+Water & Infrastructure: Water Valve, Water Heater, Water Leak/Freeze sensors, Pump, and Rain Sensor.
+Media & Controls: Basic Video Player and Speaker.
+Specialized Sensors/Inputs: Heat Pump, Latching Switch, Flow, and Pressure.
+Limited Support: Cover Lift and Tilt devices only functioned for lift operations, with tilt functionality unsupported.
+Integration Limitations
+Even when a device is recognized, Alexa may face specific bridge-related limitations:
+Device Caps: Alexa currently supports a maximum of 50 bridged devices per connection; exceeding this limit may cause devices to disappear from the Alexa App.
+Latency: While Matter is designed for local control, status updates in the Alexa app may occasionally lag if the app remains open during external state changes.
+Feature Gaps: Advanced features for certain types, such as unlocking specific smart locks, may be disabled by default for security and require manual activation within the app
 
 Known issues:
 

@@ -10,7 +10,7 @@ Before opening a new issue, please search existing (including closed) issues to 
 
 Also check the [FAQ](https://github.com/Luligu/matterbridge/blob/main/README.md#frequently-asked-questions) in the [README](https://github.com/Luligu/matterbridge/blob/main/README.md).
 
-If the issue is about failing to pair with a controller, also verify that you are not running inside an isolated VM and that you don't have a firewall or VPN blocking network traffic on mDNS and port 5540.
+If pairing with a controller fails, please verify: IPv6 is enabled, you are not running inside an isolated VM/container that blocks multicast, and no firewall/VPN is blocking mDNS (UDP 5353) or Matter traffic (UDP 5540).
 
 **Describe the bug**
 A clear and concise description of what the bug is.

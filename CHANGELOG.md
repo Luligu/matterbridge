@@ -34,17 +34,19 @@ Advantages:
 
 - [matterbridge]: Added brand to MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
 - [PluginManager]: Verify brand of MatterbridgePlatform, MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
-- [PluginManager]: Added frontend message when a plugin is not added for the pluginIgnoreList or for other issues.
+- [PluginManager]: Added frontend message when a plugin is not added cause it is in the pluginIgnoreList or for other issues.
 - [MatterbridgePlatform]: Verify brand of MatterbridgeEndpoint.
 - [BasicVideoPlayer]: Added **Basic Video Player** class (suported by SmartThings).
 - [frontend]: Added **pluginIgnoreList** to avoid to install a plugin that is only a test or a name reservation on npm.
+- [docker]: Added instructions about how to disable the health check when you override the frontend port.
+- [Alexa]: Added a full review of supported device types and known issues. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 
 ### Changed
 
 - [package]: Updated dependencies.
 - [docker]: Clarified in [README-DOCKER.md](README-DOCKER.md) the content of the matterbridge docker images on Docker Hub.
 - [frontend]: Bumped `frontend` version to v. 3.4.3.
-- [frontend]: In the matterbridge docker image with tag dev, the frontend now shows the versions with the tag git.
+- [frontend]: For the matterbridge docker image with tag dev, the frontend now shows the versions with the tag git.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
