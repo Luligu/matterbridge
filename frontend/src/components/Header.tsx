@@ -401,7 +401,10 @@ function Header() {
         {!settings.matterbridgeInformation.readOnly && (
           <Tooltip title={`Matterbridge v.${settings.matterbridgeInformation.matterbridgeVersion}`}>
             <span className='status-information' style={{ cursor: 'default' }}>
-              v.{settings.matterbridgeInformation.matterbridgeVersion.split('-dev-')[0] + (settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? '@dev' : '')}
+              v.
+              {settings.matterbridgeInformation.matterbridgeVersion.split('-')[0] +
+                (settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? '@dev' : '') +
+                (settings.matterbridgeInformation.matterbridgeVersion.includes('-git-') ? '@git' : '')}
             </span>
           </Tooltip>
         )}

@@ -41,6 +41,7 @@ Advantages:
 
 - [package]: Updated dependencies.
 - [docker]: Clarified in [README-DOCKER.md](README-DOCKER.md) the content of the matterbridge docker images on Docker Hub.
+- [frontend]: Bumped `frontend` version to v. 3.4.3.
 - [frontend]: In the matterbridge docker image with tag dev, the frontend now shows the versions with the tag git.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>

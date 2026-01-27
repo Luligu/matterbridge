@@ -77,22 +77,8 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       id: 'version',
       render: (value, rowKey, plugin, _column) => (
         <>
-          {/*plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
-            <Tooltip title='New plugin stable version available, click to install'>
-              <span className='status-warning' style={{ marginRight: '10px' }} onClick={() => handleUpdatePlugin(plugin)}>
-                Update to v.{plugin.latestVersion}
-              </span>
-            </Tooltip>
-          )}
-          {plugin.version.includes('-dev-') && plugin.devVersion !== undefined && plugin.devVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
-            <Tooltip title='New plugin dev version available, click to install'>
-              <span className='status-warning' style={{ marginRight: '10px' }} onClick={() => handleUpdateDevPlugin(plugin)}>
-                Update to new dev v.{plugin.devVersion.split('-dev-')[0]}
-              </span>
-            </Tooltip>
-          )*/}
           <Tooltip title={`Plugin v.${plugin.version}`}>
-            <span>{plugin.version.split('-dev-')[0] + (plugin.version.includes('-dev-') ? '@dev' : '')}</span>
+            <span>{plugin.version.split('-')[0] + (plugin.version.includes('-dev-') ? '@dev' : '') + (plugin.version.includes('-git-') ? '@git' : '')}</span>
           </Tooltip>
         </>
       ),
