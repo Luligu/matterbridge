@@ -550,18 +550,21 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       if (projectChipDependencies.length > 0) {
         this.log.error(`Found @project-chip packages "${projectChipDependencies.join(', ')}" in plugin dependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
       const projectChipDevDependencies = checkForProjectChipPackages(packageJson.devDependencies || {});
       if (projectChipDevDependencies.length > 0) {
         this.log.error(`Found @project-chip packages "${projectChipDevDependencies.join(', ')}" in plugin devDependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
       const projectChipPeerDependencies = checkForProjectChipPackages(packageJson.peerDependencies || {});
       if (projectChipPeerDependencies.length > 0) {
         this.log.error(`Found @project-chip packages "${projectChipPeerDependencies.join(', ')}" in plugin peerDependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
 
@@ -573,18 +576,21 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       if (matterbridgeDependencies.length > 0) {
         this.log.error(`Found matterbridge package in the plugin dependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
       const matterbridgeDevDependencies = checkForMatterbridgePackage(packageJson.devDependencies || {});
       if (matterbridgeDevDependencies.length > 0) {
         this.log.error(`Found matterbridge package in the plugin devDependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
       const matterbridgePeerDependencies = checkForMatterbridgePackage(packageJson.peerDependencies || {});
       if (matterbridgePeerDependencies.length > 0) {
         this.log.error(`Found matterbridge package in the plugin peerDependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
 
@@ -592,6 +598,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       return packageJsonPath;
     } catch (err) {
       logError(this.log, `Failed to resolve plugin path ${plg}${nameOrPath}${er}`, err);
+      this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Failed to resolve plugin path ${nameOrPath}`, timeout: 30, severity: 'error' } });
       return null;
     }
   }
@@ -783,18 +790,21 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       if (projectChipDependencies.length > 0) {
         this.log.error(`Found @project-chip packages "${projectChipDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} dependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
       const projectChipDevDependencies = checkForProjectChipPackages(packageJson.devDependencies || {});
       if (projectChipDevDependencies.length > 0) {
         this.log.error(`Found @project-chip packages "${projectChipDevDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} devDependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
       const projectChipPeerDependencies = checkForProjectChipPackages(packageJson.peerDependencies || {});
       if (projectChipPeerDependencies.length > 0) {
         this.log.error(`Found @project-chip packages "${projectChipPeerDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} peerDependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
 
@@ -806,24 +816,28 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       if (matterbridgeDependencies.length > 0) {
         this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} dependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
       const matterbridgeDevDependencies = checkForMatterbridgePackage(packageJson.devDependencies || {});
       if (matterbridgeDevDependencies.length > 0) {
         this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} devDependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
       const matterbridgePeerDependencies = checkForMatterbridgePackage(packageJson.peerDependencies || {});
       if (matterbridgePeerDependencies.length > 0) {
         this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} peerDependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' } });
         return null;
       }
 
       return packageJson;
     } catch (err) {
       logError(this.log, `Failed to parse package.json of plugin ${plg}${plugin.name}${er}`, err);
+      this.server.request({ type: 'frontend_snackbarmessage', src: 'plugins', dst: 'frontend', params: { message: `Failed to parse package.json of plugin ${plugin.name}`, timeout: 30, severity: 'error' } });
       plugin.error = true;
       return null;
     }
