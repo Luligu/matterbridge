@@ -34,6 +34,7 @@ Advantages:
 
 - [matterbridge]: Added brand to MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
 - [PluginManager]: Verify brand of MatterbridgePlatform, MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
+- [PluginManager]: Added frontend message when a plugin is not added for the pluginIgnoreList or for other issues.
 - [MatterbridgePlatform]: Verify brand of MatterbridgeEndpoint.
 - [BasicVideoPlayer]: Added **Basic Video Player** class (suported by SmartThings).
 - [frontend]: Added **pluginIgnoreList** to avoid to install a plugin that is only a test or a name reservation on npm.

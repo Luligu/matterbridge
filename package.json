@@ -190,17 +190,17 @@
   },
   "dependencies": {
     "@matter/main": "0.16.7",
+    "@matterbridge/dgram": "0.0.3",
+    "@matterbridge/jest-utils": "0.0.1",
+    "@matterbridge/utils": "0.0.2",
+    "@matterbridge/vitest-utils": "0.0.1",
     "archiver": "7.0.1",
     "express": "5.2.1",
     "glob": "13.0.0",
     "multer": "2.0.2",
     "node-ansi-logger": "3.1.1",
     "node-persist-manager": "2.0.0",
-    "ws": "8.19.0",
-    "@matterbridge/dgram": "0.0.3",
-    "@matterbridge/utils": "0.0.2",
-    "@matterbridge/jest-utils": "0.0.1",
-    "@matterbridge/vitest-utils": "0.0.1"
+    "ws": "8.19.0"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
