@@ -44,7 +44,8 @@
   "bin": {
     "matterbridge": "bin/matterbridge.js",
     "mb_mdns": "bin/mb_mdns.js",
-    "mb_coap": "bin/mb_coap.js"
+    "mb_coap": "bin/mb_coap.js",
+    "mb_health": "bin/mb_health.js"
   },
   "engines": {
     "node": ">=20.0.0 <21.0.0 || >=22.0.0 <23.0.0 || >=24.0.0 <25.0.0"
