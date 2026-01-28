@@ -4,7 +4,7 @@
  * @file workerTypes.ts
  * @author Luca Liguori
  * @created 2025-11-25
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-import { LogLevel } from 'node-ansi-logger';
+import type { LogLevel } from 'node-ansi-logger';
 
 /** Control messages sent through parentPort manager <-> workers */
 export type ParentPortMessage =

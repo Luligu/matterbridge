@@ -61,10 +61,6 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./types": {
-      "import": "./dist/types/export.js",
-      "types": "./dist/types/export.d.ts"
-    },
     "./devices": {
       "import": "./dist/devices/export.js",
       "types": "./dist/devices/export.d.ts"
@@ -199,6 +195,7 @@
     "@matterbridge/jest-utils": "0.0.1",
     "@matterbridge/utils": "0.0.2",
     "@matterbridge/vitest-utils": "0.0.1",
+    "@matterbridge/thread": "0.0.1",
     "archiver": "7.0.1",
     "express": "5.2.1",
     "glob": "13.0.0",

@@ -41,6 +41,7 @@ Advantages:
 - [docker]: Added instructions about how to disable the health check when you override the frontend port.
 - [Alexa]: Added a full review of supported device types and known issues. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 - [virtual]: Added outlet to mounted switch device type in virtual devices (Matter .1.4.2).
+- [package]: Added @matterbridge/thread monorepo scoped package.
 
 ### Changed
 

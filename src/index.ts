@@ -35,4 +35,5 @@ export * from './matterbridgeDeviceTypes.js';
 export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
+export * from './matterbridgePlatformTypes.js';
 export { addVirtualDevice } from './helpers.js';
