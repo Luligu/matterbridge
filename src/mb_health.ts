@@ -32,6 +32,19 @@ import https from 'node:https';
  * @returns {Promise<boolean>} True if the endpoint responds with a 2xx status code.
  */
 export function checkHealth(url: string, timeoutMs: number): Promise<boolean> {
+  return fetchHealth(url, timeoutMs)
+    .then(({ ok }) => ok)
+    .catch(() => false);
+}
+
+/**
+ * Fetches the health endpoint response.
+ *
+ * @param {string} url The URL to fetch.
+ * @param {number} timeoutMs The timeout in milliseconds.
+ * @returns {Promise<{ ok: boolean; statusCode: number; body: string; json?: unknown }>} The response details.
+ */
+export function fetchHealth(url: string, timeoutMs: number): Promise<{ ok: boolean; statusCode: number; body: string; json?: unknown }> {
   return new Promise((resolve) => {
     const parsedUrl = new URL(url);
     const requestImpl = parsedUrl.protocol === 'https:' ? https : http;
@@ -45,18 +58,38 @@ export function checkHealth(url: string, timeoutMs: number): Promise<boolean> {
         method: 'GET',
         headers: {
           'cache-control': 'no-store',
+          accept: 'application/json',
         },
       },
       (response) => {
-        response.resume();
-        resolve((response.statusCode ?? 0) >= 200 && (response.statusCode ?? 0) < 300);
+        const chunks: Buffer[] = [];
+        response.on('data', (chunk) => {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        });
+        response.on('end', () => {
+          const statusCode = response.statusCode ?? 0;
+          const ok = statusCode >= 200 && statusCode < 300;
+          const body = Buffer.concat(chunks).toString('utf8');
+
+          let json: unknown | undefined;
+          try {
+            if (body.trim().length > 0) json = JSON.parse(body);
+          } catch {
+            json = undefined;
+          }
+
+          resolve({ ok, statusCode, body, json });
+        });
+        response.on('error', () => {
+          resolve({ ok: false, statusCode: response.statusCode ?? 0, body: '' });
+        });
       },
     );
 
-    request.on('error', () => resolve(false));
+    request.on('error', () => resolve({ ok: false, statusCode: 0, body: '' }));
     request.setTimeout(timeoutMs, () => {
       request.destroy();
-      resolve(false);
+      resolve({ ok: false, statusCode: 0, body: '' });
     });
     request.end();
   });
@@ -71,7 +104,7 @@ export function checkHealth(url: string, timeoutMs: number): Promise<boolean> {
  */
 export async function mbHealthExitCode(url: string, timeoutMs: number): Promise<number> {
   try {
-    const ok = await checkHealth(url, timeoutMs);
+    const { ok } = await fetchHealth(url, timeoutMs);
     return ok ? 0 : 1;
   } catch {
     return 1;
@@ -87,8 +120,20 @@ export async function mbHealthExitCode(url: string, timeoutMs: number): Promise<
  * @returns {Promise<void>} Resolves when done.
  */
 export async function mbHealthCli(url: string, timeoutMs: number, exitFn: (code: number) => never | void = process.exit): Promise<void> {
-  const code = await mbHealthExitCode(url, timeoutMs);
-  exitFn(code);
+  const { ok, statusCode, body, json } = await fetchHealth(url, timeoutMs);
+
+  if (json !== undefined) {
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify(json, null, 2));
+  } else if (body) {
+    // eslint-disable-next-line no-console
+    console.log(body);
+  } else {
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify({ ok, statusCode }, null, 2));
+  }
+
+  exitFn(ok ? 0 : 1);
 }
 
 /**
