@@ -38,7 +38,6 @@ import { BroadcastServer } from './broadcastServer.js';
  * @returns {Promise<void>} A promise that resolves when the update checks are complete.
  */
 export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<void> {
-  /** Broadcast server */
   const log = new AnsiLogger({ logName: 'MatterbridgeUpdates', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.logLevel });
   const server = new BroadcastServer('updates', log);
 
@@ -48,10 +47,15 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
   const pluginsVersionPromises = [];
   const pluginsDevVersionPromises = [];
   const shellyUpdatesPromises = [];
-  const plugins = (await server.fetch({ type: 'plugins_apipluginarray', src: server.name, dst: 'plugins' }, 1000)).result.plugins;
-  for (const plugin of plugins) {
-    pluginsVersionPromises.push(getPluginLatestVersion(log, server, plugin));
-    pluginsDevVersionPromises.push(getPluginDevVersion(log, server, plugin));
+  try {
+    const plugins = (await server.fetch({ type: 'plugins_apipluginarray', src: server.name, dst: 'plugins' }, 1000)).result.plugins;
+    for (const plugin of plugins) {
+      pluginsVersionPromises.push(getPluginLatestVersion(log, server, plugin));
+      pluginsDevVersionPromises.push(getPluginDevVersion(log, server, plugin));
+    }
+  } catch (error) {
+    // istanbul ignore next cause it's just an error log
+    log.debug(`Error fetching plugins for update check: ${error instanceof Error ? error.message : error}`);
   }
 
   if (hasParameter('shelly')) {
