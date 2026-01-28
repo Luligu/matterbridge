@@ -369,6 +369,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.shellyMainUpdate = true;
           this.server.respond({ ...msg, result: { success: true } });
           break;
+        case 'matterbridge_platform':
+          this.server.respond({ ...msg, result: { data: this.getPlatformMatterbridge(), success: true } });
+          break;
+        case 'matterbridge_shared':
+          this.server.respond({ ...msg, result: { data: this.getSharedMatterbridge(), success: true } });
+          break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }

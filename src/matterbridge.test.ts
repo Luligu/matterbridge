@@ -121,6 +121,8 @@ describe('Matterbridge', () => {
     expect(matterbridge.shellySysUpdate).toBe(true);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_main_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
     expect(matterbridge.shellyMainUpdate).toBe(true);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_platform', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shared', src: 'manager', dst: 'matterbridge', params: {} } as any);
   });
 
   test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
