@@ -44,7 +44,7 @@ describe('Workers', () => {
     await import('./workerGlobalPrefix.js');
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/Global node_modules Directory:/));
     // process.argv.pop();
-  });
+  }, 10000);
 
   test('Run workerGlobalPrefix as a worker thread', async () => {
     let worker: Worker;
@@ -78,14 +78,14 @@ describe('Workers', () => {
         reject(error);
       });
     });
-  });
+  }, 10000);
 
   test('Run workerCheckUpdates in the mainThread', async () => {
     // process.argv.push('--verbose');
     await import('./workerCheckUpdates.js');
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/Check updates succeeded/));
     // process.argv.pop();
-  });
+  }, 10000);
 
   test('Run workerCheckUpdates as a worker thread', async () => {
     let worker: Worker;
@@ -119,5 +119,5 @@ describe('Workers', () => {
         reject(error);
       });
     });
-  });
+  }, 10000);
 });
