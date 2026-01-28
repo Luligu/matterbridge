@@ -4,7 +4,7 @@
  * @file workers.ts
  * @author Luca Liguori
  * @created 2025-11-25
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -36,7 +36,6 @@ import type { ParentPortMessage } from './workerTypes.js';
  *
  * @param {ControlMessage} message - The control message to send.
  */
-// istanbul ignore next cause it's available only in worker threads
 export function parentPost(message: ParentPortMessage): void {
   if (!parentPort) throw new Error(`WorkerServer ${workerData.threadName}: parentPort is not available.`);
   parentPort.postMessage(message);
@@ -49,7 +48,6 @@ export function parentPost(message: ParentPortMessage): void {
  * @param {LogLevel} logLevel - The log level of the message.
  * @param {string} message - The log message to send.
  */
-// istanbul ignore next cause it's available only in worker threads
 export function parentLog(logName: string | undefined, logLevel: LogLevel, message: string): void {
   if (!parentPort) throw new Error(`WorkerServer ${workerData.threadName}: parentPort is not available.`);
   const logMessage: ParentPortMessage = { type: 'log', threadId, threadName: workerData.threadName, logName, logLevel, message };
@@ -95,7 +93,6 @@ export function createESMWorker(name: string, relativePath: string, workerData?:
  * @param {boolean} [logEnv] - Whether to log environment variables. Defaults to false.
  */
 export function logWorkerInfo(log: AnsiLogger, logEnv: boolean = false): void {
-  // Log worker info
   log.debug(`${isMainThread ? 'Main thread' : 'Worker thread'}: ${workerData?.threadName}:${threadId} Pid: ${process.pid}`);
   log.debug(`ParentPort: ${parentPort ? 'active' : 'not active'}`);
   log.debug(`WorkerData: ${workerData ? inspect(workerData, true, 10, true) : 'none'}`);
@@ -103,4 +100,3 @@ export function logWorkerInfo(log: AnsiLogger, logEnv: boolean = false): void {
   log.debug(`Argv: ${argv.length ? argv.join(' ') : 'none'}`);
   log.debug(`Env: ${logEnv ? inspect(process.env, true, 10, true) : 'not logged'}`);
 }
-export { ParentPortMessage };

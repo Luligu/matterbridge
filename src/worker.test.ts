@@ -1,4 +1,4 @@
-// src\workers.test.ts
+// src\worker.test.ts
 
 const NAME = 'Workers';
 const HOMEDIR = path.join('jest', NAME);
@@ -10,15 +10,30 @@ import { inspect } from 'node:util';
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 
-import { loggerDebugSpy, setupTest } from './jestutils/jestHelpers.js';
-import { createESMWorker, logWorkerInfo } from './worker.js';
+import { setupTest } from './jestutils/jestHelpers.js';
+import { createESMWorker } from './worker.js';
 import type { ParentPortMessage } from './workerTypes.js';
+import { BroadcastServer } from './broadcastServer.js';
+import { WorkerMessage } from './broadcastServerTypes.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 describe('Workers', () => {
   const log = new AnsiLogger({ logName: 'MatterbridgeWorkers', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  // Broadcast servers
+  const serverMatterbridge = new BroadcastServer('matterbridge', log);
+  serverMatterbridge.on('broadcast_message', (msg: WorkerMessage) => {
+    if (serverMatterbridge.isWorkerRequest(msg) && msg.type === 'matterbridge_shared') {
+      serverMatterbridge.respond({ ...msg, result: { data: { matterbridgeVersion: '1.0.0', logLevel: LogLevel.ERROR } as any, success: true } });
+    }
+  });
+  const serverPlugins = new BroadcastServer('plugins', log);
+  serverPlugins.on('broadcast_message', (msg: WorkerMessage) => {
+    if (serverPlugins.isWorkerRequest(msg) && msg.type === 'plugins_apipluginarray') {
+      serverPlugins.respond({ ...msg, result: { plugins: [] } });
+    }
+  });
 
   beforeAll(async () => {});
 
@@ -30,21 +45,12 @@ describe('Workers', () => {
   afterEach(async () => {});
 
   afterAll(async () => {
+    // Close broadcast servers
+    serverMatterbridge.close();
+    serverPlugins.close();
     // Restore all mocks
     jest.restoreAllMocks();
   });
-
-  test('Run worker info in main thread', async () => {
-    logWorkerInfo(log, true);
-    expect(loggerDebugSpy).toHaveBeenCalled();
-  });
-
-  test('Run workerGlobalPrefix in the mainThread', async () => {
-    // process.argv.push('--verbose');
-    await import('./workerGlobalPrefix.js');
-    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/Global node_modules Directory:/));
-    // process.argv.pop();
-  }, 10000);
 
   test('Run workerGlobalPrefix as a worker thread', async () => {
     let worker: Worker;
@@ -78,13 +84,6 @@ describe('Workers', () => {
         reject(error);
       });
     });
-  }, 10000);
-
-  test('Run workerCheckUpdates in the mainThread', async () => {
-    // process.argv.push('--verbose');
-    await import('./workerCheckUpdates.js');
-    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/Check updates succeeded/));
-    // process.argv.pop();
   }, 10000);
 
   test('Run workerCheckUpdates as a worker thread', async () => {

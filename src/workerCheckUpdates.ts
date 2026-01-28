@@ -4,7 +4,7 @@
  * @file workerCheckUpdates.ts
  * @author Luca Liguori
  * @created 2025-11-25
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -29,13 +29,12 @@ import { hasParameter, inspectError } from '@matterbridge/utils';
 
 import { BroadcastServer } from './broadcastServer.js';
 import { logWorkerInfo, parentLog, parentPost } from './worker.js';
-// import { checkUpdates } from './checkUpdates.js';
+import { checkUpdates } from './checkUpdates.js';
 
 const debug = hasParameter('debug') || hasParameter('verbose');
 const verbose = hasParameter('verbose');
 
 // Send init message
-// istanbul ignore next cause it's available only in worker threads
 if (!isMainThread && parentPort) {
   parentPost({ type: 'init', threadId, threadName: workerData.threadName, success: true });
   if (debug) parentLog('MatterbridgeCheckUpdates', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} initialized.`);
@@ -50,7 +49,8 @@ if (verbose) logWorkerInfo(log, verbose);
 
 let success = false;
 try {
-  // await checkUpdates();
+  const shared = (await server.fetch({ type: 'matterbridge_shared', src: `matterbridge`, dst: 'matterbridge' })).result.data;
+  await checkUpdates(shared);
   success = true;
   log.debug(`Check updates succeeded`);
   if (!isMainThread && parentPort) parentLog('MatterbridgeCheckUpdates', LogLevel.DEBUG, `Check updates succeeded`);
@@ -60,10 +60,11 @@ try {
   // istanbul ignore next cause it's just an error log
   if (!isMainThread && parentPort) parentLog('MatterbridgeCheckUpdates', LogLevel.ERROR, errorMessage);
 }
+
+// Close the broadcast server
 server.close();
 
 // Send exit message
-// istanbul ignore next cause it's available only in worker threads
 if (!isMainThread && parentPort) {
   parentPost({ type: 'exit', threadId, threadName: workerData.threadName, success });
   if (debug) parentLog('MatterbridgeCheckUpdates', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} exiting with success: ${success}.`);
