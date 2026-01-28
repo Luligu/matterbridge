@@ -22,8 +22,8 @@ const jestConfig = {
   testEnvironment: 'node', // Use Node.js environment for testing
   cacheDirectory: '<rootDir>/.cache/jest',
   moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' }, // Handle ESM imports by removing the .js extension
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/vitest/', '/src/mock/'],
-  coveragePathIgnorePatterns: ['/node_modules/', '/dist/', '/vitest/', '/src/mock/'],
+  testPathIgnorePatterns: ['/.cache/', '/dist/', '/node_modules/', '/scripts/', '/vitest/', '/src/mock/'],
+  coveragePathIgnorePatterns: ['/.cache/', '/dist/', '/node_modules/', '/scripts/', '/vitest/', '/src/mock/'],
   maxWorkers: '100%', // Use all available CPU cores for running tests
 };
 
