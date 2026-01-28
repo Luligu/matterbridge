@@ -17,7 +17,7 @@ The project will evolve to a multi-threaded architecture (the CLI will become th
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-- check updates;
+- ✅ check updates;
 - npm install;
 - ✅ get the global node_modules directory;
 

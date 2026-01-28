@@ -53,12 +53,17 @@
     "packages/jest-utils",
     "packages/vitest-utils",
     "packages/utils",
-    "packages/dgram"
+    "packages/dgram",
+    "packages/thread"
   ],
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/export.js",
+      "types": "./dist/types/export.d.ts"
     },
     "./devices": {
       "import": "./dist/devices/export.js",
