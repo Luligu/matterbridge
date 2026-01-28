@@ -38,10 +38,11 @@ Advantages:
 - [MatterbridgePlatform]: Verify brand of MatterbridgeEndpoint.
 - [BasicVideoPlayer]: Added **Basic Video Player** class (suported by SmartThings).
 - [frontend]: Added **pluginIgnoreList** to avoid to install a plugin that is only a test or a name reservation on npm.
-- [docker]: Added instructions about how to disable the health check when you override the frontend port.
+- [docker]: Added instructions about how to disable the health check when you override the frontend port or enable https.
 - [Alexa]: Added a full review of supported device types and known issues. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
-- [virtual]: Added outlet to mounted switch device type in virtual devices (Matter .1.4.2).
+- [virtual]: Added outlet to mounted switch device type in virtual devices (Matter 1.4.2).
 - [package]: Added @matterbridge/thread monorepo scoped package.
+- [docker]: Added mb_health bin to be used with docker health check. It allows to reduce the image size by 20MB.
 
 ### Changed
 

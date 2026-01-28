@@ -150,7 +150,7 @@ sudo usermod -aG docker $USER
   matterbridge --docker --frontend 8585
 </code></pre>
 <p>If you override the command, always start it with <code>matterbridge --docker</code>.</p>
-<p><strong>If you change the frontend port, overriding the default command of the images, docker will report the container unhealty unless you add the --no-healthcheck param</strong>.</p>
+<p><strong>If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add the --no-healthcheck param</strong>.</p>
 <h3 id="run-with-docker-compose">Run with Docker Compose</h3>
 <p>The <code>docker-compose.yml</code> file is available in the <code>docker</code> directory of this repository:</p>
 <pre><code class="language-yaml">services:
@@ -178,7 +178,7 @@ sudo usermod -aG docker $USER
     command: [&quot;matterbridge&quot;, &quot;--docker&quot;, &quot;--frontend&quot;, &quot;8585&quot;]
 </code></pre>
 <p>If you override the command, always start it with <code>[&quot;matterbridge&quot;, &quot;--docker&quot;]</code>.</p>
-<p><strong>If you change the frontend port, overriding the default command of the images, docker will report the container unhealty unless you add:</strong>.</p>
+<p><strong>If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add:</strong>.</p>
 <pre><code class="language-yaml">    healthcheck:
       disable: true
 </code></pre>
