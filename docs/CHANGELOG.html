@@ -107,7 +107,7 @@
 </li>
 <li><p>each plugin in childbridge mode;</p>
 </li>
-<li><p>check updates;</p>
+<li><p>✅ check updates;</p>
 </li>
 <li><p>npm install;</p>
 </li>
@@ -126,16 +126,21 @@
 <ul>
 <li>[matterbridge]: Added brand to MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.</li>
 <li>[PluginManager]: Verify brand of MatterbridgePlatform, MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.</li>
+<li>[PluginManager]: Added frontend message when a plugin is not added cause it is in the pluginIgnoreList or for other issues.</li>
 <li>[MatterbridgePlatform]: Verify brand of MatterbridgeEndpoint.</li>
 <li>[BasicVideoPlayer]: Added <strong>Basic Video Player</strong> class (suported by SmartThings).</li>
 <li>[frontend]: Added <strong>pluginIgnoreList</strong> to avoid to install a plugin that is only a test or a name reservation on npm.</li>
+<li>[docker]: Added instructions about how to disable the health check when you override the frontend port.</li>
+<li>[Alexa]: Added a full review of supported device types and known issues. Thanks <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</li>
+<li>[virtual]: Added outlet to mounted switch device type in virtual devices (Matter .1.4.2).</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[package]: Updated dependencies.</li>
 <li>[docker]: Clarified in <a href="README-DOCKER.html">README-DOCKER.html</a> the content of the matterbridge docker images on Docker Hub.</li>
 <li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.3.</li>
-<li>[frontend]: In the matterbridge docker image with tag dev, the frontend now shows the versions with the tag git.</li>
+<li>[frontend]: For the matterbridge docker image with tag dev, the frontend now shows the versions with the tag git.</li>
+<li>[worker]: Bumped worker module to v. 1.1.0.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="351-2026-01-24">[3.5.1] - 2026-01-24</h2>
