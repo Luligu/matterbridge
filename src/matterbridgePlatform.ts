@@ -33,7 +33,7 @@ import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 // Matter
-import { EndpointNumber, VendorId } from '@matter/types/datatype';
+import { EndpointNumber } from '@matter/types/datatype';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { hasParameter, isValidArray, isValidObject, isValidString } from '@matterbridge/utils';
@@ -43,68 +43,8 @@ import { assertMatterbridgeEndpoint, MatterbridgeEndpoint } from './matterbridge
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
-import { SystemInformation } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
-
-// Platform types
-
-/** Platform configuration value type. */
-export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
-
-/** Platform configuration type. */
-export type PlatformConfig = { name: string; type: string; version: string; debug: boolean; unregisterOnShutdown: boolean } & Record<string, PlatformConfigValue>;
-
-/** Platform schema value type. */
-export type PlatformSchemaValue = string | number | boolean | bigint | object | undefined | null;
-
-/** Platform schema type. */
-export type PlatformSchema = Record<string, PlatformSchemaValue>;
-
-/** A type representing a subset of readonly properties of Matterbridge for platform use. */
-export type PlatformMatterbridge = {
-  readonly systemInformation: Readonly<
-    Pick<
-      SystemInformation,
-      | 'interfaceName'
-      | 'macAddress'
-      | 'ipv4Address'
-      | 'ipv6Address'
-      | 'nodeVersion'
-      | 'hostname'
-      | 'user'
-      | 'osType'
-      | 'osRelease'
-      | 'osPlatform'
-      | 'osArch'
-      | 'totalMemory'
-      | 'freeMemory'
-      | 'systemUptime'
-      | 'processUptime'
-      | 'cpuUsage'
-      | 'processCpuUsage'
-      | 'rss'
-      | 'heapTotal'
-      | 'heapUsed'
-    >
-  >;
-  readonly rootDirectory: string;
-  readonly homeDirectory: string;
-  readonly matterbridgeDirectory: string;
-  readonly matterbridgePluginDirectory: string;
-  readonly matterbridgeCertDirectory: string;
-  readonly globalModulesDirectory: string;
-  readonly matterbridgeVersion: string;
-  readonly matterbridgeLatestVersion: string;
-  readonly matterbridgeDevVersion: string;
-  readonly frontendVersion: string;
-  readonly bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
-  readonly restartMode: 'service' | 'docker' | '';
-  readonly virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
-  readonly aggregatorVendorId: VendorId;
-  readonly aggregatorVendorName: string;
-  readonly aggregatorProductId: number;
-  readonly aggregatorProductName: string;
-};
+import { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
 
 // Module-private brand
 const MATTERBRIDGE_PLATFORM_BRAND = Symbol('MatterbridgePlatform.brand');

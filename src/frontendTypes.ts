@@ -24,7 +24,7 @@
 
 import type { EndpointNumber } from '@matter/types';
 
-import type { PlatformConfig } from './matterbridgePlatform.js';
+import type { PlatformConfig } from './matterbridgePlatformTypes.js';
 import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
 export type RefreshRequiredChanged = 'settings' | 'plugins' | 'devices' | 'matter';

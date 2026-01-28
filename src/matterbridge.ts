@@ -72,7 +72,7 @@ import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
-import { PlatformMatterbridge } from './matterbridgePlatform.js';
+import { PlatformMatterbridge } from './matterbridgePlatformTypes.js';
 
 /**
  * Represents the Matterbridge events.

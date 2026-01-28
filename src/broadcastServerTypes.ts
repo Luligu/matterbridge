@@ -26,7 +26,7 @@ import { LogLevel } from 'node-ansi-logger';
 import { EndpointNumber } from '@matter/types/datatype';
 
 import type { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
-import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatform.js';
+import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, Plugin, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
 
 /** Types of worker source */

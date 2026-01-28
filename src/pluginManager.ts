@@ -32,7 +32,8 @@ import { hasParameter, inspectError, logError } from '@matterbridge/utils';
 
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';
-import { assertMatterbridgePlatform, type MatterbridgePlatform, type PlatformConfig, type PlatformMatterbridge, type PlatformSchema } from './matterbridgePlatform.js';
+import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
+import { assertMatterbridgePlatform, type MatterbridgePlatform } from './matterbridgePlatform.js';
 import { ApiPlugin, plg, Plugin, PluginName, StoragePlugin, typ } from './matterbridgeTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
