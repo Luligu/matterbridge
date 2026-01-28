@@ -95,7 +95,7 @@ sudo docker run --name matterbridge \
 
 If you override the command, always start it with `matterbridge --docker`.
 
-**If you change the frontend port, overriding the default command of the images, docker will report the container unhealty unless you add the --no-healthcheck param**.
+**If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add the --no-healthcheck param**.
 
 ### Run with Docker Compose
 
@@ -139,7 +139,7 @@ services:
 
 If you override the command, always start it with `["matterbridge", "--docker"]`.
 
-**If you change the frontend port, overriding the default command of the images, docker will report the container unhealty unless you add:**.
+**If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add:**.
 
 ```yaml
     healthcheck:
