@@ -174,7 +174,7 @@ npm link
 
 Always keep your local instance of matterbridge up to date.
 
-### WARNING \***\*\*\*\*\***
+### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
 Some error messages are logged on start when a plugin has wrong imports or configurations and the plugin will be disabled to prevent instability and crashes.
 
