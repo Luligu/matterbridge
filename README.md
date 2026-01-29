@@ -647,20 +647,27 @@ Install Google Home on an iPhone and complete the commissioning there. Once set 
 
 Tested by [Tamer Salah](https://github.com/tammeryousef1006).
 
-Alexa integrates with Matterbridge to locally control non-native devices by acting as a Matter Controller. While Amazon has expanded support to include core categories like lighting, plugs, thermostats, locks, and sensors, many advanced or specialized device types defined in the latest Matter specifications are not yet recognized by the Alexa ecosystem.
+Alexa integrates with Matterbridge to locally control non-native devices by acting as a Matter Controller.
+While Amazon has expanded support to include core categories like lighting, plugs, thermostats, locks, and sensors, many advanced or specialized device types defined in the latest Matter specifications are not yet recognized by the Alexa ecosystem.
+
 Alexa Support vs. Matterbridge Test Results
+
 During testing, Alexa successfully managed most standard smart home categories but failed to recognize or fully support the following types exposed via Matterbridge:
-Appliances & Kitchen: Cooktop, Microwave Oven, Oven, Refrigerator, Laundry Washer/Dryer, and Extractor Hood.
-Energy & Utilities: Battery Storage, EVSE (Electric Vehicle Supply Equipment), and Solar Power.
-Water & Infrastructure: Water Valve, Water Heater, Water Leak/Freeze sensors, Pump, and Rain Sensor.
-Media & Controls: Basic Video Player and Speaker.
-Specialized Sensors/Inputs: Heat Pump, Latching Switch, Flow, and Pressure.
-Limited Support: Cover Lift and Tilt devices only functioned for lift operations, with tilt functionality unsupported.
+
+- Appliances & Kitchen: Cooktop, Microwave Oven, Oven, Refrigerator, Laundry Washer/Dryer, and Extractor Hood.
+- Energy & Utilities: Battery Storage, EVSE (Electric Vehicle Supply Equipment), and Solar Power.
+- Water & Infrastructure: Water Valve, Water Heater, Water Leak/Freeze sensors, Pump, and Rain Sensor.
+- Media & Controls: Basic Video Player and Speaker.
+- Specialized Sensors/Inputs: Heat Pump, Latching Switch, Flow, and Pressure.
+- Limited Support: Cover Lift and Tilt devices only functioned for lift operations, with tilt functionality unsupported.
+
 Integration Limitations
+
 Even when a device is recognized, Alexa may face specific bridge-related limitations:
-Device Caps: Alexa currently supports a maximum of 50 bridged devices per connection; exceeding this limit may cause devices to disappear from the Alexa App.
-Latency: While Matter is designed for local control, status updates in the Alexa app may occasionally lag if the app remains open during external state changes.
-Feature Gaps: Advanced features for certain types, such as unlocking specific smart locks, may be disabled by default for security and require manual activation within the app
+
+- Device Caps: Alexa currently supports a maximum of 50 bridged devices per connection; exceeding this limit may cause devices to disappear from the Alexa App.
+- Latency: While Matter is designed for local control, status updates in the Alexa app may occasionally lag if the app remains open during external state changes.
+- Feature Gaps: Advanced features for certain types, such as unlocking specific smart locks, may be disabled by default for security and require manual activation within the app
 
 Known issues:
 
@@ -672,13 +679,13 @@ In the zigbee2mqtt and shelly plugins select the option to expose the switch dev
 
 ## SmartThings
 
-Tested by Tamer Salah
+Tested by [Tamer Salah](https://github.com/tammeryousef1006).
 
 No issues reported so far.
 
 ## eWeLink
 
-Tested by Tamer Salah
+Tested by [Tamer Salah](https://github.com/tammeryousef1006).
 
 eWeLink needs the standard port 5540 for commissioning.
 
