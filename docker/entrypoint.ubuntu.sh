@@ -7,7 +7,7 @@ echo "It is based on ubuntu:latest and node 24 (https://deb.nodesource.com) and 
 
 if [ ! -f "$FLAG_FILE" ]; then
 
-  echo "Installing bluetooth essentials:"
+  echo "Installing bluetooth, build-essential and python3:"
   apt-get update
   apt-get install -y --no-install-recommends \
     bluetooth bluez libbluetooth-dev libudev-dev build-essential libcap2-bin \

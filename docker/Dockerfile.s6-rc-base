@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM debian:trixie-slim AS s6-downloader
+FROM node:24-trixie-slim AS downloader
 
 ARG S6_OVERLAY_VERSION=3.2.2.0
 ARG TARGETARCH
@@ -37,9 +37,9 @@ RUN set -eux; \
   /tmp/* /var/tmp/* /root/.cache
 
 
-FROM node:24-trixie-slim
+FROM node:24-trixie-slim AS release
 
-COPY --from=s6-downloader /out/ /
+COPY --from=downloader /out/ /
 
 # Locale: ensure sane UTF-8 behavior (Node logs/JSON/etc.)
 ENV LANG=C.UTF-8
@@ -61,7 +61,14 @@ ENV S6_CMD_RECEIVE_SIGNALS=1
 ENV S6_VERBOSITY=2
 
 # Install Matterbridge globally
-RUN npm install matterbridge --global --omit=dev --no-audit --no-fund
+RUN npm install matterbridge --global --omit=dev --no-audit --no-fund && \
+  rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
+  find /usr/local/lib/node_modules -type d -name ".github" -exec rm -rf {} + && \
+  find /usr/local/lib/node_modules -type d -name ".vscode" -exec rm -rf {} + && \
+  find /usr/local/lib/node_modules -type d -name "docs" -exec rm -rf {} + && \
+  find /usr/local/lib/node_modules -type f \( -name "*.ts" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete && \
+  find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "src" -exec rm -rf {} + && \
+  find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "cjs" -exec rm -rf {} +
 
 # s6-overlay: start s6-init as the container's init process.
 ENTRYPOINT ["/init"]
