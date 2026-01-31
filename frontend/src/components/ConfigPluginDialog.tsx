@@ -138,6 +138,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     // Move the ui: properties from the schema to the uiSchema
     if (formData && schema && schema.properties) {
       if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
+      /*
       Object.keys(schema.properties).forEach((key) => {
         Object.keys(schema.properties[key]).forEach((subkey) => {
           if (subkey.startsWith('ui:')) {
@@ -149,6 +150,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           }
         });
       });
+      */
+      moveUiPropertiesToUiSchema(schema, uiSchema);
       setUiSchema(uiSchema);
       if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
     }
@@ -167,6 +170,53 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       if (debug) console.log('ConfigPluginDialog removed WebSocket listener');
     };
   }, [addListener, formData, plugin, removeListener, schema, sendMessage, uiSchema]);
+
+  const moveUiPropertiesToUiSchema = (schemaObj: any, uiSchemaObj: any, path: string[] = []) => {
+    if (!schemaObj || typeof schemaObj !== 'object') return;
+
+    // Handle properties object
+    if (schemaObj.properties) {
+      Object.keys(schemaObj.properties).forEach((key) => {
+        const property = schemaObj.properties[key];
+        const currentPath = [...path, key];
+
+        // Move ui:* properties from this property
+        Object.keys(property).forEach((subkey) => {
+          if (subkey.startsWith('ui:')) {
+            if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', currentPath.join('.'), subkey, property[subkey]);
+
+            // Create nested uiSchema structure
+            let currentUiSchema = uiSchemaObj;
+            currentPath.forEach((p) => {
+              if (!currentUiSchema[p]) currentUiSchema[p] = {};
+              currentUiSchema = currentUiSchema[p];
+            });
+            currentUiSchema[subkey] = property[subkey];
+
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+            delete property[subkey];
+          }
+        });
+
+        // Recursively process nested properties
+        moveUiPropertiesToUiSchema(property, uiSchemaObj, currentPath);
+      });
+    }
+
+    // Handle oneOf/anyOf/allOf arrays
+    ['oneOf', 'anyOf', 'allOf'].forEach((keyword) => {
+      if (Array.isArray(schemaObj[keyword])) {
+        schemaObj[keyword].forEach((subSchema: any) => {
+          moveUiPropertiesToUiSchema(subSchema, uiSchemaObj, path);
+        });
+      }
+    });
+
+    // Handle items (for arrays)
+    if (schemaObj.items) {
+      moveUiPropertiesToUiSchema(schemaObj.items, uiSchemaObj, path);
+    }
+  };
 
   const handleFormChange = (data: IChangeEvent<any, RJSFSchema, any>, id?: string) => {
     currentFormData = data.formData;
