@@ -46,10 +46,16 @@ Advantages:
 
 ### Added
 
+### Breaking Changes
+
+- [docker]: Updated all docker images to use node:24-trixie-slim as base.
+
 ### Changed
 
 - [package]: Updated dependencies.
 - [workflows]: Updated all workflows to use Node.js 24.
+- [readme]: Updated readme files to clarify which Node.js version should be installed.
+- [docker]: Updated readme file to clarify which base image is used.
 - [matter.js]: Bump to matter.j v. 0.16.8.
 
 ### Fixed

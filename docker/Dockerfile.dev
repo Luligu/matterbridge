@@ -1,5 +1,5 @@
 # ─────────────── BUILD STAGE ───────────────
-FROM node:22-bookworm-slim AS builder
+FROM node:24-trixie-slim AS builder
 
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
@@ -113,7 +113,7 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
 RUN npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf node_modules package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 # ─────────────── RUNTIME STAGE ───────────────
-FROM node:22-bookworm-slim AS release
+FROM node:24-trixie-slim AS release
 
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive

@@ -20,9 +20,9 @@
 
 The Matterbridge Docker images (multi-arch manifest list for **linux/amd64** and **linux/arm64**) are published on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge). If you use them, please consider starring the project on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
 
-The image (tag **latest**) includes Matterbridge and all official plugins, using the latest release published on npm. It is based on `node:22-bookworm-slim`. Since all official plugins are included, you can select and add a plugin without installing anything.
+The image (tag **latest**) includes Matterbridge and all official plugins, using the latest release published on npm. It is based on `node:24-trixie-slim`. Since all official plugins are included, you can select and add a plugin without installing anything.
 
-The image (tag **dev**) includes Matterbridge and all official plugins from the latest push on GitHub. It is based on `node:22-bookworm-slim`. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest **dev** from the frontend, you will override the GitHub version with the latest **dev** published on npm.
+The image (tag **dev**) includes Matterbridge and all official plugins from the latest push on GitHub. It is based on `node:24-trixie-slim`. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest **dev** from the frontend, you will override the GitHub version with the latest **dev** published on npm.
 
 The image (tag **ubuntu**) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image; they will be installed on first run. This image preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
 
