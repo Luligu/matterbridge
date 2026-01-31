@@ -188,7 +188,9 @@
     "docker:build:local:ubuntu": "docker build --no-cache --pull -f docker/Dockerfile.ubuntu -t matterbridge:ubuntu .",
     "docker:run:local:ubuntu": "docker run --rm -it --name matterbridge-ubuntu-local -p 8585:8283 matterbridge:ubuntu",
     "docker:build:local:alpine": "docker build --no-cache --pull -f docker/Dockerfile.alpine -t matterbridge:alpine .",
-    "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine-local -p 8585:8283 matterbridge:alpine"
+    "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine-local -p 8585:8283 matterbridge:alpine",
+    "docker:build:local:s6-rc-base": "docker build --no-cache --pull -f docker/Dockerfile.s6-rc-base -t matterbridge:s6-rc-base .",
+    "docker:run:local:s6-rc-base": "docker run --rm -it --name matterbridge-s6-rc-base-local -p 8585:8283 matterbridge:s6-rc-base"
   },
   "dependencies": {
     "@matter/main": "0.16.8",

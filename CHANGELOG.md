@@ -33,7 +33,7 @@ The project will evolve to a multi-threaded architecture (the CLI will become th
 
 - ✅ check updates;
 - npm install;
-- ✅ get the global node_modules directory;
+- ✅ check the global node_modules directory;
 
 Advantages:
 
@@ -46,9 +46,11 @@ Advantages:
 
 ### Breaking Changes
 
-- [docker]: Updated all docker images to use node:24-trixie-slim as base.
+- [docker]: Updated latest and dev docker images to use node:24-trixie-slim as base.
 
 ### Added
+
+- [docker]: Added workflow, scripts and dockerfile to build the s6-rc-base base image used by the Matterbridge Home Assistant Application.
 
 ### Changed
 

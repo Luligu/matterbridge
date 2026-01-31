@@ -1,25 +1,12 @@
-name: Build Docker Image latest with buildx
+name: Build Docker Image s6-rc-base with buildx
 
 on:
-  # Use in other repository workflows with:
-  # - name: Trigger Matterbridge Docker Build Latest
-  #   uses: actions/github-script@v7
-  #   with:
-  #     github-token: ${{ secrets.TRIGGER_TOKEN }}
-  #     script: |
-  #       await github.rest.actions.createWorkflowDispatch({
-  #         owner: 'Luligu',
-  #         repo: 'matterbridge',
-  #         workflow_id: 'docker-buildx-latest.yml',
-  #         ref: 'main'
-  #       })
-
-  # Allow manual dispatch and trigger from other workflows
+  # Allow manual dispatch
   workflow_dispatch:
 
 # Cancel previous runs when a new one is triggered
 concurrency:
-  group: docker-build-latest
+  group: docker-build-s6-rc-base
   cancel-in-progress: true
 
 jobs:
@@ -76,17 +63,15 @@ jobs:
         with:
           version: latest
 
-      - name: Run Docker Buildx on latest
+      - name: Run Docker Buildx with Dockerfile.s6-rc-base
         run: |
           docker buildx build \
             --no-cache \
             --pull \
             --platform linux/amd64,linux/arm64 \
-            -f docker/Dockerfile.latest \
-            -t luligu/matterbridge:latest \
-            -t luligu/matterbridge:${{ env.VERSION }} \
+            -f docker/Dockerfile.s6-rc-base \
+            -t luligu/matterbridge:s6-rc-base \
+            -t luligu/matterbridge:s6-rc-base-${{ env.VERSION }} \
             --push .
+          docker manifest inspect luligu/matterbridge:s6-rc-base
         timeout-minutes: 60
-
-      - name: Inspect pushed manifest
-        run: docker manifest inspect luligu/matterbridge:latest

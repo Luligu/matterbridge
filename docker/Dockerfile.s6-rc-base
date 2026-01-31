@@ -1,0 +1,67 @@
+FROM --platform=$BUILDPLATFORM debian:trixie-slim AS s6-downloader
+
+ARG S6_OVERLAY_VERSION=3.2.2.0
+ARG TARGETARCH
+
+RUN set -eux; \
+  export DEBIAN_FRONTEND=noninteractive; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends \
+  ca-certificates \
+  curl \
+  xz-utils; \
+  case "${TARGETARCH}" in \
+  amd64) s6arch="x86_64" ;; \
+  arm64) s6arch="aarch64" ;; \
+  *) echo "Unsupported TARGETARCH=${TARGETARCH} (only amd64/arm64 supported)" >&2; exit 1 ;; \
+  esac; \
+  curl -fsSL -o /tmp/s6-overlay-noarch.tar.xz \
+  "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz"; \
+  curl -fsSL -o "/tmp/s6-overlay-${s6arch}.tar.xz" \
+  "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${s6arch}.tar.xz"; \
+  curl -fsSL -o /tmp/s6-overlay-symlinks-noarch.tar.xz \
+  "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-symlinks-noarch.tar.xz"; \
+  curl -fsSL -o "/tmp/s6-overlay-symlinks-${s6arch}.tar.xz" \
+  "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-symlinks-arch.tar.xz"; \
+  mkdir -p /out; \
+  tar -C /out -Jxpf /tmp/s6-overlay-noarch.tar.xz; \
+  tar -C /out -Jxpf "/tmp/s6-overlay-${s6arch}.tar.xz"; \
+  tar -C /out -Jxpf /tmp/s6-overlay-symlinks-noarch.tar.xz; \
+  tar -C /out -Jxpf "/tmp/s6-overlay-symlinks-${s6arch}.tar.xz"; \
+  rm -f /tmp/s6-overlay-noarch.tar.xz "/tmp/s6-overlay-${s6arch}.tar.xz" \
+  /tmp/s6-overlay-symlinks-noarch.tar.xz "/tmp/s6-overlay-symlinks-${s6arch}.tar.xz"; \
+  /out/command/s6-echo "Prepared s6-overlay v${S6_OVERLAY_VERSION} for ${s6arch}"; \
+  apt-get purge -y --auto-remove curl xz-utils; \
+  apt-get clean; \
+  rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /var/cache/apt/archives/partial/* \
+  /tmp/* /var/tmp/* /root/.cache
+
+
+FROM node:24-trixie-slim
+
+COPY --from=s6-downloader /out/ /
+
+# Locale: ensure sane UTF-8 behavior (Node logs/JSON/etc.)
+ENV LANG=C.UTF-8
+
+# s6-overlay: keep the container's original environment variables for all services/CMD
+# (and make `with-contenv` effectively a no-op). Handy for HA-style injected env.
+ENV S6_KEEP_ENV=1
+
+# s6-overlay: what to do if stage2 init fails (cont-init, oneshots, readiness timeouts, etc.)
+# 0=continue silently, 1=continue but warn, 2=stop the container (fail fast).
+ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
+
+# s6-overlay: deliver SIGTERM/SIGINT/etc. to the CMD (main process) instead of PID 1.
+# Usually gives cleaner/faster shutdown for single-process containers.
+ENV S6_CMD_RECEIVE_SIGNALS=1
+
+# s6-overlay: reduce startup/shutdown log noise.
+# 0=errors only, 1=warnings+errors, 2=normal (default), up to 5=very verbose.
+ENV S6_VERBOSITY=2
+
+# Install Matterbridge globally
+RUN npm install matterbridge --global --omit=dev --no-audit --no-fund
+
+# s6-overlay: start s6-init as the container's init process.
+ENTRYPOINT ["/init"]
