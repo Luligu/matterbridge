@@ -44,11 +44,11 @@ Advantages:
 
 ## [3.5.3] - Dev branch
 
-### Added
-
 ### Breaking Changes
 
 - [docker]: Updated all docker images to use node:24-trixie-slim as base.
+
+### Added
 
 ### Changed
 
