@@ -76,6 +76,37 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('setTemperature', { request, cluster: TemperatureControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    let targetTemp = request.targetTemperature;
+    if (targetTemp !== undefined) {
+      const maxC = this.state.maxTemperature;
+      const minC = this.state.minTemperature;
+      if (targetTemp > maxC) {
+        const converted = Math.round(((targetTemp / 100 - 32) * 5 / 9) * 100);
+        if (converted >= minC && converted <= maxC) {
+          device.log.warn(`Detected likely Fahrenheit value (${targetTemp}). Correcting to Celsius (${converted}).`);
+          targetTemp = converted;
+        }
+      }
+    }
+    if (targetTemp !== undefined && targetTemp >= this.state.minTemperature && targetTemp <= this.state.maxTemperature) {
+      device.log.debug(`MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to ${targetTemp}`);
+      this.state.temperatureSetpoint = targetTemp;
+    } else {
+      device.log.error(`MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature ${targetTemp}`);
+    }
+  }
+}
+
+export class MatterbridgeNumberTemperatureControlServer extends TemperatureControlServer.with(TemperatureControl.Feature.TemperatureNumber, TemperatureControl.Feature.TemperatureStep) {
+  override initialize() {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint ${this.state.temperatureSetpoint} minTemperature ${this.state.minTemperature} maxTemperature ${this.state.maxTemperature} step ${this.state.step}`);
+  }
+
+  override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('setTemperature', { request, cluster: TemperatureControlServer.id, attributes: this.state, endpoint: this.endpoint });
     if (request.targetTemperature !== undefined && request.targetTemperature >= this.state.minTemperature && request.targetTemperature <= this.state.maxTemperature) {
       device.log.debug(`MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to ${request.targetTemperature}`);
       this.state.temperatureSetpoint = request.targetTemperature;
