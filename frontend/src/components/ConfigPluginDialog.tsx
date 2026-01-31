@@ -86,6 +86,16 @@ const listItemTextSecondaryStyle = {};
 let selectDevices: ApiSelectDevice[] = [];
 let selectEntities: ApiSelectEntity[] = [];
 
+type RjsfPropertyWithStringType = RJSFSchema & { type: string };
+
+function hasSchemaPropertyWithStringType(schema: RJSFSchema, name: string): schema is RJSFSchema & { properties: Record<string, RjsfPropertyWithStringType> } {
+  const properties: unknown = schema?.properties;
+  if (!properties || typeof properties !== 'object') return false;
+  const property: unknown = (properties as Record<string, unknown>)[name];
+  if (!property || typeof property !== 'object') return false;
+  return typeof (property as { type?: unknown }).type === 'string';
+}
+
 export interface ConfigPluginDialogProps {
   open: boolean;
   onClose: () => void;
@@ -442,8 +452,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       // console.log('ArrayFieldTemplate: handleSelectValue', value);
       setDialogDeviceOpen(false);
       // Trigger onAddClick to add the selected new item
-      if (schema.selectFrom === 'serial') (schema as any).items.default = value.serial;
-      else if (schema.selectFrom === 'name') (schema as any).items.default = value.name;
+      if (schema.selectFrom === 'serial' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.serial;
+      else if (schema.selectFrom === 'name' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.name;
       onAddClick();
     };
 
@@ -451,8 +461,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
       setDialogEntityOpen(false);
       // Trigger onAddClick to add the selected new item
-      if (schema.selectEntityFrom === 'name') (schema as any).items.default = value.name;
-      else if (schema.selectEntityFrom === 'description') (schema as any).items.default = value.description;
+      if (schema.selectEntityFrom === 'name' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.name;
+      else if (schema.selectEntityFrom === 'description' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.description;
       onAddClick();
     };
 
@@ -460,8 +470,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
       setDialogDeviceEntityOpen(false);
       // Trigger onAddClick to add the selected new item
-      if (schema.selectDeviceEntityFrom === 'name') (schema as any).items.default = value.name;
-      else if (schema.selectDeviceEntityFrom === 'description') (schema as any).items.default = value.description;
+      if (schema.selectDeviceEntityFrom === 'name' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.name;
+      else if (schema.selectDeviceEntityFrom === 'description' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.description;
       onAddClick();
     };
 
@@ -788,11 +798,11 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                 sx={{
                   margin: '0px',
                   marginBottom: '10px',
-                  padding: ['object', 'array'].includes((schema as any).properties[name].type) ? '0px' : boxPadding,
-                  border: ['object', 'array'].includes((schema as any).properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
+                  padding: hasSchemaPropertyWithStringType(schema, name) && ['object', 'array'].includes(schema.properties[name].type) ? '0px' : boxPadding,
+                  border: hasSchemaPropertyWithStringType(schema, name) && ['object', 'array'].includes(schema.properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
                 }}
               >
-                {!['object', 'array', 'boolean'].includes((schema as any).properties[name].type) && <Typography sx={titleSx}>{(schema as any).properties[name].title || name}</Typography>}
+                {hasSchemaPropertyWithStringType(schema, name) && !['object', 'array', 'boolean'].includes(schema.properties[name].type) && <Typography sx={titleSx}>{schema.properties[name].title || name}</Typography>}
                 <Box sx={{ flexGrow: 1, padding: '0px', margin: '0px' }}>{content}</Box>
               </Box>
             ),
