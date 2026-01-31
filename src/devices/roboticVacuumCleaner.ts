@@ -30,6 +30,7 @@ import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { ServiceArea } from '@matter/types/clusters/service-area';
 import { ModeBase } from '@matter/types/clusters/mode-base';
+import { Identify } from '@matter/types/clusters/identify';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { RvcRunModeServer } from '@matter/node/behaviors/rvc-run-mode';
 import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
@@ -78,7 +79,8 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
     supportedMaps?: ServiceArea.Map[],
   ) {
     super([roboticVacuumCleaner, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, mode });
-    this.createDefaultIdentifyClusterServer()
+    // Use the AudibleBeep identification type for the Identify cluster
+    this.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.AudibleBeep)
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Robot Vacuum Cleaner')
       .createDefaultPowerSourceRechargeableBatteryClusterServer(80, PowerSource.BatChargeLevel.Ok, 5900)
       .createDefaultRvcRunModeClusterServer(currentRunMode, supportedRunModes)

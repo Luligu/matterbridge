@@ -845,7 +845,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(request.identifyTime).toBe(5);
       expect(attributes).toBeDefined();
       expect(attributes.identifyTime).toBe(0);
-      expect(attributes.identifyType).toBe(Identify.IdentifyType.None);
+      expect(attributes.identifyType).toBe(Identify.IdentifyType.AudibleBeep);
       expect(endpoint).toBeDefined();
       expect(endpoint).toBe(light);
       expect(endpoint.id).toBe(light.id);
