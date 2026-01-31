@@ -59,6 +59,8 @@ Advantages:
 - [readme]: Updated readme files to clarify which Node.js version should be installed.
 - [docker]: Updated readme file to clarify which base image is used.
 - [matter.js]: Bump to matter.j v. 0.16.8.
+- [frontend]: Bumped `frontend` version to v. 3.4.4.
+- [config]: Added title render to the config editor and allow ui properties in 'oneOf', 'anyOf', 'allOf'. Thanks RinDevJunior (https://github.com/Luligu/matterbridge/pull/495).
 
 ### Fixed
 
