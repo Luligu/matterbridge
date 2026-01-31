@@ -741,7 +741,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                   border: ['object', 'array', 'boolean'].includes((schema as any).properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
                 }}
               >
-                {!['object', 'array', 'boolean'].includes((schema as any).properties[name].type) && <Typography sx={titleSx}>{name}</Typography>}
+                {!['object', 'array', 'boolean'].includes((schema as any).properties[name].type) && <Typography sx={titleSx}>{(schema as any).properties[name].title || name}</Typography>}
                 <Box sx={{ flexGrow: 1, padding: '0px', margin: '0px' }}>{content}</Box>
               </Box>
             ),
@@ -910,7 +910,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       <Box sx={{ margin: '0px', padding: '5px 10px', border: '1px solid grey' }}>
         {name && (
           <Box sx={{ margin: '0px', padding: '0px', gap: '10px', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-            <Typography sx={titleSx}>{name}</Typography>
+            <Typography sx={titleSx}>{schema.title || name}</Typography>
             <Checkbox checked={value} readOnly={readonly} onChange={() => onChange(!value)} sx={{ padding: '0px', margin: '0px' }} />
           </Box>
         )}
