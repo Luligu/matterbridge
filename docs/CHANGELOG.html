@@ -122,7 +122,7 @@
 </li>
 <li><p>npm install;</p>
 </li>
-<li><p>✅ get the global node_modules directory;</p>
+<li><p>✅ check the global node_modules directory;</p>
 </li>
 </ul>
 <p>Advantages:</p>
@@ -135,9 +135,12 @@
 <h2 id="353-dev-branch">[3.5.3] - Dev branch</h2>
 <h3 id="breaking-changes">Breaking Changes</h3>
 <ul>
-<li>[docker]: Updated all docker images to use node:24-trixie-slim as base.</li>
+<li>[docker]: Updated latest and dev docker images to use node:24-trixie-slim as base.</li>
 </ul>
 <h3 id="added">Added</h3>
+<ul>
+<li>[docker]: Added workflow, scripts and dockerfile to build the s6-rc-base base image used by the Matterbridge Home Assistant Application.</li>
+</ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[package]: Updated dependencies.</li>
@@ -145,6 +148,9 @@
 <li>[readme]: Updated readme files to clarify which Node.js version should be installed.</li>
 <li>[docker]: Updated readme file to clarify which base image is used.</li>
 <li>[matter.js]: Bump to matter.j v. 0.16.8.</li>
+<li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.4.</li>
+<li>[frontend]: Updated <code>frontend</code> dependencies.</li>
+<li>[config]: Added title render to the config editor and allow ui properties in &#39;oneOf&#39;, &#39;anyOf&#39;, &#39;allOf&#39;. Thanks RinDevJunior (<a href="https://github.com/Luligu/matterbridge/pull/495">https://github.com/Luligu/matterbridge/pull/495</a>).</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
