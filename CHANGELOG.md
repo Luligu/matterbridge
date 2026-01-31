@@ -42,6 +42,19 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.5.3] - Dev branch
+
+### Added
+
+### Changed
+
+- [package]: Updated dependencies.
+- [matter.js]: Bump to matter.j v. 0.16.8.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.5.2] - 2026-01-31
 
 ### Added
