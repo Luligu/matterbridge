@@ -1,7 +1,7 @@
 /**
  * This file contains the check updates functions.
  *
- * @file update.ts
+ * @file checkUpdates.ts
  * @author Luca Liguori
  * @created 2025-02-24
  * @version 2.0.1
@@ -38,7 +38,6 @@ import { BroadcastServer } from './broadcastServer.js';
  * @returns {Promise<void>} A promise that resolves when the update checks are complete.
  */
 export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<void> {
-  /** Broadcast server */
   const log = new AnsiLogger({ logName: 'MatterbridgeUpdates', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.logLevel });
   const server = new BroadcastServer('updates', log);
 
@@ -48,10 +47,15 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
   const pluginsVersionPromises = [];
   const pluginsDevVersionPromises = [];
   const shellyUpdatesPromises = [];
-  const plugins = (await server.fetch({ type: 'plugins_apipluginarray', src: server.name, dst: 'plugins' }, 1000)).result.plugins;
-  for (const plugin of plugins) {
-    pluginsVersionPromises.push(getPluginLatestVersion(log, server, plugin));
-    pluginsDevVersionPromises.push(getPluginDevVersion(log, server, plugin));
+  try {
+    const plugins = (await server.fetch({ type: 'plugins_apipluginarray', src: server.name, dst: 'plugins' }, 1000)).result.plugins;
+    for (const plugin of plugins) {
+      pluginsVersionPromises.push(getPluginLatestVersion(log, server, plugin));
+      pluginsDevVersionPromises.push(getPluginDevVersion(log, server, plugin));
+    }
+  } catch (error) {
+    // istanbul ignore next cause it's just an error log
+    log.debug(`Error fetching plugins for update check: ${error instanceof Error ? error.message : error}`);
   }
 
   if (hasParameter('shelly')) {
@@ -197,7 +201,6 @@ export async function getPluginLatestVersion(log: AnsiLogger, server: BroadcastS
     if (plugin.version !== plugin.latestVersion) {
       log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
       server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
-      // matterbridge.frontend.wssSendRefreshRequired('plugins');
     } else {
       log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
     }
@@ -223,10 +226,9 @@ export async function getPluginDevVersion(log: AnsiLogger, server: BroadcastServ
     const version = await getNpmPackageVersion(plugin.name, 'dev');
     plugin.devVersion = version;
     server.request({ type: 'plugins_set_dev_version', src: server.name, dst: 'plugins', params: { plugin, version } });
-    if (plugin.version.includes('-dev-') && plugin.version !== plugin.devVersion) {
+    if ((plugin.version.includes('-dev-') || plugin.version.includes('-git-')) && plugin.version !== plugin.devVersion) {
       log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest dev version: ${plugin.devVersion}.`);
       server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
-      // matterbridge.frontend.wssSendRefreshRequired('plugins');
     } else if (plugin.version.includes('-dev-') && plugin.version === plugin.devVersion) {
       log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest dev version: ${plugin.devVersion}.`);
     }

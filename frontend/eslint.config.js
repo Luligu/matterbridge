@@ -58,6 +58,7 @@ export default defineConfig([
   },
   {
     // All JavaScript and TypeScript with React
+    name: 'React',
     files: ['**/*.{js,jsx,ts,tsx}'],
     ...reactPlugin.configs.flat.recommended,
     ...reactPlugin.configs.flat['jsx-runtime'], // Add this if you are using React 17+

@@ -197,7 +197,6 @@ export function isMatterbridgeEndpoint(value: unknown): value is MatterbridgeEnd
  */
 export function assertMatterbridgeEndpoint(value: unknown, context?: string): asserts value is MatterbridgeEndpoint {
   if (isMatterbridgeEndpoint(value)) return;
-  // istanbul ignore next
   throw new TypeError(`Invalid MatterbridgeEndpoint received${context ? ` in ${context}` : ''}`);
 }
 
@@ -1156,7 +1155,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         vendorName: vendorName.slice(0, 32),
         productName: productName.slice(0, 32),
         productUrl: this.productUrl.slice(0, 256),
-        productLabel: deviceName.slice(0, 64),
+        productLabel: productName.slice(0, 64),
         nodeLabel: deviceName.slice(0, 32),
         serialNumber: serialNumber.slice(0, 32),
         uniqueId: this.uniqueId.slice(0, 32),
@@ -2092,6 +2091,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
         ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
         ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+        ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.Presets
         numberOfPresets: Array.isArray(presetsList) ? presetsList.length : 0,
         activePresetHandle: activePresetHandle !== undefined ? Uint8Array.from([activePresetHandle]) : null,

@@ -25,9 +25,9 @@
 import { LogLevel } from 'node-ansi-logger';
 import { EndpointNumber } from '@matter/types/datatype';
 
-import { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
-import type { PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import type { ApiMatter, ApiPlugin, BaseDevice, Plugin, StoragePlugin } from './matterbridgeTypes.js';
+import type { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
+import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
+import type { ApiMatter, ApiPlugin, BaseDevice, Plugin, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
 
 /** Types of worker source */
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
@@ -164,6 +164,14 @@ export type WorkerMessageTypes = {
   'matterbridge_main_update': {
     request: { params: { available: boolean } };
     response: { result: { success: true } };
+  };
+  'matterbridge_platform': {
+    request: { params: undefined };
+    response: { result: { data: PlatformMatterbridge; success: true } };
+  };
+  'matterbridge_shared': {
+    request: { params: undefined };
+    response: { result: { data: SharedMatterbridge; success: true } };
   };
 
   // Matter methods

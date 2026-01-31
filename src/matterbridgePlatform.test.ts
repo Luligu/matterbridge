@@ -103,6 +103,7 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('MatterbridgePlatform for plugin test is fully initialized'));
 
     expect(() => assertMatterbridgePlatform(platform)).not.toThrow();
+    expect(() => assertMatterbridgePlatform({})).toThrow();
   });
 
   test('onStart should throw an error if not overridden', async () => {

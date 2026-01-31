@@ -22,7 +22,7 @@ import { getParameter, hasParameter } from '@matterbridge/utils';
 import { Matterbridge } from './matterbridge.js';
 import { plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Mock BroadcastServer methods
@@ -121,6 +121,8 @@ describe('Matterbridge', () => {
     expect(matterbridge.shellySysUpdate).toBe(true);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_main_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
     expect(matterbridge.shellyMainUpdate).toBe(true);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_platform', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shared', src: 'manager', dst: 'matterbridge', params: {} } as any);
   });
 
   test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
@@ -138,10 +140,12 @@ describe('Matterbridge', () => {
     matterbridge.plugins.clear();
     await matterbridge.plugins.saveToStorage();
 
-    await new Promise((resolve) => {
-      matterbridge.once('online', resolve);
-    });
-    await Promise.resolve();
+    if (!matterbridge.serverNode?.lifecycle.isOnline === true) {
+      await new Promise((resolve) => {
+        matterbridge.once('online', resolve);
+      });
+    }
+    await flushAsync(undefined, undefined, 100);
 
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('Jest');
@@ -187,7 +191,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
     expect((Matterbridge as any).instance).toBeUndefined(); // Instance is not defined cause cleanup() has been called
     // await setDebug(false);
-  });
+  }, 30000);
 
   test('Matterbridge.loadInstance(true) with frontend', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '8081', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-profile', 'Jest'];

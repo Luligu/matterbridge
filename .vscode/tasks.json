@@ -251,6 +251,14 @@
       "label": "Test: Workers",
       "type": "shell",
       "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "src/broadcastServer.test.ts", "src/worker.test.ts", "src/worker.mock.test.ts"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: MatterNode",
+      "type": "shell",
+      "command": "node",
       "args": [
         "--no-warnings",
         "--experimental-vm-modules",
@@ -258,8 +266,6 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "src/broadcastServer.test.ts",
-        "src/workers.test.ts",
         "src/matterNode.test.ts",
         "src/matterNode.bridge.test.ts",
         "src/matterNode.accessory.test.ts",

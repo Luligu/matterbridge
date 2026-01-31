@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.5.1",
+  "version": "3.5.2",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -44,7 +44,8 @@
   "bin": {
     "matterbridge": "bin/matterbridge.js",
     "mb_mdns": "bin/mb_mdns.js",
-    "mb_coap": "bin/mb_coap.js"
+    "mb_coap": "bin/mb_coap.js",
+    "mb_health": "bin/mb_health.js"
   },
   "engines": {
     "node": ">=20.0.0 <21.0.0 || >=22.0.0 <23.0.0 || >=24.0.0 <25.0.0"
@@ -53,7 +54,8 @@
     "packages/jest-utils",
     "packages/vitest-utils",
     "packages/utils",
-    "packages/dgram"
+    "packages/dgram",
+    "packages/thread"
   ],
   "exports": {
     ".": {
@@ -71,6 +73,10 @@
     "./utils": {
       "import": "./dist/utils/export.js",
       "types": "./dist/utils/export.d.ts"
+    },
+    "./dgram": {
+      "import": "./dist/dgram/export.js",
+      "types": "./dist/dgram/export.d.ts"
     },
     "./jestutils": {
       "import": "./dist/jestutils/export.js",
@@ -143,8 +149,9 @@
     "version:patch": "npm version patch -m \"Release %s\"",
     "version:minor": "npm version minor -m \"Release %s\"",
     "version:major": "npm version major -m \"Release %s\"",
-    "git:status": "git status && git branch -vv && git diff dev origin/dev && git stash list",
+    "git:status": "git status && git branch -vv && git --no-pager diff dev origin/dev && git stash list && git fsck --full --no-reflogs",
     "git:remote": "git remote -v && git remote show origin",
+    "git:prune": "git fetch --prune --prune-tags",
     "git:hardreset:main": "git fetch origin && git checkout main && git reset --hard origin/main",
     "git:hardreset:dev": "git fetch origin && git checkout dev && git reset --hard origin/dev",
     "git:hardreset:edge": "git fetch origin && git checkout edge && git reset --hard origin/edge",
@@ -152,7 +159,7 @@
     "dataModel": "node ./scripts/data-model.mjs",
     "fetchChip": "node ./scripts/fetch-chip.mjs",
     "updateHtmls": "node ./scripts/marked.mjs",
-    "runMeBeforePublish": "npm run build && npm run lint && npm run format && npm run test && npm run build",
+    "runMeBeforePublish": "npm run build && npm run lint && npm run format && npm run test && npm run build && npm run updateHtmls",
     "prepublishOnly": "npm pkg delete devDependencies scripts workspaces && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap --omit=dev",
     "prepublishOnlyProduction": "npm run cleanBuildProduction && npm run prepublishOnly",
     "npmPack": "npx shx cp package.json package.json.backup && node scripts/version.mjs dev && npm run prepublishOnlyProduction && npm pack && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
@@ -174,28 +181,29 @@
     "buildAll": "npm run build && npm --workspaces run build",
     "lintAll": "npm run lint && npm --workspaces run lint",
     "testAll": "npm run test && npm --workspaces run test",
-    "docker:build:local:latest": "docker build -f docker/Dockerfile.main -t matterbridge:latest .",
-    "docker:run:local:latest": "docker run --rm -it --name matterbridge-latest -p 8585:8283 matterbridge:latest",
-    "docker:build:local:dev": "docker build -f docker/Dockerfile.dev -t matterbridge:dev .",
-    "docker:run:local:dev": "docker run --rm -it --name matterbridge-dev -p 8585:8283 matterbridge:dev",
-    "docker:build:local:ubuntu": "docker build -f docker/Dockerfile.ubuntu -t matterbridge:ubuntu .",
-    "docker:run:local:ubuntu": "docker run --rm -it --name matterbridge-ubuntu -p 8585:8283 matterbridge:ubuntu",
-    "docker:build:local:alpine": "docker build -f docker/Dockerfile.alpine -t matterbridge:alpine .",
-    "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine -p 8585:8283 matterbridge:alpine"
+    "docker:build:local:latest": "docker build --no-cache --pull -f docker/Dockerfile.latest -t matterbridge:latest .",
+    "docker:run:local:latest": "docker run --rm -it --name matterbridge-latest-local -p 8585:8283 matterbridge:latest",
+    "docker:build:local:dev": "docker build --no-cache --pull -f docker/Dockerfile.dev -t matterbridge:dev .",
+    "docker:run:local:dev": "docker run --rm -it --name matterbridge-dev-local -p 8585:8283 matterbridge:dev",
+    "docker:build:local:ubuntu": "docker build --no-cache --pull -f docker/Dockerfile.ubuntu -t matterbridge:ubuntu .",
+    "docker:run:local:ubuntu": "docker run --rm -it --name matterbridge-ubuntu-local -p 8585:8283 matterbridge:ubuntu",
+    "docker:build:local:alpine": "docker build --no-cache --pull -f docker/Dockerfile.alpine -t matterbridge:alpine .",
+    "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine-local -p 8585:8283 matterbridge:alpine"
   },
   "dependencies": {
     "@matter/main": "0.16.7",
+    "@matterbridge/dgram": "0.0.3",
+    "@matterbridge/jest-utils": "0.0.1",
+    "@matterbridge/utils": "0.0.2",
+    "@matterbridge/vitest-utils": "0.0.1",
+    "@matterbridge/thread": "0.0.1",
     "archiver": "7.0.1",
     "express": "5.2.1",
     "glob": "13.0.0",
     "multer": "2.0.2",
     "node-ansi-logger": "3.1.1",
     "node-persist-manager": "2.0.0",
-    "ws": "8.19.0",
-    "@matterbridge/dgram": "0.0.3",
-    "@matterbridge/utils": "0.0.2",
-    "@matterbridge/jest-utils": "0.0.1",
-    "@matterbridge/vitest-utils": "0.0.1"
+    "ws": "8.19.0"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
@@ -213,7 +221,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest": "29.12.1",
-    "eslint-plugin-jsdoc": "62.4.0",
+    "eslint-plugin-jsdoc": "62.4.1",
     "eslint-plugin-n": "17.23.2",
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-promise": "7.2.1",
@@ -224,7 +232,7 @@
     "shx": "0.4.0",
     "ts-jest": "29.4.6",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.53.1",
+    "typescript-eslint": "8.54.0",
     "vitest": "4.0.18"
   }
 }

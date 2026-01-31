@@ -55,6 +55,7 @@ jobs:
           npm pkg set build.type="${GITHUB_REF_TYPE}"
           npm pkg set build.name="${GITHUB_REF_NAME}"
           npm pkg set build.docker="false"
+          npm pkg set build.dev="true"
 
       - name: Extract version and set tag
         id: vars
@@ -66,7 +67,7 @@ jobs:
           echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
           echo "ORIG_SHA=$SHA"    >> $GITHUB_ENV
 
-      - name: Bump to date-stamped dev version tag ${{ env.DEV_TAG }} sha ${{ env.ORIG_SHA }}
+      - name: Bump to date-stamped dev version tag ${{ env.DEV_TAG }}
         run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version --ignore-scripts
 
       - name: Check if a new dev-publish is needed

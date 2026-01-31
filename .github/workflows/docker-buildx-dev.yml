@@ -48,19 +48,17 @@ jobs:
           npm pkg set build.type="${GITHUB_REF_TYPE}"
           npm pkg set build.name="${GITHUB_REF_NAME}"
           npm pkg set build.docker="true"
+          npm pkg set build.dev="true"
 
-      - name: Extract base version, date and commit
-        id: vars
+      - name: Extract version from package.json
+        id: extract_version
         run: |
-          BASE=$(jq -r '.version' package.json)
-          DATE=$(date -u +'%Y%m%d')
-          SHA=${GITHUB_SHA::7}
-          DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
-          echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
-          echo "ORIG_SHA=$SHA"    >> $GITHUB_ENV
+          VERSION=$(jq -r '.version' package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Bump to date-commit-stamped version --no-git-tag-version tag ${{ env.DEV_TAG }} sha ${{ env.ORIG_SHA }}
-        run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version --ignore-scripts
+      - name: Echo main version ${{ env.VERSION }}
+        run: |
+          echo "Extracted version is: ${{ env.VERSION }}"
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -81,9 +79,12 @@ jobs:
       - name: Run Docker Buildx on dev
         run: |
           docker buildx build \
+            --no-cache \
+            --pull \
             --platform linux/amd64,linux/arm64 \
             -f docker/Dockerfile.dev \
             -t luligu/matterbridge:dev \
+            -t luligu/matterbridge:dev-${{ env.VERSION }} \
             --push .
         timeout-minutes: 60
 

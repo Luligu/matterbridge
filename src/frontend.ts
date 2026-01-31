@@ -46,13 +46,14 @@ import { EndpointNumber, FabricIndex } from '@matter/types/datatype';
 import { CommissioningOptions } from '@matter/types/commissioning';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { PowerSource } from '@matter/types/clusters/power-source';
-// Matterbridge
+// @matterbridge
 import { createZip, formatBytes, formatPercent, formatUptime, getParameter, hasParameter, inspectError, isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString, wait, withTimeout } from '@matterbridge/utils';
 
+// Matterbridge
 import type { Cluster, ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, Plugin } from './matterbridgeTypes.js';
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import type { PlatformConfig } from './matterbridgePlatform.js';
+import type { PlatformConfig } from './matterbridgePlatformTypes.js';
 import type { ApiSettings, RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
 import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from './matterbridgeTypes.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
@@ -1759,7 +1760,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         }
       } else if (data.method === '/api/checkupdates') {
-        const { checkUpdates } = await import('./update.js');
+        const { checkUpdates } = await import('./checkUpdates.js');
         checkUpdates(this.matterbridge);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellysysupdate') {
@@ -1860,12 +1861,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertiseTime: 0, advertising: false } });
         }
         if (data.params.advertise) {
-          // TODO: matter.js 0.16.0
-          // await serverNode.env.get(DeviceAdvertiser)?.advertise(true);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const advertiser = serverNode.env.get(DeviceAdvertiser) as any;
-          if (advertiser && advertiser.advertise && typeof advertiser.advertise === 'function') await advertiser.advertise(true);
-          if (advertiser && advertiser.restartAdvertisement && typeof advertiser.restartAdvertisement === 'function') advertiser.restartAdvertisement();
+          serverNode.env.get(DeviceAdvertiser)?.restartAdvertisement();
           this.log.debug(`*Advertising has been sent for node ${data.params.id}`);
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertising: true } });
         }

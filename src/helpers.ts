@@ -27,11 +27,13 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { Endpoint } from '@matter/node';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
+import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
+import { VendorId } from '@matter/types/datatype';
 // Matterbridge
 import { hasParameter } from '@matterbridge/utils';
 
@@ -70,7 +72,7 @@ export async function addVirtualDevice(aggregatorEndpoint: Endpoint<AggregatorEn
   }
   const device = new Endpoint(deviceType, {
     id: name.replaceAll(' ', '') + ':' + type,
-    bridgedDeviceBasicInformation: { nodeLabel: name.slice(0, 32) },
+    bridgedDeviceBasicInformation: { vendorId: VendorId(0xfff1), vendorName: 'Matterbridge', productName: 'Matterbridge Virtual Device', nodeLabel: name.slice(0, 32) },
     onOff: { onOff: false, startUpOnOff: OnOff.StartUpOnOff.Off },
   });
 
@@ -91,6 +93,15 @@ export async function addVirtualDevice(aggregatorEndpoint: Endpoint<AggregatorEn
 
   // Add the created device to the given endpoint.
   await aggregatorEndpoint.add(device);
+
+  // Add the OnOffPlugInUnit to MountedOnOffControlDevice (Matter 1.4.2).
+  await device.construction.ready;
+  if (type === 'mounted_switch') {
+    await device.act(async (agent) => {
+      const descriptor = await agent.load(DescriptorServer);
+      descriptor.addDeviceTypes('OnOffPlugInUnit');
+    });
+  }
 
   // Initially set the state of the virtual device's `OnOffBaseServer` to false (off).
   await device.setStateOf(OnOffBaseServer, { onOff: false });

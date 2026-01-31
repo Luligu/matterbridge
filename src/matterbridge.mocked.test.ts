@@ -39,12 +39,12 @@ const spawnModule = await import('./spawn.js');
 const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
 
 // Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('./workers.js', () => ({
+jest.unstable_mockModule('./worker.js', () => ({
   createESMWorker: jest.fn(() => {
     return undefined; // Mock the createESMWorker function to return immediately
   }),
 }));
-const workerModule = await import('./workers.js');
+const workerModule = await import('./worker.js');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import os from 'node:os';
@@ -56,16 +56,17 @@ import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 import { LogLevel as MatterLogLevel, Logger } from '@matter/general';
 import { VendorId } from '@matter/types';
-const { Matterbridge } = await import('./matterbridge.js');
-const { PluginManager } = await import('./pluginManager.js');
-const { DeviceManager } = await import('./deviceManager.js');
 import { getParameter } from '@matterbridge/utils';
 
+import { plg, Plugin } from './matterbridgeTypes.js';
+import { closeMdnsInstance, configurePluginSpy, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { PluginManager as PluginManagerType } from './pluginManager.js';
 import type { DeviceManager as DeviceManagerType } from './deviceManager.js';
-import { plg, Plugin } from './matterbridgeTypes.js';
-import { closeMdnsInstance, configurePluginSpy, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+
+const { Matterbridge } = await import('./matterbridge.js');
+const { PluginManager } = await import('./pluginManager.js');
+const { DeviceManager } = await import('./deviceManager.js');
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -626,13 +627,16 @@ describe('Matterbridge mocked', () => {
   }, 10000);
 
   test('Matterbridge.initialize() update', async () => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+      return Promise.resolve();
+    });
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     // Mock the checkUpdates from update module before importing it
-    jest.unstable_mockModule('./update.js', () => ({
+    jest.unstable_mockModule('./checkUpdates.js', () => ({
       checkUpdates: jest.fn().mockImplementation(() => Promise.resolve()), // Mock the checkUpdates function to resolve immediately
     }));
-    const update = await import('./update.js');
+    const update = await import('./checkUpdates.js');
     const checkUpdatesMock = update.checkUpdates;
     jest.useFakeTimers();
     await (matterbridge as any).initialize();
@@ -643,6 +647,12 @@ describe('Matterbridge mocked', () => {
   }, 10000);
 
   test('Matterbridge.initialize() registerProcessHandlers and matter file logger', async () => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+      return Promise.resolve();
+    });
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+      return Promise.resolve();
+    });
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger'];
     const createDestinationMatterLoggerSpy = jest.spyOn(Matterbridge.prototype as any, 'createDestinationMatterLogger');

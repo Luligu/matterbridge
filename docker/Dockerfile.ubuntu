@@ -1,47 +1,4 @@
-# ─────────────── BUILD STAGE ───────────────
-FROM ubuntu:latest AS base
-
-# 🛠️ Set noninteractive frontend
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install node from NodeSource
-RUN apt update || (sleep 10 && apt update) || (sleep 20 && apt update) && \
-  apt install -y --no-install-recommends ca-certificates curl && \
-  curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
-  apt install -y --no-install-recommends nodejs
-
-# Build Matterbridge for production
-WORKDIR /matterbridge
-COPY ./package*.json ./tsconfig*.json ./.npmignore ./
-COPY ./src ./src
-COPY ./frontend/package.json ./frontend/package.json
-COPY ./frontend/build ./frontend/build
-COPY ./bin ./bin
-
-COPY ./packages/dgram/package*.json ./packages/dgram/tsconfig*.json ./packages/dgram/.npmignore ./packages/dgram/
-COPY ./packages/dgram/src ./packages/dgram/src
-
-COPY ./packages/jest-utils/package*.json ./packages/jest-utils/tsconfig*.json ./packages/jest-utils/.npmignore ./packages/jest-utils/
-COPY ./packages/jest-utils/src ./packages/jest-utils/src
-
-COPY ./packages/utils/package*.json ./packages/utils/tsconfig*.json ./packages/utils/.npmignore ./packages/utils/
-COPY ./packages/utils/src ./packages/utils/src
-
-COPY ./packages/vitest-utils/package*.json ./packages/vitest-utils/tsconfig*.json ./packages/vitest-utils/.npmignore ./packages/vitest-utils/
-COPY ./packages/vitest-utils/src ./packages/vitest-utils/src
-
-# COPY ./vendor ./vendor
-
-RUN npm ci --no-fund --no-audit && \
-  npm run buildProduction && \
-  npm pkg delete devDependencies scripts workspaces && \
-  rm -rf node_modules package-lock.json npm-shrinkwrap.json && \
-  npm install --no-fund --no-audit --omit=dev && \
-  npm shrinkwrap --omit=dev && \
-  npm pack
-
-# ─────────────── RUNTIME STAGE ───────────────
-FROM ubuntu:latest AS release
+FROM ubuntu:latest
 
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
@@ -55,9 +12,16 @@ RUN apt update || (sleep 10 && apt update) || (sleep 20 && apt update) && \
 
 # Install matterbridge
 WORKDIR /matterbridge    
-COPY --from=base /matterbridge/*.tgz .
-RUN npm install *.tgz --global --verbose --no-fund --no-audit --omit=dev && \
-  rm *.tgz
+RUN npm install matterbridge --global --verbose --no-fund --no-audit --omit=dev && \
+  npm uninstall -g corepack && \
+  npm cache clean --force && \
+  rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
+  find /usr/lib/node_modules -type d -name ".github" -exec rm -rf {} + && \
+  find /usr/lib/node_modules -type d -name ".vscode" -exec rm -rf {} + && \
+  find /usr/lib/node_modules -type d -name "docs" -exec rm -rf {} + && \
+  find /usr/lib/node_modules -type f \( -name "*.ts" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete && \
+  find /usr/lib/node_modules/matterbridge/node_modules/@matter -type d -name "src" -exec rm -rf {} + && \
+  find /usr/lib/node_modules/matterbridge/node_modules/@matter -type d -name "cjs" -exec rm -rf {} +
 
 # Add Docker HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \

@@ -23,7 +23,7 @@ It can also be used to run Home Assistant and Matter Server inside Docker Deskto
 
 Since the mDNS are shared between reflector clients, you can pair Matterbridge running with Docker Desktop to Home Assistant running with Docker Desktop. Even on the same machine.
 
-<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
 # Prerequisites
 

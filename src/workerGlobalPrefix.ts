@@ -4,7 +4,7 @@
  * @file workerGlobalPrefix.ts
  * @author Luca Liguori
  * @created 2025-11-25
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -28,13 +28,12 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { getGlobalNodeModules, hasParameter, inspectError } from '@matterbridge/utils';
 
 import { BroadcastServer } from './broadcastServer.js';
-import { logWorkerInfo, parentLog, parentPost } from './workers.js';
+import { logWorkerInfo, parentLog, parentPost } from './worker.js';
 
 const debug = hasParameter('debug') || hasParameter('verbose');
 const verbose = hasParameter('verbose');
 
 // Send init message
-// istanbul ignore next cause it's available only in worker threads
 if (!isMainThread && parentPort) {
   parentPost({ type: 'init', threadId, threadName: workerData.threadName, success: true });
   if (debug) parentLog('MatterbridgePrefix', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} initialized.`);
@@ -61,10 +60,11 @@ try {
   // istanbul ignore next cause it's just an error log
   if (!isMainThread && parentPort) parentLog('MatterbridgePrefix', LogLevel.ERROR, errorMessage);
 }
+
+// Close the broadcast server
 server.close();
 
 // Send exit message
-// istanbul ignore next cause it's available only in worker threads
 if (!isMainThread && parentPort) {
   parentPost({ type: 'exit', threadId, threadName: workerData.threadName, success });
   if (debug) parentLog('MatterbridgePrefix', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} exiting with success: ${success}.`);

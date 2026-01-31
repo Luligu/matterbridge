@@ -1,4 +1,18 @@
-# <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
+# <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
+
+[![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
+[![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
+[![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge/latest?label=docker%20version)](https://hub.docker.com/r/luligu/matterbridge)
+[![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls)](https://hub.docker.com/r/luligu/matterbridge)
+![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
+![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
+[![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
+
+[![powered by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
+[![powered by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
+[![powered by](https://img.shields.io/badge/powered%20by-node--persist--manager-blue)](https://www.npmjs.com/package/node-persist-manager)
+
+---
 
 All notable changes to this project will be documented in this file.
 
@@ -17,7 +31,7 @@ The project will evolve to a multi-threaded architecture (the CLI will become th
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-- check updates;
+- ✅ check updates;
 - npm install;
 - ✅ get the global node_modules directory;
 
@@ -27,6 +41,32 @@ Advantages:
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
+
+## [3.5.2] - 2026-01-31
+
+### Added
+
+- [matterbridge]: Added brand to MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
+- [PluginManager]: Verify brand of MatterbridgePlatform, MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.
+- [PluginManager]: Added frontend message when a plugin is not added cause it is in the pluginIgnoreList or for other issues.
+- [MatterbridgePlatform]: Verify brand of MatterbridgeEndpoint.
+- [BasicVideoPlayer]: Added **Basic Video Player** class (suported by SmartThings).
+- [frontend]: Added **pluginIgnoreList** to avoid to install a plugin that is only a test or a name reservation on npm.
+- [docker]: Added instructions about how to disable the health check when you override the frontend port or enable https.
+- [Alexa]: Added a full review of supported device types and known issues. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+- [virtual]: Added outlet to mounted switch device type in virtual devices (Matter 1.4.2). Now the mounted switch is supported by all controllers.
+- [package]: Added @matterbridge/thread monorepo scoped package.
+- [docker]: Added mb_health bin to be used with docker health check. It allows to reduce the image size by 20MB.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [docker]: Clarified in [README-DOCKER.md](README-DOCKER.md) the content of the matterbridge docker images on Docker Hub.
+- [frontend]: Bumped `frontend` version to v. 3.4.3.
+- [frontend]: For the matterbridge docker image with tag dev, the frontend now shows the versions with the tag git.
+- [worker]: Bumped worker module to v. 1.1.0.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.5.1] - 2026-01-24
 
@@ -41,7 +81,7 @@ Advantages:
 - [mb_mdns]: Added --ip-filter params to filter incoming mDns messages by sender ip.
 - [express]: Added a login check for internal express api. The /health and /memory api don't need a login. Thanks Rogibaer (https://github.com/Luligu/matterbridge-hass/issues/149).
 - [readme]: Added a section with the data structure and backup/restore guidelines.
-- [matterbridge]: Add brand to MatterbridgePlatform and MatterbridgeEndpoint.
+- [matterbridge]: Added brand to MatterbridgePlatform and MatterbridgeEndpoint.
 
 ### Changed
 

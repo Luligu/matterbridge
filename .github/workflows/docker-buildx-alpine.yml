@@ -34,6 +34,17 @@ jobs:
           npm pkg set build.type="${GITHUB_REF_TYPE}"
           npm pkg set build.name="${GITHUB_REF_NAME}"
           npm pkg set build.docker="true"
+          npm pkg set build.dev="false"
+
+      - name: Extract version from package.json
+        id: extract_version
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Echo main version ${{ env.VERSION }}
+        run: |
+          echo "Extracted version is: ${{ env.VERSION }}"
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -51,19 +62,11 @@ jobs:
         with:
           version: latest
 
-      - name: Extract version from package.json
-        id: extract_version
-        run: |
-          VERSION=$(jq -r '.version' package.json)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Echo main version ${{ env.VERSION }}
-        run: |
-          echo "Extracted version is: ${{ env.VERSION }}"
-
       - name: Run Docker Buildx with Dockerfile.alpine
         run: |
           docker buildx build \
+            --no-cache \
+            --pull \
             --platform linux/amd64,linux/arm64 \
             -f docker/Dockerfile.alpine \
             -t luligu/matterbridge:alpine \

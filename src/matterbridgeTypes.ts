@@ -34,7 +34,8 @@ import type { AdministratorCommissioning } from '@matter/types/clusters/administ
 
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';
-import type { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import type { MatterbridgePlatform } from './matterbridgePlatform.js';
+import type { PlatformConfig, PlatformSchema } from './matterbridgePlatformTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Default colors

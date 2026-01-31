@@ -65,7 +65,6 @@ Dev containers have networking limitations depending on the host OS and Docker s
       // Settings for the VS Code environment
       "settings": {
         "terminal.integrated.shell.linux": "/bin/bash",
-        "terminal.integrated.scrollback": 10000,
         "editor.tabSize": 2,
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {

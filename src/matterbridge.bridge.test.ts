@@ -35,12 +35,12 @@ process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
 // Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('./workers.js', () => ({
+jest.unstable_mockModule('./worker.js', () => ({
   createESMWorker: jest.fn(() => {
     return undefined; // Mock the createESMWorker function to return immediately
   }),
 }));
-const workerModule = await import('./workers.js');
+const workerModule = await import('./worker.js');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import path from 'node:path';
@@ -118,9 +118,12 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).passcode).toBe(PASSCODE + 1);
     expect((matterbridge as any).discriminator).toBe(DISCRIMINATOR + 1);
 
-    await new Promise((resolve) => {
-      matterbridge.once('online', resolve);
-    });
+    if (!matterbridge.serverNode?.lifecycle.isOnline === true) {
+      await new Promise((resolve) => {
+        matterbridge.once('online', resolve);
+      });
+    }
+    await flushAsync(undefined, undefined, 100);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);

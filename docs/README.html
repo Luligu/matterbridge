@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Matterbridge</title>
-  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/matterbridge.svg">
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
   <style>
     body {
       font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
@@ -88,11 +88,11 @@
   </style>
 </head>
 <body>
-<h1 id="img-srchttpsmatterbridgeiomatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge"><img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge</h1>
+<h1 id="img-srchttpsmatterbridgeioassetsmatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge"><img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge</h1>
 <p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
-<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver" alt="Docker Version"></a>
-<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge.svg" alt="Docker Pulls"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge/latest?label=docker%20version" alt="Docker Version"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls" alt="Docker Pulls"></a>
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
 <a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a>
@@ -113,7 +113,7 @@
 <p>Matterbridge is lightweight and also runs on slow Linux machines with as little as 512MB of memory.</p>
 <p>It runs perfectly on Linux, macOS and Windows.</p>
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
+<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="acknowledgements">Acknowledgements</h2>
 <p>The project is build on top of <a href="https://github.com/project-chip/matter.js">matter.js</a>.</p>
 <p>A special thanks to Apollon77 for his incredible work.</p>
@@ -255,13 +255,13 @@ Nvm is not a good choice and should not be used for production.</p>
 <p>It is the ideal companion of the official <a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Matterbridge Home Assistant Add-on</a>.</p>
 <h3 id="webhooks">Webhooks</h3>
 <a href="https://github.com/Luligu/matterbridge-webhooks">
-  <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge logo" width="100" />
+  <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge logo" width="100" />
 </a>
 
 <p>Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.</p>
 <h3 id="bthome">BTHome</h3>
 <a href="https://github.com/Luligu/matterbridge-webhooks">
-  <img src="https://matterbridge.io/matterbridge.svg" alt="Matterbridge logo" width="100" />
+  <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge logo" width="100" />
 </a>
 
 <p>Matterbridge BTHome allows you to expose any BTHome device to Matter using the native bluetooth of the host machine.</p>
@@ -413,9 +413,11 @@ matterbridge --add matterbridge-zigbee2mqtt
 <li>10000 = fully closed</li>
 <li>0 = fully opened</li>
 </ul>
-<p>So depending on the controller you pair with, you should see 100 for fully closed and 0 for fully open.</p>
-<p>Some controllers invert the position so you need to verify your controller.</p>
-<h2 id="data-structure">Data structure</h2>
+<p>So you should see 100% for fully closed and 0% for fully open.</p>
+<p>Some controllers interpret the position the other way around (they show “open” as “closed” and vice versa). If the percentages look reversed, it’s a controller-specific UI behavior. Alexa is a common example.</p>
+<h2 id="how-to-disable-restart-matterbridge-and-update-matterbridge">How to disable Restart matterbridge and update matterbridge</h2>
+<p>In the settings page of the frontend, set virtual devices to Disabled.</p>
+<h2 id="data-structure-for-backup-and-restore">Data structure for backup and restore</h2>
 <p>Matterbridge uses three directories. These are the default locations (some advanced setups may change them, so check your configuration):</p>
 <pre><code class="language-text">~/.matterbridge
 ~/Matterbridge
@@ -463,20 +465,38 @@ In this context, the message is not indicative of a problem.</p>
 <h3 id="workaround">Workaround</h3>
 <p>Install Google Home on an iPhone and complete the commissioning there. Once set up, the devices will appear and function normally on your Android phone and other Nest devices in your home. By <a href="https://github.com/artemkovalyov">Artem Kovalov</a>.</p>
 <h2 id="alexa">Alexa</h2>
-<p>Tested by Tamer Salah</p>
-<p>Alexa needs the standard port 5540 to pair (from matter.js readme).</p>
-<p>There is no support for these Matter device types:</p>
+<p>Tested by <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</p>
+<p>Alexa integrates with Matterbridge to locally control non-native devices by acting as a Matter Controller.
+While Amazon has expanded support to include core categories like lighting, plugs, thermostats, locks, and sensors, many advanced or specialized device types defined in the latest Matter specifications are not yet recognized by the Alexa ecosystem.</p>
+<p>Alexa Support vs. Matterbridge Test Results</p>
+<p>During testing, Alexa successfully managed most standard smart home categories but failed to recognize or fully support the following types exposed via Matterbridge:</p>
 <ul>
-<li>pressure sensor</li>
-<li>flow sensor</li>
+<li>Appliances &amp; Kitchen: Cooktop, Microwave Oven, Oven, Refrigerator, Laundry Washer/Dryer, and Extractor Hood.</li>
+<li>Energy &amp; Utilities: Battery Storage, EVSE (Electric Vehicle Supply Equipment), and Solar Power.</li>
+<li>Water &amp; Infrastructure: Water Valve, Water Heater, Water Leak/Freeze sensors, Pump, and Rain Sensor.</li>
+<li>Media &amp; Controls: Basic Video Player and Speaker.</li>
+<li>Specialized Sensors/Inputs: Heat Pump, Latching Switch, Flow, and Pressure.</li>
+<li>Limited Support: Cover Lift and Tilt devices only functioned for lift operations, with tilt functionality unsupported.</li>
+</ul>
+<p>Integration Limitations</p>
+<p>Even when a device is recognized, Alexa may face specific bridge-related limitations:</p>
+<ul>
+<li>Device Caps: Alexa currently supports a maximum of 50 bridged devices per connection; exceeding this limit may cause devices to disappear from the Alexa App.</li>
+<li>Latency: While Matter is designed for local control, status updates in the Alexa app may occasionally lag if the app remains open during external state changes.</li>
+<li>Feature Gaps: Advanced features for certain types, such as unlocking specific smart locks, may be disabled by default for security and require manual activation within the app</li>
+</ul>
+<p>Known issues:</p>
+<ul>
+<li>the cover position is inverted in Alexa</li>
+<li>humidity takes long to update</li>
 </ul>
 <p>In the zigbee2mqtt and shelly plugins select the option to expose the switch devices like light or outlet cause they don&#39;t show up like switch
 (Matterbridge uses a switch device type without client cluster).</p>
 <h2 id="smartthings">SmartThings</h2>
-<p>Tested by Tamer Salah</p>
+<p>Tested by <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</p>
 <p>No issues reported so far.</p>
 <h2 id="ewelink">eWeLink</h2>
-<p>Tested by Tamer Salah</p>
+<p>Tested by <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</p>
 <p>eWeLink needs the standard port 5540 for commissioning.</p>
 <h2 id="tuyasmart-life">Tuya/Smart Life</h2>
 <p>Check the matter.js readme.</p>
@@ -487,7 +507,7 @@ In this context, the message is not indicative of a problem.</p>
 <p>On my side I sponsor the packages that I use in this project and single developers. It would be nice to have sponsors too.</p>
 <p>Click on the badge below to get started:</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="https://matterbridge.io/bmc-button.svg" alt="Buy me a coffee" width="120">
+  <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
 <p>Thank you for your support!</p>

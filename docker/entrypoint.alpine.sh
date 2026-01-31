@@ -3,6 +3,7 @@
 FLAG_FILE="/matterbridge/.initialized"
 
 echo "Welcome to the Matterbridge alpine docker image."
+echo "It is based on node:24-alpine and includes matterbridge built from the source (GitHub main branch)."
 
 if [ ! -f "$FLAG_FILE" ]; then
 
@@ -16,6 +17,7 @@ DISTRO=$(awk -F= '/^PRETTY_NAME=/{gsub(/"/, "", $2); print $2}' /etc/os-release)
 CODENAME=$(awk -F= '/^VERSION_CODENAME=/{print $2}' /etc/os-release) && \
 echo "🖥️ Distro: $DISTRO ($CODENAME)" && \
 echo "👤 User: $(whoami)" && \
+echo "🏷️ Hostname: $(hostname)" && \
 echo "🧱 Architecture: $(uname -m)" && \
 echo "🧩 Kernel Version: $(uname -r)" && \
 echo "📅 Date: $(date)" && \

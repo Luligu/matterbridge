@@ -43,6 +43,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/brid
 // Matterbridge
 import { copyDirectory, getIntParameter, getParameter, hasParameter, inspectError, isValidNumber, isValidString, parseVersionString, wait, withTimeout } from '@matterbridge/utils';
 
+import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { SharedMatterbridge, ApiMatter, Plugin, SanitizedExposedFabricInformation, SanitizedSession, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, plg, PluginName, NODE_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE } from './matterbridgeTypes.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
@@ -50,7 +51,6 @@ import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
 import { toBaseDevice } from './deviceManager.js';
 import { PluginManager } from './pluginManager.js';
-import type { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { addVirtualDevice } from './helpers.js';
 
@@ -999,11 +999,10 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       }
     }
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-    // Add the device to the DeviceManager
-    await this.server.fetch({ type: 'devices_set', src: this.server.name, dst: 'devices', params: { device: toBaseDevice(device) } });
 
     // Add the device to the DeviceManager
     await device.construction.ready;
+    await this.server.fetch({ type: 'devices_set', src: this.server.name, dst: 'devices', params: { device: toBaseDevice(device) } });
 
     // Subscribe to the attributes changed event
     await this.subscribeAttributeChanged(plugin, device);

@@ -73,10 +73,10 @@ jest.unstable_mockModule('./shelly.ts', () => ({
 const { triggerShellySysUpdate, triggerShellyMainUpdate, createShellySystemLog, triggerShellySoftReset, triggerShellyHardReset, triggerShellyReboot, triggerShellyChangeIp } = await import('./shelly.ts');
 
 // Mock the function getNpmPackageVersion
-jest.unstable_mockModule('./update.js', () => ({
+jest.unstable_mockModule('./checkUpdates.js', () => ({
   checkUpdates: jest.fn(),
 }));
-const { checkUpdates } = await import('./update.js');
+const { checkUpdates } = await import('./checkUpdates.js');
 
 // Spy on Matterbridge methods
 const createServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'createServerNode');

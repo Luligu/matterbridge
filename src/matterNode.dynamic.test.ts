@@ -23,7 +23,7 @@ import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@
 
 import { MatterNode } from './matterNode.js';
 import { SharedMatterbridge, NODE_STORAGE_DIR, dev, plg } from './matterbridgeTypes.js';
-import { flushAsync, loggerInfoSpy, originalProcessArgv, setupTest } from './jestutils/jestHelpers.js';
+import { loggerInfoSpy, originalProcessArgv, setupTest } from './jestutils/jestHelpers.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PluginManager } from './pluginManager.js';
 import type { Matterbridge } from './matterbridge.js';
@@ -105,6 +105,9 @@ describe('MatterNode dynamic', () => {
   };
   (matterbridge as any).addVirtualEndpoint = async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
     return await matter.addVirtualEndpoint(pluginName, name, type, callback);
+  };
+  (matterbridge as any).getPlatformMatterbridge = () => {
+    return matterbridge;
   };
 
   // Create PluginManager and DeviceManager to simulate the normal environment
