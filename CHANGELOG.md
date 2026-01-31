@@ -42,7 +42,7 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.5.2] - Dev branch
+## [3.5.2] - 2026-01-31
 
 ### Added
 
