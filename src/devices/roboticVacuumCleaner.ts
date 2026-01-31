@@ -80,8 +80,6 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
   ) {
     super([roboticVacuumCleaner, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, mode });
     // Use the AudibleBeep identification type for the Identify cluster
-    // @ts-ignore: next-line
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.AudibleBeep)
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Robot Vacuum Cleaner')
       .createDefaultPowerSourceRechargeableBatteryClusterServer(80, PowerSource.BatChargeLevel.Ok, 5900)
