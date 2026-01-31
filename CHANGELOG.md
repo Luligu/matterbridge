@@ -49,6 +49,7 @@ Advantages:
 ### Changed
 
 - [package]: Updated dependencies.
+- [workflows]: Updated all workflows to use Node.js 24.
 - [matter.js]: Bump to matter.j v. 0.16.8.
 
 ### Fixed
