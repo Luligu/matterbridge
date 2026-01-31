@@ -54,6 +54,8 @@ Advantages:
 
 ### Fixed
 
+- [publish]: Updated publish.yml to trigger the correct docker-buildx-latest.yml.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.5.2] - 2026-01-31
