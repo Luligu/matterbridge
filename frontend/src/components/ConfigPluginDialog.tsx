@@ -138,17 +138,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     // Move the ui: properties from the schema to the uiSchema
     if (formData && schema && schema.properties) {
       if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
-      Object.keys(schema.properties).forEach((key) => {
-        Object.keys(schema.properties[key]).forEach((subkey) => {
-          if (subkey.startsWith('ui:')) {
-            if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', key, subkey, schema.properties[key][subkey]);
-            uiSchema[key] = {};
-            uiSchema[key][subkey] = schema.properties[key][subkey];
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete schema.properties[key][subkey];
-          }
-        });
-      });
+      moveUiPropertiesToUiSchema(schema, uiSchema);
       setUiSchema(uiSchema);
       if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
     }
@@ -167,6 +157,53 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       if (debug) console.log('ConfigPluginDialog removed WebSocket listener');
     };
   }, [addListener, formData, plugin, removeListener, schema, sendMessage, uiSchema]);
+
+  const moveUiPropertiesToUiSchema = (schemaObj: any, uiSchemaObj: any, path: string[] = []) => {
+    if (!schemaObj || typeof schemaObj !== 'object') return;
+
+    // Handle properties object
+    if (schemaObj.properties) {
+      Object.keys(schemaObj.properties).forEach((key) => {
+        const property = schemaObj.properties[key];
+        const currentPath = [...path, key];
+
+        // Move ui:* properties from this property
+        Object.keys(property).forEach((subkey) => {
+          if (subkey.startsWith('ui:')) {
+            if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', currentPath.join('.'), subkey, property[subkey]);
+
+            // Create nested uiSchema structure
+            let currentUiSchema = uiSchemaObj;
+            currentPath.forEach((p) => {
+              if (!currentUiSchema[p]) currentUiSchema[p] = {};
+              currentUiSchema = currentUiSchema[p];
+            });
+            currentUiSchema[subkey] = property[subkey];
+
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+            delete property[subkey];
+          }
+        });
+
+        // Recursively process nested properties
+        moveUiPropertiesToUiSchema(property, uiSchemaObj, currentPath);
+      });
+    }
+
+    // Handle oneOf/anyOf/allOf arrays
+    ['oneOf', 'anyOf', 'allOf'].forEach((keyword) => {
+      if (Array.isArray(schemaObj[keyword])) {
+        schemaObj[keyword].forEach((subSchema: any) => {
+          moveUiPropertiesToUiSchema(subSchema, uiSchemaObj, path);
+        });
+      }
+    });
+
+    // Handle items (for arrays)
+    if (schemaObj.items) {
+      moveUiPropertiesToUiSchema(schemaObj.items, uiSchemaObj, path);
+    }
+  };
 
   const handleFormChange = (data: IChangeEvent<any, RJSFSchema, any>, id?: string) => {
     currentFormData = data.formData;
@@ -741,7 +778,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                   border: ['object', 'array', 'boolean'].includes((schema as any).properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
                 }}
               >
-                {!['object', 'array', 'boolean'].includes((schema as any).properties[name].type) && <Typography sx={titleSx}>{name}</Typography>}
+                {!['object', 'array', 'boolean'].includes((schema as any).properties[name].type) && <Typography sx={titleSx}>{(schema as any).properties[name].title || name}</Typography>}
                 <Box sx={{ flexGrow: 1, padding: '0px', margin: '0px' }}>{content}</Box>
               </Box>
             ),
@@ -910,7 +947,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       <Box sx={{ margin: '0px', padding: '5px 10px', border: '1px solid grey' }}>
         {name && (
           <Box sx={{ margin: '0px', padding: '0px', gap: '10px', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-            <Typography sx={titleSx}>{name}</Typography>
+            <Typography sx={titleSx}>{schema.title || name}</Typography>
             <Checkbox checked={value} readOnly={readonly} onChange={() => onChange(!value)} sx={{ padding: '0px', margin: '0px' }} />
           </Box>
         )}
