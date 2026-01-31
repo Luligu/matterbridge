@@ -737,8 +737,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                 sx={{
                   margin: '0px',
                   marginBottom: '10px',
-                  padding: ['object', 'array', 'boolean'].includes((schema as any).properties[name].type) ? '0px' : boxPadding,
-                  border: ['object', 'array', 'boolean'].includes((schema as any).properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
+                  padding: ['object', 'array'].includes((schema as any).properties[name].type) ? '0px' : boxPadding,
+                  border: ['object', 'array'].includes((schema as any).properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
                 }}
               >
                 {!['object', 'array', 'boolean'].includes((schema as any).properties[name].type) && <Typography sx={titleSx}>{(schema as any).properties[name].title || name}</Typography>}
@@ -907,7 +907,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       );
     }
     return (
-      <Box sx={{ margin: '0px', padding: '5px 10px', border: '1px solid grey' }}>
+      <Box sx={{ margin: '0px', padding: '0px' }}>
         {name && (
           <Box sx={{ margin: '0px', padding: '0px', gap: '10px', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
             <Typography sx={titleSx}>{schema.title || name}</Typography>
