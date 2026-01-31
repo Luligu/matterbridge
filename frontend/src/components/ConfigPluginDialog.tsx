@@ -96,6 +96,10 @@ function hasSchemaPropertyWithStringType(schema: RJSFSchema, name: string): sche
   return typeof (property as { type?: unknown }).type === 'string';
 }
 
+function hasSchemaItemsDefault(schema: RJSFSchema): schema is RJSFSchema & { items: RJSFSchema & { default: unknown } } {
+  const items = schema.items;
+  return !!items && typeof items === 'object' && !Array.isArray(items) && 'default' in items;
+}
 export interface ConfigPluginDialogProps {
   open: boolean;
   onClose: () => void;
@@ -452,8 +456,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       // console.log('ArrayFieldTemplate: handleSelectValue', value);
       setDialogDeviceOpen(false);
       // Trigger onAddClick to add the selected new item
-      if (schema.selectFrom === 'serial' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.serial;
-      else if (schema.selectFrom === 'name' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.name;
+      if (schema.selectFrom === 'serial' && hasSchemaItemsDefault(schema)) schema.items.default = value.serial;
+      else if (schema.selectFrom === 'name' && hasSchemaItemsDefault(schema)) schema.items.default = value.name;
       onAddClick();
     };
 
@@ -461,8 +465,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
       setDialogEntityOpen(false);
       // Trigger onAddClick to add the selected new item
-      if (schema.selectEntityFrom === 'name' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.name;
-      else if (schema.selectEntityFrom === 'description' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.description;
+      if (schema.selectEntityFrom === 'name' && hasSchemaItemsDefault(schema)) schema.items.default = value.name;
+      else if (schema.selectEntityFrom === 'description' && hasSchemaItemsDefault(schema)) schema.items.default = value.description;
       onAddClick();
     };
 
@@ -470,8 +474,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
       setDialogDeviceEntityOpen(false);
       // Trigger onAddClick to add the selected new item
-      if (schema.selectDeviceEntityFrom === 'name' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.name;
-      else if (schema.selectDeviceEntityFrom === 'description' && schema.items && typeof schema.items === 'object' && !Array.isArray(schema.items)) schema.items.default = value.description;
+      if (schema.selectDeviceEntityFrom === 'name' && hasSchemaItemsDefault(schema)) schema.items.default = value.name;
+      else if (schema.selectDeviceEntityFrom === 'description' && hasSchemaItemsDefault(schema)) schema.items.default = value.description;
       onAddClick();
     };
 
