@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   publish-release:
-    name: Publish release to npm and trigger docker build latest, ubuntu and alpine
+    name: Publish release to npm and trigger docker build latest, ubuntu, alpine and s6-rc-base overlay
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
