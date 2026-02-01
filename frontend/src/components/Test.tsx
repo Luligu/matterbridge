@@ -15,6 +15,8 @@ import { ApiSettings, WsMessageApiResponse } from '../../../src/frontendTypes';
 import { ApiClusters, ApiDevice, ApiPlugin } from '../../../src/matterbridgeTypes';
 import { debug } from '../App';
 import { MbfPage } from './MbfPage';
+import { Button } from '@mui/material';
+import { SearchPluginsDialog } from './SearchPluginsDialog';
 // const debug = true;
 
 function Test() {
@@ -117,6 +119,20 @@ function Test() {
     };
   }, [online, sendMessage, showSnackbarMessage]);
 
+  // SearchPluginsDialog states and handlers
+  const [open, setOpen] = useState(false);
+  const [pluginName, setPluginName] = useState('');
+  const handleClose = () => {
+    setPluginName('');
+    setOpen(false);
+    console.log('Dialog closed without selection');
+  };
+  const handleSelect = (selected: string) => {
+    setPluginName(selected);
+    setOpen(false);
+    console.log('Selected plugin:', selected);
+  };
+
   if (debug) console.log('Test rendering...');
   if (!online) {
     return <Connecting />;
@@ -126,6 +142,11 @@ function Test() {
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', alignContent: 'center', gap: '20px', height: '100vh', width: '100vw' }}>
         <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '256px', width: '256px', margin: '10px' }} />
         <p>Welcome to the Test page of the Matterbridge frontend</p>
+        <p>Selected plugin: {pluginName || '-'}</p>
+        <SearchPluginsDialog open={open} onClose={handleClose} onSelect={handleSelect} />
+        <Button variant='contained' onClick={() => setOpen(true)}>
+          Search Plugin
+        </Button>
       </div>
     </MbfPage>
   );

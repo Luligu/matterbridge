@@ -21,6 +21,8 @@ export const MbfLsk = {
   virtualMode: `${LOCAL_STORAGE_PREFIX}virtualMode`,
   // Install package dialog
   installAutoExit: `${LOCAL_STORAGE_PREFIX}installAutoExit`,
+  // Search plugins total cache
+  searchPluginsTotal: `${LOCAL_STORAGE_PREFIX}searchPluginsTotal`,
 };
 
 export const LOCAL_STORAGE_TABLE_KEYS = {
