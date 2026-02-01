@@ -75,6 +75,7 @@ const rjsfDebug = false;
 
 const titleSx = { fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
 const descriptionSx = { fontSize: '12px', fontWeight: 'normal', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
+const descriptionButtonSx = { fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
 const helpSx = { fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)', backgroundColor: 'var(--div-bg-color)' };
 const errorTitleSx = { fontSize: '16px', fontWeight: 'bold', backgroundColor: 'var(--div-bg-color)' };
 const iconButtonSx = { padding: '0px', margin: '0px' };
@@ -953,18 +954,20 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     };
 
     if (schema.buttonText && schema.description) {
+      /* Button with description border: '1px solid grey', */
       return (
-        <Box sx={{ margin: '0px', padding: '10px', border: '1px solid grey', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography sx={descriptionSx}>{schema.description}</Typography>
+        <Box sx={{ margin: '0px', padding: '5px 0px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography sx={descriptionButtonSx}>{schema.description}</Typography>
           <Button variant='contained' color='primary' onClick={() => onClick()}>
             {schema.buttonText}
           </Button>
         </Box>
       );
     } else if (schema.buttonField && schema.description) {
+      /* Text field with button and description , border: '1px solid grey'*/
       return (
-        <Box sx={{ margin: '0px', padding: '10px', gap: '20px', border: '1px solid grey', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography sx={descriptionSx}>{schema.description}</Typography>
+        <Box sx={{ margin: '0px', padding: '5px 0px', gap: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography sx={descriptionButtonSx}>{schema.description}</Typography>
           <TextField id={name + '-input'} name={name} label={schema.textLabel} placeholder={schema.textPlaceholder} onChange={(event) => onChangeField(event.target.value)} sx={{ width: '250px', minWidth: '250px', maxWidth: '250px' }} />
           <Button id={name + '-button'} variant='contained' color='primary' disabled={fieldValue === undefined} onClick={() => onClick()}>
             {schema.buttonField}
