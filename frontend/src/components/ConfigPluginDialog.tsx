@@ -202,7 +202,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         // Handle oneOf/anyOf/allOf arrays
         ['oneOf', 'anyOf', 'allOf'].forEach((keyword) => {
           if (Array.isArray(schemaObj[keyword])) {
-            schemaObj[keyword].forEach((subSchema: any) => {
+            schemaObj[keyword].forEach((subSchema) => {
               moveUiPropertiesToUiSchema(subSchema, uiSchemaObj, path);
             });
           }
