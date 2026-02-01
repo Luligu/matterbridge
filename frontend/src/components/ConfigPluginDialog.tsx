@@ -114,6 +114,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
 
   // Refs
   const uniqueId = useRef(getUniqueId());
+  const schemaRef = useRef({} as RJSFSchema);
+  const uiSchemaRef = useRef({} as UiSchema);
 
   // States
   const [formData, setFormData] = useState(plugin.configJson);
@@ -217,6 +219,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
 
       moveUiPropertiesToUiSchema(schema, uiSchema);
       setUiSchema(uiSchema);
+      schemaRef.current = schema; // We make sure state is updated
+      uiSchemaRef.current = uiSchema; // We make sure state is updated
       if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
     }
 
@@ -953,21 +957,21 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       else if (schema.buttonSave === true) handleSaveChanges({ formData } as any); // Save changes and we don't close (no need for other props).
     };
 
-    if (schema.buttonText && schema.description) {
-      /* Button with description border: '1px solid grey', */
+    if (schema.buttonText && (schema.title || schema.description)) {
+      /* SPECIAL: button with description */
       return (
         <Box sx={{ margin: '0px', padding: '5px 0px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography sx={descriptionButtonSx}>{schema.description}</Typography>
+          <Typography sx={descriptionButtonSx}>{schema.title || schema.description}</Typography>
           <Button variant='contained' color='primary' onClick={() => onClick()}>
             {schema.buttonText}
           </Button>
         </Box>
       );
-    } else if (schema.buttonField && schema.description) {
-      /* Text field with button and description , border: '1px solid grey'*/
+    } else if (schema.buttonField && (schema.title || schema.description)) {
+      /* SPECIAL: text field with button and description */
       return (
         <Box sx={{ margin: '0px', padding: '5px 0px', gap: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography sx={descriptionButtonSx}>{schema.description}</Typography>
+          <Typography sx={descriptionButtonSx}>{schema.title || schema.description}</Typography>
           <TextField id={name + '-input'} name={name} label={schema.textLabel} placeholder={schema.textPlaceholder} onChange={(event) => onChangeField(event.target.value)} sx={{ width: '250px', minWidth: '250px', maxWidth: '250px' }} />
           <Button id={name + '-button'} variant='contained' color='primary' disabled={fieldValue === undefined} onClick={() => onClick()}>
             {schema.buttonField}

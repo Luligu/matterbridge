@@ -192,20 +192,22 @@ function HomeInstallAddPlugins() {
         {/* SearchPluginDialog */}
         <SearchPluginsDialog open={openSearchDialog} onClose={handleCloseSearchDialog} onSelect={handleSelectSearchDialog} onInstall={handleInstallSearchDialog} onAdd={handleAddSearchDialog} />
 
-        {/* Input and menu */}
+        {/* Input and search IconButton */}
         <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-          <TextField
-            value={pluginName}
-            onChange={(event) => {
-              setPluginName(event.target.value);
-            }}
-            size='small'
-            id='plugin-name'
-            label='Plugin name or plugin path'
-            variant='outlined'
-            fullWidth
-          />
-          <Tooltip title='Search plugins to install'>
+          <Tooltip title='Provide the npm name or the local path of the plugin to install, uninstall, or add'>
+            <TextField
+              value={pluginName}
+              onChange={(event) => {
+                setPluginName(event.target.value);
+              }}
+              size='small'
+              id='plugin-name'
+              label='Plugin name or plugin path'
+              variant='outlined'
+              fullWidth
+            />
+          </Tooltip>
+          <Tooltip title='Search on npm the plugin to install'>
             <IconButton size='large' onClick={handleOpenSearchDialog}>
               <ManageSearchIcon fontSize='inherit' />
             </IconButton>
@@ -232,7 +234,7 @@ function HomeInstallAddPlugins() {
               Upload
             </Button>
           </Tooltip>
-          <Tooltip title='Add an installed plugin'>
+          <Tooltip title='Add an already installed plugin or a plugin from a local path'>
             <Button onClick={handleAddPluginClick} onContextMenu={handleAddRightClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
               {' '}
               Add
