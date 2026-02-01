@@ -12,8 +12,8 @@ import Button from '@mui/material/Button';
 import { pluginIgnoreList } from './HomeInstallAddPlugins';
 import MbfTable, { MbfTableColumn } from './MbfTable';
 import { MbfLsk } from '../utils/localStorage';
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 type TotalsCacheEntry = { total: number; asOf: string };
 type TotalsCache = Record<string, TotalsCacheEntry>;
