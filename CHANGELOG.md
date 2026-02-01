@@ -53,6 +53,7 @@ Advantages:
 - [docker]: Added workflow, scripts and dockerfile to build the s6-rc-base base image used by the Matterbridge Home Assistant Application.
 - [frontend]: Added title render to the config editor and allow ui properties in 'oneOf', 'anyOf', 'allOf'. Thanks RinDevJunior (https://github.com/Luligu/matterbridge/pull/495).
 - [frontend]: Added SearchPluginsDialog in Install plugins panel on the home page.
+- [workflow]: Migrate to trusted publishing / OIDC.
 
 ### Changed
 
