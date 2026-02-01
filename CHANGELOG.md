@@ -51,6 +51,8 @@ Advantages:
 ### Added
 
 - [docker]: Added workflow, scripts and dockerfile to build the s6-rc-base base image used by the Matterbridge Home Assistant Application.
+- [frontend]: Added title render to the config editor and allow ui properties in 'oneOf', 'anyOf', 'allOf'. Thanks RinDevJunior (https://github.com/Luligu/matterbridge/pull/495).
+- [frontend]: Added SearchPluginsDialog in Install plugins panel on the home page.
 
 ### Changed
 
@@ -61,7 +63,6 @@ Advantages:
 - [matter.js]: Bump to matter.j v. 0.16.8.
 - [frontend]: Bumped `frontend` version to v. 3.4.4.
 - [frontend]: Updated `frontend` dependencies.
-- [config]: Added title render to the config editor and allow ui properties in 'oneOf', 'anyOf', 'allOf'. Thanks RinDevJunior (https://github.com/Luligu/matterbridge/pull/495).
 
 ### Fixed
 

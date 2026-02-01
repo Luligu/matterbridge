@@ -23,6 +23,8 @@ export const MbfLsk = {
   installAutoExit: `${LOCAL_STORAGE_PREFIX}installAutoExit`,
   // Search plugins total cache
   searchPluginsTotal: `${LOCAL_STORAGE_PREFIX}searchPluginsTotal`,
+  // Search plugins metadata cache (homepage/help/changelog)
+  searchPluginsMeta: `${LOCAL_STORAGE_PREFIX}searchPluginsMeta`,
 };
 
 export const LOCAL_STORAGE_TABLE_KEYS = {

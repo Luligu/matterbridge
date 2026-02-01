@@ -7,16 +7,48 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+
+// @mui/icons-material
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 
 // Frontend
 import { pluginIgnoreList } from './HomeInstallAddPlugins';
 import MbfTable, { MbfTableColumn } from './MbfTable';
 import { MbfLsk } from '../utils/localStorage';
 import { debug } from '../App';
-// const debug = true;
 
 type TotalsCacheEntry = { total: number; asOf: string };
 type TotalsCache = Record<string, TotalsCacheEntry>;
+
+type MetaCacheEntry = { homepage: string | null; help: string | null; changelog: string | null; asOf: string };
+type MetaCache = Record<string, MetaCacheEntry>;
+
+const normalizeGitUrl = (value: string) => value.replace('git+', '').replace('.git', '').trim();
+
+const normalizeRepositoryUrl = (value: string): string => {
+  let v = normalizeGitUrl(value);
+
+  // Common repository.url formats we see from npm:
+  // - git://github.com/owner/repo.git
+  // - ssh://git@github.com/owner/repo.git
+  // - git@github.com:owner/repo.git
+  if (v.startsWith('git://')) v = `https://${v.slice('git://'.length)}`;
+  if (v.startsWith('ssh://git@github.com/')) v = `https://github.com/${v.slice('ssh://git@github.com/'.length)}`;
+  if (v.startsWith('git@github.com:')) v = `https://github.com/${v.slice('git@github.com:'.length).replace(':', '/')}`;
+
+  return v;
+};
+
+const getRepositoryUrl = (repository: unknown): string | null => {
+  if (typeof repository === 'string') return repository.trim() || null;
+  if (!repository || typeof repository !== 'object') return null;
+  const url = (repository as { url?: unknown }).url;
+  return typeof url === 'string' ? url.trim() || null : null;
+};
 
 const readTotalsCache = (): TotalsCache => {
   try {
@@ -48,13 +80,47 @@ const writeTotalsCache = (cache: TotalsCache) => {
   }
 };
 
+const readMetaCache = (): MetaCache => {
+  try {
+    const raw = window.localStorage.getItem(MbfLsk.searchPluginsMeta);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object') return {};
+
+    const out: MetaCache = {};
+    for (const [name, entry] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!name) continue;
+      if (!entry || typeof entry !== 'object') continue;
+      const e = entry as Record<string, unknown>;
+      if (typeof e.asOf !== 'string') continue;
+      const homepage = typeof e.homepage === 'string' ? e.homepage : null;
+      const help = typeof e.help === 'string' ? e.help : null;
+      const changelog = typeof e.changelog === 'string' ? e.changelog : null;
+      out[name] = { homepage, help, changelog, asOf: e.asOf };
+    }
+    return out;
+  } catch {
+    return {};
+  }
+};
+
+const writeMetaCache = (cache: MetaCache) => {
+  try {
+    window.localStorage.setItem(MbfLsk.searchPluginsMeta, JSON.stringify(cache));
+  } catch {
+    // Ignore quota/blocked storage errors.
+  }
+};
+
 interface SearchPluginsDialogProps {
   open: boolean;
   onClose: () => void;
   onSelect: (pluginName: string) => void;
+  onInstall: (pluginName: string) => void;
+  onAdd: (pluginName: string) => void;
 }
 
-export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDialogProps) => {
+export const SearchPluginsDialog = ({ open, onClose, onSelect, onInstall, onAdd }: SearchPluginsDialogProps) => {
   const [pluginName, setPluginName] = useState('');
   const selectedPluginNameRef = useRef('');
   const hasFetchedRef = useRef(false);
@@ -77,6 +143,9 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDi
     description: string;
     author: string;
     official: boolean;
+    homepage: string | null;
+    help: string | null;
+    changelog: string | null;
   };
 
   type NpmSearchPackage = {
@@ -94,6 +163,13 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDi
   type NpmDownloadsRangeDay = { day?: string; downloads?: number };
   type NpmDownloadsRangeResponse = { downloads?: NpmDownloadsRangeDay[]; package?: string; start?: string; end?: string };
 
+  type NpmPackageLatestResponse = {
+    homepage?: unknown;
+    help?: unknown;
+    changelog?: unknown;
+    repository?: unknown;
+  };
+
   const formatNumber = (value: number) => new Intl.NumberFormat().format(value);
 
   const columns: MbfTableColumn<PluginSearchRow>[] = [
@@ -107,6 +183,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDi
     {
       label: 'Version',
       id: 'version',
+      required: true,
       maxWidth: 110,
       tooltip: true,
     },
@@ -128,7 +205,8 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDi
     {
       label: 'Description',
       id: 'description',
-      maxWidth: 420,
+      required: true,
+      maxWidth: 300,
       tooltip: true,
     },
     {
@@ -136,6 +214,83 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDi
       id: 'author',
       maxWidth: 140,
       tooltip: true,
+    },
+    {
+      label: 'Action',
+      id: 'action',
+      align: 'center',
+      maxWidth: 100,
+      noSort: true,
+      required: true,
+      render: (_value, _rowKey, row, _column) => (
+        <div style={{ margin: '0', padding: '0', gap: '4px', display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
+          <Tooltip title={row.homepage ? 'Open the plugin homepage' : 'No homepage available'}>
+            <span>
+              <IconButton
+                style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: 'var(--main-icon-color)' }}
+                disabled={!row.homepage}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!row.homepage) return;
+                  try {
+                    const u = new URL(row.homepage);
+                    if (u.protocol === 'http:' || u.protocol === 'https:') window.open(u.toString(), '_blank');
+                  } catch {
+                    // Ignore invalid URLs.
+                  }
+                }}
+                size='small'
+              >
+                <HomeOutlinedIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+
+          <Tooltip title={row.help ? 'Open the plugin help' : 'No help available'}>
+            <span>
+              <IconButton
+                style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: 'var(--main-icon-color)' }}
+                disabled={!row.help}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!row.help) return;
+                  try {
+                    const u = new URL(row.help);
+                    if (u.protocol === 'http:' || u.protocol === 'https:') window.open(u.toString(), '_blank');
+                  } catch {
+                    // Ignore invalid URLs.
+                  }
+                }}
+                size='small'
+              >
+                <HelpOutlineIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+
+          <Tooltip title={row.changelog ? 'Open the plugin changelog' : 'No changelog available'}>
+            <span>
+              <IconButton
+                style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: 'var(--main-icon-color)' }}
+                disabled={!row.changelog}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!row.changelog) return;
+                  try {
+                    const u = new URL(row.changelog);
+                    if (u.protocol === 'http:' || u.protocol === 'https:') window.open(u.toString(), '_blank');
+                  } catch {
+                    // Ignore invalid URLs.
+                  }
+                }}
+                size='small'
+              >
+                <HistoryOutlinedIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </div>
+      ),
     },
   ];
 
@@ -212,6 +367,11 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDi
           const name = pkg.name ?? '';
           const author = (pkg.publisher?.username ?? pkg.maintainers?.[0]?.username ?? '').trim();
           const downloads = typeof obj.downloads?.monthly === 'number' ? obj.downloads.monthly : null;
+
+          const npmLink = (pkg.links?.npm ?? '').trim();
+          const homepageLink = (pkg.links?.homepage ?? '').trim();
+          const homepage = (homepageLink || npmLink || (name ? `https://www.npmjs.com/package/${encodeURIComponent(name)}` : '')).trim() || null;
+
           return {
             name,
             version: pkg.version ?? '',
@@ -220,12 +380,16 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDi
             description: pkg.description ?? '',
             author,
             official: isOfficial(pkg),
+            homepage,
+            help: null,
+            changelog: null,
           };
         });
 
-        // Hydrate totals from localStorage immediately, then refresh in background.
+        // Hydrate totals + metadata from localStorage immediately, then refresh in background.
         const end = formatYyyyMmDd(new Date());
         const totalsCache = readTotalsCache();
+        const metaCache = readMetaCache();
 
         const nextRowsWithCachedTotals: PluginSearchRow[] = nextRows.map((r) => {
           const cached = totalsCache[r.name];
@@ -235,7 +399,114 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDi
           return { ...r, total: cached.total };
         });
 
-        setRows(nextRowsWithCachedTotals);
+        const nextRowsWithCachedTotalsAndMeta: PluginSearchRow[] = nextRowsWithCachedTotals.map((r) => {
+          const cached = metaCache[r.name];
+          if (!cached) return r;
+          if (cached.asOf !== end) return r;
+          const nextHomepage = cached.homepage ?? r.homepage;
+          const nextHelp = cached.help;
+          const nextChangelog = cached.changelog;
+          if (debug && (nextHelp || nextChangelog || (nextHomepage && nextHomepage !== r.homepage))) {
+            console.log(`[SearchPluginsDialog] metadata loaded from cache for ${r.name} (asOf=${cached.asOf}):`, { homepage: nextHomepage, help: nextHelp, changelog: nextChangelog });
+          }
+          return { ...r, homepage: nextHomepage, help: nextHelp, changelog: nextChangelog };
+        });
+
+        setRows(nextRowsWithCachedTotalsAndMeta);
+
+        // Fetch homepage/help/changelog from package.json (registry /latest).
+        // If help/changelog are missing, derive them from repository.url + /blob/main/{README,CHANGELOG}.md.
+        const packagesNeedingMetaFetchList = nextRows
+          .map((r) => r.name)
+          .filter((name) => {
+            const cached = metaCache[name];
+            const cacheFresh = !!cached && cached.asOf === end;
+            const cacheComplete = !!cached && !!cached.help && !!cached.changelog;
+            const needsFetch = !cacheFresh || !cacheComplete;
+            if (!needsFetch && debug) console.log(`[SearchPluginsDialog] metadata fetch skipped (cache fresh+complete) for ${name} (asOf=${cached.asOf}).`);
+            if (cacheFresh && !cacheComplete && debug) console.log(`[SearchPluginsDialog] metadata fetch forced (cache incomplete) for ${name} (asOf=${cached.asOf}).`);
+            return needsFetch;
+          });
+        const packagesNeedingMetaFetchSet = new Set(packagesNeedingMetaFetchList);
+
+        const fetchPackageMeta = async (packageName: string, fallbackHomepage: string | null): Promise<{ homepage: string | null; help: string | null; changelog: string | null } | null> => {
+          const latestUrl = `https://registry.npmjs.org/${encodeURIComponent(packageName)}/latest`;
+          try {
+            const latestResponse = await fetch(latestUrl, { signal: controller.signal });
+            if (!latestResponse.ok) return null;
+            const latestJson = (await latestResponse.json()) as NpmPackageLatestResponse;
+
+            const homepageFromPackage = typeof latestJson.homepage === 'string' && latestJson.homepage.includes('http') ? normalizeGitUrl(latestJson.homepage) : null;
+            const helpFromPackage = typeof latestJson.help === 'string' && latestJson.help.startsWith('http') ? latestJson.help.trim() : null;
+            const changelogFromPackage = typeof latestJson.changelog === 'string' && latestJson.changelog.startsWith('http') ? latestJson.changelog.trim() : null;
+
+            const repositoryRaw = getRepositoryUrl(latestJson.repository);
+            const repositoryNormalized = repositoryRaw ? normalizeRepositoryUrl(repositoryRaw) : null;
+            const repositoryUrl = repositoryNormalized && repositoryNormalized.includes('http') ? repositoryNormalized : null;
+
+            // Mirror backend fallback logic (PluginManager): help/changelog -> repository blob/main -> homepage.
+            const homepageResolved = homepageFromPackage || repositoryUrl || fallbackHomepage || null;
+            const helpResolved = helpFromPackage || (repositoryUrl ? `${repositoryUrl}/blob/main/README.md` : null) || homepageResolved || null;
+            const changelogResolved = changelogFromPackage || (repositoryUrl ? `${repositoryUrl}/blob/main/CHANGELOG.md` : null) || homepageResolved || null;
+            return {
+              homepage: homepageResolved,
+              help: helpResolved,
+              changelog: changelogResolved,
+            };
+          } catch (error) {
+            if (error instanceof DOMException && error.name === 'AbortError') return null;
+            return null;
+          }
+        };
+
+        // Slow down requests to avoid rate limiting.
+        const metaConcurrency = 1;
+        const metaDelayBetweenRequestsMs = 250;
+        let metaIndex = 0;
+
+        const metaWorker = async () => {
+          while (metaIndex < packagesNeedingMetaFetchList.length) {
+            if (controller.signal.aborted) return;
+            const rowIndex = metaIndex;
+            metaIndex += 1;
+
+            const packageName = packagesNeedingMetaFetchList[rowIndex];
+            if (!packageName) continue;
+
+            if (!packagesNeedingMetaFetchSet.has(packageName)) continue;
+            packagesNeedingMetaFetchSet.delete(packageName);
+
+            const fallbackHomepage = nextRows.find((r) => r.name === packageName)?.homepage ?? null;
+            const meta = await fetchPackageMeta(packageName, fallbackHomepage);
+            if (controller.signal.aborted) return;
+            if (meta) {
+              setRows((prev) =>
+                prev.map((r) =>
+                  r.name === packageName
+                    ? {
+                        ...r,
+                        homepage: meta.homepage ?? r.homepage,
+                        help: meta.help,
+                        changelog: meta.changelog,
+                      }
+                    : r,
+                ),
+              );
+
+              metaCache[packageName] = {
+                homepage: meta.homepage,
+                help: meta.help,
+                changelog: meta.changelog,
+                asOf: end,
+              };
+              writeMetaCache(metaCache);
+            }
+
+            if (!controller.signal.aborted) await sleep(metaDelayBetweenRequestsMs);
+          }
+        };
+
+        void Promise.all(Array.from({ length: Math.min(metaConcurrency, nextRows.length) }, () => metaWorker()));
 
         // Fetch total downloads for each package using the downloads/range API.
         // This is intentionally throttled to avoid hammering the API.
@@ -354,6 +625,18 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDi
     onSelect(selectedName);
   };
 
+  const handleInstall = () => {
+    blurActiveElement();
+    const selectedName = selectedPluginNameRef.current || pluginName;
+    onInstall(selectedName);
+  };
+
+  const handleAdd = () => {
+    blurActiveElement();
+    const selectedName = selectedPluginNameRef.current || pluginName;
+    onAdd(selectedName);
+  };
+
   const handleCancel = () => {
     blurActiveElement();
     onClose();
@@ -426,9 +709,15 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect }: SearchPluginsDi
           )}
         </div>
       </DialogContent>
-      <DialogActions sx={{ justifyContent: 'center' }}>
+      <DialogActions sx={{ justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
         <Button variant='contained' onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName)}>
           Select
+        </Button>
+        <Button variant='contained' onClick={handleInstall} disabled={!(selectedPluginNameRef.current || pluginName)}>
+          Install
+        </Button>
+        <Button variant='contained' onClick={handleAdd} disabled={!(selectedPluginNameRef.current || pluginName)}>
+          Add
         </Button>
         <Button onClick={handleCancel}>Cancel</Button>
       </DialogActions>

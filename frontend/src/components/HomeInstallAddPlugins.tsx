@@ -6,33 +6,33 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
-import MenuItem from '@mui/material/MenuItem';
-import Menu from '@mui/material/Menu';
 
 // @mui/icons-material
 import Download from '@mui/icons-material/Download';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import Add from '@mui/icons-material/Add';
-import MoreVert from '@mui/icons-material/MoreVert';
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 
 // Frontend
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
+import { SearchPluginsDialog } from './SearchPluginsDialog';
 import { debug, enableMobile } from '../App';
 
 export const pluginIgnoreList = [
-  'matterbridge-',
-  'matterbridge-plugin-template',
-  'matterbridge-dyson',
-  'matterbridge-irobot',
-  'matterbridge-tuya',
-  'matterbridge-mqtt',
-  'matterbridge-matter',
-  'matterbridge-security',
-  'matterbridge-automations',
-  'matterbridge-securitysystem',
+  'matterbridge-', // invalid name
+  'matterbridge-plugin-template', // standard template repository - someone published on hist name!!!!!!!
+  'matterbridge-dyson', // my package
+  'matterbridge-irobot', // my package
+  'matterbridge-tuya', // my package
+  'matterbridge-mqtt', // my package
+  'matterbridge-matter', // my package
+  'matterbridge-security', // my package
+  'matterbridge-automations', // my package
+  'matterbridge-securitysystem', // empty place holder
+  'matterbridge-adapter', // 5 years ago
 ];
 
 function HomeInstallAddPlugins() {
@@ -43,7 +43,6 @@ function HomeInstallAddPlugins() {
   // States
   const [pluginName, setPluginName] = useState('matterbridge-');
   const [_dragging, setDragging] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   // Refs
   const uniqueId = useRef(getUniqueId());
 
@@ -144,13 +143,33 @@ function HomeInstallAddPlugins() {
     console.log('Right-clicked Add button');
   };
 
-  const handleClickVertical = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget as HTMLElement);
+  // SearchPluginsDialog states and handlers
+  const [openSearchDialog, setOpenSearchDialog] = useState(false);
+  const handleOpenSearchDialog = () => {
+    setOpenSearchDialog(true);
+    console.log('Dialog opened for selection');
   };
-
-  const handleCloseMenu = (value: string) => {
-    if (value !== '') setPluginName(value);
-    setAnchorEl(null);
+  const handleCloseSearchDialog = () => {
+    setPluginName('matterbridge-');
+    setOpenSearchDialog(false);
+    console.log('Dialog closed without selection');
+  };
+  const handleSelectSearchDialog = (selected: string) => {
+    setPluginName(selected);
+    setOpenSearchDialog(false);
+    console.log('Select plugin:', selected);
+  };
+  const handleInstallSearchDialog = (selected: string) => {
+    setPluginName(selected);
+    setOpenSearchDialog(false);
+    handleInstallPluginClick();
+    console.log('Install plugin:', selected);
+  };
+  const handleAddSearchDialog = (selected: string) => {
+    setPluginName(selected);
+    setOpenSearchDialog(false);
+    handleAddPluginClick();
+    console.log('Add plugin:', selected);
   };
 
   const [closed, setClosed] = useState(false);
@@ -170,6 +189,9 @@ function HomeInstallAddPlugins() {
         onDrop={handleFileDrop}
         style={enableMobile && mobile ? { flexWrap: 'wrap', alignItems: 'center', gap: '10px' } : { flexWrap: 'wrap', alignItems: 'center', gap: '20px' }}
       >
+        {/* SearchPluginDialog */}
+        <SearchPluginsDialog open={openSearchDialog} onClose={handleCloseSearchDialog} onSelect={handleSelectSearchDialog} onInstall={handleInstallSearchDialog} onAdd={handleAddSearchDialog} />
+
         {/* Input and menu */}
         <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
           <TextField
@@ -183,26 +205,13 @@ function HomeInstallAddPlugins() {
             variant='outlined'
             fullWidth
           />
-          <IconButton onClick={handleClickVertical}>
-            <MoreVert />
-          </IconButton>
-          <Menu id='simple-menu' anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-hass')}>matterbridge-hass</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-webhooks')}>matterbridge-webhooks</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-bthome')}>matterbridge-bthome</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-test')}>matterbridge-test</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-example-accessory-platform')}>matterbridge-example-accessory-platform</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-example-dynamic-platform')}>matterbridge-example-dynamic-platform</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-door')}>matterbridge-eve-door</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-motion')}>matterbridge-eve-motion</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-energy')}>matterbridge-eve-energy</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-weather')}>matterbridge-eve-weather</MenuItem>
-            <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
-          </Menu>
+          <Tooltip title='Search plugins to install'>
+            <IconButton size='large' onClick={handleOpenSearchDialog}>
+              <ManageSearchIcon fontSize='inherit' />
+            </IconButton>
+          </Tooltip>
         </div>
+
         {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
           <Tooltip title='Install or update a plugin from npm'>
