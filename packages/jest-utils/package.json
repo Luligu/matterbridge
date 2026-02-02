@@ -52,6 +52,7 @@
     "test:vitest:coverage": "vitest run --reporter verbose --coverage",
     "deepClean": "npx shx rm -rf tsconfig.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .cache/* .cache/.[!.]* .cache/..?* node_modules/* node_modules/.[!.]* node_modules/..?*",
     "reset": "npm run deepClean && npm install --no-fund --no-audit && npm run build",
+    "softReset": "npm install --no-fund --no-audit && npm run build",
     "lint": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 .",
     "lint:fix": "eslint --cache --cache-location .cache/.eslintcache --fix --max-warnings=0 .",
     "format": "prettier --cache --cache-location .cache/.prettiercache --write .",
@@ -65,7 +66,7 @@
     "npmPublishTagDev": "npx shx cp package.json package.json.backup && node scripts/version.mjs dev && npm run prepublishOnly && npm publish --tag dev && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagEdge": "npx shx cp package.json package.json.backup && node scripts/version.mjs edge && npm run prepublishOnly && npm publish --tag edge && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagLatest": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag latest && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
-    "install:dependencies": "npm install --no-fund --no-audit --save-exact node-ansi-logger@dev",
+    "install:dependencies": "npm install --no-fund --no-audit --save-exact node-ansi-logger",
     "install:scripts": "npm install --no-fund --no-audit --save-dev --save-exact npm-check-updates shx cross-env",
     "install:typescript": "npm install --no-fund --no-audit --save-dev --save-exact typescript @types/node",
     "install:eslint": "npm install --no-fund --no-audit --save-dev --save-exact eslint @eslint/js typescript-eslint eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-jsdoc",
@@ -74,13 +75,13 @@
     "install:vitest": "npm install --no-fund --no-audit --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin"
   },
   "dependencies": {
-    "node-ansi-logger": "3.2.0-dev-20260202-7156835"
+    "node-ansi-logger": "3.1.1"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
     "@jest/globals": "30.2.0",
     "@types/jest": "30.0.0",
-    "@types/node": "25.1.0",
+    "@types/node": "25.2.0",
     "@vitest/coverage-v8": "4.0.18",
     "@vitest/eslint-plugin": "1.6.6",
     "cross-env": "10.1.0",
