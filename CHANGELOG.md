@@ -20,7 +20,7 @@
 
 All notable changes to this project will be documented in this file.
 
-If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
+If you like this project and find it useful, please consider giving it a star on [GitHub](https://github.com/Luligu/matterbridge) and sponsoring it.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
@@ -48,6 +48,10 @@ Advantages:
 
 ## [3.5.3] - Dev branch
 
+### Dev Breaking Changes
+
+- [logger]: The logger (node-ansi-logger) has been refactored and updated to support the new features below. To avoid possible type errors, please update the dependencies.
+
 ### Breaking Changes
 
 - [docker]: Updated latest and dev docker images to use node:24-trixie-slim as base.
@@ -55,10 +59,10 @@ Advantages:
 ### Added
 
 - [docker]: Added workflow, scripts and dockerfile to build the s6-rc-base base image used by the Matterbridge Home Assistant Application.
-- [frontend]: Added title render to the config editor and allow ui properties in 'oneOf', 'anyOf', 'allOf'. Thanks RinDevJunior (https://github.com/Luligu/matterbridge/pull/495).
+- [frontend]: Added title rendering to the config editor and allow ui properties in 'oneOf', 'anyOf', 'allOf'. Thanks RinDevJunior (https://github.com/Luligu/matterbridge/pull/495).
 - [frontend]: Added SearchPluginsDialog in Install plugins panel on the home page.
 - [publish]: Migrate to trusted publishing / OIDC.
-- [logger]: Added parameter **--no-ansi** to disable ANSI color escape codes. Accepts also environment variable NO_COLOR=1 (https://no-color.org/).
+- [logger]: Added parameter **--no-ansi** to disable ANSI color escape codes in all loggers. Accepts also environment variable NO_COLOR=1 (https://no-color.org/).
 
 ### Changed
 
@@ -69,6 +73,7 @@ Advantages:
 - [matter.js]: Bump to matter.j v. 0.16.8.
 - [frontend]: Bumped `frontend` version to v. 3.4.4.
 - [frontend]: Updated `frontend` dependencies.
+- [frontend]: Updated rendering of button actions in config editor.
 
 ### Fixed
 
