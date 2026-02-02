@@ -65,7 +65,7 @@
     "npmPublishTagDev": "npx shx cp package.json package.json.backup && node scripts/version.mjs dev && npm run prepublishOnly && npm publish --tag dev && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagEdge": "npx shx cp package.json package.json.backup && node scripts/version.mjs edge && npm run prepublishOnly && npm publish --tag edge && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagLatest": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag latest && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
-    "install:dependencies": "npm install --no-fund --no-audit --save-exact node-ansi-logger @matterbridge/jest-utils",
+    "install:dependencies": "npm install --no-fund --no-audit --save-exact node-ansi-logger@dev @matterbridge/jest-utils",
     "install:scripts": "npm install --no-fund --no-audit --save-dev --save-exact npm-check-updates shx cross-env",
     "install:typescript": "npm install --no-fund --no-audit --save-dev --save-exact typescript @types/node",
     "install:eslint": "npm install --no-fund --no-audit --save-dev --save-exact eslint @eslint/js typescript-eslint eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-jsdoc",
@@ -75,7 +75,7 @@
   },
   "dependencies": {
     "@matterbridge/jest-utils": "0.0.1",
-    "node-ansi-logger": "3.1.1"
+    "node-ansi-logger": "3.2.0-dev-20260202-7156835"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
