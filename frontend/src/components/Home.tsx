@@ -28,7 +28,7 @@ function Home(): React.JSX.Element {
   const [plugins, setPlugins] = useState<ApiPlugin[]>([]);
   const [homePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) === 'false' ? false : true); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem(MbfLsk.homePageMode) ?? 'devices'); // default devices
-  const [changelog, setChangelog] = useState('');
+  const [changelog, _setChangelog] = useState('https://matterbridge.io/CHANGELOG.html');
   const [showChangelog, setShowChangelog] = useState(false);
   const [browserRefresh, setBrowserRefresh] = useState(false);
   const [storeId, setStoreId] = useState<string | null>(null);
@@ -54,9 +54,6 @@ function Home(): React.JSX.Element {
         if (debug) console.log(`Home received settings:`, msg.response);
         setSystemInfo(msg.response.systemInformation);
         setMatterbridgeInfo(msg.response.matterbridgeInformation);
-        if (msg.response.matterbridgeInformation.matterbridgeVersion) {
-          setChangelog(`https://github.com/Luligu/matterbridge/blob/${msg.response.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main'}/CHANGELOG.md`);
-        }
 
         if (localStorage.getItem(MbfLsk.frontendVersion) === null && msg.response.matterbridgeInformation.frontendVersion) {
           localStorage.setItem(MbfLsk.frontendVersion, msg.response.matterbridgeInformation.frontendVersion);
