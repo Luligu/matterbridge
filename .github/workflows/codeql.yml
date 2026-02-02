@@ -29,6 +29,11 @@ on:
       - '**/__test__/*.ts' # any .ts under __test__
   workflow_dispatch:
 
+# Cancel previous runs when a new one is triggered (same branch/PR)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     name: Analyze

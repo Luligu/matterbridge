@@ -56,7 +56,9 @@ jobs:
         run: npm install --no-fund --no-audit --global .
 
       - name: Test matterbridge cli
-        run: matterbridge -loginterfaces
+        run: |
+          matterbridge --version
+          matterbridge --loginterfaces
 
       - name: Lint the project
         run: npm run lint

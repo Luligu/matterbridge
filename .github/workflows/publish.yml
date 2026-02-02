@@ -7,9 +7,10 @@ on:
     - cron: '0 0 * * *' # daily at 00:00 UTC
   workflow_dispatch:
 
+# Cancel previous runs when a new one is triggered (same branch/PR)
 concurrency:
-  group: npm-publish
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
