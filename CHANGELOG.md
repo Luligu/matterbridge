@@ -63,6 +63,7 @@ Advantages:
 - [frontend]: Added SearchPluginsDialog in Install plugins panel on the home page.
 - [publish]: Migrate to trusted publishing / OIDC.
 - [logger]: Added parameter **--no-ansi** to disable ANSI color escape codes in all loggers. Accepts also environment variable NO_COLOR=1 (https://no-color.org/).
+- [package]: Added sync-workspaces script for managing workspace package versions and dependencies.
 
 ### Changed
 
