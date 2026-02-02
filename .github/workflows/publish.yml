@@ -31,7 +31,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.x'
-          registry-url: 'https://registry.npmjs.org'
           cache: npm
 
       - name: Verify Node.js version
@@ -131,7 +130,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.x'
-          registry-url: 'https://registry.npmjs.org'
           cache: npm
 
       - name: Verify Node.js version
@@ -199,7 +197,7 @@ jobs:
             echo "should_publish=true"  >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish to npm under 'dev' tag with trusted publishing / OIDC
+      - name: Publish to npm under dev tag with trusted publishing / OIDC
         if: steps.check_new.outputs.should_publish == 'true'
         run: npm publish --tag dev
 
