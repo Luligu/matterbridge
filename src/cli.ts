@@ -40,6 +40,8 @@ export let instance: Matterbridge | undefined;
 export const tracker = new Tracker('Cli', false, false);
 export const inspector = new Inspector('Cli', false, false);
 
+if (process.argv.includes('--no-ansi') || process.argv.includes('-no-ansi')) process.env.NO_COLOR = '1';
+
 const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
 /**
@@ -302,6 +304,7 @@ function help(): void {
       --homedir:               override the home directory (default the os homedir)
       --delay [seconds]:       set a delay in seconds before starting Matterbridge in the first 5 minutes from a reboot (default 120)
       --fixed_delay [seconds]: set a fixed delay in seconds before starting Matterbridge (default 120)
+      --no-ansi:               disable ANSI color output in the logs    
   `);
   process.exit(0);
 }

@@ -447,7 +447,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Setup the matter environment with default values
     this.environment.vars.set('log.level', MatterLogLevel.INFO);
-    this.environment.vars.set('log.format', MatterLogFormat.ANSI);
+    this.environment.vars.set('log.format', hasParameter('no-ansi') || process.env.NO_COLOR === '1' ? MatterLogFormat.PLAIN : MatterLogFormat.ANSI);
     this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);

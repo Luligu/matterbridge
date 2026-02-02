@@ -58,6 +58,7 @@ Advantages:
 - [frontend]: Added title render to the config editor and allow ui properties in 'oneOf', 'anyOf', 'allOf'. Thanks RinDevJunior (https://github.com/Luligu/matterbridge/pull/495).
 - [frontend]: Added SearchPluginsDialog in Install plugins panel on the home page.
 - [publish]: Migrate to trusted publishing / OIDC.
+- [logger]: Added parameter **--no-ansi** to disable ANSI color escape codes. Accepts also environment variable NO_COLOR=1 (https://no-color.org/).
 
 ### Changed
 
