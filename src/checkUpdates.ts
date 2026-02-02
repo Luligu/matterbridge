@@ -160,7 +160,7 @@ export async function getMatterbridgeDevVersion(matterbridge: SharedMatterbridge
     server.request({ type: 'matterbridge_dev_version', src: server.name, dst: 'matterbridge', params: { version } });
     // matterbridge.matterbridgeDevVersion = version;
     // await matterbridge.nodeContext?.set<string>('matterbridgeDevVersion', version);
-    if (matterbridge.matterbridgeVersion.includes('-dev-') && matterbridge.matterbridgeVersion !== version) {
+    if ((matterbridge.matterbridgeVersion.includes('-dev-') || matterbridge.matterbridgeVersion.includes('-git-')) && matterbridge.matterbridgeVersion !== version) {
       log.notice(`Matterbridge@dev is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${version}.`);
       server.request({
         type: 'frontend_snackbarmessage',
@@ -173,7 +173,7 @@ export async function getMatterbridgeDevVersion(matterbridge: SharedMatterbridge
       // matterbridge.frontend.wssSendUpdateRequired(true);
       server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'settings' } });
       // matterbridge.frontend.wssSendRefreshRequired('settings');
-    } else if (matterbridge.matterbridgeVersion.includes('-dev-') && matterbridge.matterbridgeVersion === version) {
+    } else if ((matterbridge.matterbridgeVersion.includes('-dev-') || matterbridge.matterbridgeVersion.includes('-git-')) && matterbridge.matterbridgeVersion === version) {
       log.debug(`Matterbridge@dev is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${version}.`);
     }
     return version;
