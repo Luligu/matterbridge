@@ -1,11 +1,15 @@
 // React
-import { useState, useContext, useRef, memo } from 'react';
+import { useState, useContext, useRef, useEffect, memo } from 'react';
 
 // @mui/material
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
 
 // @mui/icons-material
 import Download from '@mui/icons-material/Download';
@@ -35,6 +39,66 @@ export const pluginIgnoreList = [
   'matterbridge-adapter', // 5 years ago
 ];
 
+/**
+ * Fetches all available versions for a given npm package
+ * @param packageName - The npm package name
+ * @returns Promise<string[]> - Array of version strings sorted newest first, or empty array on error
+ */
+async function fetchPackageVersions(packageName: string): Promise<string[]> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    const response = await fetch(`https://registry.npmjs.org/${encodeURIComponent(packageName)}`, {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.error(`Failed to fetch versions for ${packageName}: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    const versions = data.versions ? Object.keys(data.versions) : [];
+
+    // Sort versions in reverse chronological order (newest first)
+    // Simple semver-like sorting
+    versions.sort((a: string, b: string) => {
+      const aParts = a.split(/[.-]/).map((part) => (isNaN(Number(part)) ? part : Number(part)));
+      const bParts = b.split(/[.-]/).map((part) => (isNaN(Number(part)) ? part : Number(part)));
+
+      for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+        const aPart = aParts[i];
+        const bPart = bParts[i];
+
+        if (aPart === undefined) return 1; // a is shorter, so it's older
+        if (bPart === undefined) return -1; // b is shorter, so it's older
+
+        if (typeof aPart === 'number' && typeof bPart === 'number') {
+          if (aPart !== bPart) return bPart - aPart; // Reverse order (newest first)
+        } else {
+          // String comparison for pre-release tags
+          const aStr = String(aPart);
+          const bStr = String(bPart);
+          if (aStr !== bStr) return bStr.localeCompare(aStr); // Reverse order
+        }
+      }
+      return 0;
+    });
+
+    return versions;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error(`Request timed out for ${packageName}`);
+    } else {
+      console.error(`Error fetching versions for ${packageName}:`, error);
+    }
+    return [];
+  }
+}
+
 function HomeInstallAddPlugins() {
   // Contexts
   const { mobile, showSnackbarMessage } = useContext(UiContext);
@@ -42,9 +106,45 @@ function HomeInstallAddPlugins() {
 
   // States
   const [pluginName, setPluginName] = useState('matterbridge-');
+  const [pluginVersion, setPluginVersion] = useState<string>('latest');
+  const [availableVersions, setAvailableVersions] = useState<string[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
   const [_dragging, setDragging] = useState(false);
   // Refs
   const uniqueId = useRef(getUniqueId());
+
+  // Auto-fetch plugin versions when plugin name changes
+  useEffect(() => {
+    // Clear previous version selection when plugin name changes
+    setPluginVersion('latest');
+
+    // Check if we should fetch versions
+    const shouldFetchVersions =
+      pluginName !== '' &&
+      pluginName.startsWith('matterbridge-') &&
+      !pluginName.includes('@') &&
+      !pluginName.startsWith('/') &&
+      !pluginName.startsWith('./') &&
+      !pluginName.startsWith('file:');
+
+    if (!shouldFetchVersions) {
+      setAvailableVersions([]);
+      setLoadingVersions(false);
+      return;
+    }
+
+    // Debounce the API call
+    setLoadingVersions(true);
+    const timeoutId = setTimeout(async () => {
+      const versions = await fetchPackageVersions(pluginName);
+      setAvailableVersions(versions);
+      setLoadingVersions(false);
+    }, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [pluginName]);
 
   // Handle drag events
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -109,11 +209,12 @@ function HomeInstallAddPlugins() {
   };
 
   const handleInstallPluginClick = () => {
+    const packageNameWithVersion = pluginVersion ? `${pluginName}@${pluginVersion}` : pluginName;
     if (pluginIgnoreList.includes(pluginName.split('@')[0])) {
       showSnackbarMessage(`Installation of plugin "${pluginName}" is blocked by the ignore list.`);
       return;
     }
-    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: pluginName, restart: false } });
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: packageNameWithVersion, restart: false } });
   };
 
   const handleUninstallPluginClick = () => {
@@ -125,11 +226,12 @@ function HomeInstallAddPlugins() {
   };
 
   const handleAddPluginClick = () => {
+    const packageNameWithVersion = pluginVersion ? `${pluginName}@${pluginVersion}` : pluginName;
     if (pluginIgnoreList.includes(pluginName.split('@')[0])) {
       showSnackbarMessage(`Addition of plugin "${pluginName}" is blocked by the ignore list.`);
       return;
     }
-    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/addplugin', src: 'Frontend', dst: 'Matterbridge', params: { pluginNameOrPath: pluginName } });
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/addplugin', src: 'Frontend', dst: 'Matterbridge', params: { pluginNameOrPath: packageNameWithVersion } });
   };
 
   // Right-click handlers
@@ -207,6 +309,39 @@ function HomeInstallAddPlugins() {
               fullWidth
             />
           </Tooltip>
+
+          <Tooltip title='Select a specific version to install (optional)'>
+            <FormControl size='small' sx={{ minWidth: 150, flexShrink: 0 }}>
+              <InputLabel id='plugin-version-label'>Plugin Version</InputLabel>
+              <Select
+                labelId='plugin-version-label'
+                id='plugin-version'
+                value={pluginVersion}
+                label='Plugin Version'
+                onChange={(event) => setPluginVersion(event.target.value)}
+                disabled={
+                  pluginName === '' ||
+                  pluginName.includes('@') ||
+                  pluginName.startsWith('/') ||
+                  pluginName.startsWith('./') ||
+                  pluginName.startsWith('file:') ||
+                  availableVersions.length === 0 ||
+                  loadingVersions
+                }
+                displayEmpty
+              >
+                <MenuItem value='latest'>
+                  <em>{loadingVersions ? 'Loading...' : 'latest'}</em>
+                </MenuItem>
+                {availableVersions.map((version) => (
+                  <MenuItem key={version} value={version}>
+                    {version}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Tooltip>
+
           <Tooltip title='Search on npm the plugin to install'>
             <IconButton size='large' onClick={handleOpenSearchDialog}>
               <ManageSearchIcon fontSize='inherit' />
