@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/jest-utils",
-  "version": "0.0.1",
+  "version": "3.5.3",
   "description": "Matterbridge jest utility library",
   "author": "https://github.com/Luligu",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/dgram",
-  "version": "0.0.3",
+  "version": "3.5.3",
   "description": "Matterbridge dgram library",
   "author": "https://github.com/Luligu",
   "repository": {
@@ -71,7 +71,7 @@
     "install:vitest": "npm install --no-fund --no-audit --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin"
   },
   "dependencies": {
-    "@matterbridge/jest-utils": "0.0.1",
+    "@matterbridge/jest-utils": "3.5.3",
     "node-ansi-logger": "3.1.1"
   },
   "devDependencies": {
