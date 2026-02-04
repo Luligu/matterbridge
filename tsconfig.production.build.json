@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/jest-utils/tsconfig.production.json" }, 
+    { "path": "./packages/vitest-utils/tsconfig.production.json" }, 
+    { "path": "./packages/utils/tsconfig.production.json" }, 
+    { "path": "./packages/thread/tsconfig.production.json" }, 
+    { "path": "./packages/dgram/tsconfig.production.json" },
+    { "path": "./tsconfig.production.json" }
+  ]
+}
