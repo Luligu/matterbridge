@@ -164,7 +164,7 @@
     "fetchChip": "node ./scripts/fetch-chip.mjs",
     "updateHtmls": "node ./scripts/marked.mjs",
     "sync": "node scripts/sync-workspaces.mjs --scope \"@matterbridge\"",
-    "runMeBeforePublish": "npm run build && npm run lint && npm run format && npm run test && npm run build && npm run updateHtmls",
+    "runMeBeforePublish": "npm run build && npm run lint && npm run format && npm run test:coverage && npm run build && npm run updateHtmls",
     "prepublishOnly": "npm run cleanBuildProduction && npm pkg delete devDependencies scripts && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* package-lock.json npm-shrinkwrap.json && npm install --omit=dev && npm shrinkwrap --omit=dev",
     "npmPack": "npx shx cp package.json package.json.backup && node scripts/version.mjs dev && npm run prepublishOnly && npm pack && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
     "npmPublishTagDev": "npx shx cp package.json package.json.backup && node scripts/version.mjs dev && npm run prepublishOnly && npm publish --tag dev && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm run reset",
@@ -183,9 +183,6 @@
     "install:prettier": "npm install --no-fund --no-audit --save-dev --save-exact prettier eslint-config-prettier eslint-plugin-prettier",
     "install:jest": "npm install --no-fund --no-audit --save-dev --save-exact jest ts-jest @types/jest @jest/globals eslint-plugin-jest",
     "install:vitest": "npm install --no-fund --no-audit --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin",
-    "buildAll": "npm run build && npm --workspaces run build",
-    "lintAll": "npm run lint && npm --workspaces run lint",
-    "testAll": "npm run test && npm --workspaces run test",
     "docker:build:local:latest": "docker build --no-cache --pull -f docker/Dockerfile.latest -t matterbridge:latest .",
     "docker:run:local:latest": "docker run --rm -it --name matterbridge-latest-local -p 8585:8283 matterbridge:latest",
     "docker:build:local:dev": "docker build --no-cache --pull -f docker/Dockerfile.dev -t matterbridge:dev .",
@@ -196,12 +193,7 @@
     "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine-local -p 8585:8283 matterbridge:alpine",
     "docker:build:local:s6-rc-base": "docker build --no-cache --pull -f docker/Dockerfile.s6-rc-base -t matterbridge:s6-rc-base .",
     "docker:run:local:s6-rc-base": "docker run --rm -it --name matterbridge-s6-rc-base-local -p 8585:8283 matterbridge:s6-rc-base matterbridge",
-    "bBuild": "tsc -b tsconfig.build.json --verbose",
-    "bCleanBuild": "npm run clean && tsc -b tsconfig.build.json --verbose",
-    "bbuildProduction": "tsc -b tsconfig.production.build.json --verbose",
-    "bCleanBuildProduction": "npm run clean && tsc -b tsconfig.production.build.json --verbose",
-    "bWatch": "tsc -b tsconfig.build.json --watch --verbose",
-    "bCleanWatch": "npm run clean && tsc -b tsconfig.build.json --watch --verbose"
+    "publish:all": "npm publish --tag edge --dry-run && npm publish --workspaces --tag edge --dry-run"
   },
   "dependencies": {
     "@matter/main": "0.16.8",
