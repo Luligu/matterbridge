@@ -99,13 +99,14 @@
 <a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
 <a href="https://github.com/eslint/eslint"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
-<a href="https://nodejs.org/api/esm.html"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a></p>
+<a href="https://nodejs.org/api/esm.html"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
+<a href="https://matterbridge.io"><img src="https://img.shields.io/badge/matterbridge.io-online-brightgreen" alt="matterbridge.io"></a></p>
 <p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="powered by"></a>
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="powered by"></a>
 <a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="powered by"></a></p>
 <hr>
 <p>All notable changes to this project will be documented in this file.</p>
-<p>If you like this project and find it useful, please consider giving it a star on GitHub at <a href="https://github.com/Luligu/matterbridge">https://github.com/Luligu/matterbridge</a> and sponsoring it.</p>
+<p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="project-evolution">Project evolution</h2>
 <p>The project will evolve to a multi-threaded architecture (the CLI will become the thread manager) with these initial threads:</p>
@@ -137,6 +138,10 @@
 <li>ability to update the plugin in childbridge mode without restarting matterbridge;</li>
 </ul>
 <h2 id="353-dev-branch">[3.5.3] - Dev branch</h2>
+<h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
+<ul>
+<li>[logger]: The logger (node-ansi-logger) has been refactored and updated to support the new features below. To avoid possible type errors, please update the dependencies.</li>
+</ul>
 <h3 id="breaking-changes">Breaking Changes</h3>
 <ul>
 <li>[docker]: Updated latest and dev docker images to use node:24-trixie-slim as base.</li>
@@ -144,9 +149,11 @@
 <h3 id="added">Added</h3>
 <ul>
 <li>[docker]: Added workflow, scripts and dockerfile to build the s6-rc-base base image used by the Matterbridge Home Assistant Application.</li>
-<li>[frontend]: Added title render to the config editor and allow ui properties in &#39;oneOf&#39;, &#39;anyOf&#39;, &#39;allOf&#39;. Thanks RinDevJunior (<a href="https://github.com/Luligu/matterbridge/pull/495">https://github.com/Luligu/matterbridge/pull/495</a>).</li>
+<li>[frontend]: Added title rendering to the config editor and allow ui properties in &#39;oneOf&#39;, &#39;anyOf&#39;, &#39;allOf&#39;. Thanks RinDevJunior (<a href="https://github.com/Luligu/matterbridge/pull/495">https://github.com/Luligu/matterbridge/pull/495</a>).</li>
 <li>[frontend]: Added SearchPluginsDialog in Install plugins panel on the home page.</li>
 <li>[publish]: Migrate to trusted publishing / OIDC.</li>
+<li>[logger]: Added parameter <strong>--no-ansi</strong> to disable ANSI color escape codes in all loggers. Accepts also environment variable NO_COLOR=1 (<a href="https://no-color.org/">https://no-color.org/</a>).</li>
+<li>[package]: Added sync-workspaces script for managing workspace package versions and dependencies.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -157,6 +164,7 @@
 <li>[matter.js]: Bump to matter.j v. 0.16.8.</li>
 <li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.4.</li>
 <li>[frontend]: Updated <code>frontend</code> dependencies.</li>
+<li>[frontend]: Updated rendering of button actions in config editor.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
