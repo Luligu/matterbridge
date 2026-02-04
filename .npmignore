@@ -11,7 +11,7 @@ coverage/
 jest/
 mock/
 node_modules/
-# packages/
+packages/
 public/
 screenshots/
 scripts/

@@ -21,12 +21,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   rm -rf .cache .devcontainer .git .github .vscode docker docs node_modules reflector screenshots scripts systemd package-lock.json npm-shrinkwrap.json && \
   npm install --no-fund --no-audit --omit=dev && \
   npm link --no-fund --no-audit
-# npm shrinkwrap --omit=dev && \
-# npm pack
-
-RUN \
-  npm pack && \
-  npm install --global --no-fund --no-audit --verbose --omit=dev ./matterbridge*.tgz
 
 WORKDIR /matterbridge-zigbee2mqtt
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git . && \
