@@ -67,7 +67,15 @@ jobs:
           npm pkg set build.dev="false"
 
       - name: Publish to npm with trusted publishing / OIDC
-        run: npm publish
+        run: |
+          npm run sync
+          npm --workspaces pkg delete devDependencies scripts
+          npm pkg delete devDependencies scripts workspaces
+          npx shx rm -rf node_modules package-lock.json npm-shrinkwrap.json 
+          npm install --no-fund --no-audit --omit=dev 
+          npm shrinkwrap --omit=dev
+          npm publish --workspaces
+          npm publish
 
       - name: Trigger Matterbridge Docker Build Latest
         uses: actions/github-script@v7
@@ -200,7 +208,15 @@ jobs:
 
       - name: Publish to npm under dev tag with trusted publishing / OIDC
         if: steps.check_new.outputs.should_publish == 'true'
-        run: npm publish --tag dev
+        run: |
+          npm run sync
+          npm --workspaces pkg delete devDependencies scripts
+          npm pkg delete devDependencies scripts workspaces
+          npx shx rm -rf node_modules package-lock.json npm-shrinkwrap.json 
+          npm install --omit=dev 
+          npm shrinkwrap --omit=dev
+          npm publish --workspaces --tag dev
+          npm publish --tag dev
 
       - name: Trigger Matterbridge Docker Build Dev
         if: steps.check_new.outputs.should_publish == 'true'

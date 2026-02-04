@@ -14,6 +14,7 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   npm pkg set version="${BASE_VERSION}-git-${SHA7}"
 RUN npm ci --no-fund --no-audit && \
   npm run buildProduction && \
+  npm --workspaces pkg delete devDependencies scripts && \
   npm pkg delete devDependencies scripts workspaces && \
   rm -rf node_modules package-lock.json npm-shrinkwrap.json && \
   npm install --no-fund --no-audit --omit=dev && \
