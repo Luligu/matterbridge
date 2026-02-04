@@ -186,6 +186,7 @@
     "docker:build:local:latest": "docker build --no-cache --pull -f docker/Dockerfile.latest -t matterbridge:latest .",
     "docker:run:local:latest": "docker run --rm -it --name matterbridge-latest-local -p 8585:8283 matterbridge:latest",
     "docker:build:local:dev": "docker build --no-cache --pull -f docker/Dockerfile.dev -t matterbridge:dev .",
+    "docker:build:local:dev:fast": "docker build -f docker/Dockerfile.dev -t matterbridge:dev .",
     "docker:run:local:dev": "docker run --rm -it --name matterbridge-dev-local -p 8585:8283 matterbridge:dev",
     "docker:build:local:ubuntu": "docker build --no-cache --pull -f docker/Dockerfile.ubuntu -t matterbridge:ubuntu .",
     "docker:run:local:ubuntu": "docker run --rm -it --name matterbridge-ubuntu-local -p 8585:8283 matterbridge:ubuntu",
