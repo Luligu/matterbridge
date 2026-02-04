@@ -193,7 +193,7 @@
     "docker:run:local:alpine": "docker run --rm -it --name matterbridge-alpine-local -p 8585:8283 matterbridge:alpine",
     "docker:build:local:s6-rc-base": "docker build --no-cache --pull -f docker/Dockerfile.s6-rc-base -t matterbridge:s6-rc-base .",
     "docker:run:local:s6-rc-base": "docker run --rm -it --name matterbridge-s6-rc-base-local -p 8585:8283 matterbridge:s6-rc-base matterbridge",
-    "publish:all": "npm publish --tag edge --dry-run && npm publish --workspaces --tag edge --dry-run"
+    "publish:all": "npm run sync && npm run cleanBuildProduction && npx shx cp package.json package.json.backup && npm publish --tag edge --dry-run && npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm publish --workspaces --tag edge --dry-run"
   },
   "dependencies": {
     "@matter/main": "0.16.8",
