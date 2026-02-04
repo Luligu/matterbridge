@@ -61,15 +61,14 @@
     "updateDependencies": "npx npm-check-updates -u && npm run reset",
     "automator": "node scripts/runAutomator.mjs --monorepo-package",
     "runMeBeforePublish": "npm run build && npm run lint && npm run format && npm run test:coverage && npm run build",
-    "prepublishOnly": "npx shx cp package.json package.json.backup && npm pkg delete devDependencies scripts",
+    "prepublishOnly": "npm pkg delete devDependencies scripts",
     "install:dependencies": "npm install --no-fund --no-audit --save-exact node-ansi-logger @matterbridge/jest-utils",
     "install:scripts": "npm install --no-fund --no-audit --save-dev --save-exact npm-check-updates shx cross-env",
     "install:typescript": "npm install --no-fund --no-audit --save-dev --save-exact typescript @types/node",
     "install:eslint": "npm install --no-fund --no-audit --save-dev --save-exact eslint @eslint/js typescript-eslint eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-jsdoc",
     "install:prettier": "npm install --no-fund --no-audit --save-dev --save-exact prettier eslint-config-prettier eslint-plugin-prettier",
     "install:jest": "npm install --no-fund --no-audit --save-dev --save-exact jest ts-jest @types/jest @jest/globals eslint-plugin-jest",
-    "install:vitest": "npm install --no-fund --no-audit --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin",
-    "postpublish": "npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup"
+    "install:vitest": "npm install --no-fund --no-audit --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin"
   },
   "dependencies": {
     "@matterbridge/jest-utils": "0.0.1",
