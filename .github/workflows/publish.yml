@@ -66,16 +66,9 @@ jobs:
           npm pkg set build.docker="false"
           npm pkg set build.dev="false"
 
-      - name: Publish to npm with trusted publishing / OIDC
+      - name: Publish to npm under dev tag with trusted publishing / OIDC
         run: |
-          npm run sync
-          npm --workspaces pkg delete devDependencies scripts
-          npm pkg delete devDependencies scripts workspaces
-          npx shx rm -rf node_modules package-lock.json npm-shrinkwrap.json 
-          npm install --no-fund --no-audit --omit=dev 
-          npm shrinkwrap --omit=dev
-          npm publish --workspaces
-          npm publish
+          node scripts/build-workspaces.mjs --scope @matterbridge --tag latest
 
       - name: Trigger Matterbridge Docker Build Latest
         uses: actions/github-script@v7
@@ -182,6 +175,7 @@ jobs:
           DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
           echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
           echo "ORIG_SHA=$SHA"    >> $GITHUB_ENV
+          echo "ORIG_BASE=$BASE"  >> $GITHUB_ENV
 
       - name: Bump to version-dev-date-commit --no-git-tag-version --ignore-scripts tag ${{ env.DEV_TAG }}
         run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version --ignore-scripts
@@ -209,14 +203,8 @@ jobs:
       - name: Publish to npm under dev tag with trusted publishing / OIDC
         if: steps.check_new.outputs.should_publish == 'true'
         run: |
-          npm run sync
-          npm --workspaces pkg delete devDependencies scripts
-          npm pkg delete devDependencies scripts workspaces
-          npx shx rm -rf node_modules package-lock.json npm-shrinkwrap.json 
-          npm install --omit=dev 
-          npm shrinkwrap --omit=dev
-          npm publish --workspaces --tag dev
-          npm publish --tag dev
+          npm version "${{ env.ORIG_BASE }}" --no-git-tag-version --ignore-scripts
+          node scripts/build-workspaces.mjs --scope @matterbridge --tag dev
 
       - name: Trigger Matterbridge Docker Build Dev
         if: steps.check_new.outputs.should_publish == 'true'

@@ -22,11 +22,11 @@ function green(text) {
 
 function usage() {
   return [
-    'Usage: node scripts/build-workspaces.mjs --tag <dev|edge|git> [--scope <prefix>] [--dry-run]',
+    'Usage: node scripts/publish-workspaces.mjs --tag <dev|edge|git|latest> [--scope <prefix>] [--dry-run]',
     '',
     'What it does:',
     '  0) Backs up root + workspaces package.json files in-memory',
-    '  1) Runs scripts/version.mjs <tag> (sets a publish version suffix)',
+    '  1) Runs scripts/version.mjs <tag> (sets a publish version suffix; skipped when tag=latest)',
     '  2) Runs scripts/sync-workspaces.mjs (sync workspace versions + scoped deps)',
     '  3) Runs npm run buildProduction',
     '  4) Temporarily removes devDependencies, scripts, workspaces, and bundledDependencies from all package.json files',
@@ -35,7 +35,7 @@ function usage() {
     '  7) Restores original package.json files from the in-memory backup',
     '',
     'Options:',
-    '  --tag, -t    Required. One of: dev | edge | git',
+    '  --tag, -t    Required. One of: dev | edge | git | latest',
     '  --scope, -s  Dependency name prefix to sync/bundle (default: @matterbridge)',
     '  --dry-run, -n Only applies to publish (adds npm publish --dry-run)',
   ].join('\n');
@@ -245,10 +245,10 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-if (tag !== 'dev' && tag !== 'edge' && tag !== 'git') {
+if (tag !== 'dev' && tag !== 'edge' && tag !== 'git' && tag !== 'latest') {
   console.error(usage());
   process.exitCode = 1;
-  throw new Error('Missing or invalid --tag (expected dev, edge, or git).');
+  throw new Error('Missing or invalid --tag (expected dev, edge, git, or latest).');
 }
 
 const __filename = fileURLToPath(import.meta.url);
@@ -321,7 +321,15 @@ await backupAllPackageJson();
 console.log(green('backed up: package.json files (in-memory backup)'));
 
 try {
-  runCmd(repoRoot, false, 'node', ['scripts/version.mjs', tag]);
+  const publishTag = tag;
+  const shouldRunVersion = publishTag !== 'latest';
+
+  if (shouldRunVersion) {
+    runCmd(repoRoot, false, 'node', ['scripts/version.mjs', publishTag]);
+  } else {
+    console.log(green('skipped: scripts/version.mjs (tag=latest)'));
+  }
+
   runCmd(repoRoot, false, 'node', ['scripts/sync-workspaces.mjs', '--scope', scopePrefix]);
   runCmd(repoRoot, false, 'npm', ['run', 'cleanBuildProduction']);
 
@@ -333,11 +341,11 @@ try {
 
   for (const dir of workspaceDirs) {
     console.log(`publishing workspace: ${formatRelPath(repoRoot, dir)}`);
-    runPublish(dir, dryRun, ['publish', '--tag', tag]);
+    runPublish(dir, dryRun, ['publish', '--tag', publishTag]);
   }
 
   console.log('publishing root package: package.json');
-  runPublish(repoRoot, dryRun, ['publish', '--tag', tag]);
+  runPublish(repoRoot, dryRun, ['publish', '--tag', publishTag]);
 } finally {
   try {
     await restoreAllPackageJson();
