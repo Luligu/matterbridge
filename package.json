@@ -203,7 +203,7 @@
     "publish:all:edge": "node scripts/version.mjs git && npm run sync && npm run cleanBuildProduction && npm publish --workspaces --tag edge && npm publish --tag edge",
     "pack:production": "npm --workspaces pkg delete devDependencies scripts && npm pkg delete devDependencies scripts && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* package-lock.json npm-shrinkwrap.json && npm install --omit=dev && npm shrinkwrap --omit=dev",
     "pack:bundle": "npm pkg set bundledDependencies[]=@matterbridge/dgram && npm pkg set bundledDependencies[]=@matterbridge/jest-utils && npm pkg set bundledDependencies[]=@matterbridge/thread && npm pkg set bundledDependencies[]=@matterbridge/utils && npm pkg set bundledDependencies[]=@matterbridge/vitest-utils",
-    "pack:all": "npm run backup:all && node scripts/version.mjs git && npm run sync && npm run cleanBuildProduction && npm run pack:production && npm run pack:bundle && npm pack --verbose && npx shx cp package.json.backup package.json && npm run restore:all && npm run reset"
+    "pack:all": "npm run backup:all && node scripts/version.mjs git && npm run sync && npm run cleanBuildProduction && npm run pack:bundle && npm run pack:production && npm pack --verbose && npx shx cp package.json.backup package.json && npm run restore:all && npm run reset"
   },
   "dependencies": {
     "@matter/main": "0.16.8",
