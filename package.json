@@ -196,7 +196,7 @@
     "backup:all": "npx shx cp package.json package.json.backup && npm exec --workspaces shx cp package.json package.json.backup",
     "restore:all": "npx shx cp package.json.backup package.json && npx shx rm -f package.json.backup && npm exec --workspaces shx cp package.json.backup package.json && npm exec --workspaces shx rm -f package.json.backup",
     "publish:all:dev": "npm run backup:all && npm run pack:prepare:edge && npm run pack:production && npm publish --tag dev && npx shx cp package.json.backup package.json && npm run restore:all && npm run reset",
-    "publish:all:edge": "npm run backup:all && npm run pack:prepare:edge && npm run pack:production && npm publish --tag edge && npx shx cp package.json.backup package.json && npm run restore:all && npm run reset",
+    "publish:all:edge": "npm run backup:all && npm run pack:prepare:edge && npm run pack:production && npm pkg delete bundledDependencies && npm --workspaces publish --tag edge && npm publish --tag edge && npx shx cp package.json.backup package.json && npm run restore:all && npm run reset",
     "publish:all:latest": "npm run backup:all && npm run pack:prepare:edge && npm run pack:production && npm publish && npx shx cp package.json.backup package.json && npm run restore:all && npm run reset",
     "pack:prepare:git": "npm run cleanBuildProduction && node scripts/version.mjs git && node scripts/sync-workspaces.mjs --scope \"@matterbridge\" && node scripts/bundle-workspaces.mjs --scope \"@matterbridge\"",
     "pack:prepare:dev": "npm run cleanBuildProduction && node scripts/version.mjs dev && node scripts/sync-workspaces.mjs --scope \"@matterbridge\" && node scripts/bundle-workspaces.mjs --scope \"@matterbridge\"",
