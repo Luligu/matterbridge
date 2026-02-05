@@ -42,6 +42,7 @@ function HomeInstallAddPlugins() {
 
   // States
   const [pluginName, setPluginName] = useState('matterbridge-');
+  const [pluginVersions, setPluginVersions] = useState<string[]>([]);
   const [_dragging, setDragging] = useState(false);
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -159,17 +160,9 @@ function HomeInstallAddPlugins() {
     setOpenSearchDialog(false);
     console.log('Select plugin:', selected);
   };
-  const handleInstallSearchDialog = (selected: string) => {
-    setPluginName(selected);
-    setOpenSearchDialog(false);
-    handleInstallPluginClick();
-    console.log('Install plugin:', selected);
-  };
-  const handleAddSearchDialog = (selected: string) => {
-    setPluginName(selected);
-    setOpenSearchDialog(false);
-    handleAddPluginClick();
-    console.log('Add plugin:', selected);
+  const handleVersionsSearchDialog = (versions: string[]) => {
+    setPluginVersions(versions);
+    console.log('Select plugin versions:', versions, pluginVersions);
   };
 
   const [closed, setClosed] = useState(false);
@@ -190,7 +183,7 @@ function HomeInstallAddPlugins() {
         style={enableMobile && mobile ? { flexWrap: 'wrap', alignItems: 'center', gap: '10px' } : { flexWrap: 'wrap', alignItems: 'center', gap: '20px' }}
       >
         {/* SearchPluginDialog */}
-        <SearchPluginsDialog open={openSearchDialog} onClose={handleCloseSearchDialog} onSelect={handleSelectSearchDialog} onInstall={handleInstallSearchDialog} onAdd={handleAddSearchDialog} />
+        <SearchPluginsDialog open={openSearchDialog} onClose={handleCloseSearchDialog} onSelect={handleSelectSearchDialog} onVersions={handleVersionsSearchDialog} />
 
         {/* Input and search IconButton */}
         <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>

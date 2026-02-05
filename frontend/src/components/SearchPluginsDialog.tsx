@@ -116,11 +116,10 @@ interface SearchPluginsDialogProps {
   open: boolean;
   onClose: () => void;
   onSelect: (pluginName: string) => void;
-  onInstall: (pluginName: string) => void;
-  onAdd: (pluginName: string) => void;
+  onVersions: (versions: string[]) => void;
 }
 
-export const SearchPluginsDialog = ({ open, onClose, onSelect, onInstall, onAdd }: SearchPluginsDialogProps) => {
+export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: SearchPluginsDialogProps) => {
   const [pluginName, setPluginName] = useState('');
   const selectedPluginNameRef = useRef('');
   const hasFetchedRef = useRef(false);
@@ -623,23 +622,13 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onInstall, onAdd 
     blurActiveElement();
     const selectedName = selectedPluginNameRef.current || pluginName;
     onSelect(selectedName);
-  };
-
-  const handleInstall = () => {
-    blurActiveElement();
-    const selectedName = selectedPluginNameRef.current || pluginName;
-    onInstall(selectedName);
-  };
-
-  const handleAdd = () => {
-    blurActiveElement();
-    const selectedName = selectedPluginNameRef.current || pluginName;
-    onAdd(selectedName);
+    onVersions([]); // Clear any previously loaded versions.
   };
 
   const handleCancel = () => {
     blurActiveElement();
     onClose();
+    onVersions([]); // Clear any previously loaded versions.
   };
 
   const totalMonthlyDownloads = rows.reduce((sum, r) => sum + (typeof r.downloads === 'number' ? r.downloads : 0), 0);
@@ -710,16 +699,14 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onInstall, onAdd 
         </div>
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-        <Button variant='contained' onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName)}>
-          Select
-        </Button>
-        <Button variant='contained' onClick={handleInstall} disabled={!(selectedPluginNameRef.current || pluginName)}>
-          Install
-        </Button>
-        <Button variant='contained' onClick={handleAdd} disabled={!(selectedPluginNameRef.current || pluginName)}>
-          Add
-        </Button>
-        <Button onClick={handleCancel}>Cancel</Button>
+        <Tooltip title='Select the plugin and close the dialog. Double-click a row to select and close the dialog.'>
+          <Button variant='contained' onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName)}>
+            Select
+          </Button>
+        </Tooltip>
+        <Tooltip title='Close the dialog without selecting a plugin.'>
+          <Button onClick={handleCancel}>Cancel</Button>
+        </Tooltip>
       </DialogActions>
     </Dialog>
   );
