@@ -257,7 +257,7 @@ function HomeInstallAddPlugins() {
             <Tooltip title='Select the npm tag/version to install'>
               <span>
                 <FormControl size='small' style={{ minWidth: '150px' }}>
-                  <InputLabel id='plugin-version-label'>Version</InputLabel>
+                  <InputLabel id='plugin-version-label'>Tag or version</InputLabel>
                   <Select labelId='plugin-version-label' id='plugin-version' value={selectedPluginVersion} label='Version' onChange={(event) => setSelectedPluginVersion(String(event.target.value ?? ''))}>
                     {pluginVersions.map((v) => (
                       <MenuItem key={v} value={v}>
