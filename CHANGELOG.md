@@ -64,7 +64,7 @@ Advantages:
 - [frontend]: Added SearchPluginsDialog in Install plugins panel on the home page.
 - [frontend]: Added version/tag selector to HomeInstallAddPlugins. Thanks RinDevJunior for the great idea (https://github.com/Luligu/matterbridge/pull/500).
 - [publish]: Migrate to trusted publishing / OIDC.
-- [logger]: Added parameter **--no-ansi** to disable ANSI color escape codes in all loggers. Accepts also environment variable NO_COLOR=1 (https://no-color.org/).
+- [logger]: Added parameter **--no-ansi** to disable ANSI color escape codes in all loggers. Accepts also environment variable **NO_COLOR=1** (https://no-color.org/).
 - [package]: Added sync-workspaces script for managing workspace package versions and dependencies.
 
 ### Changed
