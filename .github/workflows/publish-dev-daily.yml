@@ -1,0 +1,225 @@
+name: Publish to npm and trigger docker builds
+
+on:
+  release:
+    types: [created]
+  schedule:
+    - cron: '0 0 * * *' # daily at 00:00 UTC
+  workflow_dispatch:
+
+# Cancel previous runs when a new one is triggered (same branch/PR)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write # needed for npm trusted publishing (OIDC)
+  actions: read
+
+jobs:
+  publish-release:
+    name: Publish release to npm and trigger docker build latest, ubuntu, alpine and s6-rc-base overlay
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: npm
+
+      - name: Verify Node.js version
+        run: node -v
+
+      - name: Verify Npm version
+        run: npm -v
+
+      - name: Install dependencies
+        run: npm ci --no-fund --no-audit
+
+      - name: Build the project for production
+        run: npm run buildProduction
+
+      - name: Install matterbridge
+        run: npm install --no-fund --no-audit --global .
+
+      - name: Lint the project
+        run: npm run lint
+
+      - name: Test the project
+        run: npm run test
+
+      - name: Stamp build metadata into package.json
+        run: |
+          npm pkg set build.sha="${GITHUB_SHA}"
+          npm pkg set build.sha7="${GITHUB_SHA::7}"
+          npm pkg set build.event="${GITHUB_EVENT_NAME}"
+          npm pkg set build.workflow="${GITHUB_WORKFLOW}"
+          npm pkg set build.type="${GITHUB_REF_TYPE}"
+          npm pkg set build.name="${GITHUB_REF_NAME}"
+          npm pkg set build.docker="false"
+          npm pkg set build.dev="false"
+
+      - name: Publish to npm with trusted publishing / OIDC
+        run: |
+          npm run sync
+          npm --workspaces pkg delete devDependencies scripts
+          npm pkg delete devDependencies scripts workspaces
+          npx shx rm -rf node_modules package-lock.json npm-shrinkwrap.json 
+          npm install --no-fund --no-audit --omit=dev 
+          npm shrinkwrap --omit=dev
+          npm publish --workspaces
+          npm publish
+
+      - name: Trigger Matterbridge Docker Build Latest
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-latest.yml',
+              ref: 'main'
+            })
+
+      - name: Trigger Matterbridge Docker Build Ubuntu
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-ubuntu.yml',
+              ref: 'main'
+            })
+
+      - name: Trigger Matterbridge Docker Build Alpine
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-alpine.yml',
+              ref: 'main'
+            })
+
+      - name: Trigger Matterbridge Docker Build s6-rc-base overlay
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-s6-rc-base.yml',
+              ref: 'main'
+            })
+
+  publish-dev:
+    name: Publish daily dev to npm and trigger docker build dev
+    if: github.event_name != 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Setup Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: npm
+
+      - name: Verify Node.js version
+        run: node -v
+
+      - name: Verify Npm version
+        run: npm -v
+
+      - name: Install dependencies
+        run: npm ci --no-fund --no-audit
+
+      - name: Build the project for production
+        run: npm run buildProduction
+
+      - name: Install matterbridge
+        run: npm install --no-fund --no-audit --global .
+
+      - name: Lint the project
+        run: npm run lint
+
+      - name: Test the project
+        run: npm run test
+
+      - name: Stamp build metadata into package.json
+        run: |
+          npm pkg set build.sha="${GITHUB_SHA}"
+          npm pkg set build.sha7="${GITHUB_SHA::7}"
+          npm pkg set build.event="${GITHUB_EVENT_NAME}"
+          npm pkg set build.workflow="${GITHUB_WORKFLOW}"
+          npm pkg set build.type="${GITHUB_REF_TYPE}"
+          npm pkg set build.name="${GITHUB_REF_NAME}"
+          npm pkg set build.docker="false"
+          npm pkg set build.dev="true"
+
+      - name: Extract version and set tag
+        id: vars
+        run: |
+          BASE=$(jq -r '.version' package.json)
+          DATE=$(date -u +'%Y%m%d')
+          SHA=$(git rev-parse --short=7 HEAD)
+          DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
+          echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
+          echo "ORIG_SHA=$SHA"    >> $GITHUB_ENV
+
+      - name: Bump to version-dev-date-commit --no-git-tag-version --ignore-scripts tag ${{ env.DEV_TAG }}
+        run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version --ignore-scripts
+
+      - name: Check if a new dev-publish is needed
+        id: check_new
+        run: |
+          PKG=$(node -p "require('./package.json').name")
+          PUBLISHED=$(npm view "$PKG" dist-tags.dev 2>/dev/null || echo "")
+          PUBLISHED_SHA=${PUBLISHED##*-}
+          CURRENT_SHA=${ORIG_SHA}
+
+          echo "Published dev tag: $PUBLISHED"
+          echo "Published SHA: $PUBLISHED_SHA"
+          echo "Current SHA: $CURRENT_SHA"
+
+          if [ "$PUBLISHED_SHA" = "$CURRENT_SHA" ]; then
+            echo "✅ No new commits since last dev publish - skipping"
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          else
+            echo "🚀 New commits detected - proceeding with dev publish"
+            echo "should_publish=true"  >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to npm under dev tag with trusted publishing / OIDC
+        if: steps.check_new.outputs.should_publish == 'true'
+        run: |
+          node scripts/build-workspaces.mjs --scope @matterbridge --tag edge --dry-run
+
+      - name: Trigger Matterbridge Docker Build Dev
+        if: steps.check_new.outputs.should_publish == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-dev.yml',
+              ref: 'dev'
+            })

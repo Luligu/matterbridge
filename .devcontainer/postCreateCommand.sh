@@ -26,7 +26,7 @@ npm install --global --no-fund --no-audit npm npm-check-updates shx cross-env
 echo "2 - Creating directories..."
 mkdir -p /home/node/Matterbridge /home/node/.matterbridge /home/node/.mattercert
 
-echo "3 - Setting ownership of directories..."
+echo "3 - Setting ownership of directories... This can take a while..."
 sudo chown -R node:node . /home/node/Matterbridge /home/node/.matterbridge /home/node/.mattercert
 
 echo "4 - Building the package..."
