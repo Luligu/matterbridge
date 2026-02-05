@@ -209,7 +209,7 @@ jobs:
       - name: Publish to npm under dev tag with trusted publishing / OIDC
         if: steps.check_new.outputs.should_publish == 'true'
         run: |
-          run: npm version "${{ env.BASE }}" --no-git-tag-version --ignore-scripts
+          npm version "${{ env.BASE }}" --no-git-tag-version --ignore-scripts
           node scripts/build-workspaces.mjs --scope @matterbridge --tag edge --dry-run
 
       - name: Trigger Matterbridge Docker Build Dev
