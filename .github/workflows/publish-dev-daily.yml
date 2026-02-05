@@ -211,7 +211,7 @@ jobs:
         if: steps.check_new.outputs.should_publish == 'true'
         run: |
           npm version "${{ env.ORIG_BASE }}" --no-git-tag-version --ignore-scripts
-          node scripts/build-workspaces.mjs --scope @matterbridge --tag edge --dry-run
+          node scripts/build-workspaces.mjs --scope @matterbridge --tag edge
 
       - name: Trigger Matterbridge Docker Build Dev
         if: steps.check_new.outputs.should_publish == 'true'
