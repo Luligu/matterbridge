@@ -1,10 +1,10 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/jest-utils/tsconfig.json" }, 
-    { "path": "./packages/vitest-utils/tsconfig.json" }, 
-    { "path": "./packages/utils/tsconfig.json" }, 
-    { "path": "./packages/thread/tsconfig.json" }, 
+    { "path": "./packages/jest-utils/tsconfig.json" },
+    { "path": "./packages/vitest-utils/tsconfig.json" },
+    { "path": "./packages/utils/tsconfig.json" },
+    { "path": "./packages/thread/tsconfig.json" },
     { "path": "./packages/dgram/tsconfig.json" },
     { "path": "./tsconfig.json" }
   ]
