@@ -62,6 +62,7 @@ Advantages:
 - [docker]: Added workflow, scripts and dockerfile to build the s6-rc-base base image used by the Matterbridge Home Assistant Application.
 - [frontend]: Added title rendering to the config editor and allow ui properties in 'oneOf', 'anyOf', 'allOf'. Thanks RinDevJunior (https://github.com/Luligu/matterbridge/pull/495).
 - [frontend]: Added SearchPluginsDialog in Install plugins panel on the home page.
+- [frontend]: Added version/tag selector to HomeInstallAddPlugins. Thanks RinDevJunior for the great idea (https://github.com/Luligu/matterbridge/pull/500).
 - [publish]: Migrate to trusted publishing / OIDC.
 - [logger]: Added parameter **--no-ansi** to disable ANSI color escape codes in all loggers. Accepts also environment variable NO_COLOR=1 (https://no-color.org/).
 - [package]: Added sync-workspaces script for managing workspace package versions and dependencies.

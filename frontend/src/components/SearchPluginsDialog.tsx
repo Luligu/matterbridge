@@ -1,5 +1,31 @@
 // React
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+/*
+  NPM fetch map (SearchPluginsDialog)
+
+  1) Search packages (list + latest version + basic metadata)
+    - URL: https://registry.npmjs.org/-/v1/search?text=matterbridge-&size=...
+    - Purpose: populate the table with package name, latest version, description, publisher, npm/homepage links.
+
+  2) Package "latest" metadata (homepage/help/changelog + repository)
+    - URL: https://registry.npmjs.org/<package>/latest
+    - Purpose: enrich rows with homepage/help/changelog links.
+     If help/changelog are missing, derive from repository URL (e.g. .../blob/main/README.md).
+    - Cache: localStorage key MbfLsk.searchPluginsMeta (per day)
+
+  3) Total downloads (all-time-ish, via downloads range)
+    - URL: https://api.npmjs.org/downloads/range/2020-01-01:<today>/<package>
+    - Purpose: compute and show "Total" downloads per package.
+    - Cache: localStorage key MbfLsk.searchPluginsTotal (per day)
+    - Notes: throttled + basic retry/backoff on 429.
+
+  4) Versions list (all published versions)
+    - URL: https://registry.npmjs.org/<package>
+    - Purpose: get the full version list (the search API only returns the latest version).
+     Used to populate the versions selector after selecting a plugin.
+    - Cache: localStorage key MbfLsk.searchPluginsVersions (per day)
+*/
 
 // @mui/material
 import Dialog from '@mui/material/Dialog';
@@ -20,12 +46,16 @@ import { pluginIgnoreList } from './HomeInstallAddPlugins';
 import MbfTable, { MbfTableColumn } from './MbfTable';
 import { MbfLsk } from '../utils/localStorage';
 import { debug } from '../App';
+// const debug = true;
 
 type TotalsCacheEntry = { total: number; asOf: string };
 type TotalsCache = Record<string, TotalsCacheEntry>;
 
 type MetaCacheEntry = { homepage: string | null; help: string | null; changelog: string | null; asOf: string };
 type MetaCache = Record<string, MetaCacheEntry>;
+
+type VersionsCacheEntry = { versions: string[]; asOf: string };
+type VersionsCache = Record<string, VersionsCacheEntry>;
 
 const normalizeGitUrl = (value: string) => value.replace('git+', '').replace('.git', '').trim();
 
@@ -112,6 +142,37 @@ const writeMetaCache = (cache: MetaCache) => {
   }
 };
 
+const readVersionsCache = (): VersionsCache => {
+  try {
+    const raw = window.localStorage.getItem(MbfLsk.searchPluginsVersions);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object') return {};
+
+    const out: VersionsCache = {};
+    for (const [name, entry] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!name) continue;
+      if (!entry || typeof entry !== 'object') continue;
+      const e = entry as Record<string, unknown>;
+      if (typeof e.asOf !== 'string') continue;
+      if (!Array.isArray(e.versions)) continue;
+      const versions = (e.versions as unknown[]).filter((v): v is string => typeof v === 'string');
+      out[name] = { versions, asOf: e.asOf };
+    }
+    return out;
+  } catch {
+    return {};
+  }
+};
+
+const writeVersionsCache = (cache: VersionsCache) => {
+  try {
+    window.localStorage.setItem(MbfLsk.searchPluginsVersions, JSON.stringify(cache));
+  } catch {
+    // Ignore quota/blocked storage errors.
+  }
+};
+
 interface SearchPluginsDialogProps {
   open: boolean;
   onClose: () => void;
@@ -123,11 +184,14 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
   const [pluginName, setPluginName] = useState('');
   const selectedPluginNameRef = useRef('');
   const hasFetchedRef = useRef(false);
+  const controllerRef = useRef<AbortController | null>(null);
   const [rows, setRows] = useState<PluginSearchRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selecting, setSelecting] = useState(false);
   const [totalsLoading, setTotalsLoading] = useState(false);
   const [totalsProgress, setTotalsProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
+  const versionsCacheRef = useRef<VersionsCache>({});
 
   const blurActiveElement = () => {
     const el = document.activeElement;
@@ -169,6 +233,67 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
     repository?: unknown;
   };
 
+  type NpmPackageResponse = {
+    versions?: Record<string, unknown>;
+    'dist-tags'?: Record<string, unknown>;
+  };
+
+  const formatYyyyMmDd = (date: Date) => {
+    const yyyy = date.getFullYear().toString();
+    const mm = (date.getMonth() + 1).toString().padStart(2, '0');
+    const dd = date.getDate().toString().padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const getPackageVersions = useCallback(async (packageName: string, asOf: string): Promise<string[]> => {
+    const cached = versionsCacheRef.current[packageName];
+    const cacheLooksValid =
+      !!cached &&
+      cached.asOf === asOf &&
+      Array.isArray(cached.versions) &&
+      cached.versions.length > 0 &&
+      // New format always starts with the literal tag string "latest".
+      cached.versions[0] === 'latest';
+    if (cacheLooksValid) {
+      if (debug) console.log(`[SearchPluginsDialog] versions cache hit for ${packageName} (${cached.versions.length.toString()})`);
+      return cached.versions;
+    }
+    if (cached && cached.asOf === asOf && cached.versions.length > 0 && cached.versions[0] !== 'latest') {
+      if (debug) console.log(`[SearchPluginsDialog] versions cache ignored (old format) for ${packageName} (asOf=${asOf})`);
+    }
+
+    const url = `https://registry.npmjs.org/${encodeURIComponent(packageName)}`;
+    if (debug) console.log(`[SearchPluginsDialog] fetching versions for ${packageName} from: ${url}`);
+    const response = await fetch(url, { signal: controllerRef.current?.signal });
+    if (!response.ok) {
+      if (debug) console.log(`[SearchPluginsDialog] versions fetch failed for ${packageName}: ${response.status.toString()} ${response.statusText}`);
+      return [];
+    }
+    const json = (await response.json()) as NpmPackageResponse;
+    const versionKeys = Object.keys(json.versions ?? {});
+
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+    versionKeys.sort((a, b) => collator.compare(a, b)).reverse();
+
+    const distTags = json['dist-tags'] ?? {};
+    const hasDevTag = typeof distTags?.dev === 'string' && String(distTags.dev).trim().length > 0;
+
+    // Versions list format requested by UI:
+    // - Always start with the string "latest"
+    // - Then "dev" if the npm dist-tag exists
+    // - Then at most 20 latest version numbers
+    const latestVersions = versionKeys.slice(0, 20);
+    const list: string[] = ['latest'];
+    if (hasDevTag) list.push('dev');
+    list.push(...latestVersions);
+
+    if (debug) console.log(`[SearchPluginsDialog] fetched versions for ${packageName} (tags: latest${hasDevTag ? ', dev' : ''}; latestVersions=${latestVersions.length.toString()}; allVersions=${versionKeys.length.toString()}):`, list);
+
+    versionsCacheRef.current[packageName] = { versions: list, asOf };
+    writeVersionsCache(versionsCacheRef.current);
+    return list;
+  }, []);
+
   const formatNumber = (value: number) => new Intl.NumberFormat().format(value);
 
   const columns: MbfTableColumn<PluginSearchRow>[] = [
@@ -199,7 +324,6 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       align: 'right',
       maxWidth: 120,
       render: (value) => (typeof value === 'number' ? formatNumber(value) : ''),
-      noSort: true,
     },
     {
       label: 'Description',
@@ -297,8 +421,11 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
     if (!open) {
       hasFetchedRef.current = false;
       selectedPluginNameRef.current = '';
+      controllerRef.current?.abort();
+      controllerRef.current = null;
       setRows([]);
       setLoading(false);
+      setSelecting(false);
       setTotalsLoading(false);
       setTotalsProgress({ done: 0, total: 0 });
       setError(null);
@@ -309,6 +436,8 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
     hasFetchedRef.current = true;
 
     const controller = new AbortController();
+    controllerRef.current = controller;
+    versionsCacheRef.current = readVersionsCache();
 
     void (async () => {
       const prefix = 'matterbridge-';
@@ -316,13 +445,6 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       const url = `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(prefix)}&size=${size}`;
 
       const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-      const formatYyyyMmDd = (date: Date) => {
-        const yyyy = date.getFullYear().toString();
-        const mm = (date.getMonth() + 1).toString().padStart(2, '0');
-        const dd = date.getDate().toString().padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
-      };
 
       const sumDownloadsRange = (payload: NpmDownloadsRangeResponse): number | null => {
         if (!Array.isArray(payload.downloads)) return null;
@@ -340,6 +462,37 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       try {
         setLoading(true);
         setError(null);
+
+        const isLikelyBotUser = (username: string): boolean => {
+          const u = String(username ?? '')
+            .trim()
+            .toLowerCase();
+          if (!u) return false;
+
+          // Common npm publishers when packages are released from CI.
+          if (u === 'github actions') return true;
+          if (u === 'github-actions') return true;
+          if (u === 'github-actions[bot]') return true;
+          if (u.includes('github-actions')) return true;
+          if (u.endsWith('[bot]')) return true;
+
+          return false;
+        };
+
+        const getDisplayAuthor = (pkg: NpmSearchPackage): string => {
+          const maintainerUsernames = (pkg.maintainers ?? []).map((m) => (m.username ?? '').trim()).filter(Boolean);
+          const publisherUsername = (pkg.publisher?.username ?? '').trim();
+
+          // Prefer a non-bot maintainer (publisher is often a CI bot account).
+          const maintainerHuman = maintainerUsernames.find((u) => !isLikelyBotUser(u));
+          if (maintainerHuman) return maintainerHuman;
+
+          // Fall back to non-bot publisher.
+          if (publisherUsername && !isLikelyBotUser(publisherUsername)) return publisherUsername;
+
+          // Last resort: whatever is available.
+          return maintainerUsernames[0] ?? publisherUsername ?? '';
+        };
 
         const response = await fetch(url, { signal: controller.signal });
         if (!response.ok) {
@@ -364,7 +517,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
         const nextRows: PluginSearchRow[] = objects.map((obj) => {
           const pkg = obj.package as NpmSearchPackage;
           const name = pkg.name ?? '';
-          const author = (pkg.publisher?.username ?? pkg.maintainers?.[0]?.username ?? '').trim();
+          const author = getDisplayAuthor(pkg);
           const downloads = typeof obj.downloads?.monthly === 'number' ? obj.downloads.monthly : null;
 
           const npmLink = (pkg.links?.npm ?? '').trim();
@@ -412,6 +565,47 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
         });
 
         setRows(nextRowsWithCachedTotalsAndMeta);
+
+        // Prefetch versions for the visible rows.
+        // The npm search API only returns the latest version; we need the package document for the version list.
+        // This runs in the background (throttled) so selection can usually use the cache.
+        const packagesNeedingVersionsFetchList = nextRows
+          .map((r) => r.name)
+          .filter((name) => {
+            const cached = versionsCacheRef.current[name];
+            return !cached || cached.asOf !== end || cached.versions.length === 0;
+          });
+
+        if (debug) console.log(`[SearchPluginsDialog] versions prefetch queue (${packagesNeedingVersionsFetchList.length.toString()}):`, packagesNeedingVersionsFetchList);
+
+        const versionsConcurrency = 1;
+        const versionsDelayBetweenRequestsMs = 200;
+        let versionsIndex = 0;
+
+        const versionsWorker = async () => {
+          while (versionsIndex < packagesNeedingVersionsFetchList.length) {
+            if (controller.signal.aborted) return;
+            const rowIndex = versionsIndex;
+            versionsIndex += 1;
+
+            const packageName = packagesNeedingVersionsFetchList[rowIndex];
+            if (!packageName) continue;
+
+            try {
+              const versions = await getPackageVersions(packageName, end);
+              if (debug && versions.length > 0) {
+                console.log(`[SearchPluginsDialog] versions fetched for ${packageName} (${versions.length.toString()}):`, versions.slice(0, 5));
+              }
+            } catch (error) {
+              if (error instanceof DOMException && error.name === 'AbortError') return;
+              // Ignore and keep going.
+            } finally {
+              if (!controller.signal.aborted) await sleep(versionsDelayBetweenRequestsMs);
+            }
+          }
+        };
+
+        void Promise.all(Array.from({ length: Math.min(versionsConcurrency, nextRows.length) }, () => versionsWorker()));
 
         // Fetch homepage/help/changelog from package.json (registry /latest).
         // If help/changelog are missing, derive them from repository.url + /blob/main/{README,CHANGELOG}.md.
@@ -616,13 +810,28 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
     })();
 
     return () => controller.abort();
-  }, [open]);
+  }, [open, getPackageVersions]);
 
-  const handleSelect = () => {
+  const handleSelect = async () => {
     blurActiveElement();
     const selectedName = selectedPluginNameRef.current || pluginName;
-    onSelect(selectedName);
-    onVersions([]); // Clear any previously loaded versions.
+    if (!selectedName || selecting) return;
+
+    try {
+      setSelecting(true);
+      const asOf = formatYyyyMmDd(new Date());
+      const versions = await getPackageVersions(selectedName, asOf);
+      if (debug) console.log(`[SearchPluginsDialog] passing versions to onVersions() for ${selectedName} (${versions.length.toString()}):`, versions);
+      onVersions(versions);
+      setSelecting(false);
+      onSelect(selectedName);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      console.error('[SearchPluginsDialog] npm versions fetch error:', error);
+      onVersions([]);
+      setSelecting(false);
+      onSelect(selectedName);
+    }
   };
 
   const handleCancel = () => {
@@ -690,7 +899,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
               onRowClick={(row, _rowKey, event) => {
                 selectedPluginNameRef.current = row.name;
                 setPluginName(row.name);
-                if (event.detail === 2) onSelect(row.name);
+                if (event.detail === 2) void handleSelect();
               }}
               footerLeft={`Total packages: ${rows.length.toString()}  Total downloads: ${formatNumber(totalMonthlyDownloads)} / ${totalAllTimeText}${totalsFooter}`}
               footerRight={pluginName ? `Selected: ${pluginName}` : ''}
@@ -700,7 +909,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
         <Tooltip title='Select the plugin and close the dialog. Double-click a row to select and close the dialog.'>
-          <Button variant='contained' onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName)}>
+          <Button variant='contained' onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName) || selecting}>
             Select
           </Button>
         </Tooltip>

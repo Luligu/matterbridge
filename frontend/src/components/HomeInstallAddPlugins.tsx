@@ -6,6 +6,10 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 // @mui/icons-material
 import Download from '@mui/icons-material/Download';
@@ -42,10 +46,51 @@ function HomeInstallAddPlugins() {
 
   // States
   const [pluginName, setPluginName] = useState('matterbridge-');
-  const [pluginVersions, setPluginVersions] = useState<string[]>([]);
+  const [pluginVersions, setPluginVersions] = useState<string[]>(['latest', 'dev']);
+  const [selectedPluginVersion, setSelectedPluginVersion] = useState<string>('latest');
   const [_dragging, setDragging] = useState(false);
   // Refs
   const uniqueId = useRef(getUniqueId());
+
+  const splitPackageNameAndSpecifier = (input: string): { name: string; specifier: string | null } => {
+    const s = String(input ?? '').trim();
+    if (!s) return { name: '', specifier: null };
+
+    // Scoped package: @scope/name@specifier
+    if (s.startsWith('@')) {
+      const at = s.lastIndexOf('@');
+      if (at > 0) {
+        const before = s.slice(0, at);
+        const after = s.slice(at + 1);
+        if (before.includes('/') && after) return { name: before, specifier: after };
+      }
+      return { name: s, specifier: null };
+    }
+
+    // Unscoped: name@specifier
+    const at = s.indexOf('@');
+    if (at > 0) {
+      const before = s.slice(0, at);
+      const after = s.slice(at + 1);
+      if (after) return { name: before, specifier: after };
+      return { name: before, specifier: null };
+    }
+
+    return { name: s, specifier: null };
+  };
+
+  const buildInstallPackageName = (): string => {
+    const { name, specifier } = splitPackageNameAndSpecifier(pluginName);
+    if (!name) return '';
+
+    // If the user typed a specifier directly, respect it.
+    if (specifier) return `${name}@${specifier}`;
+
+    // Otherwise, apply dropdown selection (latest/dev/version) if available.
+    if (selectedPluginVersion) return `${name}@${selectedPluginVersion}`;
+
+    return name;
+  };
 
   // Handle drag events
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -110,11 +155,13 @@ function HomeInstallAddPlugins() {
   };
 
   const handleInstallPluginClick = () => {
-    if (pluginIgnoreList.includes(pluginName.split('@')[0])) {
-      showSnackbarMessage(`Installation of plugin "${pluginName}" is blocked by the ignore list.`);
+    const installName = buildInstallPackageName();
+    if (!installName) return;
+    if (pluginIgnoreList.includes(installName.split('@')[0])) {
+      showSnackbarMessage(`Installation of plugin "${installName}" is blocked by the ignore list.`);
       return;
     }
-    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: pluginName, restart: false } });
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: installName, restart: false } });
   };
 
   const handleUninstallPluginClick = () => {
@@ -136,33 +183,35 @@ function HomeInstallAddPlugins() {
   // Right-click handlers
   const handleUploadRightClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    console.log('Right-clicked Upload button');
+    if (debug) console.log('Right-clicked Upload button');
   };
 
   const handleAddRightClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    console.log('Right-clicked Add button');
+    if (debug) console.log('Right-clicked Add button');
   };
 
   // SearchPluginsDialog states and handlers
   const [openSearchDialog, setOpenSearchDialog] = useState(false);
   const handleOpenSearchDialog = () => {
     setOpenSearchDialog(true);
-    console.log('Dialog opened for selection');
+    if (debug) console.log('Dialog opened for selection');
   };
   const handleCloseSearchDialog = () => {
     setPluginName('matterbridge-');
     setOpenSearchDialog(false);
-    console.log('Dialog closed without selection');
+    if (debug) console.log('Dialog closed without selection');
   };
   const handleSelectSearchDialog = (selected: string) => {
     setPluginName(selected);
     setOpenSearchDialog(false);
-    console.log('Select plugin:', selected);
+    if (debug) console.log('Select plugin:', selected);
   };
   const handleVersionsSearchDialog = (versions: string[]) => {
     setPluginVersions(versions);
-    console.log('Select plugin versions:', versions, pluginVersions);
+    // Default to 'latest' tag if present.
+    setSelectedPluginVersion(versions.includes('latest') ? 'latest' : (versions[0] ?? ''));
+    if (debug) console.log('Select plugin versions:', versions);
   };
 
   const [closed, setClosed] = useState(false);
@@ -191,7 +240,11 @@ function HomeInstallAddPlugins() {
             <TextField
               value={pluginName}
               onChange={(event) => {
-                setPluginName(event.target.value);
+                const next = event.target.value;
+                // Manual edit: clear the versions list so the dropdown disappears.
+                setPluginVersions(['latest', 'dev']);
+                setSelectedPluginVersion('latest');
+                setPluginName(next);
               }}
               size='small'
               id='plugin-name'
@@ -200,6 +253,22 @@ function HomeInstallAddPlugins() {
               fullWidth
             />
           </Tooltip>
+          {pluginVersions.length > 0 && (
+            <Tooltip title='Select the npm tag/version to install'>
+              <span>
+                <FormControl size='small' style={{ minWidth: '150px' }}>
+                  <InputLabel id='plugin-version-label'>Version</InputLabel>
+                  <Select labelId='plugin-version-label' id='plugin-version' value={selectedPluginVersion} label='Version' onChange={(event) => setSelectedPluginVersion(String(event.target.value ?? ''))}>
+                    {pluginVersions.map((v) => (
+                      <MenuItem key={v} value={v}>
+                        {v}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </span>
+            </Tooltip>
+          )}
           <Tooltip title='Search on npm the plugin to install'>
             <IconButton size='large' onClick={handleOpenSearchDialog}>
               <ManageSearchIcon fontSize='inherit' />

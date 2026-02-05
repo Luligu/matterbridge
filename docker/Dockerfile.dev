@@ -11,39 +11,17 @@ WORKDIR /matterbridge
 
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
   npm ci --no-fund --no-audit && \
-  SHA7=$(git rev-parse --short=7 HEAD) && \
-  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
-  npm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  npm run sync && \
+  node scripts/version.mjs git && \
+  node scripts/sync-workspaces.mjs --scope @matterbridge && \
+  node scripts/bundle-workspaces.mjs --scope @matterbridge && \
   npm run buildProduction && \
   npm link --no-fund --no-audit && \
   npm --workspaces pkg delete devDependencies scripts && \
   npm pkg delete devDependencies scripts && \
   rm -rf .cache .devcontainer .git .github .vscode docker docs node_modules reflector screenshots scripts systemd package-lock.json npm-shrinkwrap.json && \
   npm install --no-fund --no-audit --omit=dev && \
+  npm pkg delete devDependencies scripts workspaces && \
   npm shrinkwrap && \
-  npm pkg delete bundledDependencies || true && \
-  for pkg in packages/*; do \
-  scopedName="$(node -p "require('./${pkg}/package.json').name")"; \
-  npm pkg set "bundledDependencies[]=${scopedName}"; \
-  scope="${scopedName%%/*}"; \
-  name="${scopedName##*/}"; \
-  if [ "$scope" = "$scopedName" ]; then \
-  dest="node_modules/${scopedName}"; \
-  else \
-  dest="node_modules/${scope}/${name}"; \
-  fi; \
-  # If npm created a workspace symlink into packages/, dist is already there.
-  if [ -L "$dest" ]; then \
-  continue; \
-  fi; \
-  mkdir -p "$dest"; \
-  cp -f "$pkg/package.json" "$dest/package.json"; \
-  if [ -d "$pkg/dist" ]; then \
-  rm -rf "$dest/dist"; \
-  cp -R "$pkg/dist" "$dest/"; \
-  fi; \
-  done && \
   npm pack
 
 WORKDIR /matterbridge-zigbee2mqtt
