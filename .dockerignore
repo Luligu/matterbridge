@@ -1,0 +1,38 @@
+# Docker build context ignore rules
+# We intentionally DO NOT ignore `.git/` here.
+
+# Dependencies
+**/node_modules
+
+# Test output
+coverage
+**/coverage
+
+# Build output (we keep `frontend/build` for Docker builds, but ignore it for everything else)
+**/dist
+**/build
+!frontend/build
+
+# Tooling caches
+.cache
+**/.cache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# VS Code settings
+.vscode
+
+# Other assets not needed for builds
+.devcontainer
+.github
+docs
+reflector
+screenshots
+tmp
+jest
+**/tmp
+*.tgz
