@@ -119,13 +119,7 @@ function HomeInstallAddPlugins() {
     setPluginVersion('latest');
 
     // Check if we should fetch versions
-    const shouldFetchVersions =
-      pluginName !== '' &&
-      pluginName.startsWith('matterbridge-') &&
-      !pluginName.includes('@') &&
-      !pluginName.startsWith('/') &&
-      !pluginName.startsWith('./') &&
-      !pluginName.startsWith('file:');
+    const shouldFetchVersions = pluginName !== '' && pluginName.startsWith('matterbridge-') && !pluginName.includes('@') && !pluginName.startsWith('/') && !pluginName.startsWith('./') && !pluginName.startsWith('file:');
 
     if (!shouldFetchVersions) {
       setAvailableVersions([]);
@@ -319,15 +313,7 @@ function HomeInstallAddPlugins() {
                 value={pluginVersion}
                 label='Plugin Version'
                 onChange={(event) => setPluginVersion(event.target.value)}
-                disabled={
-                  pluginName === '' ||
-                  pluginName.includes('@') ||
-                  pluginName.startsWith('/') ||
-                  pluginName.startsWith('./') ||
-                  pluginName.startsWith('file:') ||
-                  availableVersions.length === 0 ||
-                  loadingVersions
-                }
+                disabled={pluginName === '' || pluginName.includes('@') || pluginName.startsWith('/') || pluginName.startsWith('./') || pluginName.startsWith('file:') || availableVersions.length === 0 || loadingVersions}
                 displayEmpty
               >
                 <MenuItem value='latest'>
