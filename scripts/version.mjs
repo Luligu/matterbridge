@@ -7,11 +7,11 @@ import { fileURLToPath } from 'node:url';
 
 function usage() {
   return [
-    'Usage: node scripts/version.mjs <dev|edge|git> [--dry-run]',
-    '   or: node scripts/version.mjs --dry-run <dev|edge|git>',
+    'Usage: node scripts/version.mjs <dev|edge|git|local> [--dry-run]',
+    '   or: node scripts/version.mjs --dry-run <dev|edge|git|local>',
     '',
     'Updates package.json version to:',
-    '  <baseVersion>-<dev|edge|git>-<yyyymmdd>-<7charSha>',
+    '  <baseVersion>-<dev|edge|git|local>-<yyyymmdd>-<7charSha>',
     '',
     'Options:',
     '  --dry-run, -n   Print the next version but do not write package.json',
@@ -67,10 +67,10 @@ if (unknownFlags.length > 0) {
 const dryRun = args.includes('--dry-run') || args.includes('-n');
 const positional = args.filter((a) => !a.startsWith('-'));
 const tag = positional[0]?.toLowerCase();
-if (tag !== 'dev' && tag !== 'edge' && tag !== 'git') {
+if (tag !== 'dev' && tag !== 'edge' && tag !== 'git' && tag !== 'local') {
   console.error(usage());
   process.exitCode = 1;
-  throw new Error('Missing or invalid parameter (expected dev, edge, or git).');
+  throw new Error('Missing or invalid parameter (expected dev, edge, git, or local).');
 }
 
 const __filename = fileURLToPath(import.meta.url);
