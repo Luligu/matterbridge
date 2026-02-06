@@ -139,7 +139,8 @@ sudo usermod -aG docker $USER
 <p>After adding your user to the <code>docker</code> group, log out and log back in so your current session picks up the new group membership.</p>
 <h3 id="run-the-container">Run the container</h3>
 <p>The container must have full access to the host network (needed for mDNS and the Matter protocol).</p>
-<pre><code class="language-bash">sudo docker run --name matterbridge \
+<pre><code class="language-bash">sudo docker pull luligu/matterbridge:latest
+sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
   -v ~/.mattercert:/root/.mattercert \
@@ -147,7 +148,8 @@ sudo usermod -aG docker $USER
 </code></pre>
 <p>You may need to adapt the paths to your setup.</p>
 <h3 id="run-the-container-with-extra-parameters-eg-frontend-on-port-8585">Run the container with extra parameters (e.g. frontend on port 8585)</h3>
-<pre><code class="language-bash">sudo docker run --name matterbridge \
+<pre><code class="language-bash">sudo docker pull luligu/matterbridge:latest
+sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
   -v ~/.mattercert:/root/.mattercert \
@@ -171,10 +173,12 @@ sudo usermod -aG docker $USER
 </code></pre>
 <p>Copy it to your home directory or edit your existing compose file to add the Matterbridge service.</p>
 <p>Then start Docker Compose with:</p>
-<pre><code class="language-bash">docker compose up -d
+<pre><code class="language-bash">docker compose pull matterbridge
+docker compose up -d
 </code></pre>
 <p>Or start only the Matterbridge container with:</p>
-<pre><code class="language-bash">docker compose up -d matterbridge
+<pre><code class="language-bash">docker compose pull matterbridge
+docker compose up -d matterbridge
 </code></pre>
 <p>If you need to start Matterbridge with extra parameters (e.g. frontend on port 8585), override the default command by adding a <code>command</code> line to the service:</p>
 <pre><code class="language-yaml">services:

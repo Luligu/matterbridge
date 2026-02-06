@@ -47,6 +47,18 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+## [3.5.4] - Dev branch
+
+### Changed
+
+- [package]: Updated dependencies.
+
+### Fixed
+
+- [worflows]: Fixed workflows that failed.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.5.3] - 2026-02-06
 
 ### Dev Breaking Changes

@@ -78,6 +78,7 @@ After adding your user to the `docker` group, log out and log back in so your cu
 The container must have full access to the host network (needed for mDNS and the Matter protocol).
 
 ```bash
+sudo docker pull luligu/matterbridge:latest
 sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
@@ -90,6 +91,7 @@ You may need to adapt the paths to your setup.
 ### Run the container with extra parameters (e.g. frontend on port 8585)
 
 ```bash
+sudo docker pull luligu/matterbridge:latest
 sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
@@ -124,12 +126,14 @@ Copy it to your home directory or edit your existing compose file to add the Mat
 Then start Docker Compose with:
 
 ```bash
+docker compose pull matterbridge
 docker compose up -d
 ```
 
 Or start only the Matterbridge container with:
 
 ```bash
+docker compose pull matterbridge
 docker compose up -d matterbridge
 ```
 
