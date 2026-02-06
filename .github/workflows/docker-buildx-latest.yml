@@ -29,8 +29,6 @@ jobs:
     steps:
       - name: Checkout code to main branch
         uses: actions/checkout@v4
-        with:
-          ref: main
 
       - name: Setup Node.js 24.x
         uses: actions/setup-node@v4
