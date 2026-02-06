@@ -209,7 +209,7 @@ function HomeInstallAddPlugins() {
   };
 
   const handleInstallPluginClick = () => {
-    const packageNameWithVersion = pluginVersion ? `${pluginName}@${pluginVersion}` : pluginName;
+    const packageNameWithVersion = pluginVersion && pluginVersion !== 'latest' ? `${pluginName}@${pluginVersion}` : pluginName;
     if (pluginIgnoreList.includes(pluginName.split('@')[0])) {
       showSnackbarMessage(`Installation of plugin "${pluginName}" is blocked by the ignore list.`);
       return;
@@ -226,7 +226,7 @@ function HomeInstallAddPlugins() {
   };
 
   const handleAddPluginClick = () => {
-    const packageNameWithVersion = pluginVersion ? `${pluginName}@${pluginVersion}` : pluginName;
+    const packageNameWithVersion = pluginVersion && pluginVersion !== 'latest' ? `${pluginName}@${pluginVersion}` : pluginName;
     if (pluginIgnoreList.includes(pluginName.split('@')[0])) {
       showSnackbarMessage(`Addition of plugin "${pluginName}" is blocked by the ignore list.`);
       return;
