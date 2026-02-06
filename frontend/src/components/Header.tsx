@@ -405,6 +405,7 @@ function Header() {
               {settings.matterbridgeInformation.matterbridgeVersion.split('-')[0] +
                 (settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? '@dev' : '') +
                 (settings.matterbridgeInformation.matterbridgeVersion.includes('-edge-') ? '@edge' : '') +
+                (settings.matterbridgeInformation.matterbridgeVersion.includes('-local-') ? '@local' : '') +
                 (settings.matterbridgeInformation.matterbridgeVersion.includes('-git-') ? '@git' : '')}
             </span>
           </Tooltip>

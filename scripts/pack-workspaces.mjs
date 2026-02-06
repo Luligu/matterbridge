@@ -293,6 +293,8 @@ try {
   console.log(`fields removed (total): ${stripSummary.removedCount}`);
   console.log('');
 
+  runCmd(repoRoot, false, 'npm', ['shrinkwrap']);
+
   console.log('packing root package: package.json');
   runCmd(repoRoot, dryRun, 'npm', ['pack']);
 } finally {
