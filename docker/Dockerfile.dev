@@ -9,12 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends git
 
 WORKDIR /matterbridge
 COPY . .
-RUN if [ ! -f package.json ]; then \
-  echo "package.json not found in build context; cloning matterbridge..." && \
-  GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . ; \
-  else \
-  echo "package.json found in build context; skipping git clone." ; \
-  fi && \
+RUN \
   npm ci --no-fund --no-audit && \
   node scripts/version.mjs git && \
   node scripts/sync-workspaces.mjs --scope @matterbridge && \

@@ -1,0 +1,53 @@
+ARG NODE_VERSION=24.13.0
+
+# ─────────────── NODE STAGE ───────────────
+FROM ubuntu:latest AS node
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG NODE_VERSION
+
+RUN \
+  apt-get update || (sleep 10 && apt-get update) || (sleep 20 && apt-get update) \
+  && apt-get install -y --no-install-recommends ca-certificates curl xz-utils \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /tmp/* /var/tmp/* \
+  && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/lintian/* /usr/share/locale/* \
+  && \
+  set -x \
+  && DPKG_ARCH=$(dpkg --print-architecture) \
+  && case "${DPKG_ARCH}" in \
+  amd64) NODE_ARCH="x64" ;; \
+  *) NODE_ARCH="${DPKG_ARCH}" ;; \
+  esac \
+  && curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" -o /tmp/node.tar.xz \
+  && mkdir -p /opt/node \
+  && tar -xJf /tmp/node.tar.xz -C /opt/node --strip-components=1 --no-same-owner \
+  && rm -f /tmp/node.tar.xz \
+  && rm -rf /opt/node/share/doc /opt/node/share/man /opt/node/share/systemtap \
+  && rm -rf /tmp/* /var/tmp/* \
+  && export PATH=/opt/node/bin:$PATH
+
+# ─────────────── RELEASE STAGE ───────────────
+FROM ubuntu:latest AS release
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+COPY --from=node /opt/node /opt/node
+ENV PATH=/usr/local/bin:/opt/node/bin:$PATH
+ENV npm_config_prefix=/usr/local
+
+RUN \
+  apt-get update || (sleep 10 && apt-get update) || (sleep 20 && apt-get update) \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /tmp/* /var/tmp/* \
+  && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/lintian/* /usr/share/locale/*
+
+# Copy and execute the entrypoint script
+COPY ./docker/entrypoint.24-ubuntu-slim.sh ./
+RUN chmod +x ./entrypoint.24-ubuntu-slim.sh
+ENTRYPOINT ["./entrypoint.24-ubuntu-slim.sh"]
+CMD ["bash"]

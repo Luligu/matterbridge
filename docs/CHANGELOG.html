@@ -140,28 +140,30 @@
 <h2 id="353-dev-branch">[3.5.3] - Dev branch</h2>
 <h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
 <ul>
-<li>[logger]: The logger (node-ansi-logger) has been refactored and updated to support the new features below. To avoid possible type errors, please update the dependencies.</li>
+<li>[logger]: The logger (node-ansi-logger) has been refactored and updated to support the new features below.</li>
 </ul>
 <h3 id="breaking-changes">Breaking Changes</h3>
 <ul>
 <li>[docker]: Updated latest and dev docker images to use node:24-trixie-slim as base.</li>
+<li>[node]: Consider to update all setups to node 24 that is now the LTS.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
-<li>[docker]: Added workflow, scripts and dockerfile to build the s6-rc-base base image used by the Matterbridge Home Assistant Application.</li>
+<li>[docker]: Added workflow, scripts and dockerfile to build the <strong>s6-rc-base</strong> base image used by the Matterbridge Home Assistant Application.</li>
+<li>[docker]: Added workflow, scripts and dockerfile to build the <strong>24-ubuntu-slim</strong> base image used by the ubuntu Matterbridge docker image.</li>
 <li>[frontend]: Added title rendering to the config editor and allow ui properties in &#39;oneOf&#39;, &#39;anyOf&#39;, &#39;allOf&#39;. Thanks RinDevJunior (<a href="https://github.com/Luligu/matterbridge/pull/495">https://github.com/Luligu/matterbridge/pull/495</a>).</li>
 <li>[frontend]: Added SearchPluginsDialog in Install plugins panel on the home page.</li>
 <li>[frontend]: Added version/tag selector to HomeInstallAddPlugins. Thanks RinDevJunior for the great idea (<a href="https://github.com/Luligu/matterbridge/pull/500">https://github.com/Luligu/matterbridge/pull/500</a>).</li>
-<li>[publish]: Migrate to trusted publishing / OIDC.</li>
+<li>[publish]: Migrated to trusted publishing / OIDC.</li>
 <li>[logger]: Added parameter <strong>--no-ansi</strong> to disable ANSI color escape codes in all loggers. Accepts also environment variable <strong>NO_COLOR=1</strong> (<a href="https://no-color.org/">https://no-color.org/</a>).</li>
-<li>[package]: Added sync-workspaces script for managing workspace package versions and dependencies.</li>
+<li>[package]: Added version.mjs, sync-workspaces.mjs, bundle-workspaces.mjs, publish-workspaces.mjs and pack-workspaces.mjs scripts for managing monorepo packages versions and dependencies.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[package]: Updated dependencies.</li>
 <li>[workflows]: Updated all workflows to use Node.js 24.</li>
 <li>[readme]: Updated readme files to clarify which Node.js version should be installed.</li>
-<li>[docker]: Updated readme file to clarify which base image is used.</li>
+<li>[docker]: Updated docker readme file to clarify which base image is used.</li>
 <li>[matter.js]: Bump to matter.j v. 0.16.8.</li>
 <li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.4.</li>
 <li>[frontend]: Updated <code>frontend</code> dependencies.</li>

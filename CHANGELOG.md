@@ -51,19 +51,21 @@ Advantages:
 
 ### Dev Breaking Changes
 
-- [logger]: The logger (node-ansi-logger) has been refactored and updated to support the new features below. To avoid possible type errors, please update the dependencies.
+- [logger]: The logger (node-ansi-logger) has been refactored and updated to support the new features below.
 
 ### Breaking Changes
 
 - [docker]: Updated latest and dev docker images to use node:24-trixie-slim as base.
+- [node]: Consider to update all setups to node 24 that is now the LTS.
 
 ### Added
 
-- [docker]: Added workflow, scripts and dockerfile to build the s6-rc-base base image used by the Matterbridge Home Assistant Application.
+- [docker]: Added workflow, scripts and dockerfile to build the **s6-rc-base** base image used by the Matterbridge Home Assistant Application.
+- [docker]: Added workflow, scripts and dockerfile to build the **24-ubuntu-slim** base image used by the ubuntu Matterbridge docker image.
 - [frontend]: Added title rendering to the config editor and allow ui properties in 'oneOf', 'anyOf', 'allOf'. Thanks RinDevJunior (https://github.com/Luligu/matterbridge/pull/495).
 - [frontend]: Added SearchPluginsDialog in Install plugins panel on the home page.
 - [frontend]: Added version/tag selector to HomeInstallAddPlugins. Thanks RinDevJunior for the great idea (https://github.com/Luligu/matterbridge/pull/500).
-- [publish]: Migrate to trusted publishing / OIDC.
+- [publish]: Migrated to trusted publishing / OIDC.
 - [logger]: Added parameter **--no-ansi** to disable ANSI color escape codes in all loggers. Accepts also environment variable **NO_COLOR=1** (https://no-color.org/).
 - [package]: Added version.mjs, sync-workspaces.mjs, bundle-workspaces.mjs, publish-workspaces.mjs and pack-workspaces.mjs scripts for managing monorepo packages versions and dependencies.
 
@@ -72,7 +74,7 @@ Advantages:
 - [package]: Updated dependencies.
 - [workflows]: Updated all workflows to use Node.js 24.
 - [readme]: Updated readme files to clarify which Node.js version should be installed.
-- [docker]: Updated readme file to clarify which base image is used.
+- [docker]: Updated docker readme file to clarify which base image is used.
 - [matter.js]: Bump to matter.j v. 0.16.8.
 - [frontend]: Bumped `frontend` version to v. 3.4.4.
 - [frontend]: Updated `frontend` dependencies.

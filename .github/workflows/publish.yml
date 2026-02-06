@@ -82,7 +82,7 @@ jobs:
               ref: 'main'
             })
 
-      - name: Trigger Matterbridge Docker Build Ubuntu
+      - name: Trigger Matterbridge Docker Build 24-ubuntu-slim
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
@@ -90,7 +90,7 @@ jobs:
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'docker-buildx-ubuntu.yml',
+              workflow_id: 'docker-buildx-24-ubuntu-slim.yml',
               ref: 'main'
             })
 

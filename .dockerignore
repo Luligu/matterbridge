@@ -11,6 +11,7 @@ coverage
 # Build output (we keep `frontend/build` for Docker builds, but ignore it for everything else)
 **/dist
 **/build
+**/*.tsbuildinfo
 !frontend/build
 
 # Tooling caches

@@ -1,14 +1,7 @@
-FROM ubuntu:latest
+FROM luligu/matterbridge:24-ubuntu-slim
 
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Install node from NodeSource
-RUN apt-get update || (sleep 10 && apt-get update) || (sleep 20 && apt-get update) && \
-  apt-get install -y --no-install-recommends ca-certificates curl && \
-  curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
-  apt-get install -y --no-install-recommends nodejs && \
-  apt-get update && apt-get autoremove -y && apt-get clean
 
 # Install matterbridge
 WORKDIR /matterbridge    
