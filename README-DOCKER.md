@@ -33,6 +33,12 @@ The image (tag **ubuntu**) includes only Matterbridge, using the latest release 
 
 The image (tag **alpine**) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `node:24-alpine`. Plugins are not included in the image; they will be installed on first run.
 
+### Matterbridge docker base images
+
+The image (tag **24-ubuntu-slim**) includes only `ubuntu:latest` with Node.js 24 from NodeSource. It is used to build the **ubuntu** image but can also be used to open a shell in ubuntu latest with node 24.
+
+The image (tag **s6-rc-base**) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-trixie-slim`. Plugins are not included in the image; they will be installed on first run. It is used int [Matterbridge Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
+
 ### Docker health check
 
 All images include a health check.

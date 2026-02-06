@@ -219,7 +219,7 @@ or with user matterbridge and with private global node_modules and npm cache (no
 
 ### Run matterbridge as an home assistant add-on with the official add-on
 
-[Home assistant add-on configuration](https://github.com/Luligu/matterbridge-home-assistant-addon)
+[Home assistant application (formerly known as add-on) configuration](https://github.com/Luligu/matterbridge-home-assistant-addon)
 
 ### Other Home Assistant Community Add-ons
 
