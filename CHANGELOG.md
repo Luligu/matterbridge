@@ -59,6 +59,20 @@ Advantages:
 
 - [worflows]: Fixed workflows that failed and dockerfiles.
 
+### Security
+
+During installation you may see a warning that looks scary, for example:
+
+```text
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+```
+
+This warning does not come from Matterbridge code.
+
+It is emitted by a transitive dependency (the `archiver` package) that pulls in an older `glob` version. Matterbridge does not depend on this version of `glob` directly.
+
+In short: you can safely ignore this message; it is a dependency warning, not a Matterbridge vulnerability.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.5.3] - 2026-02-06
