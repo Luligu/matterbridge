@@ -47,11 +47,11 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-## [3.5.3] - Dev branch
+## [3.5.3] - 2026-02-06
 
 ### Dev Breaking Changes
 
-- [logger]: The logger (node-ansi-logger) has been refactored and updated to support the new features below.
+- [logger]: The logger (node-ansi-logger) has been refactored and updated (v.3.2.0) to support the new features below.
 
 ### Breaking Changes
 

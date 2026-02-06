@@ -71,7 +71,7 @@
     "install:vitest": "npm install --no-fund --no-audit --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin"
   },
   "dependencies": {
-    "node-ansi-logger": "3.2.0-dev-20260203-849bc05"
+    "node-ansi-logger": "3.2.0"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
