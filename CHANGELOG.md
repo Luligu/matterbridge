@@ -52,10 +52,12 @@ Advantages:
 ### Changed
 
 - [package]: Updated dependencies.
+- [matterbridge.io]: Updated docs.
+- [docker]: Updated docker readme file to clarify which base image is used.
 
 ### Fixed
 
-- [worflows]: Fixed workflows that failed.
+- [worflows]: Fixed workflows that failed and dockerfiles.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
