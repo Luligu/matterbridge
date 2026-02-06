@@ -96,10 +96,14 @@
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
 <a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a>
-<a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square" alt="code style: prettier"></a></p>
-<p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="power by"></a>
-<a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="power by"></a>
-<a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="power by"></a></p>
+<a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
+<a href="https://github.com/eslint/eslint"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
+<a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
+<a href="https://nodejs.org/api/esm.html"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
+<a href="https://matterbridge.io"><img src="https://img.shields.io/badge/matterbridge.io-online-brightgreen" alt="matterbridge.io"></a></p>
+<p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="powered by"></a>
+<a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="powered by"></a>
+<a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="powered by"></a></p>
 <hr>
 <p><a href="https://matterbridge.io">Matterbridge</a> is a Matter plugin manager.</p>
 <p>It allows you to have all your Matter devices up and running in a couple of minutes without having to deal with the pairing process for each individual device.</p>
@@ -129,18 +133,19 @@
 <p><a href="https://blog.adafruit.com/2025/11/03/matterbridge-a-matter-plugin-manager/">https://blog.adafruit.com/2025/11/03/matterbridge-a-matter-plugin-manager/</a></p>
 <h2 id="prerequisites">Prerequisites</h2>
 <p>To run Matterbridge, you need either a <a href="https://nodejs.org/en">Node.js</a> environment or <a href="https://docs.docker.com/get-started/get-docker/">Docker</a> installed on your system.</p>
-<p>If you don&#39;t have Node.js already install, please use this method to install it on a debian device: <a href="https://github.com/nodesource/distributions">https://github.com/nodesource/distributions</a>.
-The supported versions of node are 20, 22 and 24. Please install Node.js 22 LTS. Don&#39;t use Node.js Current but always the Node.js LTS.
-Node.js 23, like all odd-numbered versions, is not supported.
-Nvm is not a good choice and should not be used for production.</p>
-<p>If you don&#39;t have Docker already install, please use this method to install it on a debian device: <a href="https://docs.docker.com/engine/install">https://docs.docker.com/engine/install</a>.</p>
-<p>If you don&#39;t have Docker already install, please use this method to install it on a Windows or macOS: <a href="https://docs.docker.com/get-started/introduction/get-docker-desktop/">https://docs.docker.com/get-started/introduction/get-docker-desktop/</a>.</p>
-<p>After follow the guidelines for the <a href="README-DOCKER.html">Docker configurations</a>.</p>
+<p>If you don&#39;t have Node.js already installed, please use this method to install it on a Debian system: <a href="https://github.com/nodesource/distributions">https://github.com/nodesource/distributions</a>.</p>
+<p>The supported versions of Node.js are 20, 22, and 24. Please <strong>install Node.js 24 LTS</strong>. Don&#39;t use Node.js Current; always use the Node.js LTS releases.</p>
+<p>Node.js 25, like all odd-numbered versions, is not supported.</p>
+<p>To verify which Node.js version is currently LTS (Active), check <a href="https://nodejs.org/en/about/previous-releases">Node.js Releases</a>.</p>
+<p><strong>Nvm is not a good choice and should not be used for production</strong>.</p>
+<p>If you don&#39;t have Docker already installed, please use this method to install it on a Debian system: <a href="https://docs.docker.com/engine/install">https://docs.docker.com/engine/install</a>.</p>
+<p>If you don&#39;t have Docker already installed, please use this method to install it on Windows or macOS: <a href="https://docs.docker.com/get-started/introduction/get-docker-desktop/">https://docs.docker.com/get-started/introduction/get-docker-desktop/</a>.</p>
+<p>After that, follow the guidelines for the <a href="README-DOCKER.html">Docker configurations</a>.</p>
 <p>I suggest using Docker for its simplicity.</p>
 <p>Since Matter is designed as &quot;a universal IPv6-based communication protocol for smart home devices&quot; (per the Matter specifications), <strong>IPv6 must be enabled on your local network (LAN)</strong>.</p>
 <p><strong>Important:</strong> You only need IPv6 on your local network - it doesn&#39;t matter if your internet provider doesn&#39;t provide IPv6 on the internet side (WAN).</p>
-<p>Avoid using VLAN, VM and firewall blocking the communications between the controllers and Matterbridge.</p>
-<p>To pair matterbridge, you need a matter enabled controller (Apple Home, Smart Things, Google Home, Alexa, Home Assistant etc.).</p>
+<p>Avoid VLANs, VMs, and firewalls that block communication between the controllers and Matterbridge.</p>
+<p>To pair Matterbridge, you need a Matter-enabled controller (Apple Home, SmartThings, Google Home, Alexa, Home Assistant, etc.).</p>
 <h2 id="installation">Installation</h2>
 <p>Follow these steps to install Matterbridge:</p>
 <pre><code class="language-bash">npm install -g matterbridge --omit=dev

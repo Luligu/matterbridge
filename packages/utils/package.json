@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/utils",
-  "version": "3.5.3",
+  "version": "3.5.4",
   "description": "Matterbridge utils library",
   "author": "https://github.com/Luligu",
   "repository": {
@@ -71,7 +71,7 @@
     "install:vitest": "npm install --no-fund --no-audit --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin"
   },
   "dependencies": {
-    "@matterbridge/jest-utils": "3.5.3",
+    "@matterbridge/jest-utils": "3.5.4",
     "node-ansi-logger": "3.2.0"
   },
   "devDependencies": {

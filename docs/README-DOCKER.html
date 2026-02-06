@@ -95,7 +95,12 @@
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls" alt="Docker Pulls"></a>
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
-<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a></p>
+<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a>
+<a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
+<a href="https://github.com/eslint/eslint"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
+<a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
+<a href="https://nodejs.org/api/esm.html"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
+<a href="https://matterbridge.io"><img src="https://img.shields.io/badge/matterbridge.io-online-brightgreen" alt="matterbridge.io"></a></p>
 <p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="powered by"></a>
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="powered by"></a>
 <a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="powered by"></a></p>
@@ -103,8 +108,8 @@
 <h1 id="production-configuration">Production configuration</h1>
 <h2 id="run-matterbridge-with-docker-and-docker-compose">Run Matterbridge with Docker and Docker Compose</h2>
 <p>The Matterbridge Docker images (multi-arch manifest list for <strong>linux/amd64</strong> and <strong>linux/arm64</strong>) are published on <a href="https://hub.docker.com/r/luligu/matterbridge"><strong>Docker Hub</strong></a>. If you use them, please consider starring the project on <a href="https://hub.docker.com/r/luligu/matterbridge"><strong>Docker Hub</strong></a>.</p>
-<p>The image (tag <strong>latest</strong>) includes Matterbridge and all official plugins, using the latest release published on npm. It is based on <code>node:22-bookworm-slim</code>. Since all official plugins are included, you can select and add a plugin without installing anything.</p>
-<p>The image (tag <strong>dev</strong>) includes Matterbridge and all official plugins from the latest push on GitHub. It is based on <code>node:22-bookworm-slim</code>. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest <strong>dev</strong> from the frontend, you will override the GitHub version with the latest <strong>dev</strong> published on npm.</p>
+<p>The image (tag <strong>latest</strong>) includes Matterbridge and all official plugins, using the latest release published on npm. It is based on <code>node:24-trixie-slim</code>. Since all official plugins are included, you can select and add a plugin without installing anything.</p>
+<p>The image (tag <strong>dev</strong>) includes Matterbridge and all official plugins from the latest push on GitHub. It is based on <code>node:24-trixie-slim</code>. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest <strong>dev</strong> from the frontend, you will override the GitHub version with the latest <strong>dev</strong> published on npm. The frontend shows if you are currently running the GitHub release or the latest or dev npm release.</p>
 <p>The image (tag <strong>ubuntu</strong>) includes only Matterbridge, using the latest release published on npm. This image (<strong>for test and development only</strong>) is based on <code>ubuntu:latest</code> with Node.js 24 from NodeSource. Plugins are not included in the image; they will be installed on first run. This image preinstalls <code>bluetooth</code>, <code>build-essential</code>, and <code>python</code> packages (useful for plugins that require native builds).</p>
 <p>The image (tag <strong>alpine</strong>) includes only Matterbridge, using the latest release published on npm. This image (<strong>for test and development only</strong>) is based on <code>node:24-alpine</code>. Plugins are not included in the image; they will be installed on first run.</p>
 <h3 id="docker-health-check">Docker health check</h3>
