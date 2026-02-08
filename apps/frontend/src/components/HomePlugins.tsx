@@ -27,7 +27,7 @@ import { Connecting } from './Connecting';
 import { StatusIndicator } from './StatusIndicator';
 import MbfTable, { MbfTableColumn } from './MbfTable';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
-import { getQRColor } from './getQRColor';
+import { getQRColor } from '../utils/getQRColor';
 import { debug } from '../App';
 import { MbfWindow } from './MbfWindow';
 // const debug = true;

@@ -16,7 +16,7 @@ import Test from './components/Test';
 // Frontend components
 import { WebSocketProvider } from './components/WebSocketProvider';
 import { UiProvider } from './components/UiProvider';
-import { createMuiTheme, getCssVariable } from './components/muiTheme';
+import { createMuiTheme, getCssVariable } from './utils/muiTheme';
 import { MbfScreen } from './components/MbfScreen';
 import { MbfLsk } from './utils/localStorage';
 

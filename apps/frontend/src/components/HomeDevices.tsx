@@ -20,7 +20,7 @@ import { ApiSelectDevice, ApiSettings, WsMessageApiResponse, ApiDevice, ApiMatte
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-import { getQRColor } from './getQRColor';
+import { getQRColor } from '../utils/getQRColor';
 import MbfTable, { MbfTableColumn } from './MbfTable';
 import { debug } from '../App';
 import { MbfWindow } from './MbfWindow';

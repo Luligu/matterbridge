@@ -54,6 +54,7 @@ Advantages:
 - [package]: Updated dependencies.
 - [matterbridge.io]: Updated docs.
 - [docker]: Updated docker readme file to clarify which base image is used.
+- [frontend]: Bumped `frontend` version to v. 3.4.5.
 
 ### Fixed
 

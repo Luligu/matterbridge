@@ -9,7 +9,7 @@ globalThis.console = {
   trace: vi.fn(),
 };
 import { vi, describe, it, expect } from 'vitest';
-import { createMuiTheme, getCssVariable } from '../src/components/muiTheme';
+import { createMuiTheme, getCssVariable } from '../src/utils/muiTheme';
 
 // Mock getComputedStyle for getCssVariable
 const originalGetComputedStyle = window.getComputedStyle;
