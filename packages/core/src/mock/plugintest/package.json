@@ -1,5 +1,8 @@
 {
-  "notname": "test",
+  "name": "test",
   "type": "module",
-  "main": "index.js"
+  "main": "index.js",
+  "version": "1.0.0",
+  "description": "To update",
+  "author": "To update"
 }

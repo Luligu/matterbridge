@@ -30,8 +30,8 @@ import { Semtag } from '@matter/types/globals';
 import { ClusterId, EndpointNumber } from '@matter/types/datatype';
 import { HandlerFunction } from '@matter/general';
 
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import type { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

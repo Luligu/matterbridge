@@ -4,7 +4,7 @@ const NAME = 'MatterbridgeMocked';
 const HOMEDIR = path.join('jest', NAME);
 
 // Mock selected functions from @matterbridge/utils before importing Matterbridge
-const originalUtilsModule = await import('../packages/utils/src/export.js');
+const originalUtilsModule = await import('../../utils/src/export.js');
 jest.unstable_mockModule('@matterbridge/utils', async () => {
   return {
     ...originalUtilsModule,
@@ -39,12 +39,12 @@ const spawnModule = await import('./spawn.js');
 const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
 
 // Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('./worker.js', () => ({
+jest.unstable_mockModule('@matterbridge/thread', () => ({
   createESMWorker: jest.fn(() => {
     return undefined; // Mock the createESMWorker function to return immediately
   }),
 }));
-const workerModule = await import('./worker.js');
+const workerModule = await import('@matterbridge/thread');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import os from 'node:os';
@@ -234,11 +234,26 @@ describe('Matterbridge mocked', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Matterbridge profile: Jest'));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Home Directory: ${HOMEDIR}`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Directory: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge')}`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'certs')}`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'uploads')}`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join('jest', 'MatterbridgeMocked', 'Matterbridge', 'profiles', 'Jest')}`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join('jest', 'MatterbridgeMocked', '.mattercert', 'profiles', 'Jest')}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`Created Matterbridge Directory: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge')}`),
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'certs')}`),
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'uploads')}`),
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join('jest', 'MatterbridgeMocked', 'Matterbridge', 'profiles', 'Jest')}`),
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join('jest', 'MatterbridgeMocked', '.mattercert', 'profiles', 'Jest')}`),
+    );
 
     // -frontend 0
     expect((matterbridge as any).frontend.httpServer).toBeUndefined();
@@ -266,7 +281,25 @@ describe('Matterbridge mocked', () => {
     jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
       return Promise.resolve();
     });
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-filelogger', '-matterlogger', 'debug', '-matterfilelogger', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.test.js',
+      '-novirtual',
+      '-frontend',
+      '0',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'debug',
+      '-filelogger',
+      '-matterlogger',
+      'debug',
+      '-matterfilelogger',
+      '-debug',
+    ];
     const filePath = path.join('jest', NAME, '.mattercert', 'profiles', 'Jest', 'pairing.json');
     mkdirSync(path.join('jest', NAME, 'profiles', 'Jest', '.mattercert'), { recursive: true });
     writeFileSync(
@@ -293,17 +326,32 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.log.logLevel).toBe(LogLevel.DEBUG);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Home Directory already exists at path: ${HOMEDIR}`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge')}`));
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(`Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'certs')}`),
+      expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(`Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'uploads')}`),
+      expect.stringContaining(
+        `Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'certs')}`,
+      ),
     );
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', 'Matterbridge', 'profiles', 'Jest')}`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.mattercert', 'profiles', 'Jest')}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(
+        `Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'uploads')}`,
+      ),
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', 'Matterbridge', 'profiles', 'Jest')}`),
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(
+        `Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.mattercert', 'profiles', 'Jest')}`,
+      ),
+    );
 
     unlinkSync(path.join(matterbridge.matterbridgeCertDirectory, 'pairing.json'));
     await (matterbridge as any).nodeContext.set('mattermdnsinterface', '');
@@ -318,7 +366,23 @@ describe('Matterbridge mocked', () => {
     jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
       return Promise.resolve();
     });
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.test.js',
+      '-novirtual',
+      '-frontend',
+      '0',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'debug',
+      '-matterlogger',
+      'debug',
+      '-debug',
+    ];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.DEBUG);
     expect(matterbridge.fileLogger).toBe(false);
@@ -333,7 +397,23 @@ describe('Matterbridge mocked', () => {
     jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
       return Promise.resolve();
     });
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'info', '-matterlogger', 'info', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.test.js',
+      '-novirtual',
+      '-frontend',
+      '0',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'info',
+      '-matterlogger',
+      'info',
+      '-debug',
+    ];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.INFO);
     expect(matterbridge.fileLogger).toBe(false);
@@ -348,7 +428,23 @@ describe('Matterbridge mocked', () => {
     jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
       return Promise.resolve();
     });
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'notice', '-matterlogger', 'notice', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.test.js',
+      '-novirtual',
+      '-frontend',
+      '0',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'notice',
+      '-matterlogger',
+      'notice',
+      '-debug',
+    ];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.NOTICE);
     expect(Logger.level).toBe(MatterLogLevel.NOTICE);
@@ -361,7 +457,23 @@ describe('Matterbridge mocked', () => {
     jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
       return Promise.resolve();
     });
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'warn', '-matterlogger', 'warn', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.test.js',
+      '-novirtual',
+      '-frontend',
+      '0',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'warn',
+      '-matterlogger',
+      'warn',
+      '-debug',
+    ];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.WARN);
     expect(Logger.level).toBe(MatterLogLevel.WARN);
@@ -374,7 +486,23 @@ describe('Matterbridge mocked', () => {
     jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
       return Promise.resolve();
     });
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'error', '-matterlogger', 'error', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.test.js',
+      '-novirtual',
+      '-frontend',
+      '0',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'error',
+      '-matterlogger',
+      'error',
+      '-debug',
+    ];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.ERROR);
     expect(Logger.level).toBe(MatterLogLevel.ERROR);
@@ -387,7 +515,23 @@ describe('Matterbridge mocked', () => {
     jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
       return Promise.resolve();
     });
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'fatal', '-matterlogger', 'fatal', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.test.js',
+      '-novirtual',
+      '-frontend',
+      '0',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'fatal',
+      '-matterlogger',
+      'fatal',
+      '-debug',
+    ];
     await (matterbridge as any).initialize();
     expect(matterbridge.log.logLevel).toBe(LogLevel.FATAL);
     expect(Logger.level).toBe(MatterLogLevel.FATAL);
@@ -467,7 +611,22 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).nodeContext.set('mattermdnsinterface', '');
     await (matterbridge as any).nodeContext.remove('virtualmode');
 
-    process.argv = ['node', 'matterbridge.mocked.test.js', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'null', '-matterlogger', 'null', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.mocked.test.js',
+      '-frontend',
+      '0',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'null',
+      '-matterlogger',
+      'null',
+      '-debug',
+    ];
     await (matterbridge as any).initialize();
     expect(matterbridge.mdnsInterface).toBeUndefined();
     expect(matterbridge.virtualMode).toBe('outlet');
@@ -487,12 +646,12 @@ describe('Matterbridge mocked', () => {
     process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     expect(matterbridge.plugins.array()).toEqual([]);
-    expect(await (matterbridge.plugins as any).add('./src/mock/plugin1')).not.toBeNull();
-    expect(await (matterbridge.plugins as any).add('./src/mock/plugin2')).not.toBeNull();
-    expect(await (matterbridge.plugins as any).add('./src/mock/plugin3')).not.toBeNull();
-    expect(await (matterbridge.plugins as any).add('./src/mock/plugin4')).not.toBeNull();
-    expect(await (matterbridge.plugins as any).add('./src/mock/plugin5')).not.toBeNull();
-    expect(await (matterbridge.plugins as any).add('./src/mock/plugin6')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./packages/core/src/mock/plugin1')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./packages/core/src/mock/plugin2')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./packages/core/src/mock/plugin3')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./packages/core/src/mock/plugin4')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./packages/core/src/mock/plugin5')).not.toBeNull();
+    expect(await (matterbridge.plugins as any).add('./packages/core/src/mock/plugin6')).not.toBeNull();
     expect(plugins.length).toBe(6);
   });
 
@@ -579,7 +738,24 @@ describe('Matterbridge mocked', () => {
       throw new Error('Test error for createStorage');
     });
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-service', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.test.js',
+      '-service',
+      '-novirtual',
+      '-frontend',
+      '0',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'debug',
+      '-matterlogger',
+      'debug',
+      '-debug',
+    ];
     await expect((matterbridge as any).initialize()).rejects.toThrow('Fatal error creating node storage manager and context for matterbridge');
     expect(matterbridge.restartMode).toBe('service');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, 'The matterbridge storage is corrupted. Restoring it with backup...');
@@ -591,7 +767,25 @@ describe('Matterbridge mocked', () => {
       throw new Error('Test error for createStorage');
     });
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-docker', '-norestore', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.test.js',
+      '-docker',
+      '-norestore',
+      '-novirtual',
+      '-frontend',
+      '0',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'debug',
+      '-matterlogger',
+      'debug',
+      '-debug',
+    ];
     await expect((matterbridge as any).initialize()).rejects.toThrow('Fatal error creating node storage manager and context for matterbridge');
     expect(matterbridge.restartMode).toBe('docker');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.FATAL, 'The matterbridge storage is corrupted. Found -norestore parameter: exiting...');
@@ -602,7 +796,23 @@ describe('Matterbridge mocked', () => {
       throw new Error('Test error for startMatterStorage');
     });
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-debug'];
+    process.argv = [
+      'node',
+      'matterbridge.test.js',
+      '-novirtual',
+      '-frontend',
+      '0',
+      '-controller',
+      '-homedir',
+      HOMEDIR,
+      '-profile',
+      'Jest',
+      '-logger',
+      'debug',
+      '-matterlogger',
+      'debug',
+      '-debug',
+    ];
     await expect((matterbridge as any).initialize()).rejects.toThrow('Fatal error creating matter storage: Test error for startMatterStorage');
     // await destroyInstance(matterbridge, 10, 10);
   }, 10000);
@@ -853,26 +1063,26 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.shutdown).toBe(true);
     expect(logInterfacesMock).toHaveBeenCalled();
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-disable', './src/mock/plugin1'];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-disable', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.get('matterbridge-mock1')?.enabled).toBe(false);
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-enable', './src/mock/plugin1'];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-enable', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.length).toBe(6);
     expect(matterbridge.plugins.get('matterbridge-mock1')?.enabled).toBe(true);
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-remove', './src/mock/plugin1'];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-remove', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.length).toBe(5);
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-add', './src/mock/plugin1'];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-add', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     expect(matterbridge.shutdown).toBe(true);
@@ -984,14 +1194,32 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
 
-    matterbridge.plugins.set({ name: 'matterbridge-mock1', enabled: true, path: './src/mock/plugin1/package.json', type: 'DynamicPlatform', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock1',
+      enabled: true,
+      path: './src/mock/plugin1/package.json',
+      type: 'DynamicPlatform',
+      version: '1.0.0',
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    });
     await matterbridge.unregisterAndShutdownProcess(10);
     expect(removeAllBridgedEndpointsSpy).toHaveBeenCalled();
     expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false, 10);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('unregistered all devices and shutting down...'));
     jest.clearAllMocks();
 
-    matterbridge.plugins.set({ name: 'matterbridge-mock1', enabled: true, path: './src/mock/plugin1/package.json', type: 'DynamicPlatform', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock1',
+      enabled: true,
+      path: './src/mock/plugin1/package.json',
+      type: 'DynamicPlatform',
+      version: '1.0.0',
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    });
     (matterbridge as any).initialized = true;
     matterbridge.hasCleanupStarted = false;
     matterbridge.bridgeMode = 'childbridge';
@@ -1009,7 +1237,15 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() cleanup()', async () => {
     process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
-    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' } as any);
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock1',
+      path: './src/mock/plugin1/package.json',
+      type: 'Unknown',
+      version: '1.0.0',
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    } as any);
     const plugin = matterbridge.plugins.get('matterbridge-mock1');
     expect(plugin).toBeDefined();
     if (!plugin) return;
@@ -1058,9 +1294,33 @@ describe('Matterbridge mocked', () => {
     expect(wait).not.toHaveBeenCalledWith(2000 * 1000, 'Race condition delay', true);
     expect(wait).not.toHaveBeenCalledWith(2000 * 1000, 'Fixed race condition delay', true);
     matterbridge.plugins.clear();
-    matterbridge.plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' } as any);
-    matterbridge.plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' } as any);
-    matterbridge.plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' } as any);
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock1',
+      path: './src/mock/plugin1/package.json',
+      type: 'Unknown',
+      version: '1.0.0',
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    } as any);
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock2',
+      path: './src/mock/plugin2/package.json',
+      type: 'Unknown',
+      version: '1.0.0',
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    } as any);
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock3',
+      path: './src/mock/plugin3/package.json',
+      type: 'Unknown',
+      version: '1.0.0',
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    } as any);
     const plugin1 = matterbridge.plugins.get('matterbridge-mock1');
     expect(plugin1).toBeDefined();
     if (!plugin1) return;
@@ -1097,7 +1357,10 @@ describe('Matterbridge mocked', () => {
 
     jest.advanceTimersByTime(1000); // Simulate 1 second for the interval
     expect(plugin1.error).toBe(true);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error waiting for plugin ${plg}${plugin1.name}${er} to load and start. Plugin is in error state.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      expect.stringContaining(`Error waiting for plugin ${plg}${plugin1.name}${er} to load and start. Plugin is in error state.`),
+    );
 
     jest.advanceTimersByTime(1000); // Simulate 1 second for the interval
     expect((matterbridge as any).startMatterInterval).toBeUndefined();
@@ -1249,8 +1512,14 @@ describe('Matterbridge mocked', () => {
     jest.advanceTimersByTime(1000); // Advance 1 second for the start interval
     expect(plugin1.error).toBe(true);
     expect(plugin2.error).toBe(true);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error waiting for plugin ${plg}${plugin1.name}${er} to load and start. Plugin is in error state.`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error waiting for plugin ${plg}${plugin2.name}${er} to load and start. Plugin is in error state.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      expect.stringContaining(`Error waiting for plugin ${plg}${plugin1.name}${er} to load and start. Plugin is in error state.`),
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      expect.stringContaining(`Error waiting for plugin ${plg}${plugin2.name}${er} to load and start. Plugin is in error state.`),
+    );
 
     jest.advanceTimersByTime(1000); // Simulate 1 second for the start interval. It will clear the interval for error state of the first plugin
     expect((matterbridge as any).startMatterInterval).toBeUndefined();
@@ -1315,7 +1584,16 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() removeAllBridgedEndpoints', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
-    matterbridge.plugins.set({ name: 'matterbridge-mock1', enabled: true, path: './src/mock/plugin1/package.json', type: 'DynamicPlatform', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    matterbridge.plugins.set({
+      name: 'matterbridge-mock1',
+      enabled: true,
+      path: './src/mock/plugin1/package.json',
+      type: 'DynamicPlatform',
+      version: '1.0.0',
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+    });
     matterbridge.devices.set({ name: 'Test Device 1', uniqueId: '123', plugin: 'matterbridge-mock1', serverNode: {} } as any); // Mock a device in server mode
     expect(matterbridge.plugins.size).toBe(1);
     expect(matterbridge.devices.size).toBe(1);

@@ -30,8 +30,8 @@ import type { Matterbridge } from './matterbridge.js';
 import { DeviceManager } from './deviceManager.js';
 import { bridgedNode, occupancySensor, onOffOutlet, powerSource, pressureSensor } from './matterbridgeDeviceTypes.js';
 
-const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../frontend/package.json', import.meta.url), 'utf8'));
+const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
+const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
 const nic = getInterfaceDetails();
 
 const matterbridge: SharedMatterbridge = {
@@ -149,7 +149,12 @@ describe('MatterNode dynamic', () => {
 
   test('Add plugin', async () => {
     // @ts-expect-error access private property
-    pluginManager.matterbridge.nodeStorage = new NodeStorageManager({ dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+    pluginManager.matterbridge.nodeStorage = new NodeStorageManager({
+      dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR),
+      writeQueue: false,
+      expiredInterval: undefined,
+      logging: false,
+    });
     // @ts-expect-error access private property
     pluginManager.matterbridge.nodeContext = await pluginManager.matterbridge.nodeStorage.createStorage('matterbridge');
 
@@ -233,7 +238,9 @@ describe('MatterNode dynamic', () => {
     // Remove with no aggregator to test that code path
     const savedAggregator = matter.aggregatorNode;
     matter.aggregatorNode = undefined;
-    await expect(() => matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(`Error removing bridged endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`);
+    await expect(() => matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+      `Error removing bridged endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`,
+    );
     matter.aggregatorNode = savedAggregator; // Restore aggregator node
 
     await matter.removeBridgedEndpoint('matterbridge-mock1', device);
@@ -245,7 +252,11 @@ describe('MatterNode dynamic', () => {
     await matter.serverNode?.env.get(ServerNodeStore)?.endpointStores.close();
 
     // Wrong matter device with bridged device
-    const occSensor = new MatterbridgeEndpoint([occupancySensor, bridgedNode], { id: 'Motion sensor', mode: 'matter' }, true).createDefaultBridgedDeviceBasicInformationClusterServer('Motion sensor', 'MOT1234567890');
+    const occSensor = new MatterbridgeEndpoint(
+      [occupancySensor, bridgedNode],
+      { id: 'Motion sensor', mode: 'matter' },
+      true,
+    ).createDefaultBridgedDeviceBasicInformationClusterServer('Motion sensor', 'MOT1234567890');
     occSensor.plugin = 'matterbridge-mock1';
     expect(await matter.addBridgedEndpoint('matterbridge-mock1', occSensor)).toBeUndefined();
     expect(occSensor.owner).toBeUndefined();

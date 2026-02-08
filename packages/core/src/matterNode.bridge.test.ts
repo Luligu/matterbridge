@@ -29,8 +29,8 @@ import type { Matterbridge } from './matterbridge.js';
 import { DeviceManager } from './deviceManager.js';
 import { bridgedNode, flowSensor, humiditySensor, occupancySensor, onOffOutlet, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 
-const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../frontend/package.json', import.meta.url), 'utf8'));
+const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
+const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
 const nic = getInterfaceDetails();
 
 const matterbridge: SharedMatterbridge = {
@@ -148,7 +148,12 @@ describe('MatterNode bridge', () => {
 
   test('Add plugin', async () => {
     // @ts-expect-error access private property
-    pluginManager.matterbridge.nodeStorage = new NodeStorageManager({ dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+    pluginManager.matterbridge.nodeStorage = new NodeStorageManager({
+      dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR),
+      writeQueue: false,
+      expiredInterval: undefined,
+      logging: false,
+    });
     // @ts-expect-error access private property
     pluginManager.matterbridge.nodeContext = await pluginManager.matterbridge.nodeStorage.createStorage('matterbridge');
 
@@ -193,13 +198,17 @@ describe('MatterNode bridge', () => {
     };
     matter.pluginManager.set(pluginMatter);
 
-    const tmpSensor = new MatterbridgeEndpoint([temperatureSensor], { id: 'Temperature sensor', mode: 'matter' }, true).createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890').addRequiredClusterServers();
+    const tmpSensor = new MatterbridgeEndpoint([temperatureSensor], { id: 'Temperature sensor', mode: 'matter' }, true)
+      .createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
+      .addRequiredClusterServers();
     tmpSensor.plugin = 'matterdevicetest';
 
     // Test no server node
     const savedServer = matter.serverNode;
     matter.serverNode = undefined;
-    await expect(() => matter.addBridgedEndpoint('matterdevicetest', tmpSensor)).rejects.toThrow(`Server node not found for matter endpoint ${plg}matterdevicetest${er}:${dev}${tmpSensor.deviceName}${er} (${zb}${tmpSensor.name}${er})`);
+    await expect(() => matter.addBridgedEndpoint('matterdevicetest', tmpSensor)).rejects.toThrow(
+      `Server node not found for matter endpoint ${plg}matterdevicetest${er}:${dev}${tmpSensor.deviceName}${er} (${zb}${tmpSensor.name}${er})`,
+    );
     matter.serverNode = savedServer;
 
     // Test correctly adding
@@ -207,7 +216,9 @@ describe('MatterNode bridge', () => {
     expect(tmpSensor.owner).toBeDefined();
     expect(deviceManager.length).toBe(1);
 
-    const humSensor = new MatterbridgeEndpoint([humiditySensor, bridgedNode], { id: 'Humidity sensor' }, true).createDefaultBridgedDeviceBasicInformationClusterServer('Humidity sensor', 'HUM1234567890').addRequiredClusterServers();
+    const humSensor = new MatterbridgeEndpoint([humiditySensor, bridgedNode], { id: 'Humidity sensor' }, true)
+      .createDefaultBridgedDeviceBasicInformationClusterServer('Humidity sensor', 'HUM1234567890')
+      .addRequiredClusterServers();
     humSensor.plugin = 'serverdevicetest';
     await matter.addBridgedEndpoint('serverdevicetest', humSensor);
     expect(humSensor.owner).toBeDefined();
@@ -217,7 +228,9 @@ describe('MatterNode bridge', () => {
     await closeServerNodeStores(matter.serverNode);
 
     // Wrong matter device with bridged device
-    const occSensor = new MatterbridgeEndpoint([occupancySensor, bridgedNode], { id: 'Motion sensor', mode: 'matter' }, true).createDefaultBridgedDeviceBasicInformationClusterServer('Motion sensor', 'MOT1234567890').addRequiredClusterServers();
+    const occSensor = new MatterbridgeEndpoint([occupancySensor, bridgedNode], { id: 'Motion sensor', mode: 'matter' }, true)
+      .createDefaultBridgedDeviceBasicInformationClusterServer('Motion sensor', 'MOT1234567890')
+      .addRequiredClusterServers();
     occSensor.plugin = 'serverdevicetest';
     expect(await matter.addBridgedEndpoint('serverdevicetest', occSensor)).toBeUndefined();
     expect(occSensor.owner).toBeUndefined();
@@ -227,13 +240,17 @@ describe('MatterNode bridge', () => {
     await matter.removeAllBridgedEndpoints('serverdevicetest');
     expect(deviceManager.length).toBe(0);
 
-    const sensor = new MatterbridgeEndpoint([flowSensor, bridgedNode], { id: 'Flow sensor' }, true).createDefaultBridgedDeviceBasicInformationClusterServer('Flow sensor', 'FLOW1234567890').addRequiredClusterServers();
+    const sensor = new MatterbridgeEndpoint([flowSensor, bridgedNode], { id: 'Flow sensor' }, true)
+      .createDefaultBridgedDeviceBasicInformationClusterServer('Flow sensor', 'FLOW1234567890')
+      .addRequiredClusterServers();
     sensor.plugin = 'serverdevicetest';
     await matter.addBridgedEndpoint('serverdevicetest', sensor);
     expect(sensor.owner).toBeDefined();
     expect(deviceManager.length).toBe(1);
     await matter.aggregatorNode?.parts.get('Flowsensor')?.delete();
-    await expect(matter.removeAllBridgedEndpoints('serverdevicetest')).rejects.toThrow(`Endpoint ${plg}${sensor.plugin}${er}:${dev}${sensor.deviceName}${er} id ${sensor.id} not found removing all endpoints`);
+    await expect(matter.removeAllBridgedEndpoints('serverdevicetest')).rejects.toThrow(
+      `Endpoint ${plg}${sensor.plugin}${er}:${dev}${sensor.deviceName}${er} id ${sensor.id} not found removing all endpoints`,
+    );
     deviceManager.clear();
     expect(deviceManager.length).toBe(0);
   });

@@ -154,7 +154,11 @@ export class Oven extends MatterbridgeEndpoint {
     endpoint.behaviors.require(MatterbridgeOvenCavityOperationalStateServer, {
       phaseList: phaseList || null,
       currentPhase: currentPhase || null,
-      operationalStateList: [{ operationalStateId: OperationalState.OperationalStateEnum.Stopped }, { operationalStateId: OperationalState.OperationalStateEnum.Running }, { operationalStateId: OperationalState.OperationalStateEnum.Error }],
+      operationalStateList: [
+        { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+        { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Error },
+      ],
       operationalState,
       operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     });
@@ -172,7 +176,9 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
     if (supportedMode) {
-      device.log.info(`MatterbridgeOvenModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with mode ${supportedMode.mode} = ${supportedMode.label}`);
+      device.log.info(
+        `MatterbridgeOvenModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with mode ${supportedMode.mode} = ${supportedMode.label}`,
+      );
       this.state.currentMode = request.newMode;
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
     } else {
@@ -193,7 +199,9 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
 
   override stop(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeOvenCavityOperationalStateServer: stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called setting operational state to Stopped and operational error to No error`);
+    device.log.info(
+      `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called setting operational state to Stopped and operational error to No error`,
+    );
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
@@ -203,7 +211,9 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
 
   override start(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeOvenCavityOperationalStateServer: start (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called setting operational state to Running and operational error to No error`);
+    device.log.info(
+      `MatterbridgeOvenCavityOperationalStateServer: start (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called setting operational state to Running and operational error to No error`,
+    );
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {

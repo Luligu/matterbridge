@@ -388,7 +388,10 @@ export async function startMatterbridge(
     });
   }
 
-  expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${frontendPort}${UNDERLINEOFF}${rs}`);
+  expect(loggerLogSpy).toHaveBeenCalledWith(
+    LogLevel.INFO,
+    `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${frontendPort}${UNDERLINEOFF}${rs}`,
+  );
   if (bridgeMode === 'bridge') {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
@@ -479,7 +482,12 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
  */
 export async function startMatterbridgeEnvironment(port: number = 5540): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
   // Create the node storage
-  matterbridge.nodeStorage = new NodeStorageManager({ dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+  matterbridge.nodeStorage = new NodeStorageManager({
+    dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR),
+    writeQueue: false,
+    expiredInterval: undefined,
+    logging: false,
+  });
   matterbridge.nodeContext = await matterbridge.nodeStorage.createStorage('matterbridge');
 
   // Create the matter storage
@@ -551,7 +559,12 @@ export function addMatterbridgePlatform(platform: MatterbridgePlatform, name?: s
   expect(platform).toBeDefined();
   // Setup the platform MatterNode helpers
   // @ts-expect-error - setMatterNode is intentionally private
-  platform.setMatterNode?.(matterbridge.addBridgedEndpoint.bind(matterbridge), matterbridge.removeBridgedEndpoint.bind(matterbridge), matterbridge.removeAllBridgedEndpoints.bind(matterbridge), matterbridge.addVirtualEndpoint.bind(matterbridge));
+  platform.setMatterNode?.(
+    matterbridge.addBridgedEndpoint.bind(matterbridge),
+    matterbridge.removeBridgedEndpoint.bind(matterbridge),
+    matterbridge.removeAllBridgedEndpoints.bind(matterbridge),
+    matterbridge.addVirtualEndpoint.bind(matterbridge),
+  );
 
   if (name) platform.config.name = name;
   expect(platform.config.name).toBeDefined();
@@ -876,7 +889,11 @@ export async function closeServerNodeStores(targetServer?: ServerNode): Promise<
  * @param {DeviceTypeId} deviceType Device type identifier for the server node.
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
  */
-export async function startServerNode(name: string, port: number, deviceType: DeviceTypeId = bridge.code): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+export async function startServerNode(
+  name: string,
+  port: number,
+  deviceType: DeviceTypeId = bridge.code,
+): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
   const { randomBytes } = await import('node:crypto');
   const random = randomBytes(8).toString('hex');
 

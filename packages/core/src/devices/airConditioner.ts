@@ -123,7 +123,16 @@ export class AirConditioner extends MatterbridgeEndpoint {
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Air Conditioner');
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDeadFrontOnOffClusterServer(true);
-    this.createDefaultThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, occupiedCoolingSetpoint, minSetpointDeadBand, minHeatSetpointLimit, maxHeatSetpointLimit, minCoolSetpointLimit, maxCoolSetpointLimit);
+    this.createDefaultThermostatClusterServer(
+      localTemperature,
+      occupiedHeatingSetpoint,
+      occupiedCoolingSetpoint,
+      minSetpointDeadBand,
+      minHeatSetpointLimit,
+      maxHeatSetpointLimit,
+      minCoolSetpointLimit,
+      maxCoolSetpointLimit,
+    );
     this.createDefaultThermostatUserInterfaceConfigurationClusterServer(temperatureDisplayMode, keypadLockout, scheduleProgrammingVisibility);
     this.createDefaultFanControlClusterServer(fanMode, fanModeSequence, percentSetting, percentCurrent);
   }

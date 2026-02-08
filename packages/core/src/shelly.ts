@@ -23,6 +23,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable jsdoc/reject-any-type */
 
 import type { RequestOptions } from 'node:http';
 
@@ -70,7 +71,12 @@ export async function getShellySysUpdate(matterbridge: SharedMatterbridge, log: 
 
     server.request({ type: 'matterbridge_sys_update', src: server.name, dst: 'matterbridge', params: { available: true } });
     // matterbridge.shellySysUpdate = true;
-    server.request({ type: 'frontend_broadcast_message', src: server.name, dst: 'frontend', params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } } } });
+    server.request({
+      type: 'frontend_broadcast_message',
+      src: server.name,
+      dst: 'frontend',
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } } },
+    });
     // matterbridge.frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } });
     for (const { name } of updates) {
       if (!name) continue;
@@ -120,7 +126,12 @@ export async function getShellyMainUpdate(matterbridge: SharedMatterbridge, log:
 
     server.request({ type: 'matterbridge_main_update', src: server.name, dst: 'matterbridge', params: { available: true } });
     // matterbridge.shellyMainUpdate = true;
-    server.request({ type: 'frontend_broadcast_message', src: server.name, dst: 'frontend', params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_main_update', success: true, response: { available: true } } } });
+    server.request({
+      type: 'frontend_broadcast_message',
+      src: server.name,
+      dst: 'frontend',
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_main_update', success: true, response: { available: true } } },
+    });
     // matterbridge.frontend.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_main_update', success: true, response: { available: true } });
     for (const { name } of updates) {
       if (!name) continue;
@@ -210,7 +221,10 @@ export async function verifyShellyUpdate(matterbridge: Matterbridge, api: string
  * @param {string} config.dns - The DNS server to set (required for static configuration).
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
-export async function triggerShellyChangeIp(matterbridge: Matterbridge, config: { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string }): Promise<void> {
+export async function triggerShellyChangeIp(
+  matterbridge: Matterbridge,
+  config: { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string },
+): Promise<void> {
   const api = config.type === 'static' ? '/api/network/connection/static' : '/api/network/connection/dynamic';
   const data: { interface: string; addr?: string; mask?: string; gw?: string; dns?: string } = { interface: 'end0' };
   if (config.type === 'static') {

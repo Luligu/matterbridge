@@ -4,8 +4,8 @@
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { BroadcastServer } from './broadcastServer.js';
-import { WorkerMessage } from './broadcastServerTypes.js';
+import { BroadcastServer } from '../../../packages/core/src/broadcastServer.js';
+import { WorkerMessage } from '../../../packages/core/src/broadcastServerTypes.js';
 
 const postMessage = jest.fn();
 let mockedThreadId = 0;
@@ -166,7 +166,7 @@ describe('worker parentPort (mocked)', () => {
       mockedHasWorkerData = true;
 
       process.argv.push('--verbose');
-      await import('./workerGlobalPrefix.js');
+      await import('../../../packages/core/src/workerGlobalPrefix.js');
       process.argv.pop();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringMatching(/Global node_modules Directory:/));
@@ -187,7 +187,7 @@ describe('worker parentPort (mocked)', () => {
       mockedHasWorkerData = true;
 
       process.argv.push('--verbose');
-      await import('./workerCheckUpdates.js');
+      await import('../../../packages/core/src/workerCheckUpdates.js');
       process.argv.pop();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringMatching(/Check updates succeeded/));

@@ -60,9 +60,37 @@ describe('DeviceManager', () => {
   test('size returns correct number of devices', async () => {
     expect(devices.size).toBe(0);
     expect(devices.length).toBe(0);
-    devices.set({ name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1', uniqueId: 'DeviceUniqueId1', id: 'DeviceId1', number: 1, maybeId: 'DeviceId1', maybeNumber: 1 } as unknown as MatterbridgeEndpoint);
-    devices.set({ name: 'DeviceType2', serialNumber: 'DeviceSerial2', deviceName: 'Device2', uniqueId: 'DeviceUniqueId2', id: 'DeviceId2', number: 2, maybeId: 'DeviceId2', maybeNumber: 2 } as unknown as MatterbridgeEndpoint);
-    devices.set({ plugin: 'jest', name: 'DeviceType3', serialNumber: 'DeviceSerial3', deviceName: 'Device3', uniqueId: 'DeviceUniqueId3', id: 'DeviceId3', number: 3, maybeId: 'DeviceId3', maybeNumber: 3 } as unknown as MatterbridgeEndpoint);
+    devices.set({
+      name: 'DeviceType1',
+      serialNumber: 'DeviceSerial1',
+      deviceName: 'Device1',
+      uniqueId: 'DeviceUniqueId1',
+      id: 'DeviceId1',
+      number: 1,
+      maybeId: 'DeviceId1',
+      maybeNumber: 1,
+    } as unknown as MatterbridgeEndpoint);
+    devices.set({
+      name: 'DeviceType2',
+      serialNumber: 'DeviceSerial2',
+      deviceName: 'Device2',
+      uniqueId: 'DeviceUniqueId2',
+      id: 'DeviceId2',
+      number: 2,
+      maybeId: 'DeviceId2',
+      maybeNumber: 2,
+    } as unknown as MatterbridgeEndpoint);
+    devices.set({
+      plugin: 'jest',
+      name: 'DeviceType3',
+      serialNumber: 'DeviceSerial3',
+      deviceName: 'Device3',
+      uniqueId: 'DeviceUniqueId3',
+      id: 'DeviceId3',
+      number: 3,
+      maybeId: 'DeviceId3',
+      maybeNumber: 3,
+    } as unknown as MatterbridgeEndpoint);
     expect(devices.size).toBe(3);
     expect(devices.length).toBe(3);
     await (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_basearray', src: 'frontend', dst: 'devices', params: {} } as any);
@@ -77,32 +105,51 @@ describe('DeviceManager', () => {
   });
 
   test('set already registered device to log error', async () => {
-    const device = { name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1', uniqueId: 'DeviceUniqueId1', id: 'DeviceId1', number: 1, maybeId: 'DeviceId1', maybeNumber: 1 } as unknown as MatterbridgeEndpoint;
+    const device = {
+      name: 'DeviceType1',
+      serialNumber: 'DeviceSerial1',
+      deviceName: 'Device1',
+      uniqueId: 'DeviceUniqueId1',
+      id: 'DeviceId1',
+      number: 1,
+      maybeId: 'DeviceId1',
+      maybeNumber: 1,
+    } as unknown as MatterbridgeEndpoint;
     devices.set(device);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `The device ${dev}Device1${er} with uniqueId ${BLUE}DeviceUniqueId1${er} serialNumber ${BLUE}DeviceSerial1${er} is already in the device manager`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `The device ${dev}Device1${er} with uniqueId ${BLUE}DeviceUniqueId1${er} serialNumber ${BLUE}DeviceSerial1${er} is already in the device manager`,
+    );
 
     expect(devices.size).toBe(3);
-    const baseDevice = { name: 'DeviceType1bis', serialNumber: 'DeviceSerial1bis', deviceName: 'Device1bis', uniqueId: 'DeviceUniqueId1bis', id: 'DeviceId1bis', number: 10 } as unknown as BaseDevice;
+    const baseDevice = {
+      name: 'DeviceType1bis',
+      serialNumber: 'DeviceSerial1bis',
+      deviceName: 'Device1bis',
+      uniqueId: 'DeviceUniqueId1bis',
+      id: 'DeviceId1bis',
+      number: 10,
+    } as unknown as BaseDevice;
     expect((await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.device).toBeDefined();
     expect(devices.size).toBe(4);
     let getDevice: BaseDevice | undefined = (await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.device;
     expect(getDevice).toEqual({
-      'deviceName': 'Device1bis',
-      'id': 'DeviceId1bis',
-      'name': 'DeviceType1bis',
-      'number': 10,
-      'serialNumber': 'DeviceSerial1bis',
-      'uniqueId': 'DeviceUniqueId1bis',
+      deviceName: 'Device1bis',
+      id: 'DeviceId1bis',
+      name: 'DeviceType1bis',
+      number: 10,
+      serialNumber: 'DeviceSerial1bis',
+      uniqueId: 'DeviceUniqueId1bis',
     });
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     getDevice = (await testServer.fetch({ type: 'devices_get', src: testServer.name, dst: 'devices', params: { uniqueId: baseDevice.uniqueId! } })).result.device;
     expect(getDevice).toEqual({
-      'deviceName': 'Device1bis',
-      'id': 'DeviceId1bis',
-      'name': 'DeviceType1bis',
-      'number': 10,
-      'serialNumber': 'DeviceSerial1bis',
-      'uniqueId': 'DeviceUniqueId1bis',
+      deviceName: 'Device1bis',
+      id: 'DeviceId1bis',
+      name: 'DeviceType1bis',
+      number: 10,
+      serialNumber: 'DeviceSerial1bis',
+      uniqueId: 'DeviceUniqueId1bis',
     });
     expect((await testServer.fetch({ type: 'devices_remove', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.success).toBe(true);
     expect(devices.size).toBe(3);
@@ -171,43 +218,43 @@ describe('DeviceManager', () => {
     expect((await testServer.fetch({ type: 'devices_basearray', src: testServer.name, dst: 'devices', params: {} })).result.devices).toHaveLength(3);
     expect((await testServer.fetch({ type: 'devices_basearray', src: testServer.name, dst: 'devices', params: {} })).result.devices).toEqual([
       {
-        'configUrl': undefined,
-        'deviceName': 'Device1',
-        'deviceType': undefined,
-        'id': 'DeviceId1',
+        configUrl: undefined,
+        deviceName: 'Device1',
+        deviceType: undefined,
+        id: 'DeviceId1',
         mode: undefined,
-        'name': 'DeviceType1',
-        'number': 1,
-        'plugin': undefined,
-        'productUrl': undefined,
-        'serialNumber': 'DeviceSerial1',
-        'uniqueId': 'DeviceUniqueId1',
+        name: 'DeviceType1',
+        number: 1,
+        plugin: undefined,
+        productUrl: undefined,
+        serialNumber: 'DeviceSerial1',
+        uniqueId: 'DeviceUniqueId1',
       },
       {
-        'configUrl': undefined,
-        'deviceName': 'Device2',
-        'deviceType': undefined,
-        'id': 'DeviceId2',
+        configUrl: undefined,
+        deviceName: 'Device2',
+        deviceType: undefined,
+        id: 'DeviceId2',
         mode: undefined,
-        'name': 'DeviceType2',
-        'number': 2,
-        'plugin': undefined,
-        'productUrl': undefined,
-        'serialNumber': 'DeviceSerial2',
-        'uniqueId': 'DeviceUniqueId2',
+        name: 'DeviceType2',
+        number: 2,
+        plugin: undefined,
+        productUrl: undefined,
+        serialNumber: 'DeviceSerial2',
+        uniqueId: 'DeviceUniqueId2',
       },
       {
-        'configUrl': undefined,
-        'deviceName': 'Device3',
-        'deviceType': undefined,
-        'id': 'DeviceId3',
+        configUrl: undefined,
+        deviceName: 'Device3',
+        deviceType: undefined,
+        id: 'DeviceId3',
         mode: undefined,
-        'name': 'DeviceType3',
-        'number': 3,
-        'plugin': 'jest',
-        'productUrl': undefined,
-        'serialNumber': 'DeviceSerial3',
-        'uniqueId': 'DeviceUniqueId3',
+        name: 'DeviceType3',
+        number: 3,
+        plugin: 'jest',
+        productUrl: undefined,
+        serialNumber: 'DeviceSerial3',
+        uniqueId: 'DeviceUniqueId3',
       },
     ]);
     await setDebug(false);
@@ -237,7 +284,10 @@ describe('DeviceManager', () => {
 
   test('remove not registered device to log error', () => {
     devices.remove({ name: 'DeviceType4', serialNumber: 'DeviceSerial4', deviceName: 'Device4', uniqueId: 'DeviceUniqueId4' } as unknown as MatterbridgeEndpoint);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `The device ${dev}Device4${er} with uniqueId ${BLUE}DeviceUniqueId4${er} serialNumber ${BLUE}DeviceSerial4${er} is not registered in the device manager`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `The device ${dev}Device4${er} with uniqueId ${BLUE}DeviceUniqueId4${er} serialNumber ${BLUE}DeviceSerial4${er} is not registered in the device manager`,
+    );
   });
 
   test('clear to reset the devices', async () => {

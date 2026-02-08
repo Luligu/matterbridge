@@ -35,12 +35,12 @@ process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
 // Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('./worker.js', () => ({
+jest.unstable_mockModule('@matterbridge/thread', () => ({
   createESMWorker: jest.fn(() => {
     return undefined; // Mock the createESMWorker function to return immediately
   }),
 }));
-const workerModule = await import('./worker.js');
+const workerModule = await import('@matterbridge/thread');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import path from 'node:path';
@@ -127,7 +127,10 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`,
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in bridge mode`);
@@ -146,9 +149,9 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   test('addBridgedEndpoint with no aggregator', async () => {
     const aggregator = matterbridge.aggregatorNode;
     matterbridge.aggregatorNode = undefined;
-    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/plugin1')).not.toBeNull();
     await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);
-    expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
+    expect(await plugins.remove('./packages/core/src/mock/plugin1')).not.toBeNull();
     matterbridge.aggregatorNode = aggregator;
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Aggregator node not found for Matterbridge`));
   });
@@ -156,22 +159,22 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   test('removeBridgedEndpoint with no aggregator', async () => {
     const aggregator = matterbridge.aggregatorNode;
     matterbridge.aggregatorNode = undefined;
-    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/plugin1')).not.toBeNull();
     await matterbridge.removeBridgedEndpoint('matterbridge-mock1', {} as any);
-    expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
+    expect(await plugins.remove('./packages/core/src/mock/plugin1')).not.toBeNull();
     matterbridge.aggregatorNode = aggregator;
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`aggregator node not found`));
   });
 
   test('addBridgedEndpoint fails adding', async () => {
-    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/plugin1')).not.toBeNull();
     await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);
-    expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
+    expect(await plugins.remove('./packages/core/src/mock/plugin1')).not.toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error adding bridged endpoint`));
   });
 
   test('addVirtualEndpoint', async () => {
-    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/plugin1')).not.toBeNull();
     const plugin = plugins.get('matterbridge-mock1');
     expect(plugin).toBeDefined();
     if (!plugin) return;
@@ -184,22 +187,22 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     await matterbridge.addVirtualEndpoint('matterbridge-mock1', 'Virtual', 'outlet', {} as any);
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`Please use a different name`));
 
-    expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
+    expect(await plugins.remove('./packages/core/src/mock/plugin1')).not.toBeNull();
   });
 
   test('add plugin', async () => {
     expect(plugins.length).toBe(0);
-    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/plugin1')).not.toBeNull();
     expect(plugins.length).toBe(1);
-    expect(await plugins.add('./src/mock/plugin2')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/plugin2')).not.toBeNull();
     expect(plugins.length).toBe(2);
-    expect(await plugins.add('./src/mock/plugin3')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/plugin3')).not.toBeNull();
     expect(plugins.length).toBe(3);
-    expect(await plugins.add('./src/mock/plugin4')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/plugin4')).not.toBeNull();
     expect(plugins.length).toBe(4);
-    expect(await plugins.add('./src/mock/plugin5')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/plugin5')).not.toBeNull();
     expect(plugins.length).toBe(5);
-    expect(await plugins.add('./src/mock/plugin6')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/plugin6')).not.toBeNull();
     expect(plugins.length).toBe(6);
     expect(plugins.get('matterbridge-mock1')?.type).toBe('AnyPlatform');
     expect(plugins.get('matterbridge-mock2')?.type).toBe('AnyPlatform');
@@ -246,7 +249,9 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     await waiter(
       'Matter server node restarted',
       () => {
-        return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
+        return (
+          (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true
+        );
       },
       true,
       60000,
@@ -257,7 +262,14 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     await waiter(
       'Matterbridge plugins started',
       () => {
-        return plugins.array()[0].started === true && plugins.array()[1].started === true && plugins.array()[2].started === true && plugins.array()[3].started === true && plugins.array()[4].started === true && plugins.array()[5].started === true;
+        return (
+          plugins.array()[0].started === true &&
+          plugins.array()[1].started === true &&
+          plugins.array()[2].started === true &&
+          plugins.array()[3].started === true &&
+          plugins.array()[4].started === true &&
+          plugins.array()[5].started === true
+        );
       },
       true,
       60000,

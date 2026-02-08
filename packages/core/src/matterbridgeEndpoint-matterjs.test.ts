@@ -660,9 +660,9 @@ describe('Matterbridge ' + NAME, () => {
       endpoint.events.occupancySensing.occupancy$Changed.on((newState, oldState, context) => {
         // console.log(wr + 'occupancySensing.occupancy$Changed', newState, oldState, context);
         expect(newState).toBeDefined();
-        expect(newState).toEqual({ 'occupied': true });
+        expect(newState).toEqual({ occupied: true });
         expect(oldState).toBeDefined();
-        expect(oldState).toEqual({ 'occupied': false });
+        expect(oldState).toEqual({ occupied: false });
         expect(context).toBeDefined();
         expect(context?.offline).toBe(true);
         if (newState.occupied && !oldState.occupied && context?.offline) {
@@ -674,28 +674,31 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add deviceType to onOffPlugin with tagList', async () => {
-    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared)), {
-      id: 'OnOffPlugin2',
-      identify: {
-        identifyTime: 0,
-        identifyType: Identify.IdentifyType.None,
+    const endpoint = new Endpoint(
+      OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared)),
+      {
+        id: 'OnOffPlugin2',
+        identify: {
+          identifyTime: 0,
+          identifyType: Identify.IdentifyType.None,
+        },
+        onOff: {
+          onOff: false,
+        },
+        occupancySensing: {
+          occupancy: { occupied: false },
+          occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
+          occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
+        },
+        descriptor: {
+          tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
+          deviceTypeList: [
+            { deviceType: onOffOutlet.code, revision: onOffOutlet.revision },
+            { deviceType: occupancySensor.code, revision: occupancySensor.revision },
+          ],
+        },
       },
-      onOff: {
-        onOff: false,
-      },
-      occupancySensing: {
-        occupancy: { occupied: false },
-        occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
-        occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
-      },
-      descriptor: {
-        tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
-        deviceTypeList: [
-          { deviceType: onOffOutlet.code, revision: onOffOutlet.revision },
-          { deviceType: occupancySensor.code, revision: occupancySensor.revision },
-        ],
-      },
-    });
+    );
     expect(endpoint).toBeDefined();
     expect(() =>
       endpoint.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
@@ -710,29 +713,36 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add deviceType to onOffPlugin in the costructor', async () => {
-    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), IlluminanceMeasurementServer), {
-      id: 'OnOffPlugin3',
-      identify: {
-        identifyTime: 0,
-        identifyType: Identify.IdentifyType.None,
+    const endpoint = new Endpoint(
+      OnOffPlugInUnitDevice.with(
+        DescriptorServer.with(Descriptor.Feature.TagList),
+        OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared),
+        IlluminanceMeasurementServer,
+      ),
+      {
+        id: 'OnOffPlugin3',
+        identify: {
+          identifyTime: 0,
+          identifyType: Identify.IdentifyType.None,
+        },
+        onOff: {
+          onOff: false,
+        },
+        occupancySensing: {
+          occupancy: { occupied: false },
+          occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
+          occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
+        },
+        descriptor: {
+          tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
+          deviceTypeList: [
+            { deviceType: onOffOutlet.code, revision: onOffOutlet.revision },
+            { deviceType: occupancySensor.code, revision: occupancySensor.revision },
+            { deviceType: lightSensor.code, revision: lightSensor.revision },
+          ],
+        },
       },
-      onOff: {
-        onOff: false,
-      },
-      occupancySensing: {
-        occupancy: { occupied: false },
-        occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
-        occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
-      },
-      descriptor: {
-        tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
-        deviceTypeList: [
-          { deviceType: onOffOutlet.code, revision: onOffOutlet.revision },
-          { deviceType: occupancySensor.code, revision: occupancySensor.revision },
-          { deviceType: lightSensor.code, revision: lightSensor.revision },
-        ],
-      },
-    });
+    );
     expect(endpoint).toBeDefined();
     await expect(server.add(endpoint)).resolves.toBeDefined();
     const deviceTypeList = endpoint.state.descriptor.deviceTypeList;
@@ -856,7 +866,10 @@ describe('Matterbridge ' + NAME, () => {
     await invokeBehaviorCommand(light, 'identify', 'triggerEffect', { effectIdentifier: Identify.EffectIdentifier.Okay, effectVariant: Identify.EffectVariant.Default });
     expect(called).toBeTruthy();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Identifying device for 5 seconds (endpoint ${light.id}.${light.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Triggering effect ${Identify.EffectIdentifier.Okay} variant ${Identify.EffectVariant.Default} (endpoint ${light.id}.${light.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Triggering effect ${Identify.EffectIdentifier.Okay} variant ${Identify.EffectVariant.Default} (endpoint ${light.id}.${light.number})`,
+    );
   });
 
   test('invoke MatterbridgeOnOffServer commands', async () => {
@@ -882,8 +895,18 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.behaviors.elementsOf(MatterbridgeLevelControlServer).commands.has('moveToLevelWithOnOff')).toBeTruthy();
     expect((light.stateOf(MatterbridgeLevelControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
     expect((light.stateOf(MatterbridgeLevelControlServer) as any).generatedCommandList).toEqual([]);
-    await invokeBehaviorCommand(light, 'levelControl', 'moveToLevel', { level: 100, transitionTime: 5, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-    await invokeBehaviorCommand(light, 'levelControl', 'moveToLevelWithOnOff', { level: 100, transitionTime: 5, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+    await invokeBehaviorCommand(light, 'levelControl', 'moveToLevel', {
+      level: 100,
+      transitionTime: 5,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
+    await invokeBehaviorCommand(light, 'levelControl', 'moveToLevelWithOnOff', {
+      level: 100,
+      transitionTime: 5,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${light.id}.${light.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${light.id}.${light.number})`);
   });
@@ -898,11 +921,40 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
     expect((light.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]);
     expect((light.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
-    await invokeBehaviorCommand(light, 'colorControl', 'moveToHue', { hue: 180, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-    await invokeBehaviorCommand(light, 'colorControl', 'moveToSaturation', { saturation: 100, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-    await invokeBehaviorCommand(light, 'colorControl', 'moveToHueAndSaturation', { hue: 180, saturation: 100, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-    await invokeBehaviorCommand(light, 'colorControl', 'moveToColor', { colorX: 30000, colorY: 30000, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-    await invokeBehaviorCommand(light, 'colorControl', 'moveToColorTemperature', { colorTemperatureMireds: 250, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+    await invokeBehaviorCommand(light, 'colorControl', 'moveToHue', {
+      hue: 180,
+      direction: ColorControl.Direction.Shortest,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
+    await invokeBehaviorCommand(light, 'colorControl', 'moveToSaturation', {
+      saturation: 100,
+      direction: ColorControl.Direction.Shortest,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
+    await invokeBehaviorCommand(light, 'colorControl', 'moveToHueAndSaturation', {
+      hue: 180,
+      saturation: 100,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
+    await invokeBehaviorCommand(light, 'colorControl', 'moveToColor', {
+      colorX: 30000,
+      colorY: 30000,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
+    await invokeBehaviorCommand(light, 'colorControl', 'moveToColorTemperature', {
+      colorTemperatureMireds: 250,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
@@ -920,7 +972,13 @@ describe('Matterbridge ' + NAME, () => {
     expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
     expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 64, 65, 66, 67, 71]);
     expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).generatedCommandList).toEqual([]);
-    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToHue', { hue: 180, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToHue', {
+      hue: 180,
+      direction: ColorControl.Direction.Shortest,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
     await invokeBehaviorCommand(enhancedLight, 'colorControl', 'enhancedMoveToHue', {
       enhancedHue: 32000,
       direction: ColorControl.Direction.Shortest,
@@ -928,16 +986,51 @@ describe('Matterbridge ' + NAME, () => {
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToSaturation', { saturation: 100, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToHueAndSaturation', { hue: 180, saturation: 100, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'enhancedMoveToHueAndSaturation', { enhancedHue: 32000, saturation: 100, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToColor', { colorX: 30000, colorY: 30000, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToColorTemperature', { colorTemperatureMireds: 250, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToSaturation', {
+      saturation: 100,
+      direction: ColorControl.Direction.Shortest,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToHueAndSaturation', {
+      hue: 180,
+      saturation: 100,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'enhancedMoveToHueAndSaturation', {
+      enhancedHue: 32000,
+      saturation: 100,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToColor', {
+      colorX: 30000,
+      colorY: 30000,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
+    await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToColorTemperature', {
+      colorTemperatureMireds: 250,
+      transitionTime: 0,
+      optionsMask: { executeIfOff: false },
+      optionsOverride: { executeIfOff: false },
+    });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting enhanced hue to 32000 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting enhanced hue to 32000 and saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Setting enhanced hue to 32000 and saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`,
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color to 30000, 30000 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
   });
@@ -1040,7 +1133,10 @@ describe('Matterbridge ' + NAME, () => {
     expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0, 254]);
     expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([253]);
     await invokeBehaviorCommand(thermostat, 'thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermostat.id}.${thermostat.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermostat.id}.${thermostat.number})`,
+    );
   });
 
   test('invoke MatterbridgeValveConfigurationAndControlServer commands', async () => {
@@ -1186,7 +1282,10 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'resume');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`,
+    );
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'goHome');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `GoHome (endpoint ${rvc.id}.${rvc.number})`);
@@ -1261,7 +1360,10 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(evse, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${evse.id}.${evse.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`,
+    );
     jest.clearAllMocks();
     await invokeBehaviorCommand(evse, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 2 (endpoint ${evse.id}.${evse.number})`);

@@ -9,12 +9,13 @@ import { inspect } from 'node:util';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
+import { setupTest } from '@matterbridge/core/jestutils';
 
-import { setupTest } from './jestutils/jestHelpers.js';
+import { BroadcastServer } from '../../../packages/core/src/broadcastServer.js';
+import { WorkerMessage } from '../../../packages/core/src/broadcastServerTypes.js';
+
 import { createESMWorker } from './worker.js';
 import type { ParentPortMessage } from './workerTypes.js';
-import { BroadcastServer } from './broadcastServer.js';
-import { WorkerMessage } from './broadcastServerTypes.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -62,7 +63,7 @@ describe('Workers', () => {
     }
 
     await new Promise<void>((resolve, reject) => {
-      worker = createESMWorker('NpmGlobalPrefix', './dist/workerGlobalPrefix.js');
+      worker = createESMWorker('NpmGlobalPrefix', './packages/core/dist/workerGlobalPrefix.js');
       worker.on('message', messageHandler);
       workerName = 'NpmGlobalPrefix';
       workerId = worker.threadId;
@@ -96,7 +97,7 @@ describe('Workers', () => {
     }
 
     await new Promise<void>((resolve, reject) => {
-      worker = createESMWorker('CheckUpdates', './dist/workerCheckUpdates.js');
+      worker = createESMWorker('CheckUpdates', './packages/core/dist/workerCheckUpdates.js');
       worker.on('message', messageHandler);
       workerName = 'CheckUpdates';
       workerId = worker.threadId;

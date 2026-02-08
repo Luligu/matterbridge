@@ -74,7 +74,17 @@
       "label": "Test: Frontend",
       "type": "shell",
       "command": "node",
-      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "frontend.test.ts", "frontend.express.test.ts", "frontend.websocket.test.ts"],
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "frontend.test.ts",
+        "frontend.express.test.ts",
+        "frontend.websocket.test.ts"
+      ],
       "group": {
         "kind": "test",
         "isDefault": false
@@ -251,7 +261,17 @@
       "label": "Test: Workers",
       "type": "shell",
       "command": "node",
-      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "src/broadcastServer.test.ts", "src/worker.test.ts", "src/worker.mock.test.ts"],
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "src/broadcastServer.test.ts",
+        "src/worker.test.ts",
+        "src/worker.mock.test.ts"
+      ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },

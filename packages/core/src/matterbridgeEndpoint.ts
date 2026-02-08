@@ -22,6 +22,9 @@
  * limitations under the License.
  */
 
+/* eslint-disable jsdoc/reject-any-type */
+/* eslint-disable jsdoc/reject-function-type */
+
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpoint loaded.\u001B[40;0m');
 
@@ -338,7 +341,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
     // Create the logger. Temporarly uses the originalId if available or 'MatterbridgeEndpoint' as fallback. The logName will be set by createDefaultBasicInformationClusterServer() and createDefaultBridgedDeviceBasicInformationClusterServer() with deviceName.
-    this.log = new AnsiLogger({ logName: this.originalId ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
+    this.log = new AnsiLogger({
+      logName: this.originalId ?? 'MatterbridgeEndpoint',
+      logTimestampFormat: TimestampFormat.TIME_MILLIS,
+      logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel,
+    });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} mode: ${CYAN}${this.mode}${db} id: ${CYAN}${optionsV8.id}${db} number: ${CYAN}${optionsV8.number}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
@@ -355,7 +362,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [debug] - Debug flag.
    * @returns {Promise<MatterbridgeEndpoint>} MatterbridgeEndpoint instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false): Promise<MatterbridgeEndpoint> {
+  static async loadInstance(
+    definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>,
+    options: MatterbridgeEndpointOptions = {},
+    debug: boolean = false,
+  ): Promise<MatterbridgeEndpoint> {
     return new MatterbridgeEndpoint(definition, options, debug);
   }
 
@@ -481,7 +492,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
    */
-  async setAttribute(clusterId: Behavior.Type | ClusterType | ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean> {
+  async setAttribute(
+    clusterId: Behavior.Type | ClusterType | ClusterId | string,
+    attribute: string,
+    value: boolean | number | bigint | string | object | null,
+    log?: AnsiLogger,
+  ): Promise<boolean> {
     return await setAttribute(this, clusterId, attribute, value, log);
   }
 
@@ -507,7 +523,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
    */
-  async updateAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean> {
+  async updateAttribute(
+    cluster: Behavior.Type | ClusterType | ClusterId | string,
+    attribute: string,
+    value: boolean | number | bigint | string | object | null,
+    log?: AnsiLogger,
+  ): Promise<boolean> {
     return await updateAttribute(this, cluster, attribute, value, log);
   }
 
@@ -526,8 +547,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. When context.offline === true then the change is locally generated and not from the controller.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async subscribeAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, listener: (newValue: any, oldValue: any, context: ActionContext) => void, log?: AnsiLogger): Promise<boolean> {
+
+  async subscribeAttribute(
+    cluster: Behavior.Type | ClusterType | ClusterId | string,
+    attribute: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    listener: (newValue: any, oldValue: any, context: ActionContext) => void,
+    log?: AnsiLogger,
+  ): Promise<boolean> {
     return await subscribeAttribute(this, cluster, attribute, listener, log);
   }
 
@@ -540,7 +567,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {AnsiLogger} [log] - Optional logger for logging information.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
    */
-  async triggerEvent(cluster: Behavior.Type | ClusterType | ClusterId | string, event: string, payload: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger): Promise<boolean> {
+  async triggerEvent(
+    cluster: Behavior.Type | ClusterType | ClusterId | string,
+    event: string,
+    payload: Record<string, boolean | number | bigint | string | object | undefined | null>,
+    log?: AnsiLogger,
+  ): Promise<boolean> {
     return await triggerEvent(this, cluster, event, payload, log);
   }
 
@@ -628,7 +660,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @deprecated Used ONLY in Jest tests.
    */
-  async invokeBehaviorCommand(cluster: Behavior.Type | ClusterType | ClusterId | string, command: keyof MatterbridgeEndpointCommands, params?: Record<string, boolean | number | bigint | string | object | null>) {
+  async invokeBehaviorCommand(
+    cluster: Behavior.Type | ClusterType | ClusterId | string,
+    command: keyof MatterbridgeEndpointCommands,
+    params?: Record<string, boolean | number | bigint | string | object | null>,
+  ) {
     await invokeBehaviorCommand(this, cluster, command, params);
   }
 
@@ -675,10 +711,20 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {Function} callback - The callback function to call with the cluster name, cluster id, attribute name, attribute id and attribute value.
    */
-  forEachAttribute(callback: (clusterName: string, clusterId: number, attributeName: string, attributeId: number, attributeValue: boolean | number | bigint | string | object | null | undefined) => void): void {
+  forEachAttribute(
+    callback: (
+      clusterName: string,
+      clusterId: number,
+      attributeName: string,
+      attributeId: number,
+      attributeValue: boolean | number | bigint | string | object | null | undefined,
+    ) => void,
+  ): void {
     if (!this.lifecycle.isReady || this.construction.status !== Lifecycle.Status.Active) return;
 
-    for (const [clusterName, clusterAttributes] of Object.entries(this.state as unknown as Record<string, Record<string, boolean | number | bigint | string | object | undefined | null>>)) {
+    for (const [clusterName, clusterAttributes] of Object.entries(
+      this.state as unknown as Record<string, Record<string, boolean | number | bigint | string | object | undefined | null>>,
+    )) {
       // Skip if the key / cluster name is a number, cause they are double indexed.
       if (!isNaN(Number(clusterName))) continue;
       for (const [attributeName, attributeValue] of Object.entries(clusterAttributes)) {
@@ -715,7 +761,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * const endpoint = device.addChildDeviceType('Temperature', [temperatureSensor], { tagList: [{ mfgCode: null, namespaceId: LocationTag.Indoor.namespaceId, tag: LocationTag.Indoor.tag, label: null }] }, true);
    * ```
    */
-  addChildDeviceType(endpointName: string, definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false): MatterbridgeEndpoint {
+  addChildDeviceType(
+    endpointName: string,
+    definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>,
+    options: MatterbridgeEndpointOptions = {},
+    debug: boolean = false,
+  ): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
     let alreadyAdded = false;
     let child = this.getChildEndpointByName(endpointName);
@@ -778,7 +829,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * const endpoint = device.addChildDeviceTypeWithClusterServer('Temperature', [temperatureSensor], [], { tagList: [{ mfgCode: null, namespaceId: LocationTag.Indoor.namespaceId, tag: LocationTag.Indoor.tag, label: null }] }, true);
    * ```
    */
-  addChildDeviceTypeWithClusterServer(endpointName: string, definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, serverList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug: boolean = false): MatterbridgeEndpoint {
+  addChildDeviceTypeWithClusterServer(
+    endpointName: string,
+    definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>,
+    serverList: ClusterId[] = [],
+    options: MatterbridgeEndpointOptions = {},
+    debug: boolean = false,
+  ): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let alreadyAdded = false;
     let child = this.getChildEndpointByName(endpointName);
@@ -996,7 +1053,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     batVoltage: null | number = null,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
   ): this {
-    this.behaviors.require(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery), getDefaultPowerSourceBatteryClusterServer(batPercentRemaining, batChargeLevel, batVoltage, batReplaceability));
+    this.behaviors.require(
+      MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery),
+      getDefaultPowerSourceBatteryClusterServer(batPercentRemaining, batChargeLevel, batVoltage, batReplaceability),
+    );
     return this;
   }
 
@@ -1053,7 +1113,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     batVoltage: number = 1500,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
   ): this {
-    this.behaviors.require(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), getDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining, batChargeLevel, batVoltage, batReplaceability));
+    this.behaviors.require(
+      MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable),
+      getDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining, batChargeLevel, batVoltage, batReplaceability),
+    );
     return this;
   }
 
@@ -1188,7 +1251,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
     this.behaviors.require(
-      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      ElectricalEnergyMeasurementServer.with(
+        ElectricalEnergyMeasurement.Feature.ImportedEnergy,
+        ElectricalEnergyMeasurement.Feature.ExportedEnergy,
+        ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
+      ),
       getDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported),
     );
     return this;
@@ -1203,8 +1270,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} frequency - The frequency value in millihertz.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null): this {
-    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), getDefaultElectricalPowerMeasurementClusterServer(voltage, current, power, frequency));
+  createDefaultElectricalPowerMeasurementClusterServer(
+    voltage: number | bigint | null = null,
+    current: number | bigint | null = null,
+    power: number | bigint | null = null,
+    frequency: number | bigint | null = null,
+  ): this {
+    this.behaviors.require(
+      ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
+      getDefaultElectricalPowerMeasurementClusterServer(voltage, current, power, frequency),
+    );
     return this;
   }
 
@@ -1217,8 +1292,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} frequency - The frequency value in millihertz.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createApparentElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, apparentCurrent: number | bigint | null = null, apparentPower: number | bigint | null = null, frequency: number | bigint | null = null): this {
-    this.behaviors.require(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), getApparentElectricalPowerMeasurementClusterServer(voltage, apparentCurrent, apparentPower, frequency));
+  createApparentElectricalPowerMeasurementClusterServer(
+    voltage: number | bigint | null = null,
+    apparentCurrent: number | bigint | null = null,
+    apparentPower: number | bigint | null = null,
+    frequency: number | bigint | null = null,
+  ): this {
+    this.behaviors.require(
+      ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
+      getApparentElectricalPowerMeasurementClusterServer(voltage, apparentCurrent, apparentPower, frequency),
+    );
     return this;
   }
 
@@ -1323,7 +1406,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {OnOff.StartUpOnOff | null} [startUpOnOff] - The start-up OnOff state. Null means previous state.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultOnOffClusterServer(onOff: boolean = false, globalSceneControl: boolean = false, onTime: number = 0, offWaitTime: number = 0, startUpOnOff: OnOff.StartUpOnOff | null = null): this {
+  createDefaultOnOffClusterServer(
+    onOff: boolean = false,
+    globalSceneControl: boolean = false,
+    onTime: number = 0,
+    offWaitTime: number = 0,
+    startUpOnOff: OnOff.StartUpOnOff | null = null,
+  ): this {
     this.behaviors.require(MatterbridgeOnOffServer.with(OnOff.Feature.Lighting), {
       onOff,
       globalSceneControl,
@@ -1404,7 +1493,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * If any command that has the effect of setting the CurrentLevel attribute to the minimum level
    * allowed by the device, the OnOff attribute of the On/Off cluster on the same endpoint, if implemented, SHALL be set to FALSE (‘Off’).
    */
-  createDefaultLevelControlClusterServer(currentLevel: number = 254, minLevel: number = 1, maxLevel: number = 254, onLevel: number | null = null, startUpCurrentLevel: number | null = null): this {
+  createDefaultLevelControlClusterServer(
+    currentLevel: number = 254,
+    minLevel: number = 1,
+    maxLevel: number = 254,
+    onLevel: number | null = null,
+    startUpCurrentLevel: number | null = null,
+  ): this {
     this.behaviors.require(MatterbridgeLevelControlServer.with(LevelControl.Feature.OnOff, LevelControl.Feature.Lighting), {
       currentLevel,
       minLevel,
@@ -1547,26 +1642,34 @@ export class MatterbridgeEndpoint extends Endpoint {
     colorTempPhysicalMinMireds: number = 147,
     colorTempPhysicalMaxMireds: number = 500,
   ): this {
-    this.behaviors.require(MatterbridgeEnhancedColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.EnhancedHue, ColorControl.Feature.ColorTemperature), {
-      colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
-      enhancedColorMode: ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation,
-      colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: true, colorTemperature: true },
-      options: {
-        executeIfOff: false,
+    this.behaviors.require(
+      MatterbridgeEnhancedColorControlServer.with(
+        ColorControl.Feature.Xy,
+        ColorControl.Feature.HueSaturation,
+        ColorControl.Feature.EnhancedHue,
+        ColorControl.Feature.ColorTemperature,
+      ),
+      {
+        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+        enhancedColorMode: ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation,
+        colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: true, colorTemperature: true },
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        currentX,
+        currentY,
+        currentHue: Math.round((enhancedCurrentHue / 65535) * 254), // currentHue range is 0-254 and enhancedCurrentHue range is 0-65535
+        enhancedCurrentHue,
+        currentSaturation,
+        colorTemperatureMireds,
+        colorTempPhysicalMinMireds,
+        colorTempPhysicalMaxMireds,
+        coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+        startUpColorTemperatureMireds: null,
+        remainingTime: 0,
       },
-      numberOfPrimaries: null,
-      currentX,
-      currentY,
-      currentHue: Math.round((enhancedCurrentHue / 65535) * 254), // currentHue range is 0-254 and enhancedCurrentHue range is 0-65535
-      enhancedCurrentHue,
-      currentSaturation,
-      colorTemperatureMireds,
-      colorTempPhysicalMinMireds,
-      colorTempPhysicalMaxMireds,
-      coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
-      startUpColorTemperatureMireds: null,
-      remainingTime: 0,
-    });
+    );
     return this;
   }
 
@@ -1589,7 +1692,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks startUpColorTemperatureMireds persists across restarts.
    * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
-  createXyColorControlClusterServer(currentX: number = 0, currentY: number = 0, colorTemperatureMireds: number = 500, colorTempPhysicalMinMireds: number = 147, colorTempPhysicalMaxMireds: number = 500): this {
+  createXyColorControlClusterServer(
+    currentX: number = 0,
+    currentY: number = 0,
+    colorTemperatureMireds: number = 500,
+    colorTempPhysicalMinMireds: number = 147,
+    colorTempPhysicalMaxMireds: number = 500,
+  ): this {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.CurrentXAndCurrentY,
       enhancedColorMode: ColorControl.EnhancedColorMode.CurrentXAndCurrentY,
@@ -1626,7 +1735,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks startUpColorTemperatureMireds persists across restarts.
    * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
-  createHsColorControlClusterServer(currentHue: number = 0, currentSaturation: number = 0, colorTemperatureMireds: number = 500, colorTempPhysicalMinMireds: number = 147, colorTempPhysicalMaxMireds: number = 500): this {
+  createHsColorControlClusterServer(
+    currentHue: number = 0,
+    currentSaturation: number = 0,
+    colorTemperatureMireds: number = 500,
+    colorTempPhysicalMinMireds: number = 147,
+    colorTempPhysicalMaxMireds: number = 500,
+  ): this {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
       enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
@@ -1703,7 +1818,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   async configureEnhancedColorControlMode(colorMode: ColorControl.EnhancedColorMode) {
     if (isValidNumber(colorMode, ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation, ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation)) {
-      await this.setAttribute(ColorControl.Cluster.id, 'colorMode', colorMode === ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation ? ColorControl.ColorMode.CurrentHueAndCurrentSaturation : colorMode, this.log);
+      await this.setAttribute(
+        ColorControl.Cluster.id,
+        'colorMode',
+        colorMode === ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation ? ColorControl.ColorMode.CurrentHueAndCurrentSaturation : colorMode,
+        this.log,
+      );
       await this.setAttribute(ColorControl.Cluster.id, 'enhancedColorMode', colorMode, this.log);
     }
   }
@@ -1765,27 +1885,35 @@ export class MatterbridgeEndpoint extends Endpoint {
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindLift,
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorBlind,
   ): this {
-    this.behaviors.require(MatterbridgeLiftTiltWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
-      type, // Must support features Lift and Tilt
-      numberOfActuationsLift: 0,
-      numberOfActuationsTilt: 0,
-      configStatus: {
-        operational: true,
-        onlineReserved: false,
-        liftMovementReversed: false,
-        liftPositionAware: true,
-        tiltPositionAware: true,
-        liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
-        tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+    this.behaviors.require(
+      MatterbridgeLiftTiltWindowCoveringServer.with(
+        WindowCovering.Feature.Lift,
+        WindowCovering.Feature.PositionAwareLift,
+        WindowCovering.Feature.Tilt,
+        WindowCovering.Feature.PositionAwareTilt,
+      ),
+      {
+        type, // Must support features Lift and Tilt
+        numberOfActuationsLift: 0,
+        numberOfActuationsTilt: 0,
+        configStatus: {
+          operational: true,
+          onlineReserved: false,
+          liftMovementReversed: false,
+          liftPositionAware: true,
+          tiltPositionAware: true,
+          liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+          tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+        },
+        operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+        endProductType, // Must support features Lift and Tilt
+        mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
+        targetPositionLiftPercent100ths: positionLiftPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+        currentPositionLiftPercent100ths: positionLiftPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+        targetPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+        currentPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
       },
-      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
-      endProductType, // Must support features Lift and Tilt
-      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
-      targetPositionLiftPercent100ths: positionLiftPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-      currentPositionLiftPercent100ths: positionLiftPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-      targetPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-      currentPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-    });
+    );
     return this;
   }
 
@@ -1924,43 +2052,51 @@ export class MatterbridgeEndpoint extends Endpoint {
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
   ): this {
-    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
-      // Common attributes
-      localTemperature: localTemperature * 100,
-      externalMeasuredIndoorTemperature: localTemperature * 100,
-      ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
-      controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
-      systemMode: Thermostat.SystemMode.Auto,
-      thermostatRunningState: {
-        heat: false,
-        cool: false,
-        fan: false,
-        heatStage2: false,
-        coolStage2: false,
-        fanStage2: false,
-        fanStage3: false,
+    this.behaviors.require(
+      MatterbridgeThermostatServer.with(
+        Thermostat.Feature.Heating,
+        Thermostat.Feature.Cooling,
+        Thermostat.Feature.AutoMode,
+        ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : []),
+      ),
+      {
+        // Common attributes
+        localTemperature: localTemperature * 100,
+        externalMeasuredIndoorTemperature: localTemperature * 100,
+        ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
+        controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+        systemMode: Thermostat.SystemMode.Auto,
+        thermostatRunningState: {
+          heat: false,
+          cool: false,
+          fan: false,
+          heatStage2: false,
+          coolStage2: false,
+          fanStage2: false,
+          fanStage3: false,
+        },
+        // Thermostat.Feature.Heating
+        occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
+        minHeatSetpointLimit: minHeatSetpointLimit * 100,
+        maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
+        absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        // Thermostat.Feature.Cooling
+        occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
+        minCoolSetpointLimit: minCoolSetpointLimit * 100,
+        maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
+        absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        // Thermostat.Feature.AutoMode
+        minSetpointDeadBand: minSetpointDeadBand * 10,
+        thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
+        // Thermostat.Feature.Occupancy
+        ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
+        ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
+        ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+        ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
       },
-      // Thermostat.Feature.Heating
-      occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
-      minHeatSetpointLimit: minHeatSetpointLimit * 100,
-      maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
-      absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
-      absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
-      // Thermostat.Feature.Cooling
-      occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
-      minCoolSetpointLimit: minCoolSetpointLimit * 100,
-      maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
-      absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
-      absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
-      // Thermostat.Feature.AutoMode
-      minSetpointDeadBand: minSetpointDeadBand * 10,
-      thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
-      // Thermostat.Feature.Occupancy
-      ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
-      ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
-      ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
-      ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
-    });
+    );
     return this;
   }
 
@@ -2185,7 +2321,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   createDefaultThermostatUserInterfaceConfigurationClusterServer(
     temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode = ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius,
     keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout = ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout,
-    scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility = ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted,
+    scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility = ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility
+      .ScheduleProgrammingPermitted,
   ): this {
     this.behaviors.require(ThermostatUserInterfaceConfigurationServer, {
       temperatureDisplayMode,
@@ -2209,7 +2346,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - fanModeSequence is fixed.
    * - percentSetting is writable.
    */
-  createDefaultFanControlClusterServer(fanMode: FanControl.FanMode = FanControl.FanMode.Off, fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto, percentSetting: number = 0, percentCurrent: number = 0): this {
+  createDefaultFanControlClusterServer(
+    fanMode: FanControl.FanMode = FanControl.FanMode.Off,
+    fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto,
+    percentSetting: number = 0,
+    percentCurrent: number = 0,
+  ): this {
     this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.Auto, FanControl.Feature.Step), {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
@@ -2256,7 +2398,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * fanModeSequence is fixed.
    * percentSetting is writable.
    */
-  createBaseFanControlClusterServer(fanMode: FanControl.FanMode = FanControl.FanMode.Off, fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHigh, percentSetting: number = 0, percentCurrent: number = 0): this {
+  createBaseFanControlClusterServer(
+    fanMode: FanControl.FanMode = FanControl.FanMode.Off,
+    fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHigh,
+    percentSetting: number = 0,
+    percentCurrent: number = 0,
+  ): this {
     this.behaviors.require(FanControlServer, {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
@@ -2362,25 +2509,35 @@ export class MatterbridgeEndpoint extends Endpoint {
     windSetting: { sleepWind: boolean; naturalWind: boolean } = { sleepWind: false, naturalWind: true },
     airflowDirection: FanControl.AirflowDirection = FanControl.AirflowDirection.Forward,
   ): this {
-    this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step, FanControl.Feature.Rocking, FanControl.Feature.Wind, FanControl.Feature.AirflowDirection), {
-      // Base fan control attributes
-      fanMode, // Writable and persistent attribute
-      fanModeSequence, // Fixed attribute
-      percentSetting, // Writable attribute
-      percentCurrent,
-      // MultiSpeed feature
-      speedMax, // Fixed attribute
-      speedSetting, // Writable attribute
-      speedCurrent,
-      // Rocking feature
-      rockSupport, // Fixed attribute
-      rockSetting, // Writable attribute
-      // Wind feature
-      windSupport, // Fixed attribute
-      windSetting, // Writable attribute
-      // AirflowDirection feature
-      airflowDirection, // Writable attribute
-    });
+    this.behaviors.require(
+      MatterbridgeFanControlServer.with(
+        FanControl.Feature.MultiSpeed,
+        FanControl.Feature.Auto,
+        FanControl.Feature.Step,
+        FanControl.Feature.Rocking,
+        FanControl.Feature.Wind,
+        FanControl.Feature.AirflowDirection,
+      ),
+      {
+        // Base fan control attributes
+        fanMode, // Writable and persistent attribute
+        fanModeSequence, // Fixed attribute
+        percentSetting, // Writable attribute
+        percentCurrent,
+        // MultiSpeed feature
+        speedMax, // Fixed attribute
+        speedSetting, // Writable attribute
+        speedCurrent,
+        // Rocking feature
+        rockSupport, // Fixed attribute
+        rockSetting, // Writable attribute
+        // Wind feature
+        windSupport, // Fixed attribute
+        windSetting, // Writable attribute
+        // AirflowDirection feature
+        airflowDirection, // Writable attribute
+      },
+    );
     return this;
   }
 
@@ -2412,17 +2569,20 @@ export class MatterbridgeEndpoint extends Endpoint {
     lastChangedTime: number | null | undefined = null,
     replacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
   ): this {
-    this.behaviors.require(MatterbridgeHepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList), {
-      // Feature.Condition
-      condition,
-      degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Fixed attribute
-      // Feature.ReplacementProductList
-      replacementProductList, // Fixed attribute
-      // Base attributes
-      changeIndication,
-      inPlaceIndicator,
-      lastChangedTime, // Writable and persistent across restarts
-    });
+    this.behaviors.require(
+      MatterbridgeHepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList),
+      {
+        // Feature.Condition
+        condition,
+        degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Fixed attribute
+        // Feature.ReplacementProductList
+        replacementProductList, // Fixed attribute
+        // Base attributes
+        changeIndication,
+        inPlaceIndicator,
+        lastChangedTime, // Writable and persistent across restarts
+      },
+    );
     return this;
   }
 
@@ -2454,17 +2614,24 @@ export class MatterbridgeEndpoint extends Endpoint {
     lastChangedTime: number | null | undefined = null,
     replacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
   ): this {
-    this.behaviors.require(MatterbridgeActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList), {
-      // Feature.Condition
-      condition,
-      degradationDirection: ResourceMonitoring.DegradationDirection.Down,
-      // Feature.ReplacementProductList
-      replacementProductList, // Fixed attribute
-      // Base attributes
-      changeIndication,
-      inPlaceIndicator,
-      lastChangedTime, // Writable and persistent across restarts
-    });
+    this.behaviors.require(
+      MatterbridgeActivatedCarbonFilterMonitoringServer.with(
+        ResourceMonitoring.Feature.Condition,
+        ResourceMonitoring.Feature.Warning,
+        ResourceMonitoring.Feature.ReplacementProductList,
+      ),
+      {
+        // Feature.Condition
+        condition,
+        degradationDirection: ResourceMonitoring.DegradationDirection.Down,
+        // Feature.ReplacementProductList
+        replacementProductList, // Fixed attribute
+        // Base attributes
+        changeIndication,
+        inPlaceIndicator,
+        lastChangedTime, // Writable and persistent across restarts
+      },
+    );
     return this;
   }
 
@@ -2534,7 +2701,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [valveLevel] - The valve level to set. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultValveConfigurationAndControlClusterServer(valveState: ValveConfigurationAndControl.ValveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel: number = 0): this {
+  createDefaultValveConfigurationAndControlClusterServer(
+    valveState: ValveConfigurationAndControl.ValveState = ValveConfigurationAndControl.ValveState.Closed,
+    valveLevel: number = 0,
+  ): this {
     this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level), {
       currentState: valveState,
       targetState: valveState,
@@ -2579,10 +2749,25 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {SmokeCoAlarm.AlarmState} coState - The state of the CO alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultSmokeCOAlarmClusterServer(smokeState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal, coState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal): this {
+  createDefaultSmokeCOAlarmClusterServer(
+    smokeState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal,
+    coState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal,
+  ): this {
     this.behaviors.require(
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm).enable({
-        events: { smokeAlarm: true, interconnectSmokeAlarm: false, coAlarm: true, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
+        events: {
+          smokeAlarm: true,
+          interconnectSmokeAlarm: false,
+          coAlarm: true,
+          interconnectCoAlarm: false,
+          lowBattery: true,
+          hardwareFault: true,
+          endOfService: true,
+          selfTestComplete: true,
+          alarmMuted: true,
+          muteEnded: true,
+          allClear: true,
+        },
       }),
       {
         smokeState,
@@ -2607,7 +2792,17 @@ export class MatterbridgeEndpoint extends Endpoint {
   createSmokeOnlySmokeCOAlarmClusterServer(smokeState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal): this {
     this.behaviors.require(
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm).enable({
-        events: { smokeAlarm: true, interconnectSmokeAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
+        events: {
+          smokeAlarm: true,
+          interconnectSmokeAlarm: false,
+          lowBattery: true,
+          hardwareFault: true,
+          endOfService: true,
+          selfTestComplete: true,
+          alarmMuted: true,
+          muteEnded: true,
+          allClear: true,
+        },
       }),
       {
         smokeState,
@@ -2631,7 +2826,17 @@ export class MatterbridgeEndpoint extends Endpoint {
   createCoOnlySmokeCOAlarmClusterServer(coState: SmokeCoAlarm.AlarmState = SmokeCoAlarm.AlarmState.Normal): this {
     this.behaviors.require(
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.CoAlarm).enable({
-        events: { coAlarm: true, interconnectCoAlarm: false, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
+        events: {
+          coAlarm: true,
+          interconnectCoAlarm: false,
+          lowBattery: true,
+          hardwareFault: true,
+          endOfService: true,
+          selfTestComplete: true,
+          alarmMuted: true,
+          muteEnded: true,
+          allClear: true,
+        },
       }),
       {
         coState,
@@ -2657,7 +2862,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultSwitchClusterServer(): this {
     this.behaviors.require(
-      MatterbridgeSwitchServer.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress).enable({
+      MatterbridgeSwitchServer.with(
+        Switch.Feature.MomentarySwitch,
+        Switch.Feature.MomentarySwitchRelease,
+        Switch.Feature.MomentarySwitchLongPress,
+        Switch.Feature.MomentarySwitchMultiPress,
+      ).enable({
         events: { initialPress: true, longPress: true, shortRelease: true, longRelease: true, multiPressOngoing: true, multiPressComplete: true },
       }),
       {
@@ -2843,9 +3053,18 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [defaultSensitivityLevel] - The default sensitivity level. Defaults to `0` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultBooleanStateConfigurationClusterServer(sensorFault: boolean = false, currentSensitivityLevel: number = 0, supportedSensitivityLevels: number = 2, defaultSensitivityLevel: number = 0): this {
+  createDefaultBooleanStateConfigurationClusterServer(
+    sensorFault: boolean = false,
+    currentSensitivityLevel: number = 0,
+    supportedSensitivityLevels: number = 2,
+    defaultSensitivityLevel: number = 0,
+  ): this {
     this.behaviors.require(
-      MatterbridgeBooleanStateConfigurationServer.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.SensitivityLevel).enable({
+      MatterbridgeBooleanStateConfigurationServer.with(
+        BooleanStateConfiguration.Feature.Visual,
+        BooleanStateConfiguration.Feature.Audible,
+        BooleanStateConfiguration.Feature.SensitivityLevel,
+      ).enable({
         events: { alarmsStateChanged: true, sensorFault: true },
       }),
       {
@@ -2960,7 +3179,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks The default value for the occupancy sensor type is PIR.
    */
   createDefaultOccupancySensingClusterServer(occupied: boolean = false, holdTime: number = 30, holdTimeMin: number = 1, holdTimeMax: number = 300): this {
-    this.behaviors.require(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), getDefaultOccupancySensingClusterServer(occupied, holdTime, holdTimeMin, holdTimeMax));
+    this.behaviors.require(
+      OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared),
+      getDefaultOccupancySensingClusterServer(occupied, holdTime, holdTimeMin, holdTimeMax),
+    );
     return this;
   }
 
@@ -3021,10 +3243,17 @@ export class MatterbridgeEndpoint extends Endpoint {
     levelValue: ConcentrationMeasurement.LevelValue = ConcentrationMeasurement.LevelValue.Unknown,
     measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
   ): this {
-    this.behaviors.require(TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.LevelIndication, ConcentrationMeasurement.Feature.MediumLevel, ConcentrationMeasurement.Feature.CriticalLevel), {
-      levelValue,
-      measurementMedium,
-    });
+    this.behaviors.require(
+      TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with(
+        ConcentrationMeasurement.Feature.LevelIndication,
+        ConcentrationMeasurement.Feature.MediumLevel,
+        ConcentrationMeasurement.Feature.CriticalLevel,
+      ),
+      {
+        levelValue,
+        measurementMedium,
+      },
+    );
     return this;
   }
 

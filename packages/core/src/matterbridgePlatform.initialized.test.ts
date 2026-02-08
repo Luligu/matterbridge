@@ -44,7 +44,7 @@ describe('Matterbridge platform', () => {
 
   test('Add accessory plugin matterbridge-accessory-test', async () => {
     expect(plugins.length).toBe(0);
-    expect(await plugins.add('./src/mock/pluginmbatest')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/pluginmbatest')).not.toBeNull();
     expect(plugins.length).toBe(1);
     expect(plugins.get('matterbridge-accessory-test')?.type).toBe('AnyPlatform');
     accessoryPlatform = (await plugins.load('matterbridge-accessory-test')) as MatterbridgeAccessoryPlatform;
@@ -57,7 +57,7 @@ describe('Matterbridge platform', () => {
 
   test('Add dynamic plugin matterbridge-dynamic-test', async () => {
     expect(plugins.length).toBe(1);
-    expect(await plugins.add('./src/mock/pluginmbdtest')).not.toBeNull();
+    expect(await plugins.add('./packages/core/src/mock/pluginmbdtest')).not.toBeNull();
     expect(plugins.length).toBe(2);
     expect(plugins.get('matterbridge-dynamic-test')?.type).toBe('AnyPlatform');
     dynamicPlatform = (await plugins.load('matterbridge-dynamic-test')) as MatterbridgeDynamicPlatform;
@@ -164,57 +164,57 @@ describe('Matterbridge platform', () => {
 });
 
 const defSchemaAccessory = {
-  'description': 'matterbridge-accessory-test v. 1.0.0 by LuLigu',
-  'properties': {
-    'name': {
-      'description': 'Plugin name',
-      'readOnly': true,
-      'type': 'string',
+  description: 'matterbridge-accessory-test v. 1.0.0 by LuLigu',
+  properties: {
+    name: {
+      description: 'Plugin name',
+      readOnly: true,
+      type: 'string',
     },
-    'type': {
-      'description': 'Plugin type',
-      'readOnly': true,
-      'type': 'string',
+    type: {
+      description: 'Plugin type',
+      readOnly: true,
+      type: 'string',
     },
-    'debug': {
-      'default': false,
-      'description': 'Enable the debug for the plugin (development only)',
-      'type': 'boolean',
+    debug: {
+      default: false,
+      description: 'Enable the debug for the plugin (development only)',
+      type: 'boolean',
     },
-    'unregisterOnShutdown': {
-      'default': false,
-      'description': 'Unregister all devices on shutdown (development only)',
-      'type': 'boolean',
+    unregisterOnShutdown: {
+      default: false,
+      description: 'Unregister all devices on shutdown (development only)',
+      type: 'boolean',
     },
   },
-  'title': 'Matterbridge accessory test plugin',
-  'type': 'object',
+  title: 'Matterbridge accessory test plugin',
+  type: 'object',
 };
 
 const defSchemaDynamic = {
-  'description': 'matterbridge-dynamic-test v. 1.0.0 by LuLigu',
-  'properties': {
-    'name': {
-      'description': 'Plugin name',
-      'readOnly': true,
-      'type': 'string',
+  description: 'matterbridge-dynamic-test v. 1.0.0 by LuLigu',
+  properties: {
+    name: {
+      description: 'Plugin name',
+      readOnly: true,
+      type: 'string',
     },
-    'type': {
-      'description': 'Plugin type',
-      'readOnly': true,
-      'type': 'string',
+    type: {
+      description: 'Plugin type',
+      readOnly: true,
+      type: 'string',
     },
-    'debug': {
-      'default': false,
-      'description': 'Enable the debug for the plugin (development only)',
-      'type': 'boolean',
+    debug: {
+      default: false,
+      description: 'Enable the debug for the plugin (development only)',
+      type: 'boolean',
     },
-    'unregisterOnShutdown': {
-      'default': false,
-      'description': 'Unregister all devices on shutdown (development only)',
-      'type': 'boolean',
+    unregisterOnShutdown: {
+      default: false,
+      description: 'Unregister all devices on shutdown (development only)',
+      type: 'boolean',
     },
   },
-  'title': 'Matterbridge dynamic test plugin',
-  'type': 'object',
+  title: 'Matterbridge dynamic test plugin',
+  type: 'object',
 };

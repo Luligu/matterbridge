@@ -94,7 +94,11 @@ export async function checkUpdatesAndLog(matterbridge: SharedMatterbridge, log: 
         type: 'frontend_snackbarmessage',
         src: server.name,
         dst: 'frontend',
-        params: { message: branch === 'main' ? updateJson.latestMessage : updateJson.devMessage, timeout: 0, severity: branch === 'main' ? updateJson.latestMessageSeverity : updateJson.devMessageSeverity },
+        params: {
+          message: branch === 'main' ? updateJson.latestMessage : updateJson.devMessage,
+          timeout: 0,
+          severity: branch === 'main' ? updateJson.latestMessageSeverity : updateJson.devMessageSeverity,
+        },
       });
       // matterbridge.frontend.wssSendSnackbarMessage(branch === 'main' ? updateJson.latestMessage : updateJson.devMessage, 0, branch === 'main' ? updateJson.latestMessageSeverity : updateJson.devMessageSeverity);
     }

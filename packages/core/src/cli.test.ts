@@ -3,7 +3,24 @@
 const NAME = 'CliMain';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', './cli.js', '-inspect', '-snapshotinterval', '60000', '-frontend', '0', '-help', '-version', '-loader', '-debug', '-verbose', '-logger', 'debug', '-matterlogger', 'debug'];
+process.argv = [
+  'node',
+  './cli.js',
+  '-inspect',
+  '-snapshotinterval',
+  '60000',
+  '-frontend',
+  '0',
+  '-help',
+  '-version',
+  '-loader',
+  '-debug',
+  '-verbose',
+  '-logger',
+  'debug',
+  '-matterlogger',
+  'debug',
+];
 
 import path from 'node:path';
 
@@ -89,7 +106,17 @@ describe('Matterbridge', () => {
     const cli = await import('./cli.js');
     expect(cli.instance).toBeDefined();
     cli.tracker.emit('uptime', 12.34, 23.45);
-    cli.tracker.emit('snapshot', { osCpu: 12.34, processCpu: 23.45, totalMemory: 123456789, freeMemory: 987654321, rss: 12345678, heapTotal: 87654321, heapUsed: 6543210, external: 123456, arrayBuffers: 98765 } as any);
+    cli.tracker.emit('snapshot', {
+      osCpu: 12.34,
+      processCpu: 23.45,
+      totalMemory: 123456789,
+      freeMemory: 987654321,
+      rss: 12345678,
+      heapTotal: 87654321,
+      heapUsed: 6543210,
+      external: 123456,
+      arrayBuffers: 98765,
+    } as any);
   });
 
   it('should shutdown matterbridge', async () => {

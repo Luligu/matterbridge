@@ -1,10 +1,10 @@
 // Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('../worker.js', () => ({
+jest.unstable_mockModule('@matterbridge/thread', () => ({
   createESMWorker: jest.fn(() => {
     return undefined; // Mock the createESMWorker function to return immediately
   }),
 }));
-const workerModule = await import('../worker.js');
+const workerModule = await import('@matterbridge/thread');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import path from 'node:path';
@@ -231,7 +231,12 @@ describe('Matterbridge not initialized test environment', () => {
   });
 
   test('should add a Matterbridge platform', async () => {
-    const platform = { name: 'JestHelpersPlatform', type: 'Any', version: '1.0.0', config: { name: 'JestHelpersPlatform', type: 'Any', version: '1.0.0', debug: false, unregisterOnShutdown: false } } as any;
+    const platform = {
+      name: 'JestHelpersPlatform',
+      type: 'Any',
+      version: '1.0.0',
+      config: { name: 'JestHelpersPlatform', type: 'Any', version: '1.0.0', debug: false, unregisterOnShutdown: false },
+    } as any;
     addMatterbridgePlatform(platform);
     expect(platform.name).toBe('JestHelpersPlatform');
   });

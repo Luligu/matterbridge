@@ -8,13 +8,11 @@ coverage/
 dist/
 jest/
 node_modules/
+temp/
 
 # Ignore specific files
 **/*.html
-docker-compose.yml
-.eslintcache
-.prettiercache
 
 # Package specific directories and files that should be ignored
-frontend
-packages
+apps/
+packages/

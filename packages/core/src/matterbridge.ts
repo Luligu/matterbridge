@@ -33,19 +33,65 @@ import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt, BLUE, or } from 'node-ansi-logger';
+import {
+  AnsiLogger,
+  TimestampFormat,
+  LogLevel,
+  UNDERLINE,
+  UNDERLINEOFF,
+  db,
+  debugStringify,
+  BRIGHT,
+  RESET,
+  er,
+  nf,
+  rs,
+  wr,
+  RED,
+  GREEN,
+  zb,
+  CYAN,
+  nt,
+  BLUE,
+  or,
+} from 'node-ansi-logger';
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
-import { Logger, Diagnostic, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, UINT32_MAX, UINT16_MAX, Crypto, Environment, StorageContext, StorageManager, StorageService } from '@matter/general';
+import {
+  Logger,
+  Diagnostic,
+  LogLevel as MatterLogLevel,
+  LogFormat as MatterLogFormat,
+  UINT32_MAX,
+  UINT16_MAX,
+  Crypto,
+  Environment,
+  StorageContext,
+  StorageManager,
+  StorageService,
+} from '@matter/general';
 import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
 import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 // @matterbridge
-import { copyDirectory, createDirectory, formatBytes, formatPercent, formatUptime, getIntParameter, getParameter, hasParameter, isValidNumber, isValidObject, isValidString, parseVersionString } from '@matterbridge/utils';
+import {
+  copyDirectory,
+  createDirectory,
+  formatBytes,
+  formatPercent,
+  formatUptime,
+  getIntParameter,
+  getParameter,
+  hasParameter,
+  isValidNumber,
+  isValidObject,
+  isValidString,
+  parseVersionString,
+} from '@matterbridge/utils';
 
 // Matterbridge
 import {
@@ -156,7 +202,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public readonly profile = getParameter('profile');
 
   /** Matterbridge logger */
-  public readonly log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+  public readonly log = new AnsiLogger({
+    logName: 'Matterbridge',
+    logTimestampFormat: TimestampFormat.TIME_MILLIS,
+    logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO,
+  });
   /** Matterbridge logger level */
   public logLevel: LogLevel = this.log.logLevel;
   /** Whether to log to a file */
@@ -443,7 +493,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Set the matterbridge root directory
     const { fileURLToPath } = await import('node:url');
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
-    this.rootDirectory = path.resolve(currentFileDirectory, '../'); // Adjust the path for dist directory
+    this.rootDirectory = path.resolve(currentFileDirectory, '../', '../', '../'); // Adjust the path for package core dist directory
 
     // Setup the matter environment with default values
     this.environment.vars.set('log.level', MatterLogLevel.INFO);
@@ -507,7 +557,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode')) ?? PaseClient.generateRandomPasscode(this.environment.get(Crypto));
 
     // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
-    this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
+    this.discriminator =
+      getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
 
     // Certificate management
     const pairingFilePath = path.join(this.matterbridgeCertDirectory, 'pairing.json');
@@ -550,7 +601,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
       if (isValidNumber(pairingFileJson.deviceType)) {
         this.aggregatorDeviceType = DeviceTypeId(pairingFileJson.deviceType);
-        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using deviceType ${CYAN}${this.aggregatorDeviceType}(0x${this.aggregatorDeviceType.toString(16).padStart(4, '0')})${nf} from pairing file.`);
+        this.log.info(
+          `Pairing file ${CYAN}${pairingFilePath}${nf} found. Using deviceType ${CYAN}${this.aggregatorDeviceType}(0x${this.aggregatorDeviceType.toString(16).padStart(4, '0')})${nf} from pairing file.`,
+        );
       }
       if (isValidString(pairingFileJson.serialNumber, 3)) {
         this.aggregatorSerialNumber = pairingFileJson.serialNumber;
@@ -565,7 +618,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (isValidNumber(pairingFileJson.passcode) && isValidNumber(pairingFileJson.discriminator)) {
         this.passcode = pairingFileJson.passcode;
         this.discriminator = pairingFileJson.discriminator;
-        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using passcode ${CYAN}${this.passcode}${nf} and discriminator ${CYAN}${this.discriminator}${nf} from pairing file.`);
+        this.log.info(
+          `Pairing file ${CYAN}${pairingFilePath}${nf} found. Using passcode ${CYAN}${this.passcode}${nf} and discriminator ${CYAN}${this.discriminator}${nf} from pairing file.`,
+        );
       }
       // Set the certification for matter.js if it is present in the pairing file
       if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
@@ -734,7 +789,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           break;
         }
         /* istanbul ignore next */
-        if (ifaces && ifaces.find((iface) => iface.scopeid && iface.scopeid > 0 && iface.address + '%' + (process.platform === 'win32' ? iface.scopeid : ifaceName) === this.ipv6Address)) {
+        if (
+          ifaces &&
+          ifaces.find((iface) => iface.scopeid && iface.scopeid > 0 && iface.address + '%' + (process.platform === 'win32' ? iface.scopeid : ifaceName) === this.ipv6Address)
+        ) {
           this.log.info(`Using ipv6address ${CYAN}${this.ipv6Address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
           isValid = true;
           break;
@@ -767,7 +825,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     for (const plugin of this.plugins) {
       // Try to reinstall the plugin from npm (for Docker pull and external plugins)
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if (!fs.existsSync(plugin.path) && !hasParameter('add') && !hasParameter('remove') && !hasParameter('enable') && !hasParameter('disable') && !hasParameter('reset') && !hasParameter('factoryreset')) {
+      if (
+        !fs.existsSync(plugin.path) &&
+        !hasParameter('add') &&
+        !hasParameter('remove') &&
+        !hasParameter('enable') &&
+        !hasParameter('disable') &&
+        !hasParameter('reset') &&
+        !hasParameter('factoryreset')
+      ) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
         const { spawnCommand } = await import('./spawn.js');
         if (await spawnCommand('npm', ['install', '-g', `${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}`, '--omit=dev', '--verbose'], 'install', plugin.name)) {
@@ -836,10 +902,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       let index = 0;
       for (const plugin of this.plugins) {
         if (index !== this.plugins.length - 1) {
-          this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} version: ${plg}${plugin.version}${nf} ${plugin.enabled ? GREEN : RED}enabled${nf}`);
+          this.log.info(
+            `├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} version: ${plg}${plugin.version}${nf} ${plugin.enabled ? GREEN : RED}enabled${nf}`,
+          );
           this.log.info(`│ └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         } else {
-          this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} version: ${plg}${plugin.version}${nf} ${plugin.enabled ? GREEN : RED}disabled${nf}`);
+          this.log.info(
+            `└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} version: ${plg}${plugin.version}${nf} ${plugin.enabled ? GREEN : RED}disabled${nf}`,
+          );
           this.log.info(`  └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         }
         index++;
@@ -1239,8 +1309,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     } else {
       // The global node_modules directory is already set in the node storage and we check if it is still valid
       this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-      const { createESMWorker } = await import('./worker.js');
-      createESMWorker('NpmGlobalPrefix', path.join(this.rootDirectory, 'dist/workerGlobalPrefix.js'));
+      const { createESMWorker } = await import('@matterbridge/thread');
+      createESMWorker('NpmGlobalPrefix', path.join(this.rootDirectory, 'packages/core/dist/workerGlobalPrefix.js'));
     }
 
     // Matterbridge version
@@ -1259,7 +1329,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Frontend version
     this.log.debug(`Reading frontend package.json...`);
-    const frontendPackageJson = JSON.parse(await fs.promises.readFile(path.join(this.rootDirectory, '..', '..', 'apps', 'frontend', 'package.json'), 'utf8'));
+    const frontendPackageJson = JSON.parse(await fs.promises.readFile(path.join(this.rootDirectory, 'apps', 'frontend', 'package.json'), 'utf8'));
     this.frontendVersion = frontendPackageJson.version;
     this.log.debug(`Frontend version ${CYAN}${this.frontendVersion}${db}`);
 
@@ -1315,7 +1385,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * It also logs to file (matter.log) if fileLogger is true.
    *
    * @param {boolean} fileLogger - Whether to log to file or not.
-   * @returns {Function} The MatterLogger function. \x1b[35m for violet \x1b[34m is blue
+   * @returns {(text: string, message: Diagnostic.Message) => void} The MatterLogger function. \x1b[35m for violet \x1b[34m is blue
    */
   private createDestinationMatterLogger(fileLogger: boolean): (text: string, message: Diagnostic.Message) => void {
     this.matterLog.logNameColor = '\x1b[34m'; // Blue matter.js Logger
@@ -1705,7 +1775,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
     if (!this.matterbridgeContext) throw new Error('No storage context initialized');
 
-    this.serverNode = await this.createServerNode(this.matterbridgeContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+    this.serverNode = await this.createServerNode(
+      this.matterbridgeContext,
+      this.port ? this.port++ : undefined,
+      this.passcode ? this.passcode++ : undefined,
+      this.discriminator ? this.discriminator++ : undefined,
+    );
     this.aggregatorNode = await this.createAggregatorNode(this.matterbridgeContext);
     await this.serverNode.add(this.aggregatorNode);
 
@@ -1740,7 +1815,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           }
 
           if (!plugin.loaded || !plugin.started) {
-            this.log.debug(`Waiting (failSafeCount=${failCount}/${this.failCountLimit}) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
+            this.log.debug(
+              `Waiting (failSafeCount=${failCount}/${this.failCountLimit}) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`,
+            );
             failCount++;
             if (failCount > this.failCountLimit) {
               this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
@@ -1850,7 +1927,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.debug(`Checking plugin ${plg}${plugin.name}${db} to start matter in childbridge mode...`);
           if (!plugin.loaded || !plugin.started) {
             allStarted = false;
-            this.log.debug(`Waiting (failSafeCount=${failCount}/${this.failCountLimit}) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
+            this.log.debug(
+              `Waiting (failSafeCount=${failCount}/${this.failCountLimit}) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`,
+            );
             failCount++;
             if (failCount > this.failCountLimit) {
               this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
@@ -2225,7 +2304,17 @@ const commissioningController = new CommissioningController({
    * @param {string} [uniqueId] - The unique ID of the device (optional).
    * @returns {Promise<StorageContext>} The storage context for the commissioning server.
    */
-  private async createServerNodeContext(storeId: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string, serialNumber?: string, uniqueId?: string): Promise<StorageContext> {
+  private async createServerNodeContext(
+    storeId: string,
+    deviceName: string,
+    deviceType: DeviceTypeId,
+    vendorId: number,
+    vendorName: string,
+    productId: number,
+    productName: string,
+    serialNumber?: string,
+    uniqueId?: string,
+  ): Promise<StorageContext> {
     const { randomBytes } = await import('node:crypto');
     if (!this.matterStorageService) throw new Error('No storage service initialized');
 
@@ -2246,7 +2335,10 @@ const commissioningController = new CommissioningController({
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
     await storageContext.set('softwareVersion', isValidNumber(parseVersionString(this.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridgeVersion) : 1);
     await storageContext.set('softwareVersionString', isValidString(this.matterbridgeVersion, 5, 64) ? this.matterbridgeVersion : '1.0.0');
-    await storageContext.set('hardwareVersion', isValidNumber(parseVersionString(this.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.systemInformation.osRelease) : 1);
+    await storageContext.set(
+      'hardwareVersion',
+      isValidNumber(parseVersionString(this.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.systemInformation.osRelease) : 1,
+    );
     await storageContext.set('hardwareVersionString', isValidString(this.systemInformation.osRelease, 5, 64) ? this.systemInformation.osRelease : '1.0.0');
 
     this.log.debug(`Created server node storage context "${storeId}.persist" for ${storeId}:`);
@@ -2277,7 +2369,12 @@ const commissioningController = new CommissioningController({
    * @param {number} [discriminator] - The discriminator for the server node. Defaults to 3850.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint>>} A promise that resolves to the created server node.
    */
-  private async createServerNode(storageContext: StorageContext, port: number = 5540, passcode: number = 20242025, discriminator: number = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
+  private async createServerNode(
+    storageContext: StorageContext,
+    port: number = 5540,
+    passcode: number = 20242025,
+    discriminator: number = 3850,
+  ): Promise<ServerNode<ServerNode.RootEndpoint>> {
     const storeId = await storageContext.get<string>('storeId');
     this.log.notice(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
@@ -2529,8 +2626,21 @@ const commissioningController = new CommissioningController({
       plugin.locked = true;
       plugin.device = device;
       this.log.debug(`Creating accessory plugin ${plg}${plugin.name}${db} server node...`);
-      plugin.storageContext = await this.createServerNodeContext(plugin.name, device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
-      plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      plugin.storageContext = await this.createServerNodeContext(
+        plugin.name,
+        device.deviceName,
+        DeviceTypeId(device.deviceType),
+        device.vendorId,
+        device.vendorName,
+        device.productId,
+        device.productName,
+      );
+      plugin.serverNode = await this.createServerNode(
+        plugin.storageContext,
+        this.port ? this.port++ : undefined,
+        this.passcode ? this.passcode++ : undefined,
+        this.discriminator ? this.discriminator++ : undefined,
+      );
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node...`);
       await plugin.serverNode.add(device);
     }
@@ -2546,8 +2656,21 @@ const commissioningController = new CommissioningController({
     if (!plugin.locked) {
       plugin.locked = true;
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} server node...`);
-      plugin.storageContext = await this.createServerNodeContext(plugin.name, plugin.description, this.aggregatorDeviceType, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, this.aggregatorProductName);
-      plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      plugin.storageContext = await this.createServerNodeContext(
+        plugin.name,
+        plugin.description,
+        this.aggregatorDeviceType,
+        this.aggregatorVendorId,
+        this.aggregatorVendorName,
+        this.aggregatorProductId,
+        this.aggregatorProductName,
+      );
+      plugin.serverNode = await this.createServerNode(
+        plugin.storageContext,
+        this.port ? this.port++ : undefined,
+        this.passcode ? this.passcode++ : undefined,
+        this.discriminator ? this.discriminator++ : undefined,
+      );
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
       plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
       this.log.debug(`Adding dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
@@ -2563,10 +2686,32 @@ const commissioningController = new CommissioningController({
    * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
    */
   private async createDeviceServerNode(plugin: Plugin, device: MatterbridgeEndpoint): Promise<void> {
-    if (device.mode === 'server' && !device.serverNode && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
+    if (
+      device.mode === 'server' &&
+      !device.serverNode &&
+      device.deviceType &&
+      device.deviceName &&
+      device.vendorId &&
+      device.vendorName &&
+      device.productId &&
+      device.productName
+    ) {
       this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);
-      const context = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
-      device.serverNode = await this.createServerNode(context, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      const context = await this.createServerNodeContext(
+        device.deviceName.replace(/[ .]/g, ''),
+        device.deviceName,
+        DeviceTypeId(device.deviceType),
+        device.vendorId,
+        device.vendorName,
+        device.productId,
+        device.productName,
+      );
+      device.serverNode = await this.createServerNode(
+        context,
+        this.port ? this.port++ : undefined,
+        this.passcode ? this.passcode++ : undefined,
+        this.discriminator ? this.discriminator++ : undefined,
+      );
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node...`);
       await device.serverNode.add(device);
       this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node`);
@@ -2595,7 +2740,9 @@ const commissioningController = new CommissioningController({
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : error;
         const errorInspect = inspect(error, { depth: 10 });
-        this.log.error(`Error creating server node for device ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) of plugin ${plg}${pluginName}${er}: ${errorMessage}\nstack: ${errorInspect}`);
+        this.log.error(
+          `Error creating server node for device ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) of plugin ${plg}${pluginName}${er}: ${errorMessage}\nstack: ${errorInspect}`,
+        );
         return;
       }
     } else if (this.bridgeMode === 'bridge') {
@@ -2611,7 +2758,9 @@ const commissioningController = new CommissioningController({
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : error;
           const errorInspect = inspect(error, { depth: 10 });
-          this.log.error(`Error adding matter endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for plugin ${plg}${pluginName}${er}: ${errorMessage}\nstack: ${errorInspect}`);
+          this.log.error(
+            `Error adding matter endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for plugin ${plg}${pluginName}${er}: ${errorMessage}\nstack: ${errorInspect}`,
+          );
           return;
         }
       } else {
@@ -2626,7 +2775,9 @@ const commissioningController = new CommissioningController({
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : error;
           const errorInspect = inspect(error, { depth: 10 });
-          this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for plugin ${plg}${pluginName}${er}: ${errorMessage}\nstack: ${errorInspect}`);
+          this.log.error(
+            `Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for plugin ${plg}${pluginName}${er}: ${errorMessage}\nstack: ${errorInspect}`,
+          );
           return;
         }
       }
@@ -2648,7 +2799,9 @@ const commissioningController = new CommissioningController({
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : error;
           const errorInspect = inspect(error, { depth: 10 });
-          this.log.error(`Error creating endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for AccessoryPlatform plugin ${plg}${pluginName}${er} server node: ${errorMessage}\nstack: ${errorInspect}`);
+          this.log.error(
+            `Error creating endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for AccessoryPlatform plugin ${plg}${pluginName}${er} server node: ${errorMessage}\nstack: ${errorInspect}`,
+          );
           return;
         }
       }
@@ -2668,7 +2821,9 @@ const commissioningController = new CommissioningController({
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : error;
           const errorInspect = inspect(error, { depth: 10 });
-          this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for DynamicPlatform plugin ${plg}${pluginName}${er} aggregator node: ${errorMessage}\nstack: ${errorInspect}`);
+          this.log.error(
+            `Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for DynamicPlatform plugin ${plg}${pluginName}${er} aggregator node: ${errorMessage}\nstack: ${errorInspect}`,
+          );
           return;
         }
       }
@@ -2678,7 +2833,9 @@ const commissioningController = new CommissioningController({
     this.devices.set(device);
     // Subscribe to the attributes changed event
     await this.subscribeAttributeChanged(plugin, device);
-    this.log.info(`Added and registered bridged endpoint (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
+    this.log.info(
+      `Added and registered bridged endpoint (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`,
+    );
   }
 
   /**
@@ -2698,7 +2855,9 @@ const commissioningController = new CommissioningController({
       return;
     }
     if (device.mode === 'server') {
-      this.log.info(`Removed mode server bridged endpoint(${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(
+        `Removed mode server bridged endpoint(${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`,
+      );
     } else if (this.bridgeMode === 'bridge') {
       // Unregister and remove the device from the matterbridge aggregator node
       if (!this.aggregatorNode) {
@@ -2714,7 +2873,9 @@ const commissioningController = new CommissioningController({
       } else if (plugin.type === 'DynamicPlatform') {
         // Unregister and remove the device from the plugin aggregator node
         if (!plugin.aggregatorNode) {
-          this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator node not found`);
+          this.log.error(
+            `Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator node not found`,
+          );
           return;
         }
         await device.delete();
@@ -2792,7 +2953,9 @@ const commissioningController = new CommissioningController({
         return true;
       }
     }
-    this.log.error(`Virtual endpoint ${dev}${name}${er} for plugin ${plg}${pluginName}${er} not created. Virtual endpoints are only supported in bridge mode and childbridge mode with a DynamicPlatform.`);
+    this.log.error(
+      `Virtual endpoint ${dev}${name}${er} for plugin ${plg}${pluginName}${er} not created. Virtual endpoints are only supported in bridge mode and childbridge mode with a DynamicPlatform.`,
+    );
     return false;
   }
 
@@ -2862,16 +3025,22 @@ const commissioningController = new CommissioningController({
       if (device.hasAttributeServer(sub.cluster, sub.attribute)) {
         this.log.debug(`Subscribing to endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
         await device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
-          this.log.debug(`Bridged endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`);
+          this.log.debug(
+            `Bridged endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
+          );
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, device.id, sub.cluster, sub.attribute, value);
         });
       }
       for (const child of device.getChildEndpoints()) {
         if (child.hasAttributeServer(sub.cluster, sub.attribute)) {
-          this.log.debug(`Subscribing to child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
+          this.log.debug(
+            `Subscribing to child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`,
+          );
           await child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
-            this.log.debug(`Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`);
+            this.log.debug(
+              `Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
+            );
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, child.number, child.id, sub.cluster, sub.attribute, value);
           });

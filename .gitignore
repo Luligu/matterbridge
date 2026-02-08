@@ -24,11 +24,9 @@ heap_profile
 heap_profiles
 heap_snapshots
 TODO.md
-crypto
-docs/Matter specifications/
 STYLEGUIDE.md
-workers/
-history.html
+packages/core/src/crypto
+packages/core/src/workers
 
 # Allow dist folders inside vendor/
 !vendor/**/dist/

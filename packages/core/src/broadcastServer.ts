@@ -31,10 +31,18 @@ import { BroadcastChannel } from 'node:worker_threads';
 import { type AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
 import { hasParameter, logError } from '@matterbridge/utils';
 
-import type { WorkerMessage, WorkerMessageRequest, WorkerMessageRequestAny, WorkerMessageResponse, WorkerMessageResponseSuccess, WorkerMessageTypes, WorkerSrcType } from './broadcastServerTypes.js';
+import type {
+  WorkerMessage,
+  WorkerMessageRequest,
+  WorkerMessageRequestAny,
+  WorkerMessageResponse,
+  WorkerMessageResponseSuccess,
+  WorkerMessageTypes,
+  WorkerSrcType,
+} from './broadcastServerTypes.js';
 
 interface BroadcastServerEvents {
-  'broadcast_message': [msg: WorkerMessage];
+  broadcast_message: [msg: WorkerMessage];
 }
 
 /**
@@ -125,7 +133,13 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     }
 
     const message = value as Partial<WorkerMessageRequest> & { result?: unknown; error?: unknown };
-    if (typeof message.type !== 'string' || typeof message.src !== 'string' || typeof message.dst !== 'string' || typeof message.id !== 'number' || typeof message.timestamp !== 'number') {
+    if (
+      typeof message.type !== 'string' ||
+      typeof message.src !== 'string' ||
+      typeof message.dst !== 'string' ||
+      typeof message.id !== 'number' ||
+      typeof message.timestamp !== 'number'
+    ) {
       return false;
     }
 
@@ -155,7 +169,13 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     }
 
     const message = value as Partial<WorkerMessageResponse> & { error?: unknown; result?: unknown };
-    if (typeof message.type !== 'string' || typeof message.src !== 'string' || typeof message.dst !== 'string' || typeof message.id !== 'number' || typeof message.timestamp !== 'number') {
+    if (
+      typeof message.type !== 'string' ||
+      typeof message.src !== 'string' ||
+      typeof message.dst !== 'string' ||
+      typeof message.id !== 'number' ||
+      typeof message.timestamp !== 'number'
+    ) {
       return false;
     }
 
@@ -279,7 +299,10 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {Promise<WorkerMessageResponseSuccess<K>>} A promise that resolves with the successful response from the worker or rejects on timeout.
    * @throws {Error} If the fetch operation times out after 250ms or if an error response is received or if the response is malformed.
    */
-  async fetch<T extends WorkerMessageRequestAny, K extends Extract<keyof WorkerMessageTypes, T['type']>>(message: T, timeout: number = 250): Promise<WorkerMessageResponseSuccess<K>> {
+  async fetch<T extends WorkerMessageRequestAny, K extends Extract<keyof WorkerMessageTypes, T['type']>>(
+    message: T,
+    timeout: number = 250,
+  ): Promise<WorkerMessageResponseSuccess<K>> {
     if (this.closed) {
       return Promise.reject(new Error('Broadcast channel is closed'));
     }

@@ -123,7 +123,11 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * - supportedModes is a fixed attribute. It cannot be changed at runtime.
    * - currentMode persists across reboots.
    */
-  createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(endpoint: MatterbridgeEndpoint, currentMode: number, supportedModes: RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[]): MatterbridgeEndpoint {
+  createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(
+    endpoint: MatterbridgeEndpoint,
+    currentMode: number,
+    supportedModes: RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[],
+  ): MatterbridgeEndpoint {
     endpoint.behaviors.require(MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, {
       supportedModes,
       currentMode,
@@ -174,9 +178,19 @@ export class Refrigerator extends MatterbridgeEndpoint {
     const endpoint = this.getChildEndpointByName(cabinetName);
     if (endpoint) {
       if (doorOpen) {
-        await endpoint.triggerEvent('RefrigeratorAlarm', 'notify', { active: { doorOpen: true }, inactive: { doorOpen: false }, state: { doorOpen: true }, mask: { doorOpen: true } }, endpoint.log);
+        await endpoint.triggerEvent(
+          'RefrigeratorAlarm',
+          'notify',
+          { active: { doorOpen: true }, inactive: { doorOpen: false }, state: { doorOpen: true }, mask: { doorOpen: true } },
+          endpoint.log,
+        );
       } else {
-        await endpoint.triggerEvent('RefrigeratorAlarm', 'notify', { active: { doorOpen: false }, inactive: { doorOpen: true }, state: { doorOpen: false }, mask: { doorOpen: true } }, endpoint.log);
+        await endpoint.triggerEvent(
+          'RefrigeratorAlarm',
+          'notify',
+          { active: { doorOpen: false }, inactive: { doorOpen: true }, state: { doorOpen: false }, mask: { doorOpen: true } },
+          endpoint.log,
+        );
       }
       return endpoint;
     }
@@ -193,11 +207,15 @@ export class MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer e
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
     if (supportedMode) {
-      device.log.info(`MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with mode ${supportedMode.mode} = ${supportedMode.label}`);
+      device.log.info(
+        `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with mode ${supportedMode.mode} = ${supportedMode.label}`,
+      );
       this.state.currentMode = request.newMode;
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
     } else {
-      device.log.error(`MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with invalid mode ${request.newMode}`);
+      device.log.error(
+        `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with invalid mode ${request.newMode}`,
+      );
       return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Invalid mode' };
     }
   }

@@ -67,7 +67,13 @@ export class ExtractorHood extends MatterbridgeEndpoint {
     this.createDefaultPowerSourceWiredClusterServer();
     this.createBaseFanControlClusterServer();
     this.createDefaultHepaFilterMonitoringClusterServer(hepaCondition, hepaChangeIndication, hepaInPlaceIndicator, hepaLastChangedTime, hepaReplacementProductList);
-    this.createDefaultActivatedCarbonFilterMonitoringClusterServer(activatedCarbonCondition, activatedCarbonChangeIndication, activatedCarbonInPlaceIndicator, activatedCarbonLastChangedTime, activatedCarbonReplacementProductList);
+    this.createDefaultActivatedCarbonFilterMonitoringClusterServer(
+      activatedCarbonCondition,
+      activatedCarbonChangeIndication,
+      activatedCarbonInPlaceIndicator,
+      activatedCarbonLastChangedTime,
+      activatedCarbonReplacementProductList,
+    );
 
     this.subscribeAttribute('fanControl', 'fanMode', (newValue: number, oldValue: number, context) => {
       if (context.offline === true) return;

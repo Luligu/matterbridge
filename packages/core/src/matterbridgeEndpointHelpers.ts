@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+/* eslint-disable jsdoc/reject-any-type */
+
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpointHelpers loaded.\u001B[40;0m');
 
@@ -372,7 +374,9 @@ export async function invokeBehaviorCommand(
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     const behavior = (agent as unknown as Record<string, Record<string, Function>>)[behaviorId];
     if (!(command in behavior) || typeof behavior[command] !== 'function') {
-      endpoint.log?.error(`invokeBehaviorCommand error: command ${hk}${command}${er} not found on agent for endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+      endpoint.log?.error(
+        `invokeBehaviorCommand error: command ${hk}${command}${er} not found on agent for endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`,
+      );
       return false;
     }
     behavior[command](params);
@@ -393,7 +397,13 @@ export async function invokeBehaviorCommand(
  *
  * @deprecated Used ONLY in Jest tests.
  */
-export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, newValue: unknown, oldValue: unknown): Promise<boolean> {
+export async function invokeSubscribeHandler(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+  attribute: string,
+  newValue: unknown,
+  oldValue: unknown,
+): Promise<boolean> {
   const event = attribute + '$Changed';
   const behaviorId = getBehavior(endpoint, cluster)?.id;
   if (!behaviorId) {
@@ -402,7 +412,9 @@ export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, clu
   }
 
   if (endpoint.construction.status !== Lifecycle.Status.Active) {
-    endpoint.log.error(`invokeSubscribeHandler ${hk}${behaviorId}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    endpoint.log.error(
+      `invokeSubscribeHandler ${hk}${behaviorId}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`,
+    );
     return false;
   }
 
@@ -610,7 +622,9 @@ export function getAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.T
   }
 
   if (endpoint.construction.status !== Lifecycle.Status.Active) {
-    endpoint.log.error(`getAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    endpoint.log.error(
+      `getAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`,
+    );
     return undefined;
   }
 
@@ -641,7 +655,13 @@ export function getAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.T
  * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
  * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
  */
-export async function setAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean> {
+export async function setAttribute(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+  attribute: string,
+  value: boolean | number | bigint | string | object | null,
+  log?: AnsiLogger,
+): Promise<boolean> {
   const clusterName = getBehavior(endpoint, cluster)?.id;
   if (!clusterName) {
     endpoint.log.error(`setAttribute ${hk}${attribute}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
@@ -649,7 +669,9 @@ export async function setAttribute(endpoint: MatterbridgeEndpoint, cluster: Beha
   }
 
   if (endpoint.construction.status !== Lifecycle.Status.Active) {
-    endpoint.log.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    endpoint.log.error(
+      `setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`,
+    );
     return false;
   }
 
@@ -682,7 +704,13 @@ export async function setAttribute(endpoint: MatterbridgeEndpoint, cluster: Beha
  * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the update. Errors are logged to the endpoint logger.
  * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
  */
-export async function updateAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean> {
+export async function updateAttribute(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+  attribute: string,
+  value: boolean | number | bigint | string | object | null,
+  log?: AnsiLogger,
+): Promise<boolean> {
   const clusterName = getBehavior(endpoint, cluster)?.id;
   if (!clusterName) {
     endpoint.log.error(`updateAttribute ${hk}${attribute}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
@@ -690,7 +718,9 @@ export async function updateAttribute(endpoint: MatterbridgeEndpoint, cluster: B
   }
 
   if (endpoint.construction.status !== Lifecycle.Status.Active) {
-    endpoint.log.error(`updateAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    endpoint.log.error(
+      `updateAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`,
+    );
     return false;
   }
 
@@ -746,7 +776,9 @@ export async function subscribeAttribute(
   }
 
   if (endpoint.construction.status !== Lifecycle.Status.Active) {
-    endpoint.log.debug(`subscribeAttribute ${hk}${clusterName}.${attribute}${db}: Endpoint ${or}${endpoint.maybeId}${db}:${or}${endpoint.maybeNumber}${db} is in the ${BLUE}${endpoint.construction.status}${db} state`);
+    endpoint.log.debug(
+      `subscribeAttribute ${hk}${clusterName}.${attribute}${db}: Endpoint ${or}${endpoint.maybeId}${db}:${or}${endpoint.maybeNumber}${db} is in the ${BLUE}${endpoint.construction.status}${db} state`,
+    );
     await endpoint.construction.ready;
   }
 
@@ -789,7 +821,9 @@ export async function triggerEvent(
   }
 
   if (endpoint.construction.status !== Lifecycle.Status.Active) {
-    endpoint.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    endpoint.log.error(
+      `triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`,
+    );
     return false;
   }
 
@@ -803,7 +837,9 @@ export async function triggerEvent(
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   await endpoint.act((agent) => agent[clusterName].events[event].emit(payload, agent.context));
-  log?.info(`${db}Trigger event ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${event}${db} with ${debugStringify(payload)}${db} on endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} `);
+  log?.info(
+    `${db}Trigger event ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${event}${db} with ${debugStringify(payload)}${db} on endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} `,
+  );
   return true;
 }
 
@@ -961,18 +997,25 @@ export function getDefaultPowerSourceRechargeableBatteryClusterServer(
  * @returns {Behavior.Options<ElectricalEnergyMeasurementServer>} - The default options for the Electrical Energy Measurement Cluster Server.
  */
 export function getDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null) {
-  return optionsFor(ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy), {
-    accuracy: {
-      measurementType: MeasurementType.ElectricalEnergy,
-      measured: true,
-      minMeasuredValue: Number.MIN_SAFE_INTEGER,
-      maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-      accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+  return optionsFor(
+    ElectricalEnergyMeasurementServer.with(
+      ElectricalEnergyMeasurement.Feature.ImportedEnergy,
+      ElectricalEnergyMeasurement.Feature.ExportedEnergy,
+      ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
+    ),
+    {
+      accuracy: {
+        measurementType: MeasurementType.ElectricalEnergy,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+      cumulativeEnergyReset: null,
+      cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
+      cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
     },
-    cumulativeEnergyReset: null,
-    cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
-    cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
-  });
+  );
 }
 
 /**
@@ -984,7 +1027,12 @@ export function getDefaultElectricalEnergyMeasurementClusterServer(energyImporte
  * @param {number} frequency - The frequency value in millihertz.
  * @returns {Behavior.Options<ElectricalPowerMeasurementServer>} - The default options for the Electrical Power Measurement Cluster Server.
  */
-export function getDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null) {
+export function getDefaultElectricalPowerMeasurementClusterServer(
+  voltage: number | bigint | null = null,
+  current: number | bigint | null = null,
+  power: number | bigint | null = null,
+  frequency: number | bigint | null = null,
+) {
   return optionsFor(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), {
     powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
     numberOfMeasurementTypes: 4,
@@ -1034,7 +1082,12 @@ export function getDefaultElectricalPowerMeasurementClusterServer(voltage: numbe
  * @param {number} frequency - The frequency value in millihertz.
  * @returns {Behavior.Options<ElectricalPowerMeasurementServer>} - The default options for the Electrical Apparent Power Measurement Cluster Server.
  */
-export function getApparentElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, apparentCurrent: number | bigint | null = null, apparentPower: number | bigint | null = null, frequency: number | bigint | null = null) {
+export function getApparentElectricalPowerMeasurementClusterServer(
+  voltage: number | bigint | null = null,
+  apparentCurrent: number | bigint | null = null,
+  apparentPower: number | bigint | null = null,
+  frequency: number | bigint | null = null,
+) {
   return optionsFor(ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent), {
     powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
     numberOfMeasurementTypes: 4,
@@ -1148,7 +1201,11 @@ export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: 
       {
         label: 'Full Energy Management',
         mode: 5,
-        modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }, { value: DeviceEnergyManagementMode.ModeTag.GridOptimization }],
+        modeTags: [
+          { value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization },
+          { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization },
+          { value: DeviceEnergyManagementMode.ModeTag.GridOptimization },
+        ],
       },
     ], // Fixed attribute
     currentMode: currentMode ?? 1,
@@ -1212,7 +1269,11 @@ export function getDefaultTemperatureMeasurementClusterServer(measuredValue: num
  * @param {number | null} maxMeasuredValue - The maximum measured value of the relative humidity x 100.
  * @returns {Behavior.Options<MatterbridgeRelativeHumidityMeasurementServer>} - The default options for the RelativeHumidityMeasurement cluster server.
  */
-export function getDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+export function getDefaultRelativeHumidityMeasurementClusterServer(
+  measuredValue: number | null = null,
+  minMeasuredValue: number | null = null,
+  maxMeasuredValue: number | null = null,
+) {
   return optionsFor(RelativeHumidityMeasurementServer, {
     measuredValue,
     minMeasuredValue,

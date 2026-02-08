@@ -60,9 +60,9 @@ describe('Utils test', () => {
   let switch2PM = {};
 
   beforeAll(async () => {
-    let data = await fs.readFile(path.join('src', 'mock', 'shellyplus2pm-5443b23d81f8.roller.json'), 'utf8');
+    let data = await fs.readFile(path.join('packages', 'utils', 'src', 'mock', 'shellyplus2pm-5443b23d81f8.roller.json'), 'utf8');
     roller2PM = JSON.parse(data);
-    data = await fs.readFile(path.join('src', 'mock', 'shellyplus2pm-5443b23d81f8.switch.json'), 'utf8');
+    data = await fs.readFile(path.join('packages', 'utils', 'src', 'mock', 'shellyplus2pm-5443b23d81f8.switch.json'), 'utf8');
     switch2PM = JSON.parse(data);
   });
 
@@ -110,14 +110,14 @@ describe('Utils test', () => {
   });
 
   test('Deep copy equal bridge-info', async () => {
-    const data = await fs.readFile(path.join('src', 'mock', 'bridge-info.json'), 'utf8');
+    const data = await fs.readFile(path.join('packages', 'utils', 'src', 'mock', 'bridge-info.json'), 'utf8');
     const bridgeInfo = JSON.parse(data);
     const copy = deepCopy(bridgeInfo);
     expect(deepEqual(bridgeInfo, copy)).toBeTruthy();
   });
 
   test('Deep equal bridge-info', async () => {
-    const data = await fs.readFile(path.join('src', 'mock', 'bridge-info.json'), 'utf8');
+    const data = await fs.readFile(path.join('packages', 'utils', 'src', 'mock', 'bridge-info.json'), 'utf8');
     const bridgeInfo = JSON.parse(data);
     const copy = deepCopy(bridgeInfo);
     copy.version = '1.0.0';
@@ -125,14 +125,14 @@ describe('Utils test', () => {
   });
 
   test('Deep copy equal bridge-devices', async () => {
-    const data = await fs.readFile(path.join('src', 'mock', 'bridge-devices.json'), 'utf8');
+    const data = await fs.readFile(path.join('packages', 'utils', 'src', 'mock', 'bridge-devices.json'), 'utf8');
     const bridgeDevices = JSON.parse(data);
     const copy = deepCopy(bridgeDevices);
     expect(deepEqual(bridgeDevices, copy)).toBeTruthy();
   });
 
   test('Deep copy equal bridge-groups', async () => {
-    const data = await fs.readFile(path.join('src', 'mock', 'bridge-groups.json'), 'utf8');
+    const data = await fs.readFile(path.join('packages', 'utils', 'src', 'mock', 'bridge-groups.json'), 'utf8');
     const bridgeGroups = JSON.parse(data);
     const copy = deepCopy(bridgeGroups);
     expect(deepEqual(bridgeGroups, copy)).toBeTruthy();

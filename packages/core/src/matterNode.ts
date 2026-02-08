@@ -33,7 +33,18 @@ import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, or, Times
 import { NodeStorageManager } from 'node-persist-manager';
 // @matter
 import '@matter/nodejs';
-import { Logger, Diagnostic, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, StorageContext, StorageManager, StorageService, UINT32_MAX, UINT16_MAX, Environment } from '@matter/general';
+import {
+  Logger,
+  Diagnostic,
+  LogLevel as MatterLogLevel,
+  LogFormat as MatterLogFormat,
+  StorageContext,
+  StorageManager,
+  StorageService,
+  UINT32_MAX,
+  UINT16_MAX,
+  Environment,
+} from '@matter/general';
 import { DeviceCertification, ExposedFabricInformation, MdnsService } from '@matter/protocol';
 import { VendorId, DeviceTypeId } from '@matter/types';
 import { ServerNode, Endpoint, SessionsBehavior } from '@matter/node';
@@ -45,7 +56,20 @@ import { copyDirectory, getIntParameter, getParameter, hasParameter, inspectErro
 
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { SharedMatterbridge, ApiMatter, Plugin, SanitizedExposedFabricInformation, SanitizedSession, dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, plg, PluginName, NODE_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE } from './matterbridgeTypes.js';
+import {
+  SharedMatterbridge,
+  ApiMatter,
+  Plugin,
+  SanitizedExposedFabricInformation,
+  SanitizedSession,
+  dev,
+  MATTER_LOGGER_FILE,
+  MATTER_STORAGE_NAME,
+  plg,
+  PluginName,
+  NODE_STORAGE_DIR,
+  MATTERBRIDGE_LOGGER_FILE,
+} from './matterbridgeTypes.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { WorkerMessage } from './broadcastServerTypes.js';
@@ -262,7 +286,12 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
     // Load plugins from storage
     // @ts-expect-error access private property
-    this.pluginManager.matterbridge.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+    this.pluginManager.matterbridge.nodeStorage = new NodeStorageManager({
+      dir: path.join(this.matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR),
+      writeQueue: false,
+      expiredInterval: undefined,
+      logging: false,
+    });
     // @ts-expect-error access private property
     this.pluginManager.matterbridge.nodeContext = await this.pluginManager.matterbridge.nodeStorage.createStorage('matterbridge');
     await this.pluginManager.loadFromStorage();
@@ -426,7 +455,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * Creates a MatterLogger function to show the matter.js log messages in AnsiLogger (console and frontend).
    * It also logs to file (matter.log) if fileLogger is true.
    *
-   * @returns {Function} The MatterLogger function. \x1b[35m for violet \x1b[34m is blue
+   * @returns {(text: string, message: Diagnostic.Message) => void} The MatterLogger function to be used in Logger.destinations.default.write.
    */
   createDestinationMatterLogger(): (text: string, message: Diagnostic.Message) => void {
     this.matterLog.logNameColor = '\x1b[34m'; // Blue matter.js Logger
@@ -455,7 +484,10 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.log.info(`Started matter node storage in ${CYAN}${this.matterStorageService.location}${nf}`);
 
     // Backup matter storage since it is created/opened correctly
-    await this.backupMatterStorage(path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME), path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup'));
+    await this.backupMatterStorage(
+      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME),
+      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup'),
+    );
   }
 
   /**
@@ -511,7 +543,17 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @returns {Promise<StorageContext>} The storage context for the commissioning server.
    * @throws {Error} If the storage service is not initialized.
    */
-  async createServerNodeContext(storeId: string, deviceName: string, deviceType: DeviceTypeId, vendorId: VendorId, vendorName: string, productId: number, productName: string, serialNumber?: string, uniqueId?: string): Promise<StorageContext> {
+  async createServerNodeContext(
+    storeId: string,
+    deviceName: string,
+    deviceType: DeviceTypeId,
+    vendorId: VendorId,
+    vendorName: string,
+    productId: number,
+    productName: string,
+    serialNumber?: string,
+    uniqueId?: string,
+  ): Promise<StorageContext> {
     if (!this.matterStorageService) {
       throw new Error('No storage service initialized');
     }
@@ -532,10 +574,19 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     await storageContext.set('productLabel', productName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
-    await storageContext.set('softwareVersion', isValidNumber(parseVersionString(this.matterbridge.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridge.matterbridgeVersion) : 1);
+    await storageContext.set(
+      'softwareVersion',
+      isValidNumber(parseVersionString(this.matterbridge.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridge.matterbridgeVersion) : 1,
+    );
     await storageContext.set('softwareVersionString', isValidString(this.matterbridge.matterbridgeVersion, 5, 64) ? this.matterbridge.matterbridgeVersion : '1.0.0');
-    await storageContext.set('hardwareVersion', isValidNumber(parseVersionString(this.matterbridge.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.matterbridge.systemInformation.osRelease) : 1);
-    await storageContext.set('hardwareVersionString', isValidString(this.matterbridge.systemInformation.osRelease, 5, 64) ? this.matterbridge.systemInformation.osRelease : '1.0.0');
+    await storageContext.set(
+      'hardwareVersion',
+      isValidNumber(parseVersionString(this.matterbridge.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.matterbridge.systemInformation.osRelease) : 1,
+    );
+    await storageContext.set(
+      'hardwareVersionString',
+      isValidString(this.matterbridge.systemInformation.osRelease, 5, 64) ? this.matterbridge.systemInformation.osRelease : '1.0.0',
+    );
 
     this.log.debug(`Created server node storage context "${storeId}.persist" for ${storeId}:`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
@@ -824,7 +875,11 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.aggregatorSerialNumber,
       this.aggregatorUniqueId,
     );
-    this.serverNode = await this.createServerNode(this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+    this.serverNode = await this.createServerNode(
+      this.port ? this.port++ : undefined,
+      this.passcode ? this.passcode++ : undefined,
+      this.discriminator ? this.discriminator++ : undefined,
+    );
     this.aggregatorNode = await this.createAggregatorNode();
     this.log.debug(`Adding ${plg}Matterbridge${db} aggregator node...`);
     await this.serverNode.add(this.aggregatorNode);
@@ -851,8 +906,20 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     if (!plugin.locked && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
       plugin.locked = true;
       this.log.debug(`Creating accessory plugin ${plg}${plugin.name}${db} server node...`);
-      this.matterStorageContext = await this.createServerNodeContext(plugin.name, device.deviceName, DeviceTypeId(device.deviceType), VendorId(device.vendorId), device.vendorName, device.productId, device.productName);
-      this.serverNode = await this.createServerNode(this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      this.matterStorageContext = await this.createServerNodeContext(
+        plugin.name,
+        device.deviceName,
+        DeviceTypeId(device.deviceType),
+        VendorId(device.vendorId),
+        device.vendorName,
+        device.productId,
+        device.productName,
+      );
+      this.serverNode = await this.createServerNode(
+        this.port ? this.port++ : undefined,
+        this.passcode ? this.passcode++ : undefined,
+        this.discriminator ? this.discriminator++ : undefined,
+      );
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node...`);
       await this.serverNode.add(device);
       this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node`);
@@ -878,8 +945,20 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     if (!plugin.locked) {
       plugin.locked = true;
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} server node...`);
-      this.matterStorageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', this.aggregatorDeviceType, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
-      this.serverNode = await this.createServerNode(this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      this.matterStorageContext = await this.createServerNodeContext(
+        plugin.name,
+        'Matterbridge',
+        this.aggregatorDeviceType,
+        this.aggregatorVendorId,
+        this.aggregatorVendorName,
+        this.aggregatorProductId,
+        plugin.description,
+      );
+      this.serverNode = await this.createServerNode(
+        this.port ? this.port++ : undefined,
+        this.passcode ? this.passcode++ : undefined,
+        this.discriminator ? this.discriminator++ : undefined,
+      );
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
       this.aggregatorNode = await this.createAggregatorNode();
       this.log.debug(`Adding dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
@@ -907,8 +986,20 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
     if (device.mode === 'server' && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
       this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);
-      this.matterStorageContext = await this.createServerNodeContext(device.deviceName.replace(/[ .]/g, ''), device.deviceName, DeviceTypeId(device.deviceType), VendorId(device.vendorId), device.vendorName, device.productId, device.productName);
-      this.serverNode = await this.createServerNode(this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      this.matterStorageContext = await this.createServerNodeContext(
+        device.deviceName.replace(/[ .]/g, ''),
+        device.deviceName,
+        DeviceTypeId(device.deviceType),
+        VendorId(device.vendorId),
+        device.vendorName,
+        device.productId,
+        device.productName,
+      );
+      this.serverNode = await this.createServerNode(
+        this.port ? this.port++ : undefined,
+        this.passcode ? this.passcode++ : undefined,
+        this.discriminator ? this.discriminator++ : undefined,
+      );
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node...`);
       await this.serverNode.add(device);
       this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node`);
@@ -1028,14 +1119,16 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     if (device.serverNode) {
       // TODO: Close and remove the MatterNode managing the device
     } else if (this.matterbridge.bridgeMode === 'bridge') {
-      if (!this.aggregatorNode) throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`);
+      if (!this.aggregatorNode)
+        throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`);
       await device.delete();
     } else if (this.matterbridge.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
         if (!this.serverNode) throw new Error(`Error removing endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): server node not found`);
         await device.delete();
       } else if (plugin.type === 'DynamicPlatform') {
-        if (!this.aggregatorNode) throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`);
+        if (!this.aggregatorNode)
+          throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`);
         await device.delete();
       }
     }
@@ -1135,17 +1228,31 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    */
   async subscribeAttributeChanged(plugin: Plugin, device: MatterbridgeEndpoint): Promise<void> {
     if (!plugin || !device || !device.plugin || !device.serialNumber || !device.uniqueId || !device.maybeNumber) return;
-    this.log.debug(`Subscribing attributes for endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} (${zb}${device.name}${db})`);
+    this.log.debug(
+      `Subscribing attributes for endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} (${zb}${device.name}${db})`,
+    );
     // Subscribe to the reachable$Changed event of the BasicInformationServer cluster server of the server node in childbridge mode
     if (this.matterbridge.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform' && this.serverNode) {
       this.serverNode.eventsOf(BasicInformationServer).reachable$Changed?.on((reachable: boolean) => {
-        this.log.debug(`Accessory endpoint ${plg}${plugin.name}${nf}:${dev}${device.deviceName}${nf}:${or}${device.id}${nf}:${or}${device.number}${nf} is ${reachable ? 'reachable' : 'unreachable'}`);
+        if (!device.plugin || !device.serialNumber || !device.uniqueId) return;
+        this.log.debug(
+          `Accessory endpoint ${plg}${plugin.name}${nf}:${dev}${device.deviceName}${nf}:${or}${device.id}${nf}:${or}${device.number}${nf} is ${reachable ? 'reachable' : 'unreachable'}`,
+        );
         this.server.request({
           type: 'frontend_attributechanged',
           src: 'matter',
           dst: 'frontend',
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          params: { plugin: device.plugin!, serialNumber: device.serialNumber!, uniqueId: device.uniqueId!, number: device.number, id: device.id, cluster: 'BasicInformation', attribute: 'reachable', value: reachable },
+
+          params: {
+            plugin: device.plugin,
+            serialNumber: device.serialNumber,
+            uniqueId: device.uniqueId,
+            number: device.number,
+            id: device.id,
+            cluster: 'BasicInformation',
+            attribute: 'reachable',
+            value: reachable,
+          },
         });
       });
     }
@@ -1191,22 +1298,39 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     ];
     for (const sub of subscriptions) {
       if (device.hasAttributeServer(sub.cluster, sub.attribute)) {
-        this.log.debug(`Subscribing to endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
+        this.log.debug(
+          `Subscribing to endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`,
+        );
         await device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
-          this.log.debug(`Bridged endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`);
+          if (!device.plugin || !device.serialNumber || !device.uniqueId) return;
+          this.log.debug(
+            `Bridged endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`,
+          );
           this.server.request({
             type: 'frontend_attributechanged',
             src: 'matter',
             dst: 'frontend',
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            params: { plugin: device.plugin!, serialNumber: device.serialNumber!, uniqueId: device.uniqueId!, number: device.number, id: device.id, cluster: sub.cluster, attribute: sub.attribute, value: value },
+
+            params: {
+              plugin: device.plugin,
+              serialNumber: device.serialNumber,
+              uniqueId: device.uniqueId,
+              number: device.number,
+              id: device.id,
+              cluster: sub.cluster,
+              attribute: sub.attribute,
+              value: value,
+            },
           });
         });
       }
       for (const child of device.getChildEndpoints()) {
         if (child.hasAttributeServer(sub.cluster, sub.attribute)) {
-          this.log.debug(`Subscribing to child endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
+          this.log.debug(
+            `Subscribing to child endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`,
+          );
           await child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+            if (!device.plugin || !device.serialNumber || !device.uniqueId) return;
             this.log.debug(
               `Bridged child endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`,
             );
@@ -1214,8 +1338,17 @@ export class MatterNode extends EventEmitter<MatterEvents> {
               type: 'frontend_attributechanged',
               src: 'matter',
               dst: 'frontend',
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              params: { plugin: device.plugin!, serialNumber: device.serialNumber!, uniqueId: device.uniqueId!, number: child.number, id: child.id, cluster: sub.cluster, attribute: sub.attribute, value: value },
+
+              params: {
+                plugin: device.plugin,
+                serialNumber: device.serialNumber,
+                uniqueId: device.uniqueId,
+                number: child.number,
+                id: child.id,
+                cluster: sub.cluster,
+                attribute: sub.attribute,
+                value: value,
+              },
             });
           });
         }

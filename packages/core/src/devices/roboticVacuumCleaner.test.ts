@@ -155,7 +155,10 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'rvcOperationalState', 'resume');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`,
+    );
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'rvcOperationalState', 'goHome');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `GoHome (endpoint ${device.id}.${device.number})`);

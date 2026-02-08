@@ -4,17 +4,33 @@ const MATTER_PORT = 6300;
 const NAME = 'MatterbridgeDeviceMatter';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
+process.argv = [
+  'node',
+  'matterbridge.server.test.js',
+  '-novirtual',
+  '-logger',
+  'debug',
+  '-matterlogger',
+  'debug',
+  '-debug',
+  '-bridge',
+  '-frontend',
+  '0',
+  '-homedir',
+  HOMEDIR,
+  '-port',
+  MATTER_PORT.toString(),
+];
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
 // Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('./worker.js', () => ({
+jest.unstable_mockModule('@matterbridge/thread', () => ({
   createESMWorker: jest.fn(() => {
     return undefined; // Mock the createESMWorker function to return immediately
   }),
 }));
-const workerModule = await import('./worker.js');
+const workerModule = await import('@matterbridge/thread');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import path from 'node:path';
@@ -111,7 +127,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
       matterbridge.plugins.once('added', (name) => {
         if (name === 'matterdevicetest') resolve();
       });
-      matterbridge.plugins.add('./src/mock/pluginmatterdevice');
+      matterbridge.plugins.add('./packages/core/src/mock/pluginmatterdevice');
     });
 
     expect(matterbridge.plugins.length).toBe(1);
@@ -187,7 +203,10 @@ describe('Matterbridge  Device serverMode=matter', () => {
 
     await Promise.all([online, started]);
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Adding matter endpoint ${plg}matterdevicetest${db}:${dev}Matter node device${db} to Matterbridge server node...`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Adding matter endpoint ${plg}matterdevicetest${db}:${dev}Matter node device${db} to Matterbridge server node...`),
+    );
 
     expect(matterbridge.plugins.get('matterdevicetest')).toBeDefined();
     expect(matterbridge.plugins.get('matterdevicetest')?.serverNode).toBeUndefined();

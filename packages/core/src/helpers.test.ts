@@ -26,7 +26,17 @@ import { BridgedDeviceBasicInformationServer, OnOffServer } from '@matter/node/b
 import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { aggregator, consoleLogSpy, createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, matterbridge, server, setupTest, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestHelpers.js';
+import {
+  aggregator,
+  consoleLogSpy,
+  createMatterbridgeEnvironment,
+  destroyMatterbridgeEnvironment,
+  matterbridge,
+  server,
+  setupTest,
+  startMatterbridgeEnvironment,
+  stopMatterbridgeEnvironment,
+} from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
 
 const shutdownProcessSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess').mockImplementation(async () => {

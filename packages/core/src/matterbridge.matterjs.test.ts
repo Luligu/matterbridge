@@ -4,15 +4,30 @@ const MATTER_PORT = 6100;
 const NAME = 'MatterbridgeMatterjs';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.matterjs.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
+process.argv = [
+  'node',
+  'matterbridge.matterjs.test.js',
+  '-novirtual',
+  '-logger',
+  'debug',
+  '-matterlogger',
+  'debug',
+  '-bridge',
+  '-frontend',
+  '0',
+  '-homedir',
+  HOMEDIR,
+  '-port',
+  MATTER_PORT.toString(),
+];
 
 // Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('./worker.js', () => ({
+jest.unstable_mockModule('@matterbridge/thread', () => ({
   createESMWorker: jest.fn(() => {
     return undefined; // Mock the createESMWorker function to return immediately
   }),
 }));
-const workerModule = await import('./worker.js');
+const workerModule = await import('@matterbridge/thread');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import path from 'node:path';

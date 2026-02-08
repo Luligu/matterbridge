@@ -14,7 +14,19 @@ import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-log
 
 import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './checkUpdates.js';
 import { ApiPlugin, plg } from './matterbridgeTypes.js';
-import { flushAsync, loggerDebugSpy, loggerNoticeSpy, loggerWarnSpy, matterbridge, setupTest, startMatterbridge, stopMatterbridge, wssSendRefreshRequiredSpy, wssSendSnackbarMessageSpy, wssSendUpdateRequiredSpy } from './jestutils/jestHelpers.js';
+import {
+  flushAsync,
+  loggerDebugSpy,
+  loggerNoticeSpy,
+  loggerWarnSpy,
+  matterbridge,
+  setupTest,
+  startMatterbridge,
+  stopMatterbridge,
+  wssSendRefreshRequiredSpy,
+  wssSendSnackbarMessageSpy,
+  wssSendUpdateRequiredSpy,
+} from './jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 // Mock selected functions from @matterbridge/utils
@@ -63,7 +75,8 @@ describe('getMatterbridgeLatestVersion', () => {
   });
 
   it('should add plugin', async () => {
-    plugin = (await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: './src/mock/plugin1' } }, 5000)).result.plugin;
+    plugin = (await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: './packages/core/src/mock/plugin1' } }, 5000)).result
+      .plugin;
     expect(plugin).not.toBe(null);
   });
 
@@ -112,7 +125,9 @@ describe('getMatterbridgeLatestVersion', () => {
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge');
     expect(matterbridge.matterbridgeLatestVersion).toBe(matterbridge.matterbridgeVersion);
-    expect(loggerDebugSpy).toHaveBeenCalledWith(`Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeVersion}.`);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(
+      `Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeVersion}.`,
+    );
     expect(wssSendSnackbarMessageSpy).not.toHaveBeenCalled();
     expect(wssSendUpdateRequiredSpy).not.toHaveBeenCalled();
     expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
@@ -286,14 +301,14 @@ describe('getMatterbridgeLatestVersion', () => {
 
     // Set the return value for this specific test case
     (getGitHubUpdate as jest.MockedFunction<(branch: string, file: string, timeout?: number) => Promise<any>>).mockResolvedValue({
-      'latest': '3.1.9',
-      'latestDate': '2025-07-??',
-      'dev': '3.1.9-dev-123456',
-      'devDate': '2025-07-??',
-      'latestMessage': 'Bumped matter.js to 0.15.2',
-      'latestMessageSeverity': 'info',
-      'devMessage': 'Bumped matter.js to 0.15.2',
-      'devMessageSeverity': 'info',
+      latest: '3.1.9',
+      latestDate: '2025-07-??',
+      dev: '3.1.9-dev-123456',
+      devDate: '2025-07-??',
+      latestMessage: 'Bumped matter.js to 0.15.2',
+      latestMessageSeverity: 'info',
+      devMessage: 'Bumped matter.js to 0.15.2',
+      devMessageSeverity: 'info',
     });
 
     matterbridge.matterbridgeVersion = '1.0.0';

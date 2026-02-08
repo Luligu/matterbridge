@@ -67,7 +67,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer initialized: currentMode is 2`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80°`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80°`,
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
   });
 
@@ -131,7 +134,22 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a laundry washer device with number temperature control', async () => {
-    device = new LaundryWasher('Laundry Washer Test Device', 'LW123456', undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
+    device = new LaundryWasher(
+      'Laundry Washer Test Device',
+      'LW123456',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      5500,
+      3000,
+      9000,
+      1000,
+    );
     expect(device).toBeDefined();
     expect(device.id).toBe('LaundryWasherTestDevice-LW123456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
@@ -147,7 +165,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer initialized: currentMode is 2`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`,
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
   });
 

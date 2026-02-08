@@ -22,8 +22,32 @@ const jestConfig = {
   testEnvironment: 'node', // Use Node.js environment for testing
   cacheDirectory: '<rootDir>/.cache/jest',
   moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' }, // Handle ESM imports by removing the .js extension
-  testPathIgnorePatterns: ['/.cache/', '/dist/', '/node_modules/', '/scripts/', '/vitest/', '/frontend/', '/src/crypto/', '/src/workers/', '/src/mock/', 'matterNode', 'jestHelpers.ts'], // Ignore specific paths for test files
-  coveragePathIgnorePatterns: ['/.cache/', '/dist/', '/node_modules/', '/scripts/', '/vitest/', '/frontend/', '/src/crypto/', '/src/workers/', '/src/mock/', 'matterNode', 'jestHelpers.ts'], // Ignore specific paths for test and coverage
+  testPathIgnorePatterns: [
+    '/.cache/',
+    '/dist/',
+    '/node_modules/',
+    '/scripts/',
+    '/vitest/',
+    '/apps/',
+    '/packages/core/src/crypto/',
+    '/packages/core/src/workers/',
+    '/packages/core/src/mock/',
+    'matterNode',
+    'jestHelpers.ts',
+  ], // Ignore specific paths for test files
+  coveragePathIgnorePatterns: [
+    '/.cache/',
+    '/dist/',
+    '/node_modules/',
+    '/scripts/',
+    '/vitest/',
+    '/apps/',
+    '/packages/core/src/crypto/',
+    '/packages/core/src/workers/',
+    '/packages/core/src/mock/',
+    'matterNode',
+    'jestHelpers.ts',
+  ], // Ignore specific paths for test and coverage
   maxWorkers: '100%', // Use all available CPU cores for running tests
 };
 

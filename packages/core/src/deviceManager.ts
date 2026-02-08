@@ -184,7 +184,10 @@ export class DeviceManager {
    */
   set(device: MatterbridgeEndpoint): MatterbridgeEndpoint {
     if (!device.uniqueId) throw new Error(`The device ${dev}${device.deviceName}${er} has not been initialized: uniqueId is required`);
-    if (this._devices.has(device.uniqueId)) this.log.error(`The device ${dev}${device.deviceName}${er} with uniqueId ${BLUE}${device.uniqueId}${er} serialNumber ${BLUE}${device.serialNumber}${er} is already in the device manager`);
+    if (this._devices.has(device.uniqueId))
+      this.log.error(
+        `The device ${dev}${device.deviceName}${er} with uniqueId ${BLUE}${device.uniqueId}${er} serialNumber ${BLUE}${device.serialNumber}${er} is already in the device manager`,
+      );
     this._devices.set(device.uniqueId, device);
     return device;
   }
@@ -198,7 +201,10 @@ export class DeviceManager {
    */
   remove(device: MatterbridgeEndpoint): boolean {
     if (!device.uniqueId) throw new Error(`The device ${dev}${device.deviceName}${er} has not been initialized: uniqueId is required`);
-    if (!this._devices.has(device.uniqueId)) this.log.error(`The device ${dev}${device.deviceName}${er} with uniqueId ${BLUE}${device.uniqueId}${er} serialNumber ${BLUE}${device.serialNumber}${er} is not registered in the device manager`);
+    if (!this._devices.has(device.uniqueId))
+      this.log.error(
+        `The device ${dev}${device.deviceName}${er} with uniqueId ${BLUE}${device.uniqueId}${er} serialNumber ${BLUE}${device.serialNumber}${er} is not registered in the device manager`,
+      );
     return this._devices.delete(device.uniqueId);
   }
 
@@ -266,7 +272,10 @@ export class DeviceManager {
       try {
         await callback(device);
       } catch (error) {
-        this.log.error(`Error processing forEach device ${dev}${device.deviceName}${er} serialNumber ${BLUE}${device.serialNumber}${er} uniqueId: ${BLUE}${device.uniqueId}${er}:`, error);
+        this.log.error(
+          `Error processing forEach device ${dev}${device.deviceName}${er} serialNumber ${BLUE}${device.serialNumber}${er} uniqueId: ${BLUE}${device.uniqueId}${er}:`,
+          error,
+        );
       }
     });
     await Promise.all(tasks);

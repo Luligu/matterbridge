@@ -11,7 +11,17 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import type { BroadcastServer } from './broadcastServer.js';
-import { broadcastServerBroadcastSpy, broadcastServerRequestSpy, broadcastServerRespondSpy, flushAsync, loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import {
+  broadcastServerBroadcastSpy,
+  broadcastServerRequestSpy,
+  broadcastServerRespondSpy,
+  flushAsync,
+  loggerDebugSpy,
+  loggerErrorSpy,
+  originalProcessArgv,
+  setDebug,
+  setupTest,
+} from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -163,7 +173,14 @@ describe('BroadcastServer', () => {
     server.broadcast({ type: 'jest_simple', src: 'frontend', dst: 'manager', error: 'Any error' });
     expect(postMessageSpy).toHaveBeenCalledTimes(3);
     expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest_simple', src: 'manager', dst: 'manager' });
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest_simple', src: 'manager', dst: 'manager', result: { success: true } });
+    expect(postMessageSpy).toHaveBeenCalledWith({
+      id: expect.any(Number),
+      timestamp: expect.any(Number),
+      type: 'jest_simple',
+      src: 'manager',
+      dst: 'manager',
+      result: { success: true },
+    });
     expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest_simple', src: 'manager', dst: 'manager', error: 'Any error' });
     postMessageSpy.mockRestore();
   });
@@ -175,7 +192,14 @@ describe('BroadcastServer', () => {
     server.broadcast({ type: 'jest', src: 'frontend', dst: 'manager', error: 'Not found' });
     expect(postMessageSpy).toHaveBeenCalledTimes(3);
     expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest', src: 'manager', dst: 'manager', params: { userId: 1 } });
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest', src: 'manager', dst: 'manager', result: { name: 'Bob', age: 42 } });
+    expect(postMessageSpy).toHaveBeenCalledWith({
+      id: expect.any(Number),
+      timestamp: expect.any(Number),
+      type: 'jest',
+      src: 'manager',
+      dst: 'manager',
+      result: { name: 'Bob', age: 42 },
+    });
     expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest', src: 'manager', dst: 'manager', error: 'Not found' });
     postMessageSpy.mockRestore();
   });
@@ -219,7 +243,15 @@ describe('BroadcastServer', () => {
     const postMessageSpy = jest.spyOn((server as any).broadcastChannel, 'postMessage');
     const responseMsg = { id: 654321, timestamp: Date.now() - 1000, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Bob', age: 42 } } as const;
     server.respond(responseMsg);
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: 654321, timestamp: expect.any(Number), elapsed: expect.any(Number), type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Bob', age: 42 } });
+    expect(postMessageSpy).toHaveBeenCalledWith({
+      id: 654321,
+      timestamp: expect.any(Number),
+      elapsed: expect.any(Number),
+      type: 'jest',
+      src: 'manager',
+      dst: 'frontend',
+      result: { name: 'Bob', age: 42 },
+    });
     postMessageSpy.mockRestore();
   });
 
@@ -227,15 +259,40 @@ describe('BroadcastServer', () => {
     const postMessageSpy = jest.spyOn((server as any).broadcastChannel, 'postMessage');
     const responseMsg = { id: 654321, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Bob', age: 42 } } as const;
     server.respond(responseMsg);
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: 654321, timestamp: expect.any(Number), elapsed: undefined, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Bob', age: 42 } });
+    expect(postMessageSpy).toHaveBeenCalledWith({
+      id: 654321,
+      timestamp: expect.any(Number),
+      elapsed: undefined,
+      type: 'jest',
+      src: 'manager',
+      dst: 'frontend',
+      result: { name: 'Bob', age: 42 },
+    });
     postMessageSpy.mockRestore();
   });
 
   test('respond: should broadcast a valid response message reverse of src dst', async () => {
     const postMessageSpy = jest.spyOn((server as any).broadcastChannel, 'postMessage');
-    const responseMsg = { id: 654321, timestamp: Date.now() - 1000, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 }, result: { name: 'Bob', age: 42 } } as const;
+    const responseMsg = {
+      id: 654321,
+      timestamp: Date.now() - 1000,
+      type: 'jest',
+      src: 'frontend',
+      dst: 'manager',
+      params: { userId: 1 },
+      result: { name: 'Bob', age: 42 },
+    } as const;
     server.respond(responseMsg);
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: 654321, timestamp: expect.any(Number), elapsed: expect.any(Number), type: 'jest', src: 'manager', dst: 'frontend', params: { userId: 1 }, result: { name: 'Bob', age: 42 } });
+    expect(postMessageSpy).toHaveBeenCalledWith({
+      id: 654321,
+      timestamp: expect.any(Number),
+      elapsed: expect.any(Number),
+      type: 'jest',
+      src: 'manager',
+      dst: 'frontend',
+      params: { userId: 1 },
+      result: { name: 'Bob', age: 42 },
+    });
     postMessageSpy.mockRestore();
   });
 
@@ -269,7 +326,9 @@ describe('BroadcastServer', () => {
   test('fetch: should resolve get_log_level', async () => {
     setTimeout(() => {
       // Simulate receiving the response
-      (server as any).broadcastChannel.onmessage({ data: { id: 111111, timestamp: Date.now(), type: 'get_log_level', src: 'matter', dst: 'manager', result: { logLevel: LogLevel.DEBUG } } });
+      (server as any).broadcastChannel.onmessage({
+        data: { id: 111111, timestamp: Date.now(), type: 'get_log_level', src: 'matter', dst: 'manager', result: { logLevel: LogLevel.DEBUG } },
+      });
     }, 10);
     expect((await server.fetch({ id: 111111, type: 'get_log_level', src: 'manager', dst: 'matter' })).result.logLevel).toBe(LogLevel.DEBUG);
   });
@@ -277,7 +336,9 @@ describe('BroadcastServer', () => {
   test('fetch: should resolve set_log_level', async () => {
     setTimeout(() => {
       // Simulate receiving the response
-      (server as any).broadcastChannel.onmessage({ data: { id: 111111, timestamp: Date.now(), type: 'set_log_level', src: 'matter', dst: 'manager', result: { logLevel: LogLevel.DEBUG } } });
+      (server as any).broadcastChannel.onmessage({
+        data: { id: 111111, timestamp: Date.now(), type: 'set_log_level', src: 'matter', dst: 'manager', result: { logLevel: LogLevel.DEBUG } },
+      });
     }, 10);
     expect((await server.fetch({ id: 111111, type: 'set_log_level', src: 'manager', dst: 'matter', params: { logLevel: LogLevel.DEBUG } })).result.logLevel).toBe(LogLevel.DEBUG);
   });
@@ -317,7 +378,16 @@ describe('BroadcastServer', () => {
     const testServer = new BroadcastServer('frontend', log, NAME);
     const result = await testServer.fetch({ id: 123456, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } });
     testServer.close();
-    expect(result).toEqual({ id: 123456, timestamp: expect.any(Number), elapsed: expect.any(Number), params: { userId: 1 }, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Alice', age: 33 } });
+    expect(result).toEqual({
+      id: 123456,
+      timestamp: expect.any(Number),
+      elapsed: expect.any(Number),
+      params: { userId: 1 },
+      type: 'jest',
+      src: 'manager',
+      dst: 'frontend',
+      result: { name: 'Alice', age: 33 },
+    });
 
     server.off('broadcast_message', handler);
   });

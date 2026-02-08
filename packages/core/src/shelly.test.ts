@@ -50,13 +50,13 @@ describe('Shelly API', () => {
         case '/api/updates/sys/perform':
         case '/api/updates/main/perform':
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ 'updatingInProgress': true }));
+          return res.end(JSON.stringify({ updatingInProgress: true }));
 
         case '/api/updates/sys/status':
         case '/api/updates/main/status':
           res.writeHead(200, { 'Content-Type': 'application/json' });
           // eslint-disable-next-line no-case-declarations
-          const msg = res.end(JSON.stringify({ 'updatingInProgress': updatingInProgress }));
+          const msg = res.end(JSON.stringify({ updatingInProgress: updatingInProgress }));
           updatingInProgress = false;
           return msg;
 
@@ -67,15 +67,15 @@ describe('Shelly API', () => {
 
         case '/api/system/reboot':
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ 'success': true }));
+          return res.end(JSON.stringify({ success: true }));
 
         case '/api/reset/soft':
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ 'ok': true }));
+          return res.end(JSON.stringify({ ok: true }));
 
         case '/api/reset/hard':
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ 'ok': true }));
+          return res.end(JSON.stringify({ ok: true }));
 
         case '/api/logs/system':
           res.writeHead(200, { 'Content-Type': 'text/plain' });

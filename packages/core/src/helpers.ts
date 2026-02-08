@@ -51,7 +51,12 @@ import { Matterbridge } from './matterbridge.js';
  * @remarks The virtual device is created as an instance of `Endpoint` with the `OnOffPlugInUnitDevice` device type.
  * The onOff state always reverts to false when the device is turned on.
  */
-export async function addVirtualDevice(aggregatorEndpoint: Endpoint<AggregatorEndpoint>, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<Endpoint> {
+export async function addVirtualDevice(
+  aggregatorEndpoint: Endpoint<AggregatorEndpoint>,
+  name: string,
+  type: 'light' | 'outlet' | 'switch' | 'mounted_switch',
+  callback: () => Promise<void>,
+): Promise<Endpoint> {
   // Create a new virtual device by instantiating `Endpoint` with device information.
   // The device ID is created by replacing all spaces in the name with an empty string.
   // The node label of the bridged device basic information is set to the given name.

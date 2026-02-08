@@ -34,8 +34,8 @@ import { PluginManager } from './pluginManager.js';
 import type { Matterbridge } from './matterbridge.js';
 import { DeviceManager } from './deviceManager.js';
 
-const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../frontend/package.json', import.meta.url), 'utf8'));
+const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
+const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
 const nic = getInterfaceDetails();
 
 const matterbridge: SharedMatterbridge = {
@@ -148,8 +148,12 @@ describe('MatterNode', () => {
   test('Broadcast response server message type', async () => {
     // @ts-expect-error -- Testing unknown message type
     expect(testServer.respond({ type: 'unknown', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', result: { success: true } })).toBeUndefined();
-    expect(testServer.respond({ type: 'get_log_level', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', result: { logLevel: LogLevel.DEBUG } })).toBeUndefined();
-    expect(testServer.respond({ type: 'set_log_level', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', result: { logLevel: LogLevel.DEBUG } })).toBeUndefined();
+    expect(
+      testServer.respond({ type: 'get_log_level', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', result: { logLevel: LogLevel.DEBUG } }),
+    ).toBeUndefined();
+    expect(
+      testServer.respond({ type: 'set_log_level', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', result: { logLevel: LogLevel.DEBUG } }),
+    ).toBeUndefined();
   });
 
   test('Broadcast logLevel changes correctly', async () => {
@@ -206,7 +210,9 @@ describe('MatterNode', () => {
       enabled: true,
     };
     matter.pluginManager.set(plugin);
-    const sensor = new MatterbridgeEndpoint([flowSensor], { id: 'Temperature sensor' }, true).createDefaultBasicInformationClusterServer('Flow sensor', 'FLOW1234567890').addRequiredClusterServers();
+    const sensor = new MatterbridgeEndpoint([flowSensor], { id: 'Temperature sensor' }, true)
+      .createDefaultBasicInformationClusterServer('Flow sensor', 'FLOW1234567890')
+      .addRequiredClusterServers();
     await expect((matter as any).createAccessoryPlugin('serverdevicetest')).rejects.toThrow();
     await expect((matter as any).createDynamicPlugin('serverdevicetest')).rejects.toThrow();
     await expect((matter as any).createDeviceServerNode('serverdevicetest')).rejects.toThrow();
@@ -215,7 +221,12 @@ describe('MatterNode', () => {
 
   test('Load all plugins', async () => {
     // @ts-expect-error access private property
-    pluginManager.matterbridge.nodeStorage = new NodeStorageManager({ dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+    pluginManager.matterbridge.nodeStorage = new NodeStorageManager({
+      dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR),
+      writeQueue: false,
+      expiredInterval: undefined,
+      logging: false,
+    });
     // @ts-expect-error access private property
     pluginManager.matterbridge.nodeContext = await pluginManager.matterbridge.nodeStorage.createStorage('matterbridge');
 
@@ -341,7 +352,9 @@ describe('MatterNode', () => {
   });
 
   test('Set aggregator reachability', async () => {
-    const tempSensor = new MatterbridgeEndpoint([temperatureSensor, bridgedNode], { id: 'Temperature sensor' }, true).createDefaultBridgedDeviceBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890').addRequiredClusterServers();
+    const tempSensor = new MatterbridgeEndpoint([temperatureSensor, bridgedNode], { id: 'Temperature sensor' }, true)
+      .createDefaultBridgedDeviceBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
+      .addRequiredClusterServers();
     await matter.aggregatorNode?.add(tempSensor);
     expect(await (matter as any).setAggregatorReachability(matter.aggregatorNode, false)).toBeUndefined();
     expect(await (matter as any).setAggregatorReachability(matter.aggregatorNode, true)).toBeUndefined();
@@ -359,7 +372,9 @@ describe('MatterNode', () => {
     device.plugin = 'matterbridge-mock1';
 
     // Test adding to unknown plugin
-    await expect(() => matter.addBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(`Error adding bridged endpoint ${plg}matterbridge-unknown${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`);
+    await expect(() => matter.addBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
+      `Error adding bridged endpoint ${plg}matterbridge-unknown${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`,
+    );
     expect(deviceManager.length).toBe(0);
     jest.clearAllMocks();
 
@@ -367,7 +382,9 @@ describe('MatterNode', () => {
     const saved = matter.aggregatorNode; // Save aggregator node
     matter.aggregatorNode = undefined;
     expect(await matter.pluginManager.add('./src/mock/plugin1')).not.toBeNull();
-    await expect(() => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(`Aggregator node not found for endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`);
+    await expect(() => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+      `Aggregator node not found for endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`,
+    );
     matter.aggregatorNode = saved; // Restore aggregator node
     expect(deviceManager.length).toBe(0);
     jest.clearAllMocks();
@@ -376,7 +393,9 @@ describe('MatterNode', () => {
     const savedServer = matter.serverNode; // Save server node
     matter.serverNode = undefined;
     device.mode = 'matter';
-    await expect(() => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(`Server node not found for matter endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`);
+    await expect(() => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+      `Server node not found for matter endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`,
+    );
     matter.serverNode = savedServer; // Restore server node
     device.mode = undefined; // Restore mode
     expect(deviceManager.length).toBe(0);
@@ -417,13 +436,17 @@ describe('MatterNode', () => {
     expect(deviceManager.length).toBe(1);
 
     // Test removing from unknown plugin
-    await expect(() => matter.removeBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(`Error removing bridged endpoint ${plg}matterbridge-unknown${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`);
+    await expect(() => matter.removeBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
+      `Error removing bridged endpoint ${plg}matterbridge-unknown${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`,
+    );
     expect(deviceManager.length).toBe(1);
 
     // Test removing when no aggregator node
     const savedAggregator = matter.aggregatorNode;
     matter.aggregatorNode = undefined;
-    await expect(() => matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(`Error removing bridged endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`);
+    await expect(() => matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+      `Error removing bridged endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`,
+    );
     expect(deviceManager.length).toBe(1);
     matter.aggregatorNode = savedAggregator; // Restore aggregator node
 
@@ -437,20 +460,26 @@ describe('MatterNode', () => {
   test('Remove all endpoints from the Matter aggregator node for Matterbridge', async () => {
     expect(deviceManager.length).toBe(0);
 
-    const tmpSensor = new MatterbridgeEndpoint([temperatureSensor, bridgedNode], { id: 'Temperature sensor' }, true).createDefaultBridgedDeviceBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890').addRequiredClusterServers();
+    const tmpSensor = new MatterbridgeEndpoint([temperatureSensor, bridgedNode], { id: 'Temperature sensor' }, true)
+      .createDefaultBridgedDeviceBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
+      .addRequiredClusterServers();
     tmpSensor.plugin = 'matterbridge-mock1';
     await matter.addBridgedEndpoint('matterbridge-mock1', tmpSensor);
     expect(tmpSensor.owner).toBeDefined();
     expect(deviceManager.length).toBe(1);
 
-    const humSensor = new MatterbridgeEndpoint([humiditySensor, bridgedNode], { id: 'Humidity sensor' }, true).createDefaultBridgedDeviceBasicInformationClusterServer('Humidity sensor', 'HUM1234567890').addRequiredClusterServers();
+    const humSensor = new MatterbridgeEndpoint([humiditySensor, bridgedNode], { id: 'Humidity sensor' }, true)
+      .createDefaultBridgedDeviceBasicInformationClusterServer('Humidity sensor', 'HUM1234567890')
+      .addRequiredClusterServers();
     humSensor.plugin = 'matterbridge-mock1';
     await matter.addBridgedEndpoint('matterbridge-mock1', humSensor);
     expect(humSensor.owner).toBeDefined();
     expect(deviceManager.length).toBe(2);
 
     // Test removing from unknown plugin
-    await expect(() => matter.removeAllBridgedEndpoints('matterbridge-unknown')).rejects.toThrow(`Error removing all bridged endpoints for plugin ${plg}matterbridge-unknown${er}: plugin not found`);
+    await expect(() => matter.removeAllBridgedEndpoints('matterbridge-unknown')).rejects.toThrow(
+      `Error removing all bridged endpoints for plugin ${plg}matterbridge-unknown${er}: plugin not found`,
+    );
     expect(deviceManager.length).toBe(2);
 
     // Test removing correctly
@@ -516,7 +545,9 @@ describe('MatterNode', () => {
       author: 'Test Author',
       enabled: true,
     };
-    const sensor = new MatterbridgeEndpoint(temperatureSensor, { id: 'Temperature sensor' }, true).createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890').addRequiredClusterServers();
+    const sensor = new MatterbridgeEndpoint(temperatureSensor, { id: 'Temperature sensor' }, true)
+      .createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
+      .addRequiredClusterServers();
     expect(await matter.createAccessoryPlugin(plugin, sensor)).toBeDefined();
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Created accessory plugin ${plg}${plugin.name}${db} server node`);
   });
@@ -597,7 +628,9 @@ describe('MatterNode', () => {
       author: 'Test Author',
       enabled: true,
     };
-    const sensor = new MatterbridgeEndpoint(temperatureSensor, { id: 'Temperature sensor', mode: 'server' }, true).createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890').addRequiredClusterServers();
+    const sensor = new MatterbridgeEndpoint(temperatureSensor, { id: 'Temperature sensor', mode: 'server' }, true)
+      .createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
+      .addRequiredClusterServers();
     expect(await matter.createDeviceServerNode(plugin, sensor)).toBeDefined();
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Created device ${plg}${plugin.name}${db}:${dev}${sensor.deviceName}${db} server node`);
   });
@@ -665,7 +698,14 @@ describe('MatterNode', () => {
         name: 'secure/64351',
         nodeId: NodeId(16784206195868397986n),
         peerNodeId: NodeId(1604858123872676291n),
-        fabric: { fabricIndex: FabricIndex(2), fabricId: FabricId(456546212146567986n), nodeId: NodeId(1678420619586823323397986n), rootNodeId: NodeId(18446744060824623349729n), rootVendorId: VendorId(4362), label: 'SmartThings Hub 0503' },
+        fabric: {
+          fabricIndex: FabricIndex(2),
+          fabricId: FabricId(456546212146567986n),
+          nodeId: NodeId(1678420619586823323397986n),
+          rootNodeId: NodeId(18446744060824623349729n),
+          rootVendorId: VendorId(4362),
+          label: 'SmartThings Hub 0503',
+        },
         isPeerActive: true,
         lastInteractionTimestamp: 1720035723121269,
         lastActiveTimestamp: 1720035761223121,
@@ -682,7 +722,14 @@ describe('MatterNode', () => {
         name: 'secure/64351',
         nodeId: NodeId(16784206195868397986n),
         peerNodeId: NodeId(1604858123872676291n),
-        fabric: { fabricIndex: FabricIndex(2), fabricId: FabricId(456546212146567986n), nodeId: NodeId(1678420619586823323397986n), rootNodeId: NodeId(18446744060824623349729n), rootVendorId: VendorId(4362), label: 'SmartThings Hub 0503' },
+        fabric: {
+          fabricIndex: FabricIndex(2),
+          fabricId: FabricId(456546212146567986n),
+          nodeId: NodeId(1678420619586823323397986n),
+          rootNodeId: NodeId(18446744060824623349729n),
+          rootVendorId: VendorId(4362),
+          label: 'SmartThings Hub 0503',
+        },
         isPeerActive: false,
         lastInteractionTimestamp: 1720035723121269,
         lastActiveTimestamp: 1720035761223121,

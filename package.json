@@ -189,7 +189,7 @@
     "updateMatter:latest": "npm install --save-exact @matter/main@latest && npm install && npm run reset",
     "updateMatter:dev": "npm install --save-exact @matter/main@dev && npm install && npm run reset",
     "updateMatter:loc": "npm install ../matter.js/packages/matter.js && npm install && npm run reset",
-    "install:dependencies": "npm install --no-fund --no-audit --save-exact @matter/main archiver express glob multer node-ansi-logger node-persist-manager ws",
+    "install:dependencies": "npm install --no-fund --no-audit --save-exact @matterbridge/types @matterbridge/dgram @matterbridge/jest-utils @matterbridge/thread @matterbridge/utils @matterbridge/vitest-utils @matterbridge/core",
     "install:scripts": "npm install --no-fund --no-audit --save-dev --save-exact npm-check-updates shx cross-env marked",
     "install:typescript": "npm install --no-fund --no-audit --save-dev --save-exact typescript @types/node @types/express @types/ws",
     "install:eslint": "npm install --no-fund --no-audit --save-dev --save-exact eslint@9.39.2 @eslint/js@9.39.2 typescript-eslint eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-jsdoc",
@@ -222,21 +222,13 @@
     "pack:all:latest": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag latest && npm run reset"
   },
   "dependencies": {
-    "@matter/main": "0.16.8",
     "@matterbridge/types": "3.5.4",
     "@matterbridge/dgram": "3.5.4",
     "@matterbridge/jest-utils": "3.5.4",
     "@matterbridge/thread": "3.5.4",
     "@matterbridge/utils": "3.5.4",
     "@matterbridge/vitest-utils": "3.5.4",
-    "@matterbridge/core": "3.5.4",
-    "archiver": "7.0.1",
-    "express": "5.2.1",
-    "glob": "13.0.1",
-    "multer": "2.0.2",
-    "node-ansi-logger": "3.2.0",
-    "node-persist-manager": "2.0.0",
-    "ws": "8.19.0"
+    "@matterbridge/core": "3.5.4"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",

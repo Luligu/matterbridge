@@ -65,7 +65,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet1.id).toBe('OvenTestCabinetTop');
     expect(cabinet1.hasClusterServer(OvenMode.Cluster.id)).toBeTruthy();
     expect(cabinet1.hasClusterServer(OvenCavityOperationalState.Cluster.id)).toBeTruthy();
-    expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
+    expect(cabinet1.getAllClusterServerNames()).toEqual([
+      'descriptor',
+      'matterbridge',
+      'identify',
+      'temperatureControl',
+      'temperatureMeasurement',
+      'ovenMode',
+      'ovenCavityOperationalState',
+    ]);
 
     cabinet2 = device.addCabinet(
       'Oven Test Cabinet Bottom',
@@ -86,14 +94,25 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet2.id).toBe('OvenTestCabinetBottom');
     expect(cabinet2.hasClusterServer(OvenMode.Cluster.id)).toBeTruthy();
     expect(cabinet2.hasClusterServer(OvenCavityOperationalState.Cluster.id)).toBeTruthy();
-    expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
+    expect(cabinet2.getAllClusterServerNames()).toEqual([
+      'descriptor',
+      'matterbridge',
+      'identify',
+      'temperatureControl',
+      'temperatureMeasurement',
+      'ovenMode',
+      'ovenCavityOperationalState',
+    ]);
   });
 
   test('add a oven device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenModeServer initialized`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenCavityOperationalStateServer initialized: setting operational state to Stopped and operational error to No error`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeOvenCavityOperationalStateServer initialized: setting operational state to Stopped and operational error to No error`,
+    );
   });
 
   test('device forEachAttribute', async () => {
@@ -190,12 +209,18 @@ describe('Matterbridge ' + NAME, () => {
     // Change to mode 2
     jest.clearAllMocks();
     await invokeBehaviorCommand(cabinet1, 'ovenCavityOperationalState', 'start', { newMode: 2 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenCavityOperationalStateServer: start (endpoint OvenTestCabinetTop.3) called setting operational state to Running and operational error to No error`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeOvenCavityOperationalStateServer: start (endpoint OvenTestCabinetTop.3) called setting operational state to Running and operational error to No error`,
+    );
 
     // Change to mode 15
     jest.clearAllMocks();
     await invokeBehaviorCommand(cabinet1, 'ovenCavityOperationalState', 'stop', { newMode: 15 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint OvenTestCabinetTop.3) called setting operational state to Stopped and operational error to No error`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint OvenTestCabinetTop.3) called setting operational state to Stopped and operational error to No error`,
+    );
   });
 
   test('close the server node', async () => {

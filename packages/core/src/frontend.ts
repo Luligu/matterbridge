@@ -47,7 +47,22 @@ import { CommissioningOptions } from '@matter/types/commissioning';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { PowerSource } from '@matter/types/clusters/power-source';
 // @matterbridge
-import { createZip, formatBytes, formatPercent, formatUptime, getParameter, hasParameter, inspectError, isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString, wait, withTimeout } from '@matterbridge/utils';
+import {
+  createZip,
+  formatBytes,
+  formatPercent,
+  formatUptime,
+  getParameter,
+  hasParameter,
+  inspectError,
+  isValidArray,
+  isValidBoolean,
+  isValidNumber,
+  isValidObject,
+  isValidString,
+  wait,
+  withTimeout,
+} from '@matterbridge/utils';
 
 // Matterbridge
 import type { Cluster, ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, Plugin } from './matterbridgeTypes.js';
@@ -55,7 +70,15 @@ import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { PlatformConfig } from './matterbridgePlatformTypes.js';
 import type { ApiSettings, RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
-import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from './matterbridgeTypes.js';
+import {
+  MATTER_LOGGER_FILE,
+  MATTER_STORAGE_NAME,
+  MATTERBRIDGE_DIAGNOSTIC_FILE,
+  MATTERBRIDGE_HISTORY_FILE,
+  MATTERBRIDGE_LOGGER_FILE,
+  NODE_STORAGE_DIR,
+  plg,
+} from './matterbridgeTypes.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
 import { generateHistoryPage } from './cliHistory.js';
@@ -144,7 +167,16 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_attributechanged':
-          this.wssSendAttributeChangedMessage(msg.params.plugin, msg.params.serialNumber, msg.params.uniqueId, msg.params.number, msg.params.id, msg.params.cluster, msg.params.attribute, msg.params.value);
+          this.wssSendAttributeChangedMessage(
+            msg.params.plugin,
+            msg.params.serialNumber,
+            msg.params.uniqueId,
+            msg.params.number,
+            msg.params.id,
+            msg.params.cluster,
+            msg.params.attribute,
+            msg.params.value,
+          );
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_logmessage':
@@ -244,7 +276,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     */
 
     // Serve static files from 'frontend/build' directory
-    this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, '..', '..', 'apps', 'frontend', 'build')));
+    this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'apps', 'frontend', 'build')));
 
     // Create a WebSocket server and attach it to the http or https server
     this.log.debug(`Creating WebSocketServer...`);
@@ -797,7 +829,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), data, 'utf-8');
       } catch (error) {
-        await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'Enable the matterbridge log on file in the settings to download the matterbridge log.', 'utf-8');
+        await fs.promises.writeFile(
+          path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE),
+          'Enable the matterbridge log on file in the settings to download the matterbridge log.',
+          'utf-8',
+        );
         this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
       res.type('text/plain');
@@ -976,12 +1012,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Fallback for routing (must be the last route)
     this.expressApp.use((req, res) => {
-      const filePath = path.resolve(this.matterbridge.rootDirectory, 'frontend', 'build');
+      const filePath = path.resolve(this.matterbridge.rootDirectory, 'apps', 'frontend', 'build');
       this.log.debug(`The frontend sent ${req.url} method ${req.method}: sending index.html in ${filePath} as fallback`);
       res.sendFile('index.html', { root: filePath });
     });
 
-    this.log.debug(`Frontend initialized on port ${YELLOW}${this.port}${db} static ${UNDERLINE}${path.join(this.matterbridge.rootDirectory, 'frontend', 'build')}${UNDERLINEOFF}${rs}`);
+    this.log.debug(
+      `Frontend initialized on port ${YELLOW}${this.port}${db} static ${UNDERLINE}${path.join(this.matterbridge.rootDirectory, 'apps', 'frontend', 'build')}${UNDERLINEOFF}${rs}`,
+    );
   }
 
   async stop() {
@@ -1153,7 +1191,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (this.matterbridge.hasCleanupStarted) return false; // Skip if cleanup has started
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return false;
     if (device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) return device.getAttribute(BridgedDeviceBasicInformation.Cluster.id, 'reachable') as boolean;
-    if (device.mode === 'server' && device.serverNode && device.serverNode.state.basicInformation.reachable !== undefined) return device.serverNode.state.basicInformation.reachable;
+    if (device.mode === 'server' && device.serverNode && device.serverNode.state.basicInformation.reachable !== undefined)
+      return device.serverNode.state.basicInformation.reachable;
     if (this.matterbridge.bridgeMode === 'childbridge') return true;
     return false;
   }
@@ -1258,7 +1297,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
       if (clusterName === 'onOff' && attributeName === 'onOff') attributes += `OnOff: ${attributeValue} `;
       if (clusterName === 'switch' && attributeName === 'currentPosition') attributes += `Position: ${attributeValue} `;
-      if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths' && isValidNumber(attributeValue, 0, 10000)) attributes += `Cover position: ${attributeValue / 100}% `;
+      if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths' && isValidNumber(attributeValue, 0, 10000))
+        attributes += `Cover position: ${attributeValue / 100}% `;
       if (clusterName === 'doorLock' && attributeName === 'lockState') attributes += `State: ${attributeValue === 1 ? 'Locked' : 'Not locked'} `;
       if (clusterName === 'thermostat' && attributeName === 'localTemperature' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
       if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint' && isValidNumber(attributeValue)) attributes += `Heat to: ${attributeValue / 100}°C `;
@@ -1282,14 +1322,20 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'levelControl' && attributeName === 'currentLevel') attributes += `Level: ${attributeValue} `;
 
       if (clusterName === 'colorControl' && attributeName === 'colorMode' && isValidNumber(attributeValue, 0, 2)) attributes += `Mode: ${['HS', 'XY', 'CT'][attributeValue]} `;
-      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentHue' && isValidNumber(attributeValue)) attributes += `Hue: ${Math.round(attributeValue)} `;
-      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentSaturation' && isValidNumber(attributeValue)) attributes += `Saturation: ${Math.round(attributeValue)} `;
-      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentX' && isValidNumber(attributeValue)) attributes += `X: ${Math.round(attributeValue / 655.36) / 100} `;
-      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentY' && isValidNumber(attributeValue)) attributes += `Y: ${Math.round(attributeValue / 655.36) / 100} `;
-      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 2 && attributeName === 'colorTemperatureMireds' && isValidNumber(attributeValue)) attributes += `ColorTemp: ${Math.round(attributeValue)} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentHue' && isValidNumber(attributeValue))
+        attributes += `Hue: ${Math.round(attributeValue)} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentSaturation' && isValidNumber(attributeValue))
+        attributes += `Saturation: ${Math.round(attributeValue)} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentX' && isValidNumber(attributeValue))
+        attributes += `X: ${Math.round(attributeValue / 655.36) / 100} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentY' && isValidNumber(attributeValue))
+        attributes += `Y: ${Math.round(attributeValue / 655.36) / 100} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 2 && attributeName === 'colorTemperatureMireds' && isValidNumber(attributeValue))
+        attributes += `ColorTemp: ${Math.round(attributeValue)} `;
 
       if (clusterName === 'booleanState' && attributeName === 'stateValue') attributes += `Contact: ${attributeValue} `;
-      if (clusterName === 'booleanStateConfiguration' && attributeName === 'alarmsActive' && isValidObject(attributeValue)) attributes += `Active alarms: ${stringify(attributeValue)} `;
+      if (clusterName === 'booleanStateConfiguration' && attributeName === 'alarmsActive' && isValidObject(attributeValue))
+        attributes += `Active alarms: ${stringify(attributeValue)} `;
 
       if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState') attributes += `Smoke: ${attributeValue} `;
       if (clusterName === 'smokeCoAlarm' && attributeName === 'coState') attributes += `Co: ${attributeValue} `;
@@ -1298,8 +1344,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue} `;
       if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
 
-      if (clusterName === 'occupancySensing' && attributeName === 'occupancy' && isValidObject(attributeValue, 1)) attributes += `Occupancy: ${(attributeValue as { occupied: boolean }).occupied} `;
-      if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue)) attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} `;
+      if (clusterName === 'occupancySensing' && attributeName === 'occupancy' && isValidObject(attributeValue, 1))
+        attributes += `Occupancy: ${(attributeValue as { occupied: boolean }).occupied} `;
+      if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue))
+        attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} `;
       if (clusterName === 'airQuality' && attributeName === 'airQuality') attributes += `Air quality: ${attributeValue} `;
       if (clusterName === 'totalVolatileOrganicCompoundsConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Voc: ${attributeValue} `;
       if (clusterName === 'pm1ConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Pm1: ${attributeValue} `;
@@ -1419,7 +1467,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Get the clusters from the main endpoint
     endpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-      if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
+      if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName))
+        return;
       // console.log(
       //   `${idn}${endpoint.deviceName}${rs}${nf} => Cluster: ${CYAN}${clusterName} (0x${clusterId.toString(16).padStart(2, '0')})${nf} Attribute: ${CYAN}${attributeName} (0x${attributeId.toString(16).padStart(2, '0')})${nf} Value: ${YELLOW}${typeof attributeValue === 'object' ? stringify(attributeValue as object) : attributeValue}${nf}`,
       // );
@@ -1458,7 +1507,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       childEndpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
         if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-        if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
+        if (
+          clusterName === 'EveHistory' &&
+          ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)
+        )
+          return;
         // console.log(
         //   `${idn}${childEndpoint.deviceName}${rs}${nf} => Cluster: ${CYAN}${clusterName} (0x${clusterId.toString(16).padStart(2, '0')})${nf} Attribute: ${CYAN}${attributeName} (0x${attributeId.toString(16).padStart(2, '0')})${nf} Value: ${YELLOW}${typeof attributeValue === 'object' ? stringify(attributeValue as object) : attributeValue}${nf}`,
         // );
@@ -1495,7 +1548,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (device.serverNode) serverNodes.push(device.serverNode);
     }
     const fs = await import('node:fs');
-    if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE))) fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE));
+    if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE)))
+      fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE));
     const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
     diagnosticDestination.write = async (text: string, _message: Diagnostic.Message) => {
       await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
@@ -1548,7 +1602,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     try {
       data = JSON.parse(message.toString());
-      if (!isValidNumber(data.id) || !isValidString(data.dst) || !isValidString(data.src) || !isValidString(data.method) /* || !isValidObject(data.params)*/ || data.dst !== 'Matterbridge') {
+      if (
+        !isValidNumber(data.id) ||
+        !isValidString(data.dst) ||
+        !isValidString(data.src) ||
+        !isValidString(data.method) /* || !isValidObject(data.params)*/ ||
+        data.dst !== 'Matterbridge'
+      ) {
         this.log.error(`Invalid message from websocket client: ${debugStringify(data)}`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid message' });
         return;
@@ -1676,8 +1736,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           await this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true);
           // @ts-expect-error Accessing private method
           if (plugin.serverNode) await this.matterbridge.startServerNode(plugin.serverNode);
-          // @ts-expect-error Accessing private method
-          for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name && d.serverNode)) await this.matterbridge.startServerNode(device.serverNode);
+          for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name && d.serverNode))
+            // @ts-expect-error Accessing private method
+            await this.matterbridge.startServerNode(device.serverNode);
           this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginName}`, 5, 'success');
           this.wssSendRefreshRequired('plugins');
           this.wssSendRefreshRequired('devices');
@@ -1803,7 +1864,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/create-backup') {
         this.wssSendSnackbarMessage('Creating backup...', 0);
         this.log.notice(`Creating the backup...`);
-        await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(this.matterbridge.matterbridgeDirectory), path.join(this.matterbridge.matterbridgePluginDirectory), path.join(this.matterbridge.matterbridgeCertDirectory));
+        await createZip(
+          path.join(os.tmpdir(), `matterbridge.backup.zip`),
+          path.join(this.matterbridge.matterbridgeDirectory),
+          path.join(this.matterbridge.matterbridgePluginDirectory),
+          path.join(this.matterbridge.matterbridgeCertDirectory),
+        );
         this.log.notice(`Backup ready to be downloaded.`);
         this.wssSendCloseSnackbarMessage('Creating backup...');
         this.wssSendSnackbarMessage('Backup ready to be downloaded', 10);
@@ -1837,7 +1903,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (data.params.id === 'Matterbridge') serverNode = this.matterbridge.serverNode;
         else
           serverNode =
-            this.matterbridge.plugins.array().find((p) => p.serverNode && p.serverNode.id === localData.params.id)?.serverNode || this.matterbridge.devices.array().find((d) => d.serverNode && d.serverNode.id === localData.params.id)?.serverNode;
+            this.matterbridge.plugins.array().find((p) => p.serverNode && p.serverNode.id === localData.params.id)?.serverNode ||
+            this.matterbridge.devices.array().find((d) => d.serverNode && d.serverNode.id === localData.params.id)?.serverNode;
         if (!serverNode) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown server node id ${localData.params.id} in /api/matter` });
           return;
@@ -1949,7 +2016,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           })
           .catch((error) => {
             this.log.error(`Error in plugin ${plugin.name} action ${localData.params.action}: ${error}`);
-            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Error in plugin ${plugin.name} action ${localData.params.action}: ${error}` });
+            sendResponse({
+              id: data.id,
+              method: data.method,
+              src: 'Matterbridge',
+              dst: data.src,
+              error: `Error in plugin ${plugin.name} action ${localData.params.action}: ${error}`,
+            });
           });
       } else if (data.method === '/api/config') {
         if (!isValidString(data.params.name, 5) || data.params.value === undefined) {
@@ -1998,7 +2071,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.fileLogger = data.params.value;
               await this.matterbridge.nodeContext?.set('matterbridgeFileLog', data.params.value);
               // Create the file logger for matterbridge
-              if (data.params.value) AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), await this.matterbridge.getLogLevel(), true);
+              if (data.params.value)
+                AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), await this.matterbridge.getLogLevel(), true);
               else AnsiLogger.setGlobalLogfile(undefined);
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
             }
@@ -2109,7 +2183,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.discriminator = undefined;
               await this.matterbridge.nodeContext?.remove('matterdiscriminator');
               this.wssSendRestartRequired();
-              sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning discriminator to default undefined' });
+              sendResponse({
+                id: data.id,
+                method: data.method,
+                src: 'Matterbridge',
+                dst: data.src,
+                error: 'Invalid value: reset matter commissioning discriminator to default undefined',
+              });
               this.wssSendSnackbarMessage(`Matter discriminator reset to default`, undefined, 'error');
             }
             break;
@@ -2128,7 +2208,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.passcode = undefined;
               await this.matterbridge.nodeContext?.remove('matterpasscode');
               this.wssSendRestartRequired();
-              sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning passcode to default undefined' });
+              sendResponse({
+                id: data.id,
+                method: data.method,
+                src: 'Matterbridge',
+                dst: data.src,
+                error: 'Invalid value: reset matter commissioning passcode to default undefined',
+              });
               this.wssSendSnackbarMessage(`Matter passcode reset to default`, undefined, 'error');
             }
             break;
@@ -2193,7 +2279,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.log.error(`SelectDevice: select ${select} not supported`);
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` });
           }
-        } else if (data.params.command === 'unselectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1) && isValidString(data.params.name, 1)) {
+        } else if (
+          data.params.command === 'unselectdevice' &&
+          isValidString(data.params.plugin, 10) &&
+          isValidString(data.params.serial, 1) &&
+          isValidString(data.params.name, 1)
+        ) {
           const plugin = this.matterbridge.plugins.get(data.params.plugin);
           if (!plugin) {
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' });
@@ -2369,7 +2460,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // istanbul ignore else
     if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', success: true, response: { cpuUsage: Math.round(cpuUsage * 100) / 100, processCpuUsage: Math.round(processCpuUsage * 100) / 100 } });
+    this.wssBroadcastMessage({
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'cpu_update',
+      success: true,
+      response: { cpuUsage: Math.round(cpuUsage * 100) / 100, processCpuUsage: Math.round(processCpuUsage * 100) / 100 },
+    });
   }
 
   /**
@@ -2388,7 +2486,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // istanbul ignore else
     if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', success: true, response: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers } });
+    this.wssBroadcastMessage({
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'memory_update',
+      success: true,
+      response: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers },
+    });
   }
 
   /**
@@ -2452,11 +2557,27 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * This method logs a debug message and sends a JSON-formatted message to all connected WebSocket clients
    * with the updated attribute information.
    */
-  wssSendAttributeChangedMessage(plugin: string, serialNumber: string, uniqueId: string, number: EndpointNumber, id: string, cluster: string, attribute: string, value: number | string | boolean | null) {
+  wssSendAttributeChangedMessage(
+    plugin: string,
+    serialNumber: string,
+    uniqueId: string,
+    number: EndpointNumber,
+    id: string,
+    cluster: string,
+    attribute: string,
+    value: number | string | boolean | null,
+  ) {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending an attribute update message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'state_update', success: true, response: { plugin, serialNumber, uniqueId, number, id, cluster, attribute, value } });
+    this.wssBroadcastMessage({
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'state_update',
+      success: true,
+      response: { plugin, serialNumber, uniqueId, number, id, cluster, attribute, value },
+    });
   }
 
   /**

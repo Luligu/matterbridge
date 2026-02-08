@@ -9,7 +9,15 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { LogLevel } from 'node-ansi-logger';
 // @matter
-import { Identify, PowerSource, ElectricalEnergyMeasurement, ElectricalPowerMeasurement, DeviceEnergyManagement, DeviceEnergyManagementMode, EnergyEvse } from '@matter/types/clusters';
+import {
+  Identify,
+  PowerSource,
+  ElectricalEnergyMeasurement,
+  ElectricalPowerMeasurement,
+  DeviceEnergyManagement,
+  DeviceEnergyManagementMode,
+  EnergyEvse,
+} from '@matter/types/clusters';
 import { EnergyEvseServer, EnergyEvseModeServer, DeviceEnergyManagementModeServer } from '@matter/node/behaviors';
 
 // Matterbridge
@@ -102,7 +110,10 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`,
+    );
   });
 
   test('invoke MatterbridgeEnergyEvseServer commands', async () => {

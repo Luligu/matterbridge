@@ -177,7 +177,10 @@ describe('Matterbridge frontend express with http', () => {
 
     await flushAsync();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`,
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
   }, 60000);
@@ -497,7 +500,7 @@ describe('Matterbridge frontend express with http', () => {
 
   test('POST /api/uploadpackage with test.zip', async () => {
     // Read the test file
-    const testFileContent = await fs.readFile('./src/mock/test.zip');
+    const testFileContent = await fs.readFile(new URL('./mock/test.zip', import.meta.url));
     const response = await makeMultipartRequest('/api/uploadpackage', 'test.zip', testFileContent);
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
@@ -508,7 +511,7 @@ describe('Matterbridge frontend express with http', () => {
   test('POST /api/uploadpackage with matterbridge-plugin-template.tgz', async () => {
     // setDebug(true);
     // Read the test file
-    const testFileContent = await fs.readFile('./src/mock/matterbridge-plugin-template._tgz');
+    const testFileContent = await fs.readFile(new URL('./mock/matterbridge-plugin-template._tgz', import.meta.url));
     const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
@@ -522,7 +525,7 @@ describe('Matterbridge frontend express with http', () => {
       return Promise.resolve(false);
     });
     // Read the test file
-    const testFileContent = await fs.readFile('./src/mock/test.zip');
+    const testFileContent = await fs.readFile(new URL('./mock/test.zip', import.meta.url));
     const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
     expect(response.status).toBe(500);
     expect(typeof response.body).toBe('string');
@@ -535,7 +538,7 @@ describe('Matterbridge frontend express with http', () => {
       throw new Error('Mocked spawnCommand error for install');
     });
     // Read the test file
-    const testFileContent = await fs.readFile('./src/mock/matterbridge-plugin-template._tgz');
+    const testFileContent = await fs.readFile(new URL('./mock/matterbridge-plugin-template._tgz', import.meta.url));
     const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
     expect(response.status).toBe(500);
     expect(typeof response.body).toBe('string');

@@ -104,7 +104,9 @@ export class MatterbridgePowerSourceServer extends PowerSourceServer {
         }
       }
       this.endpoint.setStateOf(PowerSourceServer, { endpointList });
-      device.log.debug(`MatterbridgePowerSourceServer: endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber} construction completed with endpointList: ${endpointList.join(', ')}`);
+      device.log.debug(
+        `MatterbridgePowerSourceServer: endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber} construction completed with endpointList: ${endpointList.join(', ')}`,
+      );
     });
   }
 }
@@ -190,7 +192,9 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
 
   override moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     device.commandHandler.executeHandler('moveToHueAndSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
     super.moveToHueAndSaturation(request);
@@ -198,7 +202,9 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
 
   override moveToColor(request: ColorControl.MoveToColorRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     device.commandHandler.executeHandler('moveToColor', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
     super.moveToColor(request);
@@ -206,14 +212,21 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
 
   override moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     device.commandHandler.executeHandler('moveToColorTemperature', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
     super.moveToColorTemperature(request);
   }
 }
 
-export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.EnhancedHue, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature) {
+export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.with(
+  ColorControl.Feature.HueSaturation,
+  ColorControl.Feature.EnhancedHue,
+  ColorControl.Feature.Xy,
+  ColorControl.Feature.ColorTemperature,
+) {
   override moveToHue(request: ColorControl.MoveToHueRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -224,7 +237,9 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
 
   override enhancedMoveToHue(request: ColorControl.EnhancedMoveToHueRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting enhanced hue to ${request.enhancedHue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Setting enhanced hue to ${request.enhancedHue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     device.commandHandler.executeHandler('enhancedMoveToHue', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHue called`);
     super.enhancedMoveToHue(request);
@@ -240,7 +255,9 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
 
   override moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     device.commandHandler.executeHandler('moveToHueAndSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
     super.moveToHueAndSaturation(request);
@@ -248,7 +265,9 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
 
   override enhancedMoveToHueAndSaturation(request: ColorControl.EnhancedMoveToHueAndSaturationRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting enhanced hue to ${request.enhancedHue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Setting enhanced hue to ${request.enhancedHue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     device.commandHandler.executeHandler('enhancedMoveToHueAndSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHueAndSaturation called`);
     super.enhancedMoveToHueAndSaturation(request);
@@ -256,7 +275,9 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
 
   override moveToColor(request: ColorControl.MoveToColorRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     device.commandHandler.executeHandler('moveToColor', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
     super.moveToColor(request);
@@ -264,7 +285,9 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
 
   override moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     device.commandHandler.executeHandler('moveToColorTemperature', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
     super.moveToColorTemperature(request);
@@ -309,7 +332,12 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
   }
 }
 
-export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt) {
+export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServer.with(
+  WindowCovering.Feature.Lift,
+  WindowCovering.Feature.PositionAwareLift,
+  WindowCovering.Feature.Tilt,
+  WindowCovering.Feature.PositionAwareTilt,
+) {
   override upOrOpen(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -426,7 +454,12 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
 }
 
 // istanbul ignore next
-export class MatterbridgePresetThermostatServer extends ThermostatServer.with(Thermostat.Feature.Presets, Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
+export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
+  Thermostat.Feature.Presets,
+  Thermostat.Feature.Cooling,
+  Thermostat.Feature.Heating,
+  Thermostat.Feature.AutoMode,
+) {
   override setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -511,7 +544,11 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
   }
 }
 
-export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateConfigurationServer.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.SensitivityLevel) {
+export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateConfigurationServer.with(
+  BooleanStateConfiguration.Feature.Visual,
+  BooleanStateConfiguration.Feature.Audible,
+  BooleanStateConfiguration.Feature.SensitivityLevel,
+) {
   override enableDisableAlarm(request: BooleanStateConfiguration.EnableDisableAlarmRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Enabling/disabling alarm ${request.alarmsToEnableDisable} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -646,7 +683,10 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
   }
 }
 
-export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment) {
+export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManagementServer.with(
+  DeviceEnergyManagement.Feature.PowerForecastReporting,
+  DeviceEnergyManagement.Feature.PowerAdjustment,
+) {
   override powerAdjustRequest(request: DeviceEnergyManagement.PowerAdjustRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Adjusting power to ${request.power} duration ${request.duration} cause ${request.cause} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -681,10 +721,14 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
     // The implementation is responsible for setting the device accordingly with the new mode if this logic is not enough
     if (supported.modeTags.find((tag) => tag.value === DeviceEnergyManagementMode.ModeTag.NoOptimization)) {
       if (this.endpoint.behaviors.has(DeviceEnergyManagementServer))
-        this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), { optOutState: DeviceEnergyManagement.OptOutState.OptOut });
+        this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
+          optOutState: DeviceEnergyManagement.OptOutState.OptOut,
+        });
     } else {
       if (this.endpoint.behaviors.has(DeviceEnergyManagementServer))
-        this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), { optOutState: DeviceEnergyManagement.OptOutState.NoOptOut });
+        this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
+          optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
+        });
     }
     device.log.debug(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
     return super.changeToMode(request);

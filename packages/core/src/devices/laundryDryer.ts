@@ -113,7 +113,12 @@ export class LaundryDryer extends MatterbridgeEndpoint {
    */
   createDefaultLaundryDryerControlsClusterServer(selectedDrynessLevel?: LaundryDryerControls.DrynessLevel, supportedDrynessLevels?: LaundryDryerControls.DrynessLevel[]): this {
     this.behaviors.require(LaundryDryerControlsServer, {
-      supportedDrynessLevels: supportedDrynessLevels ?? [LaundryDryerControls.DrynessLevel.Low, LaundryDryerControls.DrynessLevel.Normal, LaundryDryerControls.DrynessLevel.Extra, LaundryDryerControls.DrynessLevel.Max],
+      supportedDrynessLevels: supportedDrynessLevels ?? [
+        LaundryDryerControls.DrynessLevel.Low,
+        LaundryDryerControls.DrynessLevel.Normal,
+        LaundryDryerControls.DrynessLevel.Extra,
+        LaundryDryerControls.DrynessLevel.Max,
+      ],
       selectedDrynessLevel, // Writable
     });
     return this;

@@ -546,7 +546,14 @@ export const pumpDevice = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [OnOff.Cluster.id, PumpConfigurationAndControl.Cluster.id, Identify.Cluster.id],
-  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
+  optionalServerClusters: [
+    LevelControl.Cluster.id,
+    Groups.Cluster.id,
+    ScenesManagement.Cluster.id,
+    TemperatureMeasurement.Cluster.id,
+    PressureMeasurement.Cluster.id,
+    FlowMeasurement.Cluster.id,
+  ],
 });
 
 export const waterValve = DeviceTypeDefinition({
@@ -862,7 +869,16 @@ export const basicVideoPlayer = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [OnOff.Cluster.id, MediaPlayback.Cluster.id, KeypadInput.Cluster.id],
-  optionalServerClusters: [WakeOnLan.Cluster.id, Channel.Cluster.id, TargetNavigator.Cluster.id, MediaInput.Cluster.id, LowPower.Cluster.id, AudioOutput.Cluster.id, ContentControl.Cluster.id, Messages.Cluster.id],
+  optionalServerClusters: [
+    WakeOnLan.Cluster.id,
+    Channel.Cluster.id,
+    TargetNavigator.Cluster.id,
+    MediaInput.Cluster.id,
+    LowPower.Cluster.id,
+    AudioOutput.Cluster.id,
+    ContentControl.Cluster.id,
+    Messages.Cluster.id,
+  ],
 });
 
 /**
@@ -1064,7 +1080,14 @@ export const airConditioner = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id, FanControl.Cluster.id, ThermostatUserInterfaceConfiguration.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
+  optionalServerClusters: [
+    Groups.Cluster.id,
+    ScenesManagement.Cluster.id,
+    FanControl.Cluster.id,
+    ThermostatUserInterfaceConfiguration.Cluster.id,
+    TemperatureMeasurement.Cluster.id,
+    RelativeHumidityMeasurement.Cluster.id,
+  ],
 });
 
 /**

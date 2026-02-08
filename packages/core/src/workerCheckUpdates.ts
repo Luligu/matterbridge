@@ -26,9 +26,9 @@ import { threadId, isMainThread, parentPort, workerData } from 'node:worker_thre
 
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { hasParameter, inspectError } from '@matterbridge/utils';
+import { logWorkerInfo, parentLog, parentPost } from '@matterbridge/thread';
 
 import { BroadcastServer } from './broadcastServer.js';
-import { logWorkerInfo, parentLog, parentPost } from './worker.js';
 import { checkUpdates } from './checkUpdates.js';
 
 const debug = hasParameter('debug') || hasParameter('verbose');

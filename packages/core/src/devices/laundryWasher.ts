@@ -128,7 +128,12 @@ export class LaundryWasher extends MatterbridgeEndpoint {
     spinSpeedCurrent: number = 2,
     spinSpeeds: string[] = ['400', '800', '1200', '1600'],
     numberOfRinses: LaundryWasherControls.NumberOfRinses = LaundryWasherControls.NumberOfRinses.Normal,
-    supportedRinses: LaundryWasherControls.NumberOfRinses[] = [LaundryWasherControls.NumberOfRinses.None, LaundryWasherControls.NumberOfRinses.Normal, LaundryWasherControls.NumberOfRinses.Max, LaundryWasherControls.NumberOfRinses.Extra],
+    supportedRinses: LaundryWasherControls.NumberOfRinses[] = [
+      LaundryWasherControls.NumberOfRinses.None,
+      LaundryWasherControls.NumberOfRinses.Normal,
+      LaundryWasherControls.NumberOfRinses.Max,
+      LaundryWasherControls.NumberOfRinses.Extra,
+    ],
   ): this {
     this.behaviors.require(LaundryWasherControlsServer.with(LaundryWasherControls.Feature.Spin, LaundryWasherControls.Feature.Rinse), {
       spinSpeeds,

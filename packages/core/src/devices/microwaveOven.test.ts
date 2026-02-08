@@ -112,14 +112,20 @@ describe('Matterbridge ' + NAME, () => {
     await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`,
+    );
 
     // Test setCookingParameters - valid cookMode only
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { cookMode: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 2`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`,
+    );
 
     // Test setCookingParameters - no cookMode provided but valid cookTime and wattSettingIndex
     jest.clearAllMocks();
@@ -140,14 +146,20 @@ describe('Matterbridge ' + NAME, () => {
     await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { cookTime: 5000 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`,
+    );
 
     // Test setCookingParameters - invalid wattSettingIndex (out of range) -> default to highest supported index
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { cookMode: 3, cookTime: 45, wattSettingIndex: 100 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 3`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 45`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`,
+    );
 
     // Test setCookingParameters - all valid values
     jest.clearAllMocks();

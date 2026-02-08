@@ -4,7 +4,23 @@ const MATTER_PORT = 11200;
 const NAME = 'EndpointDefault';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
+process.argv = [
+  'node',
+  'matterbridge.js',
+  '-mdnsInterface',
+  'Wi-Fi',
+  '-frontend',
+  '0',
+  '-port',
+  MATTER_PORT.toString(),
+  '-homedir',
+  HOMEDIR,
+  '-bridge',
+  '-logger',
+  'debug',
+  '-matterlogger',
+  'debug',
+];
 
 import path from 'node:path';
 
@@ -98,7 +114,15 @@ import {
   waterLeakDetector,
   waterValve,
 } from './matterbridgeDeviceTypes.js';
-import { capitalizeFirstLetter, featuresFor, getBehaviourTypeFromClusterClientId, getBehaviourTypeFromClusterServerId, getBehaviourTypesFromClusterClientIds, lowercaseFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.js';
+import {
+  capitalizeFirstLetter,
+  featuresFor,
+  getBehaviourTypeFromClusterClientId,
+  getBehaviourTypeFromClusterServerId,
+  getBehaviourTypesFromClusterClientIds,
+  lowercaseFirstLetter,
+  updateAttribute,
+} from './matterbridgeEndpointHelpers.js';
 import {
   addDevice,
   aggregator,
@@ -309,13 +333,19 @@ describe('Matterbridge ' + NAME, () => {
     loggerLogSpy.mockClear();
     await device.configureColorControlMode(ColorControl.ColorMode.ColorTemperatureMireds);
     await device.setAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds', 360, device.log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}ColorControl${db}.${hk}colorTemperatureMireds${db}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}ColorControl${db}.${hk}colorTemperatureMireds${db}`),
+    );
     expect(device.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(360);
     (matterbridge as any).frontend.getClusterTextFromDevice(device);
 
     loggerLogSpy.mockClear();
     await updateAttribute(device, ColorControlServer, 'colorTemperatureMireds', 350, device.log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Update endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}ColorControl${db}.${hk}colorTemperatureMireds${db}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`${db}Update endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}ColorControl${db}.${hk}colorTemperatureMireds${db}`),
+    );
     expect(device.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(350);
 
     loggerLogSpy.mockClear();
@@ -336,7 +366,13 @@ describe('Matterbridge ' + NAME, () => {
     await updateAttribute(device, 'colorControl', 'colorTemperature', 310);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`updateAttribute error: Attribute ${hk}colorTemperature${er} not found on cluster`));
 
-    const colorCapabilities = device.getAttribute(ColorControl.Cluster.id, 'colorCapabilities') as { hueSaturation: boolean; enhancedHue: boolean; colorLoop: boolean; xy: boolean; colorTemperature: boolean };
+    const colorCapabilities = device.getAttribute(ColorControl.Cluster.id, 'colorCapabilities') as {
+      hueSaturation: boolean;
+      enhancedHue: boolean;
+      colorLoop: boolean;
+      xy: boolean;
+      colorTemperature: boolean;
+    };
     expect(await device.updateAttribute('colorControl', 'colorCapabilities', colorCapabilities)).toBe(false);
     colorCapabilities.colorTemperature = false;
     expect(await device.updateAttribute('colorControl', 'colorCapabilities', colorCapabilities)).toBe(true);
@@ -456,18 +492,29 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     await device.setWindowCoveringTargetAsCurrentAndStopped();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to 0 and operationalStatus to Stopped.`));
-    expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to 0 and operationalStatus to Stopped.`),
+    );
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(
+      device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths'),
+    );
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
     await device.setWindowCoveringCurrentTargetStatus(50, 50, WindowCovering.MovementStatus.Closing);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50, targetPositionLiftPercent100ths: 50 and operationalStatus: 2.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50, targetPositionLiftPercent100ths: 50 and operationalStatus: 2.`),
+    );
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
     await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Opening);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering operationalStatus: 1`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Opening);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Get WindowCovering operationalStatus: 1`));
     await device.setWindowCoveringTargetAndCurrentPosition(50);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50 and targetPositionLiftPercent100ths: 50.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50 and targetPositionLiftPercent100ths: 50.`),
+    );
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(50);
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
@@ -489,19 +536,33 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     await device.setWindowCoveringTargetAsCurrentAndStopped();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to 0 and operationalStatus to Stopped.`));
-    expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to 0 and operationalStatus to Stopped.`),
+    );
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(
+      device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths'),
+    );
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
     await device.setWindowCoveringCurrentTargetStatus(50, 50, WindowCovering.MovementStatus.Closing);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50, targetPositionLiftPercent100ths: 50 and operationalStatus: 2.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50, targetPositionLiftPercent100ths: 50 and operationalStatus: 2.`),
+    );
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
     await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Opening);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering operationalStatus: 1`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Opening);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Get WindowCovering operationalStatus: 1`));
     await device.setWindowCoveringTargetAndCurrentPosition(50, 50);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50 and targetPositionLiftPercent100ths: 50.`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths: 50 and targetPositionTiltPercent100ths: 50.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50 and targetPositionLiftPercent100ths: 50.`),
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths: 50 and targetPositionTiltPercent100ths: 50.`),
+    );
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(50);
@@ -525,15 +586,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupancy')).toBe(false);
     expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.Cluster.id, 'temperatureDisplayMode')).toBe(true);
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': true,
-      'cooling': true,
-      'heating': true,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': false,
-      'presets': false,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: true,
+      cooling: true,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: false,
+      presets: false,
+      scheduleConfiguration: false,
+      setback: false,
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
@@ -557,15 +618,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupancy')).toBe(true);
     expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.Cluster.id, 'temperatureDisplayMode')).toBe(true);
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': true,
-      'cooling': true,
-      'heating': true,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': true,
-      'presets': false,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: true,
+      cooling: true,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: true,
+      presets: false,
+      scheduleConfiguration: false,
+      setback: false,
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
@@ -589,15 +650,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupancy')).toBe(true);
     expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.Cluster.id, 'temperatureDisplayMode')).toBe(true);
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': true,
-      'cooling': true,
-      'heating': true,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': true,
-      'presets': false,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: true,
+      cooling: true,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: true,
+      presets: false,
+      scheduleConfiguration: false,
+      setback: false,
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
@@ -621,15 +682,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupancy')).toBe(false);
     expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.Cluster.id, 'temperatureDisplayMode')).toBe(true);
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': true,
-      'cooling': true,
-      'heating': true,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': false,
-      'presets': false,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: true,
+      cooling: true,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: false,
+      presets: false,
+      scheduleConfiguration: false,
+      setback: false,
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
@@ -651,15 +712,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'unoccupiedCoolingSetpoint')).toBe(false);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupancy')).toBe(false);
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': false,
-      'cooling': false,
-      'heating': true,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': false,
-      'presets': false,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: false,
+      cooling: false,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: false,
+      presets: false,
+      scheduleConfiguration: false,
+      setback: false,
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
@@ -681,15 +742,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'unoccupiedCoolingSetpoint')).toBe(false);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupancy')).toBe(true);
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': false,
-      'cooling': false,
-      'heating': true,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': true,
-      'presets': false,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: false,
+      cooling: false,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: true,
+      presets: false,
+      scheduleConfiguration: false,
+      setback: false,
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
@@ -711,15 +772,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'unoccupiedCoolingSetpoint')).toBe(false);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupancy')).toBe(false);
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': false,
-      'cooling': true,
-      'heating': false,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': false,
-      'presets': false,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: false,
+      cooling: true,
+      heating: false,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: false,
+      presets: false,
+      scheduleConfiguration: false,
+      setback: false,
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
@@ -741,15 +802,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'unoccupiedCoolingSetpoint')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupancy')).toBe(true);
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': false,
-      'cooling': true,
-      'heating': false,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': true,
-      'presets': false,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: false,
+      cooling: true,
+      heating: false,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: true,
+      presets: false,
+      scheduleConfiguration: false,
+      setback: false,
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
@@ -784,15 +845,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'presets')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'presetTypes')).toBe(true);
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': true,
-      'cooling': true,
-      'heating': true,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': false,
-      'presets': true,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: true,
+      cooling: true,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: false,
+      presets: true,
+      scheduleConfiguration: false,
+      setback: false,
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
@@ -843,15 +904,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'presets')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'presetTypes')).toBe(true);
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': true,
-      'cooling': true,
-      'heating': true,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': true,
-      'presets': true,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: true,
+      cooling: true,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: true,
+      presets: true,
+      scheduleConfiguration: false,
+      setback: false,
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
@@ -910,7 +971,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(true);
-    expect(featuresFor(device, 'FanControl')).toEqual({ 'airflowDirection': false, 'auto': true, 'multiSpeed': true, 'rocking': false, 'step': true, 'wind': false });
+    expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: false, auto: true, multiSpeed: true, rocking: false, step: true, wind: false });
 
     await add(device);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(true);
@@ -932,7 +993,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'rockSupport')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'windSupport')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(true);
-    expect(featuresFor(device, 'FanControl')).toEqual({ 'airflowDirection': true, 'auto': true, 'multiSpeed': true, 'rocking': true, 'step': true, 'wind': true });
+    expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: true, auto: true, multiSpeed: true, rocking: true, step: true, wind: true });
 
     await add(device);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(true);
@@ -1162,7 +1223,10 @@ describe('Matterbridge ' + NAME, () => {
     loggerLogSpy.mockClear();
     await device.triggerSwitchEvent('Single', device.log);
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger endpoint ${or}${device.id}:${device.number}${db} event ${hk}Switch.SinglePress${db}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`${db}Trigger endpoint ${or}${device.id}:${device.number}${db} event ${hk}Switch.SinglePress${db}`),
+    );
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -1214,11 +1278,17 @@ describe('Matterbridge ' + NAME, () => {
 
     jest.clearAllMocks();
     await device.triggerEvent(BooleanStateConfiguration.Cluster.id, 'stateChange', { stateValue: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}stateChange${er} error: cluster not found on endpoint ${or}ContactSensor${er}:${or}undefined${er}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      expect.stringContaining(`triggerEvent ${hk}stateChange${er} error: cluster not found on endpoint ${or}ContactSensor${er}:${or}undefined${er}`),
+    );
 
     jest.clearAllMocks();
     await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}booleanState.stateChange${er} error: Endpoint ${or}ContactSensor${er}:${or}undefined${er} is in the ${BLUE}inactive${er} state`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      expect.stringContaining(`triggerEvent ${hk}booleanState.stateChange${er} error: Endpoint ${or}ContactSensor${er}:${or}undefined${er} is in the ${BLUE}inactive${er} state`),
+    );
 
     jest.clearAllMocks();
     await device.setAttribute(BooleanState.Cluster.id, 'stateValue', true);

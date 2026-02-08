@@ -6,7 +6,7 @@ services:
     depends_on:
       - matterserver
     ports:
-      - "8123:8123"
+      - '8123:8123'
     volumes:
       - ./DockerVolumes/homeassistant:/config
     environment:
@@ -17,8 +17,7 @@ services:
     image: ghcr.io/home-assistant-libs/python-matter-server:stable
     restart: unless-stopped
     ports:
-      - "5580:5580"
-      - "5540:5540/udp"
+      - '5580:5580'
     volumes:
       - ./DockerVolumes/matterserver:/data
     environment:

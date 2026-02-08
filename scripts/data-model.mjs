@@ -26,7 +26,7 @@ const DEVICE_TYPES_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_
 const CLUSTERS_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_MODEL_VERSION}/clusters?ref=master`;
 const GITHUB_API_HEADERS = {
   'User-Agent': 'matterbridge-data-model-script',
-  Accept: 'application/vnd.github.v3+json',
+  'Accept': 'application/vnd.github.v3+json',
 };
 
 const sanitizeKey = (value) => value.replace(/[\s/]+/g, '');

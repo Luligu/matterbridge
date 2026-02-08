@@ -7,7 +7,22 @@ const FRONTEND_PORT = 8284;
 const NAME = 'Frontend';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString(), '-logger', 'debug', '-debug', '-verbose'];
+process.argv = [
+  'node',
+  'frontend.test.js',
+  '-novirtual',
+  '-test',
+  '-homedir',
+  HOMEDIR,
+  '-frontend',
+  FRONTEND_PORT.toString(),
+  '-port',
+  MATTER_PORT.toString(),
+  '-logger',
+  'debug',
+  '-debug',
+  '-verbose',
+];
 
 import { copyFileSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -131,7 +146,13 @@ describe('Matterbridge frontend', () => {
     await (frontend as any).msgHandler({ id: 123456, type: 'frontend_restartrequired', src: 'manager', dst: 'frontend', params: { snackbar: true, fixed: true } } as any);
     await (frontend as any).msgHandler({ id: 123456, type: 'frontend_restartnotrequired', src: 'manager', dst: 'frontend', params: { snackbar: true } } as any);
     await (frontend as any).msgHandler({ id: 123456, type: 'frontend_updaterequired', src: 'manager', dst: 'frontend', params: { devVersion: true } } as any);
-    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_snackbarmessage', src: 'manager', dst: 'frontend', params: { message: 'message', timeout: 5, severity: 'info' } } as any);
+    await (frontend as any).msgHandler({
+      id: 123456,
+      type: 'frontend_snackbarmessage',
+      src: 'manager',
+      dst: 'frontend',
+      params: { message: 'message', timeout: 5, severity: 'info' },
+    } as any);
     await (frontend as any).msgHandler({
       id: 123456,
       type: 'frontend_broadcast_message',
@@ -146,7 +167,13 @@ describe('Matterbridge frontend', () => {
       dst: 'frontend',
       params: { plugin: 'test', serialNumber: '1234', uniqueId: 'uniqueId', number: 123, id: 'id', cluster: 'cluster', attribute: 'attribute', value: 'value' },
     } as any);
-    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_logmessage', src: 'manager', dst: 'frontend', params: { level: 'info', time: 'time', name: 'jest', message: 'info' } } as any);
+    await (frontend as any).msgHandler({
+      id: 123456,
+      type: 'frontend_logmessage',
+      src: 'manager',
+      dst: 'frontend',
+      params: { level: 'info', time: 'time', name: 'jest', message: 'info' },
+    } as any);
     for (const type of ['plugins_install', 'plugins_uninstall'] as const) {
       await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', result: { success: true, packageName: 'testPlugin' } } as any);
       await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', result: { success: false, packageName: 'testPlugin' } } as any);
@@ -183,9 +210,22 @@ describe('Matterbridge frontend', () => {
     // Test the getReachability functionality
     expect((frontend as any).getReachability({ lifecycle: { isReady: false } })).toBeFalsy();
     expect((frontend as any).getReachability({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeFalsy();
-    expect((frontend as any).getReachability({ hasClusterServer: () => true, getAttribute: () => true, lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } })).toBeTruthy();
     expect(
-      (frontend as any).getReachability({ hasClusterServer: () => false, mode: 'server', serverNode: { state: { basicInformation: { reachable: true } } }, lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } }),
+      (frontend as any).getReachability({
+        hasClusterServer: () => true,
+        getAttribute: () => true,
+        lifecycle: { isReady: true },
+        construction: { status: Lifecycle.Status.Active },
+      }),
+    ).toBeTruthy();
+    expect(
+      (frontend as any).getReachability({
+        hasClusterServer: () => false,
+        mode: 'server',
+        serverNode: { state: { basicInformation: { reachable: true } } },
+        lifecycle: { isReady: true },
+        construction: { status: Lifecycle.Status.Active },
+      }),
     ).toBeTruthy();
     matterbridge.bridgeMode = 'childbridge';
     expect((frontend as any).getReachability({ hasClusterServer: () => false, lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } })).toBeTruthy();
@@ -207,7 +247,13 @@ describe('Matterbridge frontend', () => {
     expect((frontend as any).getBatteryLevel({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeUndefined();
 
     // Wired ac
-    let device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
+    let device = {
+      lifecycle: { isReady: true },
+      construction: { status: Lifecycle.Status.Active },
+      hasClusterServer: jest.fn(),
+      getAttribute: jest.fn((cluster: number, attribute: string) => {}),
+      getChildEndpoints: jest.fn(),
+    };
     device.hasClusterServer = jest.fn(() => true);
     device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { wired: true };
@@ -217,7 +263,13 @@ describe('Matterbridge frontend', () => {
     expect((frontend as any).getBatteryLevel(device)).toBeUndefined();
 
     // Battery
-    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
+    device = {
+      lifecycle: { isReady: true },
+      construction: { status: Lifecycle.Status.Active },
+      hasClusterServer: jest.fn(),
+      getAttribute: jest.fn((cluster: number, attribute: string) => {}),
+      getChildEndpoints: jest.fn(),
+    };
     device.hasClusterServer = jest.fn(() => true);
     device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { battery: true };
@@ -240,7 +292,13 @@ describe('Matterbridge frontend', () => {
     });
 
     // Not wired nor battery
-    device = { lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active }, hasClusterServer: jest.fn(), getAttribute: jest.fn((cluster: number, attribute: string) => {}), getChildEndpoints: jest.fn() };
+    device = {
+      lifecycle: { isReady: true },
+      construction: { status: Lifecycle.Status.Active },
+      hasClusterServer: jest.fn(),
+      getAttribute: jest.fn((cluster: number, attribute: string) => {}),
+      getChildEndpoints: jest.fn(),
+    };
     device.hasClusterServer = jest.fn(() => true);
     device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return {};
@@ -302,21 +360,42 @@ describe('Matterbridge frontend', () => {
     jest.clearAllMocks();
 
     expect(frontend.wssSendLogMessage('spawn', '12:00', 'Test', 'Message')).toBeUndefined();
-    expect(spy).toHaveBeenCalledWith({ 'dst': 'Frontend', 'id': 0, 'method': 'log', 'response': { 'level': 'spawn', 'message': 'Message', 'name': 'Test', 'time': '12:00' }, 'src': 'Matterbridge', 'success': true });
+    expect(spy).toHaveBeenCalledWith({
+      dst: 'Frontend',
+      id: 0,
+      method: 'log',
+      response: { level: 'spawn', message: 'Message', name: 'Test', time: '12:00' },
+      src: 'Matterbridge',
+      success: true,
+    });
     jest.clearAllMocks();
 
     expect(frontend.wssSendLogMessage('info', '12:00', 'Test', 'Message')).toBeUndefined();
-    expect(spy).toHaveBeenCalledWith({ 'dst': 'Frontend', 'id': 0, 'method': 'log', 'response': { 'level': 'info', 'message': 'Message', 'name': 'Test', 'time': '12:00' }, 'src': 'Matterbridge', 'success': true });
+    expect(spy).toHaveBeenCalledWith({
+      dst: 'Frontend',
+      id: 0,
+      method: 'log',
+      response: { level: 'info', message: 'Message', name: 'Test', time: '12:00' },
+      src: 'Matterbridge',
+      success: true,
+    });
     jest.clearAllMocks();
 
-    expect(frontend.wssSendLogMessage('info', '12:00', 'Test', 'Messageaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')).toBeUndefined();
+    expect(
+      frontend.wssSendLogMessage(
+        'info',
+        '12:00',
+        'Test',
+        'Messageaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      ),
+    ).toBeUndefined();
     expect(spy).toHaveBeenCalledWith({
-      'dst': 'Frontend',
-      'id': 0,
-      'method': 'log',
-      'response': { 'level': 'info', 'message': 'Messageaaaaaaaaaaaaa ... aaaaaaaaaaaaaaaaaaaa', 'name': 'Test', 'time': '12:00' },
-      'src': 'Matterbridge',
-      'success': true,
+      dst: 'Frontend',
+      id: 0,
+      method: 'log',
+      response: { level: 'info', message: 'Messageaaaaaaaaaaaaa ... aaaaaaaaaaaaaaaaaaaa', name: 'Test', time: '12:00' },
+      src: 'Matterbridge',
+      success: true,
     });
 
     // Restore for next tests
@@ -619,7 +698,10 @@ describe('Matterbridge frontend', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
     expect(startSpy).toHaveBeenNthCalledWith(1, FRONTEND_PORT);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Initializing the frontend http server on port ${YELLOW}${FRONTEND_PORT}${db}`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`),
+    );
     // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening`));
 
     // Test httpServer on error
@@ -671,7 +753,7 @@ describe('Matterbridge frontend', () => {
   test('Frontend.start() -ssl without key certs shall reject', async () => {
     process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
-    copyFileSync(path.join('src/mock/certs/server.crt'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pem'));
+    copyFileSync(new URL('./mock/certs/server.crt', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pem'));
 
     frontend.start(FRONTEND_PORT);
     await new Promise<void>((resolve) => {
@@ -689,7 +771,7 @@ describe('Matterbridge frontend', () => {
   test('Frontend.start() -ssl without ca cert', async () => {
     process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
-    copyFileSync(path.join('src/mock/certs/server.key'), path.join(matterbridge.matterbridgeDirectory, 'certs/key.pem'));
+    copyFileSync(new URL('./mock/certs/server.key', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/key.pem'));
 
     await new Promise<void>((resolve) => {
       frontend.on('server_listening', (protocol, port) => {
@@ -727,9 +809,22 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() -ssl with ca cert', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ingress', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [
+      'node',
+      'frontend.test.js',
+      '-ingress',
+      '-ssl',
+      '-novirtual',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-frontend',
+      FRONTEND_PORT.toString(),
+      '-port',
+      MATTER_PORT.toString(),
+    ];
 
-    copyFileSync(path.join('src/mock/certs/ca.crt'), path.join(matterbridge.matterbridgeDirectory, 'certs/ca.pem'));
+    copyFileSync(new URL('./mock/certs/ca.crt', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/ca.pem'));
 
     await new Promise<void>((resolve) => {
       frontend.on('server_listening', (protocol, port) => {
@@ -843,8 +938,8 @@ describe('Matterbridge frontend', () => {
   test('Frontend.start() -ssl with p12 cert', async () => {
     process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
-    copyFileSync(path.join('src/mock/certs/server.p12'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
-    copyFileSync(path.join('src/mock/certs/server.pass'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pass'));
+    copyFileSync(new URL('./mock/certs/server.p12', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
+    copyFileSync(new URL('./mock/certs/server.pass', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pass'));
 
     // Test the frontend error on start with p12 certificate
     loggerLogSpy.mockImplementation((...args: string[]) => {
@@ -898,7 +993,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded CA certificate file`));
 
     const client = new WebSocket(`wss://localhost:${FRONTEND_PORT}`, {
-      ca: readFileSync(path.join('src/mock/certs/ca.crt'), 'utf8'), // Provide CA certificate for validation
+      ca: readFileSync(new URL('./mock/certs/ca.crt', import.meta.url), 'utf8'), // Provide CA certificate for validation
       rejectUnauthorized: true, // Force certificate validation
     });
     await new Promise<void>((resolve, reject) => {
@@ -934,10 +1029,23 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() -ssl with p12 cert and mTLS', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ssl', '-mtls', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [
+      'node',
+      'frontend.test.js',
+      '-ssl',
+      '-mtls',
+      '-novirtual',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-frontend',
+      FRONTEND_PORT.toString(),
+      '-port',
+      MATTER_PORT.toString(),
+    ];
 
-    copyFileSync(path.join('src/mock/certs/server.p12'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
-    copyFileSync(path.join('src/mock/certs/server.pass'), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pass'));
+    copyFileSync(new URL('./mock/certs/server.p12', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
+    copyFileSync(new URL('./mock/certs/server.pass', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pass'));
 
     await new Promise<void>((resolve) => {
       frontend.on('server_listening', (protocol, port) => {
@@ -965,9 +1073,9 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Loaded CA certificate file`));
 
     const client = new WebSocket(`wss://localhost:${FRONTEND_PORT}`, {
-      cert: readFileSync(path.join('src/mock/certs/client.crt'), 'utf8'), // Provide certificate for validation
-      key: readFileSync(path.join('src/mock/certs/client.key'), 'utf8'), // Provide key for validation
-      ca: readFileSync(path.join('src/mock/certs/ca.crt'), 'utf8'), // Provide CA certificate for validation
+      cert: readFileSync(new URL('./mock/certs/client.crt', import.meta.url), 'utf8'), // Provide certificate for validation
+      key: readFileSync(new URL('./mock/certs/client.key', import.meta.url), 'utf8'), // Provide key for validation
+      ca: readFileSync(new URL('./mock/certs/ca.crt', import.meta.url), 'utf8'), // Provide CA certificate for validation
       rejectUnauthorized: true, // Force certificate validation
     });
     await new Promise<void>((resolve, reject) => {

@@ -216,7 +216,16 @@ Examples:
   };
 
   if (!hasParameter('noIpv4')) {
-    mdnsIpv4 = new Mdns('mDNS Server udp4', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, getParameter('interfaceName'), getParameter('ipv4InterfaceAddress') || '0.0.0.0', getParameter('outgoingIpv4InterfaceAddress'));
+    mdnsIpv4 = new Mdns(
+      'mDNS Server udp4',
+      MDNS_MULTICAST_IPV4_ADDRESS,
+      MDNS_MULTICAST_PORT,
+      'udp4',
+      true,
+      getParameter('interfaceName'),
+      getParameter('ipv4InterfaceAddress') || '0.0.0.0',
+      getParameter('outgoingIpv4InterfaceAddress'),
+    );
     if (hasParameter('v') || hasParameter('verbose')) mdnsIpv4.listNetworkInterfaces();
 
     // Apply filters if any
@@ -249,7 +258,16 @@ Examples:
   }
 
   if (!hasParameter('noIpv6')) {
-    mdnsIpv6 = new Mdns('mDNS Server udp6', MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, 'udp6', true, getParameter('interfaceName'), getParameter('ipv6InterfaceAddress') || '::', getParameter('outgoingIpv6InterfaceAddress'));
+    mdnsIpv6 = new Mdns(
+      'mDNS Server udp6',
+      MDNS_MULTICAST_IPV6_ADDRESS,
+      MDNS_MULTICAST_PORT,
+      'udp6',
+      true,
+      getParameter('interfaceName'),
+      getParameter('ipv6InterfaceAddress') || '::',
+      getParameter('outgoingIpv6InterfaceAddress'),
+    );
     if (hasParameter('v') || hasParameter('verbose')) mdnsIpv6.listNetworkInterfaces();
 
     // Apply filters if any

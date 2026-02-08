@@ -3,12 +3,12 @@
 // Config for Prettier
 
 export default {
-  printWidth: 250, // default 80
+  printWidth: 180, // default 80
   tabWidth: 2,
   useTabs: false,
   semi: true,
   singleQuote: true, // default false
-  quoteProps: 'preserve', // default 'as-needed'. Other 'consistent'
+  quoteProps: 'consistent', // default 'as-needed'
   jsxSingleQuote: false,
   trailingComma: 'all',
   bracketSpacing: true,

@@ -53,26 +53,35 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
     expect(featuresFor(device, 'Identify')).toEqual({});
     expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(featuresFor(device, 'PowerSource')).toEqual({ 'battery': false, 'rechargeable': false, 'replaceable': false, 'wired': true });
+    expect(featuresFor(device, 'PowerSource')).toEqual({ battery: false, rechargeable: false, replaceable: false, wired: true });
     expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy(); // Dead Front On/Off cluster
-    expect(featuresFor(device, 'OnOff')).toEqual({ 'deadFrontBehavior': true, 'lighting': false, 'offOnly': false }); // Dead Front On/Off cluster
+    expect(featuresFor(device, 'OnOff')).toEqual({ deadFrontBehavior: true, lighting: false, offOnly: false }); // Dead Front On/Off cluster
     expect(device.hasClusterServer(Thermostat.Cluster.id)).toBeTruthy();
     expect(featuresFor(device, 'Thermostat')).toEqual({
-      'autoMode': true,
-      'cooling': true,
-      'heating': true,
-      'localTemperatureNotExposed': false,
-      'matterScheduleConfiguration': false,
-      'occupancy': false,
-      'presets': false,
-      'scheduleConfiguration': false,
-      'setback': false,
+      autoMode: true,
+      cooling: true,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: false,
+      presets: false,
+      scheduleConfiguration: false,
+      setback: false,
     });
     expect(device.hasClusterServer(ThermostatUserInterfaceConfiguration.Cluster.id)).toBeTruthy();
     expect(featuresFor(device, 'ThermostatUserInterfaceConfiguration')).toEqual({});
     expect(device.hasClusterServer(FanControl.Cluster.id)).toBeTruthy();
-    expect(featuresFor(device, 'FanControl')).toEqual({ 'airflowDirection': false, 'auto': true, 'multiSpeed': false, 'rocking': false, 'step': true, 'wind': false });
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'onOff', 'thermostat', 'thermostatUserInterfaceConfiguration', 'fanControl']);
+    expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: false, auto: true, multiSpeed: false, rocking: false, step: true, wind: false });
+    expect(device.getAllClusterServerNames()).toEqual([
+      'descriptor',
+      'matterbridge',
+      'identify',
+      'powerSource',
+      'onOff',
+      'thermostat',
+      'thermostatUserInterfaceConfiguration',
+      'fanControl',
+    ]);
   });
 
   test('create an air conditioner device (custom options)', async () => {
@@ -106,15 +115,37 @@ describe('Matterbridge ' + NAME, () => {
         heatStage2: false,
       },
     });
-    expect(custom.getClusterServerOptions(ThermostatUserInterfaceConfiguration.Cluster.id)).toEqual({ keypadLockout: 0, scheduleProgrammingVisibility: 0, temperatureDisplayMode: 0 });
+    expect(custom.getClusterServerOptions(ThermostatUserInterfaceConfiguration.Cluster.id)).toEqual({
+      keypadLockout: 0,
+      scheduleProgrammingVisibility: 0,
+      temperatureDisplayMode: 0,
+    });
     expect(custom.getClusterServerOptions(FanControl.Cluster.id)).toEqual({ fanMode: 0, fanModeSequence: 2, percentSetting: 40, percentCurrent: 0 });
     expect(await addDevice(server, custom)).toBeTruthy();
-    expect(custom.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'onOff', 'thermostat', 'thermostatUserInterfaceConfiguration', 'fanControl']);
+    expect(custom.getAllClusterServerNames()).toEqual([
+      'descriptor',
+      'matterbridge',
+      'identify',
+      'powerSource',
+      'onOff',
+      'thermostat',
+      'thermostatUserInterfaceConfiguration',
+      'fanControl',
+    ]);
   });
 
   test('add air conditioner to server', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'onOff', 'thermostat', 'thermostatUserInterfaceConfiguration', 'fanControl']);
+    expect(device.getAllClusterServerNames()).toEqual([
+      'descriptor',
+      'matterbridge',
+      'identify',
+      'powerSource',
+      'onOff',
+      'thermostat',
+      'thermostatUserInterfaceConfiguration',
+      'fanControl',
+    ]);
   });
 
   test('fan control attributes check', async () => {

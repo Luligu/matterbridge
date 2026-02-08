@@ -4,17 +4,33 @@ const MATTER_PORT = 6200;
 const NAME = 'MatterbridgeDeviceServer';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.server.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-debug', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
+process.argv = [
+  'node',
+  'matterbridge.server.test.js',
+  '-novirtual',
+  '-logger',
+  'debug',
+  '-matterlogger',
+  'debug',
+  '-debug',
+  '-bridge',
+  '-frontend',
+  '0',
+  '-homedir',
+  HOMEDIR,
+  '-port',
+  MATTER_PORT.toString(),
+];
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
 // Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('./worker.js', () => ({
+jest.unstable_mockModule('@matterbridge/thread', () => ({
   createESMWorker: jest.fn(() => {
     return undefined; // Mock the createESMWorker function to return immediately
   }),
 }));
-const workerModule = await import('./worker.js');
+const workerModule = await import('@matterbridge/thread');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import path from 'node:path';
@@ -112,7 +128,7 @@ describe('Matterbridge Device serverMode=server', () => {
       matterbridge.plugins.once('added', (name) => {
         if (name === 'serverdevicetest') resolve();
       });
-      matterbridge.plugins.add('./src/mock/pluginserverdevice');
+      matterbridge.plugins.add('./packages/core/src/mock/pluginserverdevice');
     });
 
     expect(matterbridge.plugins.length).toBe(1);
@@ -200,7 +216,10 @@ describe('Matterbridge Device serverMode=server', () => {
 
     await Promise.all([online, deviceOnline, started]);
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Creating server node for device ${dev}Server node device${db} of plugin ${plg}serverdevicetest${db}...`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Creating server node for device ${dev}Server node device${db} of plugin ${plg}serverdevicetest${db}...`),
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Creating device ${plg}serverdevicetest${db}:${dev}Server node device${db} server node...`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Adding ${plg}serverdevicetest${db}:${dev}Server node device${db} to server node...`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Added ${plg}serverdevicetest${db}:${dev}Server node device${db} to server node`));

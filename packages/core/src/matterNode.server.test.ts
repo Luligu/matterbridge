@@ -29,8 +29,8 @@ import type { Matterbridge } from './matterbridge.js';
 import { DeviceManager } from './deviceManager.js';
 import { temperatureSensor } from './matterbridgeDeviceTypes.js';
 
-const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../frontend/package.json', import.meta.url), 'utf8'));
+const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
+const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
 const nic = getInterfaceDetails();
 
 const matterbridge: SharedMatterbridge = {
@@ -145,7 +145,12 @@ describe('MatterNode server', () => {
 
   test('Add plugin', async () => {
     // @ts-expect-error access private property
-    pluginManager.matterbridge.nodeStorage = new NodeStorageManager({ dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+    pluginManager.matterbridge.nodeStorage = new NodeStorageManager({
+      dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR),
+      writeQueue: false,
+      expiredInterval: undefined,
+      logging: false,
+    });
     // @ts-expect-error access private property
     pluginManager.matterbridge.nodeContext = await pluginManager.matterbridge.nodeStorage.createStorage('matterbridge');
 
@@ -162,7 +167,9 @@ describe('MatterNode server', () => {
   });
 
   test('Create MatterNode instance in server mode', async () => {
-    const tmpSensor = new MatterbridgeEndpoint([temperatureSensor], { id: 'Temperature sensor', mode: 'server' }, true).createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890').addRequiredClusterServers();
+    const tmpSensor = new MatterbridgeEndpoint([temperatureSensor], { id: 'Temperature sensor', mode: 'server' }, true)
+      .createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
+      .addRequiredClusterServers();
     tmpSensor.plugin = 'matterbridge-mock1';
     const spy = jest.spyOn(MatterNode.prototype, 'create').mockImplementationOnce(async () => {
       throw new Error('Simulated create error');

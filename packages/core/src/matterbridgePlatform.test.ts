@@ -80,7 +80,13 @@ describe('Matterbridge platform', () => {
 
   test('should have created an instance of MatterbridgePlatform', async () => {
     // @ts-expect-error access private constructor
-    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+      name: 'test',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+    });
     // Add the platform to the Matterbridge environment
     addMatterbridgePlatform(platform, 'test');
     expect(platform).toBeDefined();
@@ -279,20 +285,38 @@ describe('Matterbridge platform', () => {
   it('should not create storage manager without a name', async () => {
     expect(() => {
       // @ts-expect-error access private constructor
-      new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: undefined as any, type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+      new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+        name: undefined as any,
+        type: 'type',
+        version: '1.0.0',
+        debug: false,
+        unregisterOnShutdown: false,
+      });
     }).toThrow();
   });
 
   it('should not create storage manager with name empty', async () => {
     expect(() => {
       // @ts-expect-error access private constructor
-      new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: '', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+      new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+        name: '',
+        type: 'type',
+        version: '1.0.0',
+        debug: false,
+        unregisterOnShutdown: false,
+      });
     }).toThrow();
   });
 
   it('should save the select', async () => {
     // @ts-expect-error access private constructor
-    let platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+    let platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+      name: 'matterbridge-jest',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+    });
     await platform.ready;
     expect(platform.context).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
@@ -313,7 +337,13 @@ describe('Matterbridge platform', () => {
     loggerLogSpy.mockClear();
 
     // @ts-expect-error access private constructor
-    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+      name: 'matterbridge-jest',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+    });
     await platform.ready;
     expect(platform.context).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
@@ -333,7 +363,13 @@ describe('Matterbridge platform', () => {
 
   test('should clear the selects', async () => {
     // @ts-expect-error access private constructor
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+      name: 'matterbridge-jest',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+    });
     await platform.ready;
     expect(platform.context).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
@@ -349,7 +385,13 @@ describe('Matterbridge platform', () => {
 
   test('should clear the device selects', async () => {
     // @ts-expect-error access private constructor
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+      name: 'matterbridge-jest',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+    });
     await platform.ready;
     expect(platform.context).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
@@ -362,7 +404,13 @@ describe('Matterbridge platform', () => {
 
   test('should clear the entity selects', async () => {
     // @ts-expect-error access private constructor
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+      name: 'matterbridge-jest',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+    });
     await platform.ready;
     expect(platform.context).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
@@ -375,7 +423,13 @@ describe('Matterbridge platform', () => {
 
   it('should update a not existing entity selects', async () => {
     // @ts-expect-error access private constructor
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+      name: 'matterbridge-jest',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+    });
     await platform.ready;
     expect(platform.context).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
@@ -395,7 +449,13 @@ describe('Matterbridge platform', () => {
 
   it('should update an existing entity selects', async () => {
     // @ts-expect-error access private constructor
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', version: '1.0.0', debug: false, unregisterOnShutdown: false });
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+      name: 'matterbridge-jest',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+    });
     await platform.ready;
     expect(platform.context).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
@@ -518,7 +578,10 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, `Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child1${db} to ${CYAN}201${db}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child2${db} to ${CYAN}202${db}`);
-    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, `Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child3${db} to ${CYAN}202${db}`);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child3${db} to ${CYAN}202${db}`,
+    );
     await platform.unregisterDevice(testDevice);
   });
 
@@ -632,7 +695,12 @@ describe('Matterbridge platform', () => {
 
   test('setMatterNode should set helpers', async () => {
     // @ts-expect-error - setMatterNode is intentionally private
-    platform.setMatterNode?.(matterbridge.addBridgedEndpoint.bind(matterbridge), matterbridge.removeBridgedEndpoint.bind(matterbridge), matterbridge.removeAllBridgedEndpoints.bind(matterbridge), matterbridge.addVirtualEndpoint.bind(matterbridge));
+    platform.setMatterNode?.(
+      matterbridge.addBridgedEndpoint.bind(matterbridge),
+      matterbridge.removeBridgedEndpoint.bind(matterbridge),
+      matterbridge.removeAllBridgedEndpoints.bind(matterbridge),
+      matterbridge.addVirtualEndpoint.bind(matterbridge),
+    );
     // @ts-expect-error - setMatterNode is intentionally private
     expect(platform.setMatterNode).toBeUndefined();
   });
@@ -645,7 +713,9 @@ describe('Matterbridge platform', () => {
     expect(matterbridge.aggregatorNode?.parts.has('Virtual' + ':' + 'switch')).toBeTruthy();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Created virtual endpoint ${dev}Virtual${nf} for plugin ${plg}${platform.name}${nf}`);
 
-    jest.spyOn(matterbridge.plugins, 'get').mockReturnValueOnce({ name: platform.name, type: 'DynamicPlatform', version: '1.0.0', aggregatorNode: matterbridge.aggregatorNode } as any);
+    jest
+      .spyOn(matterbridge.plugins, 'get')
+      .mockReturnValueOnce({ name: platform.name, type: 'DynamicPlatform', version: '1.0.0', aggregatorNode: matterbridge.aggregatorNode } as any);
     matterbridge.bridgeMode = 'childbridge';
     platform.type = 'DynamicPlatform';
     expect(await platform.registerVirtualDevice('VirtualChildbridge', 'switch', testCallback)).toBe(true);
@@ -660,13 +730,19 @@ describe('Matterbridge platform', () => {
     platform.name = savedName;
 
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(false);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Virtual endpoint ${dev}Virtual${er} already registered for plugin ${plg}${platform.name}${er}. Please use a different name.`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `Virtual endpoint ${dev}Virtual${er} already registered for plugin ${plg}${platform.name}${er}. Please use a different name.`,
+    );
 
     const savedAggregatorNode = matterbridge.aggregatorNode;
     matterbridge.aggregatorNode = undefined;
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(false);
     matterbridge.aggregatorNode = savedAggregatorNode;
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Virtual endpoint ${dev}Virtual${er} for plugin ${plg}${platform.name}${er} not created. Virtual endpoints are only supported in bridge mode and childbridge mode with a DynamicPlatform.`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `Virtual endpoint ${dev}Virtual${er} for plugin ${plg}${platform.name}${er} not created. Virtual endpoints are only supported in bridge mode and childbridge mode with a DynamicPlatform.`,
+    );
   });
 
   test('registerDevice calls matterbridge.addBridgedEndpoint with correct parameters', async () => {
@@ -762,8 +838,8 @@ describe('Matterbridge platform', () => {
     await platform.registerDevice(device);
     expect(device.deviceTypes.has(bridgedNode.code)).toBeTruthy();
     expect(device.getClusterServerOptions(Descriptor.Cluster.id)?.deviceTypeList).toEqual([
-      { 'deviceType': 17, 'revision': 1 },
-      { 'deviceType': 19, 'revision': 3 },
+      { deviceType: 17, revision: 1 },
+      { deviceType: 19, revision: 3 },
     ]);
     expect(device.hasClusterServer('BasicInformation')).toBeFalsy();
     expect(device.hasClusterServer('BridgedDeviceBasicInformation')).toBeTruthy();
@@ -786,7 +862,10 @@ describe('Matterbridge platform', () => {
     await platform.registerDevice(device);
     expect(platform.size()).toBe(1);
     expect(platform.getDevices()).toHaveLength(1);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`,
+    );
   });
 
   test('Device retrieval methods should return undefined for unregistered devices', async () => {

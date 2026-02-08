@@ -6,7 +6,23 @@ const MATTER_PORT = 11000;
 const NAME = 'Endpoint';
 const HOMEDIR = path.join('jest', NAME);
 
-process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-bridge', '-logger', 'info', '-matterlogger', 'info'];
+process.argv = [
+  'node',
+  'matterbridge.js',
+  '-mdnsInterface',
+  'Wi-Fi',
+  '-frontend',
+  '0',
+  '-port',
+  MATTER_PORT.toString(),
+  '-homedir',
+  HOMEDIR,
+  '-bridge',
+  '-logger',
+  'info',
+  '-matterlogger',
+  'info',
+];
 
 import path from 'node:path';
 
@@ -167,7 +183,19 @@ describe('Matterbridge ' + NAME, () => {
 
   test('encoding of non-Latin and Latin names into unique IDs', async () => {
     // Sample names
-    const latinNames = ['Hello World', 'café au lait', 'München-2024', 'Tōkyō_2024', "L'éclair du matin", 'São Paulo', 'Résumé and naïve', '123456', 'Hello_123', 'test-underscore_', 'text-with-dash'];
+    const latinNames = [
+      'Hello World',
+      'café au lait',
+      'München-2024',
+      'Tōkyō_2024',
+      "L'éclair du matin",
+      'São Paulo',
+      'Résumé and naïve',
+      '123456',
+      'Hello_123',
+      'test-underscore_',
+      'text-with-dash',
+    ];
 
     const specialChars = ['.,><!?@#$%^&*(){}[]|', '€¥£₹', '©®™✓✔︎', '♥︎♡♦︎♠︎♣︎♜♞♟', '→↓↑←↔↕', '“”‘’'];
 
@@ -351,7 +379,10 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.hasAttributeServer('Descriptor', 'deviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'TagList')).toBe(true);
-    expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ tagList: [{ mfgCode: null, namespaceId: 7, tag: 1, label: 'Light2' }], deviceTypeList: [{ deviceType: 256, revision: 3 }] });
+    expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({
+      tagList: [{ mfgCode: null, namespaceId: 7, tag: 1, label: 'Light2' }],
+      deviceTypeList: [{ deviceType: 256, revision: 3 }],
+    });
 
     await add(device);
   });
@@ -497,29 +528,29 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer('onOff', 'none')).toBe(false);
 
     expect(featuresFor(device, OnOffBehavior)).toEqual({
-      'deadFrontBehavior': false,
-      'lighting': true,
-      'offOnly': false,
+      deadFrontBehavior: false,
+      lighting: true,
+      offOnly: false,
     });
     expect(featuresFor(device, OnOffServer)).toEqual({
-      'deadFrontBehavior': false,
-      'lighting': true,
-      'offOnly': false,
+      deadFrontBehavior: false,
+      lighting: true,
+      offOnly: false,
     });
     expect(featuresFor(device, OnOff.Cluster)).toEqual({
-      'deadFrontBehavior': false,
-      'lighting': true,
-      'offOnly': false,
+      deadFrontBehavior: false,
+      lighting: true,
+      offOnly: false,
     });
     expect(featuresFor(device, OnOff.Cluster.id)).toEqual({
-      'deadFrontBehavior': false,
-      'lighting': true,
-      'offOnly': false,
+      deadFrontBehavior: false,
+      lighting: true,
+      offOnly: false,
     });
     expect(featuresFor(device, 'onOff')).toEqual({
-      'deadFrontBehavior': false,
-      'lighting': true,
-      'offOnly': false,
+      deadFrontBehavior: false,
+      lighting: true,
+      offOnly: false,
     });
 
     expect(featuresFor(device, 'unknown')).toEqual({});
@@ -640,7 +671,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(false);
     const options = device.getClusterServerOptions(FixedLabel.Cluster);
     expect(options).toBeDefined();
-    expect(options).toEqual({ 'labelList': [{ 'label': 'composed', 'value': 'Light' }] });
+    expect(options).toEqual({ labelList: [{ label: 'composed', value: 'Light' }] });
 
     expect(device.getAttribute(FixedLabel.Cluster, 'labelList', device.log)).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}fixedLabel.labelList${er} error: Endpoint`));
@@ -650,8 +681,8 @@ describe('Matterbridge ' + NAME, () => {
     await device.addFixedLabel('composed2', 'Light');
     const labelList = device.getAttribute(FixedLabel.Cluster, 'labelList', device.log);
     expect(labelList).toEqual([
-      { 'label': 'composed', 'value': 'Light' },
-      { 'label': 'composed2', 'value': 'Light' },
+      { label: 'composed', value: 'Light' },
+      { label: 'composed2', value: 'Light' },
     ]);
     (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
@@ -666,7 +697,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(true);
     const options = device.getClusterServerOptions(UserLabel.Cluster);
     expect(options).toBeDefined();
-    expect(options).toEqual({ 'labelList': [{ 'label': 'composed', 'value': 'Light' }] });
+    expect(options).toEqual({ labelList: [{ label: 'composed', value: 'Light' }] });
 
     expect(device.getAttribute(UserLabel.Cluster, 'labelList', device.log)).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}userLabel.labelList${er} error: Endpoint`));
@@ -676,8 +707,8 @@ describe('Matterbridge ' + NAME, () => {
     await device.addUserLabel('composed2', 'Light');
     const labelList = device.getAttribute(UserLabel.Cluster, 'labelList', device.log);
     expect(labelList).toEqual([
-      { 'label': 'composed', 'value': 'Light' },
-      { 'label': 'composed2', 'value': 'Light' },
+      { label: 'composed', value: 'Light' },
+      { label: 'composed2', value: 'Light' },
     ]);
     (matterbridge as any).frontend.getClusterTextFromDevice(device);
   });
@@ -787,7 +818,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeSubscribeHandler ${hk}stateValue$Changed${er} error: cluster not found on endpoint`));
 
     expect(await invokeSubscribeHandler(device, 'booleanState', 'notanattribute', false, true)).toBe(false);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeSubscribeHandler ${hk}notanattribute$Changed${er} error: cluster booleanState not found on endpoint`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      expect.stringContaining(`invokeSubscribeHandler ${hk}notanattribute$Changed${er} error: cluster booleanState not found on endpoint`),
+    );
 
     expect(await invokeSubscribeHandler(device, 'booleanState', 'stateValue', false, true)).toBe(true);
     expect(newState).toBe(false);
@@ -991,7 +1025,14 @@ describe('Matterbridge ' + NAME, () => {
     device.createLevelControlClusterServer();
     device.createLevelTvocMeasurementClusterServer();
     device.addRequiredClusterServers();
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'levelControl', 'totalVolatileOrganicCompoundsConcentrationMeasurement', 'fanControl']);
+    expect(device.getAllClusterServerNames()).toEqual([
+      'descriptor',
+      'matterbridge',
+      'onOff',
+      'levelControl',
+      'totalVolatileOrganicCompoundsConcentrationMeasurement',
+      'fanControl',
+    ]);
 
     await add(device);
 
@@ -1049,19 +1090,31 @@ describe('Matterbridge ' + NAME, () => {
 
     loggerLogSpy.mockClear();
     expect(await device.setAttribute(TemperatureMeasurementServer, 'measuredValue', 2500, device.log)).toBeTruthy();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`),
+    );
 
     loggerLogSpy.mockClear();
     expect(await device.setAttribute(TemperatureMeasurement.Cluster, 'measuredValue', 2600, device.log)).toBeTruthy();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`),
+    );
 
     loggerLogSpy.mockClear();
     expect(await device.setAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', 2700, device.log)).toBeTruthy();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`),
+    );
 
     loggerLogSpy.mockClear();
     expect(await device.setAttribute('TemperatureMeasurement', 'measuredValue', 2800, device.log)).toBeTruthy();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`),
+    );
   });
 
   test('create a OnOffOutletWithSensors device', async () => {
@@ -1098,7 +1151,9 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add illuminance child to OnOffOutletWithSensors', async () => {
     const deviceType = lightSensor;
-    const childEndpoint = device.addChildDeviceTypeWithClusterServer('illuminanceChild-3', [lightSensor], [IlluminanceMeasurement.Cluster.id], { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const childEndpoint = device.addChildDeviceTypeWithClusterServer('illuminanceChild-3', [lightSensor], [IlluminanceMeasurement.Cluster.id], {
+      tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }],
+    });
     expect(childEndpoint).toBeDefined();
     childEndpoint.createDefaultIlluminanceMeasurementClusterServer(200);
     expect(device.getChildEndpointByName('illuminanceChild-3')).toBeDefined();
@@ -1183,7 +1238,10 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('addChildDeviceType to OnOffOutletWithSensors with lifecycle installed and taglist', async () => {
-    const childEndpoint = device.addChildDeviceType('contactChild-2bis', contactSensor, { number: EndpointNumber(46), tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const childEndpoint = device.addChildDeviceType('contactChild-2bis', contactSensor, {
+      number: EndpointNumber(46),
+      tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }],
+    });
     expect(childEndpoint).toBeDefined();
     childEndpoint.addRequiredClusterServers();
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`addChildDeviceType: ${CYAN}contactChild-2bis${db}`));
@@ -1217,7 +1275,10 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('addChildDeviceTypeWithClusterServer to OnOffOutletWithSensors with lifecycle installed and taglist', async () => {
-    const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3bis', contactSensor, [BooleanState.Cluster.id], { number: EndpointNumber(47), tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3bis', contactSensor, [BooleanState.Cluster.id], {
+      number: EndpointNumber(47),
+      tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }],
+    });
     expect(childEndpoint).toBeDefined();
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`addChildDeviceTypeWithClusterServer: ${CYAN}contactChild-3bis${db}`));
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`- with tagList`));

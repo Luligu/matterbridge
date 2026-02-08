@@ -16,7 +16,11 @@ import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
  *
  * @returns {this} The current MatterbridgeEndpoint instance for chaining.
  */
-export function createLevelTemperatureControlClusterServer(endpoint: MatterbridgeEndpoint, selectedTemperatureLevel: number = 1, supportedTemperatureLevels: string[] = ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']): MatterbridgeEndpoint {
+export function createLevelTemperatureControlClusterServer(
+  endpoint: MatterbridgeEndpoint,
+  selectedTemperatureLevel: number = 1,
+  supportedTemperatureLevels: string[] = ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°'],
+): MatterbridgeEndpoint {
   endpoint.behaviors.require(MatterbridgeLevelTemperatureControlServer.with(TemperatureControl.Feature.TemperatureLevel), {
     selectedTemperatureLevel,
     supportedTemperatureLevels,
@@ -35,7 +39,13 @@ export function createLevelTemperatureControlClusterServer(endpoint: Matterbridg
  *
  * @returns {this} The current MatterbridgeEndpoint instance for chaining.
  */
-export function createNumberTemperatureControlClusterServer(endpoint: MatterbridgeEndpoint, temperatureSetpoint: number = 40 * 100, minTemperature: number = 30 * 100, maxTemperature: number = 60 * 100, step: number = 10 * 100): MatterbridgeEndpoint {
+export function createNumberTemperatureControlClusterServer(
+  endpoint: MatterbridgeEndpoint,
+  temperatureSetpoint: number = 40 * 100,
+  minTemperature: number = 30 * 100,
+  maxTemperature: number = 60 * 100,
+  step: number = 10 * 100,
+): MatterbridgeEndpoint {
   endpoint.behaviors.require(MatterbridgeNumberTemperatureControlServer.with(TemperatureControl.Feature.TemperatureNumber, TemperatureControl.Feature.TemperatureStep), {
     temperatureSetpoint,
     minTemperature, // Fixed attribute
@@ -49,7 +59,9 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
   override initialize() {
     if (this.state.supportedTemperatureLevels.length >= 2) {
       const device = this.endpoint.stateOf(MatterbridgeServer);
-      device.log.info(`MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel ${this.state.selectedTemperatureLevel} and supportedTemperatureLevels: ${this.state.supportedTemperatureLevels.join(', ')}`);
+      device.log.info(
+        `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel ${this.state.selectedTemperatureLevel} and supportedTemperatureLevels: ${this.state.supportedTemperatureLevels.join(', ')}`,
+      );
     }
   }
 
@@ -58,7 +70,9 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('setTemperature', { request, cluster: TemperatureControlServer.id, attributes: this.state, endpoint: this.endpoint });
     if (request.targetTemperatureLevel !== undefined && request.targetTemperatureLevel >= 0 && request.targetTemperatureLevel < this.state.supportedTemperatureLevels.length) {
-      device.log.debug(`MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to ${request.targetTemperatureLevel}: ${this.state.supportedTemperatureLevels[request.targetTemperatureLevel]}`);
+      device.log.debug(
+        `MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to ${request.targetTemperatureLevel}: ${this.state.supportedTemperatureLevels[request.targetTemperatureLevel]}`,
+      );
       this.state.selectedTemperatureLevel = request.targetTemperatureLevel;
     } else {
       device.log.error(`MatterbridgeLevelTemperatureControlServer: setTemperature called with invalid targetTemperatureLevel ${request.targetTemperatureLevel}`);
@@ -66,10 +80,15 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
   }
 }
 
-export class MatterbridgeNumberTemperatureControlServer extends TemperatureControlServer.with(TemperatureControl.Feature.TemperatureNumber, TemperatureControl.Feature.TemperatureStep) {
+export class MatterbridgeNumberTemperatureControlServer extends TemperatureControlServer.with(
+  TemperatureControl.Feature.TemperatureNumber,
+  TemperatureControl.Feature.TemperatureStep,
+) {
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint ${this.state.temperatureSetpoint} minTemperature ${this.state.minTemperature} maxTemperature ${this.state.maxTemperature} step ${this.state.step}`);
+    device.log.info(
+      `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint ${this.state.temperatureSetpoint} minTemperature ${this.state.minTemperature} maxTemperature ${this.state.maxTemperature} step ${this.state.step}`,
+    );
   }
 
   override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {

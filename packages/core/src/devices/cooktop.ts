@@ -72,7 +72,12 @@ export class Cooktop extends MatterbridgeEndpoint {
    * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements.
    * TemperatureLevel is the only valid temperature control mode.
    */
-  addSurface(name: string, tagList: Semtag[], selectedTemperatureLevel: number = 2, supportedTemperatureLevels: string[] = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']): MatterbridgeEndpoint {
+  addSurface(
+    name: string,
+    tagList: Semtag[],
+    selectedTemperatureLevel: number = 2,
+    supportedTemperatureLevels: string[] = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
+  ): MatterbridgeEndpoint {
     const surface = this.addChildDeviceType(name, cookSurface, { tagList }, true);
     surface.log.logName = name;
     createLevelTemperatureControlClusterServer(surface, selectedTemperatureLevel, supportedTemperatureLevels);

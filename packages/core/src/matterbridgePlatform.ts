@@ -121,7 +121,10 @@ export class MatterbridgePlatform {
   isShuttingDown = false;
 
   // Device and entity select in the plugin config UI
-  readonly #selectDevices = new Map<string, { serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
+  readonly #selectDevices = new Map<
+    string,
+    { serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }
+  >();
   readonly #selectEntities = new Map<string, { name: string; description: string; icon?: string }>();
 
   // Promises for platform initialization. They are grouped in MatterbridgePlatform.ready with Promise.all.
@@ -227,7 +230,10 @@ export class MatterbridgePlatform {
     // create the selectDevice storage for the plugin platform
     this.log.debug(`Loading selectDevice for plugin ${this.config.name}`);
     this.#selectDeviceContextReady = this.#storage.createStorage('selectDevice').then(async (context) => {
-      const selectDevice = await context.get<{ serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]>('selectDevice', []);
+      const selectDevice = await context.get<{ serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]>(
+        'selectDevice',
+        [],
+      );
       for (const device of selectDevice) this.#selectDevices.set(device.serial, device);
       this.log.debug(`Loaded ${this.#selectDevices.size} selectDevice for plugin ${this.config.name}`);
       return;
@@ -358,7 +364,10 @@ export class MatterbridgePlatform {
    * ```
    */
   async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig) {
-    this.log.debug(`The plugin ${CYAN}${this.name}${db} doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`, formData);
+    this.log.debug(
+      `The plugin ${CYAN}${this.name}${db} doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`,
+      formData,
+    );
   }
 
   /**
@@ -747,7 +756,9 @@ export class MatterbridgePlatform {
    * @param {string} serial - The serial number of the device.
    * @returns {{ serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] } | undefined} The select device or undefined if not found.
    */
-  getSelectDevice(serial: string): { serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] } | undefined {
+  getSelectDevice(
+    serial: string,
+  ): { serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] } | undefined {
     return this.#selectDevices.get(serial);
   }
 
@@ -939,7 +950,11 @@ export class MatterbridgePlatform {
       if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} because not in entityWhiteList`);
       return false;
     }
-    if (isValidObject(this.config.deviceEntityBlackList, 1) && device in this.config.deviceEntityBlackList && (this.config.deviceEntityBlackList as Record<string, string[]>)[device].includes(entity)) {
+    if (
+      isValidObject(this.config.deviceEntityBlackList, 1) &&
+      device in this.config.deviceEntityBlackList &&
+      (this.config.deviceEntityBlackList as Record<string, string[]>)[device].includes(entity)
+    ) {
       if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} for device ${CYAN}${device}${nf} because in deviceEntityBlackList`);
       return false;
     }
@@ -977,7 +992,9 @@ export class MatterbridgePlatform {
         continue;
       }
       if (endpointMap.has(device.uniqueId) && endpointMap.get(device.uniqueId) !== device.maybeNumber) {
-        this.log.warn(`Endpoint number for device ${CYAN}${device.deviceName}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId)}${wr} to ${CYAN}${device.maybeNumber}${wr}`);
+        this.log.warn(
+          `Endpoint number for device ${CYAN}${device.deviceName}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId)}${wr} to ${CYAN}${device.maybeNumber}${wr}`,
+        );
         endpointMap.set(device.uniqueId, device.maybeNumber);
       }
       if (!endpointMap.has(device.uniqueId)) {
@@ -987,7 +1004,9 @@ export class MatterbridgePlatform {
       for (const child of device.getChildEndpoints() as MatterbridgeEndpoint[]) {
         if (!child.maybeId || !child.maybeNumber) continue;
         if (endpointMap.has(device.uniqueId + separator + child.id) && endpointMap.get(device.uniqueId + separator + child.id) !== child.maybeNumber) {
-          this.log.warn(`Child endpoint number for device ${CYAN}${device.deviceName}${wr}.${CYAN}${child.id}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId + separator + child.id)}${wr} to ${CYAN}${child.maybeNumber}${wr}`);
+          this.log.warn(
+            `Child endpoint number for device ${CYAN}${device.deviceName}${wr}.${CYAN}${child.id}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId + separator + child.id)}${wr} to ${CYAN}${child.maybeNumber}${wr}`,
+          );
           endpointMap.set(device.uniqueId + separator + child.id, child.maybeNumber);
         }
         if (!endpointMap.has(device.uniqueId + separator + child.id)) {

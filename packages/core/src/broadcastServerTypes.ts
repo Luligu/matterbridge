@@ -116,268 +116,283 @@ export type WorkerMessageResponseSuccessForRequest<T extends WorkerMessageReques
 export type WorkerMessageResponseErrorForRequest<T extends WorkerMessageRequestAny> = WorkerMessageResponseError<Extract<keyof WorkerMessageTypes, T['type']>>;
 
 /** Union type for WorkerMessageRequest and WorkerMessageResponse */
-export type WorkerMessage<K extends keyof WorkerMessageTypes = keyof WorkerMessageTypes> = WorkerMessageRequest<K> | WorkerMessageResponse<K> | WorkerMessageResponseSuccess<K> | WorkerMessageResponseError<K>;
+export type WorkerMessage<K extends keyof WorkerMessageTypes = keyof WorkerMessageTypes> =
+  | WorkerMessageRequest<K>
+  | WorkerMessageResponse<K>
+  | WorkerMessageResponseSuccess<K>
+  | WorkerMessageResponseError<K>;
 
 /** Map of all worker message types with their request and response structures */
 export type WorkerMessageTypes = {
   // Jest example message
-  'jest': {
+  jest: {
     request: { params: { userId: number } };
     response: { result: { name: string; age: number } };
   };
-  'jest_simple': {
+  jest_simple: {
     request: { params: undefined };
     response: { result: { success: true } };
   };
 
   // Logger general methods
-  'get_log_level': {
+  get_log_level: {
     request: { params: undefined };
     response: { result: { logLevel: LogLevel } };
   };
-  'set_log_level': {
+  set_log_level: {
     request: { params: { logLevel: LogLevel } };
     response: { result: { logLevel: LogLevel } };
   };
 
   // Matterbridge methods
-  'matterbridge_initialize': {
+  matterbridge_initialize: {
     request: { params: undefined };
     response: { result: { success: true } };
   };
-  'matterbridge_latest_version': {
+  matterbridge_latest_version: {
     request: { params: { version: string } };
     response: { result: { success: true } };
   };
-  'matterbridge_global_prefix': {
+  matterbridge_global_prefix: {
     request: { params: { prefix: string } };
     response: { result: { success: true } };
   };
-  'matterbridge_dev_version': {
+  matterbridge_dev_version: {
     request: { params: { version: string } };
     response: { result: { success: true } };
   };
-  'matterbridge_sys_update': {
+  matterbridge_sys_update: {
     request: { params: { available: boolean } };
     response: { result: { success: true } };
   };
-  'matterbridge_main_update': {
+  matterbridge_main_update: {
     request: { params: { available: boolean } };
     response: { result: { success: true } };
   };
-  'matterbridge_platform': {
+  matterbridge_platform: {
     request: { params: undefined };
     response: { result: { data: PlatformMatterbridge; success: true } };
   };
-  'matterbridge_shared': {
+  matterbridge_shared: {
     request: { params: undefined };
     response: { result: { data: SharedMatterbridge; success: true } };
   };
 
   // Matter methods
-  'matter_start': {
+  matter_start: {
     request: { params: { storeId: string } };
     response: { result: { storeId: string; success: true } };
   };
-  'matter_stop': {
+  matter_stop: {
     request: { params: { storeId: string } };
     response: { result: { storeId: string; success: true } };
   };
 
   // Frontend methods
-  'frontend_start': {
+  frontend_start: {
     request: { params: { port: number } };
     response: { result: { success: true } };
   };
-  'frontend_stop': {
+  frontend_stop: {
     request: { params: undefined };
     response: { result: { success: true } };
   };
-  'frontend_refreshrequired': {
+  frontend_refreshrequired: {
     request: { params: { changed: RefreshRequiredChanged; matter?: ApiMatter } };
     response: { result: { success: true } };
   };
-  'frontend_restartrequired': {
+  frontend_restartrequired: {
     request: { params: { snackbar: boolean; fixed: boolean } };
     response: { result: { success: true } };
   };
-  'frontend_restartnotrequired': {
+  frontend_restartnotrequired: {
     request: { params: { snackbar: boolean } };
     response: { result: { success: true } };
   };
-  'frontend_updaterequired': {
+  frontend_updaterequired: {
     request: { params: { devVersion: boolean } };
     response: { result: { success: true } };
   };
-  'frontend_snackbarmessage': {
+  frontend_snackbarmessage: {
     request: { params: { message: string; timeout?: number; severity?: 'info' | 'success' | 'warning' | 'error' } };
     response: { result: { success: true } };
   };
-  'frontend_attributechanged': {
-    request: { params: { plugin: string; serialNumber: string; uniqueId: string; number: EndpointNumber; id: string; cluster: string; attribute: string; value: number | string | boolean | null } };
+  frontend_attributechanged: {
+    request: {
+      params: {
+        plugin: string;
+        serialNumber: string;
+        uniqueId: string;
+        number: EndpointNumber;
+        id: string;
+        cluster: string;
+        attribute: string;
+        value: number | string | boolean | null;
+      };
+    };
     response: { result: { success: true } };
   };
-  'frontend_logmessage': {
+  frontend_logmessage: {
     request: { params: { level: string; time: string; name: string; message: string } };
     response: { result: { success: true } };
   };
-  'frontend_broadcast_message': {
+  frontend_broadcast_message: {
     request: { params: { msg: WsMessageBroadcast } };
     response: { result: { success: true } };
   };
 
   // PluginManager methods
-  'plugins_length': {
+  plugins_length: {
     request: { params: undefined };
     response: { result: { length: number } };
   };
-  'plugins_size': {
+  plugins_size: {
     request: { params: undefined };
     response: { result: { size: number } };
   };
-  'plugins_has': {
+  plugins_has: {
     request: { params: { name: string } };
     response: { result: { has: boolean } };
   };
-  'plugins_get': {
+  plugins_get: {
     request: { params: { name: string } };
     response: { result: { plugin: ApiPlugin | undefined } };
   };
-  'plugins_set': {
+  plugins_set: {
     request: { params: { plugin: ApiPlugin } };
     response: { result: { plugin: ApiPlugin } };
   };
-  'plugins_clear': {
+  plugins_clear: {
     request: { params: undefined };
     response: { result: { success: true } };
   };
-  'plugins_storagepluginarray': {
+  plugins_storagepluginarray: {
     request: { params: undefined };
     response: { result: { plugins: StoragePlugin[] } };
   };
-  'plugins_apipluginarray': {
+  plugins_apipluginarray: {
     request: { params: undefined };
     response: { result: { plugins: ApiPlugin[] } };
   };
-  'plugins_loadFromStorage': {
+  plugins_loadFromStorage: {
     request: { params: undefined };
     response: { result: { plugins: ApiPlugin[] } };
   };
-  'plugins_saveToStorage': {
+  plugins_saveToStorage: {
     request: { params: undefined };
     response: { result: { count: number } };
   };
-  'plugins_resolve': {
+  plugins_resolve: {
     request: { params: { pluginPath: string } };
     response: { result: { resolved: string | null } };
   };
-  'plugins_install': {
+  plugins_install: {
     request: { params: { packageName: string } };
     response: { result: { packageName: string; success: boolean } };
   };
-  'plugins_uninstall': {
+  plugins_uninstall: {
     request: { params: { packageName: string } };
     response: { result: { packageName: string; success: boolean } };
   };
-  'plugins_parse': {
+  plugins_parse: {
     request: { params: { plugin: Plugin } };
     response: { result: { packageJson: Record<string, unknown> | null } };
   };
-  'plugins_enable': {
+  plugins_enable: {
     request: { params: { nameOrPath: string } };
     response: { result: { plugin: ApiPlugin | null } };
   };
-  'plugins_disable': {
+  plugins_disable: {
     request: { params: { nameOrPath: string } };
     response: { result: { plugin: ApiPlugin | null } };
   };
-  'plugins_remove': {
+  plugins_remove: {
     request: { params: { nameOrPath: string } };
     response: { result: { plugin: ApiPlugin | null } };
   };
-  'plugins_add': {
+  plugins_add: {
     request: { params: { nameOrPath: string } };
     response: { result: { plugin: ApiPlugin | null } };
   };
-  'plugins_load': {
+  plugins_load: {
     request: { params: { plugin: ApiPlugin | string; start?: boolean; message?: string; configure?: boolean } };
     response: { result: { platform: unknown | undefined } };
   };
-  'plugins_start': {
+  plugins_start: {
     request: { params: { plugin: ApiPlugin | string; message?: string; configure?: boolean } };
     response: { result: { plugin: ApiPlugin | undefined } };
   };
-  'plugins_configure': {
+  plugins_configure: {
     request: { params: { plugin: ApiPlugin | string } };
     response: { result: { plugin: ApiPlugin | undefined } };
   };
-  'plugins_shutdown': {
+  plugins_shutdown: {
     request: { params: { plugin: ApiPlugin | string; reason?: string; removeAllDevices?: boolean; force?: boolean } };
     response: { result: { plugin: ApiPlugin | undefined } };
   };
-  'plugins_loadconfig': {
+  plugins_loadconfig: {
     request: { params: { plugin: ApiPlugin } };
     response: { result: { config: PlatformConfig } };
   };
-  'plugins_saveconfigfromplugin': {
+  plugins_saveconfigfromplugin: {
     request: { params: { name: string; restartRequired?: boolean } };
     response: { result: { success: true } };
   };
-  'plugins_saveconfigfromjson': {
+  plugins_saveconfigfromjson: {
     request: { params: { name: string; config: PlatformConfig; restartRequired?: boolean } };
     response: { result: { success: true } };
   };
-  'plugins_loadschema': {
+  plugins_loadschema: {
     request: { params: { name: string } };
     response: { result: { schema: PlatformSchema | undefined } };
   };
-  'plugins_getschema': {
+  plugins_getschema: {
     request: { params: { name: string } };
     response: { result: { schema: PlatformSchema | undefined } };
   };
-  'plugins_setschema': {
+  plugins_setschema: {
     request: { params: { name: string; schema: PlatformSchema } };
     response: { result: { success: true } };
   };
-  'plugins_set_latest_version': {
+  plugins_set_latest_version: {
     request: { params: { plugin: ApiPlugin; version: string } };
     response: { result: { success: true } };
   };
-  'plugins_set_dev_version': {
+  plugins_set_dev_version: {
     request: { params: { plugin: ApiPlugin; version: string } };
     response: { result: { success: true } };
   };
 
   // DeviceManager methods
-  'devices_length': {
+  devices_length: {
     request: { params: undefined };
     response: { result: { length: number } };
   };
-  'devices_size': {
+  devices_size: {
     request: { params: undefined };
     response: { result: { size: number } };
   };
-  'devices_has': {
+  devices_has: {
     request: { params: { uniqueId: string } };
     response: { result: { has: boolean } };
   };
-  'devices_get': {
+  devices_get: {
     request: { params: { uniqueId: string } };
     response: { result: { device: BaseDevice | undefined } };
   };
-  'devices_set': {
+  devices_set: {
     request: { params: { device: BaseDevice } };
     response: { result: { device: BaseDevice } };
   };
-  'devices_remove': {
+  devices_remove: {
     request: { params: { device: BaseDevice } };
     response: { result: { success: boolean } };
   };
-  'devices_clear': {
+  devices_clear: {
     request: { params: undefined };
     response: { result: { success: true } };
   };
-  'devices_basearray': {
+  devices_basearray: {
     request: { params: { pluginName?: string } };
     response: { result: { devices: BaseDevice[] } };
   };
