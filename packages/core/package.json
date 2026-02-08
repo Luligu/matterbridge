@@ -24,6 +24,74 @@
     ".": {
       "types": "./dist/export.d.ts",
       "import": "./dist/export.js"
+    },
+    "./devices": {
+      "types": "./dist/devices/export.d.ts",
+      "import": "./dist/devices/export.js"
+    },
+    "./clusters": {
+      "types": "./dist/clusters/export.d.ts",
+      "import": "./dist/clusters/export.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/export.d.ts",
+      "import": "./dist/utils/export.js"
+    },
+    "./dgram": {
+      "types": "./dist/dgram/export.d.ts",
+      "import": "./dist/dgram/export.js"
+    },
+    "./jestutils": {
+      "types": "./dist/jestutils/export.d.ts",
+      "import": "./dist/jestutils/export.js"
+    },
+    "./logger": {
+      "types": "./dist/logger/export.d.ts",
+      "import": "./dist/logger/export.js"
+    },
+    "./storage": {
+      "types": "./dist/storage/export.d.ts",
+      "import": "./dist/storage/export.js"
+    },
+    "./matter": {
+      "types": "./dist/matter/export.d.ts",
+      "import": "./dist/matter/export.js"
+    },
+    "./matter/devices": {
+      "types": "./dist/matter/devices.d.ts",
+      "import": "./dist/matter/devices.js"
+    },
+    "./matter/clusters": {
+      "types": "./dist/matter/clusters.d.ts",
+      "import": "./dist/matter/clusters.js"
+    },
+    "./matter/behaviors": {
+      "types": "./dist/matter/behaviors.d.ts",
+      "import": "./dist/matter/behaviors.js"
+    },
+    "./matter/endpoints": {
+      "types": "./dist/matter/endpoints.d.ts",
+      "import": "./dist/matter/endpoints.js"
+    },
+    "./matter/types": {
+      "types": "./dist/matter/types.d.ts",
+      "import": "./dist/matter/types.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
+    },
+    "./mb_mdns": {
+      "types": "./dist/mb_mdns.d.ts",
+      "import": "./dist/mb_mdns.js"
+    },
+    "./mb_coap": {
+      "types": "./dist/mb_coap.d.ts",
+      "import": "./dist/mb_coap.js"
+    },
+    "./mb_health": {
+      "types": "./dist/mb_health.d.ts",
+      "import": "./dist/mb_health.js"
     }
   },
   "engines": {

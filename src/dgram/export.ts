@@ -1,1 +1,1 @@
-export * from '@matterbridge/dgram';
+export * from '@matterbridge/core/dgram';

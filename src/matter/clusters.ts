@@ -1,2 +1,1 @@
-// @matter
-export * from '@matter/types/clusters';
+export * from '@matterbridge/core/matter/clusters';

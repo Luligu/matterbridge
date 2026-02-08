@@ -1,2 +1,1 @@
-// @matter
-export * from '@matter/types';
+export * from '@matterbridge/core/matter/types';

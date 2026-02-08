@@ -1,1 +1,1 @@
-export * from 'node-ansi-logger';
+export * from '@matterbridge/core/logger';

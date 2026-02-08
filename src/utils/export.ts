@@ -1,1 +1,1 @@
-export * from '@matterbridge/utils';
+export * from '@matterbridge/core/utils';

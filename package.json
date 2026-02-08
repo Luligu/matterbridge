@@ -61,8 +61,8 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/export.js",
+      "types": "./dist/export.d.ts"
     },
     "./devices": {
       "import": "./dist/devices/export.js",
@@ -120,8 +120,8 @@
   "files": [
     "bin",
     "dist",
-    "frontend/build",
-    "frontend/package.json",
+    "apps/frontend/build",
+    "apps/frontend/package.json",
     "npm-shrinkwrap.json",
     "CHANGELOG.md",
     "README-DEV.md",

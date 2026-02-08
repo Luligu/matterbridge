@@ -1,1 +1,1 @@
-export * from './jestHelpers.js';
+export * from '@matterbridge/core/jestutils';

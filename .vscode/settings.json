@@ -9,6 +9,7 @@
   "eslint.workingDirectories": [
     { "directory": "./", "changeProcessCWD": true },
     { "directory": "./frontend", "changeProcessCWD": true },
+    { "directory": "./apps/frontend", "changeProcessCWD": true },
     { "directory": "./packages/jest-utils", "changeProcessCWD": true },
     { "directory": "./packages/vitest-utils", "changeProcessCWD": true },
     { "directory": "./packages/utils", "changeProcessCWD": true },

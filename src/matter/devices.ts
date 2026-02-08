@@ -1,2 +1,1 @@
-// @matter
-export * from '@matter/node/devices';
+export * from '@matterbridge/core/matter/devices';

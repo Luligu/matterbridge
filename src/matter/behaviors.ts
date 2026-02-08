@@ -1,2 +1,1 @@
-// @matter
-export * from '@matter/node/behaviors';
+export * from '@matterbridge/core/matter/behaviors';

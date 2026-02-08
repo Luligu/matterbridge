@@ -1,1 +1,1 @@
-export * from 'node-persist-manager';
+export * from '@matterbridge/core/storage';
