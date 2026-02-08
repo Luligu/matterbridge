@@ -1,12 +1,12 @@
 {
-  "name": "@matterbridge/types",
+  "name": "@matterbridge/core",
   "version": "3.5.4",
-  "description": "Matterbridge types library",
+  "description": "Matterbridge core library",
   "author": "https://github.com/Luligu",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Luligu/matterbridge.git",
-    "directory": "packages/types"
+    "directory": "packages/core"
   },
   "publishConfig": {
     "access": "public"

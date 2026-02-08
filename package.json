@@ -56,7 +56,8 @@
     "packages/vitest-utils",
     "packages/utils",
     "packages/dgram",
-    "packages/thread"
+    "packages/thread",
+    "packages/core"
   ],
   "exports": {
     ".": {
@@ -222,11 +223,13 @@
   },
   "dependencies": {
     "@matter/main": "0.16.8",
+    "@matterbridge/types": "3.5.4",
     "@matterbridge/dgram": "3.5.4",
     "@matterbridge/jest-utils": "3.5.4",
     "@matterbridge/thread": "3.5.4",
     "@matterbridge/utils": "3.5.4",
     "@matterbridge/vitest-utils": "3.5.4",
+    "@matterbridge/core": "3.5.4",
     "archiver": "7.0.1",
     "express": "5.2.1",
     "glob": "13.0.1",
