@@ -19,12 +19,13 @@ import { jest } from '@jest/globals';
 import { er, LogLevel, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
+import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
+import type { SharedMatterbridge } from '@matterbridge/types';
 
 import { MatterNode } from './matterNode.js';
-import { SharedMatterbridge, Plugin, plg, dev, NODE_STORAGE_DIR } from './matterbridgeTypes.js';
 import { closeServerNodeStores, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { PluginManager } from './pluginManager.js';
+import { PluginManager, type Plugin } from './pluginManager.js';
 import type { Matterbridge } from './matterbridge.js';
 import { DeviceManager } from './deviceManager.js';
 import { bridgedNode, flowSensor, humiditySensor, occupancySensor, onOffOutlet, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';

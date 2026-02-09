@@ -9,12 +9,13 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, BLUE, er, id, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { dev } from '@matterbridge/types';
+import type { BaseDevice } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
 
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { DeviceManager } from './deviceManager.js';
-import { BaseDevice, dev } from './matterbridgeTypes.js';
 import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
-import { BroadcastServer } from './broadcastServer.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

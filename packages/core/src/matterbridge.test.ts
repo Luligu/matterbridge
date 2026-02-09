@@ -45,12 +45,12 @@ import { SessionsBehavior } from '@matter/node';
 import { ExposedFabricInformation } from '@matter/protocol';
 import { LogLevel, nf } from 'node-ansi-logger';
 import { getParameter, hasParameter } from '@matterbridge/utils';
+import { plg } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
 
 import { Matterbridge } from './matterbridge.js';
-import { plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
-import { BroadcastServer } from './broadcastServer.js';
 
 // Mock BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);

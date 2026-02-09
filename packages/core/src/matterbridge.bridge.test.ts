@@ -50,12 +50,12 @@ import { Environment } from '@matter/general';
 import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { BridgedDeviceBasicInformationServer, PressureMeasurementServer } from '@matter/node/behaviors';
 import { waiter } from '@matterbridge/utils';
+import { MATTER_STORAGE_NAME, plg } from '@matterbridge/types';
 
 import { Matterbridge } from './matterbridge.js';
 import { PluginManager } from './pluginManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
-import { MATTER_STORAGE_NAME, plg } from './matterbridgeTypes.js';
 import { loggerLogSpy, setupTest, flushAsync, destroyInstance, closeMdnsInstance, loggerErrorSpy } from './jestutils/jestHelpers.js';
 
 // Setup the test environment

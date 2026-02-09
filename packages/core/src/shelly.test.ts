@@ -11,11 +11,11 @@ import { mkdirSync } from 'node:fs';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { BroadcastServer } from '@matterbridge/thread';
 
 import { Matterbridge } from './matterbridge.js';
 import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.js';
 import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
-import { BroadcastServer } from './broadcastServer.js';
 
 const log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 

@@ -26,7 +26,8 @@
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 // @matterbridge
 import { hasParameter } from '@matterbridge/utils';
-import { BaseDevice, dev, WorkerMessage } from '@matterbridge/types';
+import { dev } from '@matterbridge/types';
+import type { BaseDevice, WorkerMessage } from '@matterbridge/types';
 import { BroadcastServer } from '@matterbridge/thread';
 
 // Matterbridge

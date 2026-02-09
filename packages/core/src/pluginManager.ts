@@ -39,7 +39,8 @@ import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread';
 import { hasParameter, inspectError, logError } from '@matterbridge/utils';
-import { PlatformConfig, PlatformMatterbridge, PlatformSchema, ApiPlugin, plg, PluginName, StoragePlugin, typ, WorkerMessage } from '@matterbridge/types';
+import { plg, typ } from '@matterbridge/types';
+import type { ApiPlugin, PlatformConfig, PlatformMatterbridge, PlatformSchema, PluginName, StoragePlugin, WorkerMessage } from '@matterbridge/types';
 
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';

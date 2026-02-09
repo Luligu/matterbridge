@@ -9,8 +9,6 @@ import { BroadcastChannel } from 'node:worker_threads';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-
-import type { BroadcastServer } from './broadcastServer.js';
 import {
   broadcastServerBroadcastSpy,
   broadcastServerRequestSpy,
@@ -21,7 +19,8 @@ import {
   originalProcessArgv,
   setDebug,
   setupTest,
-} from './jestutils/jestHelpers.js';
+} from '@matterbridge/core/jestutils';
+import type { BroadcastServer } from '@matterbridge/thread';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -46,7 +45,7 @@ describe('BroadcastServer', () => {
 
   test('constructor', async () => {
     process.argv = [...originalProcessArgv, '--loader', '--verbose'];
-    const { BroadcastServer } = await import('./broadcastServer.js');
+    const { BroadcastServer } = await import('@matterbridge/thread');
     server = new BroadcastServer('manager', log, NAME);
     expect(server).toBeInstanceOf(BroadcastServer);
     expect((server as any).broadcastChannel).toBeInstanceOf(BroadcastChannel);

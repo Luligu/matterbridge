@@ -20,9 +20,10 @@ import { er, LogLevel, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 import { ServerNodeStore } from '@matter/node';
 import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
+import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
+import type { SharedMatterbridge } from '@matterbridge/types';
 
 import { MatterNode } from './matterNode.js';
-import { SharedMatterbridge, NODE_STORAGE_DIR, plg, dev } from './matterbridgeTypes.js';
 import { loggerInfoSpy, originalProcessArgv, setupTest } from './jestutils/jestHelpers.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PluginManager } from './pluginManager.js';

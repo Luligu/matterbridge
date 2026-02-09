@@ -28,7 +28,7 @@
 import type { RequestOptions } from 'node:http';
 
 import { AnsiLogger, debugStringify } from 'node-ansi-logger';
-import { SharedMatterbridge } from '@matterbridge/types';
+import type { SharedMatterbridge } from '@matterbridge/types';
 import { BroadcastServer } from '@matterbridge/thread';
 
 import { Matterbridge } from './matterbridge.js';

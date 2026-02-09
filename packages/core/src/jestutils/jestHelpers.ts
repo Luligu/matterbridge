@@ -28,13 +28,14 @@ import path from 'node:path';
 import type { jest } from '@jest/globals';
 // Imports from node-ansi-logger
 import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+// Imports from node-persist-manager
+import { NodeStorageManager } from 'node-persist-manager';
 // Imports from @matter
 import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, Lifecycle } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/protocol';
-import { NodeStorageManager } from 'node-persist-manager';
 // Imports from @matterbridge
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '@matterbridge/types';

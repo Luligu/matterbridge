@@ -57,11 +57,11 @@ import { NodeStorageManager } from 'node-persist-manager';
 import { LogLevel as MatterLogLevel, Logger } from '@matter/general';
 import { VendorId } from '@matter/types';
 import { getParameter } from '@matterbridge/utils';
+import { plg } from '@matterbridge/types';
 
-import { plg, Plugin } from './matterbridgeTypes.js';
+import type { Plugin, PluginManager as PluginManagerType } from './pluginManager.js';
 import { closeMdnsInstance, configurePluginSpy, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
-import type { PluginManager as PluginManagerType } from './pluginManager.js';
 import type { DeviceManager as DeviceManagerType } from './deviceManager.js';
 
 const { Matterbridge } = await import('./matterbridge.js');

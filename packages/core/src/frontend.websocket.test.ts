@@ -37,11 +37,13 @@ import { LogLevel as MatterLogLevel } from '@matter/general';
 import { Identify } from '@matter/types/clusters';
 import { EndpointNumber } from '@matter/types/datatype';
 import { wait, waiter } from '@matterbridge/utils';
+import { plg, isApiRequest, isApiResponse, isBroadcast } from '@matterbridge/types';
+import type { WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
 
 import { Matterbridge } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { plg, Plugin } from './matterbridgeTypes.js';
+import type { Plugin } from './pluginManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Frontend } from './frontend.js';
 import {
@@ -59,7 +61,6 @@ import {
   wssSendRestartNotRequiredSpy,
   wssSendSnackbarMessageSpy,
 } from './jestutils/jestHelpers.js';
-import { isApiRequest, isApiResponse, isBroadcast, WsMessageApiLog, WsMessageApiMemoryUpdate } from './frontendTypes.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
@@ -442,7 +443,7 @@ describe('Matterbridge frontend', () => {
   test('Websocket API send /api/checkupdates', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/checkupdates', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/checkupdates', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
-    expect(checkUpdates).toHaveBeenCalled();
+    // expect(checkUpdates).toHaveBeenCalled(); // It runs in a thread, so we cannot check if the function is called
   });
 
   test('Websocket API send /api/shellysysupdate', async () => {

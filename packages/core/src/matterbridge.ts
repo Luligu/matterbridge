@@ -7,7 +7,7 @@
  * @version 1.6.2
  * @license Apache-2.0
  *
- * Copyright 2023, 2024, 2025 Luca Liguori.
+ * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,22 +93,16 @@ import {
   isValidString,
   parseVersionString,
 } from '@matterbridge/utils';
-import {
+import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import type {
   ApiMatter,
-  dev,
-  MATTER_LOGGER_FILE,
-  MATTER_STORAGE_NAME,
-  MATTERBRIDGE_LOGGER_FILE,
   MaybePromise,
-  NODE_STORAGE_DIR,
-  plg,
+  PlatformMatterbridge,
   SanitizedExposedFabricInformation,
   SanitizedSession,
   SharedMatterbridge,
   SystemInformation,
-  typ,
   WorkerMessage,
-  PlatformMatterbridge,
 } from '@matterbridge/types';
 import { BroadcastServer } from '@matterbridge/thread';
 

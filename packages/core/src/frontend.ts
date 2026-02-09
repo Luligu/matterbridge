@@ -77,6 +77,7 @@ import type {
   WsMessageApiResponse,
   WsMessageBroadcast,
   WsMessageErrorApiResponse,
+  WorkerMessage,
 } from '@matterbridge/types';
 import {
   MATTER_LOGGER_FILE,
@@ -86,7 +87,6 @@ import {
   MATTERBRIDGE_LOGGER_FILE,
   NODE_STORAGE_DIR,
   plg,
-  WorkerMessage,
 } from '@matterbridge/types';
 import { BroadcastServer } from '@matterbridge/thread';
 

@@ -51,8 +51,9 @@ Advantages:
 
 ### Added
 
-- [package]: Added @matterbridge/types monorepo scoped package.
-- [package]: Added @matterbridge/core monorepo scoped package.
+- [packages]: Added @matterbridge/types monorepo scoped package.
+- [packages]: Added @matterbridge/core monorepo scoped package.
+- [apps]: Added @matterbridge/frontend monorepo scoped package.
 
 ### Changed
 

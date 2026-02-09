@@ -11,9 +11,10 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-logger';
+import { plg } from '@matterbridge/types';
+import type { ApiPlugin } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
 
-import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './checkUpdates.js';
-import { ApiPlugin, plg } from './matterbridgeTypes.js';
 import {
   flushAsync,
   loggerDebugSpy,
@@ -27,7 +28,7 @@ import {
   wssSendSnackbarMessageSpy,
   wssSendUpdateRequiredSpy,
 } from './jestutils/jestHelpers.js';
-import { BroadcastServer } from './broadcastServer.js';
+import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './checkUpdates.js';
 
 // Mock selected functions from @matterbridge/utils
 jest.unstable_mockModule('@matterbridge/utils', () => ({

@@ -23,14 +23,15 @@ import { SessionsBehavior } from '@matter/node';
 import { NodeStorageManager } from 'node-persist-manager';
 import { Identify, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
 import { copyDirectory, formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
+import { dev, MATTER_STORAGE_NAME, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
+import type { SharedMatterbridge } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
 
-import { MatterNode } from './matterNode.js';
-import { SharedMatterbridge, Plugin, plg, dev, MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from './matterbridgeTypes.js';
 import { closeServerNodeStores, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
-import { BroadcastServer } from './broadcastServer.js';
+import { MatterNode } from './matterNode.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridgedNode, flowSensor, humiditySensor, powerSource, pressureSensor, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { PluginManager } from './pluginManager.js';
+import { PluginManager, type Plugin } from './pluginManager.js';
 import type { Matterbridge } from './matterbridge.js';
 import { DeviceManager } from './deviceManager.js';
 

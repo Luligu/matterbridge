@@ -19,9 +19,10 @@ import { jest } from '@jest/globals';
 import { LogLevel } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
+import { NODE_STORAGE_DIR } from '@matterbridge/types';
+import type { SharedMatterbridge } from '@matterbridge/types';
 
 import { MatterNode } from './matterNode.js';
-import { SharedMatterbridge, NODE_STORAGE_DIR } from './matterbridgeTypes.js';
 import { originalProcessArgv, setupTest, setDebug } from './jestutils/jestHelpers.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { PluginManager } from './pluginManager.js';

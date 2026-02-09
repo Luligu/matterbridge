@@ -38,7 +38,7 @@ import { Descriptor } from '@matter/types/clusters/descriptor';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 // @matterbridge
 import { hasParameter, isValidArray, isValidObject, isValidString } from '@matterbridge/utils';
-import { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
+import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
 import { BroadcastServer } from '@matterbridge/thread';
 
 // Matterbridge
@@ -49,7 +49,7 @@ import { bridgedNode } from './matterbridgeDeviceTypes.js';
 // Module-private brand
 const MATTERBRIDGE_PLATFORM_BRAND = Symbol('MatterbridgePlatform.brand');
 
-export { PlatformConfig, PlatformConfigValue, PlatformSchemaValue, PlatformSchema, PlatformMatterbridge } from '@matterbridge/types';
+export type { PlatformConfig, PlatformConfigValue, PlatformSchemaValue, PlatformSchema, PlatformMatterbridge } from '@matterbridge/types';
 
 /**
  * Type guard to check whether a value is a MatterbridgePlatform instance.

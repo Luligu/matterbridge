@@ -10,12 +10,10 @@ import { inspect } from 'node:util';
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 import { setupTest } from '@matterbridge/core/jestutils';
+import type { WorkerMessage, ParentPortMessage } from '@matterbridge/types';
 
-import { BroadcastServer } from '../../../packages/core/src/broadcastServer.js';
-import { WorkerMessage } from '../../../packages/core/src/broadcastServerTypes.js';
-
+import { BroadcastServer } from './broadcastServer.js';
 import { createESMWorker } from './worker.js';
-import type { ParentPortMessage } from './workerTypes.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

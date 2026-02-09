@@ -1,8 +1,48 @@
 {
-  "name": "frontend",
+  "name": "@matterbridge/frontend",
   "version": "3.4.5",
+  "description": "Matterbridge plugin manager for Matter",
+  "author": "https://github.com/Luligu",
+  "license": "Apache-2.0",
+  "homepage": "https://matterbridge.io/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Luligu/matterbridge.git",
+    "directory": "apps/frontend"
+  },
+  "bugs": {
+    "url": "https://github.com/Luligu/matterbridge/issues"
+  },
+  "funding": {
+    "type": "buymeacoffee",
+    "url": "https://www.buymeacoffee.com/luligugithub"
+  },
+  "keywords": [
+    "matterbridge",
+    "homebridge",
+    "bridge",
+    "plugin",
+    "frontend",
+    "matter.js",
+    "matter-node.js",
+    "matter",
+    "matterprotocol",
+    "iot",
+    "smarthome",
+    "connectedthings",
+    "hap",
+    "homekit",
+    "siri",
+    "google-home",
+    "alexa",
+    "homeassistant",
+    "smartthings",
+    "ewelink"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "private": true,
-  "homepage": "./",
   "type": "module",
   "scripts": {
     "dev": "vite",

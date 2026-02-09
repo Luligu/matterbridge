@@ -3,9 +3,9 @@
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { WorkerMessage } from '@matterbridge/types';
 
-import { BroadcastServer } from '../../../packages/core/src/broadcastServer.js';
-import { WorkerMessage } from '../../../packages/core/src/broadcastServerTypes.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 const postMessage = jest.fn();
 let mockedThreadId = 0;

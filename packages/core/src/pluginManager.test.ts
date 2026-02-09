@@ -63,16 +63,16 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 import { waiter, wait } from '@matterbridge/utils';
+import type { PlatformConfig, ApiPlugin } from '@matterbridge/types';
+import { plg, typ } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
 
 import { Matterbridge } from './matterbridge.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
-import { PlatformConfig } from './matterbridgePlatformTypes.js';
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
-import { ApiPlugin, plg, Plugin, typ } from './matterbridgeTypes.js';
-import { PluginManager } from './pluginManager.js';
+import { PluginManager, type Plugin } from './pluginManager.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
-import { BroadcastServer } from './broadcastServer.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

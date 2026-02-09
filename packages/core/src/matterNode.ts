@@ -53,20 +53,8 @@ import { BasicInformationServer } from '@matter/node/behaviors/basic-information
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 // Matterbridge
 import { copyDirectory, getIntParameter, getParameter, hasParameter, inspectError, isValidNumber, isValidString, parseVersionString, wait, withTimeout } from '@matterbridge/utils';
-import {
-  ApiMatter,
-  SanitizedExposedFabricInformation,
-  SanitizedSession,
-  dev,
-  MATTER_LOGGER_FILE,
-  MATTER_STORAGE_NAME,
-  plg,
-  PluginName,
-  NODE_STORAGE_DIR,
-  MATTERBRIDGE_LOGGER_FILE,
-  SharedMatterbridge,
-  WorkerMessage,
-} from '@matterbridge/types';
+import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, plg, NODE_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE } from '@matterbridge/types';
+import type { ApiMatter, PluginName, SanitizedExposedFabricInformation, SanitizedSession, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { BroadcastServer } from '@matterbridge/thread';
 
 import type { Matterbridge } from './matterbridge.js';

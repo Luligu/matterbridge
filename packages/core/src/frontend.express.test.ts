@@ -33,12 +33,12 @@ import os from 'node:os';
 import { jest } from '@jest/globals';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { waiter } from '@matterbridge/utils';
+import { BroadcastServer } from '@matterbridge/thread';
+import { MATTER_LOGGER_FILE, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE } from '@matterbridge/types';
 
 import { Matterbridge } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
-import { MATTER_LOGGER_FILE, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE } from './matterbridgeTypes.js';
-import { BroadcastServer } from './broadcastServer.js';
 
 // Mock BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);

@@ -60,10 +60,10 @@ import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger'
 import { Environment } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { waiter } from '@matterbridge/utils';
+import { dev, MATTER_STORAGE_NAME, plg } from '@matterbridge/types';
 
 import { Matterbridge } from './matterbridge.js';
 import { PluginManager } from './pluginManager.js';
-import { dev, MATTER_STORAGE_NAME, plg } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
 import { closeMdnsInstance, destroyInstance, loggerInfoSpy, loggerLogSpy, loggerErrorSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
