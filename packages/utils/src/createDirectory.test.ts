@@ -24,8 +24,8 @@ describe('createDirectory', () => {
   });
 
   it('should log a message if the directory already exists', async () => {
-    await createDirectory(path.join('src', 'mock'), 'Mock', log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Directory Mock already exists at path: ${path.join('src', 'mock')}`);
+    await createDirectory(path.join('.', 'screenshots'), 'Screenshots', log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Directory Screenshots already exists at path: ${path.join('.', 'screenshots')}`);
   });
 
   it('should create directory if it does not exist', async () => {
