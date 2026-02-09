@@ -32,27 +32,27 @@ jobs:
 
       - name: Verify Node.js version
         run: node -v
-        working-directory: frontend
+        working-directory: apps/frontend
 
       - name: Verify Npm version
         run: npm -v
-        working-directory: frontend
+        working-directory: apps/frontend
 
       - name: Install dependencies
         run: npm ci --no-fund --no-audit
-        working-directory: frontend
+        working-directory: apps/frontend
 
       - name: Lint the project
         run: npm run lint
-        working-directory: frontend
+        working-directory: apps/frontend
 
       - name: Build the project
         run: npm run build
-        working-directory: frontend
+        working-directory: apps/frontend
 
       - name: Test the project
         run: npm run test
-        working-directory: frontend
+        working-directory: apps/frontend
 
       - name: List, audit, fix outdated dependencies, update and build again
         run: |
@@ -65,4 +65,4 @@ jobs:
           npm run lint || true
           npm run build || true
           npm run test || true
-        working-directory: frontend
+        working-directory: apps/frontend
