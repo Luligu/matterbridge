@@ -28,6 +28,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // Node.js modules
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import fs, { unlinkSync } from 'node:fs';
 import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
@@ -92,8 +93,6 @@ import {
   isValidString,
   parseVersionString,
 } from '@matterbridge/utils';
-
-// Matterbridge
 import {
   ApiMatter,
   dev,
@@ -103,22 +102,23 @@ import {
   MaybePromise,
   NODE_STORAGE_DIR,
   plg,
-  Plugin,
   SanitizedExposedFabricInformation,
   SanitizedSession,
   SharedMatterbridge,
   SystemInformation,
   typ,
-} from './matterbridgeTypes.js';
-import { PluginManager } from './pluginManager.js';
+  WorkerMessage,
+  PlatformMatterbridge,
+} from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
+
+// Matterbridge
+import { Plugin, PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
-import { BroadcastServer } from './broadcastServer.js';
-import { WorkerMessage } from './broadcastServerTypes.js';
-import { PlatformMatterbridge } from './matterbridgePlatformTypes.js';
 
 /**
  * Represents the Matterbridge events.
@@ -204,6 +204,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Matterbridge logger */
   public readonly log = new AnsiLogger({
     logName: 'Matterbridge',
+    logNameColor: '\x1b[38;5;115m',
     logTimestampFormat: TimestampFormat.TIME_MILLIS,
     logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO,
   });
@@ -213,7 +214,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public fileLogger = false;
 
   /** Matter logger */
-  public readonly matterLog = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  public readonly matterLog = new AnsiLogger({ logName: 'Matter', logNameColor: '\x1b[34m', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   /** Matter logger level */
   public matterLogLevel: LogLevel = this.matterLog.logLevel;
   /** Whether to log Matter to a file */
@@ -310,7 +311,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** We load asyncronously so is private */
   private constructor() {
     super();
-    this.log.logNameColor = '\x1b[38;5;115m';
     this.server = new BroadcastServer('matterbridge', this.log);
     this.server.on('broadcast_message', this.msgHandler.bind(this));
   }
@@ -491,9 +491,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory', this.log);
 
     // Set the matterbridge root directory
-    const { fileURLToPath } = await import('node:url');
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
-    this.rootDirectory = path.resolve(currentFileDirectory, '../', '../', '../'); // Adjust the path for package core dist directory
+    // Adjust the path for packages core dist directory or node_modules @matterbridge core dist directory
+    this.rootDirectory = currentFileDirectory.includes(path.join('packages', 'core'))
+      ? path.resolve(currentFileDirectory, '../', '../', '../')
+      : path.resolve(currentFileDirectory, '../', '../', '..', '../');
 
     // Setup the matter environment with default values
     this.environment.vars.set('log.level', MatterLogLevel.INFO);
@@ -891,6 +893,31 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
+   * Resolve a file path located in the `@matterbridge/core` distribution directory.
+   *
+   * @remarks
+   * Matterbridge spawns ESM workers from built JavaScript files (e.g. `workerCheckUpdates.js`).
+   * Depending on how the code is executed:
+   * - **Production**: `import.meta.url` points inside `.../node_modules/@matterbridge/core/dist/...`
+   *   and the worker file is usually alongside the current module.
+   * - **Development / tests**: `import.meta.url` may point inside `.../packages/core/src/...`
+   *   while the worker file exists in `.../packages/core/dist/...`.
+   *
+   * This helper tries both locations and returns the first existing candidate.
+   *
+   * @param {string} fileName - Worker/build artifact file name, e.g. `workerGlobalPrefix.js`.
+   * @returns {string} Absolute path to the resolved file. If none exists, returns the first candidate (best effort).
+   */
+  resolveCoreDistFilePath(fileName: string): string {
+    const currentModuleDirectory = path.dirname(fileURLToPath(import.meta.url));
+    const candidates = [path.join(currentModuleDirectory, fileName), path.join(currentModuleDirectory, '..', 'dist', fileName)];
+    for (const candidate of candidates) {
+      if (fs.existsSync(candidate)) return candidate;
+    }
+    return candidates[0];
+  }
+
+  /**
    * Parses the command line arguments and performs the corresponding actions.
    *
    * @private
@@ -1034,16 +1061,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Check in 5 minutes the latest and dev versions of matterbridge and the plugins
     clearTimeout(this.checkUpdateTimeout);
     this.checkUpdateTimeout = setTimeout(async () => {
-      const { checkUpdates } = await import('./checkUpdates.js');
-      checkUpdates(this);
+      // const { checkUpdates } = await import('./checkUpdates.js');
+      // checkUpdates(this);
+      const { createESMWorker } = await import('@matterbridge/thread');
+      createESMWorker('CheckUpdates', this.resolveCoreDistFilePath('workerCheckUpdates.js'));
     }, 300 * 1000).unref();
 
     // Check each 12 hours the latest and dev versions of matterbridge and the plugins
     clearInterval(this.checkUpdateInterval);
     this.checkUpdateInterval = setInterval(
       async () => {
-        const { checkUpdates } = await import('./checkUpdates.js');
-        checkUpdates(this);
+        // const { checkUpdates } = await import('./checkUpdates.js');
+        // checkUpdates(this);
+        const { createESMWorker } = await import('@matterbridge/thread');
+        createESMWorker('CheckUpdates', this.resolveCoreDistFilePath('workerCheckUpdates.js'));
       },
       12 * 60 * 60 * 1000, // 12 hours
     ).unref();
@@ -1310,7 +1341,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // The global node_modules directory is already set in the node storage and we check if it is still valid
       this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
       const { createESMWorker } = await import('@matterbridge/thread');
-      createESMWorker('NpmGlobalPrefix', path.join(this.rootDirectory, 'packages/core/dist/workerGlobalPrefix.js'));
+      createESMWorker('NpmGlobalPrefix', this.resolveCoreDistFilePath('workerGlobalPrefix.js'));
     }
 
     // Matterbridge version
@@ -1388,7 +1419,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {(text: string, message: Diagnostic.Message) => void} The MatterLogger function. \x1b[35m for violet \x1b[34m is blue
    */
   private createDestinationMatterLogger(fileLogger: boolean): (text: string, message: Diagnostic.Message) => void {
-    this.matterLog.logNameColor = '\x1b[34m'; // Blue matter.js Logger
     if (fileLogger) {
       this.matterLog.logFilePath = path.join(this.matterbridgeDirectory, MATTER_LOGGER_FILE);
     }

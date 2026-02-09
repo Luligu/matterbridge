@@ -27,14 +27,13 @@ import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { inspect } from 'node:util';
 
-import { AnsiLogger, debugStringify, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, debugStringify, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 import { hasParameter } from '@matterbridge/utils';
+import type { ParentPortMessage } from '@matterbridge/types';
 
-import type { ParentPortMessage } from './workerTypes.js';
-
-const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug_worker') || hasParameter('verbose_worker');
-const verbose = hasParameter('verbose') || hasParameter('verbose_worker');
-const log = new AnsiLogger({ logName: 'Worker', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO });
+const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-worker') || hasParameter('verbose-worker');
+const verbose = hasParameter('verbose') || hasParameter('verbose-worker');
+const log = new AnsiLogger({ logName: 'Worker', logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO });
 
 /**
  * Sends a control message to the parent through parentPort

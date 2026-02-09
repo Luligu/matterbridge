@@ -25,8 +25,18 @@ process.argv = [
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
+// Mock the createESMWorker from workers module before importing it
+jest.unstable_mockModule('@matterbridge/thread', () => ({
+  createESMWorker: jest.fn(() => {
+    return undefined; // Mock the createESMWorker function to return immediately
+  }),
+}));
+const workerModule = await import('@matterbridge/thread');
+const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
+
 import os from 'node:os';
 import path from 'node:path';
+import fs from 'node:fs';
 
 import { jest } from '@jest/globals';
 import { LogLevel as MatterLogLevel, Logger } from '@matter/general';
@@ -284,6 +294,45 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).frontend.expressApp).toBeDefined();
     expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
   }, 60000);
+
+  test('resolveCoreDistFilePath() should return current module dir candidate when file exists', async () => {
+    const fileName = `__jest_worker_${process.pid}_${Date.now()}_a.js`;
+    const candidate1 = (matterbridge as any).resolveCoreDistFilePath(fileName) as string;
+    try {
+      // Create the file where resolveCoreDistFilePath expects it (candidate1)
+      fs.writeFileSync(candidate1, '// jest worker placeholder', 'utf8');
+      const resolved = (matterbridge as any).resolveCoreDistFilePath(fileName) as string;
+      expect(path.resolve(resolved)).toBe(path.resolve(candidate1));
+    } finally {
+      fs.rmSync(candidate1, { force: true });
+    }
+  });
+
+  test('resolveCoreDistFilePath() should fall back to ../dist when current module dir candidate is missing', async () => {
+    const fileName = `__jest_worker_${process.pid}_${Date.now()}_b.js`;
+    const candidate1 = (matterbridge as any).resolveCoreDistFilePath(fileName) as string;
+    const moduleDir = path.dirname(candidate1);
+    const candidate2 = path.resolve(moduleDir, '..', 'dist', fileName);
+
+    try {
+      // Ensure candidate1 does not exist and create candidate2
+      fs.rmSync(candidate1, { force: true });
+      fs.mkdirSync(path.dirname(candidate2), { recursive: true });
+      fs.writeFileSync(candidate2, '// jest worker placeholder', 'utf8');
+
+      const resolved = (matterbridge as any).resolveCoreDistFilePath(fileName) as string;
+      expect(path.resolve(resolved)).toBe(path.resolve(candidate2));
+    } finally {
+      fs.rmSync(candidate2, { force: true });
+      // Optional: clean dist dir if we created it and it is empty
+      try {
+        const distDir = path.dirname(candidate2);
+        if (fs.existsSync(distDir) && fs.readdirSync(distDir).length === 0) fs.rmdirSync(distDir);
+      } catch {
+        // ignore cleanup errors
+      }
+    }
+  });
 
   test('destroy instance', async () => {
     // Destroy the Matterbridge instance

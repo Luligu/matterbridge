@@ -53,13 +53,8 @@ import { BasicInformationServer } from '@matter/node/behaviors/basic-information
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 // Matterbridge
 import { copyDirectory, getIntParameter, getParameter, hasParameter, inspectError, isValidNumber, isValidString, parseVersionString, wait, withTimeout } from '@matterbridge/utils';
-
-import type { Matterbridge } from './matterbridge.js';
-import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
-  SharedMatterbridge,
   ApiMatter,
-  Plugin,
   SanitizedExposedFabricInformation,
   SanitizedSession,
   dev,
@@ -69,12 +64,16 @@ import {
   PluginName,
   NODE_STORAGE_DIR,
   MATTERBRIDGE_LOGGER_FILE,
-} from './matterbridgeTypes.js';
+  SharedMatterbridge,
+  WorkerMessage,
+} from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
+
+import type { Matterbridge } from './matterbridge.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
-import { BroadcastServer } from './broadcastServer.js';
-import { WorkerMessage } from './broadcastServerTypes.js';
 import { toBaseDevice } from './deviceManager.js';
-import { PluginManager } from './pluginManager.js';
+import { Plugin, PluginManager } from './pluginManager.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { addVirtualDevice } from './helpers.js';
 

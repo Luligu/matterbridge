@@ -28,20 +28,37 @@
 // Node.js import
 import EventEmitter from 'node:events';
 
-// AnsiLogger module
+// AnsiLogger
 import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr, debugStringify, CYAN } from 'node-ansi-logger';
+// NodeStorage
+import type { NodeStorage } from 'node-persist-manager';
+// @matter
+import type { ServerNode, Endpoint as EndpointNode } from '@matter/node';
+import type { StorageContext } from '@matter/general';
+import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 // @matterbridge
+import { BroadcastServer } from '@matterbridge/thread';
 import { hasParameter, inspectError, logError } from '@matterbridge/utils';
+import { PlatformConfig, PlatformMatterbridge, PlatformSchema, ApiPlugin, plg, PluginName, StoragePlugin, typ, WorkerMessage } from '@matterbridge/types';
 
 // Matterbridge
 import type { Matterbridge } from './matterbridge.js';
-import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
 import { assertMatterbridgePlatform, type MatterbridgePlatform } from './matterbridgePlatform.js';
-import { ApiPlugin, plg, Plugin, PluginName, StoragePlugin, typ } from './matterbridgeTypes.js';
-import { BroadcastServer } from './broadcastServer.js';
-import { WorkerMessage } from './broadcastServerTypes.js';
 import { isMatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
 import { isMatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+
+/** Define an interface for matterbridge */
+export interface Plugin extends ApiPlugin {
+  /** Node storage context created in the directory 'storage' in matterbridgeDirectory with the plugin name */
+  nodeContext?: NodeStorage;
+  storageContext?: StorageContext;
+  serverNode?: ServerNode<ServerNode.RootEndpoint>;
+  aggregatorNode?: EndpointNode<AggregatorEndpoint>;
+  device?: MatterbridgeEndpoint;
+  platform?: MatterbridgePlatform;
+  reachabilityTimeout?: NodeJS.Timeout;
+}
 
 interface PluginManagerEvents {
   added: [name: string];

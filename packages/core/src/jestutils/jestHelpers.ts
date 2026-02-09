@@ -35,16 +35,17 @@ import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/protocol';
 import { NodeStorageManager } from 'node-persist-manager';
+// Imports from @matterbridge
+import { BroadcastServer } from '@matterbridge/thread';
+import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '@matterbridge/types';
 
 // Imports from Matterbridge
 import { Matterbridge } from '../matterbridge.js';
 import { MatterbridgePlatform } from '../matterbridgePlatform.js';
-import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '../matterbridgeTypes.js';
 import { bridge } from '../matterbridgeDeviceTypes.js';
 import { DeviceManager } from '../deviceManager.js';
 import { PluginManager } from '../pluginManager.js';
 import { Frontend } from '../frontend.js';
-import { BroadcastServer } from '../broadcastServer.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 export const originalProcessArgv = Object.freeze([...process.argv]);

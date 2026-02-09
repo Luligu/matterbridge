@@ -30,7 +30,6 @@ import { BroadcastChannel } from 'node:worker_threads';
 
 import { type AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
 import { hasParameter, logError } from '@matterbridge/utils';
-
 import type {
   WorkerMessage,
   WorkerMessageRequest,
@@ -39,7 +38,7 @@ import type {
   WorkerMessageResponseSuccess,
   WorkerMessageTypes,
   WorkerSrcType,
-} from './broadcastServerTypes.js';
+} from '@matterbridge/types';
 
 interface BroadcastServerEvents {
   broadcast_message: [msg: WorkerMessage];

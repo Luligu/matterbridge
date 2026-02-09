@@ -24,15 +24,14 @@
 
 import { threadId, isMainThread, parentPort, workerData } from 'node:worker_threads';
 
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 import { hasParameter, inspectError } from '@matterbridge/utils';
-import { logWorkerInfo, parentLog, parentPost } from '@matterbridge/thread';
+import { logWorkerInfo, parentLog, parentPost, BroadcastServer } from '@matterbridge/thread';
 
-import { BroadcastServer } from './broadcastServer.js';
 import { checkUpdates } from './checkUpdates.js';
 
-const debug = hasParameter('debug') || hasParameter('verbose');
-const verbose = hasParameter('verbose');
+const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-worker') || hasParameter('verbose-worker');
+const verbose = hasParameter('verbose') || hasParameter('verbose-worker');
 
 // Send init message
 if (!isMainThread && parentPort) {
@@ -41,7 +40,12 @@ if (!isMainThread && parentPort) {
 }
 
 // Broadcast server
-const log = new AnsiLogger({ logName: 'MatterbridgeCheckUpdates', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO });
+const log = new AnsiLogger({
+  logName: 'MatterbridgeCheckUpdates',
+  logNameColor: MAGENTA,
+  logTimestampFormat: TimestampFormat.TIME_MILLIS,
+  logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO,
+});
 const server = new BroadcastServer('matterbridge', log);
 
 // Log worker info

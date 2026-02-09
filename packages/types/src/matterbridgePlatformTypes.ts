@@ -4,7 +4,7 @@
  * @file matterbridgePlatformTypes.ts
  * @author Luca Liguori
  * @created 2024-03-21
- * @version 1.6.1
+ * @version 1.7.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -22,8 +22,10 @@
  * limitations under the License.
  */
 
+// @matter
 import type { VendorId } from '@matter/main/types';
 
+// Matterbridge
 import type { SystemInformation } from './matterbridgeTypes.js';
 
 /** Platform configuration value type. */

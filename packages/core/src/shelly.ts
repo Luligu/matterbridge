@@ -28,10 +28,10 @@
 import type { RequestOptions } from 'node:http';
 
 import { AnsiLogger, debugStringify } from 'node-ansi-logger';
+import { SharedMatterbridge } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
 
 import { Matterbridge } from './matterbridge.js';
-import { BroadcastServer } from './broadcastServer.js';
-import { SharedMatterbridge } from './matterbridgeTypes.js';
 
 let verifyIntervalSecs = 15;
 let verifyTimeoutSecs = 600;

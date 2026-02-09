@@ -7,7 +7,14 @@
   "eslint.format.enable": true,
   "eslint.useFlatConfig": true,
   "eslint.workingDirectories": [
-    { "directory": "./", "changeProcessCWD": true },
-    { "directory": "./apps/frontend", "changeProcessCWD": true }
+    { "directory": "./apps/frontend", "changeProcessCWD": true },
+    { "directory": "./packages/types", "changeProcessCWD": true },
+    { "directory": "./packages/jest-utils", "changeProcessCWD": true },
+    { "directory": "./packages/vitest-utils", "changeProcessCWD": true },
+    { "directory": "./packages/utils", "changeProcessCWD": true },
+    { "directory": "./packages/dgram", "changeProcessCWD": true },
+    { "directory": "./packages/thread", "changeProcessCWD": true },
+    { "directory": "./packages/core", "changeProcessCWD": true },
+    { "directory": "./", "changeProcessCWD": true }
   ]
 }

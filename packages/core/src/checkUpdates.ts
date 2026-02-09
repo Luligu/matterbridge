@@ -26,9 +26,8 @@
 import { AnsiLogger, db, debugStringify, nt, TimestampFormat, wr } from 'node-ansi-logger';
 // Matterbridge module
 import { hasParameter, isValidString } from '@matterbridge/utils';
-
-import { ApiPlugin, plg, SharedMatterbridge } from './matterbridgeTypes.js';
-import { BroadcastServer } from './broadcastServer.js';
+import { ApiPlugin, plg, SharedMatterbridge } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
 
 /**
  * Checks for updates for Matterbridge and its plugins.

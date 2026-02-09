@@ -25,8 +25,8 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mIndex loaded.\u001B[40;0m');
 
 // Matterbridge
-export * from './matterbridge.js';
-export * from './matterbridgeTypes.js';
+// export * from './matterbridge.js';
+// export * from './matterbridgeTypes.js';
 export * from './matterbridgeEndpoint.js';
 export * from './matterbridgeEndpointHelpers.js';
 export * from './matterbridgeEndpointTypes.js';
@@ -35,5 +35,5 @@ export * from './matterbridgeDeviceTypes.js';
 export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
-export * from './matterbridgePlatformTypes.js';
+// export * from './matterbridgePlatformTypes.js';
 export { addVirtualDevice } from './helpers.js';

@@ -679,7 +679,7 @@ describe('Matterbridge mocked', () => {
     });
     await (matterbridge as any).initialize();
     expect(plugins.length).toBe(6);
-    expect(existSpy).toHaveBeenCalledTimes(6); // Six plugins checked for existence
+    expect(existSpy).toHaveBeenCalledTimes(2 + 6); // Six plugins checked for existence
     expect(parseSpy).toHaveBeenCalledTimes(5); // One plugin is skipped due to invalid install
     expect(spawnCommandMock).toHaveBeenCalledTimes(6); // Six plugins attempted to install
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Trying to reinstall it from npm...'));
@@ -853,7 +853,7 @@ describe('Matterbridge mocked', () => {
     jest.advanceTimersByTime(12 * 60 * 60 * 1000); // Simulate 12 hours
     jest.useRealTimers();
     await new Promise((resolve) => setTimeout(resolve, 10)); // Wait for the next tick
-    expect(checkUpdatesMock).toHaveBeenCalledTimes(2);
+    expect(checkUpdatesMock).toHaveBeenCalledTimes(0); // Cannot be called cause it run in a thread
   }, 10000);
 
   test('Matterbridge.initialize() registerProcessHandlers and matter file logger', async () => {

@@ -63,13 +63,21 @@ import {
   wait,
   withTimeout,
 } from '@matterbridge/utils';
-
-// Matterbridge
-import type { Cluster, ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, Plugin } from './matterbridgeTypes.js';
-import type { Matterbridge } from './matterbridge.js';
-import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import type { PlatformConfig } from './matterbridgePlatformTypes.js';
-import type { ApiSettings, RefreshRequiredChanged, WsMessageApiRequest, WsMessageApiResponse, WsMessageBroadcast, WsMessageErrorApiResponse } from './frontendTypes.js';
+import type {
+  Cluster,
+  ApiClusters,
+  ApiDevice,
+  ApiMatter,
+  ApiPlugin,
+  MatterbridgeInformation,
+  PlatformConfig,
+  ApiSettings,
+  RefreshRequiredChanged,
+  WsMessageApiRequest,
+  WsMessageApiResponse,
+  WsMessageBroadcast,
+  WsMessageErrorApiResponse,
+} from '@matterbridge/types';
 import {
   MATTER_LOGGER_FILE,
   MATTER_STORAGE_NAME,
@@ -78,12 +86,17 @@ import {
   MATTERBRIDGE_LOGGER_FILE,
   NODE_STORAGE_DIR,
   plg,
-} from './matterbridgeTypes.js';
+  WorkerMessage,
+} from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
+
+// Matterbridge
+import type { Matterbridge } from './matterbridge.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
 import { generateHistoryPage } from './cliHistory.js';
-import { BroadcastServer } from './broadcastServer.js';
-import { WorkerMessage } from './broadcastServerTypes.js';
+import { Plugin } from './pluginManager.js';
 
 /**
  * Represents the Frontend events.
@@ -115,8 +128,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   constructor(matterbridge: Matterbridge) {
     super();
     this.matterbridge = matterbridge;
-    this.log = new AnsiLogger({ logName: 'Frontend', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
-    this.log.logNameColor = '\x1b[38;5;97m';
+    this.log = new AnsiLogger({
+      logName: 'Frontend',
+      logNameColor: '\x1b[38;5;97m',
+      logTimestampFormat: TimestampFormat.TIME_MILLIS,
+      logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO,
+    });
     this.server = new BroadcastServer('frontend', this.log);
     this.server.on('broadcast_message', this.msgHandler.bind(this));
   }
@@ -1821,8 +1838,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         }
       } else if (data.method === '/api/checkupdates') {
-        const { checkUpdates } = await import('./checkUpdates.js');
-        checkUpdates(this.matterbridge);
+        // const { checkUpdates } = await import('./checkUpdates.js');
+        // checkUpdates(this.matterbridge);
+        const { createESMWorker } = await import('@matterbridge/thread');
+        createESMWorker('CheckUpdates', this.matterbridge.resolveCoreDistFilePath('workerCheckUpdates.js'));
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellysysupdate') {
         const { triggerShellySysUpdate } = await import('./shelly.js');

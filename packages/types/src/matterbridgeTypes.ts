@@ -22,21 +22,14 @@
  * limitations under the License.
  */
 
-// NodeStorage and AnsiLogger modules
-import type { NodeStorage } from 'node-persist-manager';
+// AnsiLogger
 import type { LogLevel } from 'node-ansi-logger';
 // @matter
-import type { ServerNode, Endpoint as EndpointNode } from '@matter/node';
-import type { StorageContext } from '@matter/general';
 import type { FabricIndex, VendorId, EndpointNumber, Semtag } from '@matter/types';
-import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import type { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
 
 // Matterbridge
-import type { Matterbridge } from './matterbridge.js';
-import type { MatterbridgePlatform } from './matterbridgePlatform.js';
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatformTypes.js';
-import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Default colors
 export const plg = '\u001B[38;5;33m';
@@ -53,55 +46,61 @@ export const MATTERBRIDGE_HISTORY_FILE = 'history.html';
 
 export type MaybePromise<T> = T | Promise<T>;
 
+export type PluginName = string;
+
 /**
  * A type representing a read-only subset of the Matterbridge properties.
  */
-export type SharedMatterbridge = Readonly<
-  Pick<
-    Matterbridge,
-    | 'systemInformation'
-    | 'rootDirectory'
-    | 'homeDirectory'
-    | 'matterbridgeDirectory'
-    | 'matterbridgePluginDirectory'
-    | 'matterbridgeCertDirectory'
-    | 'globalModulesDirectory'
-    | 'matterbridgeVersion'
-    | 'matterbridgeLatestVersion'
-    | 'matterbridgeDevVersion'
-    | 'frontendVersion'
-    | 'bridgeMode'
-    | 'restartMode'
-    | 'virtualMode'
-    | 'profile'
-    | 'logLevel'
-    | 'fileLogger'
-    | 'matterLogLevel'
-    | 'matterFileLogger'
-    | 'mdnsInterface'
-    | 'ipv4Address'
-    | 'ipv6Address'
-    | 'port'
-    | 'discriminator'
-    | 'passcode'
-    | 'shellySysUpdate'
-    | 'shellyMainUpdate'
-  >
->;
-
-export type PluginName = string;
-
-/** Define an interface for matterbridge */
-export interface Plugin extends ApiPlugin {
-  /** Node storage context created in the directory 'storage' in matterbridgeDirectory with the plugin name */
-  nodeContext?: NodeStorage;
-  storageContext?: StorageContext;
-  serverNode?: ServerNode<ServerNode.RootEndpoint>;
-  aggregatorNode?: EndpointNode<AggregatorEndpoint>;
-  device?: MatterbridgeEndpoint;
-  platform?: MatterbridgePlatform;
-  reachabilityTimeout?: NodeJS.Timeout;
-}
+export type SharedMatterbridge = Readonly<{
+  systemInformation: {
+    interfaceName: string;
+    macAddress: string;
+    ipv4Address: string;
+    ipv6Address: string;
+    nodeVersion: string;
+    hostname: string;
+    user: string;
+    osType: string;
+    osRelease: string;
+    osPlatform: string;
+    osArch: string;
+    totalMemory: string;
+    freeMemory: string;
+    systemUptime: string;
+    processUptime: string;
+    cpuUsage: string;
+    processCpuUsage: string;
+    rss: string;
+    heapTotal: string;
+    heapUsed: string;
+  };
+  rootDirectory: string;
+  homeDirectory: string;
+  matterbridgeDirectory: string;
+  matterbridgePluginDirectory: string;
+  matterbridgeCertDirectory: string;
+  globalModulesDirectory: string;
+  matterbridgeVersion: string;
+  matterbridgeLatestVersion: string;
+  matterbridgeDevVersion: string;
+  frontendVersion: string;
+  bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
+  restartMode: 'service' | 'docker' | '';
+  virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
+  profile: string | undefined;
+  logLevel: LogLevel;
+  fileLogger: boolean;
+  matterLogLevel: LogLevel;
+  matterFileLogger: boolean;
+  mdnsInterface: string | undefined;
+  ipv4Address: string | undefined;
+  ipv6Address: string | undefined;
+  port: number | undefined;
+  discriminator: number | undefined;
+  passcode: number | undefined;
+  shellySysUpdate: boolean;
+  shellyMainUpdate: boolean;
+}>;
 
 /** Define an interface for the frontend */
 export interface ApiPlugin extends StoragePlugin {

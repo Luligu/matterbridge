@@ -8,11 +8,11 @@
 coverage
 **/coverage
 
-# Build output (we keep `frontend/build` for Docker builds, but ignore it for everything else)
+# Build output (we keep `apps/frontend/build` for Docker builds, but ignore it for everything else)
 **/dist
 **/build
 **/*.tsbuildinfo
-!frontend/build
+!apps/frontend/build
 
 # Tooling caches
 .cache

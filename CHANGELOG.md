@@ -49,6 +49,11 @@ Advantages:
 
 ## [3.5.4] - Dev branch
 
+### Added
+
+- [package]: Added @matterbridge/types monorepo scoped package.
+- [package]: Added @matterbridge/core monorepo scoped package.
+
 ### Changed
 
 - [package]: Updated dependencies.

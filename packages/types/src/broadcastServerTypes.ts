@@ -27,7 +27,7 @@ import { EndpointNumber } from '@matter/types/datatype';
 
 import type { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
-import type { ApiMatter, ApiPlugin, BaseDevice, Plugin, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
+import type { ApiMatter, ApiPlugin, BaseDevice, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
 
 /** Types of worker source */
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
@@ -294,10 +294,12 @@ export type WorkerMessageTypes = {
     request: { params: { packageName: string } };
     response: { result: { packageName: string; success: boolean } };
   };
+  /*
   plugins_parse: {
     request: { params: { plugin: Plugin } };
     response: { result: { packageJson: Record<string, unknown> | null } };
   };
+  */
   plugins_enable: {
     request: { params: { nameOrPath: string } };
     response: { result: { plugin: ApiPlugin | null } };

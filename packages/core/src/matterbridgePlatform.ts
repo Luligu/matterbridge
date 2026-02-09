@@ -36,18 +36,20 @@ import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { EndpointNumber } from '@matter/types/datatype';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+// @matterbridge
 import { hasParameter, isValidArray, isValidObject, isValidString } from '@matterbridge/utils';
+import { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
 
 // Matterbridge
 import { assertMatterbridgeEndpoint, MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
-import { ApiSelectDevice, ApiSelectEntity } from './frontendTypes.js';
-import { BroadcastServer } from './broadcastServer.js';
-import { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
 
 // Module-private brand
 const MATTERBRIDGE_PLATFORM_BRAND = Symbol('MatterbridgePlatform.brand');
+
+export { PlatformConfig, PlatformConfigValue, PlatformSchemaValue, PlatformSchema, PlatformMatterbridge } from '@matterbridge/types';
 
 /**
  * Type guard to check whether a value is a MatterbridgePlatform instance.
