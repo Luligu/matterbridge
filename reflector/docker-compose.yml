@@ -18,7 +18,6 @@ services:
     restart: unless-stopped
     ports:
       - '5580:5580'
-      - '5540:5540/udp'
     volumes:
       - ./DockerVolumes/matterserver:/data
     environment:

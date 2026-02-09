@@ -222,14 +222,18 @@
     "pack:all:local": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag local && npm run reset",
     "pack:all:latest": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag latest && npm run reset"
   },
+  "overrides": {
+    "eslint": "9.39.2",
+    "@eslint/js": "9.39.2"
+  },
   "dependencies": {
-    "@matterbridge/types": "3.5.4",
+    "@matterbridge/core": "3.5.4",
     "@matterbridge/dgram": "3.5.4",
     "@matterbridge/jest-utils": "3.5.4",
     "@matterbridge/thread": "3.5.4",
+    "@matterbridge/types": "3.5.4",
     "@matterbridge/utils": "3.5.4",
-    "@matterbridge/vitest-utils": "3.5.4",
-    "@matterbridge/core": "3.5.4"
+    "@matterbridge/vitest-utils": "3.5.4"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
