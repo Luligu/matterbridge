@@ -814,7 +814,8 @@ describe('Matterbridge frontend', () => {
 
   test('Websocket API /api/disableplugin /api/enableplugin device mode server', async () => {
     // Add a new plugin in device mode server
-    const plugin = await matterbridge.plugins.add('./src/mock/pluginserverdevice');
+    const plugin = await matterbridge.plugins.add('./packages/core/src/mock/pluginserverdevice');
+    expect(plugin).not.toBeNull();
     expect(plugin).toBeDefined();
     if (!plugin) return;
     await matterbridge.plugins.load(plugin, true, 'Jest test', true);

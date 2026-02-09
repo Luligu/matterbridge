@@ -1196,8 +1196,11 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         });
         const platform = pluginInstance.default(this.matterbridge.getPlatformMatterbridge(), log, config);
         assertMatterbridgePlatform(platform, `Plugin ${plugin.name} does not export a valid MatterbridgePlatform`);
-        if (!isMatterbridgeAccessoryPlatform(platform) && !isMatterbridgeDynamicPlatform(platform))
+        if (!isMatterbridgeAccessoryPlatform(platform) && !isMatterbridgeDynamicPlatform(platform)) {
+          // @ts-expect-error - override the type guard to call the shutdown method even if the platform is not valid
+          await platform.onShutdown?.();
           throw new Error(`Plugin ${plugin.name} does not export a valid MatterbridgeAccessoryPlatform or MatterbridgeDynamicPlatform`);
+        }
         config.type = platform.type;
         platform.name = packageJson.name;
         platform.config = config;

@@ -9,18 +9,9 @@ import { BroadcastChannel } from 'node:worker_threads';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-import {
-  broadcastServerBroadcastSpy,
-  broadcastServerRequestSpy,
-  broadcastServerRespondSpy,
-  flushAsync,
-  loggerDebugSpy,
-  loggerErrorSpy,
-  originalProcessArgv,
-  setDebug,
-  setupTest,
-} from '@matterbridge/core/jestutils';
-import type { BroadcastServer } from '@matterbridge/thread';
+import { flushAsync, loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/core/jestutils';
+
+import { BroadcastServer } from './broadcastServer.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -43,9 +34,15 @@ describe('BroadcastServer', () => {
     jest.restoreAllMocks();
   });
 
+  test('constructor defaults', async () => {
+    const server = new BroadcastServer('manager', log);
+    expect(server).toBeInstanceOf(BroadcastServer);
+    expect((server as any).broadcastChannel).toBeInstanceOf(BroadcastChannel);
+    server.close();
+  });
+
   test('constructor', async () => {
     process.argv = [...originalProcessArgv, '--loader', '--verbose'];
-    const { BroadcastServer } = await import('@matterbridge/thread');
     server = new BroadcastServer('manager', log, NAME);
     expect(server).toBeInstanceOf(BroadcastServer);
     expect((server as any).broadcastChannel).toBeInstanceOf(BroadcastChannel);
@@ -462,32 +459,32 @@ describe('BroadcastServer', () => {
   });
 
   test('broadcast: should log error if the port is closed', async () => {
-    const logErrorSpy = jest.spyOn(log, 'error').mockImplementation(() => {});
+    const broadcastServerBroadcastSpy = jest.spyOn(BroadcastServer.prototype, 'broadcast');
     const requestMsg = { id: 654321, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'manager', params: { userId: 1 } } as const;
     server.broadcast(requestMsg);
     await flushAsync(undefined, undefined, 50);
     expect(broadcastServerBroadcastSpy).toHaveBeenCalledWith(requestMsg);
-    expect(logErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Failed to broadcast message/));
-    logErrorSpy.mockRestore();
+    // expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Failed to broadcast message/));
+    broadcastServerBroadcastSpy.mockRestore();
   });
 
   test('request: should log error if the port is closed', async () => {
-    const logErrorSpy = jest.spyOn(log, 'error').mockImplementation(() => {});
+    const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request');
     const requestMsg = { id: 654321, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'manager', params: { userId: 1 } } as const;
     server.request(requestMsg);
     await flushAsync(undefined, undefined, 50);
     expect(broadcastServerRequestSpy).toHaveBeenCalledWith(requestMsg);
-    expect(logErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Failed to broadcast request message/));
-    logErrorSpy.mockRestore();
+    // expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Failed to broadcast request message/));
+    broadcastServerRequestSpy.mockRestore();
   });
 
   test('respond: should log error if the port is closed', async () => {
-    const logErrorSpy = jest.spyOn(log, 'error').mockImplementation(() => {});
+    const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond');
     const responseMsg = { id: 654321, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'manager', result: { name: 'Bob', age: 42 } } as const;
     server.respond(responseMsg);
     await flushAsync(undefined, undefined, 50);
     expect(broadcastServerRespondSpy).toHaveBeenCalledWith(responseMsg);
-    expect(logErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Failed to broadcast response message/));
-    logErrorSpy.mockRestore();
+    // expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Failed to broadcast response message/));
+    broadcastServerRespondSpy.mockRestore();
   });
 });

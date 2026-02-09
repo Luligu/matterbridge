@@ -231,16 +231,16 @@ describe('MatterNode', () => {
     // @ts-expect-error access private property
     pluginManager.matterbridge.nodeContext = await pluginManager.matterbridge.nodeStorage.createStorage('matterbridge');
 
-    expect(await pluginManager.add('./src/mock/plugin1')).not.toBeNull();
-    expect(await pluginManager.add('./src/mock/plugin2')).not.toBeNull();
-    expect(await pluginManager.add('./src/mock/plugin3')).not.toBeNull();
-    expect(await pluginManager.add('./src/mock/plugin4')).not.toBeNull();
-    expect(await pluginManager.add('./src/mock/plugin5')).not.toBeNull();
-    expect(await pluginManager.add('./src/mock/plugin6')).not.toBeNull();
-    expect(await pluginManager.add('./src/mock/pluginmatterdevice')).not.toBeNull();
-    expect(await pluginManager.add('./src/mock/pluginserverdevice')).not.toBeNull();
-    expect(await pluginManager.add('./src/mock/pluginmbatest')).not.toBeNull();
-    expect(await pluginManager.add('./src/mock/pluginmbdtest')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/plugin1')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/plugin2')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/plugin3')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/plugin4')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/plugin5')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/plugin6')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/pluginmatterdevice')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/pluginserverdevice')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/pluginmbatest')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/pluginmbdtest')).not.toBeNull();
     expect(pluginManager.length).toBe(10);
   });
 
@@ -382,7 +382,7 @@ describe('MatterNode', () => {
     // Test adding when no aggregator node
     const saved = matter.aggregatorNode; // Save aggregator node
     matter.aggregatorNode = undefined;
-    expect(await matter.pluginManager.add('./src/mock/plugin1')).not.toBeNull();
+    expect(await matter.pluginManager.add('./packages/core/src/mock/plugin1')).not.toBeNull();
     await expect(() => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Aggregator node not found for endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`,
     );
@@ -519,8 +519,8 @@ describe('MatterNode', () => {
     expect(deviceManager.length).toBe(0);
     expect(loggerErrorSpy).toHaveBeenCalledWith(`Virtual device ${plg}matterbridge-mock1${er}:${dev}Virtual device${er} already registered. Please use a different name.`);
 
-    expect(await matter.pluginManager.remove('./src/mock/plugin1')).not.toBeNull();
-    expect(await matter.pluginManager.remove('./src/mock/plugin4')).not.toBeNull();
+    expect(await matter.pluginManager.remove('./packages/core/src/mock/plugin1')).not.toBeNull();
+    expect(await matter.pluginManager.remove('./packages/core/src/mock/plugin4')).not.toBeNull();
   });
 
   test('Stop server node for Matterbridge', async () => {

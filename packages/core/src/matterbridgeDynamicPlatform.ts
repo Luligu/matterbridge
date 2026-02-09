@@ -27,9 +27,10 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 // AnsiLogger module
 import { AnsiLogger } from 'node-ansi-logger';
-// Matterbridge
+// @matterbridge
 import type { PlatformConfig, PlatformMatterbridge } from '@matterbridge/types';
 
+// Matterbridge
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 
 // Module-private brand

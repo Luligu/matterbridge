@@ -1528,12 +1528,23 @@ describe('PluginManager', () => {
   });
 
   test('should not load plugin test without default export', async () => {
-    const plugin = await plugins.add('./src/mock/plugintest');
+    const plugin = await plugins.add('./packages/core/src/mock/plugintest');
+    expect(plugin).not.toBeNull();
     expect(plugin).toBeDefined();
     if (!plugin) return;
     await plugins.load(plugin, false, 'Test with Jest');
     await plugins.remove(plugin.name);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`does not provide a default export`));
+  });
+
+  test('should not load plugin test without wrong brand', async () => {
+    const plugin = await plugins.add('./packages/core/src/mock/pluginwronginstance');
+    expect(plugin).not.toBeNull();
+    if (!plugin) return;
+    const platform = await plugins.load(plugin, false, 'Test with Jest');
+    expect(platform).toBeUndefined();
+    expect(plugin.error).toBeTruthy();
+    await plugins.remove(plugin.name);
   });
 
   test('load plugin matterbridge-mock4', async () => {

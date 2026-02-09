@@ -159,7 +159,7 @@ describe('MatterNode dynamic', () => {
     // @ts-expect-error access private property
     pluginManager.matterbridge.nodeContext = await pluginManager.matterbridge.nodeStorage.createStorage('matterbridge');
 
-    expect(await pluginManager.add('./src/mock/plugin1')).not.toBeNull();
+    expect(await pluginManager.add('./packages/core/src/mock/plugin1')).not.toBeNull();
     expect(pluginManager.length).toBe(1);
   });
 

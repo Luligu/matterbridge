@@ -45,14 +45,6 @@
       "types": "./dist/jestutils/export.d.ts",
       "import": "./dist/jestutils/export.js"
     },
-    "./logger": {
-      "types": "./dist/logger/export.d.ts",
-      "import": "./dist/logger/export.js"
-    },
-    "./storage": {
-      "types": "./dist/storage/export.d.ts",
-      "import": "./dist/storage/export.js"
-    },
     "./matter": {
       "types": "./dist/matter/export.d.ts",
       "import": "./dist/matter/export.js"

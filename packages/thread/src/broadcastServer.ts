@@ -28,7 +28,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 import { EventEmitter } from 'node:events';
 import { BroadcastChannel } from 'node:worker_threads';
 
-import { type AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
 import { hasParameter, logError } from '@matterbridge/utils';
 import type {
   WorkerMessage,

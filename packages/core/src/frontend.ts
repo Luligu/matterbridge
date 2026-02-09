@@ -1484,6 +1484,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Get the clusters from the main endpoint
     endpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
+      // istanbul ignore if cause is not reachable without the EveHistory cluster
       if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName))
         return;
       // console.log(
@@ -1524,6 +1525,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       childEndpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
         if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
+        // istanbul ignore if cause is not reachable without the EveHistory cluster
         if (
           clusterName === 'EveHistory' &&
           ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)
