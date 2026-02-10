@@ -1059,6 +1059,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(DoorLock.Cluster, 'operatingMode')).toBe(true);
     expect(device.hasAttributeServer(DoorLock.Cluster, 'lockState')).toBe(true);
     expect(device.hasAttributeServer(DoorLock.Cluster, 'lockType')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock.Cluster, 'actuatorEnabled')).toBe(true);
 
     await add(device);
     expect(device.getAttribute(DoorLock.Cluster.id, 'lockState')).toBe(DoorLock.LockState.Locked);
