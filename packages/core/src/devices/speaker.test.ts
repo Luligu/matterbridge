@@ -3,6 +3,7 @@
 const MATTER_PORT = 8015;
 const NAME = 'Speaker';
 const HOMEDIR = path.join('jest', NAME);
+const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
 
@@ -11,29 +12,35 @@ import { jest } from '@jest/globals';
 import { OnOff, LevelControl } from '@matter/types/clusters';
 
 // helpers
-import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 
 import { Speaker } from './speaker.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
-// Setup the Matter test environment
-createTestEnvironment(NAME);
-
 describe('Matterbridge ' + NAME, () => {
   let device: Speaker;
 
+  beforeAll(async () => {
+    // Setup the Matter test environment
+    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+  });
+
   beforeEach(async () => {
+    // Clear all mocks
     jest.clearAllMocks();
   });
 
   afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    // Restore all mocks
     jest.restoreAllMocks();
   });
 
   test('create and start server node', async () => {
-    await startServerNode(NAME, MATTER_PORT);
+    await startServerNode(NAME, MATTER_PORT, undefined, MATTER_CREATE_ONLY);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   }, 10000);
@@ -312,6 +319,6 @@ describe('Matterbridge ' + NAME, () => {
 
   test('stop server', async () => {
     expect(server).toBeDefined();
-    await stopServerNode(server);
+    await stopServerNode(server, MATTER_CREATE_ONLY);
   });
 });
