@@ -1,3 +1,4 @@
+/* eslint-disable n/no-process-exit */
 import os from 'node:os';
 import path from 'node:path';
 import { access } from 'node:fs/promises';
@@ -20,7 +21,6 @@ const defaultAutomatorRelative = path.join('Code', 'automator', 'automator.mjs')
 
 const candidateAutomatorPaths = [process.env.AUTOMATOR_PATH, ...candidateOneDriveRoots.map((root) => path.join(root, defaultAutomatorRelative))].filter(Boolean);
 
-/** @param {string} filePath */
 const exists = async (filePath) => {
   try {
     await access(filePath);
@@ -32,7 +32,6 @@ const exists = async (filePath) => {
 
 let automatorPath;
 for (const candidate of candidateAutomatorPaths) {
-  // eslint-disable-next-line no-await-in-loop
   if (await exists(candidate)) {
     automatorPath = candidate;
     break;

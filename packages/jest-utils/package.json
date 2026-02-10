@@ -3,10 +3,14 @@
   "version": "3.5.4",
   "description": "Matterbridge jest utility library",
   "author": "https://github.com/Luligu",
+  "homepage": "https://matterbridge.io/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Luligu/matterbridge.git",
     "directory": "packages/jest-utils"
+  },
+  "bugs": {
+    "url": "https://github.com/Luligu/matterbridge/issues"
   },
   "publishConfig": {
     "access": "public"
@@ -46,6 +50,7 @@
     "test:watch": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest --maxWorkers=100% --watch",
     "test:verbose": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest --maxWorkers=100% --verbose",
     "test:coverage": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest --maxWorkers=100% --coverage",
+    "test:debug": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:vitest": "vitest run",
     "test:vitest:watch": "vitest --reporter verbose",
     "test:vitest:verbose": "vitest run --reporter verbose",
@@ -55,6 +60,9 @@
     "softReset": "npm install --no-fund --no-audit && npm run build",
     "lint": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 .",
     "lint:fix": "eslint --cache --cache-location .cache/.eslintcache --fix --max-warnings=0 .",
+    "lint:debug": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 --debug",
+    "lint:config": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 --print-config",
+    "lint:inspect": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 --inspect-config",
     "format": "prettier --cache --cache-location .cache/.prettiercache --write .",
     "format:check": "prettier --cache --cache-location .cache/.prettiercache --check .",
     "checkDependencies": "npx npm-check-updates",
@@ -83,7 +91,7 @@
     "@types/jest": "30.0.0",
     "@types/node": "25.2.2",
     "@vitest/coverage-v8": "4.0.18",
-    "@vitest/eslint-plugin": "1.6.6",
+    "@vitest/eslint-plugin": "1.6.7",
     "cross-env": "10.1.0",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
@@ -99,7 +107,7 @@
     "shx": "0.4.0",
     "ts-jest": "29.4.6",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.54.0",
+    "typescript-eslint": "8.55.0",
     "vitest": "4.0.18"
   }
 }

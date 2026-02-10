@@ -22,12 +22,18 @@ const __dirname = path.dirname(__filename);
 export default defineConfig([
   {
     name: 'Global Ignores',
-    ignores: ['dist', 'node_modules', '.cache', 'coverage', 'build', 'screenshots', 'scripts'],
+    ignores: ['.cache', 'apps', 'build', 'coverage', 'dist', 'jest', 'node_modules', 'packages', 'screenshots', 'temp', 'vendor', 'vite.config.ts'],
   },
-  js.configs.recommended,
-  ...tseslint.configs.strict,
-  // Comment the previous line and uncomment the following line if you want to use strict with type checking
-  // ...tseslint.configs.strictTypeChecked,
+  {
+    name: 'JavaScript & TypeScript Source Files',
+    files: ['**/*.{js,mjs,cjs,ts,mts,cts}'],
+    plugins: { js },
+    extends: ['js/recommended'],
+  },
+  // Comment out this line if you want to enable strict type-checked rules, but be aware that it may cause many errors until you fix all type issues in your codebase
+  tseslint.configs.strict,
+  // Uncomment this line to enable strict type-checked rules, but be aware that it may cause many errors until you fix all type issues in your codebase
+  // tseslint.configs.strictTypeChecked,
   pluginImport.flatConfigs.recommended,
   pluginN.configs['flat/recommended-script'],
   pluginPromise.configs['flat/recommended'],
@@ -40,6 +46,7 @@ export default defineConfig([
       ecmaVersion: 'latest',
       parserOptions: {
         tsconfigRootDir: __dirname,
+        project: './tsconfig.json',
       },
     },
     linterOptions: {
@@ -67,7 +74,7 @@ export default defineConfig([
   },
   {
     name: 'JavaScript Source Files',
-    files: ['**/*.js'],
+    files: ['**/*.{js,mjs,cjs}'],
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
@@ -75,13 +82,7 @@ export default defineConfig([
     files: ['src/**/*.ts'],
     ignores: ['src/**/*.test.ts', 'src/**/*.spec.ts'], // Ignore test files
     languageOptions: {
-      sourceType: 'module',
-      ecmaVersion: 'latest',
       parser: tseslint.parser,
-      parserOptions: {
-        tsconfigRootDir: __dirname,
-        project: './tsconfig.json',
-      },
     },
     rules: {
       // Override/add rules specific to typescript files here
@@ -104,11 +105,8 @@ export default defineConfig([
     files: ['**/*.spec.ts', '**/*.test.ts', 'test/**/*.ts'],
     ignores: ['vitest'], // Ignore Vitest test files
     languageOptions: {
-      sourceType: 'module',
-      ecmaVersion: 'latest',
       parser: tseslint.parser,
       parserOptions: {
-        tsconfigRootDir: __dirname,
         project: './tsconfig.jest.json', // Use a separate tsconfig for Jest tests with "isolatedModules": true
       },
     },
@@ -131,11 +129,8 @@ export default defineConfig([
     name: 'Vitest Test Files',
     files: ['vitest/*.spec.ts', 'vitest/*.test.ts'],
     languageOptions: {
-      sourceType: 'module',
-      ecmaVersion: 'latest',
       parser: tseslint.parser,
       parserOptions: {
-        tsconfigRootDir: __dirname,
         project: './tsconfig.vitest.json', // Use a separate tsconfig for Vitest tests
       },
     },
