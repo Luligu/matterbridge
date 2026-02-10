@@ -24,7 +24,7 @@
 /*
  *  This file contains the Jest helpers for testing the Matterbridge core package.
  *
- *  1) System Matterbridge:
+ *  1) System Matterbridge with initialized Matterbridge instance:
  *
  *  beforeAll(async () => {
  *    // Start matterbridge instance
@@ -32,14 +32,8 @@
  *  });
  *
  *  afterAll(async () => {
- *    // Close test server
- *    testServer.close();
  *    // Stop matterbridge instance
  *    await stopMatterbridge();
- *    // Restore all mocks
- *    jest.restoreAllMocks();
- *    // Reset modules to clear the mocked modules
- *    jest.resetModules();
  *  });
  *
  */
