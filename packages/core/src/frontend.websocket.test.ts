@@ -62,6 +62,15 @@ import {
   wssSendSnackbarMessageSpy,
 } from './jestutils/jestHelpers.js';
 
+// Mock the createESMWorker from workers module before importing it
+jest.unstable_mockModule('@matterbridge/thread', () => ({
+  createESMWorker: jest.fn(() => {
+    return undefined; // Mock the createESMWorker function to return immediately
+  }),
+}));
+const workerModule = await import('@matterbridge/thread');
+const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
+
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
   triggerShellyMainUpdate: jest.fn(() => Promise.resolve()),
@@ -73,12 +82,6 @@ jest.unstable_mockModule('./shelly.ts', () => ({
 }));
 const { triggerShellySysUpdate, triggerShellyMainUpdate, createShellySystemLog, triggerShellySoftReset, triggerShellyHardReset, triggerShellyReboot, triggerShellyChangeIp } =
   await import('./shelly.ts');
-
-// Mock the function getNpmPackageVersion
-jest.unstable_mockModule('./checkUpdates.js', () => ({
-  checkUpdates: jest.fn(),
-}));
-const { checkUpdates } = await import('./checkUpdates.js');
 
 // Spy on Matterbridge methods
 const createServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'createServerNode');
@@ -443,7 +446,7 @@ describe('Matterbridge frontend', () => {
   test('Websocket API send /api/checkupdates', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/checkupdates', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/checkupdates', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
-    // expect(checkUpdates).toHaveBeenCalled(); // It runs in a thread, so we cannot check if the function is called
+    expect(createESMWorker).toHaveBeenCalled();
   });
 
   test('Websocket API send /api/shellysysupdate', async () => {
