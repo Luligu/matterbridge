@@ -2649,7 +2649,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.behaviors.require(MatterbridgeDoorLockServer.enable({ events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true } }), {
       lockState,
       lockType,
-      actuatorEnabled: false,
+      /** This attribute SHALL indicate if the lock is currently able to (Enabled) or not able to (Disabled) process remote Lock, Unlock, or Unlock with Timeout commands. */
+      actuatorEnabled: true,
       /** This attribute SHALL indicate the current operating mode of the lock as defined in OperatingModeEnum */
       operatingMode: DoorLock.OperatingMode.Normal,
       /**
