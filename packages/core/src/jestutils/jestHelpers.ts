@@ -1,9 +1,9 @@
 /**
  * @description This file contains the Jest helpers.
- * @file src/helpers.test.ts
+ * @file src/jestHelpers.test.ts
  * @author Luca Liguori
  * @created 2025-09-03
- * @version 1.0.14
+ * @version 1.0.15
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -19,6 +19,29 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ *  This file contains the Jest helpers for testing the Matterbridge core package.
+ *
+ *  1) System Matterbridge:
+ *
+ *  beforeAll(async () => {
+ *    // Start matterbridge instance
+ *    await startMatterbridge('bridge', FRONTEND_PORT, MATTER_PORT, PASSCODE, DISCRIMINATOR);
+ *  });
+ *
+ *  afterAll(async () => {
+ *    // Close test server
+ *    testServer.close();
+ *    // Stop matterbridge instance
+ *    await stopMatterbridge();
+ *    // Restore all mocks
+ *    jest.restoreAllMocks();
+ *    // Reset modules to clear the mocked modules
+ *    jest.resetModules();
+ *  });
+ *
  */
 
 import { rmSync } from 'node:fs';
@@ -49,6 +72,7 @@ import { PluginManager } from '../pluginManager.js';
 import { Frontend } from '../frontend.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
+// Freeze the original process arguments and environment variables to allow resetting them in tests
 export const originalProcessArgv = Object.freeze([...process.argv]);
 export const originalProcessEnv = Object.freeze({ ...process.env } as Record<string, string | undefined>);
 
@@ -63,10 +87,10 @@ export let loggerFatalSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.fatal>
 
 // Spy on console methods
 export let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-export let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-export let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-export let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-export let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+export let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
+export let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
+export let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
+export let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
 // Spy on Matterbridge methods
 export let addBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addBridgedEndpoint>;
@@ -204,8 +228,8 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request');
   broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond');
   broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  broadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler');
+  // @ts-expect-error - access to private member for testing
+  broadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype, 'broadcastMessageHandler');
 }
 
 /**
@@ -695,9 +719,10 @@ export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<voi
  * - setup the mDNS service in the environment
  *
  * @param {string} name - Name for the environment (jest/name).
+ * @param {boolean} createOnly - If true, only create the environment without starting the mDNS service (default false).
  * @returns {Environment} - The default matter environment.
  */
-export function createTestEnvironment(name: string): Environment {
+export function createTestEnvironment(name: string, createOnly: boolean = false): Environment {
   expect(name).toBeDefined();
   expect(typeof name).toBe('string');
   expect(name.length).toBeGreaterThanOrEqual(4); // avoid accidental deletion of short paths like "/" or "C:\"
@@ -716,6 +741,9 @@ export function createTestEnvironment(name: string): Environment {
   environment.vars.set('runtime.signals', false);
   environment.vars.set('runtime.exitcode', false);
 
+  // Return early if only creating the environment without starting the mDNS service
+  if (createOnly) return environment;
+
   // Setup the mDNS service in the environment
   new MdnsService(environment);
   // await environment.get(MdnsService)?.construction.ready;
@@ -726,9 +754,11 @@ export function createTestEnvironment(name: string): Environment {
 /**
  * Destroy the matter test environment by closing the mDNS service.
  *
+ * @param {boolean} createOnly - If true, skip destroying the environment since it was only created without starting the mDNS service (default false).
  * @returns {Promise<void>} A promise that resolves when the test environment is destroyed.
  */
-export async function destroyTestEnvironment(): Promise<void> {
+export async function destroyTestEnvironment(createOnly: boolean = false): Promise<void> {
+  if (createOnly) return;
   // stop the mDNS service
   const mdns = environment.get(MdnsService);
   await mdns.close();
@@ -889,12 +919,14 @@ export async function closeServerNodeStores(targetServer?: ServerNode): Promise<
  * @param {string} name Name of the server (used for logging and product description).
  * @param {number} port TCP port to listen on.
  * @param {DeviceTypeId} deviceType Device type identifier for the server node.
+ * @param {boolean} createOnly If true, only creates the server and aggregator nodes without starting the server (default false).
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
  */
 export async function startServerNode(
   name: string,
   port: number,
   deviceType: DeviceTypeId = bridge.code,
+  createOnly: boolean = false,
 ): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
   const { randomBytes } = await import('node:crypto');
   const random = randomBytes(8).toString('hex');
@@ -958,6 +990,11 @@ export async function startServerNode(
   // Run the server
   expect(server.lifecycle.isOnline).toBeFalsy();
 
+  // Return early if createOnly is true
+  if (createOnly) {
+    return [server, aggregator];
+  }
+
   // Wait for the server to be online
   await new Promise<void>((resolve) => {
     server.lifecycle.online.on(async () => {
@@ -989,9 +1026,10 @@ export async function startServerNode(
  * Stop a matter server node.
  *
  * @param {ServerNode<ServerNode.RootEndpoint>} server The server to stop.
+ * @param {boolean} createOnly If true, only creates the server and aggregator nodes without starting the server (default false).
  * @returns {Promise<void>} Resolves when the server has stopped.
  */
-export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>): Promise<void> {
+export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>, createOnly: boolean = false): Promise<void> {
   // Flush any pending endpoint number persistence
   await flushAllEndpointNumberPersistence(server);
 
@@ -1001,7 +1039,9 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   // Stop the server
   expect(server).toBeDefined();
   expect(server.lifecycle.isReady).toBeTruthy();
-  expect(server.lifecycle.isOnline).toBeTruthy();
+  if (!createOnly) {
+    expect(server.lifecycle.isOnline).toBeTruthy();
+  }
   await server.close();
   expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();
