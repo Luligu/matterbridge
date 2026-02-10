@@ -38,24 +38,6 @@ const jsonParseSpy = jest.spyOn(JSON, 'parse');
 
 const matterbridgeShutdownSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess');
 
-// Mock MatterbridgePlatform methods
-const platformRegisterDeviceSpy = jest.spyOn(MatterbridgePlatform.prototype, 'registerDevice').mockImplementation(() => Promise.resolve(undefined));
-const platformUnregisterDeviceSpy = jest.spyOn(MatterbridgePlatform.prototype, 'unregisterDevice').mockImplementation(() => Promise.resolve(undefined));
-const platformUnregisterAllDevicesSpy = jest.spyOn(MatterbridgePlatform.prototype, 'unregisterAllDevices').mockImplementation(() => Promise.resolve(undefined));
-const dynamicPlatformRegisterDeviceSpy = jest.spyOn(MatterbridgeDynamicPlatform.prototype, 'registerDevice').mockImplementation(() => Promise.resolve(undefined));
-const dynamicPlatformUnregisterDeviceSpy = jest.spyOn(MatterbridgeDynamicPlatform.prototype, 'unregisterDevice').mockImplementation(() => Promise.resolve(undefined));
-const dynamicPlatformUnregisterAllDevicesSpy = jest.spyOn(MatterbridgeDynamicPlatform.prototype, 'unregisterAllDevices').mockImplementation(() => Promise.resolve(undefined));
-
-// Spy on PluginManager methods
-const pluginsAddSpy = jest.spyOn(PluginManager.prototype, 'add');
-const pluginsRemoveSpy = jest.spyOn(PluginManager.prototype, 'remove');
-const pluginsEnableSpy = jest.spyOn(PluginManager.prototype, 'enable');
-const pluginsDisableSpy = jest.spyOn(PluginManager.prototype, 'disable');
-const pluginsLoadSpy = jest.spyOn(PluginManager.prototype, 'load');
-const pluginsStartSpy = jest.spyOn(PluginManager.prototype, 'start');
-const pluginsConfigureSpy = jest.spyOn(PluginManager.prototype, 'configure');
-const pluginsShutdownSpy = jest.spyOn(PluginManager.prototype, 'shutdown');
-
 import { execSync } from 'node:child_process';
 import { promises as fs, writeFileSync, unlinkSync, existsSync, accessSync } from 'node:fs';
 import path from 'node:path';
@@ -70,9 +52,8 @@ import { BroadcastServer } from '@matterbridge/thread';
 import { Matterbridge } from './matterbridge.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
-import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import { PluginManager, type Plugin } from './pluginManager.js';
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { addPluginSpy, closeMdnsInstance, destroyInstance, loggerLogSpy, removePluginSpy, setDebug, setupTest, shutdownPluginSpy } from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -86,58 +67,6 @@ describe('PluginManager', () => {
 
   const log = new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   const testServer = new BroadcastServer('manager', log);
-
-  async function needsSudo() {
-    try {
-      const prefix = execSync('npm config get prefix', { encoding: 'utf8' }).trim();
-      const testFile = `${prefix}/.npm-perm-test-${Date.now()}`;
-      try {
-        writeFileSync(testFile, 'test');
-        unlinkSync(testFile);
-        return false; // writable → no sudo needed
-      } catch {
-        return process.platform !== 'win32'; // on Windows there's no sudo anyway
-      }
-    } catch {
-      // Fallback if npm is broken or inaccessible
-      return process.platform !== 'win32';
-    }
-  }
-
-  function needsSudoFast(): boolean {
-    const { NPM_CONFIG_PREFIX, PREFIX, HOME } = process.env;
-    const platform = process.platform;
-
-    // Windows: never needs sudo
-    if (platform === 'win32') return false;
-
-    // CI or root environments never need sudo
-    if (process.env.CI || process.getuid?.() === 0 || process.geteuid?.() === 0) return false;
-
-    // If user explicitly set a prefix, assume it's writable
-    const prefix = NPM_CONFIG_PREFIX || PREFIX;
-    if (prefix && prefix.startsWith(HOME || '')) return false;
-
-    // macOS/Linux defaults:
-    //   - /usr/local (needs sudo)
-    //   - ~/.npm-global (user-writable)
-    //   - $HOME/.asdf, $HOME/.nvm (user-writable)
-    const likelyGlobalPrefixes = ['/usr/local', '/usr', '/opt/homebrew', '/opt/local'];
-
-    if (prefix && likelyGlobalPrefixes.some((p) => prefix.startsWith(p))) return true;
-
-    if (prefix && existsSync(prefix)) {
-      try {
-        accessSync(prefix, fs.constants.W_OK);
-        return false;
-      } catch {
-        return true;
-      }
-    }
-
-    // Heuristic fallback: safe default → needs sudo
-    return true;
-  }
 
   beforeAll(async () => {});
 
@@ -607,7 +536,7 @@ describe('PluginManager', () => {
   });
 
   test('install plugin', async () => {
-    pluginsAddSpy.mockImplementationOnce(async (nameOrPath: string) => {
+    addPluginSpy.mockImplementationOnce(async (nameOrPath: string) => {
       return null;
     });
     matterbridgeShutdownSpy.mockImplementationOnce(() => {
@@ -618,7 +547,7 @@ describe('PluginManager', () => {
     expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge-websocket', '--omit=dev', '--verbose'], 'install', 'matterbridge-websocket');
     expect(matterbridge.restartRequired).toBe(true);
     expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(pluginsAddSpy).toHaveBeenCalledTimes(1);
+    expect(addPluginSpy).toHaveBeenCalledTimes(1);
     jest.clearAllMocks();
 
     await plugins.install('matterbridge');
@@ -626,7 +555,7 @@ describe('PluginManager', () => {
     expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
     expect(matterbridge.restartRequired).toBe(true);
     expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(pluginsAddSpy).toHaveBeenCalledTimes(0);
+    expect(addPluginSpy).toHaveBeenCalledTimes(0);
     expect(matterbridgeShutdownSpy).toHaveBeenCalledTimes(0);
     jest.clearAllMocks();
 
@@ -635,7 +564,7 @@ describe('PluginManager', () => {
     expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
     expect(matterbridge.restartRequired).toBe(true);
     expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(pluginsAddSpy).toHaveBeenCalledTimes(0);
+    expect(addPluginSpy).toHaveBeenCalledTimes(0);
     expect(matterbridgeShutdownSpy).toHaveBeenCalledTimes(1);
     jest.clearAllMocks();
 
@@ -646,7 +575,7 @@ describe('PluginManager', () => {
     expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
     expect(matterbridge.restartRequired).toBe(true);
     expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(pluginsAddSpy).toHaveBeenCalledTimes(0);
+    expect(addPluginSpy).toHaveBeenCalledTimes(0);
     expect(matterbridgeShutdownSpy).toHaveBeenCalledTimes(0);
 
     (plugins as any)._plugins.delete('matterbridge-websocket');
@@ -657,16 +586,16 @@ describe('PluginManager', () => {
 
   test('uninstall plugin', async () => {
     (plugins as any)._plugins.set('matterbridge-websocket', { name: 'matterbridge-websocket', loaded: true });
-    pluginsShutdownSpy.mockImplementationOnce(async (plugin: Plugin | string, reason?: string, removeAllDevices: boolean = false, force: boolean = false) => {
+    shutdownPluginSpy.mockImplementationOnce(async (plugin: Plugin | string, reason?: string, removeAllDevices: boolean = false, force: boolean = false) => {
       return plugin as Plugin;
     });
-    pluginsRemoveSpy.mockImplementationOnce(async (nameOrPath: string) => {
+    removePluginSpy.mockImplementationOnce(async (nameOrPath: string) => {
       return null;
     });
 
     await plugins.uninstall('matterbridge-websocket');
-    expect(pluginsShutdownSpy).toHaveBeenCalledTimes(1);
-    expect(pluginsRemoveSpy).toHaveBeenCalledTimes(1);
+    expect(shutdownPluginSpy).toHaveBeenCalledTimes(1);
+    expect(removePluginSpy).toHaveBeenCalledTimes(1);
     expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['uninstall', '-g', 'matterbridge-websocket', '--verbose'], 'uninstall', 'matterbridge-websocket');
     expect(matterbridge.restartRequired).toBe(false);
     expect(matterbridge.fixedRestartRequired).toBe(false);
