@@ -2665,6 +2665,7 @@ export class MatterbridgeEndpoint extends Endpoint {
        * - noRemoteLockUnlock: false (bit 3)
        * - passage: true (bit 4)
        * Special case of inverted bitmap: add also alwaysSet = 2047 (0000 0111 1111 1111) to have all bits set except the unsupported ones.
+       * Specs: "Any bit that is not yet defined in OperatingModesBitmap SHALL be set to 1."
        */
       supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
       autoRelockTime: 0, // 0=disabled
