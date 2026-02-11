@@ -91,7 +91,7 @@ Matterbridge exports from:
 
 ### "matterbridge"
 
-- Matterbridge and all Matterbridge related classes.
+- Matterbridge related classes needed in a plugin.
 
 ### "matterbridge/devices"
 
@@ -99,7 +99,7 @@ Matterbridge exports from:
 
 ### "matterbridge/clusters"
 
-- All clusters not present in matter.js or modified.
+- All clusters not present in matter.js or modified. It can be empty.
 
 ### "matterbridge/utils"
 

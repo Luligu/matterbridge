@@ -49,6 +49,14 @@ Advantages:
 
 ## [3.5.4] - Dev branch
 
+### Dev Breaking Changes
+
+- [exports]: Removed Matterbridge export.
+
+### Breaking Changes
+
+- [doorLock]: The default value for actuatorEnabled has been changed to true. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/509).
+
 ### Added
 
 - [packages]: Added @matterbridge/types monorepo scoped package.
