@@ -71,6 +71,7 @@ jest.unstable_mockModule('@matterbridge/thread', () => ({
 const workerModule = await import('@matterbridge/thread');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
+/*
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
   triggerShellyMainUpdate: jest.fn(() => Promise.resolve()),
@@ -82,6 +83,7 @@ jest.unstable_mockModule('./shelly.ts', () => ({
 }));
 const { triggerShellySysUpdate, triggerShellyMainUpdate, createShellySystemLog, triggerShellySoftReset, triggerShellyHardReset, triggerShellyReboot, triggerShellyChangeIp } =
   await import('./shelly.ts');
+*/
 
 // Spy on Matterbridge methods
 const createServerNodeSpy = jest.spyOn(Matterbridge.prototype as any, 'createServerNode');
@@ -449,6 +451,8 @@ describe('Matterbridge frontend', () => {
     expect(createESMWorker).toHaveBeenCalled();
   });
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
   test('Websocket API send /api/shellysysupdate', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/shellysysupdate', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/shellysysupdate', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
@@ -490,6 +494,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
     expect(triggerShellyReboot).toHaveBeenCalled();
   });
+  */
 
   test('Websocket API send /api/settings', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/settings', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/settings', params: {} });

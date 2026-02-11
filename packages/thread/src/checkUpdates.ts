@@ -25,7 +25,7 @@
 // AnsiLogger module
 import { AnsiLogger, db, debugStringify, nt, TimestampFormat, wr } from 'node-ansi-logger';
 // Matterbridge module
-import { hasParameter, isValidString } from '@matterbridge/utils';
+import { isValidString } from '@matterbridge/utils';
 import { plg } from '@matterbridge/types';
 import type { ApiPlugin, SharedMatterbridge } from '@matterbridge/types';
 import { BroadcastServer } from '@matterbridge/thread';
@@ -46,7 +46,7 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
   const devVersionPromise = getMatterbridgeDevVersion(matterbridge, log, server);
   const pluginsVersionPromises = [];
   const pluginsDevVersionPromises = [];
-  const shellyUpdatesPromises = [];
+  // const shellyUpdatesPromises = [];
   try {
     const plugins = (await server.fetch({ type: 'plugins_apipluginarray', src: server.name, dst: 'plugins' }, 1000)).result.plugins;
     for (const plugin of plugins) {
@@ -58,13 +58,15 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
     log.debug(`Error fetching plugins for update check: ${error instanceof Error ? error.message : error}`);
   }
 
+  /*
   if (hasParameter('shelly')) {
     const { getShellySysUpdate, getShellyMainUpdate } = await import('./shelly.js');
 
     shellyUpdatesPromises.push(getShellySysUpdate(matterbridge, log, server));
     shellyUpdatesPromises.push(getShellyMainUpdate(matterbridge, log, server));
   }
-  await Promise.all([checkUpdatePromise, latestVersionPromise, devVersionPromise, ...pluginsVersionPromises, ...pluginsDevVersionPromises, ...shellyUpdatesPromises]);
+  */
+  await Promise.all([checkUpdatePromise, latestVersionPromise, devVersionPromise, ...pluginsVersionPromises, ...pluginsDevVersionPromises /* , ...shellyUpdatesPromises*/]);
 
   server.close();
 }

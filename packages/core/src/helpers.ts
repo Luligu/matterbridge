@@ -130,6 +130,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
     });
     await addVirtualDevice(aggregatorEndpoint, 'Update Matterbridge', matterbridge.virtualMode, async () => {
       if (hasParameter('shelly')) {
+        /*
         const { getShelly } = await import('./shelly.js');
         getShelly('/api/updates/sys/perform', 10 * 1000)
           .then(() => {
@@ -147,11 +148,13 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
           .catch((error) => {
             matterbridge.log.error(`Error updating shelly software: ${error}`);
           });
+        */
       } else {
         await matterbridge.updateProcess();
       }
     });
     if (hasParameter('shelly')) {
+      /*
       await addVirtualDevice(aggregatorEndpoint, 'Reboot Matterbridge', matterbridge.virtualMode, async () => {
         const { postShelly } = await import('./shelly.js');
         postShelly('/api/system/reboot', {}, 60 * 1000)
@@ -163,6 +166,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
             matterbridge.log.error(`Error rebooting shelly board: ${error}`);
           });
       });
+      */
     }
   }
 }

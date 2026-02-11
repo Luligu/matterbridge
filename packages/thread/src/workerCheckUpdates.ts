@@ -1,7 +1,7 @@
 /**
- * This file contains the workerGlobalPrefix functions.
+ * This file contains the workerCheckUpdates functions.
  *
- * @file workerGlobalPrefix.ts
+ * @file workerCheckUpdates.ts
  * @author Luca Liguori
  * @created 2025-11-25
  * @version 1.1.0
@@ -25,8 +25,11 @@
 import { threadId, isMainThread, parentPort, workerData } from 'node:worker_threads';
 
 import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
-import { getGlobalNodeModules, hasParameter, inspectError } from '@matterbridge/utils';
-import { logWorkerInfo, parentLog, parentPost, BroadcastServer } from '@matterbridge/thread';
+import { hasParameter, inspectError } from '@matterbridge/utils';
+
+import { checkUpdates } from './checkUpdates.js';
+import { logWorkerInfo, parentLog, parentPost } from './worker.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-worker') || hasParameter('verbose-worker');
 const verbose = hasParameter('verbose') || hasParameter('verbose-worker');
@@ -34,12 +37,12 @@ const verbose = hasParameter('verbose') || hasParameter('verbose-worker');
 // Send init message
 if (!isMainThread && parentPort) {
   parentPost({ type: 'init', threadId, threadName: workerData.threadName, success: true });
-  if (debug) parentLog('MatterbridgePrefix', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} initialized.`);
+  if (debug) parentLog('MatterbridgeCheckUpdates', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} initialized.`);
 }
 
 // Broadcast server
 const log = new AnsiLogger({
-  logName: 'MatterbridgePrefix',
+  logName: 'MatterbridgeCheckUpdates',
   logNameColor: MAGENTA,
   logTimestampFormat: TimestampFormat.TIME_MILLIS,
   logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO,
@@ -49,19 +52,18 @@ const server = new BroadcastServer('matterbridge', log);
 // Log worker info
 if (verbose) logWorkerInfo(log, verbose);
 
-let prefix: string;
 let success = false;
 try {
-  prefix = await getGlobalNodeModules();
-  log.debug(`Global node_modules Directory: ${prefix}`);
-  server.request({ type: 'matterbridge_global_prefix', src: `matterbridge`, dst: 'matterbridge', params: { prefix } });
+  const shared = (await server.fetch({ type: 'matterbridge_shared', src: `matterbridge`, dst: 'matterbridge' })).result.data;
+  await checkUpdates(shared);
   success = true;
-  if (!isMainThread && parentPort) parentLog('MatterbridgePrefix', LogLevel.DEBUG, `Global node_modules Directory: ${prefix}`);
+  log.debug(`Check updates succeeded`);
+  if (!isMainThread && parentPort) parentLog('MatterbridgeCheckUpdates', LogLevel.DEBUG, `Check updates succeeded`);
 } catch (error) {
   // istanbul ignore next cause it's just an error log
-  const errorMessage = inspectError(log, `Failed to get global node modules`, error);
+  const errorMessage = inspectError(log, `Failed to check updates`, error);
   // istanbul ignore next cause it's just an error log
-  if (!isMainThread && parentPort) parentLog('MatterbridgePrefix', LogLevel.ERROR, errorMessage);
+  if (!isMainThread && parentPort) parentLog('MatterbridgeCheckUpdates', LogLevel.ERROR, errorMessage);
 }
 
 // Close the broadcast server
@@ -70,5 +72,5 @@ server.close();
 // Send exit message
 if (!isMainThread && parentPort) {
   parentPost({ type: 'exit', threadId, threadName: workerData.threadName, success });
-  if (debug) parentLog('MatterbridgePrefix', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} exiting with success: ${success}.`);
+  if (debug) parentLog('MatterbridgeCheckUpdates', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} exiting with success: ${success}.`);
 }

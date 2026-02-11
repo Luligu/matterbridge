@@ -166,7 +166,7 @@ describe('worker parentPort (mocked)', () => {
       mockedHasWorkerData = true;
 
       process.argv.push('--verbose');
-      await import('../../../packages/core/src/workerGlobalPrefix.js');
+      await import('./workerGlobalPrefix.js');
       process.argv.pop();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringMatching(/Global node_modules Directory:/));
@@ -187,7 +187,7 @@ describe('worker parentPort (mocked)', () => {
       mockedHasWorkerData = true;
 
       process.argv.push('--verbose');
-      await import('../../../packages/core/src/workerCheckUpdates.js');
+      await import('./workerCheckUpdates.js');
       process.argv.pop();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringMatching(/Check updates succeeded/));

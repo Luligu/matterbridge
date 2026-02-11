@@ -1844,34 +1844,48 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         createESMWorker('CheckUpdates', this.matterbridge.resolveCoreDistFilePath('workerCheckUpdates.js'));
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellysysupdate') {
+        /*
         const { triggerShellySysUpdate } = await import('./shelly.js');
         triggerShellySysUpdate(this.matterbridge);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        */
       } else if (data.method === '/api/shellymainupdate') {
+        /*
         const { triggerShellyMainUpdate } = await import('./shelly.js');
         triggerShellyMainUpdate(this.matterbridge);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        */
       } else if (data.method === '/api/shellycreatesystemlog') {
+        /*
         const { createShellySystemLog } = await import('./shelly.js');
         createShellySystemLog(this.matterbridge);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        */
       } else if (data.method === '/api/shellynetconfig') {
+        /*
         this.log.debug('/api/shellynetconfig:', data.params);
         const { triggerShellyChangeIp } = await import('./shelly.js');
         triggerShellyChangeIp(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        */
       } else if (data.method === '/api/softreset') {
+        /*
         const { triggerShellySoftReset } = await import('./shelly.js');
         triggerShellySoftReset(this.matterbridge);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        */
       } else if (data.method === '/api/hardreset') {
+        /*
         const { triggerShellyHardReset } = await import('./shelly.js');
         triggerShellyHardReset(this.matterbridge);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        */
       } else if (data.method === '/api/reboot') {
+        /*
         const { triggerShellyReboot } = await import('./shelly.js');
         triggerShellyReboot(this.matterbridge);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        */
       } else if (data.method === '/api/restart') {
         this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
         await this.matterbridge.restartProcess();

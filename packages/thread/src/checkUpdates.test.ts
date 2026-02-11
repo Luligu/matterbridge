@@ -27,7 +27,8 @@ import {
   wssSendRefreshRequiredSpy,
   wssSendSnackbarMessageSpy,
   wssSendUpdateRequiredSpy,
-} from './jestutils/jestHelpers.js';
+} from '../../../packages/core/src/jestutils/jestHelpers.js';
+
 import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './checkUpdates.js';
 
 // Mock selected functions from @matterbridge/utils
@@ -37,11 +38,13 @@ jest.unstable_mockModule('@matterbridge/utils', () => ({
   wait: jest.fn(),
 }));
 
+/*
 // Mock the function getShellySysUpdate and getShellyMainUpdate
 jest.unstable_mockModule('./shelly.js', () => ({
   getShellySysUpdate: jest.fn(),
   getShellyMainUpdate: jest.fn(),
 }));
+*/
 
 await setupTest(NAME, false);
 
@@ -83,7 +86,8 @@ describe('getMatterbridgeLatestVersion', () => {
 
   it('should check updates', async () => {
     const { getNpmPackageVersion } = await import('@matterbridge/utils');
-    const { getShellySysUpdate, getShellyMainUpdate } = await import('./shelly.js');
+
+    // const { getShellySysUpdate, getShellyMainUpdate } = await import('./shelly.js');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValue('1.0.0');
@@ -95,8 +99,8 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge');
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin ? plugin.name : 'unknown-plugin');
-    expect(getShellySysUpdate).toHaveBeenCalledWith(matterbridge, expect.any(AnsiLogger), expect.any(BroadcastServer));
-    expect(getShellyMainUpdate).toHaveBeenCalledWith(matterbridge, expect.any(AnsiLogger), expect.any(BroadcastServer));
+    // expect(getShellySysUpdate).toHaveBeenCalledWith(matterbridge, expect.any(AnsiLogger), expect.any(BroadcastServer));
+    // expect(getShellyMainUpdate).toHaveBeenCalledWith(matterbridge, expect.any(AnsiLogger), expect.any(BroadcastServer));
   });
 
   it('should update to the latest version if versions differ', async () => {
