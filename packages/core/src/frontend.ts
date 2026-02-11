@@ -1769,16 +1769,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
+        // Stop server nodes devices first
         for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name && d.serverNode)) {
           // @ts-expect-error Accessing private method
           await this.matterbridge.stopServerNode(device.serverNode);
           device.serverNode = undefined;
         }
+        // Then shutdown plugin removing devices, disable it and stop plugin server node
+        await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true);
+        await this.matterbridge.plugins.disable(data.params.pluginName);
         // @ts-expect-error Accessing private method
         if (plugin.serverNode) await this.matterbridge.stopServerNode(plugin.serverNode);
         plugin.serverNode = undefined;
-        await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true);
-        await this.matterbridge.plugins.disable(data.params.pluginName);
         this.wssSendSnackbarMessage(`Disabled plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');

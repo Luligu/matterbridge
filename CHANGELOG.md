@@ -73,6 +73,7 @@ Advantages:
 ### Fixed
 
 - [worflows]: Fixed workflows that failed and dockerfiles.
+- [childbridge]: Fixed sequence of disabling a plugin in childbridge mode. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 
 ### Security
 

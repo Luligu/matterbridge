@@ -904,7 +904,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   resolveCoreDistFilePath(fileName: string): string {
     const currentModuleDirectory = path.dirname(fileURLToPath(import.meta.url));
-    const candidates = [path.join(currentModuleDirectory, fileName), path.join(currentModuleDirectory, '..', 'dist', fileName)];
+    // This core package's src or dist directory or the global installation dist directory for thread package
+    const candidates = [
+      path.join(currentModuleDirectory, fileName), // Current src directory for jest tests
+      path.join(currentModuleDirectory, '..', 'dist', fileName), // Dist directory for local development with local packages
+      path.join(this.rootDirectory, 'node_modules', '@matterbridge', 'thread', 'dist', fileName), // Global installation dist directory for production with thread package
+    ];
     for (const candidate of candidates) {
       if (fs.existsSync(candidate)) return candidate;
     }
