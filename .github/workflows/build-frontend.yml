@@ -32,11 +32,9 @@ jobs:
 
       - name: Verify Node.js version
         run: node -v
-        working-directory: apps/frontend
 
       - name: Verify Npm version
         run: npm -v
-        working-directory: apps/frontend
 
       - name: Install dependencies
         run: npm ci --no-fund --no-audit

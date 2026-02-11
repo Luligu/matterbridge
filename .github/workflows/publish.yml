@@ -55,6 +55,22 @@ jobs:
       - name: Test the project
         run: npm run test
 
+      - name: Install dependencies
+        run: npm ci --no-fund --no-audit
+        working-directory: apps/frontend
+
+      - name: Lint the project
+        run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Build the project
+        run: npm run build
+        working-directory: apps/frontend
+
+      - name: Test the project
+        run: npm run test
+        working-directory: apps/frontend
+
       - name: Stamp build metadata into package.json
         run: |
           npm pkg set build.sha="${GITHUB_SHA}"
@@ -155,6 +171,22 @@ jobs:
       - name: Test the project
         run: npm run test
 
+      - name: Install dependencies
+        run: npm ci --no-fund --no-audit
+        working-directory: apps/frontend
+
+      - name: Lint the project
+        run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Build the project
+        run: npm run build
+        working-directory: apps/frontend
+
+      - name: Test the project
+        run: npm run test
+        working-directory: apps/frontend
+
       - name: Stamp build metadata into package.json
         run: |
           npm pkg set build.sha="${GITHUB_SHA}"
@@ -204,7 +236,7 @@ jobs:
         if: steps.check_new.outputs.should_publish == 'true'
         run: |
           npm version "${{ env.ORIG_BASE }}" --no-git-tag-version --ignore-scripts
-          node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev
+          node scripts/publish-workspaces.mjs --scope @matterbridge --tag edge
 
       - name: Trigger Matterbridge Docker Build Dev
         if: steps.check_new.outputs.should_publish == 'true'
