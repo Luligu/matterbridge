@@ -6,6 +6,7 @@
 .cache/
 coverage/
 dist/
+build/
 jest/
 node_modules/
 temp/

@@ -171,19 +171,19 @@ jobs:
       - name: Test the project
         run: npm run test
 
-      - name: Install dependencies
+      - name: Install the frontend dependencies
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
-      - name: Lint the project
+      - name: Lint the frontend
         run: npm run lint
         working-directory: apps/frontend
 
-      - name: Build the project
+      - name: Build the frontend
         run: npm run build
         working-directory: apps/frontend
 
-      - name: Test the project
+      - name: Test the frontend
         run: npm run test
         working-directory: apps/frontend
 
