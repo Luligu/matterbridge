@@ -1,0 +1,92 @@
+#!/command/with-contenv sh
+# =========================================================================================
+# Start matterbridge service
+# https://github.com/just-containers/s6-overlay?tab=readme-ov-file#writing-a-service-script
+# =========================================================================================
+set -e
+
+# Define the base directory for Matterbridge
+HOME_DIR=/addons/matterbridge
+
+# Read addon options from /data/options.json (written by Supervisor)
+# If a key is missing, fall back to defaults.
+FRONTEND_BIND="$(node -p "try{require('/data/options.json').frontend_bind ?? '0.0.0.0'}catch(e){'0.0.0.0'}")"
+BRANCH="$(node -p "try{require('/data/options.json').branch ?? 'main'}catch(e){'main'}")"
+FORCE_UPDATE="$(node -p "try{require('/data/options.json').force_update ?? true}catch(e){true}")"
+
+# Define the subdirectories for Matterbridge
+MATTERBRIDGE_PLUGINS=$HOME_DIR/Matterbridge   # For matterbridge plugins
+MATTERBRIDGE_STORAGE=$HOME_DIR/.matterbridge  # For matterbridge storage
+MATTERBRIDGE_CERT=$HOME_DIR/.mattercert       # For matterbridge certification
+
+# Define npm cache directory
+NPM_CACHE=/data/.npm-cache                    # Persistent npm cache directory
+
+# Welcome message
+echo " "
+echo "======================================================"
+echo "Welcome to the Matterbridge Home Assistant Application"
+echo "======================================================"
+echo " "
+DISTRO=$(awk -F= '/^PRETTY_NAME=/{gsub(/"/, "", $2); print $2}' /etc/os-release)
+CODENAME=$(awk -F= '/^VERSION_CODENAME=/{print $2}' /etc/os-release)
+echo "🖥️ Distro: $DISTRO ($CODENAME)"
+echo "🧱 Architecture: $(uname -m)"
+echo "🧩 Kernel Version: $(uname -r)"
+MEM_TOTAL_KB=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
+MEM_AVAIL_KB=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
+if [ -z "$MEM_AVAIL_KB" ]; then
+  MEM_AVAIL_KB=$(awk '/^MemFree:/ {print $2}' /proc/meminfo)
+fi
+MEM_TOTAL_MB=$((MEM_TOTAL_KB / 1024))
+MEM_AVAIL_MB=$((MEM_AVAIL_KB / 1024))
+echo "🧠 Memory: ${MEM_AVAIL_MB} MiB free / ${MEM_TOTAL_MB} MiB total"
+echo "🟢 Node.js version: $(node -v)"
+echo "🟣 Npm version: $(npm -v)"
+echo "🏷️ Hostname: $(hostname)"
+echo "👤 User: $(whoami)"
+echo "📅 Date: $(date)"
+echo " "
+
+# Install matterbridge (first run only)
+INSTALL_MARKER="/home/node/.matterbridge_installed"
+if [ ! -f "${INSTALL_MARKER}" ]; then
+  # Install Matterbridge based on selected branch
+  case "$BRANCH" in
+    dev)
+      if [ "$FORCE_UPDATE" = "true" ]; then
+        echo "⚙️ Branch = dev → installing matterbridge@dev from npm..."
+        echo "📦 This can take up to 3 minute on a Home Assistant Green..."
+        npm install matterbridge@dev --no-fund --no-audit --global --omit=dev --cache "$NPM_CACHE"
+      else
+        echo "⚙️ Branch = dev → using matterbridge@dev from the image..."
+      fi
+      ;;
+    main|*)
+      if [ "$FORCE_UPDATE" = "true" ]; then
+        echo "⚙️ Branch = main → installing matterbridge@latest from npm..."
+        echo "📦 This can take up to 3 minute on a Home Assistant Green..."
+        npm install matterbridge --no-fund --no-audit --global --omit=dev --cache "$NPM_CACHE"
+      else
+        echo "⚙️ Branch = main → using matterbridge@latest from the image..."
+      fi
+      ;;
+  esac
+  echo "📦 Matterbridge installation complete."
+  touch "${INSTALL_MARKER}"
+else
+  echo "📦 Matterbridge already installed."
+fi
+
+# Base args
+ARGS="--docker --homedir $HOME_DIR"
+
+# Add frontend bind
+if [ -n "$FRONTEND_BIND" ]; then
+  ARGS="$ARGS --bind $FRONTEND_BIND"
+fi
+
+# Start Matterbridge
+echo "🚀 Starting Matterbridge with args: $ARGS"
+echo " "
+exec matterbridge $ARGS

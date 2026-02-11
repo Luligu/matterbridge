@@ -1,0 +1,19 @@
+#!/command/with-contenv sh
+# =============================================================================================================================================
+# Setting the exit code of the container to the exit code of matterbridge
+# https://github.com/just-containers/s6-overlay?tab=readme-ov-file#setting-the-exit-code-of-the-container-to-the-exit-code-of-your-main-service
+# =============================================================================================================================================
+
+if test "$1" -eq 256 ; then
+  e=$((128 + $2))
+else
+  e="$1"
+fi
+
+if test "$e" -ne 0; then
+    echo "s6-rc: info: service matterbridge exited with code $e (by signal $2)."
+    echo "$e" > /run/s6-linux-init-container-results/exitcode
+    exec /run/s6/basedir/bin/halt
+else
+    echo "s6-rc: info: service matterbridge exited with code $e (by signal $2)."
+fi

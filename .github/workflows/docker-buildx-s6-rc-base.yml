@@ -77,4 +77,27 @@ jobs:
             -t luligu/matterbridge:s6-rc-base-${{ env.VERSION }} \
             --push .
           docker manifest inspect luligu/matterbridge:s6-rc-base
-        timeout-minutes: 60
+
+      - name: Run Docker Buildx with Dockerfile.s6-rc-latest
+        run: |
+          docker buildx build \
+            --no-cache \
+            --pull \
+            --platform linux/amd64,linux/arm64 \
+            -f docker/Dockerfile.s6-rc-latest \
+            -t luligu/matterbridge:s6-rc-latest \
+            -t luligu/matterbridge:s6-rc-latest-${{ env.VERSION }} \
+            --push .
+          docker manifest inspect luligu/matterbridge:s6-rc-latest
+
+      - name: Run Docker Buildx with Dockerfile.s6-rc-dev
+        run: |
+          docker buildx build \
+            --no-cache \
+            --pull \
+            --platform linux/amd64,linux/arm64 \
+            -f docker/Dockerfile.s6-rc-dev \
+            -t luligu/matterbridge:s6-rc-dev \
+            -t luligu/matterbridge:s6-rc-dev-${{ env.VERSION }} \
+            --push .
+          docker manifest inspect luligu/matterbridge:s6-rc-dev

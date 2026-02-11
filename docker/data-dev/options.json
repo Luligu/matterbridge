@@ -1,0 +1,5 @@
+{
+  "frontend_bind": "0.0.0.0",
+  "branch": "dev",
+  "force_update": false
+}

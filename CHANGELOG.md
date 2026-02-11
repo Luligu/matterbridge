@@ -56,14 +56,15 @@ Advantages:
 ### Breaking Changes
 
 - [doorLock]: The default value for **DoorLock.actuatorEnabled** has been changed to true. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/509).
-- [ingress]: Removed `--ingress` parameter used in the old Home Assisant add-on. Update the Matterbridge add-on if you didn't.
+- [ingress]: Removed the `--ingress` parameter used in the old Home Assisant add-on. Update the Matterbridge Home Assistant Application (formerly known as add-on) if you didn't.
 
 ### Added
 
 - [packages]: Added **@matterbridge/types** monorepo scoped package.
 - [packages]: Added **@matterbridge/core** monorepo scoped package.
 - [apps]: Added **@matterbridge/frontend** monorepo scoped package.
-- [amonorepos]: The transition to a modern monorepo setup with scoped packages is completed.
+- [monorepo]: The transition to a modern monorepo setup with scoped packages is completed.
+- [addon]: Added two other s6-rc based images to be used in the next releases of the [Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
 
 ### Changed
 
@@ -79,7 +80,7 @@ Advantages:
 
 ### Security
 
-During installation you may see a warning that looks scary, for example:
+During installation you may see in the log a warning that looks scary, for example:
 
 ```text
 npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
