@@ -54,8 +54,10 @@ describe('DeviceManager', () => {
     devices.logLevel = LogLevel.DEBUG;
     expect((devices as any).log.logLevel).toBe(LogLevel.DEBUG);
 
-    expect((await testServer.fetch({ type: 'set_log_level', src: testServer.name, dst: 'devices', params: { logLevel: LogLevel.DEBUG } })).result.logLevel).toBe(LogLevel.DEBUG);
-    expect((await testServer.fetch({ type: 'get_log_level', src: testServer.name, dst: 'devices' })).result.logLevel).toBe(LogLevel.DEBUG);
+    expect((await testServer.fetch({ type: 'set_log_level', src: testServer.name, dst: 'devices', params: { logLevel: LogLevel.DEBUG } }, 1000)).result.logLevel).toBe(
+      LogLevel.DEBUG,
+    );
+    expect((await testServer.fetch({ type: 'get_log_level', src: testServer.name, dst: 'devices' }, 1000)).result.logLevel).toBe(LogLevel.DEBUG);
   });
 
   test('size returns correct number of devices', async () => {
