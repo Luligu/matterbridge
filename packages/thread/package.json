@@ -104,7 +104,9 @@
     "@eslint/js": "9.39.2"
   },
   "dependencies": {
-    "node-ansi-logger": "3.2.0"
+    "node-ansi-logger": "3.2.0",
+    "@matterbridge/utils": "3.5.4",
+    "@matterbridge/types": "3.5.4"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",

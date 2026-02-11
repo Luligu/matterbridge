@@ -138,6 +138,14 @@
 <li>ability to update the plugin in childbridge mode without restarting matterbridge;</li>
 </ul>
 <h2 id="354-dev-branch">[3.5.4] - Dev branch</h2>
+<h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
+<ul>
+<li>[exports]: Removed Matterbridge export.</li>
+</ul>
+<h3 id="breaking-changes">Breaking Changes</h3>
+<ul>
+<li>[doorLock]: The default value for actuatorEnabled has been changed to true. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/pull/509">https://github.com/Luligu/matterbridge/pull/509</a>).</li>
+</ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[packages]: Added @matterbridge/types monorepo scoped package.</li>
@@ -154,6 +162,7 @@
 <h3 id="fixed">Fixed</h3>
 <ul>
 <li>[worflows]: Fixed workflows that failed and dockerfiles.</li>
+<li>[childbridge]: Fixed sequence of disabling a plugin in childbridge mode. Thanks <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</li>
 </ul>
 <h3 id="security">Security</h3>
 <p>During installation you may see a warning that looks scary, for example:</p>
@@ -164,11 +173,11 @@
 <p>In short: you can safely ignore this message; it is a dependency warning, not a Matterbridge vulnerability.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="353-2026-02-06">[3.5.3] - 2026-02-06</h2>
-<h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-1">Dev Breaking Changes</h3>
 <ul>
 <li>[logger]: The logger (node-ansi-logger) has been refactored and updated (v.3.2.0) to support the new features below.</li>
 </ul>
-<h3 id="breaking-changes">Breaking Changes</h3>
+<h3 id="breaking-changes-1">Breaking Changes</h3>
 <ul>
 <li>[docker]: Updated latest and dev docker images to use node:24-trixie-slim as base.</li>
 <li>[node]: Consider to update all setups to node 24 that is now the LTS.</li>
@@ -244,7 +253,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="350-2026-01-20">[3.5.0] - 2026-01-20</h2>
-<h3 id="breaking-changes-1">Breaking Changes</h3>
+<h3 id="breaking-changes-2">Breaking Changes</h3>
 <ul>
 <li>[matter]: This release brings the upgrade to matter 1.4.2 and matter.js 0.16.x. It may cause the controllers to see a new device.</li>
 <li>[childbridge]: Fixed nodeLabel from deviceName in childbridge mode. It may cause the controllers to see a new device.</li>
@@ -398,7 +407,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="343-2025-12-12">[3.4.3] - 2025-12-12</h2>
-<h3 id="breaking-changes-2">Breaking Changes</h3>
+<h3 id="breaking-changes-3">Breaking Changes</h3>
 <ul>
 <li>[frontend]: This version of the frontend features full responsiveness till a width of 360 pixel (smallest smartphones).
 Mobile mode starts automatically below 1200 x 900 pixels.
@@ -545,7 +554,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="337-2025-11-08">[3.3.7] - 2025-11-08</h2>
-<h3 id="breaking-changes-3">Breaking Changes</h3>
+<h3 id="breaking-changes-4">Breaking Changes</h3>
 <ul>
 <li>[frontend]: When a plugin is first added, it will not be anymore started to allow to configure it before restarting.</li>
 </ul>
@@ -587,7 +596,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="335-2025-10-31">[3.3.5] - 2025-10-31</h2>
-<h3 id="breaking-changes-4">Breaking Changes</h3>
+<h3 id="breaking-changes-5">Breaking Changes</h3>
 <ul>
 <li>[concentrationMeasurement]: Changed the default unit of measurement of some concentration measurement clusters to adapt to the generally used (and supported by Apple Home). Is is always possible to pass a different unit of measurement (Tvoc is Ugm3. Formaldehyde is Mgm3. Pm1, Pm2.5 and Pm10 are Ugm3. Ozone is Ugm3. Radon is Bqm3.)</li>
 </ul>
@@ -611,7 +620,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="334-2025-10-24">[3.3.4] - 2025-10-24</h2>
-<h3 id="breaking-changes-5">Breaking Changes</h3>
+<h3 id="breaking-changes-6">Breaking Changes</h3>
 <ul>
 <li>[nodejs]: Matterbridge will not start if the Node.js version is less then 20.x.x.</li>
 </ul>
@@ -676,7 +685,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="331-2025-10-12">[3.3.1] - 2025-10-12</h2>
-<h3 id="breaking-changes-6">Breaking Changes</h3>
+<h3 id="breaking-changes-7">Breaking Changes</h3>
 <ul>
 <li>[frontend]: When a plugin is first installed, it will not be anymore started to allow to configure it before restarting.</li>
 <li>[index]: Removed old plugin api compatibility since it was changed one year ago.</li>
@@ -793,7 +802,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="329-2025-09-27">[3.2.9] - 2025-09-27</h2>
-<h3 id="breaking-changes-7">Breaking Changes</h3>
+<h3 id="breaking-changes-8">Breaking Changes</h3>
 <ul>
 <li>[profiles]: Profile management has changed. Now, each profile has its own independent directories under <code>profiles</code> with storage, matterstorage, plugin config, and plugin directory. This means that if you are using profiles, Matterbridge will not find the old profile data. The new profile management allows to run multiple instances of matterbridge (change the frontend port and the matter port for each profile) or to simply make a test of a new plugin without modifing your production setup.</li>
 </ul>
@@ -851,7 +860,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="327-2025-09-14">[3.2.7] - 2025-09-14</h2>
-<h3 id="breaking-changes-8">Breaking Changes</h3>
+<h3 id="breaking-changes-9">Breaking Changes</h3>
 <ul>
 <li>[platform]: Typed PlatformConfig with the default properties: name, type, version, debug and unregisterOnShutdown.</li>
 <li>[platform]: Removed DefaultPlatformConfig interface definition.</li>
@@ -1005,7 +1014,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="320-2025-08-01">[3.2.0] - 2025-08-01</h2>
-<h3 id="breaking-changes-9">Breaking Changes</h3>
+<h3 id="breaking-changes-10">Breaking Changes</h3>
 <p>Removed node 18 support.
 Please install Node.js 22 LTS.
 Don&#39;t use Node.js Current but always the Node.js LTS.
@@ -1234,7 +1243,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="307-2025-06-21">[3.0.7] - 2025-06-21</h2>
-<h3 id="breaking-changes-10">Breaking Changes</h3>
+<h3 id="breaking-changes-11">Breaking Changes</h3>
 <ul>
 <li>[devices]: The single devices (i.e. Rvc, Evse etc...) are exported from matterbridge/devices. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 </ul>
@@ -1404,7 +1413,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="300-2025-04-29">[3.0.0] - 2025-04-29</h2>
-<h2 id="breaking-changes-11">Breaking changes</h2>
+<h2 id="breaking-changes-12">Breaking changes</h2>
 <p>This release brings Matter 1.4.</p>
 <p>New device types:</p>
 <ul>
@@ -1897,7 +1906,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="167-2024-12-15">[1.6.7] - 2024-12-15</h2>
-<h3 id="breaking-changes-12">Breaking Changes</h3>
+<h3 id="breaking-changes-13">Breaking Changes</h3>
 <p>In this release some device types and the OnOff, LevelControl and ColorControl have been updated to be fully compliant with Matter 1.3 specifications.
 It is possible that some controllers see them as new devices or need time to read the new clusters. It can be useful after the upgrade to power off the controller, wait a few minutes and power it on again.</p>
 <h3 id="added-66">Added</h3>
@@ -2179,7 +2188,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="152-2024-08-30">[1.5.2] - 2024-08-30</h2>
-<h3 id="breaking-changes-13">Breaking Changes</h3>
+<h3 id="breaking-changes-14">Breaking Changes</h3>
 <ul>
 <li>[-bridge -childbridge]: You don&#39;t need anymore to add the parmeter -bridge or -childbridge on the command line or systemctl configuration or docker command: the default is bridge mode and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.</li>
 <li>[-logger]: You don&#39;t need anymore to add the parmeter -logger [level]: the default is info and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.</li>
