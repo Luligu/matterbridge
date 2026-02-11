@@ -295,22 +295,22 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
   }, 60000);
 
-  test('resolveCoreDistFilePath() should return current module dir candidate when file exists', async () => {
+  test('resolveWorkerDistFilePath() should return current module dir candidate when file exists', async () => {
     const fileName = `__jest_worker_${process.pid}_${Date.now()}_a.js`;
-    const candidate1 = (matterbridge as any).resolveCoreDistFilePath(fileName) as string;
+    const candidate1 = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
     try {
-      // Create the file where resolveCoreDistFilePath expects it (candidate1)
+      // Create the file where resolveWorkerDistFilePath expects it (candidate1)
       fs.writeFileSync(candidate1, '// jest worker placeholder', 'utf8');
-      const resolved = (matterbridge as any).resolveCoreDistFilePath(fileName) as string;
+      const resolved = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
       expect(path.resolve(resolved)).toBe(path.resolve(candidate1));
     } finally {
       fs.rmSync(candidate1, { force: true });
     }
   });
 
-  test('resolveCoreDistFilePath() should fall back to ../dist when current module dir candidate is missing', async () => {
+  test('resolveWorkerDistFilePath() should fall back to ../dist when current module dir candidate is missing', async () => {
     const fileName = `__jest_worker_${process.pid}_${Date.now()}_b.js`;
-    const candidate1 = (matterbridge as any).resolveCoreDistFilePath(fileName) as string;
+    const candidate1 = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
     const moduleDir = path.dirname(candidate1);
     const candidate2 = path.resolve(moduleDir, '..', 'dist', fileName);
 
@@ -320,7 +320,7 @@ describe('Matterbridge', () => {
       fs.mkdirSync(path.dirname(candidate2), { recursive: true });
       fs.writeFileSync(candidate2, '// jest worker placeholder', 'utf8');
 
-      const resolved = (matterbridge as any).resolveCoreDistFilePath(fileName) as string;
+      const resolved = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
       expect(path.resolve(resolved)).toBe(path.resolve(candidate2));
     } finally {
       fs.rmSync(candidate2, { force: true });

@@ -902,7 +902,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {string} fileName - Worker/build artifact file name, e.g. `workerGlobalPrefix.js`.
    * @returns {string} Absolute path to the resolved file. If none exists, returns the first candidate (best effort).
    */
-  resolveCoreDistFilePath(fileName: string): string {
+  resolveWorkerDistFilePath(fileName: string): string {
     const currentModuleDirectory = path.dirname(fileURLToPath(import.meta.url));
     // This core package's src or dist directory or the global installation dist directory for thread package
     const candidates = [
@@ -1063,7 +1063,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // const { checkUpdates } = await import('./checkUpdates.js');
       // checkUpdates(this);
       const { createESMWorker } = await import('@matterbridge/thread');
-      createESMWorker('CheckUpdates', this.resolveCoreDistFilePath('workerCheckUpdates.js'));
+      createESMWorker('CheckUpdates', this.resolveWorkerDistFilePath('workerCheckUpdates.js'));
     }, 300 * 1000).unref();
 
     // Check each 12 hours the latest and dev versions of matterbridge and the plugins
@@ -1073,7 +1073,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         // const { checkUpdates } = await import('./checkUpdates.js');
         // checkUpdates(this);
         const { createESMWorker } = await import('@matterbridge/thread');
-        createESMWorker('CheckUpdates', this.resolveCoreDistFilePath('workerCheckUpdates.js'));
+        createESMWorker('CheckUpdates', this.resolveWorkerDistFilePath('workerCheckUpdates.js'));
       },
       12 * 60 * 60 * 1000, // 12 hours
     ).unref();
@@ -1340,7 +1340,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // The global node_modules directory is already set in the node storage and we check if it is still valid
       this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
       const { createESMWorker } = await import('@matterbridge/thread');
-      createESMWorker('NpmGlobalPrefix', this.resolveCoreDistFilePath('workerGlobalPrefix.js'));
+      createESMWorker('NpmGlobalPrefix', this.resolveWorkerDistFilePath('workerGlobalPrefix.js'));
     }
 
     // Matterbridge version

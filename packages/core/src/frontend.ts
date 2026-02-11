@@ -1843,7 +1843,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
       } else if (data.method === '/api/checkupdates') {
         const { createESMWorker } = await import('@matterbridge/thread');
-        createESMWorker('CheckUpdates', this.matterbridge.resolveCoreDistFilePath('workerCheckUpdates.js'));
+        createESMWorker('CheckUpdates', this.matterbridge.resolveWorkerDistFilePath('workerCheckUpdates.js'));
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellysysupdate') {
         /*

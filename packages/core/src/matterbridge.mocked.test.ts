@@ -679,7 +679,7 @@ describe('Matterbridge mocked', () => {
     });
     await (matterbridge as any).initialize();
     expect(plugins.length).toBe(6);
-    expect(existSpy).toHaveBeenCalledTimes(2 + 6); // Six plugins checked for existence
+    expect(existSpy).toHaveBeenCalledTimes(3 + 6); // Six plugins checked for existence
     expect(parseSpy).toHaveBeenCalledTimes(5); // One plugin is skipped due to invalid install
     expect(spawnCommandMock).toHaveBeenCalledTimes(6); // Six plugins attempted to install
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Trying to reinstall it from npm...'));
