@@ -61,7 +61,7 @@ describe('Workers', () => {
     }
 
     await new Promise<void>((resolve, reject) => {
-      worker = createESMWorker('NpmGlobalPrefix', './packages/core/dist/workerGlobalPrefix.js');
+      worker = createESMWorker('NpmGlobalPrefix', './packages/thread/dist/workerGlobalPrefix.js');
       worker.on('message', messageHandler);
       workerName = 'NpmGlobalPrefix';
       workerId = worker.threadId;
@@ -95,7 +95,7 @@ describe('Workers', () => {
     }
 
     await new Promise<void>((resolve, reject) => {
-      worker = createESMWorker('CheckUpdates', './packages/core/dist/workerCheckUpdates.js');
+      worker = createESMWorker('CheckUpdates', './packages/thread/dist/workerCheckUpdates.js');
       worker.on('message', messageHandler);
       workerName = 'CheckUpdates';
       workerId = worker.threadId;
