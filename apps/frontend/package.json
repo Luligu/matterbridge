@@ -39,11 +39,15 @@
     "smartthings",
     "ewelink"
   ],
+  "type": "module",
   "publishConfig": {
     "access": "public"
   },
-  "private": true,
-  "type": "module",
+  "files": [
+    "build",
+    "package.json",
+    "npm-shrinkwrap.json"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -60,13 +64,19 @@
     "test:coverage": "vitest run --reporter verbose --coverage",
     "clean": "npx rimraf ./build",
     "cleanBuild": "npm run clean && npm run build",
-    "deepClean": "npx rimraf package-lock.json ./build ./node_modules",
+    "reset": "npm run deepClean && npm install --no-fund --no-audit && npm run build && npm run test",
+    "deepClean": "npx rimraf package.json.backup package-lock.json npm-shrinkwrap.json build node_modules",
     "deepCleanRebuild": "npm run deepClean && npm install && npm run build && npm run test",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild",
     "runMeBeforePublish": "npm run lint && npm run build && npm run test",
-    "reset": "npm run deepClean && npm install && npm run build && npm run test",
+    "prepublishOnly": "npm run cleanBuild && npm pkg delete devDependencies scripts && npx rimraf node_modules package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap --omit=dev",
+    "npmPack": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm pack && npx shx cp package.json.backup package.json && npm run reset",
+    "npmPublishTagDev": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag dev && npx shx cp package.json.backup package.json && npm run reset",
+    "npmPublishTagEdge": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag edge && npx shx cp package.json.backup package.json && npm run reset",
+    "npmPublishTagLatest": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag latest && npx shx cp package.json.backup package.json && npm run reset",
     "install:all": "npm run install:react && npm run install:emotion && npm run install:mui && npm run install:mdi && npm run install:qrcode && npm run install:notistack && npm run install:rjsf && npm run install:typescript && npm run install:vite && npm run install:vitest && npm run install:eslint && npm run install:prettier",
+    "install:scripts": "npm install --no-fund --no-audit --save-dev --save-exact npm-check-updates shx rimraf",
     "install:react": "npm install --save-exact react react-dom react-router react-router-dom && npm install --save-exact --save-dev @types/react @types/react-dom",
     "install:emotion": "npm install --save-exact @emotion/react @emotion/styled",
     "install:mui": "npm install --save-exact @mui/material @mui/icons-material",
@@ -78,7 +88,7 @@
     "install:typescript": "npm install --save-exact --save-dev typescript @types/node",
     "install:vite": "npm install --save-exact --save-dev vite @vitejs/plugin-react",
     "install:vitest": "npm install --save-exact --save-dev vitest jsdom @testing-library/react @testing-library/jest-dom",
-    "install:eslint": "npm install --save-exact --save-dev eslint eslint-plugin-react eslint-plugin-react-hooks typescript-eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser",
+    "install:eslint": "npm install --save-exact --save-dev eslint@9.39.2 @eslint/js@9.39.2 eslint-plugin-react eslint-plugin-react-hooks typescript-eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser",
     "install:prettier": "npm install --save-exact --save-dev prettier eslint-config-prettier eslint-plugin-prettier"
   },
   "dependencies": {
@@ -99,23 +109,27 @@
     "react-router-dom": "7.13.0"
   },
   "devDependencies": {
+    "@eslint/js": "9.39.2",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
-    "@types/node": "25.1.0",
-    "@types/react": "19.2.10",
+    "@types/node": "25.2.3",
+    "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "@typescript-eslint/eslint-plugin": "8.54.0",
-    "@typescript-eslint/parser": "8.54.0",
-    "@vitejs/plugin-react": "5.1.2",
+    "@typescript-eslint/eslint-plugin": "8.55.0",
+    "@typescript-eslint/parser": "8.55.0",
+    "@vitejs/plugin-react": "5.1.4",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.0.1",
     "jsdom": "27.4.0",
+    "npm-check-updates": "19.3.2",
     "prettier": "3.8.1",
+    "rimraf": "6.1.2",
+    "shx": "0.4.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.54.0",
+    "typescript-eslint": "8.55.0",
     "vite": "7.3.1",
     "vitest": "4.0.18"
   }
