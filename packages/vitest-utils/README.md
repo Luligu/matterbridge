@@ -19,4 +19,4 @@
 
 ---
 
-Matterbridge internal package (not intended for direct use).
+[Matterbridge](https://matterbridge.io) internal package (not intended for direct use).

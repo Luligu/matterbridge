@@ -15,7 +15,28 @@
   "publishConfig": {
     "access": "public"
   },
-  "keywords": [],
+  "keywords": [
+    "matterbridge",
+    "homebridge",
+    "bridge",
+    "plugin",
+    "frontend",
+    "matter.js",
+    "matter-node.js",
+    "matter",
+    "matterprotocol",
+    "iot",
+    "smarthome",
+    "connectedthings",
+    "hap",
+    "homekit",
+    "siri",
+    "google-home",
+    "alexa",
+    "homeassistant",
+    "smartthings",
+    "ewelink"
+  ],
   "license": "Apache-2.0",
   "funding": {
     "type": "buymeacoffee",
