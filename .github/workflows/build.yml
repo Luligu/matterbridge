@@ -46,13 +46,13 @@ jobs:
       - name: Verify Npm version
         run: npm -v
 
-      - name: Install dependencies
+      - name: Install matterbridge dependencies
         run: npm ci --no-fund --no-audit
 
-      - name: Build the project
+      - name: Build matterbridge
         run: npm run build
 
-      - name: Install matterbridge
+      - name: Install matterbridge globally
         run: npm install --no-fund --no-audit --global .
 
       - name: Test matterbridge cli
@@ -60,10 +60,26 @@ jobs:
           matterbridge --version
           matterbridge --loginterfaces
 
-      - name: Lint the project
+      - name: Lint matterbridge
         run: npm run lint
 
-      - name: Test the project
+      - name: Install frontend dependencies
+        run: npm ci --no-fund --no-audit
+        working-directory: apps/frontend
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: apps/frontend
+
+      - name: Test frontend
+        run: npm run test
+        working-directory: apps/frontend
+
+      - name: Test matterbridge
         run: npm run test
 
       - name: List, audit, fix outdated dependencies and build again

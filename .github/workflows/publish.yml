@@ -40,10 +40,10 @@ jobs:
       - name: Verify Npm version
         run: npm -v
 
-      - name: Install dependencies
+      - name: Install matterbridge dependencies
         run: npm ci --no-fund --no-audit
 
-      - name: Build the project for production
+      - name: Build matterbridge for production
         run: npm run buildProduction
 
       - name: Install matterbridge globally
@@ -53,7 +53,7 @@ jobs:
         run: |
           matterbridge --version
 
-      - name: Lint the project
+      - name: Lint matterbridge
         run: npm run lint
 
       - name: Install frontend dependencies
@@ -72,7 +72,7 @@ jobs:
         run: npm run test
         working-directory: apps/frontend
 
-      - name: Test the project
+      - name: Test matterbridge
         run: npm run test
 
       - name: Stamp build metadata into package.json
@@ -160,10 +160,10 @@ jobs:
       - name: Verify Npm version
         run: npm -v
 
-      - name: Install dependencies
+      - name: Install matterbridge dependencies
         run: npm ci --no-fund --no-audit
 
-      - name: Build the project for production
+      - name: Build matterbridge for production
         run: npm run buildProduction
 
       - name: Install matterbridge globally
@@ -173,7 +173,7 @@ jobs:
         run: |
           matterbridge --version
 
-      - name: Lint the project
+      - name: Lint matterbridge
         run: npm run lint
 
       - name: Install frontend dependencies
@@ -192,7 +192,7 @@ jobs:
         run: npm run test
         working-directory: apps/frontend
 
-      - name: Test the project
+      - name: Test matterbridge
         run: npm run test
 
       - name: Stamp build metadata into package.json
@@ -244,7 +244,7 @@ jobs:
         if: steps.check_new.outputs.should_publish == 'true'
         run: |
           npm version "${{ env.ORIG_BASE }}" --no-git-tag-version --ignore-scripts
-          node scripts/publish-workspaces.mjs --scope @matterbridge --tag edge
+          node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev
 
       - name: Trigger Matterbridge Docker Build Dev
         if: steps.check_new.outputs.should_publish == 'true'
