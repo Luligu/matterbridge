@@ -51,22 +51,23 @@ Advantages:
 
 ### Dev Breaking Changes
 
-- [exports]: Removed Matterbridge export.
+- [exports]: Removed Matterbridge export from matterbridge.
 
 ### Breaking Changes
 
-- [doorLock]: The default value for actuatorEnabled has been changed to true. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/509).
+- [doorLock]: The default value for **DoorLock.actuatorEnabled** has been changed to true. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/509).
 
 ### Added
 
-- [packages]: Added @matterbridge/types monorepo scoped package.
-- [packages]: Added @matterbridge/core monorepo scoped package.
-- [apps]: Added @matterbridge/frontend monorepo scoped package.
+- [packages]: Added **@matterbridge/types** monorepo scoped package.
+- [packages]: Added **@matterbridge/core** monorepo scoped package.
+- [apps]: Added **@matterbridge/frontend** monorepo scoped package.
+- [amonorepos]: The transition to a modern monorepo setup with scoped packages is completed.
 
 ### Changed
 
 - [package]: Updated dependencies.
-- [matterbridge.io]: Updated docs.
+- [matterbridge.io]: Updated docs and styles.
 - [docker]: Updated docker readme file to clarify which base image is used.
 - [frontend]: Bumped `frontend` version to v. 3.4.5.
 

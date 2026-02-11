@@ -89,51 +89,51 @@ When you want to test your plugin with a paired controller and you cannot use na
 
 Matterbridge exports from:
 
-### "matterbridge"
+**"matterbridge"**
 
 - Matterbridge related classes needed in a plugin.
 
-### "matterbridge/devices"
+**"matterbridge/devices"**
 
 - All single device classes like the Rvc, LaundryWasher, etc...
 
-### "matterbridge/clusters"
+**"matterbridge/clusters"**
 
 - All clusters not present in matter.js or modified. It can be empty.
 
-### "matterbridge/utils"
+**"matterbridge/utils"**
 
 - All general utils and colorUtils functions.
 
-### "matterbridge/logger"
+**"matterbridge/logger"**
 
 - AnsiLogger class.
 
-### "matterbridge/storage"
+**"matterbridge/storage"**
 
 - NodeStorageManager and NodeStorage classes.
 
-### "matterbridge/matter"
+**"matterbridge/matter"**
 
 - All relevant matter.js exports.
 
-### "matterbridge/matter/behaviors"
+**"matterbridge/matter/behaviors"**
 
 - All matter.js behaviors.
 
-### "matterbridge/matter/clusters"
+**"matterbridge/matter/clusters"**
 
 - All matter.js clusters.
 
-### "matterbridge/matter/devices"
+**"matterbridge/matter/devices"**
 
 - All matter.js devices.
 
-### "matterbridge/matter/endpoints"
+**"matterbridge/matter/endpoints"**
 
 - All matter.js endpoints.
 
-### "matterbridge/matter/types"
+**"matterbridge/matter/types"**
 
 - All matter.js types.
 
@@ -217,24 +217,24 @@ matterbridge -add .
 
 ## MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform api
 
-### public name: string
+**public name: string**
 
 The plugin name.
 
-### public type: string
+**public type: string**
 
 The plugin platform type.
 
-### public config: object
+**public config: object**
 
 The plugin config (loaded before the platform constructor is called and saved after onShutdown() is called).
 Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for example)
 
-### constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig)
+**constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig)**
 
 The contructor is called when is plugin is loaded.
 
-### async onStart(reason?: string)
+**async onStart(reason?: string)**
 
 The method onStart() is where you have to create your MatterbridgeEndpoint and add all needed clusters.
 
@@ -244,7 +244,7 @@ The MatterbridgeEndpoint class has the create cluster methods already done and a
 
 The method is called when Matterbridge load the plugin.
 
-### async onConfigure()
+**async onConfigure()**
 
 The method onConfigure() is where you can configure your matter device.
 
@@ -252,7 +252,7 @@ The method is called when the server node the platform belongs to is online.
 
 Since the persistent attributes are loaded from the storage when the server node goes online, you may need to set them in onConfigure().
 
-### async onShutdown(reason?: string)
+**async onShutdown(reason?: string)**
 
 The method onShutdown() is where you have to stop your platform and cleanup all the used resources.
 
@@ -260,51 +260,51 @@ The method is called when Matterbridge is shutting down or when the plugin is di
 
 Since the frontend can enable and disable the plugin many times, you need to clean all resources (i.e. handlers, intervals, timers...) here.
 
-### async onChangeLoggerLevel(logLevel: LogLevel)
+**async onChangeLoggerLevel(logLevel: LogLevel)**
 
 It is called when the user changes the logger level in the frontend.
 
-### async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig)
+**async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig)**
 
 It is called when a plugin config includes an action button or an action button with text field.
 
-### async onConfigChanged(config: PlatformConfig)
+**async onConfigChanged(config: PlatformConfig)**
 
 It is called when the plugin config has been updated.
 
-### getDevices(): MatterbridgeEndpoint[]
+**getDevices(): MatterbridgeEndpoint[]**
 
 Retrieves the devices registered with the platform.
 
-### getDeviceByName(deviceName: string): MatterbridgeEndpoint | undefined
+**getDeviceByName(deviceName: string): MatterbridgeEndpoint | undefined**
 
-### getDeviceByUniqueId(uniqueId: string): MatterbridgeEndpoint | undefined
+**getDeviceByUniqueId(uniqueId: string): MatterbridgeEndpoint | undefined**
 
-### getDeviceBySerialNumber(serialNumber: string): MatterbridgeEndpoint | undefined
+**getDeviceBySerialNumber(serialNumber: string): MatterbridgeEndpoint | undefined**
 
-### getDeviceById(id: string): MatterbridgeEndpoint | undefined
+**getDeviceById(id: string): MatterbridgeEndpoint | undefined**
 
-### getDeviceByOriginalId(originalId: string): MatterbridgeEndpoint | undefined
+**getDeviceByOriginalId(originalId: string): MatterbridgeEndpoint | undefined**
 
-### getDeviceByNumber(number: EndpointNumber | number): MatterbridgeEndpoint | undefined
+**getDeviceByNumber(number: EndpointNumber | number): MatterbridgeEndpoint | undefined**
 
 They all return MatterbridgeEndpoint or undefined if not found.
 
-### hasDeviceName(deviceName: string): boolean
+**hasDeviceName(deviceName: string): boolean**
 
-### hasDeviceUniqueId(deviceUniqueId: string): boolean
+**hasDeviceUniqueId(deviceUniqueId: string): boolean**
 
 Checks if a device with this name or uniqueId is already registered in the platform.
 
-### async registerDevice(device: MatterbridgeEndpoint)
+**async registerDevice(device: MatterbridgeEndpoint)**
 
 After you have created your device, add it to the platform.
 
-### async unregisterDevice(device: MatterbridgeEndpoint)
+**async unregisterDevice(device: MatterbridgeEndpoint)**
 
 You can unregister a device.
 
-### async unregisterAllDevices()
+**async unregisterAllDevices()**
 
 You can unregister all the devices you added.
 

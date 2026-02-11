@@ -48,6 +48,16 @@
       margin: 10px 20px 10px 0px;
       position: relative;
     }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
     .copy-btn {
       display: flex;
       align-items: center;
@@ -140,22 +150,23 @@
 <h2 id="354-dev-branch">[3.5.4] - Dev branch</h2>
 <h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
 <ul>
-<li>[exports]: Removed Matterbridge export.</li>
+<li>[exports]: Removed Matterbridge export from matterbridge.</li>
 </ul>
 <h3 id="breaking-changes">Breaking Changes</h3>
 <ul>
-<li>[doorLock]: The default value for actuatorEnabled has been changed to true. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/pull/509">https://github.com/Luligu/matterbridge/pull/509</a>).</li>
+<li>[doorLock]: The default value for <strong>DoorLock.actuatorEnabled</strong> has been changed to true. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/pull/509">https://github.com/Luligu/matterbridge/pull/509</a>).</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
-<li>[packages]: Added @matterbridge/types monorepo scoped package.</li>
-<li>[packages]: Added @matterbridge/core monorepo scoped package.</li>
-<li>[apps]: Added @matterbridge/frontend monorepo scoped package.</li>
+<li>[packages]: Added <strong>@matterbridge/types</strong> monorepo scoped package.</li>
+<li>[packages]: Added <strong>@matterbridge/core</strong> monorepo scoped package.</li>
+<li>[apps]: Added <strong>@matterbridge/frontend</strong> monorepo scoped package.</li>
+<li>[amonorepos]: The transition to a modern monorepo setup with scoped packages is completed.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[package]: Updated dependencies.</li>
-<li>[matterbridge.io]: Updated docs.</li>
+<li>[matterbridge.io]: Updated docs and styles.</li>
 <li>[docker]: Updated docker readme file to clarify which base image is used.</li>
 <li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.5.</li>
 </ul>

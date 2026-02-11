@@ -48,6 +48,16 @@
       margin: 10px 20px 10px 0px;
       position: relative;
     }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
     .copy-btn {
       display: flex;
       align-items: center;
@@ -155,51 +165,51 @@
 </ul>
 <h2 id="guidelines-on-importsexports">Guidelines on imports/exports</h2>
 <p>Matterbridge exports from:</p>
-<h3 id="matterbridge">&quot;matterbridge&quot;</h3>
+<p><strong>&quot;matterbridge&quot;</strong></p>
 <ul>
-<li>Matterbridge and all Matterbridge related classes.</li>
+<li>Matterbridge related classes needed in a plugin.</li>
 </ul>
-<h3 id="matterbridgedevices">&quot;matterbridge/devices&quot;</h3>
+<p><strong>&quot;matterbridge/devices&quot;</strong></p>
 <ul>
 <li>All single device classes like the Rvc, LaundryWasher, etc...</li>
 </ul>
-<h3 id="matterbridgeclusters">&quot;matterbridge/clusters&quot;</h3>
+<p><strong>&quot;matterbridge/clusters&quot;</strong></p>
 <ul>
-<li>All clusters not present in matter.js or modified.</li>
+<li>All clusters not present in matter.js or modified. It can be empty.</li>
 </ul>
-<h3 id="matterbridgeutils">&quot;matterbridge/utils&quot;</h3>
+<p><strong>&quot;matterbridge/utils&quot;</strong></p>
 <ul>
 <li>All general utils and colorUtils functions.</li>
 </ul>
-<h3 id="matterbridgelogger">&quot;matterbridge/logger&quot;</h3>
+<p><strong>&quot;matterbridge/logger&quot;</strong></p>
 <ul>
 <li>AnsiLogger class.</li>
 </ul>
-<h3 id="matterbridgestorage">&quot;matterbridge/storage&quot;</h3>
+<p><strong>&quot;matterbridge/storage&quot;</strong></p>
 <ul>
 <li>NodeStorageManager and NodeStorage classes.</li>
 </ul>
-<h3 id="matterbridgematter">&quot;matterbridge/matter&quot;</h3>
+<p><strong>&quot;matterbridge/matter&quot;</strong></p>
 <ul>
 <li>All relevant matter.js exports.</li>
 </ul>
-<h3 id="matterbridgematterbehaviors">&quot;matterbridge/matter/behaviors&quot;</h3>
+<p><strong>&quot;matterbridge/matter/behaviors&quot;</strong></p>
 <ul>
 <li>All matter.js behaviors.</li>
 </ul>
-<h3 id="matterbridgematterclusters">&quot;matterbridge/matter/clusters&quot;</h3>
+<p><strong>&quot;matterbridge/matter/clusters&quot;</strong></p>
 <ul>
 <li>All matter.js clusters.</li>
 </ul>
-<h3 id="matterbridgematterdevices">&quot;matterbridge/matter/devices&quot;</h3>
+<p><strong>&quot;matterbridge/matter/devices&quot;</strong></p>
 <ul>
 <li>All matter.js devices.</li>
 </ul>
-<h3 id="matterbridgematterendpoints">&quot;matterbridge/matter/endpoints&quot;</h3>
+<p><strong>&quot;matterbridge/matter/endpoints&quot;</strong></p>
 <ul>
 <li>All matter.js endpoints.</li>
 </ul>
-<h3 id="matterbridgemattertypes">&quot;matterbridge/matter/types&quot;</h3>
+<p><strong>&quot;matterbridge/matter/types&quot;</strong></p>
 <ul>
 <li>All matter.js types.</li>
 </ul>
@@ -251,51 +261,51 @@ npm run build
 <pre><code class="language-bash">matterbridge -add .
 </code></pre>
 <h2 id="matterbridgedynamicplatform-and-matterbridgeaccessoryplatform-api">MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform api</h2>
-<h3 id="public-name-string">public name: string</h3>
+<p><strong>public name: string</strong></p>
 <p>The plugin name.</p>
-<h3 id="public-type-string">public type: string</h3>
+<p><strong>public type: string</strong></p>
 <p>The plugin platform type.</p>
-<h3 id="public-config-object">public config: object</h3>
+<p><strong>public config: object</strong></p>
 <p>The plugin config (loaded before the platform constructor is called and saved after onShutdown() is called).
 Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for example)</p>
-<h3 id="constructormatterbridge-platformmatterbridge-log-ansilogger-config-platformconfig">constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig)</h3>
+<p><strong>constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig)</strong></p>
 <p>The contructor is called when is plugin is loaded.</p>
-<h3 id="async-onstartreason-string">async onStart(reason?: string)</h3>
+<p><strong>async onStart(reason?: string)</strong></p>
 <p>The method onStart() is where you have to create your MatterbridgeEndpoint and add all needed clusters.</p>
 <p>After add the command handlers and subscribe to the attributes when needed.</p>
 <p>The MatterbridgeEndpoint class has the create cluster methods already done and all command handlers needed (see plugin examples).</p>
 <p>The method is called when Matterbridge load the plugin.</p>
-<h3 id="async-onconfigure">async onConfigure()</h3>
+<p><strong>async onConfigure()</strong></p>
 <p>The method onConfigure() is where you can configure your matter device.</p>
 <p>The method is called when the server node the platform belongs to is online.</p>
 <p>Since the persistent attributes are loaded from the storage when the server node goes online, you may need to set them in onConfigure().</p>
-<h3 id="async-onshutdownreason-string">async onShutdown(reason?: string)</h3>
+<p><strong>async onShutdown(reason?: string)</strong></p>
 <p>The method onShutdown() is where you have to stop your platform and cleanup all the used resources.</p>
 <p>The method is called when Matterbridge is shutting down or when the plugin is disabled.</p>
 <p>Since the frontend can enable and disable the plugin many times, you need to clean all resources (i.e. handlers, intervals, timers...) here.</p>
-<h3 id="async-onchangeloggerlevelloglevel-loglevel">async onChangeLoggerLevel(logLevel: LogLevel)</h3>
+<p><strong>async onChangeLoggerLevel(logLevel: LogLevel)</strong></p>
 <p>It is called when the user changes the logger level in the frontend.</p>
-<h3 id="async-onactionaction-string-value-string-id-string-formdata-platformconfig">async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig)</h3>
+<p><strong>async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig)</strong></p>
 <p>It is called when a plugin config includes an action button or an action button with text field.</p>
-<h3 id="async-onconfigchangedconfig-platformconfig">async onConfigChanged(config: PlatformConfig)</h3>
+<p><strong>async onConfigChanged(config: PlatformConfig)</strong></p>
 <p>It is called when the plugin config has been updated.</p>
-<h3 id="getdevices-matterbridgeendpoint">getDevices(): MatterbridgeEndpoint[]</h3>
+<p><strong>getDevices(): MatterbridgeEndpoint[]</strong></p>
 <p>Retrieves the devices registered with the platform.</p>
-<h3 id="getdevicebynamedevicename-string-matterbridgeendpoint-undefined">getDeviceByName(deviceName: string): MatterbridgeEndpoint | undefined</h3>
-<h3 id="getdevicebyuniqueiduniqueid-string-matterbridgeendpoint-undefined">getDeviceByUniqueId(uniqueId: string): MatterbridgeEndpoint | undefined</h3>
-<h3 id="getdevicebyserialnumberserialnumber-string-matterbridgeendpoint-undefined">getDeviceBySerialNumber(serialNumber: string): MatterbridgeEndpoint | undefined</h3>
-<h3 id="getdevicebyidid-string-matterbridgeendpoint-undefined">getDeviceById(id: string): MatterbridgeEndpoint | undefined</h3>
-<h3 id="getdevicebyoriginalidoriginalid-string-matterbridgeendpoint-undefined">getDeviceByOriginalId(originalId: string): MatterbridgeEndpoint | undefined</h3>
-<h3 id="getdevicebynumbernumber-endpointnumber-number-matterbridgeendpoint-undefined">getDeviceByNumber(number: EndpointNumber | number): MatterbridgeEndpoint | undefined</h3>
+<p><strong>getDeviceByName(deviceName: string): MatterbridgeEndpoint | undefined</strong></p>
+<p><strong>getDeviceByUniqueId(uniqueId: string): MatterbridgeEndpoint | undefined</strong></p>
+<p><strong>getDeviceBySerialNumber(serialNumber: string): MatterbridgeEndpoint | undefined</strong></p>
+<p><strong>getDeviceById(id: string): MatterbridgeEndpoint | undefined</strong></p>
+<p><strong>getDeviceByOriginalId(originalId: string): MatterbridgeEndpoint | undefined</strong></p>
+<p><strong>getDeviceByNumber(number: EndpointNumber | number): MatterbridgeEndpoint | undefined</strong></p>
 <p>They all return MatterbridgeEndpoint or undefined if not found.</p>
-<h3 id="hasdevicenamedevicename-string-boolean">hasDeviceName(deviceName: string): boolean</h3>
-<h3 id="hasdeviceuniqueiddeviceuniqueid-string-boolean">hasDeviceUniqueId(deviceUniqueId: string): boolean</h3>
+<p><strong>hasDeviceName(deviceName: string): boolean</strong></p>
+<p><strong>hasDeviceUniqueId(deviceUniqueId: string): boolean</strong></p>
 <p>Checks if a device with this name or uniqueId is already registered in the platform.</p>
-<h3 id="async-registerdevicedevice-matterbridgeendpoint">async registerDevice(device: MatterbridgeEndpoint)</h3>
+<p><strong>async registerDevice(device: MatterbridgeEndpoint)</strong></p>
 <p>After you have created your device, add it to the platform.</p>
-<h3 id="async-unregisterdevicedevice-matterbridgeendpoint">async unregisterDevice(device: MatterbridgeEndpoint)</h3>
+<p><strong>async unregisterDevice(device: MatterbridgeEndpoint)</strong></p>
 <p>You can unregister a device.</p>
-<h3 id="async-unregisteralldevices">async unregisterAllDevices()</h3>
+<p><strong>async unregisterAllDevices()</strong></p>
 <p>You can unregister all the devices you added.</p>
 <p>It can be useful to call this method from onShutdown() if you don&#39;t want to keep all the devices during development.</p>
 <h2 id="matterbridgeendpoint-api">MatterbridgeEndpoint api</h2>
