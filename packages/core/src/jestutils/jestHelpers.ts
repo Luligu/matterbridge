@@ -24,7 +24,7 @@
 /*
  *  This file contains the Jest helpers for testing the Matterbridge core package.
  *
- *  1) System Matterbridge with initialized Matterbridge instance:
+ *  1) Matterbridge with initialized Matterbridge instance:
  *
  *  beforeAll(async () => {
  *    // Start matterbridge instance
@@ -457,11 +457,14 @@ export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: 
  * ```
  */
 export async function createMatterbridgeEnvironment(name: string): Promise<Matterbridge> {
+  // Create the exported log
+  log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+
   // Create a MatterbridgeEdge instance
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.5.3';
+  matterbridge.matterbridgeVersion = '3.5.4';
   matterbridge.bridgeMode = 'bridge';
   matterbridge.rootDirectory = path.join('jest', name);
   matterbridge.homeDirectory = path.join('jest', name);
@@ -469,7 +472,6 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
   matterbridge.matterbridgePluginDirectory = path.join('jest', name, 'Matterbridge');
   matterbridge.matterbridgeCertDirectory = path.join('jest', name, '.mattercert');
   matterbridge.log.logLevel = LogLevel.DEBUG;
-  log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Get the frontend, plugins and devices
   frontend = matterbridge.frontend;

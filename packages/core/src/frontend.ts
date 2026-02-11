@@ -373,31 +373,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
 
       // Listen on the specified port
-      if (hasParameter('ingress')) {
-        // We limit to all ipv4 addresses when running in ingress mode (Home Assistant add-on)
-        this.httpServer.listen(this.port, '0.0.0.0', () => {
-          this.log.info(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${this.port}${UNDERLINEOFF}${rs}`);
-          this.listening = true;
-          this.emit('server_listening', 'http', this.port, '0.0.0.0');
-        });
-      } else {
-        // We listen to all available addresses
-        this.httpServer.listen(this.port, getParameter('bind'), () => {
-          const addr = this.httpServer?.address();
-          // istanbul ignore else
-          if (addr && typeof addr !== 'string') {
-            this.log.info(`The frontend http server is bound to ${addr.family} ${addr.address}:${addr.port}`);
-          }
-          // istanbul ignore else
-          if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
-            this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
-          // istanbul ignore else
-          if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
-            this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
-          this.listening = true;
-          this.emit('server_listening', 'http', this.port);
-        });
-      }
+      this.httpServer.listen(this.port, getParameter('bind'), () => {
+        const addr = this.httpServer?.address();
+        // istanbul ignore else
+        if (addr && typeof addr !== 'string') {
+          this.log.info(`The frontend http server is bound to ${addr.family} ${addr.address}:${addr.port}`);
+        }
+        // istanbul ignore else
+        if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
+          this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
+        // istanbul ignore else
+        if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
+          this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+        this.listening = true;
+        this.emit('server_listening', 'http', this.port);
+      });
 
       this.httpServer.on('upgrade', async (req, socket, head) => {
         try {
@@ -527,31 +517,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
 
       // Listen on the specified port
-      if (hasParameter('ingress')) {
-        // We limit to all ipv4 addresses when running in ingress mode (Home Assistant add-on)
-        this.httpsServer.listen(this.port, '0.0.0.0', () => {
-          this.log.info(`The frontend https server is listening on ${UNDERLINE}https://0.0.0.0:${this.port}${UNDERLINEOFF}${rs}`);
-          this.listening = true;
-          this.emit('server_listening', 'https', this.port, '0.0.0.0');
-        });
-      } else {
-        // We listen to all available addresses
-        this.httpsServer.listen(this.port, getParameter('bind'), () => {
-          const addr = this.httpsServer?.address();
-          // istanbul ignore else
-          if (addr && typeof addr !== 'string') {
-            this.log.info(`The frontend https server is bound to ${addr.family} ${addr.address}:${addr.port}`);
-          }
-          // istanbul ignore else
-          if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
-            this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
-          // istanbul ignore else
-          if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
-            this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
-          this.listening = true;
-          this.emit('server_listening', 'https', this.port);
-        });
-      }
+      this.httpsServer.listen(this.port, getParameter('bind'), () => {
+        const addr = this.httpsServer?.address();
+        // istanbul ignore else
+        if (addr && typeof addr !== 'string') {
+          this.log.info(`The frontend https server is bound to ${addr.family} ${addr.address}:${addr.port}`);
+        }
+        // istanbul ignore else
+        if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
+          this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
+        // istanbul ignore else
+        if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
+          this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+        this.listening = true;
+        this.emit('server_listening', 'https', this.port);
+      });
 
       this.httpsServer.on('upgrade', async (req, socket, head) => {
         try {

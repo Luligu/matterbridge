@@ -56,6 +56,7 @@ Advantages:
 ### Breaking Changes
 
 - [doorLock]: The default value for **DoorLock.actuatorEnabled** has been changed to true. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/509).
+- [ingress]: Removed `--ingress` parameter used in the old Home Assisant add-on. Update the Matterbridge add-on if you didn't.
 
 ### Added
 

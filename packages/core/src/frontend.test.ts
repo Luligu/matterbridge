@@ -665,7 +665,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() with createServerMock', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ingress', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     createServerMock.mockImplementationOnce(() => {
       throw new Error('Test error');
@@ -685,8 +685,8 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to create HTTP server: Error: Test error`);
   });
 
-  test('Frontend.start() -ingress', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ingress', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+  test('Frontend.start()', async () => {
+    process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
     frontend.start(FRONTEND_PORT);
     await new Promise<void>((resolve) => {
       frontend.once('server_listening', () => resolve());
@@ -697,12 +697,6 @@ describe('Matterbridge frontend', () => {
     expect((matterbridge as any).frontend.expressApp).toBeDefined();
     expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
     expect(startSpy).toHaveBeenNthCalledWith(1, FRONTEND_PORT);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Initializing the frontend http server on port ${YELLOW}${FRONTEND_PORT}${db}`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(
-      LogLevel.INFO,
-      expect.stringContaining(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${FRONTEND_PORT}${UNDERLINEOFF}${rs}`),
-    );
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The WebSocketServer is listening`));
 
     // Test httpServer on error
     const errorEACCES = new Error('Test error');
@@ -717,7 +711,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Port ${FRONTEND_PORT} is already in use`);
   });
 
-  test('Frontend.stop() -ingress', async () => {
+  test('Frontend.stop() II', async () => {
     // Stop the frontend
     await matterbridge.frontend.stop();
 
