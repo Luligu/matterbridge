@@ -46,30 +46,34 @@ jobs:
       - name: Build the project for production
         run: npm run buildProduction
 
-      - name: Install matterbridge
+      - name: Install matterbridge globally
         run: npm install --no-fund --no-audit --global .
+
+      - name: Test matterbridge cli
+        run: |
+          matterbridge --version
 
       - name: Lint the project
         run: npm run lint
 
-      - name: Test the project
-        run: npm run test
-
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
-      - name: Lint the project
+      - name: Lint frontend
         run: npm run lint
         working-directory: apps/frontend
 
-      - name: Build the project
+      - name: Build frontend
         run: npm run build
+        working-directory: apps/frontend
+
+      - name: Test frontend
+        run: npm run test
         working-directory: apps/frontend
 
       - name: Test the project
         run: npm run test
-        working-directory: apps/frontend
 
       - name: Stamp build metadata into package.json
         run: |
@@ -162,30 +166,34 @@ jobs:
       - name: Build the project for production
         run: npm run buildProduction
 
-      - name: Install matterbridge
+      - name: Install matterbridge globally
         run: npm install --no-fund --no-audit --global .
+
+      - name: Test matterbridge cli
+        run: |
+          matterbridge --version
 
       - name: Lint the project
         run: npm run lint
 
-      - name: Test the project
-        run: npm run test
-
-      - name: Install the frontend dependencies
+      - name: Install frontend dependencies
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
-      - name: Lint the frontend
+      - name: Lint frontend
         run: npm run lint
         working-directory: apps/frontend
 
-      - name: Build the frontend
+      - name: Build frontend
         run: npm run build
         working-directory: apps/frontend
 
-      - name: Test the frontend
+      - name: Test frontend
         run: npm run test
         working-directory: apps/frontend
+
+      - name: Test the project
+        run: npm run test
 
       - name: Stamp build metadata into package.json
         run: |
