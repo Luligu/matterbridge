@@ -67,7 +67,10 @@ describe('Workers', () => {
     }
 
     await new Promise<void>((resolve, reject) => {
-      worker = createESMWorker('NpmGlobalPrefix', './packages/thread/dist/workerGlobalPrefix.js');
+      worker = createESMWorker('NpmGlobalPrefix', './packages/thread/dist/workerGlobalPrefix.js', undefined, undefined, undefined, undefined, true);
+      worker.stdout?.on('data', () => {});
+      worker.stderr?.on('data', () => {});
+
       worker.on('message', messageHandler);
       workerName = 'NpmGlobalPrefix';
       workerId = worker.threadId;
@@ -103,7 +106,9 @@ describe('Workers', () => {
     }
 
     await new Promise<void>((resolve, reject) => {
-      worker = createESMWorker('CheckUpdates', './packages/thread/dist/workerCheckUpdates.js');
+      worker = createESMWorker('CheckUpdates', './packages/thread/dist/workerCheckUpdates.js', undefined, undefined, undefined, undefined, true);
+      worker.stdout?.on('data', () => {});
+      worker.stderr?.on('data', () => {});
       worker.on('message', messageHandler);
       workerName = 'CheckUpdates';
       workerId = worker.threadId;
@@ -139,7 +144,9 @@ describe('Workers', () => {
     }
 
     await new Promise<void>((resolve, reject) => {
-      worker = createESMWorker('SystemCheck', './packages/thread/dist/workerSystemCheck.js');
+      worker = createESMWorker('SystemCheck', './packages/thread/dist/workerSystemCheck.js', undefined, undefined, undefined, undefined, true);
+      worker.stdout?.on('data', () => {});
+      worker.stderr?.on('data', () => {});
       worker.on('message', messageHandler);
       workerName = 'SystemCheck';
       workerId = worker.threadId;

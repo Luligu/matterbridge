@@ -85,6 +85,7 @@ export function threadLogger(threadName: string, level: LogLevel, message: strin
  * @param {string[]} [argv] - optional command line arguments to pass to the worker. If not provided, inherits from the main thread.
  * @param {NodeJS.ProcessEnv} [env] - optional environment variables to pass to the worker. If not provided, inherits from the main thread.
  * @param {string[]} [execArgv] - optional execArgv to pass to the worker. If not provided no execArgv are passed.
+ * @param {boolean} [pipedOutput] - whether to pipe the worker's stdout and stderr. Defaults to false.
  * @returns {Worker} - the created Worker instance
  *
  * @example
@@ -99,6 +100,7 @@ export function createESMWorker(
   argv?: string[],
   env?: NodeJS.ProcessEnv,
   execArgv?: string[],
+  pipedOutput: boolean = false,
 ): Worker {
   const fileURL = pathToFileURL(resolve(relativePath));
   const options: WorkerOptions & { type: string } = {
@@ -108,6 +110,8 @@ export function createESMWorker(
     argv: argv ?? process.argv.slice(2), // Pass command line arguments to worker
     env: env ?? process.env, // Inherit environment variables
     execArgv, // execArgv for node like --inspect
+    stdout: pipedOutput,
+    stderr: pipedOutput,
   };
   if (verbose) log.debug(`Creating ESM Worker ${name} with file URL: ${fileURL.href} and options: ${debugStringify(options)}`);
   return new Worker(fileURL, options);
