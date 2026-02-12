@@ -6,6 +6,7 @@ const HOMEDIR = path.join('jest', NAME);
 import path from 'node:path';
 import type { Worker } from 'node:worker_threads';
 import { inspect } from 'node:util';
+import { existsSync } from 'node:fs';
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
@@ -20,21 +21,24 @@ await setupTest(NAME, false);
 
 describe('Workers', () => {
   const log = new AnsiLogger({ logName: 'MatterbridgeWorkers', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-  // Broadcast servers
-  const serverMatterbridge = new BroadcastServer('matterbridge', log);
-  serverMatterbridge.on('broadcast_message', (msg: WorkerMessage) => {
-    if (serverMatterbridge.isWorkerRequest(msg) && msg.type === 'matterbridge_shared') {
-      serverMatterbridge.respond({ ...msg, result: { data: { matterbridgeVersion: '1.0.0', logLevel: LogLevel.ERROR } as any, success: true } });
-    }
-  });
-  const serverPlugins = new BroadcastServer('plugins', log);
-  serverPlugins.on('broadcast_message', (msg: WorkerMessage) => {
-    if (serverPlugins.isWorkerRequest(msg) && msg.type === 'plugins_apipluginarray') {
-      serverPlugins.respond({ ...msg, result: { plugins: [] } });
-    }
-  });
+  let broadcastserverMatterbridge: BroadcastServer;
+  let broadcastserverPlugins: BroadcastServer;
 
-  beforeAll(async () => {});
+  beforeAll(async () => {
+    // Create mocked broadcast servers
+    broadcastserverMatterbridge = new BroadcastServer('matterbridge', log);
+    broadcastserverMatterbridge.on('broadcast_message', (msg: WorkerMessage) => {
+      if (broadcastserverMatterbridge.isWorkerRequest(msg) && msg.type === 'matterbridge_shared') {
+        broadcastserverMatterbridge.respond({ ...msg, result: { data: { matterbridgeVersion: '1.0.0', logLevel: LogLevel.ERROR } as any, success: true } });
+      }
+    });
+    broadcastserverPlugins = new BroadcastServer('plugins', log);
+    broadcastserverPlugins.on('broadcast_message', (msg: WorkerMessage) => {
+      if (broadcastserverPlugins.isWorkerRequest(msg) && msg.type === 'plugins_apipluginarray') {
+        broadcastserverPlugins.respond({ ...msg, result: { plugins: [] } });
+      }
+    });
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -45,8 +49,8 @@ describe('Workers', () => {
 
   afterAll(async () => {
     // Close broadcast servers
-    serverMatterbridge.close();
-    serverPlugins.close();
+    broadcastserverMatterbridge.close();
+    broadcastserverPlugins.close();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -55,6 +59,8 @@ describe('Workers', () => {
     let worker: Worker;
     let workerName: string | null;
     let workerId: number;
+
+    expect(existsSync('./packages/thread/dist/workerGlobalPrefix.js')).toBe(true);
 
     function messageHandler(message: ParentPortMessage): void {
       log.notice(`Main thread received message from worker ${message.threadName}:${message.threadId}:${rs}\n${inspect(message, false, 2, true)}`);
@@ -89,6 +95,8 @@ describe('Workers', () => {
     let worker: Worker;
     let workerName: string | null;
     let workerId: number;
+
+    expect(existsSync('./packages/thread/dist/workerCheckUpdates.js')).toBe(true);
 
     function messageHandler(message: ParentPortMessage): void {
       log.notice(`Main thread received message from worker ${message.threadName}:${message.threadId}:${rs}\n${inspect(message, false, 2, true)}`);
