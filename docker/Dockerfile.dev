@@ -15,6 +15,7 @@ RUN \
   node scripts/sync-workspaces.mjs --scope @matterbridge && \
   node scripts/bundle-workspaces.mjs --scope @matterbridge && \
   npm run buildProduction && \
+  cd apps/frontend && npm ci --no-fund --no-audit && npm run build && cd ../.. && \
   npm link --no-fund --no-audit && \
   npm --workspaces pkg delete devDependencies scripts && \
   npm pkg delete devDependencies scripts && \
