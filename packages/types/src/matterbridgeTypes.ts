@@ -31,6 +31,10 @@ import type { AdministratorCommissioning } from '@matter/types/clusters/administ
 // Matterbridge
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatformTypes.js';
 
+// Exclude certain network interfaces from system information based on their name pattern, as they are typically virtual or non-relevant interfaces.
+export const excludedInterfaceNamePattern =
+  /(tailscale|wireguard|openvpn|zerotier|hamachi|\bwg\d+\b|\btun\d+\b|\btap\d+\b|\butun\d+\b|docker|podman|\bveth[a-z0-9]*\b|\bbr-[a-z0-9]+\b|cni|kube|flannel|calico|virbr\d*\b|vmware|vmnet\d*\b|virtualbox|vboxnet\d*\b|teredo|isatap)/i;
+
 // Default colors
 export const plg = '\u001B[38;5;33m';
 export const dev = '\u001B[38;5;79m';

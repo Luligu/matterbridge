@@ -27,7 +27,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## Project evolution
 
-The project will evolve to a multi-threaded architecture (the CLI will become the thread manager) with these initial threads:
+The project is evolving to a multi-threaded architecture (the CLI will become the thread manager) with these initial threads:
 
 - matterbridge;
 - frontend;
@@ -36,16 +36,19 @@ The project will evolve to a multi-threaded architecture (the CLI will become th
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-- ✅ check updates;
-- npm install;
-- ✅ check the global node_modules directory;
-
 Advantages:
 
 - real concurrency outside the Node.js main loop;
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
+
+These threads already run as a workers:
+
+- ✅ check updates;
+- ✅ system check;
+- npm install;
+- ✅ check the global node_modules directory;
 
 ## [3.5.4] - Dev branch
 
@@ -57,15 +60,17 @@ Advantages:
 
 - [doorLock]: The default value for **DoorLock.actuatorEnabled** has been changed to true. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/509).
 - [ingress]: Removed the `--ingress` parameter used in the old Home Assisant add-on. Update the Matterbridge Home Assistant Application (formerly known as add-on) if you didn't.
+- [Node.Js]: Restricted **Node.Js requirents** to >= `20.19` < 21 or >= `22.13` < 23 or >= `24` < 25.
 
 ### Added
 
 - [packages]: Added **@matterbridge/types** monorepo scoped package.
 - [packages]: Added **@matterbridge/core** monorepo scoped package.
 - [apps]: Added **@matterbridge/frontend** monorepo scoped package.
-- [monorepo]: The transition to a modern monorepo setup with scoped packages is completed.
+- [monorepo]: The transition to a modern monorepo setup with scoped packages is now completed.
 - [addon]: Added two other s6-rc based images to be used in the next releases of the [Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
 - [frontend]: The frontend is now built in the GitHub publish workflow.
+- [SystemCheck]: Added a **system check** (run in its own thread) that starts after 2 minutes and checks the most common causes of issues: Node.Js version and network configuration.
 
 ### Changed
 

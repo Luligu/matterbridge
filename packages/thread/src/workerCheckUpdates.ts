@@ -1,5 +1,5 @@
 /**
- * This file contains the workerCheckUpdates functions.
+ * This file contains the workerCheckUpdates thread.
  *
  * @file workerCheckUpdates.ts
  * @author Luca Liguori
@@ -28,21 +28,22 @@ import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger
 import { hasParameter, inspectError } from '@matterbridge/utils';
 
 import { checkUpdates } from './checkUpdates.js';
-import { logWorkerInfo, parentLog, parentPost } from './worker.js';
+import { logWorkerInfo, parentLog, parentPost, threadLogger } from './worker.js';
 import { BroadcastServer } from './broadcastServer.js';
 
 const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-worker') || hasParameter('verbose-worker');
 const verbose = hasParameter('verbose') || hasParameter('verbose-worker');
+const name = 'MatterbridgeCheckUpdates';
 
 // Send init message
 if (!isMainThread && parentPort) {
   parentPost({ type: 'init', threadId, threadName: workerData.threadName, success: true });
-  if (debug) parentLog('MatterbridgeCheckUpdates', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} initialized.`);
+  if (debug) parentLog(name, LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} initialized.`);
 }
 
 // Broadcast server
 const log = new AnsiLogger({
-  logName: 'MatterbridgeCheckUpdates',
+  logName: name,
   logNameColor: MAGENTA,
   logTimestampFormat: TimestampFormat.TIME_MILLIS,
   logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO,
@@ -52,18 +53,16 @@ const server = new BroadcastServer('matterbridge', log);
 // Log worker info
 if (verbose) logWorkerInfo(log, verbose);
 
+threadLogger(name, LogLevel.INFO, `Starting check updates...`);
 let success = false;
 try {
-  const shared = (await server.fetch({ type: 'matterbridge_shared', src: `matterbridge`, dst: 'matterbridge' })).result.data;
+  const shared = (await server.fetch({ type: 'matterbridge_shared', src: `matterbridge`, dst: 'matterbridge' }, 1000)).result.data;
   await checkUpdates(shared);
+  threadLogger(name, LogLevel.INFO, `Check updates succeeded`);
   success = true;
-  log.debug(`Check updates succeeded`);
-  if (!isMainThread && parentPort) parentLog('MatterbridgeCheckUpdates', LogLevel.DEBUG, `Check updates succeeded`);
 } catch (error) {
-  // istanbul ignore next cause it's just an error log
   const errorMessage = inspectError(log, `Failed to check updates`, error);
-  // istanbul ignore next cause it's just an error log
-  if (!isMainThread && parentPort) parentLog('MatterbridgeCheckUpdates', LogLevel.ERROR, errorMessage);
+  threadLogger(name, LogLevel.ERROR, errorMessage);
 }
 
 // Close the broadcast server
@@ -72,5 +71,5 @@ server.close();
 // Send exit message
 if (!isMainThread && parentPort) {
   parentPost({ type: 'exit', threadId, threadName: workerData.threadName, success });
-  if (debug) parentLog('MatterbridgeCheckUpdates', LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} exiting with success: ${success}.`);
+  if (debug) parentLog(name, LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} exiting with success: ${success}.`);
 }

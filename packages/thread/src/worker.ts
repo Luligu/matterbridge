@@ -61,6 +61,19 @@ export function parentLog(logName: string | undefined, logLevel: LogLevel, messa
 }
 
 /**
+ *  Logs a message in the worker logger and sends it to the parent logger.
+ *
+ * @param {string} threadName - The name of the thread to include in the log message.
+ * @param {LogLevel} level - The log level of the message.
+ * @param {string} message - The log message to log.
+ * @returns {void}
+ */
+export function threadLogger(threadName: string, level: LogLevel, message: string): void {
+  AnsiLogger.create({ logName: threadName, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: level }).log(level, message);
+  if (!isMainThread && parentPort) parentLog(threadName, level, message);
+}
+
+/**
  * Typed helper to create an ESM Worker.
  *
  * This function uses pathToFileURL to convert the relative path to a file URL,

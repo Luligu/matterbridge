@@ -48,7 +48,7 @@
     "mb_health": "bin/mb_health.js"
   },
   "engines": {
-    "node": ">=20.0.0 <21.0.0 || >=22.0.0 <23.0.0 || >=24.0.0 <25.0.0"
+    "node": ">=20.19.0 <21.0.0 || >=22.13.0 <23.0.0 || >=24.0.0 <25.0.0"
   },
   "workspaces": [
     "packages/types",
@@ -224,14 +224,11 @@
     "docker:build:local:s6-rc-dev": "docker build --no-cache --pull -f docker/Dockerfile.s6-rc-dev -t matterbridge:s6-rc-dev .",
     "docker:run:local:s6-rc-dev": "npm run docker:rm:all && docker run -dit --restart always --name matterbridge-s6-rc-dev-local -v matterbridge-local-storage:/root/.matterbridge -v matterbridge-local-plugins:/root/Matterbridge -p 8283:8283 matterbridge:s6-rc-dev",
     "docker:run:hub:s6-rc-dev": "npm run docker:rm:all && docker pull luligu/matterbridge:s6-rc-dev && docker run -dit --restart always --name matterbridge-s6-rc-dev-hub -v matterbridge-local-storage:/root/.matterbridge -v matterbridge-local-plugins:/root/Matterbridge -p 8283:8283 luligu/matterbridge:s6-rc-dev",
-
     "docker:buildx:create": "docker buildx create --name matterbridge --driver docker-container --use && docker run --privileged --rm tonistiigi/binfmt --install all && docker buildx inspect --bootstrap && docker buildx ls",
     "docker:buildx:hub:s6-rc-latest": "docker buildx build --platform linux/amd64,linux/arm64 --no-cache --pull -f docker/Dockerfile.s6-rc-latest -t luligu/matterbridge:s6-rc-latest --push .",
     "docker:buildx:hub:s6-rc-dev": "docker buildx build --platform linux/amd64,linux/arm64 --no-cache --pull -f docker/Dockerfile.s6-rc-dev -t luligu/matterbridge:s6-rc-dev --push .",
     "docker:buildx:remove": "docker rm -f buildx_buildkit_matterbridge0 && docker buildx use desktop-linux && docker buildx rm matterbridge && docker buildx ls",
-
     "docker:rm:all": "docker rm -f matterbridge-latest-local matterbridge-dev-local matterbridge-ubuntu-local matterbridge-24-ubuntu-slim-local matterbridge-alpine-local matterbridge-s6-rc-base-local matterbridge-s6-rc-latest-local matterbridge-s6-rc-dev-local matterbridge-s6-rc-latest-hub matterbridge-s6-rc-dev-hub matterbridge-latest-hub matterbridge-dev-hub matterbridge-ubuntu-hub matterbridge-24-ubuntu-slim-hub matterbridge-alpine-hub matterbridge-s6-rc-base-hub || true",
-
     "publish:all:dev": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev && npm run reset",
     "publish:all:edge": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag edge && npm run reset",
     "publish:all:latest": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag latest && npm run reset",

@@ -121,24 +121,12 @@
 <h2 id="project-evolution">Project evolution</h2>
 <p>The project will evolve to a multi-threaded architecture (the CLI will become the thread manager) with these initial threads:</p>
 <ul>
-<li><p>matterbridge;</p>
-</li>
-<li><p>frontend;</p>
-</li>
-<li><p>plugins;</p>
-</li>
-<li><p>devices;</p>
-</li>
-<li><p>all plugins in bridge mode;</p>
-</li>
-<li><p>each plugin in childbridge mode;</p>
-</li>
-<li><p>✅ check updates;</p>
-</li>
-<li><p>npm install;</p>
-</li>
-<li><p>✅ check the global node_modules directory;</p>
-</li>
+<li>matterbridge;</li>
+<li>frontend;</li>
+<li>plugins;</li>
+<li>devices;</li>
+<li>all plugins in bridge mode;</li>
+<li>each plugin in childbridge mode;</li>
 </ul>
 <p>Advantages:</p>
 <ul>
@@ -146,6 +134,13 @@
 <li>isolation between threads;</li>
 <li>individual plugin isolation in childbridge mode;</li>
 <li>ability to update the plugin in childbridge mode without restarting matterbridge;</li>
+</ul>
+<p>These threads run as a workers:</p>
+<ul>
+<li>✅ check updates;</li>
+<li>✅ system check;</li>
+<li>npm install;</li>
+<li>✅ check the global node_modules directory;</li>
 </ul>
 <h2 id="354-dev-branch">[3.5.4] - Dev branch</h2>
 <h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
@@ -162,8 +157,10 @@
 <li>[packages]: Added <strong>@matterbridge/types</strong> monorepo scoped package.</li>
 <li>[packages]: Added <strong>@matterbridge/core</strong> monorepo scoped package.</li>
 <li>[apps]: Added <strong>@matterbridge/frontend</strong> monorepo scoped package.</li>
-<li>[monorepo]: The transition to a modern monorepo setup with scoped packages is completed.</li>
+<li>[monorepo]: The transition to a modern monorepo setup with scoped packages is now completed.</li>
 <li>[addon]: Added two other s6-rc based images to be used in the next releases of the <a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Home Assistant Application</a>.</li>
+<li>[frontend]: The frontend is now built in the GitHub publish workflow.</li>
+<li>[SystemCheck]: Added a <strong>system check</strong> (run in its own thread) that starts after 2 minutes and check the most common causes of issues: Node.Js version and network configuration.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>

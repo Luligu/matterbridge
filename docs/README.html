@@ -369,14 +369,14 @@ matterbridge --add matterbridge-zigbee2mqtt
 <li><code>ca.pem</code> (optional)</li>
 </ul>
 <p><img src="./screenshots/Screenshot%20Certificates.png" alt="image"></p>
-<p>Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.</p>
+<p>Matterbridge looks first for .p12 certificate and, if they are not found, it looks for cert.pem and key.pem.</p>
 <h3 id="provide-your-own-pkcs12-certificate-and-the-passphrase">Provide your own &#39;PKCS#12&#39; certificate and the passphrase</h3>
 <p>Place your own p12 certificate (binary file) and the passphrase (text file) in the <code>.matterbridge/cert</code> directory:</p>
 <ul>
 <li><code>cert.p12</code></li>
 <li><code>cert.pass</code></li>
 </ul>
-<p>Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.</p>
+<p>Matterbridge looks first for .p12 certificate and, if they are not found, it looks for cert.pem and key.pem.</p>
 <h3 id="change-the-command-line">Change the command line</h3>
 <p>Add the <strong>--ssl</strong> parameter to the command line.</p>
 <p>If desired, you can also change the frontend port with <strong>-frontend 443</strong>.</p>

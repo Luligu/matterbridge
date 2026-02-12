@@ -2,30 +2,27 @@
 # We intentionally DO NOT ignore `.git/` here.
 
 # Dependencies
-**/node_modules
+**/node_modules/
 
 # Test output
-coverage
-**/coverage
+**/coverage/
 
-# Build output (we keep `apps/frontend/build` for Docker builds, but ignore it for everything else)
-**/dist
-**/build
+# Build output
+**/dist/
+**/build/
 **/*.tsbuildinfo
-!apps/frontend/build
 
 # Tooling caches
-.cache
-**/.cache
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
+**/.cache/
 
 # VS Code settings
-.vscode
+**/.vscode/
+
+# Logs
+**/*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/pnpm-debug.log*
 
 # Other assets not needed for builds
 .devcontainer
@@ -35,5 +32,5 @@ reflector
 screenshots
 tmp
 jest
-**/tmp
-*.tgz
+**/tmp/
+**/*.tgz

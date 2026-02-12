@@ -93,7 +93,7 @@ import {
   isValidString,
   parseVersionString,
 } from '@matterbridge/utils';
-import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import { dev, excludedInterfaceNamePattern, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
 import type {
   ApiMatter,
   MaybePromise,
@@ -250,6 +250,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private readonly startMatterIntervalMs = 1000;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
+  private systemCheckTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
   private sigintHandler: NodeJS.SignalsListener | undefined;
@@ -1057,11 +1058,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       return;
     }
 
+    // Run in 2 minutes the system check
+    clearTimeout(this.systemCheckTimeout);
+    this.systemCheckTimeout = setTimeout(async () => {
+      const { createESMWorker } = await import('@matterbridge/thread');
+      createESMWorker('SystemCheck', this.resolveWorkerDistFilePath('workerSystemCheck.js'));
+    }, 120 * 1000).unref();
+
     // Check in 5 minutes the latest and dev versions of matterbridge and the plugins
     clearTimeout(this.checkUpdateTimeout);
     this.checkUpdateTimeout = setTimeout(async () => {
-      // const { checkUpdates } = await import('./checkUpdates.js');
-      // checkUpdates(this);
       const { createESMWorker } = await import('@matterbridge/thread');
       createESMWorker('CheckUpdates', this.resolveWorkerDistFilePath('workerCheckUpdates.js'));
     }, 300 * 1000).unref();
@@ -1070,8 +1076,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     clearInterval(this.checkUpdateInterval);
     this.checkUpdateInterval = setInterval(
       async () => {
-        // const { checkUpdates } = await import('./checkUpdates.js');
-        // checkUpdates(this);
         const { createESMWorker } = await import('@matterbridge/thread');
         createESMWorker('CheckUpdates', this.resolveWorkerDistFilePath('workerCheckUpdates.js'));
       },
@@ -1241,8 +1245,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   private async logNodeAndSystemInfo() {
     // IP address information
-    const excludedInterfaceNamePattern =
-      /(tailscale|wireguard|openvpn|zerotier|hamachi|\bwg\d+\b|\btun\d+\b|\btap\d+\b|\butun\d+\b|docker|podman|\bveth[a-z0-9]*\b|\bbr-[a-z0-9]+\b|cni|kube|flannel|calico|virbr\d*\b|vmware|vmnet\d*\b|virtualbox|vboxnet\d*\b|teredo|isatap)/i;
     const networkInterfaces = os.networkInterfaces();
     this.systemInformation.interfaceName = '';
     this.systemInformation.ipv4Address = '';
@@ -1338,7 +1340,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
     } else {
       // The global node_modules directory is already set in the node storage and we check if it is still valid
-      this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+      // this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
       const { createESMWorker } = await import('@matterbridge/thread');
       createESMWorker('NpmGlobalPrefix', this.resolveWorkerDistFilePath('workerGlobalPrefix.js'));
     }
@@ -1546,6 +1548,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         clearInterval(this.startMatterInterval);
         this.startMatterInterval = undefined;
         this.log.debug('Start matter interval cleared');
+      }
+
+      // Clear the system check timeout
+      if (this.systemCheckTimeout) {
+        clearTimeout(this.systemCheckTimeout);
+        this.systemCheckTimeout = undefined;
+        this.log.debug('System check timeout cleared');
       }
 
       // Clear the check update timeout

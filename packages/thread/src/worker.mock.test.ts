@@ -169,7 +169,7 @@ describe('worker parentPort (mocked)', () => {
       await import('./workerGlobalPrefix.js');
       process.argv.pop();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringMatching(/Global node_modules Directory:/));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringMatching(/Global node_modules directory:/));
 
       consoleLogSpy.mockRestore();
     });
@@ -191,6 +191,27 @@ describe('worker parentPort (mocked)', () => {
       process.argv.pop();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringMatching(/Check updates succeeded/));
+
+      consoleLogSpy.mockRestore();
+    });
+  }, 10000);
+
+  test('Run workerSystemCheck in the mainThread', async () => {
+    await jest.isolateModulesAsync(async () => {
+      jest.resetModules();
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      mockedThreadId = 789;
+      mockedThreadName = 'SystemCheckWorker';
+      mockedIsMainThread = false;
+      mockedHasParentPort = true;
+      mockedHasWorkerData = true;
+
+      process.argv.push('--verbose');
+      await import('./workerSystemCheck.js');
+      process.argv.pop();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringMatching(/System check succeeded/));
 
       consoleLogSpy.mockRestore();
     });
