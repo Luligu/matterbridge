@@ -266,6 +266,10 @@ function help(): void {
       --enable [plugin name]:  enable the globally installed plugin with the given name
       --disable [plugin path]: disable the plugin from the given absolute or relative path
       --disable [plugin name]: disable the globally installed plugin with the given name
+      --list:                  list the registered plugins
+      --loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
+      --logstorage:            log the node storage
+      --systemcheck:           perform a system check (check Node.js version and network interfaces) 
 
     Reset Commands:
       --reset:                 remove the commissioning for Matterbridge (bridge mode and childbridge mode). Shutdown Matterbridge before using it!
@@ -286,9 +290,6 @@ function help(): void {
       --filelogger:            enable the matterbridge file logger (matterbridge.log)
       --matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
       --matterfilelogger:      enable the matter.js file logger (matter.log)
-      --list:                  list the registered plugins
-      --loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
-      --logstorage:            log the node storage
       --sudo:                  force the use of sudo to install or update packages if the internal logic fails
       --nosudo:                force not to use sudo to install or update packages if the internal logic fails
       --norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted

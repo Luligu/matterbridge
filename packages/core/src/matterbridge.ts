@@ -829,7 +829,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         !hasParameter('enable') &&
         !hasParameter('disable') &&
         !hasParameter('reset') &&
-        !hasParameter('factoryreset')
+        !hasParameter('factoryreset') &&
+        !hasParameter('systemcheck')
       ) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
         const { spawnCommand } = await import('./spawn.js');
@@ -907,8 +908,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     const currentModuleDirectory = path.dirname(fileURLToPath(import.meta.url));
     // This core package's src or dist directory or the global installation dist directory for thread package
     const candidates = [
-      path.join(currentModuleDirectory, fileName), // Current src directory for jest tests
-      path.join(currentModuleDirectory, '..', 'dist', fileName), // Dist directory for local development with local packages
+      path.join(currentModuleDirectory, fileName), // Dist directory for local development with local packages
+      path.join(currentModuleDirectory, '..', 'dist', fileName), // Current src directory for jest tests
       path.join(this.rootDirectory, 'node_modules', '@matterbridge', 'thread', 'dist', fileName), // Global installation dist directory for production with thread package
     ];
     for (const candidate of candidates) {
@@ -972,6 +973,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (hasParameter('loginterfaces')) {
       const { logInterfaces } = await import('@matterbridge/utils');
       logInterfaces();
+      this.shutdown = true;
+      return;
+    }
+
+    if (hasParameter('systemcheck')) {
+      const { createESMWorker } = await import('@matterbridge/thread');
+      await new Promise((resolve) => {
+        const worker = createESMWorker('SystemCheck', this.resolveWorkerDistFilePath('workerSystemCheck.js'));
+        worker.on('exit', () => {
+          resolve(null);
+        });
+      });
       this.shutdown = true;
       return;
     }

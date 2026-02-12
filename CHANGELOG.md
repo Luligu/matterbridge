@@ -71,6 +71,7 @@ These threads already run as a workers:
 - [addon]: Added two other s6-rc based images to be used in the next releases of the [Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
 - [frontend]: The frontend is now built in the GitHub publish workflow.
 - [SystemCheck]: Added a **system check** (run in its own thread) that starts after 2 minutes and checks the most common causes of issues: Node.Js version and network configuration.
+- [SystemCheck]: Added parameter **--systemcheck** to run the system check and exit.
 
 ### Changed
 
