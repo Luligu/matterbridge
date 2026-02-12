@@ -61,6 +61,7 @@ These threads already run as a workers:
 - [doorLock]: The default value for **DoorLock.actuatorEnabled** has been changed to true. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/509).
 - [ingress]: Removed the `--ingress` parameter used in the old Home Assisant add-on. Update the Matterbridge Home Assistant Application (formerly known as add-on) if you didn't.
 - [Node.Js]: Restricted **Node.Js requirents** to >= `20.19` < 21 or >= `22.13` < 23 or >= `24` < 25.
+- [Node.Js]: Consider to update all setups to node 24 that is now the LTS.
 
 ### Added
 
