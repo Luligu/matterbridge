@@ -65,6 +65,7 @@ Advantages:
 - [apps]: Added **@matterbridge/frontend** monorepo scoped package.
 - [monorepo]: The transition to a modern monorepo setup with scoped packages is completed.
 - [addon]: Added two other s6-rc based images to be used in the next releases of the [Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
+- [frontend]: The frontend is now built in the GitHub publish workflow.
 
 ### Changed
 
