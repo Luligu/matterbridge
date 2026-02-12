@@ -69,6 +69,7 @@ try {
   const versionPatch = parseInt(nodeVersion.split('.')[2]);
   threadLogger(name, LogLevel.DEBUG, `Node.js Version: ${versionMajor}.${versionMinor}.${versionPatch}`);
   if (versionMajor === 20 && versionMinor < 19) threadLogger(name, LogLevel.ERROR, `Node.js version < 20.19.0 is not supported. Please upgrade to Node.js LTS version (24.x).`);
+  if (versionMajor === 22 && versionMinor < 13) threadLogger(name, LogLevel.ERROR, `Node.js version < 22.13.0 is not supported. Please upgrade to Node.js LTS version (24.x).`);
   // prettier-ignore
   if (versionMajor === 21 || versionMajor === 23 || versionMajor === 25) threadLogger(name, LogLevel.ERROR, `Node.js odd major versions are not supported. Please upgrade to Node.js LTS version (24.x).`);
   // prettier-ignore

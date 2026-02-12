@@ -977,6 +977,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       return;
     }
 
+    /* istanbul ignore next since the worker is tested in a separate test unit */
     if (hasParameter('systemcheck')) {
       const { createESMWorker } = await import('@matterbridge/thread');
       await new Promise((resolve) => {
