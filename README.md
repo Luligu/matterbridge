@@ -465,7 +465,7 @@ Place your own certificates in the `.matterbridge/cert` directory:
 
 ![image](./screenshots/Screenshot%20Certificates.png)
 
-Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
+Matterbridge looks first for .p12 certificate and, if they are not found, it looks for cert.pem and key.pem.
 
 ### Provide your own 'PKCS#12' certificate and the passphrase
 
@@ -474,7 +474,7 @@ Place your own p12 certificate (binary file) and the passphrase (text file) in t
 - `cert.p12`
 - `cert.pass`
 
-Matterbridge looks first for .p12 certificate and if it is not found it looks for cert.pem and key.pem.
+Matterbridge looks first for .p12 certificate and, if they are not found, it looks for cert.pem and key.pem.
 
 ### Change the command line
 
