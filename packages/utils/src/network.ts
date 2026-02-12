@@ -27,6 +27,10 @@ import os from 'node:os';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
+// Exclude certain network interfaces from system information based on their name pattern, as they are typically virtual or non-relevant interfaces.
+export const excludedInterfaceNamePattern =
+  /(tailscale|wireguard|openvpn|zerotier|hamachi|\bwg\d+\b|\btun\d+\b|\btap\d+\b|\butun\d+\b|docker|podman|\bveth[a-z0-9]*\b|\bbr-[a-z0-9]+\b|cni|kube|flannel|calico|virbr\d*\b|vmware|vmnet\d*\b|virtualbox|vboxnet\d*\b|teredo|isatap)/i;
+
 /**
  * Retrieves the first non-internal network interface details.
  *
@@ -40,8 +44,8 @@ export function getInterfaceDetails(): { interfaceName: string; ipv4Address: str
     macAddress: undefined,
   };
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
-    if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
-    for (const detail of interfaceDetails) {
+    if (!interfaceName || excludedInterfaceNamePattern.test(interfaceName)) continue;
+    for (const detail of interfaceDetails || []) {
       if (detail.internal) continue;
       if (!result.interfaceName) result.interfaceName = interfaceName;
       if (interfaceName === result.interfaceName && !result.ipv4Address && detail.family === 'IPv4') result.ipv4Address = detail.address;
@@ -59,8 +63,8 @@ export function getInterfaceDetails(): { interfaceName: string; ipv4Address: str
  */
 export function getInterfaceName(): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
-    if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
-    for (const detail of interfaceDetails) {
+    if (!interfaceName || excludedInterfaceNamePattern.test(interfaceName)) continue;
+    for (const detail of interfaceDetails || []) {
       if (!detail.internal) return interfaceName;
     }
   }
@@ -80,8 +84,8 @@ export function getInterfaceName(): string | undefined {
  */
 export function getIpv4InterfaceAddress(): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
-    if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
-    for (const detail of interfaceDetails) {
+    if (!interfaceName || excludedInterfaceNamePattern.test(interfaceName)) continue;
+    for (const detail of interfaceDetails || []) {
       if (detail.family === 'IPv4' && !detail.internal) return detail.address;
     }
   }
@@ -117,8 +121,8 @@ export function getIpv4InterfaceAddress(): string | undefined {
  */
 export function getIpv6InterfaceAddress(scope: boolean = false): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
-    if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
-    for (const detail of interfaceDetails) {
+    if (!interfaceName || excludedInterfaceNamePattern.test(interfaceName)) continue;
+    for (const detail of interfaceDetails || []) {
       if (detail.family === 'IPv6' && !detail.internal) {
         const address = detail.address;
         if (!scope) return address;
@@ -144,8 +148,8 @@ export function getIpv6InterfaceAddress(scope: boolean = false): string | undefi
  */
 export function getMacAddress(): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
-    if (!interfaceName || !interfaceDetails || interfaceDetails.length === 0) continue;
-    for (const detail of interfaceDetails) {
+    if (!interfaceName || excludedInterfaceNamePattern.test(interfaceName)) continue;
+    for (const detail of interfaceDetails || []) {
       if (!detail.internal) return detail.mac;
     }
   }

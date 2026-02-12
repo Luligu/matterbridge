@@ -92,8 +92,9 @@ import {
   isValidObject,
   isValidString,
   parseVersionString,
+  excludedInterfaceNamePattern,
 } from '@matterbridge/utils';
-import { dev, excludedInterfaceNamePattern, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
 import type {
   ApiMatter,
   MaybePromise,
@@ -979,13 +980,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     /* istanbul ignore next since the worker is tested in a separate test unit */
     if (hasParameter('systemcheck')) {
-      const { createESMWorker } = await import('@matterbridge/thread');
-      await new Promise((resolve) => {
-        const worker = createESMWorker('SystemCheck', this.resolveWorkerDistFilePath('workerSystemCheck.js'));
-        worker.on('exit', () => {
-          resolve(null);
-        });
-      });
+      const { systemCheck } = await import('@matterbridge/thread');
+      await systemCheck();
       this.shutdown = true;
       return;
     }

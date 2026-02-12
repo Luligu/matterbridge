@@ -82,6 +82,9 @@ async function runWorkerSystemCheck(options: RunOptions) {
 
   const inspectError = jest.fn(() => 'inspected error');
 
+  const excludedInterfaceNamePattern =
+    /(tailscale|wireguard|openvpn|zerotier|hamachi|\bwg\d+\b|\btun\d+\b|\btap\d+\b|\butun\d+\b|docker|podman|\bveth[a-z0-9]*\b|\bbr-[a-z0-9]+\b|cni|kube|flannel|calico|virbr\d*\b|vmware|vmnet\d*\b|virtualbox|vboxnet\d*\b|teredo|isatap)/i;
+
   const isMainThread = options.isMainThread ?? false;
   const parentPort = (options.parentPortPresent ?? true) ? {} : null;
 
@@ -101,6 +104,7 @@ async function runWorkerSystemCheck(options: RunOptions) {
   jest.unstable_mockModule('@matterbridge/utils', () => ({
     hasParameter,
     inspectError,
+    excludedInterfaceNamePattern,
   }));
 
   jest.unstable_mockModule('./worker.js', () => ({

@@ -26,8 +26,7 @@ import { threadId, isMainThread, parentPort, workerData } from 'node:worker_thre
 import os from 'node:os';
 
 import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
-import { hasParameter, inspectError } from '@matterbridge/utils';
-import { excludedInterfaceNamePattern } from '@matterbridge/types';
+import { hasParameter, inspectError, excludedInterfaceNamePattern } from '@matterbridge/utils';
 
 import { logWorkerInfo, parentLog, parentPost, threadLogger } from './worker.js';
 import { BroadcastServer } from './broadcastServer.js';
