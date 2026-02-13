@@ -83,6 +83,14 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(matterbridge.bridgeMode).toBe('bridge');
     expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
 
+    // Clear the timeouts and intervals set by initialize to prevent them from running during tests
+    expect((matterbridge as any).systemCheckTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
+
     // Clear all plugins
     plugins = matterbridge.plugins;
     matterbridge.plugins.clear();

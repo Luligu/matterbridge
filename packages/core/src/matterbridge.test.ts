@@ -159,12 +159,15 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).initialized).toBeFalsy();
     await (matterbridge as any).initialize();
     expect((matterbridge as any).initialized).toBeTruthy();
+
+    // Clear the timeouts and intervals set by initialize to prevent them from running during tests
     expect((matterbridge as any).systemCheckTimeout).toBeDefined();
     expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
     expect((matterbridge as any).checkUpdateInterval).toBeDefined();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
+
     expect(matterbridge.serverNode).toBeDefined();
     expect(matterbridge.aggregatorNode).toBeDefined();
     expect(matterbridge.matterStorageManager).toBeDefined();
@@ -248,6 +251,14 @@ describe('Matterbridge', () => {
     matterbridge = await Matterbridge.loadInstance(true);
     expect((Matterbridge as any).instance).toBeDefined();
     expect((matterbridge as any).initialized).toBeTruthy();
+
+    // Clear the timeouts and intervals set by initialize to prevent them from running during tests
+    expect((matterbridge as any).systemCheckTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
 
     await new Promise((resolve) => {
       matterbridge.once('online', resolve);
@@ -371,6 +382,14 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Matterbridge profile: Jest'));
+
+    // Clear the timeouts and intervals set by initialize to prevent them from running during tests
+    expect((matterbridge as any).systemCheckTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
 
     await new Promise((resolve) => {
       matterbridge.once('online', resolve);

@@ -61,6 +61,15 @@ describe('Matterbridge matterjs', () => {
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
+
+    // Clear the timeouts and intervals set by initialize to prevent them from running during tests
+    expect((matterbridge as any).systemCheckTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
+
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe(undefined);
     expect(matterbridge.bridgeMode).toBe('bridge');

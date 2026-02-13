@@ -68,12 +68,14 @@ describe('Matterbridge  Device serverMode=matter', () => {
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
 
+    // Clear the timeouts and intervals set by initialize to prevent them from running during tests
     expect((matterbridge as any).systemCheckTimeout).toBeDefined();
     expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
     expect((matterbridge as any).checkUpdateInterval).toBeDefined();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
+
     expect(matterbridge.profile).toBeUndefined();
     expect(matterbridge.bridgeMode).toBe('bridge');
     expect(Environment.default.vars.get('path.root')).toBe(path.join(HOMEDIR, '.matterbridge', 'matterstorage'));

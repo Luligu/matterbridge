@@ -93,6 +93,14 @@ describe('PluginManager', () => {
     server = (plugins as any).server;
     expect(server).toBeInstanceOf(BroadcastServer);
     matterbridge.globalModulesDirectory = path.join(NPM_CONFIG_PREFIX, 'node_modules');
+
+    // Clear the timeouts and intervals set by initialize to prevent them from running during tests
+    expect((matterbridge as any).systemCheckTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
   });
 
   test('BroadcastServer from local path', async () => {
