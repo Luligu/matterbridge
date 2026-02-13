@@ -243,6 +243,12 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).initialized).toBeFalsy();
     await (matterbridge as any).initialize();
     expect((matterbridge as any).initialized).toBeTruthy();
+    expect((matterbridge as any).systemCheckTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     plugins = matterbridge.plugins;
     expect(plugins.length).toBe(6);
 

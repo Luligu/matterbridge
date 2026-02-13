@@ -263,6 +263,7 @@ describe('Matterbridge mocked', () => {
 
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge, 10, 10);
+    expect((matterbridge as any).systemCheckTimeout).toBeUndefined();
     expect((matterbridge as any).checkUpdateTimeout).toBeUndefined();
     expect((matterbridge as any).checkUpdateInterval).toBeUndefined();
 
@@ -1261,6 +1262,7 @@ describe('Matterbridge mocked', () => {
     (matterbridge as any).reachabilityTimeout = setTimeout(() => {}, 60000);
     await (matterbridge as any).cleanup('cleanup test', false, 10);
     expect((matterbridge as any).startMatterInterval).toBeUndefined();
+    expect((matterbridge as any).systemCheckTimeout).toBeUndefined();
     expect((matterbridge as any).checkUpdateTimeout).toBeUndefined();
     expect((matterbridge as any).checkUpdateInterval).toBeUndefined();
     expect((matterbridge as any).configureTimeout).toBeUndefined();
