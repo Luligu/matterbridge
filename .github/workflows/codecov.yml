@@ -27,8 +27,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
       - name: Setup Node.js 24.x
         uses: actions/setup-node@v4
@@ -44,6 +42,22 @@ jobs:
 
       - name: Link matterbridge globally
         run: npm link --no-fund --no-audit
+
+      - name: Install frontend dependencies
+        run: npm ci --no-fund --no-audit
+        working-directory: apps/frontend
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: apps/frontend
+
+      - name: Test frontend
+        run: npm run test
+        working-directory: apps/frontend
 
       - name: Run matterbridge tests
         run: npm run test:coverage
