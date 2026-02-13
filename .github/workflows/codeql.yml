@@ -9,7 +9,7 @@ on:
       - 'scripts/**' # any file under scripts/
       - 'chip/**' # any file under chip/
       - 'systemd/**' # any file under systemd/
-      - 'frontend/build/**' # any file under frontend/build/
+      - 'apps/frontend/build/**' # any file under apps/frontend/build/
       - '**/*.md' # any .md anywhere
       - '**/*.spec.ts' # any .spec.ts anywhere
       - '**/*.test.ts' # any .test.ts anywhere
@@ -22,7 +22,7 @@ on:
       - 'scripts/**' # any file under scripts/
       - 'chip/**' # any file under chip/
       - 'systemd/**' # any file under systemd/
-      - 'frontend/build/**' # any file under frontend/build/
+      - 'apps/frontend/build/**' # any file under apps/frontend/build/
       - '**/*.md' # any .md anywhere
       - '**/*.spec.ts' # any .spec.ts anywhere
       - '**/*.test.ts' # any .test.ts anywhere
@@ -55,7 +55,7 @@ jobs:
               - 'scripts/**'
               - 'chip/**'
               - 'systemd/**'
-              - 'frontend/build/**'
+              - 'apps/frontend/build/**'
               - '**/*.md'
               - '**/*.spec.ts'
               - '**/*.test.ts'
