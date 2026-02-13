@@ -3,7 +3,7 @@
 FLAG_FILE="/matterbridge/.initialized"
 
 echo "Welcome to the Matterbridge latest docker image."
-echo "It is based on node:22-bookworm-slim and includes matterbridge built from the source (GitHub main branch) and all official plugins from the latest stable release from npm."
+echo "It is based on node:24-trixie-slim and includes matterbridge and all official plugins from the latest npm release."
 
 if [ ! -f "$FLAG_FILE" ]; then
 
@@ -13,15 +13,15 @@ if [ ! -f "$FLAG_FILE" ]; then
   touch "$FLAG_FILE"
 fi
 
-DISTRO=$(awk -F= '/^PRETTY_NAME=/{gsub(/"/, "", $2); print $2}' /etc/os-release) && \
-CODENAME=$(awk -F= '/^VERSION_CODENAME=/{print $2}' /etc/os-release) && \
-echo "🖥️ Distro: $DISTRO ($CODENAME)" && \
-echo "👤 User: $(whoami)" && \
-echo "🏷️ Hostname: $(hostname)" && \
-echo "🧱 Architecture: $(uname -m)" && \
-echo "🧩 Kernel Version: $(uname -r)" && \
-echo "📅 Date: $(date)" && \
-echo "🟢 Node.js version: $(node -v)" && \
+DISTRO=$(awk -F= '/^PRETTY_NAME=/{gsub(/"/, "", $2); print $2}' /etc/os-release)
+CODENAME=$(awk -F= '/^VERSION_CODENAME=/{print $2}' /etc/os-release)
+echo "🖥️ Distro: $DISTRO ($CODENAME)"
+echo "🧱 Architecture: $(uname -m)"
+echo "🧩 Kernel Version: $(uname -r)"
+echo "👤 User: $(whoami)"
+echo "🏷️ Hostname: $(hostname)"
+echo "📅 Date: $(date)"
+echo "🟢 Node.js version: $(node -v)"
 echo "🟣 Npm version: $(npm -v)"
 
 # Start the main process

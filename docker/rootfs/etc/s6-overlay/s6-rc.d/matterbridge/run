@@ -57,7 +57,7 @@ if [ ! -f "${INSTALL_MARKER}" ]; then
       if [ "$FORCE_UPDATE" = "true" ]; then
         echo "⚙️ Branch = dev → installing matterbridge@dev from npm..."
         echo "📦 This can take up to 3 minute on a Home Assistant Green..."
-        npm install matterbridge@dev --no-fund --no-audit --global --omit=dev --cache "$NPM_CACHE"
+        npm install matterbridge@dev --no-fund --no-audit --global --omit=dev
       else
         echo "⚙️ Branch = dev → using matterbridge@dev from the image..."
       fi
@@ -66,7 +66,7 @@ if [ ! -f "${INSTALL_MARKER}" ]; then
       if [ "$FORCE_UPDATE" = "true" ]; then
         echo "⚙️ Branch = main → installing matterbridge@latest from npm..."
         echo "📦 This can take up to 3 minute on a Home Assistant Green..."
-        npm install matterbridge --no-fund --no-audit --global --omit=dev --cache "$NPM_CACHE"
+        npm install matterbridge --no-fund --no-audit --global --omit=dev
       else
         echo "⚙️ Branch = main → using matterbridge@latest from the image..."
       fi

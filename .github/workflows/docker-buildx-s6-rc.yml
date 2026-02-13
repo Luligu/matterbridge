@@ -66,38 +66,15 @@ jobs:
         with:
           version: latest
 
-      - name: Run Docker Buildx with Dockerfile.s6-rc-base
+      - name: Run Docker Buildx with Dockerfile.s6-rc
         run: |
           docker buildx build \
             --no-cache \
             --pull \
             --platform linux/amd64,linux/arm64 \
-            -f docker/Dockerfile.s6-rc-base \
-            -t luligu/matterbridge:s6-rc-base \
-            -t luligu/matterbridge:s6-rc-base-${{ env.VERSION }} \
+            -f docker/Dockerfile.s6-rc \
+            -t luligu/matterbridge:s6-rc \
+            -t luligu/matterbridge:s6-rc-${{ env.VERSION }} \
+            -t luligu/matterbridge:2026.2.4 \
             --push .
-          docker manifest inspect luligu/matterbridge:s6-rc-base
-
-      - name: Run Docker Buildx with Dockerfile.s6-rc-latest
-        run: |
-          docker buildx build \
-            --no-cache \
-            --pull \
-            --platform linux/amd64,linux/arm64 \
-            -f docker/Dockerfile.s6-rc-latest \
-            -t luligu/matterbridge:s6-rc-latest \
-            -t luligu/matterbridge:s6-rc-latest-${{ env.VERSION }} \
-            --push .
-          docker manifest inspect luligu/matterbridge:s6-rc-latest
-
-      - name: Run Docker Buildx with Dockerfile.s6-rc-dev
-        run: |
-          docker buildx build \
-            --no-cache \
-            --pull \
-            --platform linux/amd64,linux/arm64 \
-            -f docker/Dockerfile.s6-rc-dev \
-            -t luligu/matterbridge:s6-rc-dev \
-            -t luligu/matterbridge:s6-rc-dev-${{ env.VERSION }} \
-            --push .
-          docker manifest inspect luligu/matterbridge:s6-rc-dev
+          docker manifest inspect luligu/matterbridge:s6-rc

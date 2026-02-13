@@ -126,7 +126,7 @@ jobs:
               ref: 'main'
             })
 
-      - name: Trigger Matterbridge Docker Build s6-rc-base overlay
+      - name: Trigger Matterbridge Docker Build s6-rc overlay
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
@@ -134,7 +134,7 @@ jobs:
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'docker-buildx-s6-rc-base.yml',
+              workflow_id: 'docker-buildx-s6-rc.yml',
               ref: 'main'
             })
 

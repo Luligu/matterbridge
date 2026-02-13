@@ -1,3 +1,4 @@
+# Downloader stage: fetch and extract s6-overlay files to /out
 FROM node:24-trixie-slim AS downloader
 
 ARG S6_OVERLAY_VERSION=3.2.2.0
@@ -36,10 +37,17 @@ RUN set -eux; \
   rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /var/cache/apt/archives/partial/* \
   /tmp/* /var/tmp/* /root/.cache
 
-
+# Release stage
 FROM node:24-trixie-slim AS release
 
+# Copy s6-overlay files
 COPY --from=downloader /out/ /
+
+# Copy s6-rc rootfs files
+COPY docker/rootfs /
+
+# Ensure matterbridge service scripts are executable (defensive)
+RUN chmod +x /etc/s6-overlay/s6-rc.d/matterbridge/run /etc/s6-overlay/s6-rc.d/matterbridge/finish
 
 # Locale: ensure sane UTF-8 behavior (Node logs/JSON/etc.)
 ENV LANG=C.UTF-8
