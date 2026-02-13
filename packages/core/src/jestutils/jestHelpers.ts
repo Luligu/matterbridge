@@ -24,8 +24,9 @@
 /*
  *  This file contains the Jest helpers for testing the Matterbridge core package.
  *
- *  1) Matterbridge with initialized Matterbridge instance:
+ *  1) Matterbridge with initialized Matterbridge instance with matterbridge, frontend, devices and plugins.
  *
+ *  ```typescript
  *  beforeAll(async () => {
  *    // Start matterbridge instance
  *    await startMatterbridge('bridge', FRONTEND_PORT, MATTER_PORT, PASSCODE, DISCRIMINATOR);
@@ -35,7 +36,25 @@
  *    // Stop matterbridge instance
  *    await stopMatterbridge();
  *  });
+ *  ```
  *
+ *  2) Matter test environment with initialized ServerNode and AggregatorEndpoint. No matterbridge, frontend, devices and plugins.
+ *
+ *  ```typescript
+ *  beforeAll(async () => {
+ *    // Setup the Matter test environment
+ *    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+ *    // Start the server node and aggregator
+ *    await startServerNode(NAME, MATTER_PORT, undefined, MATTER_CREATE_ONLY);
+ *  });
+ *
+ *  afterAll(async () => {
+ *    // Stop the server node
+ *    await stopServerNode(server, MATTER_CREATE_ONLY);
+ *    // Destroy the Matter test environment
+ *    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+ *  });
+ *  ```
  */
 
 import { rmSync } from 'node:fs';
@@ -914,7 +933,7 @@ export async function closeServerNodeStores(targetServer?: ServerNode): Promise<
  *
  * @param {string} name Name of the server (used for logging and product description).
  * @param {number} port TCP port to listen on.
- * @param {DeviceTypeId} deviceType Device type identifier for the server node.
+ * @param {DeviceTypeId} deviceType Device type identifier for the server node. Defaults to the bridge device type.
  * @param {boolean} createOnly If true, only creates the server and aggregator nodes without starting the server (default false).
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
  */

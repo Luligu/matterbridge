@@ -3,6 +3,7 @@
 const MATTER_PORT = 8010;
 const NAME = 'MicrowaveOven';
 const HOMEDIR = path.join('jest', NAME);
+const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
 
@@ -16,20 +17,31 @@ import { wait } from '@matterbridge/utils';
 
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import {
+  addDevice,
+  aggregator,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  loggerLogSpy,
+  server,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestHelpers.js';
+import { microwaveOven } from '../matterbridgeDeviceTypes.js';
 
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from './microwaveOven.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
-// Setup the Matter test environment
-createTestEnvironment(NAME);
-
 describe('Matterbridge ' + NAME, () => {
   let device: MatterbridgeEndpoint;
 
-  beforeAll(async () => {});
+  beforeAll(async () => {
+    // Setup the Matter test environment
+    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -39,12 +51,14 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment(MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
   test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT);
+    await startServerNode(NAME, MATTER_PORT, microwaveOven.code, MATTER_CREATE_ONLY);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   }, 10000);
@@ -185,6 +199,6 @@ describe('Matterbridge ' + NAME, () => {
 
   test('close the server node', async () => {
     expect(server).toBeDefined();
-    await stopServerNode(server);
+    await stopServerNode(server, MATTER_CREATE_ONLY);
   });
 });

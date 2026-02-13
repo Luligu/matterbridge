@@ -3,6 +3,7 @@
 const MATTER_PORT = 8002;
 const NAME = 'BatteryStorage';
 const HOMEDIR = path.join('jest', NAME);
+const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
 
@@ -16,21 +17,20 @@ import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-man
 
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { addDevice, aggregator, createTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import { batteryStorage } from '../matterbridgeDeviceTypes.js';
 
 import { BatteryStorage } from './batteryStorage.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
-// Setup the Matter test environment
-createTestEnvironment(NAME);
-
 describe('Matterbridge ' + NAME, () => {
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
-    //
+    // Setup the Matter test environment
+    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
@@ -41,12 +41,14 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment(MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
   test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT);
+    await startServerNode(NAME, MATTER_PORT, batteryStorage.code, MATTER_CREATE_ONLY);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   }, 10000);
@@ -93,6 +95,6 @@ describe('Matterbridge ' + NAME, () => {
 
   test('close the server node', async () => {
     expect(server).toBeDefined();
-    await stopServerNode(server);
+    await stopServerNode(server, MATTER_CREATE_ONLY);
   });
 });

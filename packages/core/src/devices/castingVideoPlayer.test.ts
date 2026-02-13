@@ -3,6 +3,7 @@
 const MATTER_PORT = 8018;
 const NAME = 'CastingVideoPlayer';
 const HOMEDIR = path.join('jest', NAME);
+const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
 
@@ -19,23 +20,34 @@ import { ContentLauncher } from '@matter/types/clusters/content-launcher';
 import { ContentLauncherServer } from '@matter/node/behaviors/content-launcher';
 
 // Matterbridge
-import { basicVideoPlayer } from '../matterbridgeDeviceTypes.js';
+import { castingVideoPlayer } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, aggregator, createTestEnvironment, deleteDevice, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import {
+  addDevice,
+  aggregator,
+  createTestEnvironment,
+  deleteDevice,
+  destroyTestEnvironment,
+  loggerLogSpy,
+  server,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestHelpers.js';
 
 import { CastingVideoPlayer } from './castingVideoPlayer.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
-// Setup the Matter test environment
-createTestEnvironment(NAME);
-
 describe('Matterbridge ' + NAME, () => {
   let device: MatterbridgeEndpoint;
 
-  beforeAll(async () => {});
+  beforeAll(async () => {
+    // Setup the Matter test environment
+    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -45,12 +57,14 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment(MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
   test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, basicVideoPlayer.code);
+    await startServerNode(NAME, MATTER_PORT, castingVideoPlayer.code, MATTER_CREATE_ONLY);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   }, 10000);
@@ -149,6 +163,6 @@ describe('Matterbridge ' + NAME, () => {
 
   test('close the server node', async () => {
     expect(server).toBeDefined();
-    await stopServerNode(server);
+    await stopServerNode(server, MATTER_CREATE_ONLY);
   });
 });

@@ -162,7 +162,7 @@
     "clean": "npm --workspaces --if-present run clean && npx shx rm -rf *.tsbuildinfo dist",
     "deepClean": "npm --workspaces --if-present run deepClean && npx shx rm -rf *.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .cache/* .cache/.[!.]* .cache/..?* node_modules/* node_modules/.[!.]* node_modules/..?*",
     "reset": "npm run deepClean && npm install --no-fund --no-audit && npm run build && (npm link --no-fund --no-audit || sudo npm link --no-fund --no-audit) && shx chmod +x bin/*.js",
-    "softReset": "npx shx rm -f package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit && npm run build && (npm link --no-fund --no-audit|| sudo npm link --no-fund --no-audit) && shx chmod +x bin/*.js",
+    "softReset": "npx shx rm -f package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit && npm run build && (npm link --no-fund --no-audit || sudo npm link --no-fund --no-audit) && shx chmod +x bin/*.js",
     "lint": "npm --workspaces --if-present run lint && eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 .",
     "lint:fix": "npm --workspaces --if-present run lint:fix && eslint --cache --cache-location .cache/.eslintcache --fix --max-warnings=0 .",
     "lint:debug": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 --debug",

@@ -13,6 +13,7 @@ import { OnOff, LevelControl } from '@matter/types/clusters';
 
 // helpers
 import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import { speakerDevice } from '../matterbridgeDeviceTypes.js';
 
 import { Speaker } from './speaker.js';
 
@@ -40,7 +41,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create and start server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, undefined, MATTER_CREATE_ONLY);
+    await startServerNode(NAME, MATTER_PORT, speakerDevice.code, MATTER_CREATE_ONLY);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   }, 10000);

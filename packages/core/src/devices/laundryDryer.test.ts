@@ -3,6 +3,7 @@
 const MATTER_PORT = 8008;
 const NAME = 'LaundryDryer';
 const HOMEDIR = path.join('jest', NAME);
+const MATTER_CREATE_ONLY = true;
 
 // Import necessary modules and types
 import path from 'node:path';
@@ -16,7 +17,19 @@ import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/node/
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, aggregator, createTestEnvironment, deleteDevice, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import {
+  addDevice,
+  aggregator,
+  createTestEnvironment,
+  deleteDevice,
+  destroyTestEnvironment,
+  loggerLogSpy,
+  server,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestHelpers.js';
+import { laundryDryer } from '../matterbridgeDeviceTypes.js';
 
 import { LaundryDryer } from './laundryDryer.js';
 import { MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';
@@ -25,13 +38,13 @@ import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatur
 // Setup the test environment
 await setupTest(NAME, false);
 
-// Setup the Matter test environment
-createTestEnvironment(NAME);
-
 describe('Matterbridge ' + NAME, () => {
   let device: MatterbridgeEndpoint;
 
-  beforeAll(async () => {});
+  beforeAll(async () => {
+    // Setup the Matter test environment
+    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -41,12 +54,14 @@ describe('Matterbridge ' + NAME, () => {
   afterEach(async () => {});
 
   afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment(MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
   test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT);
+    await startServerNode(NAME, MATTER_PORT, laundryDryer.code, MATTER_CREATE_ONLY);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   }, 10000);
@@ -175,6 +190,6 @@ describe('Matterbridge ' + NAME, () => {
 
   test('close the server node', async () => {
     expect(server).toBeDefined();
-    await stopServerNode(server);
+    await stopServerNode(server, MATTER_CREATE_ONLY);
   });
 });

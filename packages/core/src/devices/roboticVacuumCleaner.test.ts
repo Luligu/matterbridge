@@ -3,6 +3,7 @@
 const MATTER_PORT = 8013;
 const NAME = 'Vacuum';
 const HOMEDIR = path.join('jest', NAME);
+const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
 
@@ -16,35 +17,46 @@ import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, Servic
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviors.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { addDevice, aggregator, createTestEnvironment, loggerLogSpy, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import {
+  addDevice,
+  aggregator,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  loggerLogSpy,
+  server,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestHelpers.js';
+import { roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
 
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
-// Setup the Matter test environment
-createTestEnvironment(NAME);
-
 describe('Matterbridge Robotic Vacuum Cleaner', () => {
   let device: MatterbridgeEndpoint;
 
-  beforeAll(async () => {});
+  beforeAll(async () => {
+    // Setup the Matter test environment
+    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+  });
 
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
-
   afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment(MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
   test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT);
+    await startServerNode(NAME, MATTER_PORT, roboticVacuumCleaner.code, MATTER_CREATE_ONLY);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   }, 10000);
@@ -182,6 +194,6 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
 
   test('close the server node', async () => {
     expect(server).toBeDefined();
-    await stopServerNode(server);
+    await stopServerNode(server, MATTER_CREATE_ONLY);
   });
 });
