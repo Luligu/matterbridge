@@ -37,16 +37,19 @@ jobs:
           echo "VCS_REF=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
-      - name: Stamp build metadata into package.json
+      - name: Write build metadata to .dockerbuild.json
         run: |
-          npm pkg set build.sha="${GITHUB_SHA}"
-          npm pkg set build.sha7="${GITHUB_SHA::7}"
-          npm pkg set build.event="${GITHUB_EVENT_NAME}"
-          npm pkg set build.workflow="${GITHUB_WORKFLOW}"
-          npm pkg set build.type="${GITHUB_REF_TYPE}"
-          npm pkg set build.name="${GITHUB_REF_NAME}"
-          npm pkg set build.docker="true"
-          npm pkg set build.dev="false"
+          cat > .dockerbuild.json <<EOF
+          {
+            "sha": "${GITHUB_SHA}",
+            "sha7": "${GITHUB_SHA::7}",
+            "event": "${GITHUB_EVENT_NAME}",
+            "workflow": "${GITHUB_WORKFLOW}",
+            "type": "${GITHUB_REF_TYPE}",
+            "name": "${GITHUB_REF_NAME}",
+            "dev": false
+          }
+          EOF
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3

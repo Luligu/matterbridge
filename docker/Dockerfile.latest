@@ -21,7 +21,7 @@ LABEL org.opencontainers.image.title="matterbridge" \
   org.opencontainers.image.created=$BUILD_DATE
 
 WORKDIR /matterbridge
-
+COPY ./.dockerbuild.json ./
 RUN apt-get update && \
   apt-get install -y --no-install-recommends curl && \
   apt-get clean && \

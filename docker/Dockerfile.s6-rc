@@ -92,6 +92,8 @@ ENV S6_CMD_RECEIVE_SIGNALS=1
 ENV S6_VERBOSITY=2
 
 # Install Matterbridge globally
+WORKDIR /matterbridge
+COPY ./.dockerbuild.json ./
 RUN npm install matterbridge --global --omit=dev --no-audit --no-fund && \
   rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
   GLOBAL_NODE_MODULES="$(npm root -g)" && \

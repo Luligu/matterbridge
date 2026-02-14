@@ -22,6 +22,7 @@ LABEL org.opencontainers.image.title="matterbridge" \
 
 # Install matterbridge
 WORKDIR /matterbridge
+COPY ./.dockerbuild.json ./
 RUN npm install matterbridge --global --verbose --no-fund --no-audit --omit=dev && \
   npm uninstall -g corepack && \
   npm cache clean --force && \
