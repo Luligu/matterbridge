@@ -55,6 +55,7 @@ These threads already run as a workers:
 ### Added
 
 - [images]: Add OCI standard labels (https://opencontainers.org/) to docker pipelines.
+- [frontend]: Add frontend publishing steps to publish workflow.
 
 ### Changed
 

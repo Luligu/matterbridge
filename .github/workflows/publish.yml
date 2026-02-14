@@ -72,6 +72,10 @@ jobs:
         run: npm run test
         working-directory: apps/frontend
 
+      - name: Publish frontend
+        run: npm publish --tag latest --access public || true
+        working-directory: apps/frontend
+
       - name: Test matterbridge
         run: npm run test
 
@@ -189,6 +193,10 @@ jobs:
 
       - name: Test frontend
         run: npm run test
+        working-directory: apps/frontend
+
+      - name: Publish frontend
+        run: npm publish --tag dev --access public || true
         working-directory: apps/frontend
 
       - name: Test matterbridge
