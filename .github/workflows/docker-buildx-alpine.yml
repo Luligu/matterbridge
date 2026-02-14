@@ -29,6 +29,14 @@ jobs:
       - name: Verify Npm version
         run: npm -v
 
+      - name: Set metadata
+        id: meta
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "VCS_REF=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
       - name: Stamp build metadata into package.json
         run: |
           npm pkg set build.sha="${GITHUB_SHA}"
@@ -39,16 +47,6 @@ jobs:
           npm pkg set build.name="${GITHUB_REF_NAME}"
           npm pkg set build.docker="true"
           npm pkg set build.dev="false"
-
-      - name: Extract version from package.json
-        id: extract_version
-        run: |
-          VERSION=$(jq -r '.version' package.json)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Echo main version ${{ env.VERSION }}
-        run: |
-          echo "Extracted version is: ${{ env.VERSION }}"
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -66,7 +64,7 @@ jobs:
         with:
           version: latest
 
-      - name: Run Docker Buildx with Dockerfile.alpine
+      - name: Run Docker Buildx with Dockerfile.alpine for version ${{ steps.meta.outputs.VERSION }}
         run: |
           docker buildx build \
             --no-cache \
@@ -74,7 +72,10 @@ jobs:
             --platform linux/amd64,linux/arm64 \
             -f docker/Dockerfile.alpine \
             -t luligu/matterbridge:alpine \
-            -t luligu/matterbridge:alpine-${{ env.VERSION }} \
+            -t luligu/matterbridge:alpine-${{ steps.meta.outputs.VERSION }} \
+            --build-args VERSION=${{ steps.meta.outputs.VERSION }} \
+            --build-args VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
+            --build-args BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
             --push .
           docker manifest inspect luligu/matterbridge:alpine
         timeout-minutes: 60

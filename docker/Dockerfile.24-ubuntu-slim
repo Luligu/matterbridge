@@ -1,4 +1,4 @@
-ARG NODE_VERSION=24.13.0
+ARG NODE_VERSION=24.13.1
 
 # ─────────────── NODE STAGE ───────────────
 FROM ubuntu:latest AS node
@@ -35,9 +35,29 @@ FROM ubuntu:latest AS release
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Copy Node.js from the node stage
 COPY --from=node /opt/node /opt/node
+
+# Set environment variables for Node.js
 ENV PATH=/usr/local/bin:/opt/node/bin:$PATH
 ENV npm_config_prefix=/usr/local
+
+# ---- Build arguments injected by CI ----
+ARG VERSION
+ARG VCS_REF
+ARG BUILD_DATE
+
+# ---- OCI standard labels (https://opencontainers.org/) ----
+LABEL org.opencontainers.image.title="matterbridge" \
+  org.opencontainers.image.description="Matterbridge plugin manager for Matter" \
+  org.opencontainers.image.version=$VERSION \
+  org.opencontainers.image.revision=$VCS_REF \
+  org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \
+  org.opencontainers.image.url="https://matterbridge.io" \
+  org.opencontainers.image.documentation="https://matterbridge.io/README.html" \
+  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.authors="Luligu <https://github.com/Luligu>" \
+  org.opencontainers.image.created=$BUILD_DATE
 
 RUN \
   apt-get update || (sleep 10 && apt-get update) || (sleep 20 && apt-get update) \

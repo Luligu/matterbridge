@@ -1,6 +1,9 @@
 # Downloader stage: fetch and extract s6-overlay files to /out
 FROM node:24-trixie-slim AS downloader
 
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
 ARG S6_OVERLAY_VERSION=3.2.2.0
 ARG TARGETARCH
 
@@ -39,6 +42,26 @@ RUN set -eux; \
 
 # Release stage
 FROM node:24-trixie-slim AS release
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ---- Build arguments injected by CI ----
+ARG VERSION
+ARG VCS_REF
+ARG BUILD_DATE
+
+# ---- OCI standard labels (https://opencontainers.org/) ----
+LABEL org.opencontainers.image.title="matterbridge" \
+  org.opencontainers.image.description="Matterbridge plugin manager for Matter" \
+  org.opencontainers.image.version=$VERSION \
+  org.opencontainers.image.revision=$VCS_REF \
+  org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \
+  org.opencontainers.image.url="https://matterbridge.io" \
+  org.opencontainers.image.documentation="https://matterbridge.io/README.html" \
+  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.authors="Luligu <https://github.com/Luligu>" \
+  org.opencontainers.image.created=$BUILD_DATE
 
 # Copy s6-overlay files
 COPY --from=downloader /out/ /

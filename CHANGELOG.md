@@ -50,6 +50,18 @@ These threads already run as a workers:
 - npm install;
 - ✅ check the global node_modules directory;
 
+## [3.5.5] - Dev branch
+
+### Added
+
+- [images]: Add OCI standard labels (https://opencontainers.org/) to docker pipelines.
+
+### Changed
+
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.5.4] - 2026-02-13
 
 ### Dev Breaking Changes

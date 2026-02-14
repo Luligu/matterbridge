@@ -29,15 +29,15 @@ The image (tag **latest** 92 MB) includes Matterbridge and all official plugins,
 
 The image (tag **dev** 93 MB) includes Matterbridge and all official plugins from the latest push on GitHub. It is based on `node:24-trixie-slim`. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest **dev** from the frontend, you will override the GitHub version with the latest **dev** published on npm. The frontend shows if you are currently running the GitHub release or the latest or dev npm release.
 
-The image (tag **ubuntu** 90 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image; they will be installed on first run. This image preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
+The image (tag **ubuntu** 90 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image: they will be installed on first run. This image, on the first run, preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
 
-The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `node:24-alpine`. Plugins are not included in the image; they will be installed on first run.
+The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `node:24-alpine`. Plugins are not included in the image: they will be installed on first run.
 
 ### Matterbridge docker base images
 
 The image (tag **24-ubuntu-slim** 86 MB) includes only `ubuntu:latest` -> Ubuntu 24.04.3 LTS (noble) with Node.js 24 from NodeSource. It is used to build the **ubuntu** image but can also be used to open a shell in ubuntu latest with node 24.
 
-The image (tag **s6-rc** 84 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-trixie-slim` and integrates the `s6-rc overlay` system. Plugins are not included in the image; they will be installed on first run. It is used for the [Matterbridge Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
+The image (tag **s6-rc** 84 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-trixie-slim` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is used for the [Matterbridge Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
 
 ### Docker health check
 

@@ -29,6 +29,14 @@ jobs:
       - name: Verify Npm version
         run: npm -v
 
+      - name: Set metadata
+        id: meta
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "VCS_REF=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -45,7 +53,7 @@ jobs:
         with:
           version: latest
 
-      - name: Run Docker Buildx with Dockerfile.24-ubuntu-slim
+      - name: Run Docker Buildx with Dockerfile.24-ubuntu-slim for version ${{ steps.meta.outputs.VERSION }}
         run: |
           docker buildx build \
             --no-cache \
@@ -53,6 +61,10 @@ jobs:
             --platform linux/amd64,linux/arm64 \
             -f docker/Dockerfile.24-ubuntu-slim \
             -t luligu/matterbridge:24-ubuntu-slim \
+            -t luligu/matterbridge:24-ubuntu-slim-${{ steps.meta.outputs.VERSION }} \
+            --build-args VERSION=${{ steps.meta.outputs.VERSION }} \
+            --build-args VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
+            --build-args BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
             --push .
           docker manifest inspect luligu/matterbridge:24-ubuntu-slim
         timeout-minutes: 60
