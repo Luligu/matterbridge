@@ -86,9 +86,9 @@ jobs:
             -f docker/Dockerfile.latest \
             -t luligu/matterbridge:latest \
             -t luligu/matterbridge:${{ steps.meta.outputs.VERSION }} \
-            --build-args VERSION=${{ steps.meta.outputs.VERSION }} \
-            --build-args VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
-            --build-args BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
+            --build-arg VERSION=${{ steps.meta.outputs.VERSION }} \
+            --build-arg VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
+            --build-arg BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
             --push .
         timeout-minutes: 60
 
