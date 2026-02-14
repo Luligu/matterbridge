@@ -202,6 +202,7 @@
     "install:vitest": "npm install --no-fund --no-audit --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin",
     "docker:build:local:latest": "docker build --no-cache --pull -f docker/Dockerfile.latest -t matterbridge:latest .",
     "docker:run:local:latest": "npm run docker:rm:all && docker run -dit --restart always --name matterbridge-latest-local -v matterbridge-local-storage:/root/.matterbridge -v matterbridge-local-plugins:/root/Matterbridge -p 8283:8283 matterbridge:latest",
+    "docker:run:local:user:latest": "npm run docker:rm:all && docker run -dit --restart always --name matterbridge-latest-local --user 1000:1000 -p 8283:8283 matterbridge:latest",
     "docker:run:hub:latest": "npm run docker:rm:all && docker pull luligu/matterbridge:latest && docker run -dit --restart always --name matterbridge-latest-hub -v matterbridge-local-storage:/root/.matterbridge -v matterbridge-local-plugins:/root/Matterbridge -p 8283:8283 luligu/matterbridge:latest",
     "docker:build:local:dev": "docker build --no-cache --pull -f docker/Dockerfile.dev -t matterbridge:dev .",
     "docker:run:local:dev": "npm run docker:rm:all && docker run -dit --restart always --name matterbridge-dev-local -v matterbridge-local-storage:/root/.matterbridge -v matterbridge-local-plugins:/root/Matterbridge -p 8283:8283 matterbridge:dev",
