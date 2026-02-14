@@ -140,7 +140,7 @@ LABEL org.opencontainers.image.title="matterbridge" \
   org.opencontainers.image.created=$BUILD_DATE
 
 WORKDIR /matterbridge
-
+COPY ./.dockerbuild.json ./
 COPY --from=builder \
   /matterbridge/*.tgz \
   /matterbridge-zigbee2mqtt/*.tgz \
