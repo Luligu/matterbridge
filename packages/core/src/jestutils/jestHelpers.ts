@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /*
  *  This file contains the Jest helpers for testing the Matterbridge core package.
  *
@@ -347,6 +349,15 @@ export async function startMatterbridge(
   matterbridge = await Matterbridge.loadInstance(true);
   // @ts-expect-error - access to private member for testing
   expect(matterbridge.environment).toBeDefined();
+
+  // Clear the timeouts and intervals set by initialize to prevent them from running during tests
+  expect((matterbridge as any).systemCheckTimeout).toBeDefined();
+  expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+  expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+  clearTimeout((matterbridge as any).systemCheckTimeout);
+  clearTimeout((matterbridge as any).checkUpdateTimeout);
+  clearInterval((matterbridge as any).checkUpdateInterval);
+
   // Setup the mDNS service in the environment
   // @ts-expect-error - access to private member for testing
   new MdnsService(matterbridge.environment);
@@ -805,22 +816,17 @@ export async function flushAsync(ticks: number = 3, microTurns: number = 10, pau
  * @returns {number} - The total number of active handles and requests
  */
 export function logKeepAlives(log?: AnsiLogger): number {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handles = (process as any)._getActiveHandles?.() ?? [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const requests = (process as any)._getActiveRequests?.() ?? [];
 
   // istanbul ignore next
   const fmtHandle = (h: unknown, i: number) => {
     const ctor = (h as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
     // Timer-like?
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hasRef = typeof (h as any)?.hasRef === 'function' ? (h as any).hasRef() : undefined;
     // MessagePort?
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isPort = (h as any)?.constructor?.name?.includes('MessagePort');
     // Socket/Server?
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fd = (h as any)?.fd ?? (h as any)?._handle?.fd;
     return { i, type: ctor, hasRef, isPort, fd };
   };
