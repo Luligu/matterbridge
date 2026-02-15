@@ -768,6 +768,9 @@ describe('Matterbridge mocked', () => {
       get: () => '18.0.0',
     });
     await expect((matterbridge as any).initialize()).rejects.toThrow(`Node version 18 is not supported. Please upgrade to 20 or above.`);
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     Object.defineProperty(process.versions, 'node', {
       get: () => originalNodeVersion,
     });
@@ -806,6 +809,9 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await expect((matterbridge as any).initialize()).rejects.toThrow('Fatal error creating node storage manager and context for matterbridge');
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.restartMode).toBe('service');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, 'The matterbridge storage is corrupted. Restoring it with backup...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, 'The matterbridge storage has been restored with backup');
@@ -836,6 +842,9 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await expect((matterbridge as any).initialize()).rejects.toThrow('Fatal error creating node storage manager and context for matterbridge');
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.restartMode).toBe('docker');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.FATAL, 'The matterbridge storage is corrupted. Found -norestore parameter: exiting...');
   });
@@ -898,17 +907,12 @@ describe('Matterbridge mocked', () => {
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     // Mock the checkUpdates from update module before importing it
-    jest.unstable_mockModule('../../../packages/thread/src/checkUpdates.js', () => ({
-      checkUpdates: jest.fn().mockImplementation(() => Promise.resolve()), // Mock the checkUpdates function to resolve immediately
-    }));
-    const update = await import('../../../packages/thread/src/checkUpdates.js');
-    const checkUpdatesMock = update.checkUpdates;
     jest.useFakeTimers();
     await (matterbridge as any).initialize();
     jest.advanceTimersByTime(12 * 60 * 60 * 1000); // Simulate 12 hours
     jest.useRealTimers();
     await new Promise((resolve) => setTimeout(resolve, 10)); // Wait for the next tick
-    expect(checkUpdatesMock).toHaveBeenCalledTimes(0); // Cannot be called cause it run in a thread
+    expect(createESMWorker).toHaveBeenCalledTimes(3); // 1 systemCheck and 2 update checks
   }, 10000);
 
   test('Matterbridge.initialize() registerProcessHandlers and matter file logger', async () => {
@@ -1118,30 +1122,45 @@ describe('Matterbridge mocked', () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-list'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.shutdown).toBe(true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Registered plugins'));
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-logstorage'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.shutdown).toBe(true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${plg}Matterbridge${nf} storage log`));
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-loginterfaces'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.shutdown).toBe(true);
     expect(logInterfacesMock).toHaveBeenCalled();
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-disable', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.get('matterbridge-mock1')?.enabled).toBe(false);
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-enable', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.length).toBe(6);
     expect(matterbridge.plugins.get('matterbridge-mock1')?.enabled).toBe(true);
@@ -1149,24 +1168,36 @@ describe('Matterbridge mocked', () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-remove', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.length).toBe(5);
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-add', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.length).toBe(6);
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-reset'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.length).toBe(0);
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-factoryreset'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.shutdown).toBe(true);
     matterbridge.shutdown = false;
 
@@ -1179,6 +1210,9 @@ describe('Matterbridge mocked', () => {
     });
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-delay'];
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(wait).toHaveBeenCalledWith(120000, 'Race condition delay', true);
 
     jest.spyOn(Matterbridge.prototype as any, 'startBridge').mockImplementationOnce(async () => {
@@ -1186,6 +1220,9 @@ describe('Matterbridge mocked', () => {
     });
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-fixed_delay'];
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(wait).toHaveBeenCalledWith(120000, 'Fixed race condition delay', true);
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR];
   }, 10000);
@@ -1205,6 +1242,9 @@ describe('Matterbridge mocked', () => {
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR];
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(frontendStartSpy).toHaveBeenCalled();
     expect(startBridgeSpy).toHaveBeenCalled();
     expect(startChildBridgeSpy).not.toHaveBeenCalled();
@@ -1213,6 +1253,9 @@ describe('Matterbridge mocked', () => {
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR, '-bridge'];
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(frontendStartSpy).toHaveBeenCalled();
     expect(startBridgeSpy).toHaveBeenCalled();
     expect(startChildBridgeSpy).not.toHaveBeenCalled();
@@ -1220,6 +1263,9 @@ describe('Matterbridge mocked', () => {
 
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR, '-childbridge'];
     await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(frontendStartSpy).toHaveBeenCalled();
     expect(startBridgeSpy).not.toHaveBeenCalled();
     expect(startChildBridgeSpy).toHaveBeenCalled();
