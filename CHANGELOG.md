@@ -61,6 +61,10 @@ These threads already run as a workers:
 
 - [package]: Update dependencies.
 
+### Fixed
+
+- [frontend]: Fix check authentication.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.5.4] - 2026-02-13

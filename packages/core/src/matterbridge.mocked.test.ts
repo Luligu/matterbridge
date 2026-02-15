@@ -203,6 +203,9 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).initialize();
     expect((matterbridge as any).initialized).toBeTruthy();
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
 
     expect(matterbridge.nodeStorage).toBeDefined();
     expect(matterbridge.nodeContext).toBeDefined();
@@ -316,6 +319,9 @@ describe('Matterbridge mocked', () => {
       'utf-8',
     );
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Pairing file ${CYAN}${filePath}${nf} found.`));
     expect(matterbridge.aggregatorVendorId).toBe(VendorId(0xfff2));
     expect(matterbridge.aggregatorVendorName).toBe('TestVendor');
@@ -385,6 +391,9 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.log.logLevel).toBe(LogLevel.DEBUG);
     expect(matterbridge.fileLogger).toBe(false);
     expect(Logger.level).toBe(MatterLogLevel.DEBUG);
@@ -416,6 +425,9 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.log.logLevel).toBe(LogLevel.INFO);
     expect(matterbridge.fileLogger).toBe(false);
     expect(Logger.level).toBe(MatterLogLevel.INFO);
@@ -447,6 +459,9 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.log.logLevel).toBe(LogLevel.NOTICE);
     expect(Logger.level).toBe(MatterLogLevel.NOTICE);
   });
@@ -476,6 +491,9 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.log.logLevel).toBe(LogLevel.WARN);
     expect(Logger.level).toBe(MatterLogLevel.WARN);
   });
@@ -505,6 +523,9 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.log.logLevel).toBe(LogLevel.ERROR);
     expect(Logger.level).toBe(MatterLogLevel.ERROR);
   });
@@ -534,6 +555,9 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.log.logLevel).toBe(LogLevel.FATAL);
     expect(Logger.level).toBe(MatterLogLevel.FATAL);
   });
@@ -574,6 +598,9 @@ describe('Matterbridge mocked', () => {
       '::1',
     ];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.log.logLevel).toBe(LogLevel.INFO);
     expect(Logger.level).toBe(MatterLogLevel.INFO);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Using mdnsinterface ${CYAN}${availableInterfaces[0]}${nf} for the Matter MdnsBroadcaster.`);
@@ -606,6 +633,9 @@ describe('Matterbridge mocked', () => {
       'invalid',
     ];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Invalid mdnsinterface`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Invalid ipv4address`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Invalid ipv6address`));
@@ -629,6 +659,9 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.mdnsInterface).toBeUndefined();
     expect(matterbridge.virtualMode).toBe('outlet');
 
@@ -646,6 +679,9 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() plugins', async () => {
     process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.plugins.array()).toEqual([]);
     expect(await (matterbridge.plugins as any).add('./packages/core/src/mock/plugin1')).not.toBeNull();
     expect(await (matterbridge.plugins as any).add('./packages/core/src/mock/plugin2')).not.toBeNull();
@@ -659,6 +695,9 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() logLevel', async () => {
     // Test set log level for plugins
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(plugins.length).toBe(6);
     await plugins.load(plugins.array()[0]);
     matterbridge.setLogLevel(LogLevel.NOTICE);
@@ -679,6 +718,9 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve(false); // Simulate a failed installation
     });
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(plugins.length).toBe(6);
     expect(existSpy).toHaveBeenCalledTimes(3 + 6); // Six plugins checked for existence
     expect(parseSpy).toHaveBeenCalledTimes(5); // One plugin is skipped due to invalid install
@@ -696,6 +738,9 @@ describe('Matterbridge mocked', () => {
       return null; // Simulate a plugin that does not return a valid path
     });
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     await (matterbridge as any).startPlugins();
     expect(resolveSpy).toHaveBeenCalledTimes(6);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('not found or not validated. Disabling it.'));
@@ -731,6 +776,9 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() devices', async () => {
     process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.devices.array()).toEqual([]);
   });
 
@@ -825,6 +873,9 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Reset commissioning for plugin ${plg}matterbridge-mock1${nt} done! Remove the device from the controller.`);
     await destroyInstance(matterbridge, 10, 10);
 
@@ -834,6 +885,9 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Plugin ${plg}matterbridge-noplugin${wr} not registerd in matterbridge`);
   }, 10000);
 
@@ -868,6 +922,9 @@ describe('Matterbridge mocked', () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger'];
     const createDestinationMatterLoggerSpy = jest.spyOn(Matterbridge.prototype as any, 'createDestinationMatterLogger');
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     if ((matterbridge as any).exceptionHandler) await (matterbridge as any).exceptionHandler(new Error('Test error for exceptionHandler'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Unhandled Exception detected:'));
     if ((matterbridge as any).rejectionHandler) await (matterbridge as any).rejectionHandler(new Error('Test error for rejectionHandler'));
@@ -905,6 +962,9 @@ describe('Matterbridge mocked', () => {
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     matterbridge.mdnsInterface = 'eth0'; // Set a valid interface for testing
     const ifaces: Record<string, os.NetworkInterfaceInfo[]> = {};
     ifaces['empty'] = undefined as any; // Simulate an empty interface
@@ -963,6 +1023,9 @@ describe('Matterbridge mocked', () => {
     // Reset the process.argv to simulate command line arguments
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.nodeContext).toBeDefined();
     await matterbridge.nodeContext?.set<string>('globalModulesDirectory', '');
     matterbridge.globalModulesDirectory = '';
@@ -980,6 +1043,9 @@ describe('Matterbridge mocked', () => {
     });
 
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.nodeContext).toBeDefined();
     await matterbridge.nodeContext?.set<string>('globalModulesDirectory', '');
     matterbridge.globalModulesDirectory = '';
@@ -1022,6 +1088,9 @@ describe('Matterbridge mocked', () => {
       'utf-8',
     ); // Create a dummy file to avoid errors
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.aggregatorVendorId).toBe(65523);
     expect(matterbridge.aggregatorVendorName).toBe('Matterbridge certificate');
     expect(matterbridge.aggregatorProductId).toBe(32769);
@@ -1124,6 +1193,9 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() startBridge and startChildbridge', async () => {
     // await setDebug(false);
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     const frontendStartSpy = jest.spyOn(matterbridge.frontend, 'start').mockImplementation(async () => Promise.resolve());
     const startBridgeSpy = jest.spyOn(matterbridge as any, 'startBridge').mockImplementation(async () => Promise.resolve());
     const startChildBridgeSpy = jest.spyOn(matterbridge as any, 'startChildbridge').mockImplementation(async () => Promise.resolve());
@@ -1160,6 +1232,9 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() restartProcess', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
 
     await matterbridge.restartProcess();
@@ -1190,6 +1265,9 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() unregisterAndShutdownProcess', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup');
     const removeAllBridgedEndpointsSpy = jest.spyOn(matterbridge as any, 'removeAllBridgedEndpoints').mockImplementation(async () => {
       return Promise.resolve();
@@ -1238,6 +1316,9 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() cleanup()', async () => {
     process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     matterbridge.plugins.set({
       name: 'matterbridge-mock1',
       path: './src/mock/plugin1/package.json',
@@ -1293,6 +1374,9 @@ describe('Matterbridge mocked', () => {
 
     process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-delay', '-fixed_delay'];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     expect(wait).not.toHaveBeenCalledWith(2000 * 1000, 'Race condition delay', true);
     expect(wait).not.toHaveBeenCalledWith(2000 * 1000, 'Fixed race condition delay', true);
     matterbridge.plugins.clear();
@@ -1416,6 +1500,9 @@ describe('Matterbridge mocked', () => {
 
     process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     matterbridge.plugins.clear();
     // prettier-ignore-start
     matterbridge.plugins.set({
@@ -1586,6 +1673,9 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() removeAllBridgedEndpoints', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
     matterbridge.plugins.set({
       name: 'matterbridge-mock1',
       enabled: true,
