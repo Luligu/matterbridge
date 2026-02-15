@@ -72,7 +72,7 @@ jobs:
         run: npm run test
         working-directory: apps/frontend
 
-      - name: Publish frontend
+      - name: Publish frontend with tag latest
         run: npm publish --tag latest --access public || true
         working-directory: apps/frontend
 
@@ -195,9 +195,17 @@ jobs:
         run: npm run test
         working-directory: apps/frontend
 
-      - name: Publish frontend
-        run: npm publish --tag dev --access public || true
+      - name: Publish frontend with tag dev
         working-directory: apps/frontend
+        run: |
+          BASE=$(jq -r '.version' package.json)
+          DATE=$(date -u +'%Y%m%d')
+          SHA=$(git rev-parse --short=7 HEAD)
+          DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
+          echo "Publishing frontend with tag ${DEV_TAG}"
+          npm version "${DEV_TAG}" --no-git-tag-version --ignore-scripts
+          npm publish --tag dev --access public || true
+          npm version "${BASE}" --no-git-tag-version --ignore-scripts
 
       - name: Test matterbridge
         run: npm run test
