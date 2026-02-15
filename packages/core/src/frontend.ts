@@ -115,7 +115,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private port = 8283;
   private listening = false;
   private storedPassword: string | undefined = undefined;
-  private authClients: string[] = [];
+  private authClients = new Set<string>();
 
   private expressApp: Express | undefined;
   private httpServer: HttpServer | undefined;
@@ -241,8 +241,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.logLevel = logLevel;
   }
 
-  validateReq(req: import('express').Request<unknown, unknown, unknown, { password?: string }>, res: import('express').Response): boolean {
-    if (req.ip && !this.authClients.includes(req.ip)) {
+  private validateReq(req: import('express').Request<unknown, unknown, unknown, { password?: string }>, res: import('express').Response): boolean {
+    if (req.ip && !this.authClients.has(req.ip)) {
       this.log.warn(`Warning blocked unauthorized access request ${req.originalUrl ?? req.url} from ${req.ip}`);
       res.status(401).json({ error: 'Unauthorized' });
       return false;
@@ -333,7 +333,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (this.webSocketServer?.clients.size === 0) {
           AnsiLogger.setGlobalCallback(undefined);
           this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
-          this.authClients = [];
+          setTimeout(() => {
+            this.log.debug('All WebSocket clients disconnected. Auth clients list cleared');
+            if (this.webSocketServer?.clients.size === 0) this.authClients.clear();
+          }, 250).unref();
         }
       });
 
@@ -413,7 +416,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           // Complete the WebSocket handshake
           this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
           // istanbul ignore else
-          if (req.socket.remoteAddress) this.authClients.push(req.socket.remoteAddress);
+          if (req.socket.remoteAddress) this.authClients.add(req.socket.remoteAddress);
           this.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
             this.webSocketServer?.emit('connection', ws, req);
           });
@@ -556,7 +559,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           // Complete the WebSocket handshake
           this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
           // istanbul ignore else
-          if (req.socket.remoteAddress) this.authClients.push(req.socket.remoteAddress);
+          if (req.socket.remoteAddress) this.authClients.add(req.socket.remoteAddress);
           this.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
             this.webSocketServer?.emit('connection', ws, req);
           });
@@ -605,7 +608,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (this.storedPassword === '' || password === this.storedPassword) {
         this.log.debug('/api/login password valid');
         res.json({ valid: true });
-        if (req.ip) this.authClients.push(req.ip);
+        if (req.ip) this.authClients.add(req.ip);
       } else {
         this.log.warn('/api/login error wrong password');
         res.json({ valid: false });

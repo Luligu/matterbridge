@@ -202,6 +202,30 @@ describe('Matterbridge frontend', () => {
     cliEmitter.emit('memory', '12345678', '87654321', '12345678', '87654321', '12345678', '87654321', '12345678');
   });
 
+  test('Frontend validateReq', async () => {
+    (frontend as any).authClients.clear();
+    let result = (frontend as any).validateReq(
+      { ip: '0.0.0.0' } as any,
+      {
+        status: () => {
+          return { json: () => {} };
+        },
+      } as any,
+    );
+    expect(result).toBeFalsy();
+    (frontend as any).authClients.add('0.0.0.0');
+    result = (frontend as any).validateReq(
+      { ip: '0.0.0.0' } as any,
+      {
+        status: () => {
+          return { json: () => {} };
+        },
+      } as any,
+    );
+    expect(result).toBeTruthy();
+    (frontend as any).authClients.clear();
+  });
+
   test('Frontend getApiSettings', async () => {
     const apiSetting = await (frontend as any).getApiSettings();
     expect(apiSetting).toBeDefined();
