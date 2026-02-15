@@ -91,6 +91,9 @@ describe('Matterbridge', () => {
     expect(cli.instance).toBeDefined();
     expect(cli.instance).toBeInstanceOf(MockMatterbridge);
     matterbridge = cli.instance as unknown as Matterbridge;
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
 
     expect(loadInstance).toHaveBeenCalledTimes(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cli main() started');
