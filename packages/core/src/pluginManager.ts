@@ -25,6 +25,9 @@
 /* eslint-disable jsdoc/reject-function-type */
 /* eslint-disable jsdoc/reject-any-type */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mPlugin Manager loaded.\u001B[40;0m');
+
 // Node.js import
 import EventEmitter from 'node:events';
 

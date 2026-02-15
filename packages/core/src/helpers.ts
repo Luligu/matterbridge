@@ -22,6 +22,9 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridge helpers loaded.\u001B[40;0m');
+
 // @matter module
 import { OnOff } from '@matter/types/clusters/on-off';
 import { Endpoint } from '@matter/node';

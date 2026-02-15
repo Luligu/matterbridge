@@ -42,7 +42,7 @@ function getShortSha7(repoRoot) {
   try {
     return shortSha7FromGit(repoRoot);
   } catch (err) {
-    throw new Error(`Unable to determine git short SHA. (${err instanceof Error ? err.message : String(err)})`);
+    throw new Error(`Unable to determine git short SHA. (${err instanceof Error ? err.message : String(err)})`, { cause: err });
   }
 }
 

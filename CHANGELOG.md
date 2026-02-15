@@ -60,6 +60,7 @@ These threads already run as a workers:
 ### Changed
 
 - [package]: Update dependencies.
+- [storage]: Bump `node-persist-manager` v. 2.0.1,
 
 ### Fixed
 
