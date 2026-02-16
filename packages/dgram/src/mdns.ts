@@ -596,7 +596,7 @@ export class Mdns extends Multicast {
     const rdlength = msg.readUInt16BE(offset);
     offset += 2;
 
-    let data = '';
+    let data: string;
     if (type === DnsRecordType.PTR) {
       // PTR record (type 12): decode its RDATA as a domain name.
       const ptrResult = this.decodeDnsName(msg, offset);

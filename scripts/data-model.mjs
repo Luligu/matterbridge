@@ -89,7 +89,7 @@ const fetchJson = async (url, { description, headers, maxRedirects } = {}) => {
   try {
     return JSON.parse(text);
   } catch (error) {
-    throw new Error(`Unable to parse JSON from ${description || url}: ${error.message}`);
+    throw new Error(`Unable to parse JSON from ${description || url}: ${error.message}`, { cause: error });
   }
 };
 

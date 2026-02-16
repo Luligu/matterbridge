@@ -511,7 +511,7 @@ export class Coap extends Multicast {
          * - If the LS bit is 1, the value is number of 4 seconds interval in the whole interval. So 3 is 12 seconds, 11 is 44 seconds and 65535 is more than 3 days.
          */
         const validity = option.value.readUInt16BE(0);
-        let validFor = 0;
+        let validFor: number;
         if ((validity & 0x1) === 0) {
           validFor = Math.floor(validity / 10);
         } else {

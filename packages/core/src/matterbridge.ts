@@ -2519,6 +2519,7 @@ const commissioningController = new CommissioningController({
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
     serverNode.lifecycle.online.on(async () => {
       this.log.notice(`Server node for ${storeId} is online`);
+      // istanbul ignore else
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
         this.advertisingNodes.set(storeId, Date.now());
@@ -2526,9 +2527,7 @@ const commissioningController = new CommissioningController({
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
         this.log.notice(`Manual pairing code: ${manualPairingCode}`);
       } else {
-        // istanbul ignore next
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
-        // istanbul ignore next
         this.advertisingNodes.delete(storeId);
       }
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });

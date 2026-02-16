@@ -57,6 +57,16 @@ describe('Coap', () => {
     jest.restoreAllMocks();
   });
 
+  it('constructor udp4', () => {
+    const coap = new Coap('test-coap', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4');
+    expect(dgram.createSocket).toHaveBeenCalledWith({ reuseAddr: true, type: 'udp4' });
+  });
+
+  it('constructor udp6', () => {
+    const coap = new Coap('test-coap', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp6');
+    expect(dgram.createSocket).toHaveBeenCalledWith({ reuseAddr: true, type: 'udp6' });
+  });
+
   describe('decodeCoapMessage', () => {
     it('should decode a simple CoAP message', () => {
       // Create a simple CoAP message: Version 1, Type CON, Token Length 0, Code GET, Message ID 1234

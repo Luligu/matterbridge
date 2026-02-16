@@ -1586,6 +1586,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     let data: WsMessageApiRequest;
 
     const sendResponse = (data: WsMessageApiResponse | WsMessageErrorApiResponse) => {
+      // istanbul ignore else cause is only a safety check
       if (client.readyState === client.OPEN) {
         if ('response' in data) {
           const { response, ...rest } = data;
@@ -1597,7 +1598,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         client.send(JSON.stringify(data));
       } else {
-        // istanbul ignore next cause is only a safety check
         this.log.error('Cannot send api response, client not connected');
       }
     };

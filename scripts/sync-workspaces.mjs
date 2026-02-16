@@ -33,7 +33,7 @@ function readJson(text, filePathForErrors) {
   try {
     return JSON.parse(text);
   } catch (err) {
-    throw new Error(`Invalid JSON in ${filePathForErrors}: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(`Invalid JSON in ${filePathForErrors}: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
   }
 }
 
