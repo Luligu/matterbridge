@@ -196,7 +196,7 @@
     "updateMatter:latest": "npm install --save-exact @matter/main@latest && npm install && npm run reset",
     "updateMatter:dev": "npm install --save-exact @matter/main@dev && npm install && npm run reset",
     "updateMatter:loc": "npm install ../matter.js/packages/matter.js && npm install && npm run reset",
-    "install:eslint10": "npm --workspaces --include-workspace-root pkg set \"overrides.eslint=10.0.0\" && npm --workspaces --include-workspace-root pkg set \"overrides.@eslint/js=10.0.1\" && npm --workspaces --include-workspace-root pkg set \"devDependencies.eslint=10.0.0\" && npm --workspaces --include-workspace-root pkg set \"devDependencies.@eslint/js=10.0.1\"",
+    "install:eslint10:on": "npm --workspaces --include-workspace-root pkg set \"overrides.eslint=10.0.0\" && npm --workspaces --include-workspace-root pkg set \"overrides.@eslint/js=10.0.1\" && npm --workspaces --include-workspace-root pkg set \"devDependencies.eslint=10.0.0\" && npm --workspaces --include-workspace-root pkg set \"devDependencies.@eslint/js=10.0.1\"",
     "install:eslint10:off": "npm --workspaces --include-workspace-root pkg delete \"overrides.eslint=10.0.0\" && npm --workspaces --include-workspace-root pkg delete \"overrides.@eslint/js\" && npm --workspaces --include-workspace-root pkg set \"devDependencies.eslint=9.39.2\" && npm --workspaces --include-workspace-root pkg set \"devDependencies.@eslint/js=9.39.2\"",
     "install:dependencies": "npm install --no-fund --no-audit --save-exact @matterbridge/types @matterbridge/dgram @matterbridge/jest-utils @matterbridge/thread @matterbridge/utils @matterbridge/vitest-utils @matterbridge/core",
     "install:scripts": "npm install --no-fund --no-audit --save-dev --save-exact npm-check-updates shx cross-env marked",
