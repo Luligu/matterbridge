@@ -88,12 +88,12 @@
     "install:typescript": "npm install --save-exact --save-dev typescript @types/node",
     "install:vite": "npm install --save-exact --save-dev vite @vitejs/plugin-react",
     "install:vitest": "npm install --save-exact --save-dev vitest jsdom @testing-library/react @testing-library/jest-dom",
-    "install:eslint": "npm install --save-exact --save-dev eslint@9.39.2 @eslint/js@9.39.2 eslint-plugin-react eslint-plugin-react-hooks typescript-eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser",
+    "install:eslint": "npm install --save-exact --save-dev eslint @eslint/js globals eslint-plugin-react eslint-plugin-react-hooks typescript-eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser",
     "install:prettier": "npm install --save-exact --save-dev prettier eslint-config-prettier eslint-plugin-prettier"
   },
   "overrides": {
     "eslint": "10.0.0",
-    "@eslint/js": "10.0.1"    
+    "@eslint/js": "10.0.1"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -127,6 +127,7 @@
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.0.1",
+    "globals": "17.3.0",
     "jsdom": "28.1.0",
     "npm-check-updates": "19.3.2",
     "prettier": "3.8.1",
