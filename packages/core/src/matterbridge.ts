@@ -1032,7 +1032,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
     } catch (error) {
       this.log.fatal(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
-      throw new Error(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
+      throw new Error(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`, { cause: error });
     }
 
     // Clear the matterbridge context if the reset parameter is set (bridge mode)

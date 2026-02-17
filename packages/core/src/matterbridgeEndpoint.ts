@@ -266,6 +266,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [debug] - Debug flag.
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false) {
+    // eslint-disable-next-line no-useless-assignment
     let deviceTypeList: { deviceType: number; revision: number }[] = [];
     const originalId = options.id;
 

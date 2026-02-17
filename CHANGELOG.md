@@ -52,6 +52,10 @@ These threads already run as a workers:
 
 ## [3.5.5] - Dev branch
 
+### Breaking Changes
+
+- [Node.Js]: Consider to update all setups to Node.Js 24 that is now the LTS.
+
 ### Added
 
 - [images]: Add OCI standard labels (https://opencontainers.org/) to docker pipelines.
@@ -60,7 +64,10 @@ These threads already run as a workers:
 ### Changed
 
 - [package]: Update dependencies.
-- [storage]: Bump `node-persist-manager` v. 2.0.1,
+- [package]: Bump package to `automator` v.3.0.8.
+- [package]: Bump `node-persist-manager` to v.2.0.1,
+- [package]: Bump `eslint` to v.10.0.0.
+- [package]: Bump `matter.js` to v.0.16.9.
 
 ### Fixed
 
@@ -148,7 +155,7 @@ In short: you can safely ignore this message; it is a dependency warning, not a 
 - [workflows]: Updated all workflows to use Node.js 24.
 - [readme]: Updated readme files to clarify which Node.js version should be installed.
 - [docker]: Updated docker readme file to clarify which base image is used.
-- [matter.js]: Bump to matter.j v. 0.16.8.
+- [matter.js]: Bump to matter.js v. 0.16.8.
 - [frontend]: Bumped `frontend` version to v. 3.4.4.
 - [frontend]: Updated `frontend` dependencies.
 - [frontend]: Updated rendering of button actions in config editor.

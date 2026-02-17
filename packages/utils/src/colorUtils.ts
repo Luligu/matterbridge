@@ -4,7 +4,7 @@
  * @file colorUtils.ts
  * @author Luca Liguori
  * @created 2023-10-05
- * @version 1.3.0
+ * @version 1.3.1
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
@@ -214,8 +214,8 @@ export function rgbColorToHslColor(rgb: RGB): HSL {
 
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
-  let h = 0,
-    s = 0;
+  let h = 0;
+  let s: number;
   const l = (max + min) / 2;
 
   if (max === min) {

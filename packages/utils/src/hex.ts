@@ -4,7 +4,7 @@
  * @file hex.ts
  * @author Luca Liguori
  * @created 2025-05-06
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -138,6 +138,7 @@ export function pemToBuffer(pem: string, validate: boolean = false): Uint8Array 
     }
 
     if (trimmedLine.startsWith('-----END')) {
+      // eslint-disable-next-line no-useless-assignment
       inContent = false;
       break;
     }
@@ -201,14 +202,14 @@ export function pemToBuffer(pem: string, validate: boolean = false): Uint8Array 
         // If no specific type is detected, skip validation
       } catch (validationError) {
         // istanbul ignore next
-        throw new Error(`PEM validation failed: ${validationError instanceof Error ? validationError.message : String(validationError)}`);
+        throw new Error(`PEM validation failed: ${validationError instanceof Error ? validationError.message : String(validationError)}`, { cause: validationError });
       }
     }
 
     return result;
   } catch (error) {
     // istanbul ignore next
-    throw new Error(`Failed to decode base64 content: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Failed to decode base64 content: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
 }
 
@@ -266,6 +267,6 @@ export function extractPrivateKeyRaw(pemPrivateKey: string): Uint8Array {
     return new Uint8Array(rawPrivateKey);
   } catch (error) {
     // istanbul ignore next
-    throw new Error(`Failed to extract private key: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Failed to extract private key: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
 }

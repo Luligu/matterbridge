@@ -1278,7 +1278,7 @@ describe('PluginManager', () => {
     // Test default config file in plugin package path
     await deleteConfig();
     await fs.writeFile(defaultConfigFile, JSON.stringify(config, null, 2), 'utf8');
-    config = await plugins.loadConfig(plugin);
+    await plugins.loadConfig(plugin);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Config file ${configFileName} for plugin ${plg}${plugin.name}${db} does not exist, creating new config file...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded default config file ${defaultConfigFile} for plugin ${plg}${plugin.name}${db}.`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Created config file ${configFileName} for plugin ${plg}${plugin.name}${db}.`);
@@ -1830,7 +1830,7 @@ describe('PluginManager', () => {
     plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
     expect(plugin).not.toBeUndefined();
 
-    plugin = await plugins.shutdown(plugin as Plugin, 'Test with Jest');
+    await plugins.shutdown(plugin as Plugin, 'Test with Jest');
   });
 
   // Useless test to uninstall example plugins

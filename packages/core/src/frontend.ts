@@ -453,6 +453,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       let pfx: Buffer | undefined;
       let passphrase: string | undefined;
 
+      // eslint-disable-next-line no-useless-assignment
       let httpsServerOptions: HttpsServerOptions = {};
 
       const fs = await import('node:fs');
