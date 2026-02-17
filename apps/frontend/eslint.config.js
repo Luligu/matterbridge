@@ -23,15 +23,13 @@ const __dirname = path.dirname(__filename);
 export default defineConfig([
   {
     name: 'Global Ignores',
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'build/**'],
+    ignores: ['dist/', 'node_modules/', 'coverage/', 'build/'],
   },
   js.configs.recommended,
-  ...tseslint.configs.strict,
-  // Spread strict type-aware configs directly
-  // ...tseslint.configs.strictTypeChecked.map((config) => ({
-  //   ...config,
-  //   files: ['src/**/*.{ts,tsx}'],
-  // })),
+  // Comment out this line if you want to enable strict type-checked rules, but be aware that it may cause many errors until you fix all type issues in your codebase
+  tseslint.configs.strict,
+  // Uncomment this line to enable strict type-checked rules, but be aware that it may cause many errors until you fix all type issues in your codebase
+  // tseslint.configs.strictTypeChecked,
   // Prettier config disables formatting-related rules from ESLint
   prettierConfig,
   {
