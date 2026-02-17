@@ -23,22 +23,22 @@ export default defineConfig([
   {
     name: 'Global Ignores',
     ignores: [
-      '.cache',
-      'apps',
-      'build',
-      'coverage',
-      'dist',
-      'jest',
-      'node_modules',
-      'packages',
-      'screenshots',
-      'temp',
-      'vendor',
+      '.cache/**',
+      'apps/**',
+      'build/**',
+      'coverage/**',
+      'dist/**',
+      'jest/**',
+      'node_modules/**',
+      'packages/**',
+      'screenshots/**',
+      'temp/**',
+      'vendor/**',
       'vite.config.ts',
-      'chip',
-      'docs',
-      'systemd',
-      'reflector',
+      'chip/**',
+      'docs/**',
+      'systemd/**',
+      'reflector/**',
     ],
   },
   {
@@ -120,7 +120,7 @@ export default defineConfig([
   {
     name: 'Jest Test Files',
     files: ['**/*.spec.ts', '**/*.test.ts', 'test/**/*.ts'],
-    ignores: ['vitest'], // Ignore Vitest test files
+    ignores: ['vitest/**'], // Ignore Vitest test files
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
