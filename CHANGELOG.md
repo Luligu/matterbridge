@@ -71,7 +71,7 @@ These threads already run as a workers:
 
 ### Fixed
 
-- [frontend]: Fix possible issue with some browser in check authentication.
+- [frontend]: Fix possible issue with some browser in check authentication. Thanks Ludovic BOUÉ and k3067e3 (https://github.com/Luligu/matterbridge/issues/498).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
