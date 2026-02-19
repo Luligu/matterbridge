@@ -13,7 +13,7 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-logger';
 import { plg } from '@matterbridge/types';
 import type { ApiPlugin } from '@matterbridge/types';
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from './broadcastServer.js';
 
 import {
   flushAsync,
