@@ -13,7 +13,6 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-logger';
 import { plg } from '@matterbridge/types';
 import type { ApiPlugin } from '@matterbridge/types';
-import { BroadcastServer } from './broadcastServer.js';
 
 import {
   flushAsync,
@@ -30,6 +29,7 @@ import {
 } from '../../../packages/core/src/jestutils/jestHelpers.js';
 
 import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './checkUpdates.js';
+import { BroadcastServer } from './broadcastServer.js';
 
 // Mock selected functions from @matterbridge/utils
 jest.unstable_mockModule('@matterbridge/utils', () => ({
