@@ -24,6 +24,8 @@
 import http from 'node:http';
 import https from 'node:https';
 
+const DEFAULT_MB_HEALTH_URL = 'http://localhost:8283/health';
+
 /**
  * Checks the Matterbridge health endpoint.
  *
@@ -48,6 +50,7 @@ export function fetchHealth(url: string, timeoutMs: number): Promise<{ ok: boole
   return new Promise((resolve) => {
     const parsedUrl = new URL(url);
     const requestImpl = parsedUrl.protocol === 'https:' ? https : http;
+    const isHttps = parsedUrl.protocol === 'https:';
 
     const request = requestImpl.request(
       {
@@ -56,6 +59,7 @@ export function fetchHealth(url: string, timeoutMs: number): Promise<{ ok: boole
         port: parsedUrl.port,
         path: parsedUrl.pathname + parsedUrl.search,
         method: 'GET',
+        ...(isHttps ? { rejectUnauthorized: false } : {}),
         headers: {
           'cache-control': 'no-store',
           'accept': 'application/json',
@@ -140,10 +144,11 @@ export async function mbHealthCli(url: string, timeoutMs: number, exitFn: (code:
  * Default CLI entrypoint for `mb_health`.
  *
  * @param {(code: number) => never | void} exitFn Exit function (defaults to process.exit).
+ * @param {string} url Optional URL to fetch (defaults to http://localhost:8283/health).
  * @returns {Promise<void>} Resolves when done.
  */
-export async function mbHealthMain(exitFn: (code: number) => never | void = process.exit): Promise<void> {
-  await mbHealthCli('http://localhost:8283/health', 5000, exitFn);
+export async function mbHealthMain(exitFn: (code: number) => never | void = process.exit, url: string = DEFAULT_MB_HEALTH_URL): Promise<void> {
+  await mbHealthCli(url, 5000, exitFn);
 }
 
 /**
@@ -152,6 +157,6 @@ export async function mbHealthMain(exitFn: (code: number) => never | void = proc
  * ```dockerfile
  * # After installing the matterbridge package globally (so the `mb_health` bin is on PATH)
  * HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
- *   CMD mb_health || exit 1
+ *   CMD mb_health <http://localhost:8283/health> || exit 1
  * ```
  */
