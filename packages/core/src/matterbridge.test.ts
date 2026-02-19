@@ -476,6 +476,19 @@ describe('Matterbridge', () => {
       },
     ];
     expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(0);
+    sessionInfos = [
+      {
+        name: 'secure/64351',
+        nodeId: NodeId(16784206195868397986n),
+        peerNodeId: NodeId(1604858123872676291n),
+        fabric: undefined,
+        isPeerActive: false,
+        lastInteractionTimestamp: 1720035723121269,
+        lastActiveTimestamp: 1720035761223121,
+        numberOfActiveSubscriptions: 0,
+      },
+    ];
+    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(0);
   });
 
   test('getVendorIdName', () => {

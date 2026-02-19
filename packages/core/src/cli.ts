@@ -25,6 +25,7 @@
 /* eslint-disable no-console */
 /* eslint-disable n/no-process-exit */
 
+// istanbul ignore if -- Loader logs are not relevant for coverage
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli loaded.\u001B[40;0m');
 
 // AnsiLogger module

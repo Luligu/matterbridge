@@ -11,6 +11,7 @@ import * as endpoints from '@matter/node/endpoints';
 import * as devices from '@matter/node/devices';
 
 import {
+  DeviceTypeDefinition,
   // Utility device types
   rootNode,
   powerSource,
@@ -84,6 +85,7 @@ import {
   solarPower,
   batteryStorage,
   heatPump,
+  DeviceClasses,
 } from './matterbridgeDeviceTypes.js';
 import { setupTest } from './jestutils/jestHelpers.js';
 
@@ -209,4 +211,17 @@ describe('Matterbridge device types', () => {
       expectWithLog(`${name}.code`, device.code, def.deviceType);
     });
   }
+
+  test('DeviceTypeDefinition', () => {
+    const dt = DeviceTypeDefinition({
+      name: 'MA-rootNode',
+      code: 0x0016,
+      deviceClass: DeviceClasses.Node,
+      revision: 3,
+    });
+    expect(dt.name).toBe('MA-rootNode');
+    expect(dt.code).toBe(0x0016);
+    expect(dt.deviceClass).toBe(DeviceClasses.Node);
+    expect(dt.revision).toBe(3);
+  });
 });

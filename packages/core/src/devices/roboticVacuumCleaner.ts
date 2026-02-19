@@ -190,13 +190,8 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {RvcOperationalState.ErrorStateStruct} [operationalError] - The current operational error of the RvcOperationalState cluster. Defaults to NoError.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultRvcOperationalStateClusterServer(
-    phaseList: string[] | null = null,
-    currentPhase: number | null = null,
-    operationalStateList?: RvcOperationalState.OperationalStateStruct[],
-    operationalState?: RvcOperationalState.OperationalState,
-    operationalError?: RvcOperationalState.ErrorStateStruct,
-  ): this {
+  // prettier-ignore
+  createDefaultRvcOperationalStateClusterServer(phaseList: string[] | null = null, currentPhase: number | null = null, operationalStateList?: RvcOperationalState.OperationalStateStruct[], operationalState?: RvcOperationalState.OperationalState, operationalError?: RvcOperationalState.ErrorStateStruct): this {
     this.behaviors.require(MatterbridgeRvcOperationalStateServer, {
       phaseList,
       currentPhase,

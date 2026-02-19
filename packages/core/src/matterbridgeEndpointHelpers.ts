@@ -24,6 +24,7 @@
 
 /* eslint-disable jsdoc/reject-any-type */
 
+// istanbul ignore if -- Loader logs are not relevant for coverage
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpointHelpers loaded.\u001B[40;0m');
 

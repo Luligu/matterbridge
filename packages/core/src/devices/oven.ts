@@ -145,12 +145,8 @@ export class Oven extends MatterbridgeEndpoint {
    * For this derived cluster, only these pre-defined strings may be used in the PhaseList attribute:
    * "pre-heating", "pre-heated", and "cooling down".
    */
-  createDefaultOvenCavityOperationalStateClusterServer(
-    endpoint: MatterbridgeEndpoint,
-    operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped,
-    currentPhase?: number,
-    phaseList?: string[],
-  ): MatterbridgeEndpoint {
+  // prettier-ignore
+  createDefaultOvenCavityOperationalStateClusterServer(endpoint: MatterbridgeEndpoint, operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped, currentPhase?: number, phaseList?: string[]): MatterbridgeEndpoint {
     endpoint.behaviors.require(MatterbridgeOvenCavityOperationalStateServer, {
       phaseList: phaseList || null,
       currentPhase: currentPhase || null,

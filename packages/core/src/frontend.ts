@@ -22,7 +22,8 @@
  * limitations under the License.
  */
 
-/* eslint-disable-next-line no-console */ /* istanbul ignore next */
+// istanbul ignore if -- Loader logs are not relevant for coverage
+// eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mFrontend loaded.\u001B[40;0m');
 
 // Node modules
@@ -1468,12 +1469,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Get the clusters from the main endpoint
     endpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-      // istanbul ignore if cause is not reachable without the EveHistory cluster
-      if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName))
-        return;
-      // console.log(
-      //   `${idn}${endpoint.deviceName}${rs}${nf} => Cluster: ${CYAN}${clusterName} (0x${clusterId.toString(16).padStart(2, '0')})${nf} Attribute: ${CYAN}${attributeName} (0x${attributeId.toString(16).padStart(2, '0')})${nf} Value: ${YELLOW}${typeof attributeValue === 'object' ? stringify(attributeValue as object) : attributeValue}${nf}`,
-      // );
+      // prettier-ignore
+      if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
       clusters.push({
         endpoint: endpoint.number.toString(),
         number: endpoint.number,
@@ -1490,16 +1487,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Get the child endpoints
     const childEndpoints = endpoint.getChildEndpoints();
-    // if (childEndpoints.length === 0) {
-    // this.log.debug(`***getClusters: found ${childEndpoints.length} child endpoints for device ${endpoint.deviceName} plugin ${pluginName} and endpoint number ${endpointNumber}`);
-    // }
     childEndpoints.forEach((childEndpoint) => {
       // istanbul ignore if cause is not reachable: should never happen but ...
       if (!childEndpoint.maybeId || !childEndpoint.maybeNumber) {
         this.log.error(`getClusters: no child endpoint found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
         return;
       }
-      // this.log.debug(`***getClusters: getting clusters for child endpoint ${childEndpoint.id} of device ${endpoint.deviceName} plugin ${pluginName} endpoint number ${childEndpoint.number}`);
 
       // Get the device types of the child endpoint
       const deviceTypes: number[] = [];
@@ -1509,15 +1502,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       childEndpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
         if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-        // istanbul ignore if cause is not reachable without the EveHistory cluster
-        if (
-          clusterName === 'EveHistory' &&
-          ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)
-        )
-          return;
-        // console.log(
-        //   `${idn}${childEndpoint.deviceName}${rs}${nf} => Cluster: ${CYAN}${clusterName} (0x${clusterId.toString(16).padStart(2, '0')})${nf} Attribute: ${CYAN}${attributeName} (0x${attributeId.toString(16).padStart(2, '0')})${nf} Value: ${YELLOW}${typeof attributeValue === 'object' ? stringify(attributeValue as object) : attributeValue}${nf}`,
-        // );
+        // prettier-ignore
+        if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
         clusters.push({
           endpoint: childEndpoint.number.toString(),
           number: childEndpoint.number,
