@@ -455,6 +455,26 @@ describe('Matterbridge', () => {
       JSON.stringify(sessionInfos);
     }).toThrow();
     expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
+    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos)).toEqual([
+      {
+        fabric: {
+          fabricId: '456546212146567986',
+          fabricIndex: 2,
+          label: 'SmartThings Hub 0503',
+          nodeId: '1678420619586823323397986',
+          rootNodeId: '18446744060824623349729',
+          rootVendorId: 4362,
+          rootVendorName: '(SmartThings)',
+        },
+        isPeerActive: true,
+        lastActiveTimestamp: '1720035761223121',
+        lastInteractionTimestamp: '1720035723121269',
+        name: 'secure/64351',
+        nodeId: '16784206195868397986',
+        numberOfActiveSubscriptions: 0,
+        peerNodeId: '1604858123872676291',
+      },
+    ]);
     expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(450);
     sessionInfos = [
       {
@@ -469,7 +489,7 @@ describe('Matterbridge', () => {
           rootVendorId: VendorId(4362),
           label: 'SmartThings Hub 0503',
         },
-        isPeerActive: false,
+        isPeerActive: false, // isPeerActive false should cause the session to be filtered out
         lastInteractionTimestamp: 1720035723121269,
         lastActiveTimestamp: 1720035761223121,
         numberOfActiveSubscriptions: 0,
@@ -482,13 +502,24 @@ describe('Matterbridge', () => {
         nodeId: NodeId(16784206195868397986n),
         peerNodeId: NodeId(1604858123872676291n),
         fabric: undefined,
-        isPeerActive: false,
+        isPeerActive: true, // isPeerActive true should not cause the session to be filtered out
         lastInteractionTimestamp: 1720035723121269,
         lastActiveTimestamp: 1720035761223121,
         numberOfActiveSubscriptions: 0,
       },
     ];
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(0);
+    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
+    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos)).toEqual([
+      {
+        isPeerActive: true,
+        lastActiveTimestamp: '1720035761223121',
+        lastInteractionTimestamp: '1720035723121269',
+        name: 'secure/64351',
+        nodeId: '16784206195868397986',
+        numberOfActiveSubscriptions: 0,
+        peerNodeId: '1604858123872676291',
+      },
+    ]);
   });
 
   test('getVendorIdName', () => {

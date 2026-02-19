@@ -1085,6 +1085,7 @@ export async function addDevice(owner: ServerNode<ServerNode.RootEndpoint> | End
   expect(owner.lifecycle.isReady).toBeTruthy();
   expect(owner.construction.status).toBe(Lifecycle.Status.Active);
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
+  await flushAsync(undefined, undefined, pause);
 
   // istanbul ignore next
   try {

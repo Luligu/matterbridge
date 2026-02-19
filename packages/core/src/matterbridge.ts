@@ -490,9 +490,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Set the matterbridge root directory
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
     // Adjust the path for packages core dist directory or node_modules @matterbridge core dist directory
-    this.rootDirectory = currentFileDirectory.includes(path.join('packages', 'core'))
-      ? path.resolve(currentFileDirectory, '../', '../', '../')
-      : path.resolve(currentFileDirectory, '../', '../', '..', '../');
+    // prettier-ignore
+    this.rootDirectory = currentFileDirectory.includes(path.join('packages', 'core')) ? path.resolve(currentFileDirectory, '../', '../', '../') : path.resolve(currentFileDirectory, '../', '../', '..', '../');
 
     // Setup the matter environment with default values
     this.environment.vars.set('log.level', MatterLogLevel.INFO);
