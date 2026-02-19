@@ -158,9 +158,7 @@ COPY --from=builder \
   /matterbridge-eve-weather/*.tgz \
   ./
 
-RUN apt-get update && \
-  apt-get install -y --no-install-recommends curl && \
-  apt-get clean && \
+RUN \
   npm install --no-fund --no-audit --omit=dev --global *.tgz && \
   npm uninstall -g corepack && \
   npm cache clean --force && \
@@ -180,7 +178,8 @@ RUN apt-get update && \
 
 # Add Docker HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
-  CMD curl --fail http://localhost:8283/health || exit 1
+  #  CMD curl --fail http://localhost:8283/health || exit 1
+  CMD mb_health
 
 # Copy and execute the entrypoint script
 COPY ./docker/entrypoint.dev.sh ./

@@ -132,8 +132,5 @@
   "overrides": {
     "eslint": "10.0.0",
     "@eslint/js": "10.0.1"
-  },
-  "\\scripts": {
-    "deepClean": "npx shx rm -rf *.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .cache node_modules\\"
   }
 }

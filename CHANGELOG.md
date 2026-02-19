@@ -55,6 +55,7 @@ These threads already run as a workers:
 ### Breaking Changes
 
 - [Node.Js]: Consider to update all setups to Node.Js 24 that is now the LTS.
+- [docker]: Use mb_health instead of curl for HEALTHCHECK. This allows to save around 15MB on the image size. If you override the UI port or the protocol, update the CMD with mb_health https://localhost/health.
 
 ### Added
 
