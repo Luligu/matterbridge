@@ -1013,6 +1013,8 @@ export async function startServerNode(
 
   // Return early if createOnly is true
   if (createOnly) {
+    // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
+    await flushAsync(3, 3, 100);
     return [server, aggregator];
   }
 
@@ -1037,8 +1039,8 @@ export async function startServerNode(
   expect(aggregator.lifecycle.hasId).toBeTruthy();
   expect(aggregator.lifecycle.hasNumber).toBeTruthy();
 
-  // Ensure the queue is empty and pause 250ms
-  await flushAsync(3, 3, 10);
+  // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
+  await flushAsync(3, 3, 100);
 
   return [server, aggregator];
 }
@@ -1067,8 +1069,8 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();
 
-  // Ensure the queue is empty and pause 250ms
-  await flushAsync(3, 3, 10);
+  // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
+  await flushAsync(3, 3, 100);
 }
 
 /**

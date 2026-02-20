@@ -48,8 +48,8 @@ ARG VCS_REF
 ARG BUILD_DATE
 
 # ---- OCI standard labels (https://opencontainers.org/) ----
-LABEL org.opencontainers.image.title="matterbridge" \
-  org.opencontainers.image.description="Matterbridge plugin manager for Matter" \
+LABEL org.opencontainers.image.title="matterbridge:24-ubuntu-slim" \
+  org.opencontainers.image.description="Ubuntu 24.04.3 LTS (noble) with Node.js 24 from nodejs.org" \
   org.opencontainers.image.version=$VERSION \
   org.opencontainers.image.revision=$VCS_REF \
   org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \

@@ -37,7 +37,7 @@ The image (tag **s6-rc** 84 MB) includes only Matterbridge, using the latest rel
 
 ### Matterbridge docker base images
 
-The image (tag **24-ubuntu-slim** 86 MB) includes only `ubuntu:latest` -> Ubuntu 24.04.3 LTS (noble) with Node.js 24 from NodeSource. It is used to build the **ubuntu** image but can also be used to open a shell in ubuntu latest with node 24 (node doesn't publish node:24-ubuntu).
+The image (tag **24-ubuntu-slim** 86 MB) includes only `ubuntu:latest`: Ubuntu 24.04.3 LTS (noble) with Node.js 24. It is used to build the **ubuntu** image but can also be used to open a shell in ubuntu latest with node 24 (node doesn't publish node:24-ubuntu).
 
 ### Docker health check
 
@@ -51,7 +51,7 @@ How health checks work in different scenarios:
 You can manually check the health status:
 
 ```bash
-docker exec -it matterbridge curl -v http://localhost:8283/health
+docker exec -it matterbridge mb_health
 ```
 
 ### Create the Matterbridge directories first

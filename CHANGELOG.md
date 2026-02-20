@@ -50,7 +50,7 @@ These threads already run as a workers:
 - npm install;
 - ✅ check the global node_modules directory;
 
-## [3.5.5] - Dev branch
+## [3.5.5] - 2026-02-20
 
 ### Breaking Changes
 

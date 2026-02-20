@@ -142,15 +142,17 @@
 <li>npm install;</li>
 <li>✅ check the global node_modules directory;</li>
 </ul>
-<h2 id="355-dev-branch">[3.5.5] - Dev branch</h2>
+<h2 id="355-2026-02-20">[3.5.5] - 2026-02-20</h2>
 <h3 id="breaking-changes">Breaking Changes</h3>
 <ul>
 <li>[Node.Js]: Consider to update all setups to Node.Js 24 that is now the LTS.</li>
+<li>[docker]: Use mb_health instead of curl for HEALTHCHECK. This allows to save around 15MB on the image size. If you override the UI port or the protocol, update the CMD with mb_health <a href="https://localhost/health">https://localhost/health</a>.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[images]: Add OCI standard labels (<a href="https://opencontainers.org/">https://opencontainers.org/</a>) to docker pipelines.</li>
 <li>[frontend]: Add frontend publishing steps to publish workflow.</li>
+<li>[docker]: Add dockerVersion api.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>

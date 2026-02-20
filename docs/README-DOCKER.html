@@ -124,7 +124,7 @@
 <p>The image (tag <strong>alpine</strong> 58 MB) includes only Matterbridge, using the latest release published on npm. This image (<strong>for test and development only</strong>) is based on <code>node:24-alpine</code>. Plugins are not included in the image: they will be installed on first run.</p>
 <p>The image (tag <strong>s6-rc</strong> 84 MB) includes only Matterbridge, using the latest release published on npm. This image is based on <code>node:24-trixie-slim</code> and integrates the <code>s6-rc overlay</code> system. Plugins are not included in the image: they will be installed on first run. It is only used for the <a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Matterbridge Home Assistant Application</a>.</p>
 <h3 id="matterbridge-docker-base-images">Matterbridge docker base images</h3>
-<p>The image (tag <strong>24-ubuntu-slim</strong> 86 MB) includes only <code>ubuntu:latest</code> -&gt; Ubuntu 24.04.3 LTS (noble) with Node.js 24 from NodeSource. It is used to build the <strong>ubuntu</strong> image but can also be used to open a shell in ubuntu latest with node 24 (node doesn&#39;t publish node:24-ubuntu).</p>
+<p>The image (tag <strong>24-ubuntu-slim</strong> 86 MB) includes only <code>ubuntu:latest</code>: Ubuntu 24.04.3 LTS (noble) with Node.js 24. It is used to build the <strong>ubuntu</strong> image but can also be used to open a shell in ubuntu latest with node 24 (node doesn&#39;t publish node:24-ubuntu).</p>
 <h3 id="docker-health-check">Docker health check</h3>
 <p>All images include a health check.</p>
 <p>How health checks work in different scenarios:</p>
@@ -133,7 +133,7 @@
 <li>With <code>docker run</code>: the health check still runs, but the container will not restart automatically when it becomes unhealthy.</li>
 </ul>
 <p>You can manually check the health status:</p>
-<pre><code class="language-bash">docker exec -it matterbridge curl -v http://localhost:8283/health
+<pre><code class="language-bash">docker exec -it matterbridge mb_health
 </code></pre>
 <h3 id="create-the-matterbridge-directories-first">Create the Matterbridge directories first</h3>
 <p>This creates the required directories in your home directory (if they don&#39;t already exist):</p>
