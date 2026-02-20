@@ -50,6 +50,17 @@ These threads already run as a workers:
 - npm install;
 - ✅ check the global node_modules directory;
 
+## [3.5.6] - Dev branch
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Bump `eslint` to v.10.0.1.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.5.5] - 2026-02-20
 
 ### Breaking Changes
