@@ -10,9 +10,9 @@
 
 import os from 'node:os';
 
-import { BLUE, db, LogLevel } from 'node-ansi-logger';
 import { jest } from '@jest/globals';
 import { loggerDebugSpy, loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
+import { BLUE, db, LogLevel } from 'node-ansi-logger';
 
 import { Dgram } from './dgram.js';
 

@@ -28,26 +28,7 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Lifecycle } from '@matter/general';
-import { EndpointNumber } from '@matter/types';
-import {
-  BooleanState,
-  BooleanStateCluster,
-  Descriptor,
-  DescriptorCluster,
-  FixedLabel,
-  FlowMeasurement,
-  Groups,
-  Identify,
-  IlluminanceMeasurement,
-  OccupancySensing,
-  OnOff,
-  PressureMeasurement,
-  RelativeHumidityMeasurement,
-  ScenesManagement,
-  TemperatureMeasurement,
-  Thermostat,
-  UserLabel,
-} from '@matter/types/clusters';
+import { ActionContext } from '@matter/node';
 import {
   BooleanStateBehavior,
   BooleanStateServer,
@@ -68,10 +49,41 @@ import {
   ThermostatUserInterfaceConfigurationServer,
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
+import { EndpointNumber } from '@matter/types';
+import {
+  BooleanState,
+  BooleanStateCluster,
+  Descriptor,
+  DescriptorCluster,
+  FixedLabel,
+  FlowMeasurement,
+  Groups,
+  Identify,
+  IlluminanceMeasurement,
+  OccupancySensing,
+  OnOff,
+  PressureMeasurement,
+  RelativeHumidityMeasurement,
+  ScenesManagement,
+  TemperatureMeasurement,
+  Thermostat,
+  UserLabel,
+} from '@matter/types/clusters';
 import { BLUE, CYAN, db, er, hk, LogLevel, or } from 'node-ansi-logger';
-import { ActionContext } from '@matter/node';
 
-import { assertMatterbridgeEndpoint, MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import {
+  addDevice,
+  aggregator,
+  createMatterbridgeEnvironment,
+  destroyMatterbridgeEnvironment,
+  flushAsync,
+  loggerDebugSpy,
+  loggerLogSpy,
+  matterbridge,
+  setupTest,
+  startMatterbridgeEnvironment,
+  stopMatterbridgeEnvironment,
+} from './jestutils/jestHelpers.js';
 import {
   airQualitySensor,
   bridgedNode,
@@ -92,20 +104,8 @@ import {
   temperatureSensor,
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
+import { assertMatterbridgeEndpoint, MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters, featuresFor, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
-import {
-  addDevice,
-  aggregator,
-  createMatterbridgeEnvironment,
-  destroyMatterbridgeEnvironment,
-  flushAsync,
-  loggerDebugSpy,
-  loggerLogSpy,
-  matterbridge,
-  setupTest,
-  startMatterbridgeEnvironment,
-  stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

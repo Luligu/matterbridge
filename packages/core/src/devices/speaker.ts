@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
-// matter clusters
-import { OnOff } from '@matter/types/clusters/on-off';
+// Imports from @matter
 import { LevelControl } from '@matter/types/clusters/level-control';
+import { OnOff } from '@matter/types/clusters/on-off';
 
 // matterbridge
 import { speakerDevice } from '../matterbridgeDeviceTypes.js';

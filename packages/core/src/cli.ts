@@ -28,14 +28,14 @@
 // istanbul ignore if -- Loader logs are not relevant for coverage
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli loaded.\u001B[40;0m');
 
+// @matterbridge
+import { formatBytes, formatUptime, hasAnyParameter, hasParameter, inspectError, Inspector, Tracker, TrackerSnapshot } from '@matterbridge/utils';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-// @matterbridge
-import { formatBytes, formatUptime, hasAnyParameter, hasParameter, Inspector, inspectError, Tracker, TrackerSnapshot } from '@matterbridge/utils';
 
 // Cli
 import { cliEmitter } from './cliEmitter.js';
-// Matterbridge
+// matterbridge
 import type { Matterbridge } from './matterbridge.js';
 
 export let instance: Matterbridge | undefined;

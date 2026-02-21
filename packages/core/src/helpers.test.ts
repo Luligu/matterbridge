@@ -25,9 +25,7 @@ import { Logger } from '@matter/general';
 import { Endpoint } from '@matter/node';
 import { BridgedDeviceBasicInformationServer, OnOffServer } from '@matter/node/behaviors';
 
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   aggregator,
   consoleLogSpy,
@@ -40,6 +38,8 @@ import {
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 
 const shutdownProcessSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess').mockImplementation(async () => {
   console.log('Mocked shutdownProcess called');

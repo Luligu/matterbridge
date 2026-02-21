@@ -76,7 +76,7 @@
     "test:vitest:watch": "vitest --reporter verbose",
     "test:vitest:verbose": "vitest run --reporter verbose",
     "test:vitest:coverage": "vitest run --reporter verbose --coverage",
-    "deepClean": "npx shx rm -rf *.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .cache node_modules",
+    "deepClean": "npx shx rm -rf *.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .cache/* .cache/.[!.]* .cache/..?* node_modules/* node_modules/.[!.]* node_modules/..?*",
     "reset": "npm run deepClean && npm install --no-fund --no-audit && npm run build",
     "softReset": "npm install --no-fund --no-audit && npm run build",
     "lint": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 .",
@@ -87,17 +87,20 @@
     "format": "prettier --cache --cache-location .cache/.prettiercache --write .",
     "format:check": "prettier --cache --cache-location .cache/.prettiercache --check .",
     "checkDependencies": "npx npm-check-updates",
-    "updateDependencies": "npx npm-check-updates -u",
+    "updateDependencies": "npx npm-check-updates -u && npm run reset",
     "automator": "node scripts/runAutomator.mjs --monorepo-package",
     "runMeBeforePublish": "npm run cleanBuild && npm run lint && npm run format && npm run test:coverage && npm run build",
     "prepublishOnly": "npm pkg delete devDependencies scripts",
     "install:dependencies": "npm install --no-fund --no-audit --save-exact node-ansi-logger",
     "install:scripts": "npm install --no-fund --no-audit --save-dev --save-exact npm-check-updates shx cross-env",
     "install:typescript": "npm install --no-fund --no-audit --save-dev --save-exact typescript @types/node",
-    "install:eslint": "npm install --no-fund --no-audit --save-dev --save-exact eslint @eslint/js typescript-eslint eslint-plugin-import eslint-plugin-n eslint-plugin-promise eslint-plugin-jsdoc",
+    "install:eslint": "npm pkg delete overrides.eslint overrides.@eslint/js && npm install --no-fund --no-audit --save-dev --save-exact eslint@latest @eslint/js@latest && npm pkg set \"overrides.eslint=10.0.1\" && npm pkg set \"overrides.@eslint/js=10.0.1\" && npm install --no-fund --no-audit --save-dev --save-exact typescript-eslint eslint-plugin-simple-import-sort eslint-plugin-n eslint-plugin-promise eslint-plugin-jsdoc",
     "install:prettier": "npm install --no-fund --no-audit --save-dev --save-exact prettier eslint-config-prettier eslint-plugin-prettier",
     "install:jest": "npm install --no-fund --no-audit --save-dev --save-exact jest ts-jest @types/jest @jest/globals eslint-plugin-jest",
     "install:vitest": "npm install --no-fund --no-audit --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin"
+  },
+  "dependencies": {
+    "node-ansi-logger": "3.2.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -109,12 +112,12 @@
     "cross-env": "10.1.0",
     "eslint": "10.0.1",
     "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest": "29.15.0",
     "eslint-plugin-jsdoc": "62.7.0",
     "eslint-plugin-n": "17.24.0",
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-promise": "7.2.1",
+    "eslint-plugin-simple-import-sort": "12.1.1",
     "jest": "30.2.0",
     "npm-check-updates": "19.4.1",
     "prettier": "3.8.1",
@@ -123,9 +126,6 @@
     "typescript": "5.9.3",
     "typescript-eslint": "8.56.0",
     "vitest": "4.0.18"
-  },
-  "dependencies": {
-    "node-ansi-logger": "3.2.0"
   },
   "overrides": {
     "eslint": "10.0.1",

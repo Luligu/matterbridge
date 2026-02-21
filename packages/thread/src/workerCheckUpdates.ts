@@ -22,14 +22,14 @@
  * limitations under the License.
  */
 
-import { threadId, isMainThread, parentPort, workerData } from 'node:worker_threads';
+import { isMainThread, parentPort, threadId, workerData } from 'node:worker_threads';
 
-import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 import { hasParameter, inspectError } from '@matterbridge/utils';
+import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 
+import { BroadcastServer } from './broadcastServer.js';
 import { checkUpdates } from './checkUpdates.js';
 import { logWorkerInfo, parentLog, parentPost, threadLogger } from './worker.js';
-import { BroadcastServer } from './broadcastServer.js';
 
 const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-worker') || hasParameter('verbose-worker');
 const verbose = hasParameter('verbose') || hasParameter('verbose-worker');

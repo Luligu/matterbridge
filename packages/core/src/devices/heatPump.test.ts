@@ -8,18 +8,17 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 // @matter
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
-import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
-import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
-import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 import { heatPump } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { HeatPump } from './heatPump.js';
 
 // Setup the test environment

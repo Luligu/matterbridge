@@ -8,15 +8,13 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
 // @matter
 import { PositionTag } from '@matter/node';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors';
 import { Identify, OnOff, PowerSource, RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters';
+import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import {
   addDevice,
   aggregator,
@@ -29,7 +27,8 @@ import {
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
 import { refrigerator } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from './refrigerator.js';
 
 // Setup the test environment

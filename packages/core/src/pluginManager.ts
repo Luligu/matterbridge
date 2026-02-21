@@ -32,26 +32,26 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // Node.js import
 import EventEmitter from 'node:events';
 
-// AnsiLogger
-import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr, debugStringify, CYAN } from 'node-ansi-logger';
-// NodeStorage
-import type { NodeStorage } from 'node-persist-manager';
 // @matter
-import type { ServerNode, Endpoint as EndpointNode } from '@matter/node';
 import type { StorageContext } from '@matter/general';
+import type { Endpoint as EndpointNode, ServerNode } from '@matter/node';
 import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread';
-import { hasParameter, inspectError, logError } from '@matterbridge/utils';
-import { plg, typ } from '@matterbridge/types';
 import type { ApiPlugin, PlatformConfig, PlatformMatterbridge, PlatformSchema, PluginName, StoragePlugin, WorkerMessage } from '@matterbridge/types';
+import { plg, typ } from '@matterbridge/types';
+import { hasParameter, inspectError, logError } from '@matterbridge/utils';
+// AnsiLogger
+import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
+// NodeStorage
+import type { NodeStorage } from 'node-persist-manager';
 
-// Matterbridge
+// matterbridge
 import type { Matterbridge } from './matterbridge.js';
-import { assertMatterbridgePlatform, type MatterbridgePlatform } from './matterbridgePlatform.js';
 import { isMatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
 import { isMatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { assertMatterbridgePlatform, type MatterbridgePlatform } from './matterbridgePlatform.js';
 
 /** Define an interface for matterbridge */
 export interface Plugin extends ApiPlugin {

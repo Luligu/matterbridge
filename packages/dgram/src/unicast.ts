@@ -22,13 +22,13 @@
  */
 
 // Node.js imports
-import { AddressInfo } from 'node:net';
 import { RemoteInfo } from 'node:dgram';
+import { AddressInfo } from 'node:net';
 
 // AnsiLogger imports
 import { BLUE, db } from 'node-ansi-logger';
 
-// Net imports
+// matterbridge
 import { Dgram } from './dgram.js';
 
 /**

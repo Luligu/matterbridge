@@ -27,8 +27,8 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli history loaded.\u001B[40;0m');
 
 import { writeFileSync } from 'node:fs';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
 
 import { Tracker, TrackerSnapshot } from '@matterbridge/utils';
 

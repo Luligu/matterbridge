@@ -27,7 +27,6 @@ import { Semtag } from '@matter/types';
 // Matterbridge
 import { cookSurface, cooktop, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-
 import { createLevelTemperatureControlClusterServer } from './temperatureControl.js';
 
 export class Cooktop extends MatterbridgeEndpoint {

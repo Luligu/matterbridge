@@ -25,47 +25,6 @@ process.argv = [
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { Lifecycle } from '@matter/general';
-import {
-  AirQuality,
-  BasicInformation,
-  BooleanState,
-  BooleanStateConfiguration,
-  BridgedDeviceBasicInformation,
-  ColorControl,
-  DoorLock,
-  ElectricalEnergyMeasurement,
-  ElectricalPowerMeasurement,
-  FanControl,
-  FlowMeasurement,
-  Groups,
-  Identify,
-  IlluminanceMeasurement,
-  LevelControl,
-  ModeSelect,
-  OccupancySensing,
-  OnOff,
-  PowerSource,
-  PowerTopology,
-  PumpConfigurationAndControl,
-  PressureMeasurement,
-  RelativeHumidityMeasurement,
-  SmokeCoAlarm,
-  Switch,
-  TemperatureMeasurement,
-  Thermostat,
-  ValveConfigurationAndControl,
-  WindowCovering,
-  ThermostatUserInterfaceConfiguration,
-  HepaFilterMonitoring,
-  ActivatedCarbonFilterMonitoring,
-  ResourceMonitoring,
-  ScenesManagement,
-  UserLabel,
-  FixedLabel,
-  DeviceEnergyManagement,
-  DeviceEnergyManagementMode,
-} from '@matter/types/clusters';
 import {
   AirQualityServer,
   BooleanStateServer,
@@ -78,16 +37,66 @@ import {
   NitrogenDioxideConcentrationMeasurementServer,
   OccupancySensingServer,
   OzoneConcentrationMeasurementServer,
-  Pm10ConcentrationMeasurementServer,
   Pm1ConcentrationMeasurementServer,
+  Pm10ConcentrationMeasurementServer,
   Pm25ConcentrationMeasurementServer,
   RadonConcentrationMeasurementServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
+import {
+  ActivatedCarbonFilterMonitoring,
+  AirQuality,
+  BasicInformation,
+  BooleanState,
+  BooleanStateConfiguration,
+  BridgedDeviceBasicInformation,
+  ColorControl,
+  DeviceEnergyManagement,
+  DeviceEnergyManagementMode,
+  DoorLock,
+  ElectricalEnergyMeasurement,
+  ElectricalPowerMeasurement,
+  FanControl,
+  FixedLabel,
+  FlowMeasurement,
+  Groups,
+  HepaFilterMonitoring,
+  Identify,
+  IlluminanceMeasurement,
+  LevelControl,
+  ModeSelect,
+  OccupancySensing,
+  OnOff,
+  PowerSource,
+  PowerTopology,
+  PressureMeasurement,
+  PumpConfigurationAndControl,
+  RelativeHumidityMeasurement,
+  ResourceMonitoring,
+  ScenesManagement,
+  SmokeCoAlarm,
+  Switch,
+  TemperatureMeasurement,
+  Thermostat,
+  ThermostatUserInterfaceConfiguration,
+  UserLabel,
+  ValveConfigurationAndControl,
+  WindowCovering,
+} from '@matter/types/clusters';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import {
+  addDevice,
+  aggregator,
+  createMatterbridgeEnvironment,
+  destroyMatterbridgeEnvironment,
+  flushAsync,
+  loggerLogSpy,
+  matterbridge,
+  setupTest,
+  startMatterbridgeEnvironment,
+  stopMatterbridgeEnvironment,
+} from './jestutils/jestHelpers.js';
 import {
   airPurifier,
   airQualitySensor,
@@ -114,6 +123,7 @@ import {
   waterLeakDetector,
   waterValve,
 } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   capitalizeFirstLetter,
   featuresFor,
@@ -123,24 +133,6 @@ import {
   lowercaseFirstLetter,
   updateAttribute,
 } from './matterbridgeEndpointHelpers.js';
-import {
-  addDevice,
-  aggregator,
-  assertAllEndpointNumbersPersisted,
-  closeMdnsInstance,
-  createMatterbridgeEnvironment,
-  createTestEnvironment,
-  destroyInstance,
-  destroyMatterbridgeEnvironment,
-  flushAllEndpointNumberPersistence,
-  flushAsync,
-  loggerLogSpy,
-  matterbridge,
-  setDebug,
-  setupTest,
-  startMatterbridgeEnvironment,
-  stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

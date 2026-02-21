@@ -21,24 +21,24 @@
  * limitations under the License.
  */
 
-// Matter.js
-import { AreaNamespaceTag } from '@matter/node';
+// Imports from @matter
 import { MaybePromise } from '@matter/general';
-import { PowerSource } from '@matter/types/clusters/power-source';
-import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
-import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
-import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
-import { ServiceArea } from '@matter/types/clusters/service-area';
+import { AreaNamespaceTag } from '@matter/node';
+import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
+import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
+import { RvcRunModeServer } from '@matter/node/behaviors/rvc-run-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OperationalState } from '@matter/types/clusters/operational-state';
-import { RvcRunModeServer } from '@matter/node/behaviors/rvc-run-mode';
-import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
-import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
+import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
+import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
+import { ServiceArea } from '@matter/types/clusters/service-area';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { powerSource, roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeServer, MatterbridgeServiceAreaServer } from '../matterbridgeBehaviors.js';
+import { powerSource, roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
   /**

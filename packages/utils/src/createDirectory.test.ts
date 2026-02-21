@@ -2,12 +2,12 @@
 
 const NAME = 'CreateDirectory';
 
-import path from 'node:path';
 import fs from 'node:fs';
+import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { createDirectory } from './createDirectory.js';
 

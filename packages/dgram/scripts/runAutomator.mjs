@@ -1,8 +1,8 @@
 /* eslint-disable n/no-process-exit */
+import { spawnSync } from 'node:child_process';
+import { access } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { access } from 'node:fs/promises';
-import { spawnSync } from 'node:child_process';
 
 const argv = process.argv.slice(2);
 

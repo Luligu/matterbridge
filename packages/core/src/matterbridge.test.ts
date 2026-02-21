@@ -34,23 +34,23 @@ jest.unstable_mockModule('@matterbridge/thread', () => ({
 const workerModule = await import('@matterbridge/thread');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import fs from 'node:fs';
 
 import { jest } from '@jest/globals';
-import { LogLevel as MatterLogLevel, Logger } from '@matter/general';
-import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types';
+import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { SessionsBehavior } from '@matter/node';
 import { ExposedFabricInformation } from '@matter/protocol';
-import { LogLevel, nf } from 'node-ansi-logger';
-import { getParameter, hasParameter } from '@matterbridge/utils';
-import { plg } from '@matterbridge/types';
+import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types';
 import { BroadcastServer } from '@matterbridge/thread';
+import { plg } from '@matterbridge/types';
+import { getParameter, hasParameter } from '@matterbridge/utils';
+import { LogLevel, nf } from 'node-ansi-logger';
 
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 
 // Mock BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);

@@ -22,13 +22,13 @@
  * limitations under the License.
  */
 
+// @matter
+import type { EndpointNumber, FabricIndex, Semtag, VendorId } from '@matter/types';
+import type { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
 // AnsiLogger
 import type { LogLevel } from 'node-ansi-logger';
-// @matter
-import type { FabricIndex, VendorId, EndpointNumber, Semtag } from '@matter/types';
-import type { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
 
-// Matterbridge
+// matterbridge
 import type { PlatformConfig, PlatformSchema } from './matterbridgePlatformTypes.js';
 
 // Default colors

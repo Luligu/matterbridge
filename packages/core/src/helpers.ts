@@ -27,20 +27,21 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridge helpers loaded.\u001B[40;0m');
 
 // @matter module
-import { OnOff } from '@matter/types/clusters/on-off';
 import { Endpoint } from '@matter/node';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
-import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
+import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { OnOff } from '@matter/types/clusters/on-off';
 import { VendorId } from '@matter/types/datatype';
-// Matterbridge
+// @matterbridge
 import { hasParameter } from '@matterbridge/utils';
 
+// matterbridge
 import { Matterbridge } from './matterbridge.js';
 
 /**

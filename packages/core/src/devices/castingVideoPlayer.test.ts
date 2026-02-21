@@ -8,21 +8,18 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
 // @matter
-import { MediaPlayback } from '@matter/types/clusters/media-playback';
-import { MediaPlaybackServer } from '@matter/node/behaviors/media-playback';
-import { KeypadInputServer } from '@matter/node/behaviors/keypad-input';
-import { PowerSource } from '@matter/types/clusters/power-source';
-import { OnOff } from '@matter/types/clusters/on-off';
-import { KeypadInput } from '@matter/types/clusters/keypad-input';
-import { ContentLauncher } from '@matter/types/clusters/content-launcher';
 import { ContentLauncherServer } from '@matter/node/behaviors/content-launcher';
+import { KeypadInputServer } from '@matter/node/behaviors/keypad-input';
+import { MediaPlaybackServer } from '@matter/node/behaviors/media-playback';
+import { ContentLauncher } from '@matter/types/clusters/content-launcher';
+import { KeypadInput } from '@matter/types/clusters/keypad-input';
+import { MediaPlayback } from '@matter/types/clusters/media-playback';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
-import { castingVideoPlayer } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import {
   addDevice,
   aggregator,
@@ -35,7 +32,9 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-
+import { castingVideoPlayer } from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { CastingVideoPlayer } from './castingVideoPlayer.js';
 
 // Setup the test environment

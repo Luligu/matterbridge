@@ -8,12 +8,12 @@
  * @copyright 2025, 2026, 2027 Luca Liguori.
  */
 
-import os from 'node:os';
 import { AddressInfo } from 'node:net';
+import os from 'node:os';
 
-import { CYAN, LogLevel, nf } from 'node-ansi-logger';
 import { jest } from '@jest/globals';
 import { loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
+import { CYAN, LogLevel, nf } from 'node-ansi-logger';
 
 import { Dgram } from './dgram.js';
 import { Unicast } from './unicast.js';

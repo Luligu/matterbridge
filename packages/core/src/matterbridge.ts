@@ -26,76 +26,38 @@
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridge loaded.\u001B[40;0m');
 
+// @matter
+import '@matter/nodejs'; // Set up Node.js environment for matter.js
+
 // Node.js modules
+import EventEmitter from 'node:events';
+import fs, { unlinkSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import fs, { unlinkSync } from 'node:fs';
-import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
-// AnsiLogger module
-import {
-  AnsiLogger,
-  TimestampFormat,
-  LogLevel,
-  UNDERLINE,
-  UNDERLINEOFF,
-  db,
-  debugStringify,
-  BRIGHT,
-  RESET,
-  er,
-  nf,
-  rs,
-  wr,
-  RED,
-  GREEN,
-  zb,
-  CYAN,
-  nt,
-  BLUE,
-  or,
-} from 'node-ansi-logger';
-// NodeStorage module
-import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
-import '@matter/nodejs'; // Set up Node.js environment for matter.js
 import {
-  Logger,
-  Diagnostic,
-  LogLevel as MatterLogLevel,
-  LogFormat as MatterLogFormat,
-  UINT32_MAX,
-  UINT16_MAX,
   Crypto,
+  Diagnostic,
   Environment,
+  LogFormat as MatterLogFormat,
+  Logger,
+  LogLevel as MatterLogLevel,
   StorageContext,
   StorageManager,
   StorageService,
+  UINT16_MAX,
+  UINT32_MAX,
 } from '@matter/general';
-import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
 import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
-import { DeviceTypeId, VendorId } from '@matter/types/datatype';
-import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { AggregatorEndpoint } from '@matter/node/endpoints';
+import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
+import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
-import {
-  copyDirectory,
-  createDirectory,
-  formatBytes,
-  formatPercent,
-  formatUptime,
-  getIntParameter,
-  getParameter,
-  hasParameter,
-  isValidNumber,
-  isValidObject,
-  isValidString,
-  parseVersionString,
-  excludedInterfaceNamePattern,
-} from '@matterbridge/utils';
-import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
 import type {
   ApiMatter,
   MaybePromise,
@@ -106,15 +68,55 @@ import type {
   SystemInformation,
   WorkerMessage,
 } from '@matterbridge/types';
-import { BroadcastServer } from '@matterbridge/thread';
+import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import {
+  copyDirectory,
+  createDirectory,
+  excludedInterfaceNamePattern,
+  formatBytes,
+  formatPercent,
+  formatUptime,
+  getIntParameter,
+  getParameter,
+  hasParameter,
+  isValidNumber,
+  isValidObject,
+  isValidString,
+  parseVersionString,
+} from '@matterbridge/utils';
+// AnsiLogger module
+import {
+  AnsiLogger,
+  BLUE,
+  BRIGHT,
+  CYAN,
+  db,
+  debugStringify,
+  er,
+  GREEN,
+  LogLevel,
+  nf,
+  nt,
+  or,
+  RED,
+  RESET,
+  rs,
+  TimestampFormat,
+  UNDERLINE,
+  UNDERLINEOFF,
+  wr,
+  zb,
+} from 'node-ansi-logger';
+// NodeStorage module
+import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
-// Matterbridge
-import { Plugin, PluginManager } from './pluginManager.js';
+// matterbridge
 import { DeviceManager } from './deviceManager.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
+import { bridge } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { Plugin, PluginManager } from './pluginManager.js';
 
 /**
  * Represents the Matterbridge events.

@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-import { hasParameter } from '@matterbridge/utils';
 import { BroadcastServer } from '@matterbridge/thread';
+import { hasParameter } from '@matterbridge/utils';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 /**
  * Spawns a child process with the given command and arguments.

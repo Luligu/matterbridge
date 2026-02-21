@@ -22,14 +22,14 @@
  * limitations under the License.
  */
 
-import { isMainThread, parentPort, threadId, Worker, workerData, WorkerOptions } from 'node:worker_threads';
-import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { inspect } from 'node:util';
+import { isMainThread, parentPort, threadId, Worker, workerData, WorkerOptions } from 'node:worker_threads';
 
-import { AnsiLogger, debugStringify, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
-import { hasParameter } from '@matterbridge/utils';
 import type { ParentPortMessage } from '@matterbridge/types';
+import { hasParameter } from '@matterbridge/utils';
+import { AnsiLogger, debugStringify, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 
 const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-worker') || hasParameter('verbose-worker');
 const verbose = hasParameter('verbose') || hasParameter('verbose-worker');

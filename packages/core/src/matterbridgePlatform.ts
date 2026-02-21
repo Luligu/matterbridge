@@ -29,28 +29,28 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // Node.js modules
 import path from 'node:path';
 
+// Matter
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { Descriptor } from '@matter/types/clusters/descriptor';
+import { EndpointNumber } from '@matter/types/datatype';
+// @matterbridge
+import { BroadcastServer } from '@matterbridge/thread';
+import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
+import { hasParameter, isValidArray, isValidObject, isValidString } from '@matterbridge/utils';
 // Node AnsiLogger module
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
-// Matter
-import { EndpointNumber } from '@matter/types/datatype';
-import { Descriptor } from '@matter/types/clusters/descriptor';
-import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
-// @matterbridge
-import { hasParameter, isValidArray, isValidObject, isValidString } from '@matterbridge/utils';
-import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
-import { BroadcastServer } from '@matterbridge/thread';
 
-// Matterbridge
+// matterbridge
+import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { assertMatterbridgeEndpoint, MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
-import { bridgedNode } from './matterbridgeDeviceTypes.js';
 
 // Module-private brand
 const MATTERBRIDGE_PLATFORM_BRAND = Symbol('MatterbridgePlatform.brand');
 
-export type { PlatformConfig, PlatformConfigValue, PlatformSchemaValue, PlatformSchema, PlatformMatterbridge } from '@matterbridge/types';
+export type { PlatformConfig, PlatformConfigValue, PlatformMatterbridge, PlatformSchema, PlatformSchemaValue } from '@matterbridge/types';
 
 /**
  * Type guard to check whether a value is a MatterbridgePlatform instance.

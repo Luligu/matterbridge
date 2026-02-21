@@ -22,48 +22,51 @@
  * limitations under the License.
  */
 
-// Node modules
-import path from 'node:path';
-import fs from 'node:fs';
-import EventEmitter from 'node:events';
+// @matter
+import '@matter/nodejs';
 
+// Node modules
+import EventEmitter from 'node:events';
+import fs from 'node:fs';
+import path from 'node:path';
+
+// @matter
+import {
+  Diagnostic,
+  Environment,
+  LogFormat as MatterLogFormat,
+  Logger,
+  LogLevel as MatterLogLevel,
+  StorageContext,
+  StorageManager,
+  StorageService,
+  UINT16_MAX,
+  UINT32_MAX,
+} from '@matter/general';
+import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { DeviceCertification, ExposedFabricInformation, MdnsService } from '@matter/protocol';
+import { DeviceTypeId, VendorId } from '@matter/types';
+// @matterbridge
+import { BroadcastServer } from '@matterbridge/thread';
+import type { ApiMatter, PluginName, SanitizedExposedFabricInformation, SanitizedSession, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
+import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
+import { copyDirectory, getIntParameter, getParameter, hasParameter, inspectError, isValidNumber, isValidString, parseVersionString, wait, withTimeout } from '@matterbridge/utils';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, or, TimestampFormat, zb } from 'node-ansi-logger';
 // Node persist manager module
 import { NodeStorageManager } from 'node-persist-manager';
-// @matter
-import '@matter/nodejs';
-import {
-  Logger,
-  Diagnostic,
-  LogLevel as MatterLogLevel,
-  LogFormat as MatterLogFormat,
-  StorageContext,
-  StorageManager,
-  StorageService,
-  UINT32_MAX,
-  UINT16_MAX,
-  Environment,
-} from '@matter/general';
-import { DeviceCertification, ExposedFabricInformation, MdnsService } from '@matter/protocol';
-import { VendorId, DeviceTypeId } from '@matter/types';
-import { ServerNode, Endpoint, SessionsBehavior } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
-import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
-// Matterbridge
-import { copyDirectory, getIntParameter, getParameter, hasParameter, inspectError, isValidNumber, isValidString, parseVersionString, wait, withTimeout } from '@matterbridge/utils';
-import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, plg, NODE_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE } from '@matterbridge/types';
-import type { ApiMatter, PluginName, SanitizedExposedFabricInformation, SanitizedSession, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
-import { BroadcastServer } from '@matterbridge/thread';
 
-import type { Matterbridge } from './matterbridge.js';
-import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge } from './matterbridgeDeviceTypes.js';
+// matterbridge
 import { toBaseDevice } from './deviceManager.js';
-import { Plugin, PluginManager } from './pluginManager.js';
-import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { addVirtualDevice } from './helpers.js';
+import type { Matterbridge } from './matterbridge.js';
+import { bridge } from './matterbridgeDeviceTypes.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { MatterbridgePlatform } from './matterbridgePlatform.js';
+import { Plugin, PluginManager } from './pluginManager.js';
 
 /**
  * Represents the Matter events.

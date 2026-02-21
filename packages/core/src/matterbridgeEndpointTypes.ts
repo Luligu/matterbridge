@@ -27,12 +27,13 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpointTypes loaded.\u001B[40;0m');
 
 // @matter
-import { Semtag } from '@matter/types/globals';
-import { ClusterId, EndpointNumber } from '@matter/types/datatype';
 import { HandlerFunction } from '@matter/general';
+import { ClusterId, EndpointNumber } from '@matter/types/datatype';
+import { Semtag } from '@matter/types/globals';
 
-import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+// matterbridge
 import type { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

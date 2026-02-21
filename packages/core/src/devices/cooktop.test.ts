@@ -13,10 +13,9 @@ import { PositionTag } from '@matter/node';
 import { Identify, OnOff, PowerSource, TemperatureControl, TemperatureMeasurement } from '@matter/types/clusters';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 import { cooktop } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { Cooktop } from './cooktop.js';
 
 // Setup the test environment

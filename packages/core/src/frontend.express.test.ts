@@ -25,20 +25,20 @@ process.argv = [
   '3860',
 ];
 
-import http from 'node:http';
-import path from 'node:path';
 import fs from 'node:fs/promises';
+import http from 'node:http';
 import os from 'node:os';
+import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
-import { waiter } from '@matterbridge/utils';
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_LOGGER_FILE, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE } from '@matterbridge/types';
+import { waiter } from '@matterbridge/utils';
+import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
 import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { Matterbridge } from './matterbridge.js';
 
 // Mock BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);

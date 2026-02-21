@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
-import { vi } from 'vitest';
 import { LogLevel } from 'node-ansi-logger';
+import { vi } from 'vitest';
 
 import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, log, loggerLogSpy, setDebug, setupTest } from '../src/vitestHelpers.js';
 

@@ -9,12 +9,11 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 // @matter
-import { OnOff, LevelControl } from '@matter/types/clusters';
+import { LevelControl, OnOff } from '@matter/types/clusters';
 
-// helpers
+// matterbridge
 import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 import { speakerDevice } from '../matterbridgeDeviceTypes.js';
-
 import { Speaker } from './speaker.js';
 
 // Setup the test environment

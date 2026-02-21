@@ -1,5 +1,7 @@
 // src/matterbridgeDeviceTypes.requirements.test.ts
 
+/* eslint-disable simple-import-sort/imports */
+
 const NAME = 'MatterbridgeDevicetypesRequirements';
 const HOMEDIR = path.join('jest', NAME);
 

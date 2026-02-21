@@ -13,6 +13,7 @@
  * - Print tag/title/description and pause for user confirmation before creating
  */
 
+import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -20,7 +21,6 @@ import process from 'node:process';
 // eslint-disable-next-line n/no-unsupported-features/node-builtins
 import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

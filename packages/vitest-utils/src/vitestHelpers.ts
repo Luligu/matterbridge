@@ -24,9 +24,8 @@
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
-import type { MockInstance } from 'vitest';
-// Imports from node-ansi-logger
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import type { MockInstance } from 'vitest';
 
 export const originalProcessArgv = Object.freeze([...process.argv]);
 export const originalProcessEnv = Object.freeze({ ...process.env } as Record<string, string | undefined>);

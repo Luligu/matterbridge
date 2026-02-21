@@ -22,9 +22,12 @@
  * limitations under the License.
  */
 
-import { LogLevel } from 'node-ansi-logger';
+// @matter
 import { EndpointNumber } from '@matter/types/datatype';
+// AnsiLogger
+import { LogLevel } from 'node-ansi-logger';
 
+// matterbridge
 import type { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';

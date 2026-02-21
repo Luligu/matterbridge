@@ -47,22 +47,22 @@ jest.unstable_mockModule('@matterbridge/thread', () => ({
 const workerModule = await import('@matterbridge/thread');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
+import fs, { mkdirSync, PathLike, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import fs, { writeFileSync, unlinkSync, mkdirSync, PathLike } from 'node:fs';
 
 import { jest } from '@jest/globals';
+import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
+import { VendorId } from '@matter/types';
+import { plg } from '@matterbridge/types';
+import { getParameter } from '@matterbridge/utils';
 import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
-import { LogLevel as MatterLogLevel, Logger } from '@matter/general';
-import { VendorId } from '@matter/types';
-import { getParameter } from '@matterbridge/utils';
-import { plg } from '@matterbridge/types';
 
-import type { Plugin, PluginManager as PluginManagerType } from './pluginManager.js';
+import type { DeviceManager as DeviceManagerType } from './deviceManager.js';
 import { closeMdnsInstance, configurePluginSpy, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
-import type { DeviceManager as DeviceManagerType } from './deviceManager.js';
+import type { Plugin, PluginManager as PluginManagerType } from './pluginManager.js';
 
 const { Matterbridge } = await import('./matterbridge.js');
 const { PluginManager } = await import('./pluginManager.js');

@@ -8,15 +8,13 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
 // @matter
 import { MicrowaveOvenControlServer, MicrowaveOvenModeServer } from '@matter/node/behaviors';
 import { Identify, MicrowaveOvenControl, MicrowaveOvenMode, OnOff, OperationalState, PowerSource } from '@matter/types/clusters';
-// Matterbridge
 import { wait } from '@matterbridge/utils';
+import { LogLevel } from 'node-ansi-logger';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
+// Matterbridge
 import {
   addDevice,
   aggregator,
@@ -29,7 +27,8 @@ import {
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
 import { microwaveOven } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from './microwaveOven.js';
 
 // Setup the test environment

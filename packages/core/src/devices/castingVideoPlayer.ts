@@ -22,18 +22,17 @@
  */
 
 // Imports from @matter
-import { MediaPlayback } from '@matter/types/clusters/media-playback';
 import { ContentLauncherServer } from '@matter/node/behaviors/content-launcher';
+import { MediaPlayback } from '@matter/types/clusters/media-playback';
 
 // Matterbridge
+import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { castingVideoPlayer, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
-
 import { MatterbridgeKeypadInputServer, MatterbridgeMediaPlaybackServer } from './basicVideoPlayer.js';
 
 /**
- * Options for configuring an {@link AirConditioner} instance.
+ * Options for configuring a {@link CastingVideoPlayer} instance.
  *
  * All temperatures in °C. Typical valid range 0–50 unless otherwise noted.
  */

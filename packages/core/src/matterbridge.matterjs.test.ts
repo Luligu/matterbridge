@@ -33,12 +33,12 @@ const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<type
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
 import { Environment } from '@matter/general';
 import { FabricIndex } from '@matter/types';
+import { LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { Matterbridge } from './matterbridge.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

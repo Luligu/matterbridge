@@ -13,7 +13,7 @@ import dgram from 'node:dgram';
 import { jest } from '@jest/globals';
 import { setupTest } from '@matterbridge/jest-utils';
 
-import { Coap, CoapMessage, COAP_OPTION_URI_PATH, COIOT_OPTION_DEVID, COIOT_OPTION_VALIDITY, COIOT_OPTION_SERIAL } from './coap.js';
+import { Coap, COAP_OPTION_URI_PATH, CoapMessage, COIOT_OPTION_DEVID, COIOT_OPTION_SERIAL, COIOT_OPTION_VALIDITY } from './coap.js';
 import { COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT } from './multicast.js';
 
 // Setup the test environment

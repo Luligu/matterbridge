@@ -10,25 +10,25 @@ const STRESS_TEST_ITERATIONS = 5;
 process.argv = [...originalProcessArgv, '--verbose'];
 process.env['MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS'] = '10';
 
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import fs from 'node:fs';
 import url from 'node:url';
 
 import { jest } from '@jest/globals';
+import type { SharedMatterbridge } from '@matterbridge/types';
+import { NODE_STORAGE_DIR } from '@matterbridge/types';
+import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
 import { LogLevel } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
-import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
-import { NODE_STORAGE_DIR } from '@matterbridge/types';
-import type { SharedMatterbridge } from '@matterbridge/types';
 
-import { MatterNode } from './matterNode.js';
-import { originalProcessArgv, setupTest, setDebug } from './jestutils/jestHelpers.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { PluginManager } from './pluginManager.js';
-import type { Matterbridge } from './matterbridge.js';
 import { DeviceManager } from './deviceManager.js';
+import { originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import type { Matterbridge } from './matterbridge.js';
 import { temperatureSensor } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { MatterNode } from './matterNode.js';
+import { PluginManager } from './pluginManager.js';
 
 const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));

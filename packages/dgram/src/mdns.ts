@@ -24,12 +24,12 @@
 // Node.js imports
 import dgram from 'node:dgram';
 
+// @matterbridge
+import { hasParameter } from '@matterbridge/utils';
 // AnsiLogger imports
 import { AnsiLogger, BLUE, CYAN, db, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
-// Utils imports
-import { hasParameter } from '@matterbridge/utils';
 
-// Net imports
+// matterbridge
 import { Multicast } from './multicast.js';
 export const enum DnsRecordType {
   A = 1,

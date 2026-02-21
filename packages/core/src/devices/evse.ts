@@ -22,19 +22,19 @@
  * limitations under the License.
  */
 
-// @matter
+// Imports from @matter
 import { MaybePromise } from '@matter/general';
-import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
-import { EnergyEvse } from '@matter/types/clusters/energy-evse';
-import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
-import { ModeBase } from '@matter/types/clusters/mode-base';
 import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
 import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { EnergyEvse } from '@matter/types/clusters/energy-evse';
+import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
+import { ModeBase } from '@matter/types/clusters/mode-base';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { deviceEnergyManagement, electricalSensor, evse, powerSource } from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 export class Evse extends MatterbridgeEndpoint {
   /**

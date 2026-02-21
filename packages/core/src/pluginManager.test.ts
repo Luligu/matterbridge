@@ -39,21 +39,21 @@ const jsonParseSpy = jest.spyOn(JSON, 'parse');
 const matterbridgeShutdownSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess');
 
 import { execSync } from 'node:child_process';
-import { promises as fs, writeFileSync, unlinkSync, existsSync, accessSync } from 'node:fs';
+import { accessSync, existsSync, promises as fs, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
-import { waiter, wait } from '@matterbridge/utils';
-import type { PlatformConfig, ApiPlugin } from '@matterbridge/types';
-import { plg, typ } from '@matterbridge/types';
 import { BroadcastServer } from '@matterbridge/thread';
+import type { ApiPlugin, PlatformConfig } from '@matterbridge/types';
+import { plg, typ } from '@matterbridge/types';
+import { wait, waiter } from '@matterbridge/utils';
+import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
-import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
-import { MatterbridgePlatform } from './matterbridgePlatform.js';
-import { PluginManager, type Plugin } from './pluginManager.js';
 import { addPluginSpy, closeMdnsInstance, destroyInstance, loggerLogSpy, removePluginSpy, setDebug, setupTest, shutdownPluginSpy } from './jestutils/jestHelpers.js';
+import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgePlatform } from './matterbridgePlatform.js';
+import { type Plugin, PluginManager } from './pluginManager.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

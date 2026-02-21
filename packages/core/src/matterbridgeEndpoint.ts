@@ -29,143 +29,143 @@
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpoint loaded.\u001B[40;0m');
 
-// AnsiLogger module
-import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
 // @matter/general
-import { Lifecycle, NamedHandler, AtLeastOne, UINT16_MAX, UINT32_MAX } from '@matter/general';
+import { AtLeastOne, Lifecycle, NamedHandler, UINT16_MAX, UINT32_MAX } from '@matter/general';
 // @matter/node
 import { ActionContext, Behavior, Endpoint, EndpointType, MutableEndpoint, ServerNode, SupportedBehaviors } from '@matter/node';
+// @matter behaviors
+import { AirQualityServer } from '@matter/node/behaviors/air-quality';
+import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
+import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
+import { CarbonDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-dioxide-concentration-measurement';
+import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-monoxide-concentration-measurement';
+import { DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
+import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
+import { FanControlServer } from '@matter/node/behaviors/fan-control';
+import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
+import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behaviors/formaldehyde-concentration-measurement';
+import { GroupsServer } from '@matter/node/behaviors/groups';
+import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
+import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
+import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
+import { OzoneConcentrationMeasurementServer } from '@matter/node/behaviors/ozone-concentration-measurement';
+import { Pm1ConcentrationMeasurementServer } from '@matter/node/behaviors/pm1-concentration-measurement';
+import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
+import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-concentration-measurement';
+import { PowerTopologyServer } from '@matter/node/behaviors/power-topology';
+import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
+import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
+import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
+import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
+import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
+import { SwitchServer } from '@matter/node/behaviors/switch';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 // @matter/types
 import { ClusterType, getClusterNameById } from '@matter/types/cluster';
-import { EndpointNumber, ClusterId, VendorId } from '@matter/types/datatype';
-import { Semtag } from '@matter/types/globals';
-// @matter clusters
-import { Descriptor } from '@matter/types/clusters/descriptor';
-import { PowerSource } from '@matter/types/clusters/power-source';
-import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
-import { Identify } from '@matter/types/clusters/identify';
-import { OnOff } from '@matter/types/clusters/on-off';
-import { LevelControl } from '@matter/types/clusters/level-control';
-import { ColorControl } from '@matter/types/clusters/color-control';
-import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { Thermostat } from '@matter/types/clusters/thermostat';
-import { FanControl } from '@matter/types/clusters/fan-control';
-import { DoorLock } from '@matter/types/clusters/door-lock';
-import { ModeSelect } from '@matter/types/clusters/mode-select';
-import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
-import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
-import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
-import { Switch } from '@matter/types/clusters/switch';
-import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
-import { PowerTopology } from '@matter/types/clusters/power-topology';
-import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
-import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { ColorControl } from '@matter/types/clusters/color-control';
 import { ConcentrationMeasurement } from '@matter/types/clusters/concentration-measurement';
-import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
-import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
-import { OperationalState } from '@matter/types/clusters/operational-state';
+import { Descriptor } from '@matter/types/clusters/descriptor';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import { DoorLock } from '@matter/types/clusters/door-lock';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
+import { FanControl } from '@matter/types/clusters/fan-control';
+import { Identify } from '@matter/types/clusters/identify';
+import { LevelControl } from '@matter/types/clusters/level-control';
+import { ModeSelect } from '@matter/types/clusters/mode-select';
+import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { PowerTopology } from '@matter/types/clusters/power-topology';
+import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
-// @matter behaviors
-import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
-import { GroupsServer } from '@matter/node/behaviors/groups';
-import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
-import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
-import { SwitchServer } from '@matter/node/behaviors/switch';
-import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
-import { PowerTopologyServer } from '@matter/node/behaviors/power-topology';
-import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
-import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
-import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
-import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
-import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
-import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
-import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
-import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
-import { AirQualityServer } from '@matter/node/behaviors/air-quality';
-import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-monoxide-concentration-measurement';
-import { CarbonDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-dioxide-concentration-measurement';
-import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
-import { OzoneConcentrationMeasurementServer } from '@matter/node/behaviors/ozone-concentration-measurement';
-import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behaviors/formaldehyde-concentration-measurement';
-import { Pm1ConcentrationMeasurementServer } from '@matter/node/behaviors/pm1-concentration-measurement';
-import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-concentration-measurement';
-import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
-import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
-import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
-import { FanControlServer } from '@matter/node/behaviors/fan-control';
-import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
-// Matterbridge
+import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { Switch } from '@matter/types/clusters/switch';
+import { Thermostat } from '@matter/types/clusters/thermostat';
+import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
+import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
+import { WindowCovering } from '@matter/types/clusters/window-covering';
+import { ClusterId, EndpointNumber, VendorId } from '@matter/types/datatype';
+import { Semtag } from '@matter/types/globals';
+// @matterbridge
 import { inspectError, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils';
+// AnsiLogger module
+import { AnsiLogger, CYAN, db, debugStringify, hk, LogLevel, or, TimestampFormat, YELLOW, zb } from 'node-ansi-logger';
 
-import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
-import { CommandHandlerFunction, MatterbridgeEndpointCommands, MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
+// matterbridge
 import {
-  MatterbridgeServer,
-  MatterbridgeIdentifyServer,
-  MatterbridgeOnOffServer,
-  MatterbridgeLevelControlServer,
-  MatterbridgeColorControlServer,
-  MatterbridgeLiftWindowCoveringServer,
-  MatterbridgeLiftTiltWindowCoveringServer,
-  MatterbridgeThermostatServer,
-  MatterbridgeFanControlServer,
-  MatterbridgeDoorLockServer,
-  MatterbridgeModeSelectServer,
-  MatterbridgeValveConfigurationAndControlServer,
-  MatterbridgeSmokeCoAlarmServer,
+  MatterbridgeActivatedCarbonFilterMonitoringServer,
   MatterbridgeBooleanStateConfigurationServer,
-  MatterbridgeSwitchServer,
-  MatterbridgeOperationalStateServer,
+  MatterbridgeColorControlServer,
   MatterbridgeDeviceEnergyManagementModeServer,
   MatterbridgeDeviceEnergyManagementServer,
-  MatterbridgeActivatedCarbonFilterMonitoringServer,
-  MatterbridgeHepaFilterMonitoringServer,
+  MatterbridgeDoorLockServer,
   MatterbridgeEnhancedColorControlServer,
+  MatterbridgeFanControlServer,
+  MatterbridgeHepaFilterMonitoringServer,
+  MatterbridgeIdentifyServer,
+  MatterbridgeLevelControlServer,
+  MatterbridgeLiftTiltWindowCoveringServer,
+  MatterbridgeLiftWindowCoveringServer,
+  MatterbridgeModeSelectServer,
+  MatterbridgeOnOffServer,
+  MatterbridgeOperationalStateServer,
   MatterbridgePowerSourceServer,
+  MatterbridgeServer,
+  MatterbridgeSmokeCoAlarmServer,
+  MatterbridgeSwitchServer,
+  MatterbridgeThermostatServer,
+  MatterbridgeValveConfigurationAndControlServer,
 } from './matterbridgeBehaviors.js';
+import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import {
   addClusterServers,
   addFixedLabel,
   addOptionalClusterServers,
   addRequiredClusterServers,
   addUserLabel,
+  checkNotLatinCharacters,
   createUniqueId,
+  featuresFor,
+  generateUniqueId,
+  getApparentElectricalPowerMeasurementClusterServer,
+  getAttribute,
+  getAttributeId,
   getBehavior,
   getBehaviourTypesFromClusterClientIds,
   getBehaviourTypesFromClusterServerIds,
-  getDefaultOperationalStateClusterServer,
+  getClusterId,
+  getDefaultDeviceEnergyManagementClusterServer,
+  getDefaultDeviceEnergyManagementModeClusterServer,
+  getDefaultElectricalEnergyMeasurementClusterServer,
+  getDefaultElectricalPowerMeasurementClusterServer,
   getDefaultFlowMeasurementClusterServer,
   getDefaultIlluminanceMeasurementClusterServer,
+  getDefaultOccupancySensingClusterServer,
+  getDefaultOperationalStateClusterServer,
+  getDefaultPowerSourceBatteryClusterServer,
+  getDefaultPowerSourceRechargeableBatteryClusterServer,
+  getDefaultPowerSourceReplaceableBatteryClusterServer,
+  getDefaultPowerSourceWiredClusterServer,
   getDefaultPressureMeasurementClusterServer,
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
-  getDefaultOccupancySensingClusterServer,
-  getDefaultElectricalEnergyMeasurementClusterServer,
-  getDefaultElectricalPowerMeasurementClusterServer,
-  getApparentElectricalPowerMeasurementClusterServer,
-  lowercaseFirstLetter,
-  updateAttribute,
-  getClusterId,
-  getAttributeId,
-  setAttribute,
-  getAttribute,
-  checkNotLatinCharacters,
-  generateUniqueId,
-  subscribeAttribute,
   invokeBehaviorCommand,
+  lowercaseFirstLetter,
+  setAttribute,
+  subscribeAttribute,
   triggerEvent,
-  featuresFor,
-  getDefaultPowerSourceWiredClusterServer,
-  getDefaultPowerSourceReplaceableBatteryClusterServer,
-  getDefaultPowerSourceRechargeableBatteryClusterServer,
-  getDefaultDeviceEnergyManagementClusterServer,
-  getDefaultDeviceEnergyManagementModeClusterServer,
-  getDefaultPowerSourceBatteryClusterServer,
+  updateAttribute,
 } from './matterbridgeEndpointHelpers.js';
+import { CommandHandlerFunction, MatterbridgeEndpointCommands, MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
 
 // Module-private brand
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');

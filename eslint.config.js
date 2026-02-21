@@ -5,16 +5,16 @@
 import path from 'node:path';
 import url from 'node:url';
 
-import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import pluginImport from 'eslint-plugin-import';
-import pluginN from 'eslint-plugin-n';
-import pluginPromise from 'eslint-plugin-promise';
-import pluginJsdoc from 'eslint-plugin-jsdoc';
-import pluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
-import pluginJest from 'eslint-plugin-jest';
 import pluginVitest from '@vitest/eslint-plugin';
+import { defineConfig } from 'eslint/config';
+import pluginJest from 'eslint-plugin-jest';
+import pluginJsdoc from 'eslint-plugin-jsdoc';
+import pluginN from 'eslint-plugin-n';
+import pluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import pluginPromise from 'eslint-plugin-promise';
+import pluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
+import tseslint from 'typescript-eslint';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,7 +51,6 @@ export default defineConfig([
   tseslint.configs.strict,
   // Uncomment this line to enable strict type-checked rules, but be aware that it may cause many errors until you fix all type issues in your codebase
   // tseslint.configs.strictTypeChecked,
-  pluginImport.flatConfigs.recommended,
   pluginN.configs['flat/recommended-script'],
   pluginPromise.configs['flat/recommended'],
   pluginJsdoc.configs['flat/recommended'],
@@ -70,14 +69,17 @@ export default defineConfig([
       reportUnusedDisableDirectives: 'error', // Report unused eslint-disable directives
       reportUnusedInlineConfigs: 'error', // Report unused eslint-disable-line directives
     },
+    plugins: {
+      'simple-import-sort': pluginSimpleImportSort,
+    },
     rules: {
       'no-console': 'warn', // Warn on console usage
       'spaced-comment': ['error', 'always'], // Require space after comment markers
       'no-unused-vars': 'warn', // Use the base rule for unused variables
-      'import/order': ['warn', { 'newlines-between': 'always' }],
-      'import/no-unresolved': 'off', // Too many false errors with named exports
-      'import/named': 'off', // Too many false errors with named exports
+      'simple-import-sort/imports': ['warn'],
+      'simple-import-sort/exports': ['warn'],
       'n/prefer-node-protocol': 'error', // Prefer using 'node:' protocol for built-in modules
+      'n/no-unsupported-features/node-builtins': ['error', { ignores: ['fetch'] }],
       'n/no-extraneous-import': 'off', // Allow imports from node_modules
       'n/no-unpublished-import': 'off', // Allow imports from unpublished packages
       'promise/always-return': 'warn', // Ensure promises always return a value

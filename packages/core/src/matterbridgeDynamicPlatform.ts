@@ -26,12 +26,12 @@
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeDynamicPlatform loaded.\u001B[40;0m');
 
-// AnsiLogger module
-import { AnsiLogger } from 'node-ansi-logger';
 // @matterbridge
 import type { PlatformConfig, PlatformMatterbridge } from '@matterbridge/types';
+// AnsiLogger module
+import { AnsiLogger } from 'node-ansi-logger';
 
-// Matterbridge
+// matterbridge
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 
 // Module-private brand

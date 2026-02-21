@@ -8,15 +8,12 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
 // @matter
-import { Identify, PowerSource, Thermostat, WaterHeaterManagement } from '@matter/types/clusters';
 import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } from '@matter/node/behaviors';
+import { Identify, PowerSource, Thermostat, WaterHeaterManagement } from '@matter/types/clusters';
+import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgeThermostatServer } from '../matterbridgeBehaviors.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import {
   addDevice,
   aggregator,
@@ -28,8 +25,10 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
+import { MatterbridgeThermostatServer } from '../matterbridgeBehaviors.js';
 import { waterHeater } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.js';
 
 // Setup the test environment

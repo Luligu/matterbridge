@@ -4,8 +4,8 @@ const NAME = 'MatterbridgeDynamicPlatform';
 
 import { jest } from '@jest/globals';
 
-import { isMatterbridgeDynamicPlatform, MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, log, matterbridge, setupTest } from './jestutils/jestHelpers.js';
+import { isMatterbridgeDynamicPlatform, MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

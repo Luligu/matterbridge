@@ -8,23 +8,20 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
+import { DeviceEnergyManagementModeServer, EnergyEvseModeServer, EnergyEvseServer } from '@matter/node/behaviors';
 // @matter
 import {
-  Identify,
-  PowerSource,
-  ElectricalEnergyMeasurement,
-  ElectricalPowerMeasurement,
   DeviceEnergyManagement,
   DeviceEnergyManagementMode,
+  ElectricalEnergyMeasurement,
+  ElectricalPowerMeasurement,
   EnergyEvse,
+  Identify,
+  PowerSource,
 } from '@matter/types/clusters';
-import { EnergyEvseServer, EnergyEvseModeServer, DeviceEnergyManagementModeServer } from '@matter/node/behaviors';
+import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
-import { MatterbridgeDeviceEnergyManagementModeServer } from '../matterbridgeBehaviors.js';
 import {
   addDevice,
   aggregator,
@@ -36,9 +33,11 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
+import { MatterbridgeDeviceEnergyManagementModeServer } from '../matterbridgeBehaviors.js';
 import { evse } from '../matterbridgeDeviceTypes.js';
-
-import { Evse, MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './evse.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
+import { Evse, MatterbridgeEnergyEvseModeServer, MatterbridgeEnergyEvseServer } from './evse.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

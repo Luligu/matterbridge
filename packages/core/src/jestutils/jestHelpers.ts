@@ -60,34 +60,29 @@
  */
 
 import { rmSync } from 'node:fs';
-import { inspect } from 'node:util';
 import path from 'node:path';
+import { inspect } from 'node:util';
 
 import type { jest } from '@jest/globals';
-// Imports from node-ansi-logger
-import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
-// Imports from node-persist-manager
-import { NodeStorageManager } from 'node-persist-manager';
-// Imports from @matter
-import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, Lifecycle } from '@matter/general';
+import { Environment, Lifecycle, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
-import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/protocol';
-import { LevelControl } from '@matter/types/clusters/level-control';
 import { ColorControl } from '@matter/types/clusters/color-control';
-// Imports from @matterbridge
+import { LevelControl } from '@matter/types/clusters/level-control';
+import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '@matterbridge/types';
+import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { NodeStorageManager } from 'node-persist-manager';
 
-// Imports from Matterbridge
-import { Matterbridge } from '../matterbridge.js';
-import { MatterbridgePlatform } from '../matterbridgePlatform.js';
-import { bridge } from '../matterbridgeDeviceTypes.js';
 import { DeviceManager } from '../deviceManager.js';
-import { PluginManager } from '../pluginManager.js';
 import { Frontend } from '../frontend.js';
+import { Matterbridge } from '../matterbridge.js';
+import { bridge } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { MatterbridgePlatform } from '../matterbridgePlatform.js';
+import { PluginManager } from '../pluginManager.js';
 
 // Freeze the original process arguments and environment variables to allow resetting them in tests
 export const originalProcessArgv = Object.freeze([...process.argv]);

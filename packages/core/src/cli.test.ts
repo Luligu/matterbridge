@@ -25,14 +25,14 @@ process.argv = [
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
 import { Inspector, Tracker } from '@matterbridge/utils';
+import { LogLevel } from 'node-ansi-logger';
 
+import { cliEmitter } from './cliEmitter.js';
+import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
 // eslint-disable-next-line n/no-missing-import
 import { MockMatterbridge } from './mock/mockMatterbridge.js';
-import { cliEmitter } from './cliEmitter.js';
-import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 
 const loadInstance = jest.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
   return MockMatterbridge.loadInstance() as unknown as Matterbridge; // Simulate a successful load by returning an instance of MockMatterbridge

@@ -22,15 +22,14 @@
  */
 
 // Imports from @matter
-import { OperationalState } from '@matter/types/clusters/operational-state';
-import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
-import { LaundryDryerControls } from '@matter/types/clusters/laundry-dryer-controls';
 import { LaundryDryerControlsServer } from '@matter/node/behaviors/laundry-dryer-controls';
+import { LaundryDryerControls } from '@matter/types/clusters/laundry-dryer-controls';
+import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
+import { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
 import { laundryDryer, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-
 import { MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
