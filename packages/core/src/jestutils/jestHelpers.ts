@@ -74,6 +74,8 @@ import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/protocol';
+import { LevelControl } from '@matter/types/clusters/level-control';
+import { ColorControl } from '@matter/types/clusters/color-control';
 // Imports from @matterbridge
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '@matterbridge/types';
@@ -1142,4 +1144,122 @@ export async function deleteDevice(owner: ServerNode<ServerNode.RootEndpoint> | 
   expect(device.construction.status).toBe(Lifecycle.Status.Destroyed);
   await flushAsync(undefined, undefined, pause);
   return true;
+}
+
+/**
+ * Build a Matter LevelControl `MoveToLevelRequest` payload.
+ *
+ * Helper used in tests to create a correctly shaped request object, including
+ * `optionsMask` and `optionsOverride`.
+ *
+ * @param {number} level Target level (Matter `uint8`; commonly 0–254).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {LevelControl.MoveToLevelRequest} The request payload.
+ */
+export function getMoveToLevelRequest(level: number, transitionTime: number, executeIfOff: boolean): LevelControl.MoveToLevelRequest {
+  const request: LevelControl.MoveToLevelRequest = {
+    level,
+    transitionTime,
+    optionsMask: { executeIfOff, coupleColorTempToLevel: false },
+    optionsOverride: { executeIfOff, coupleColorTempToLevel: false },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveToColorTemperatureRequest` payload.
+ *
+ * @param {number} colorTemperatureMireds Target color temperature in mireds (micro reciprocal degrees).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveToColorTemperatureRequest} The request payload.
+ */
+export function getMoveToColorTemperatureRequest(colorTemperatureMireds: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToColorTemperatureRequest {
+  const request: ColorControl.MoveToColorTemperatureRequest = {
+    colorTemperatureMireds,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveToHueRequest` payload.
+ *
+ * Uses `ColorControl.Direction.Shortest` by default.
+ *
+ * @param {number} hue Target hue (Matter `uint8`; commonly 0–254).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveToHueRequest} The request payload.
+ */
+export function getMoveToHueRequest(hue: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToHueRequest {
+  const request: ColorControl.MoveToHueRequest = {
+    hue,
+    transitionTime,
+    direction: ColorControl.Direction.Shortest,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveToSaturationRequest` payload.
+ *
+ * @param {number} saturation Target saturation (Matter `uint8`; commonly 0–254).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveToSaturationRequest} The request payload.
+ */
+export function getMoveToSaturationRequest(saturation: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToSaturationRequest {
+  const request: ColorControl.MoveToSaturationRequest = {
+    saturation,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveToHueAndSaturationRequest` payload.
+ *
+ * @param {number} hue Target hue (Matter `uint8`; commonly 0–254).
+ * @param {number} saturation Target saturation (Matter `uint8`; commonly 0–254).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveToHueAndSaturationRequest} The request payload.
+ */
+export function getMoveToHueAndSaturationRequest(hue: number, saturation: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToHueAndSaturationRequest {
+  const request: ColorControl.MoveToHueAndSaturationRequest = {
+    hue,
+    saturation,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveToColorRequest` payload.
+ *
+ * @param {number} colorX Target X coordinate in CIE 1931 XY color space (Matter `uint16`).
+ * @param {number} colorY Target Y coordinate in CIE 1931 XY color space (Matter `uint16`).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveToColorRequest} The request payload.
+ */
+export function getMoveToColorRequest(colorX: number, colorY: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToColorRequest {
+  const request: ColorControl.MoveToColorRequest = {
+    colorX,
+    colorY,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
 }
