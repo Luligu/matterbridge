@@ -153,8 +153,8 @@
 <h2 id="355-2026-02-20">[3.5.5] - 2026-02-20</h2>
 <h3 id="breaking-changes">Breaking Changes</h3>
 <ul>
-<li>[Node.Js]: Consider to update all setups to Node.Js 24 that is now the LTS.</li>
-<li>[docker]: Use mb_health instead of curl for HEALTHCHECK. This allows to save around 15MB on the image size. If you override the UI port or the protocol, update the CMD with mb_health <a href="https://localhost/health">https://localhost/health</a>.</li>
+<li>[Node.Js]: Consider to update all not docker based setups to Node.Js 24 that is now the LTS.</li>
+<li>[docker]: Use mb_health instead of curl for HEALTHCHECK. This allows to save around 15MB on the docker image size. If you override the UI port or the protocol, update the health check CMD with mb_health <a href="https://localhost/health">https://localhost/health</a> or disable it.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
@@ -172,7 +172,7 @@
 </ul>
 <h3 id="fixed-1">Fixed</h3>
 <ul>
-<li>[frontend]: Fix possible issue with some browser in check authentication. Thanks Ludovic BOUÉ and k3067e3 (<a href="https://github.com/Luligu/matterbridge/issues/498">https://github.com/Luligu/matterbridge/issues/498</a>).</li>
+<li>[frontend]: Fix possible issue with some browsers in check authentication. Thanks Ludovic BOUÉ and k3067e3 (<a href="https://github.com/Luligu/matterbridge/issues/498">https://github.com/Luligu/matterbridge/issues/498</a>).</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="354-2026-02-13">[3.5.4] - 2026-02-13</h2>
@@ -185,7 +185,7 @@
 <li>[doorLock]: The default value for <strong>DoorLock.actuatorEnabled</strong> has been changed to true. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/pull/509">https://github.com/Luligu/matterbridge/pull/509</a>).</li>
 <li>[ingress]: Removed the <code>--ingress</code> parameter used in the old Home Assisant add-on. Update the Matterbridge Home Assistant Application (formerly known as add-on) if you didn&#39;t.</li>
 <li>[Node.Js]: Restricted <strong>Node.Js requirents</strong> to <code>&gt;= 20.19</code> &lt; 21 or <code>&gt;= 22.13</code> &lt; 23 or <code>&gt;= 24</code> &lt; 25.</li>
-<li>[Node.Js]: Consider to update all setups to Node.Js 24 that is now the LTS.</li>
+<li>[Node.Js]: Consider to update all all not docker based setups to Node.Js 24 that is now the LTS.</li>
 </ul>
 <h3 id="added-1">Added</h3>
 <ul>

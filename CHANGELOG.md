@@ -65,8 +65,8 @@ These threads already run as a workers:
 
 ### Breaking Changes
 
-- [Node.Js]: Consider to update all setups to Node.Js 24 that is now the LTS.
-- [docker]: Use mb_health instead of curl for HEALTHCHECK. This allows to save around 15MB on the image size. If you override the UI port or the protocol, update the CMD with mb_health https://localhost/health.
+- [Node.Js]: Consider to update all not docker based setups to Node.Js 24 that is now the LTS.
+- [docker]: Use mb_health instead of curl for HEALTHCHECK. This allows to save around 15MB on the docker image size. If you override the UI port or the protocol, update the health check CMD with mb_health https://localhost/health or disable it.
 
 ### Added
 
@@ -84,7 +84,7 @@ These threads already run as a workers:
 
 ### Fixed
 
-- [frontend]: Fix possible issue with some browser in check authentication. Thanks Ludovic BOUÉ and k3067e3 (https://github.com/Luligu/matterbridge/issues/498).
+- [frontend]: Fix possible issue with some browsers in check authentication. Thanks Ludovic BOUÉ and k3067e3 (https://github.com/Luligu/matterbridge/issues/498).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
@@ -99,7 +99,7 @@ These threads already run as a workers:
 - [doorLock]: The default value for **DoorLock.actuatorEnabled** has been changed to true. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/509).
 - [ingress]: Removed the `--ingress` parameter used in the old Home Assisant add-on. Update the Matterbridge Home Assistant Application (formerly known as add-on) if you didn't.
 - [Node.Js]: Restricted **Node.Js requirents** to `>= 20.19` < 21 or `>= 22.13` < 23 or `>= 24` < 25.
-- [Node.Js]: Consider to update all setups to Node.Js 24 that is now the LTS.
+- [Node.Js]: Consider to update all all not docker based setups to Node.Js 24 that is now the LTS.
 
 ### Added
 
