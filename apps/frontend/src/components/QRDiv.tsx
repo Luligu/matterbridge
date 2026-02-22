@@ -89,8 +89,9 @@ function QRDiv({ id }: QRDivProps) {
         if (storeIdRef.current === msg.response.matter.id) {
           if (debug) console.log(`QRDiv received refresh_required/matter: setting matter data for storeId "${msg.response.matter.id}":`, msg.response.matter);
           if (advertiseTimeoutRef.current) clearTimeout(advertiseTimeoutRef.current);
-          if (msg.response.matter.advertising && msg.response.matter.advertiseTime && msg.response.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.response.matter.advertising = false; // already expired
+          // if (msg.response.matter.advertising && msg.response.matter.advertiseTime && msg.response.matter.advertiseTime + 15 * 60 * 1000 <= Date.now()) msg.response.matter.advertising = false; // already expired
           setMatter(msg.response.matter);
+          /*
           if (msg.response.matter.advertising) {
             if (debug) console.log(`QRDiv setting matter advertise timeout for storeId "${msg.response.matter.id}":`, msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now());
             advertiseTimeoutRef.current = setTimeout(
@@ -103,6 +104,7 @@ function QRDiv({ id }: QRDivProps) {
               msg.response.matter.advertiseTime + 15 * 60 * 1000 - Date.now(),
             );
           }
+          */
         }
       }
     };
