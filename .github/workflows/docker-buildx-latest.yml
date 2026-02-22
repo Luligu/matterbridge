@@ -87,8 +87,8 @@ jobs:
             --pull \
             --platform linux/amd64,linux/arm64 \
             -f docker/Dockerfile.latest \
-            -t luligu/matterbridge:latest \
-            -t luligu/matterbridge:${{ steps.meta.outputs.VERSION }} \
+            -t bhepburn/matterbridge:latest \
+            -t bhepburn/matterbridge:${{ steps.meta.outputs.VERSION }} \
             --build-arg VERSION=${{ steps.meta.outputs.VERSION }} \
             --build-arg VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
             --build-arg BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
