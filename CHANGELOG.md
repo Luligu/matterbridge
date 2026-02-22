@@ -59,8 +59,11 @@ These threads already run as a workers:
 - [package]: Bump `eslint` to v.10.0.1.
 - [package]: Bump `typescript-eslint` to v.8.56.0.
 - [package]: Replace `eslint-plugin-import` with `eslint-plugin-simple-import-sort`.
+- [package]: Bump `matter.js` to v.0.16.10. Thanks matter.js team.
 
 ### Fixed
+
+- [advertise]: Remove not used timeout of 15 minutes.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

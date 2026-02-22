@@ -136,7 +136,7 @@
     "test:vitest:watch": "vitest --reporter verbose",
     "test:vitest:verbose": "vitest run --reporter verbose",
     "test:vitest:coverage": "vitest run --reporter verbose --coverage",
-    "deepClean": "npx shx rm -rf *.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .cache/* .cache/.[!.]* .cache/..?* node_modules/* node_modules/.[!.]* node_modules/..?*",
+    "deepClean": "npx shx rm -rf *.tsbuildinfo dist coverage jest temp package-lock.json npm-shrinkwrap.json .cache node_modules",
     "reset": "npm run deepClean && npm install --no-fund --no-audit && npm run build",
     "softReset": "npm install --no-fund --no-audit && npm run build",
     "lint": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 .",
@@ -160,7 +160,7 @@
     "install:vitest": "npm install --no-fund --no-audit --save-dev --save-exact vitest @vitest/coverage-v8 @vitest/eslint-plugin"
   },
   "dependencies": {
-    "@matter/main": "0.16.8",
+    "@matter/main": "0.16.10",
     "@matterbridge/dgram": "3.5.5",
     "@matterbridge/thread": "3.5.5",
     "@matterbridge/types": "3.5.5",
