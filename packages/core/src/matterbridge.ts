@@ -831,6 +831,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
+      this.log.debug(
+        `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} with version ${CYAN}${plugin.version}${db} and type ${CYAN}${plugin.type}${db}.`,
+      );
       // Try to reinstall the plugin from npm (for Docker pull and external plugins)
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
       if (
