@@ -34,7 +34,7 @@ jest.unstable_mockModule('archiver', () => ({
 }));
 
 // Import the module under test after mocking
-const { createZip } = await import('./createZip.ts');
+const { createZip } = await import('./createZip.js');
 
 // Setup the test environment
 await setupTest('CreateZipMocked', false);

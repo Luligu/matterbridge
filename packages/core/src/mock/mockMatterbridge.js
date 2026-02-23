@@ -9,8 +9,7 @@ export class MockMatterbridge extends EventEmitter {
     super();
   }
 
-  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-  static async loadInstance(initialize) {
+  static async loadInstance() {
     return new MockMatterbridge();
   }
 }

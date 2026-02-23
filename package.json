@@ -183,7 +183,7 @@
     "git:hardreset:main": "git fetch origin && git checkout main && git reset --hard origin/main",
     "git:hardreset:dev": "git fetch origin && git checkout dev && git reset --hard origin/dev",
     "git:hardreset:edge": "git fetch origin && git checkout edge && git reset --hard origin/edge",
-    "automator": "npm --workspaces run automator && npm run reset",
+    "automator": "node scripts/runAutomator.mjs --monorepo-root && npm --workspaces run automator && npm run reset",
     "dataModel": "node ./scripts/data-model.mjs",
     "fetchChip": "node ./scripts/fetch-chip.mjs",
     "updateHtmls": "node ./scripts/marked.mjs",

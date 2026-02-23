@@ -43,8 +43,8 @@ import { jest } from '@jest/globals';
 import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
 import { WebSocket } from 'ws';
 // Dynamically import after mocking
-const { Matterbridge } = await import('./matterbridge.ts');
-const { Frontend } = await import('./frontend.ts');
+const { Matterbridge } = await import('./matterbridge.js');
+const { Frontend } = await import('./frontend.js');
 import { Lifecycle } from '@matter/general';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
