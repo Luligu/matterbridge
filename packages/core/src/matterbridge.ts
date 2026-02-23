@@ -2081,6 +2081,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
+  // istanbul ignore next cause is provisionally not covered by tests, but we want to keep it in the code for maintainability and future use when matter.js supports commissioning as a controller with the new apis.
   private async startController(): Promise<void> {
     if (!this.matterStorageManager) {
       this.log.error('No storage manager initialized');
