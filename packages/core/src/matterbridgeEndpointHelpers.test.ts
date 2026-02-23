@@ -42,7 +42,7 @@ import {
 } from './matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
-await setupTest(NAME, true);
+await setupTest(NAME, false);
 
 describe('Options helpers', () => {
   let device: MatterbridgeEndpoint;

@@ -3,9 +3,8 @@
   "compilerOptions": {
     "noEmit": true,
     "composite": false,
-    "incremental": false,
-    "isolatedModules": true
+    "incremental": false
   },
-  "include": ["**/vitest/*.spec.ts", "**/vitest/*.test.ts"],
+  "include": ["**/src/**/*.ts"],
   "exclude": []
 }

@@ -1,5 +1,5 @@
 /**
- * download.mjs
+ * downloads.mjs
  *
  * Prints daily npm downloads for the last month for the package in ../package.json.
  *

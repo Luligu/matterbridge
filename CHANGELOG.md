@@ -55,7 +55,7 @@ These threads already run as a workers:
 ### Changed
 
 - [package]: Update dependencies.
-- [package]: Bump package to `automator` v.3.0.9.
+- [package]: Bump packages to `automator` v.3.0.10.
 - [package]: Bump `eslint` to v.10.0.1.
 - [package]: Bump `typescript-eslint` to v.8.56.0.
 - [package]: Replace `eslint-plugin-import` with `eslint-plugin-simple-import-sort`.

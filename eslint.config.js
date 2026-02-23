@@ -23,18 +23,17 @@ export default defineConfig([
   {
     name: 'Global Ignores',
     ignores: [
-      '.cache/**',
+      '**/.cache/**',
       'apps/**',
-      'build/**',
-      'coverage/**',
-      'dist/**',
-      'jest/**',
-      'node_modules/**',
-      'packages/**',
-      'screenshots/**',
-      'temp/**',
+      '**/build/**',
+      '**/coverage/**',
+      '**/dist/**',
+      '**/jest/**',
+      '**/node_modules/**',
+      '**/screenshots/**',
+      '**/temp/**',
       'vendor/**',
-      'vite.config.ts',
+      '**/vite.config.ts',
       'chip/**',
       'docs/**',
       'systemd/**',
@@ -62,7 +61,7 @@ export default defineConfig([
       ecmaVersion: 'latest',
       parserOptions: {
         tsconfigRootDir: __dirname,
-        project: './tsconfig.json',
+        project: './tsconfig.eslint.json',
       },
     },
     linterOptions: {
@@ -98,8 +97,8 @@ export default defineConfig([
   },
   {
     name: 'TypeScript Source Files',
-    files: ['src/**/*.ts'],
-    ignores: ['src/**/*.test.ts', 'src/**/*.spec.ts'], // Ignore test files
+    files: ['**/src/**/*.ts'],
+    ignores: ['**/src/**/*.test.ts', '**/src/**/*.spec.ts'], // Ignore test files
     languageOptions: {
       parser: tseslint.parser,
     },
@@ -121,11 +120,12 @@ export default defineConfig([
   },
   {
     name: 'Jest Test Files',
-    files: ['**/*.spec.ts', '**/*.test.ts', 'test/**/*.ts'],
-    ignores: ['vitest/**'], // Ignore Vitest test files
+    files: ['**/*.spec.ts', '**/*.test.ts', '**/test/**/*.ts'],
+    ignores: ['**/vitest/**'], // Ignore Vitest test files
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
+        tsconfigRootDir: __dirname,
         project: './tsconfig.jest.json', // Use a separate tsconfig for Jest tests with "isolatedModules": true
       },
     },
@@ -146,10 +146,11 @@ export default defineConfig([
   },
   {
     name: 'Vitest Test Files',
-    files: ['vitest/*.spec.ts', 'vitest/*.test.ts'],
+    files: ['**/vitest/*.spec.ts', '**/vitest/*.test.ts'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
+        tsconfigRootDir: __dirname,
         project: './tsconfig.vitest.json', // Use a separate tsconfig for Vitest tests
       },
     },
