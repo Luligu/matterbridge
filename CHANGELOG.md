@@ -52,12 +52,17 @@ These threads already run as a workers:
 
 ## [3.5.6] - Dev branch
 
+### Added
+
+- [nvm]: Add detection for Nvm (not for production with systemd service).
+- [nvm]: Clarify in systemd guides that Nvm cannot be used for production.
+
 ### Changed
 
 - [package]: Update dependencies.
-- [package]: Bump packages to `automator` v.3.0.10.
-- [package]: Bump `eslint` to v.10.0.1.
-- [package]: Bump `typescript-eslint` to v.8.56.0.
+- [package]: Bump packages to `automator` v.3.1.0.
+- [package]: Bump `eslint` to v.10.0.2.
+- [package]: Bump `typescript-eslint` to v.8.56.1.
 - [package]: Replace `eslint-plugin-import` with `eslint-plugin-simple-import-sort`.
 - [package]: Bump `matter.js` to v.0.16.10. Thanks matter.js team.
 
