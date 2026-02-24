@@ -2712,7 +2712,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       id: serverNode.id,
       online: serverNode.lifecycle.isOnline,
       commissioned: serverNode.state.commissioning.commissioned,
-      advertising: true, // advertiseTime > Date.now() - 15 * 60 * 1000,
+      advertising: advertiseTime > 0, // Date.now() - 15 * 60 * 1000,
       advertiseTime,
       windowStatus: serverNode.state.administratorCommissioning.windowStatus,
       qrPairingCode: serverNode.state.commissioning.pairingCodes.qrPairingCode,
