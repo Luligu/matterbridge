@@ -68,7 +68,10 @@ export async function spawnCommand(command: string, args: string[], packageComma
   // Decide when using sudo on linux and macOS
   // When you need sudo: Spawn stderr: npm error Error: EACCES: permission denied
   // When you don't need sudo: Failed to start child process "npm install -g matterbridge-eve-door": spawn sudo ENOENT
-  if (hasParameter('sudo') || (process.platform !== 'win32' && command === 'npm' && !hasParameter('docker') && !hasParameter('nosudo'))) {
+  if (
+    hasParameter('sudo') ||
+    (process.platform !== 'win32' && command === 'npm' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'))
+  ) {
     args.unshift(command);
     command = 'sudo';
   }
