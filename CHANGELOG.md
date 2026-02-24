@@ -43,7 +43,7 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-These threads already run as a workers:
+These threads already run as workers:
 
 - ✅ check updates;
 - ✅ system check;
@@ -51,6 +51,10 @@ These threads already run as a workers:
 - ✅ check the global node_modules directory;
 
 ## [3.5.6] - Dev branch
+
+### Dev Breaking Changes
+
+- [rootNode]: The serialNumber and uniqueId for accessory plugins in childbridge mode, and for devices with mode = server, are now taken from the device. These values are persisted in storage and cannot be changed later.
 
 ### Added
 
