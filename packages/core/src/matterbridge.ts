@@ -2788,6 +2788,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         device.vendorName,
         device.productId,
         device.productName,
+        device.serialNumber,
+        device.uniqueId,
       );
       plugin.serverNode = await this.createServerNode(
         plugin.storageContext,
@@ -2859,6 +2861,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         device.vendorName,
         device.productId,
         device.productName,
+        device.serialNumber,
+        device.uniqueId,
       );
       device.serverNode = await this.createServerNode(
         context,
