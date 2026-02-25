@@ -164,11 +164,11 @@ export type WorkerMessageTypes = {
     request: { params: { version: string } };
     response: { result: { success: true } };
   };
-  matterbridge_sys_update: {
+  matterbridge_shelly_sys_update: {
     request: { params: { available: boolean } };
     response: { result: { success: true } };
   };
-  matterbridge_main_update: {
+  matterbridge_shelly_main_update: {
     request: { params: { available: boolean } };
     response: { result: { success: true } };
   };
