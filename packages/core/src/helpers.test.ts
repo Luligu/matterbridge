@@ -23,7 +23,9 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { Logger } from '@matter/general';
 import { Endpoint } from '@matter/node';
-import { BridgedDeviceBasicInformationServer, OnOffServer } from '@matter/node/behaviors';
+import { BindingServer, BridgedDeviceBasicInformationServer, DescriptorServer, OnOffServer } from '@matter/node/behaviors';
+import { Identify } from '@matter/types/clusters/identify';
+import { OnOff } from '@matter/types/clusters/on-off';
 
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import {
@@ -55,7 +57,7 @@ const updateProcessSpy = jest.spyOn(Matterbridge.prototype, 'updateProcess').moc
 });
 
 // Setup the test environment
-await setupTest(NAME, false);
+await setupTest(NAME, true);
 
 describe('Matterbridge ' + HOMEDIR, () => {
   let device: Endpoint;
@@ -157,6 +159,12 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(aggregator.parts.has('RestartMatterbridge:switch')).toBeTruthy();
     expect(aggregator.parts.has('RebootMatterbridge:switch')).toBeFalsy();
     expect(aggregator.parts.size).toBe(7);
+
+    Logger.get('AggregatorNode').info(aggregator);
+    expect(aggregator.parts.get('UpdateMatterbridge:switch')?.behaviors.has(BindingServer)).toBeTruthy();
+    expect(aggregator.parts.get('UpdateMatterbridge:switch')?.stateOf(DescriptorServer).clientList).toEqual([Identify.Cluster.id, OnOff.Cluster.id]);
+    expect(aggregator.parts.get('RestartMatterbridge:switch')?.behaviors.has(BindingServer)).toBeTruthy();
+    expect(aggregator.parts.get('RestartMatterbridge:switch')?.stateOf(DescriptorServer).clientList).toEqual([Identify.Cluster.id, OnOff.Cluster.id]);
   });
 
   test('add all the mounted-switch virtual devices', async () => {

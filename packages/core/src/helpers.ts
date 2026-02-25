@@ -28,14 +28,16 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 // @matter module
 import { Endpoint } from '@matter/node';
+import { BindingServer } from '@matter/node/behaviors/binding';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
+import { OnOffBaseServer, OnOffServer } from '@matter/node/behaviors/on-off';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { VendorId } from '@matter/types/datatype';
 // @matterbridge
@@ -74,7 +76,7 @@ export async function addVirtualDevice(
       deviceType = OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer);
       break;
     case 'switch':
-      deviceType = OnOffLightSwitchDevice.with(BridgedDeviceBasicInformationServer, OnOffBaseServer);
+      deviceType = OnOffLightSwitchDevice.with(BridgedDeviceBasicInformationServer, OnOffServer.with(), BindingServer);
       break;
     case 'mounted_switch':
       deviceType = MountedOnOffControlDevice.with(BridgedDeviceBasicInformationServer);
@@ -82,8 +84,15 @@ export async function addVirtualDevice(
   }
   const device = new Endpoint(deviceType, {
     id: name.replaceAll(' ', '') + ':' + type,
-    bridgedDeviceBasicInformation: { vendorId: VendorId(0xfff1), vendorName: 'Matterbridge', productName: 'Matterbridge Virtual Device', nodeLabel: name.slice(0, 32) },
-    onOff: { onOff: false, startUpOnOff: OnOff.StartUpOnOff.Off },
+    bridgedDeviceBasicInformation: {
+      vendorId: VendorId(0xfff1),
+      vendorName: 'Matterbridge',
+      productName: 'Matterbridge Virtual Device',
+      nodeLabel: name.slice(0, 32),
+      softwareVersion: 2000,
+      softwareVersionString: '2.0.0',
+    },
+    onOff: { onOff: false },
   });
 
   // Set up an event listener for when the `onOff` state changes.
@@ -93,7 +102,7 @@ export async function addVirtualDevice(
       callback();
       process.nextTick(async () => {
         try {
-          await device.setStateOf(OnOffBaseServer, { onOff: false });
+          await device.setStateOf(OnOffServer, { onOff: false });
         } catch (_error) {
           // Not necessary to handle the error
         }
@@ -103,9 +112,17 @@ export async function addVirtualDevice(
 
   // Add the created device to the given endpoint.
   await aggregatorEndpoint.add(device);
+  await device.construction.ready;
+
+  // Set the client list for the switch type device.
+  if (type === 'switch') {
+    await device.act(async (agent) => {
+      const descriptor = await agent.load(DescriptorServer);
+      descriptor.state.clientList.push(Identify.Cluster.id, OnOff.Cluster.id);
+    });
+  }
 
   // Add the OnOffPlugInUnit to MountedOnOffControlDevice (Matter 1.4.2).
-  await device.construction.ready;
   if (type === 'mounted_switch') {
     await device.act(async (agent) => {
       const descriptor = await agent.load(DescriptorServer);
