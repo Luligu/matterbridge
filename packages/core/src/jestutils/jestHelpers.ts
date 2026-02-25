@@ -474,16 +474,17 @@ export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: 
  * Create a Matterbridge instance for testing without initializing it.
  *
  * @param {string} name - Name for the environment (jest/name).
+ * @param {boolean} createOnly - If true, only create the environment without starting it. Default is false.
  * @returns {Promise<Matterbridge>} The Matterbridge instance.
  *
  * @example
  * ```typescript
  * // Create Matterbridge environment
- * await createMatterbridgeEnvironment(NAME);
- * await startMatterbridgeEnvironment(MATTER_PORT);
+ * await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
+ * await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
  * ```
  */
-export async function createMatterbridgeEnvironment(name: string): Promise<Matterbridge> {
+export async function createMatterbridgeEnvironment(name: string, createOnly: boolean = false): Promise<Matterbridge> {
   // Create the exported log
   log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -507,7 +508,7 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
 
   // Setup matter environment
   // @ts-expect-error - access to private member for testing
-  matterbridge.environment = createTestEnvironment(name);
+  matterbridge.environment = createTestEnvironment(name, createOnly);
   // @ts-expect-error - access to private member for testing
   expect(matterbridge.environment).toBeDefined();
   // @ts-expect-error - access to private member for testing
@@ -520,16 +521,17 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
  * Only node storage, matter storage and the server and aggregator nodes are started.
  *
  * @param {number} port The matter server port.
+ * @param {boolean} createOnly If true, only create the environment without starting it. Default is false.
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} The started server and aggregator.
  *
  * @example
  * ```typescript
  * // Create Matterbridge environment
- * await createMatterbridgeEnvironment(NAME);
- * await startMatterbridgeEnvironment(MATTER_PORT);
+ * await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
+ * await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
  * ```
  */
-export async function startMatterbridgeEnvironment(port: number = 5540): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+export async function startMatterbridgeEnvironment(port: number = 5540, createOnly: boolean = false): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
   // Create the node storage
   matterbridge.nodeStorage = new NodeStorageManager({
     dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR),
@@ -562,6 +564,13 @@ export async function startMatterbridgeEnvironment(port: number = 5540): Promise
   expect(server.parts.has(aggregator.id)).toBeTruthy();
   expect(server.parts.has(aggregator)).toBeTruthy();
   expect(aggregator.lifecycle.isReady).toBeTruthy();
+
+  if (createOnly) {
+    // Ensure the queue is empty and pause
+    await flushAsync();
+
+    return [server, aggregator];
+  }
 
   // Wait for the server to be online
   expect(server.lifecycle.isOnline).toBeFalsy();
@@ -640,14 +649,16 @@ export function addMatterbridgePlatform(platform: MatterbridgePlatform, name?: s
 /**
  * Stop the matterbridge environment
  *
+ * @param {boolean} createOnly Whether the environment was created with createOnly flag. If true, only stop the environment without closing the server and aggregator nodes (default false).
+ * @returns {Promise<void>} A promise that resolves when the environment is stopped.
  * @example
  * ```typescript
  * // Destroy Matterbridge environment
- * await stopMatterbridgeEnvironment();
- * await destroyMatterbridgeEnvironment();
+ * await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
+ * await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
  * ```
  */
-export async function stopMatterbridgeEnvironment(): Promise<void> {
+export async function stopMatterbridgeEnvironment(createOnly: boolean = false): Promise<void> {
   expect(matterbridge).toBeDefined();
   expect(server).toBeDefined();
   expect(aggregator).toBeDefined();
@@ -660,7 +671,9 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
 
   // Close the server node
   expect(server.lifecycle.isReady).toBeTruthy();
-  expect(server.lifecycle.isOnline).toBeTruthy();
+  if (!createOnly) {
+    expect(server.lifecycle.isOnline).toBeTruthy();
+  }
   await server.close();
   expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();
@@ -687,7 +700,7 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
  *
  * @param {number} cleanupPause The timeout for the destroy operation (default 10ms).
  * @param {number} destroyPause The pause duration after cleanup before destroying the instance (default 250ms).
- *
+ * @param {boolean} closeMdns Whether to close the mDNS service (default true).
  * @example
  * ```typescript
  * // Destroy Matterbridge environment
@@ -695,12 +708,14 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
  * await destroyMatterbridgeEnvironment();
  * ```
  */
-export async function destroyMatterbridgeEnvironment(cleanupPause: number = 10, destroyPause: number = 250): Promise<void> {
+export async function destroyMatterbridgeEnvironment(cleanupPause: number = 10, destroyPause: number = 250, closeMdns: boolean = true): Promise<void> {
   // Destroy a matterbridge instance
   await destroyInstance(matterbridge, cleanupPause, destroyPause);
 
   // Close the mDNS service
-  await closeMdnsInstance(matterbridge);
+  if (closeMdns) {
+    await closeMdnsInstance(matterbridge);
+  }
 
   // Reset the singleton instance
   // @ts-expect-error - accessing private member for testing
