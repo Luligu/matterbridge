@@ -144,9 +144,9 @@ describe('Matterbridge', () => {
     expect(matterbridge.matterbridgeDevVersion).toBe('1.0.0');
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_global_prefix', src: 'manager', dst: 'matterbridge', params: { prefix: '' } } as any);
     expect(matterbridge.globalModulesDirectory).toBe('');
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_sys_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shelly_sys_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
     expect(matterbridge.shellySysUpdate).toBe(true);
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_main_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shelly_main_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
     expect(matterbridge.shellyMainUpdate).toBe(true);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_platform', src: 'manager', dst: 'matterbridge', params: {} } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shared', src: 'manager', dst: 'matterbridge', params: {} } as any);

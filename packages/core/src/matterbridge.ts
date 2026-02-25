@@ -418,11 +418,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await this.nodeContext?.set<string>('globalModulesDirectory', msg.params.prefix);
           this.server.respond({ ...msg, result: { success: true } });
           break;
-        case 'matterbridge_sys_update':
+        case 'matterbridge_shelly_sys_update':
           this.shellySysUpdate = true;
           this.server.respond({ ...msg, result: { success: true } });
           break;
-        case 'matterbridge_main_update':
+        case 'matterbridge_shelly_main_update':
           this.shellyMainUpdate = true;
           this.server.respond({ ...msg, result: { success: true } });
           break;
@@ -2446,6 +2446,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.matterStorageService = undefined;
     this.matterStorageManager = undefined;
     this.matterbridgeContext = undefined;
+    this.controllerContext = undefined;
     this.log.info('Matter node storage closed');
   }
 
