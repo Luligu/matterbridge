@@ -45,33 +45,25 @@ RUN \
   git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
   npm ci --no-fund --no-audit && npm run build && \
   cd apps/frontend && npm ci --no-fund --no-audit && npm run build && rm -rf node_modules && cd ../.. && \
-  npm prune --omit=dev --no-fund --no-audit && \
-  npm install . --global --omit=dev --no-fund --no-audit && \
-  rm -rf .git
+  npm prune --omit=dev --no-fund --no-audit
 
 WORKDIR /root/matterbridge-test
 RUN \
   git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-test.git . && \
   npm ci --no-fund --no-audit && npm link matterbridge && npm run build && \
-  npm prune --omit=dev --no-fund --no-audit && \
-  matterbridge --add ../matterbridge-test && \
-  rm -rf .git
+  npm prune --omit=dev --no-fund --no-audit
 
 WORKDIR /root/matterbridge-example-accessory-platform
 RUN \
   git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-accessory-platform.git . && \
   npm ci --no-fund --no-audit && npm link matterbridge && npm run build && \
-  npm prune --omit=dev --no-fund --no-audit && \
-  matterbridge --add ../matterbridge-example-accessory-platform && \
-  rm -rf .git
+  npm prune --omit=dev --no-fund --no-audit
 
 WORKDIR /root/matterbridge-example-dynamic-platform
 RUN \
   git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-dynamic-platform.git . && \
   npm ci --no-fund --no-audit && npm link matterbridge && npm run build && \
-  npm prune --omit=dev --no-fund --no-audit && \
-  matterbridge --add ../matterbridge-example-dynamic-platform && \
-  rm -rf .git
+  npm prune --omit=dev --no-fund --no-audit
 
 FROM ubuntu:latest AS release
 
@@ -137,15 +129,15 @@ WORKDIR /root/matterbridge
 RUN \
   matterbridge --add /root/matterbridge-test && \
   matterbridge --add /root/matterbridge-example-accessory-platform && \
-  matterbridge --add /root/matterbridge-example-dynamic-platform
+  matterbridge --add /root/matterbridge-example-dynamic-platform && \
+  mkdir -p /root/.mattercert
+COPY docker/chip-test/pairing.json /root/.mattercert/pairing.json
 WORKDIR /root/matterbridge-test
 RUN npm link matterbridge
 WORKDIR /root/matterbridge-example-accessory-platform
 RUN npm link matterbridge
 WORKDIR /root/matterbridge-example-dynamic-platform
 RUN npm link matterbridge
-RUN mkdir -p /root/.mattercert
-COPY docker/chip-test/pairing.json /root/.mattercert/pairing.json
 
 # Persist Matterbridge fabric state (copied from repo)
 RUN mkdir -p /root/.matterbridge/matterstorage/Matterbridge
@@ -167,10 +159,28 @@ RUN cat > /root/connectedhomeip/scripts/activate.sh <<'SH'
 set -euo pipefail
 
 export CHIP_ROOT=/root/connectedhomeip
-export PATH="$CHIP_ROOT/out/host:$PATH"
 
-# Activate the Python venv built by connectedhomeip's build_python.sh
-source "$CHIP_ROOT/out/python_env/bin/activate"
+# Idempotent PATH handling: don't prepend duplicates if sourced multiple times.
+chip_host_path="$CHIP_ROOT/out/host"
+case ":${PATH:-}:" in
+  *":${chip_host_path}:"*) ;;
+  *) export PATH="$chip_host_path:${PATH:-}" ;;
+esac
+
+# Activate the Python venv built by connectedhomeip's build_python.sh.
+# Avoid re-activating if we're already in the same venv.
+chip_venv="$CHIP_ROOT/out/python_env"
+if [ "${VIRTUAL_ENV-}" != "$chip_venv" ]; then
+  # shellcheck disable=SC1091
+  source "$chip_venv/bin/activate"
+  if [ -n "${PS1-}" ]; then
+    echo "Activated CHIP environment: CHIP_ROOT=$CHIP_ROOT, VIRTUAL_ENV=$chip_venv" 1>&2
+  fi
+else
+  if [ -n "${PS1-}" ]; then
+    echo "CHIP environment already active: CHIP_ROOT=$CHIP_ROOT, VIRTUAL_ENV=$chip_venv" 1>&2
+  fi
+fi
 
 cd "$CHIP_ROOT"
 SH
@@ -180,8 +190,9 @@ COPY --from=builder /root/connectedhomeip/credentials /root/connectedhomeip/cred
 COPY --from=builder /root/connectedhomeip/src/app/tests /root/connectedhomeip/src/app/tests
 COPY --from=builder /root/connectedhomeip/src/python_testing /root/connectedhomeip/src/python_testing
 
-# Persist chip-tool temp state/config (copied from repo)
+# Persist pairing state for yaml and python tests
 COPY docker/chip-test/chip_* /tmp/
+COPY docker/chip-test/admin_storage.json /root/connectedhomeip/
 
 WORKDIR /root/connectedhomeip
 
