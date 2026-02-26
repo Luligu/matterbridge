@@ -56,6 +56,11 @@ These threads already run as workers:
 
 - [rootNode]: The serialNumber and uniqueId for accessory plugins in childbridge mode, and for devices with mode = server, are now taken from the device. These values are persisted in storage and cannot be changed later.
 
+### Dev News
+
+- [binding]: Add for test only MatterbridgeBindingServer.
+- [docker]: Add **luligu/matterbridge:chip-test** image (400MB): Ubuntu LTS, Node.Js 24 LTS, connectedhomeip repository with chip-tool, chip-cert and all needed for yaml and phyton tests. The matterbridge instance inside the container is already paired for yaml and python test. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the tests. Matterbridge frontend as usual on port 8283. No volumes or port mapping needed.
+
 ### Added
 
 - [nvm]: Add detection for Nvm (not for production with systemd service).
