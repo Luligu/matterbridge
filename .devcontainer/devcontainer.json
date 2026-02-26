@@ -1,23 +1,29 @@
 // .devcontainer/devcontainer.json
 // This file defines the development container configuration for Matterbridge.
 /* 
-************************************************* WARNING *************************************************
+  ************************************************* NOTICE *************************************************
 Dev containers have networking limitations depending on the host OS and Docker setup.
 
-• Docker Desktop on Windows or macOS:
+• Docker Desktop on Windows or macOS (you can use your desktop or laptop PC for development running on your favorite OS):
   - Runs inside a VM
-  - Host networking mode is NOT available and mDNS is not supported
-  - Matterbridge and plugins can run but:
-    ❌ Pairing with Matter controllers will NOT work cause of missing mDNS support
+  - Host networking mode is NOT available
+  - Use the Matterbridge Plugin Dev Container system (https://matterbridge.io/reflector/MatterbridgeDevContainer.html) for development and testing. It provides a similar environment to the native Linux setup with the following features:
+    ✅ Is possible to pair with an Home Assistant instance running in docker compose on the same host
     ✅ Remote and local network access (cloud services, internet APIs) works normally
+    ✅ Matterbridge and plugins work normally
+    ✅ Matterbridge frontend works normally
+  - Use the Matterbridge mDNS Reflector with the Matterbridge Plugin Dev Container system (https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network with the following features:
+    ✅ Is possible to pair with a controller running on the local network using mDNS reflector
+    ✅ Remote and local network access (cloud services, internet APIs) works normally
+    ✅ Matterbridge and plugins work normally
     ✅ Matterbridge frontend works normally
 
 • Native Linux or WSL 2 with Docker Engine CLI integration:
-  - Host networking IS available
-  - Full local network access is supported
-  - Matterbridge and plugins work correctly, including pairing
-  - Matterbridge frontend works normally
-************************************************* WARNING *************************************************
+  - ✅ Host networking IS available (with --network=host)
+  - ✅ Full local network access is supported
+  - ✅ Matterbridge and plugins work correctly, including pairing
+  - ✅ Matterbridge frontend works normally
+  ************************************************* NOTICE *************************************************
 */
 {
   // Name of the dev container

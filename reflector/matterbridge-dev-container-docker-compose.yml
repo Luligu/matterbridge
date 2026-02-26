@@ -1,3 +1,11 @@
+networks:
+  matterbridge:
+    external: true
+
+volumes:
+  homeassistant:
+  matterserver:
+
 services:
   homeassistant:
     container_name: homeassistant
@@ -5,10 +13,12 @@ services:
     restart: unless-stopped
     depends_on:
       - matterserver
+    networks:
+      - matterbridge
     ports:
-      - '8123:8123'
+      - "8123:8123"
     volumes:
-      - ./DockerVolumes/homeassistant:/config
+      - homeassistant:/config
     environment:
       - TZ=Europe/Paris
 
@@ -16,16 +26,11 @@ services:
     container_name: matterserver
     image: ghcr.io/home-assistant-libs/python-matter-server:stable
     restart: unless-stopped
+    networks:
+      - matterbridge
     ports:
-      - '5580:5580'
+      - "5580:5580"
     volumes:
-      - ./DockerVolumes/matterserver:/data
-    environment:
-      - TZ=Europe/Paris
-
-  reflector:
-    container_name: reflector
-    image: luligu/reflector-client:latest
-    restart: unless-stopped
+      - matterserver:/data
     environment:
       - TZ=Europe/Paris

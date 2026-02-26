@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+    }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+  </style>
+</head>
+<body>
+<h1 id="create-the-shared-matterbridge-bridge-docker-network">Create the shared matterbridge bridge docker network</h1>
+<pre><code class="language-shell">docker network inspect matterbridge || docker network create matterbridge
+docker network ls
+</code></pre>
+<h1 id="run-home-assitant-and-matter-server-in-docker-compose-with-docker-desktop">Run Home Assitant and Matter Server in Docker Compose with Docker Desktop</h1>
+<p>Will join the matterbridge bridge docker network.</p>
+<p>The matterbridge-dev-container-docker-compose.yml is available <a href="https://matterbridge.io/reflector/matterbridge-dev-container-docker-compose.yml">here</a>.</p>
+<pre><code class="language-shell">docker network inspect matterbridge || docker network create matterbridge
+docker compose -p matterbridge-dev-container -f matterbridge-dev-container-docker-compose.yml down
+docker compose -p matterbridge-dev-container -f matterbridge-dev-container-docker-compose.yml pull
+docker compose -p matterbridge-dev-container -f matterbridge-dev-container-docker-compose.yml up -d --force-recreate
+</code></pre>
+<p>The Matterbridge UI is available on port 8283.</p>
+<p>The Home Assistant UI is available on port 8123.</p>
+<p>The Matter Server UI is available on port 5580.</p>
+<p>The first time you run the docker compose, you will be asked for the Matter Server address, use matterserver as address instead of localhost (<strong>ws://matterserver:5580/ws</strong>).</p>
+<h1 id="open-matterbridge-ui-in-the-matterbridge-plugin-dev-container">Open Matterbridge UI in the Matterbridge Plugin Dev Container</h1>
+<p>Features:</p>
+<ul>
+<li>will create and join the matterbridge bridge docker network</li>
+<li>will expose port 8283 for the frontend</li>
+<li>will expose ports 5540-5549 for Matter (we use range here so you can also run in childbridge mode and use devices with mode server)</li>
+<li>all data persists in docker named volumes (extremely fast)</li>
+<li>no need to use a lan controller</li>
+</ul>
+<p>Run from the Dev Container terminal:</p>
+<pre><code class="language-shell">matterbridge
+</code></pre>
+<p>The first time you run the matterbridge plugin dev container, matterbridge will be build locally from the GitHub dev branch. Rebuild the dev container to update Matterbridge.</p>
+<p>You can now pair matterbridge (the plugin is already added to matterbridge) to the Matter Server instance running in container.</p>
+<h1 id="run-the-matterbridge-reflector-client-on-the-shared-matterbridge-bridge-docker-network-only-required-if-you-want-mdns-in-the-dev-container-to-pair-with-a-lan-controller-or-to-discover-devices-on-the-lan">Run the matterbridge reflector client on the shared matterbridge bridge docker network (only required if you want mDNS in the dev container to pair with a lan controller or to discover devices on the lan)</h1>
+<p>Local</p>
+<pre><code class="language-shell">docker run -dit --name reflector-client --network matterbridge reflector-client:latest
+</code></pre>
+<p>Docker bub</p>
+<pre><code class="language-shell">docker run -dit --name reflector-client --network matterbridge luligu/reflector-client:latest
+</code></pre>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>
