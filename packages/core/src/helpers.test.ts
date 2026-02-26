@@ -26,6 +26,7 @@ import { Endpoint } from '@matter/node';
 import { BindingServer, BridgedDeviceBasicInformationServer, DescriptorServer, OnOffServer } from '@matter/node/behaviors';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
+import { setDebug } from '@matterbridge/jest-utils';
 
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import {
@@ -33,6 +34,7 @@ import {
   consoleLogSpy,
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,
+  flushAsync,
   matterbridge,
   server,
   setupTest,
@@ -40,8 +42,6 @@ import {
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 
 const shutdownProcessSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess').mockImplementation(async () => {
   console.log('Mocked shutdownProcess called');
@@ -57,7 +57,7 @@ const updateProcessSpy = jest.spyOn(Matterbridge.prototype, 'updateProcess').moc
 });
 
 // Setup the test environment
-await setupTest(NAME, true);
+await setupTest(NAME, false);
 
 describe('Matterbridge ' + HOMEDIR, () => {
   let device: Endpoint;
@@ -81,11 +81,6 @@ describe('Matterbridge ' + HOMEDIR, () => {
     await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
-  });
-
-  test('log the server node', async () => {
-    expect(server).toBeDefined();
-    Logger.get('ServerNode').info(server);
   });
 
   test('add a light virtual device', async () => {
@@ -160,7 +155,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(aggregator.parts.has('RebootMatterbridge:switch')).toBeFalsy();
     expect(aggregator.parts.size).toBe(7);
 
-    Logger.get('AggregatorNode').info(aggregator);
+    // Logger.get('AggregatorNode').info(aggregator);
     expect(aggregator.parts.get('UpdateMatterbridge:switch')?.behaviors.has(BindingServer)).toBeTruthy();
     expect(aggregator.parts.get('UpdateMatterbridge:switch')?.stateOf(DescriptorServer).clientList).toEqual([Identify.Cluster.id, OnOff.Cluster.id]);
     expect(aggregator.parts.get('RestartMatterbridge:switch')?.behaviors.has(BindingServer)).toBeTruthy();
@@ -175,9 +170,20 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(aggregator.parts.has('RestartMatterbridge:mounted_switch')).toBeTruthy();
     expect(aggregator.parts.has('RebootMatterbridge:mounted_switch')).toBeFalsy();
     expect(aggregator.parts.size).toBe(9);
+
+    // await setDebug(true);
+    // Logger.get('AggregatorNode').info(aggregator);
+
+    expect(aggregator.parts.get('UpdateMatterbridge:mounted_switch')?.behaviors.has(BindingServer)).toBeFalsy();
+    expect(aggregator.parts.get('UpdateMatterbridge:mounted_switch')?.stateOf(DescriptorServer).clientList).toEqual([]);
+    // expect(aggregator.parts.get('UpdateMatterbridge:mounted_switch')?.stateOf(DescriptorServer).deviceTypeList).toEqual([{}]);
+    expect(aggregator.parts.get('RestartMatterbridge:mounted_switch')?.behaviors.has(BindingServer)).toBeFalsy();
+    expect(aggregator.parts.get('RestartMatterbridge:mounted_switch')?.stateOf(DescriptorServer).clientList).toEqual([]);
+    // expect(aggregator.parts.get('RestartMatterbridge:mounted_switch')?.stateOf(DescriptorServer).deviceTypeList).toEqual([{}]);
   });
 
   test('send command restart to the virtual device', async () => {
+    await setDebug(false);
     const restartDevice = aggregator.parts.get('RestartMatterbridge:light');
     expect(restartDevice).toBeDefined();
     if (!restartDevice) return;

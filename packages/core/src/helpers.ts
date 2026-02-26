@@ -76,6 +76,7 @@ export async function addVirtualDevice(
       deviceType = OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer);
       break;
     case 'switch':
+      // OnOff server cluster is extraneous for this device type but needed for Apple Home to show a switch.
       deviceType = OnOffLightSwitchDevice.with(BridgedDeviceBasicInformationServer, OnOffServer.with(), BindingServer);
       break;
     case 'mounted_switch':
@@ -122,7 +123,7 @@ export async function addVirtualDevice(
     });
   }
 
-  // Add the OnOffPlugInUnit to MountedOnOffControlDevice (Matter 1.4.2).
+  // Add the OnOffPlugInUnit to MountedOnOffControlDevice (Matter 1.4.2 specs added this (new case of superset) for legacy controllers to recognize the mounted switch).
   if (type === 'mounted_switch') {
     await device.act(async (agent) => {
       const descriptor = await agent.load(DescriptorServer);
