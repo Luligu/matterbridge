@@ -126,12 +126,12 @@ describe('Matterbridge matterjs', () => {
 
   test('serverNode commissioned', async () => {
     matterbridge.serverNode?.lifecycle.commissioned.emit(undefined as any);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge was initially commissioned successfully!`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge commissioned successfully!`);
   });
 
   test('serverNode decommissioned', async () => {
     matterbridge.serverNode?.lifecycle.decommissioned.emit(undefined as any);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge was fully decommissioned successfully!`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge fully decommissioned successfully!`);
   });
 
   test('serverNode fabricsChanged', async () => {

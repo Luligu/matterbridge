@@ -2611,17 +2611,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
      * This means: It is added to the first fabric.
      */
     serverNode.lifecycle.commissioned.on(() => {
-      this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`);
+      this.log.notice(`Server node for ${storeId} commissioned successfully!`);
       this.advertisingNodes.delete(storeId);
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} commissioned successfully!`, 5, 'success');
     });
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
     serverNode.lifecycle.decommissioned.on(() => {
-      this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`);
+      this.log.notice(`Server node for ${storeId} fully decommissioned successfully!`);
       this.advertisingNodes.delete(storeId);
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
+      this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} fully decommissioned successfully!`, 5, 'success');
     });
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
