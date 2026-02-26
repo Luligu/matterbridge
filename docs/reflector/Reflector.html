@@ -98,7 +98,7 @@
   </style>
 </head>
 <body>
-<h1 id="matterbridge-mdns-reflector">Matterbridge mDNS reflector</h1>
+<h1 id="img-srchttpsmatterbridgeioassetsmatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbsp-matterbridge-mdns-reflector"><img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp; Matterbridge mDNS reflector</h1>
 <p>This project aims to use Matterbridge in these configurations:</p>
 <table>
 <thead>
@@ -320,9 +320,9 @@ docker logs --tail 1000 -f matterbridge-reflector
 use this <a href="https://matterbridge.io/reflector/reflector-docker-compose.yml">docker-compose.yml</a>.</p>
 <p>With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with <strong>ws://matterserver:5580/ws</strong></p>
 <pre><code class="language-shell">docker network inspect matterbridge || docker network create matterbridge
-docker compose -p reflector-test -f reflector-docker-compose.yml down
-docker compose -p reflector-test -f reflector-docker-compose.yml pull
-docker compose -p reflector-test -f reflector-docker-compose.yml up -d --force-recreate
+docker compose -p matterbridge-reflector -f reflector-docker-compose.yml down
+docker compose -p matterbridge-reflector -f reflector-docker-compose.yml pull
+docker compose -p matterbridge-reflector -f reflector-docker-compose.yml up -d --force-recreate
 docker logs --tail 1000 -f reflector
 </code></pre>
   <script>

@@ -35,7 +35,9 @@ The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest re
 
 The image (tag **s6-rc** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-trixie-slim` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the [Matterbridge Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
 
-The image (tag **chip-test** 400MB) includes Ubuntu LTS, Node.Js 24 LTS, connectedhomeip repository with chip-tool, chip-cert and all needed for yaml and phyton tests. The matterbridge instance inside the container is already paired for yaml and python test. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the tests. Matterbridge frontend is as usual on port 8283. No volumes or port mapping needed.
+### Matterbridge chip-tool docker image
+
+The image (tag **chip-test** 400MB) includes Ubuntu LTS, Node.Js 24 LTS, connectedhomeip repository with chip-tool, chip-cert and all needed for yaml and phyton tests. The matterbridge instance inside the container is already paired in the chip-tool fabric to execute yaml tests and in the python harness fabric to execute python tests. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the tests. Matterbridge frontend is as usual on port 8283. No volumes or port mapping needed.
 
 ### Matterbridge docker base images
 

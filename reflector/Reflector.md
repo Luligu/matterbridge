@@ -1,4 +1,4 @@
-# Matterbridge mDNS reflector
+# <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp; Matterbridge mDNS reflector
 
 This project aims to use Matterbridge in these configurations:
 
@@ -169,8 +169,8 @@ With this configuration Home Assistant (with Matter Server) works inside a Docke
 
 ```shell
 docker network inspect matterbridge || docker network create matterbridge
-docker compose -p reflector-test -f reflector-docker-compose.yml down
-docker compose -p reflector-test -f reflector-docker-compose.yml pull
-docker compose -p reflector-test -f reflector-docker-compose.yml up -d --force-recreate
+docker compose -p matterbridge-reflector -f reflector-docker-compose.yml down
+docker compose -p matterbridge-reflector -f reflector-docker-compose.yml pull
+docker compose -p matterbridge-reflector -f reflector-docker-compose.yml up -d --force-recreate
 docker logs --tail 1000 -f reflector
 ```

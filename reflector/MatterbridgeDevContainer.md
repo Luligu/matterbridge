@@ -1,11 +1,13 @@
-# Create the shared matterbridge bridge docker network
+# <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp; Matterbridge Dev Container
+
+## Create the shared matterbridge bridge docker network
 
 ```shell
 docker network inspect matterbridge || docker network create matterbridge
 docker network ls
 ```
 
-# Run Home Assitant and Matter Server in Docker Compose with Docker Desktop
+## Run Home Assitant and Matter Server in Docker Compose with Docker Desktop
 
 Will join the matterbridge bridge docker network.
 
@@ -26,7 +28,7 @@ The Matter Server UI is available on port 5580.
 
 The first time you run the docker compose, you will be asked for the Matter Server address, use matterserver as address instead of localhost (**ws://matterserver:5580/ws**).
 
-# Open Matterbridge UI in the Matterbridge Plugin Dev Container
+## Open Matterbridge UI in the Matterbridge Plugin Dev Container
 
 Features:
 
@@ -46,16 +48,6 @@ The first time you run the matterbridge plugin dev container, matterbridge will 
 
 You can now pair matterbridge (the plugin is already added to matterbridge) to the Matter Server instance running in container.
 
-# Run the matterbridge reflector client on the shared matterbridge bridge docker network (only required if you want mDNS in the dev container to pair with a lan controller or to discover devices on the lan)
+## Run the matterbridge reflector client on the shared matterbridge bridge docker network (only required if you want mDNS in the dev container to pair with a lan controller or to discover devices on the lan)
 
-Local
-
-```shell
-docker run -dit --name reflector-client --network matterbridge reflector-client:latest
-```
-
-Docker bub
-
-```shell
-docker run -dit --name reflector-client --network matterbridge luligu/reflector-client:latest
-```
+Follow the instruction in [Matterbridge mDNS reflector](Reflector.md)
