@@ -56,17 +56,17 @@ const addVirtualDevice = helpersModule.addVirtualDevice as jest.MockedFunction<t
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Environment } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
-import { waiter } from '@matterbridge/utils';
 import { dev, MATTER_STORAGE_NAME, plg } from '@matterbridge/types';
+import { waiter } from '@matterbridge/utils';
+import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
+import { closeMdnsInstance, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
-import { PluginManager } from './pluginManager.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
-import { closeMdnsInstance, destroyInstance, loggerInfoSpy, loggerLogSpy, loggerErrorSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { PluginManager } from './pluginManager.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

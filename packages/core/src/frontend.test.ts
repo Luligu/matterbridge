@@ -43,18 +43,18 @@ import { jest } from '@jest/globals';
 import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
 import { WebSocket } from 'ws';
 // Dynamically import after mocking
-const { Matterbridge } = await import('./matterbridge.ts');
-const { Frontend } = await import('./frontend.ts');
+const { Matterbridge } = await import('./matterbridge.js');
+const { Frontend } = await import('./frontend.js');
 import { Lifecycle } from '@matter/general';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
-import { wait, waiter } from '@matterbridge/utils';
 import { BroadcastServer } from '@matterbridge/thread';
+import { wait, waiter } from '@matterbridge/utils';
 
-import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
-import type { Frontend as FrontendType } from './frontend.js';
 import { cliEmitter } from './cliEmitter.js';
+import type { Frontend as FrontendType } from './frontend.js';
 import { closeMdnsInstance, destroyInstance, flushAsync, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 
 // Mock BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);

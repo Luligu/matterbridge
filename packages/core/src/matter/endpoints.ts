@@ -1,11 +1,10 @@
-// @matter
 export {
   AggregatorEndpoint,
-  ElectricalSensorEndpoint,
-  PowerSourceEndpoint,
   BridgedNodeEndpoint,
-  RootEndpoint,
   DeviceEnergyManagementEndpoint,
+  ElectricalSensorEndpoint,
   OtaProviderEndpoint,
   OtaRequestorEndpoint,
+  PowerSourceEndpoint,
+  RootEndpoint,
 } from '@matter/node/endpoints';

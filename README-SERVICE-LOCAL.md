@@ -21,6 +21,8 @@
 
 # Production advanced configuration
 
+> **Nvm is a development tool and is not supported for production**.
+
 ## Run matterbridge as a daemon with systemctl (Linux only) with local global node_modules
 
 The advantage of this setup is that the global node_modules and npm cache are private for the user and sudo is not required.
@@ -29,7 +31,7 @@ The service runs rootless like the current user.
 
 The storage position is compatible with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
 
-Also various scripts don't work if you choose this configuration.
+Other scripts don't work if you choose this configuration.
 
 ### First create the Matterbridge directories and set the correct permissions
 
@@ -95,7 +97,7 @@ Group=<USER>
 WantedBy=multi-user.target
 ```
 
-If you use the frontend with **-ssl** -frontend 443 and get an error message: "Port 443 requires elevated privileges",
+If you use the frontend with **-ssl** --frontend 443 and get an error message: "Port 443 requires elevated privileges",
 add this:
 
 ```

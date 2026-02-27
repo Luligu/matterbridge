@@ -41,8 +41,8 @@ const cloneDeep = (value) => {
 };
 
 import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { request } from 'node:https';
+import { join } from 'node:path';
 
 const fetchRemoteText = async (url, { description, headers = {}, maxRedirects = 5 } = {}) => {
   const label = description || url;

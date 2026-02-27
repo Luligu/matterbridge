@@ -10,9 +10,9 @@ const DISCRIMINATOR = 3860;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-logger';
-import { plg } from '@matterbridge/types';
 import type { ApiPlugin } from '@matterbridge/types';
+import { plg } from '@matterbridge/types';
+import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-logger';
 
 import {
   flushAsync,
@@ -27,9 +27,8 @@ import {
   wssSendSnackbarMessageSpy,
   wssSendUpdateRequiredSpy,
 } from '../../../packages/core/src/jestutils/jestHelpers.js';
-
-import { checkUpdates, getMatterbridgeLatestVersion, getMatterbridgeDevVersion, getPluginLatestVersion, getPluginDevVersion, checkUpdatesAndLog } from './checkUpdates.js';
 import { BroadcastServer } from './broadcastServer.js';
+import { checkUpdates, checkUpdatesAndLog, getMatterbridgeDevVersion, getMatterbridgeLatestVersion, getPluginDevVersion, getPluginLatestVersion } from './checkUpdates.js';
 
 // Mock selected functions from @matterbridge/utils
 jest.unstable_mockModule('@matterbridge/utils', () => ({

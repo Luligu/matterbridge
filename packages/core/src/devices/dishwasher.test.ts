@@ -8,14 +8,12 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
 // @matter
 import { DishwasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
 import { DishwasherAlarm, DishwasherMode, Identify, OnOff, OperationalState, PowerSource, TemperatureControl } from '@matter/types/clusters';
+import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import {
   addDevice,
   aggregator,
@@ -29,7 +27,8 @@ import {
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
 import { dishwasher } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { Dishwasher, MatterbridgeDishwasherModeServer } from './dishwasher.js';
 import { MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
 

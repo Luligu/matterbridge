@@ -531,10 +531,10 @@ describe('Inspector', () => {
         else if (method === 'HeapProfiler.stopSampling') cb(null, { profile: {} });
         else cb(null);
       }
-      on() {
+      override on() {
         return this;
       }
-      off() {
+      override off() {
         return this;
       }
     }
@@ -565,10 +565,10 @@ describe('Inspector', () => {
         else if (method === 'HeapProfiler.stopSampling') cb(new Error('stop-error'));
         else cb(null);
       }
-      on() {
+      override on() {
         return this;
       }
-      off() {
+      override off() {
         return this;
       }
     }

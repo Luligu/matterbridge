@@ -60,32 +60,29 @@
  */
 
 import { rmSync } from 'node:fs';
-import { inspect } from 'node:util';
 import path from 'node:path';
+import { inspect } from 'node:util';
 
 import type { jest } from '@jest/globals';
-// Imports from node-ansi-logger
-import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
-// Imports from node-persist-manager
-import { NodeStorageManager } from 'node-persist-manager';
-// Imports from @matter
-import { LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Environment, Lifecycle } from '@matter/general';
+import { Environment, Lifecycle, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
-import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/protocol';
-// Imports from @matterbridge
+import { ColorControl } from '@matter/types/clusters/color-control';
+import { LevelControl } from '@matter/types/clusters/level-control';
+import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '@matterbridge/types';
+import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { NodeStorageManager } from 'node-persist-manager';
 
-// Imports from Matterbridge
-import { Matterbridge } from '../matterbridge.js';
-import { MatterbridgePlatform } from '../matterbridgePlatform.js';
-import { bridge } from '../matterbridgeDeviceTypes.js';
 import { DeviceManager } from '../deviceManager.js';
-import { PluginManager } from '../pluginManager.js';
 import { Frontend } from '../frontend.js';
+import { Matterbridge } from '../matterbridge.js';
+import { bridge } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { MatterbridgePlatform } from '../matterbridgePlatform.js';
+import { PluginManager } from '../pluginManager.js';
 
 // Freeze the original process arguments and environment variables to allow resetting them in tests
 export const originalProcessArgv = Object.freeze([...process.argv]);
@@ -477,16 +474,17 @@ export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: 
  * Create a Matterbridge instance for testing without initializing it.
  *
  * @param {string} name - Name for the environment (jest/name).
+ * @param {boolean} createOnly - If true, only create the environment without starting it. Default is false.
  * @returns {Promise<Matterbridge>} The Matterbridge instance.
  *
  * @example
  * ```typescript
  * // Create Matterbridge environment
- * await createMatterbridgeEnvironment(NAME);
- * await startMatterbridgeEnvironment(MATTER_PORT);
+ * await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
+ * await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
  * ```
  */
-export async function createMatterbridgeEnvironment(name: string): Promise<Matterbridge> {
+export async function createMatterbridgeEnvironment(name: string, createOnly: boolean = false): Promise<Matterbridge> {
   // Create the exported log
   log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -494,7 +492,7 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.5.5';
+  matterbridge.matterbridgeVersion = '3.5.6';
   matterbridge.bridgeMode = 'bridge';
   matterbridge.rootDirectory = path.join('jest', name);
   matterbridge.homeDirectory = path.join('jest', name);
@@ -510,7 +508,7 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
 
   // Setup matter environment
   // @ts-expect-error - access to private member for testing
-  matterbridge.environment = createTestEnvironment(name);
+  matterbridge.environment = createTestEnvironment(name, createOnly);
   // @ts-expect-error - access to private member for testing
   expect(matterbridge.environment).toBeDefined();
   // @ts-expect-error - access to private member for testing
@@ -523,16 +521,17 @@ export async function createMatterbridgeEnvironment(name: string): Promise<Matte
  * Only node storage, matter storage and the server and aggregator nodes are started.
  *
  * @param {number} port The matter server port.
+ * @param {boolean} createOnly If true, only create the environment without starting it. Default is false.
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} The started server and aggregator.
  *
  * @example
  * ```typescript
  * // Create Matterbridge environment
- * await createMatterbridgeEnvironment(NAME);
- * await startMatterbridgeEnvironment(MATTER_PORT);
+ * await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
+ * await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
  * ```
  */
-export async function startMatterbridgeEnvironment(port: number = 5540): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+export async function startMatterbridgeEnvironment(port: number = 5540, createOnly: boolean = false): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
   // Create the node storage
   matterbridge.nodeStorage = new NodeStorageManager({
     dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR),
@@ -565,6 +564,13 @@ export async function startMatterbridgeEnvironment(port: number = 5540): Promise
   expect(server.parts.has(aggregator.id)).toBeTruthy();
   expect(server.parts.has(aggregator)).toBeTruthy();
   expect(aggregator.lifecycle.isReady).toBeTruthy();
+
+  if (createOnly) {
+    // Ensure the queue is empty and pause
+    await flushAsync();
+
+    return [server, aggregator];
+  }
 
   // Wait for the server to be online
   expect(server.lifecycle.isOnline).toBeFalsy();
@@ -643,14 +649,16 @@ export function addMatterbridgePlatform(platform: MatterbridgePlatform, name?: s
 /**
  * Stop the matterbridge environment
  *
+ * @param {boolean} createOnly Whether the environment was created with createOnly flag. If true, only stop the environment without closing the server and aggregator nodes (default false).
+ * @returns {Promise<void>} A promise that resolves when the environment is stopped.
  * @example
  * ```typescript
  * // Destroy Matterbridge environment
- * await stopMatterbridgeEnvironment();
- * await destroyMatterbridgeEnvironment();
+ * await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
+ * await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
  * ```
  */
-export async function stopMatterbridgeEnvironment(): Promise<void> {
+export async function stopMatterbridgeEnvironment(createOnly: boolean = false): Promise<void> {
   expect(matterbridge).toBeDefined();
   expect(server).toBeDefined();
   expect(aggregator).toBeDefined();
@@ -663,7 +671,9 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
 
   // Close the server node
   expect(server.lifecycle.isReady).toBeTruthy();
-  expect(server.lifecycle.isOnline).toBeTruthy();
+  if (!createOnly) {
+    expect(server.lifecycle.isOnline).toBeTruthy();
+  }
   await server.close();
   expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();
@@ -690,7 +700,7 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
  *
  * @param {number} cleanupPause The timeout for the destroy operation (default 10ms).
  * @param {number} destroyPause The pause duration after cleanup before destroying the instance (default 250ms).
- *
+ * @param {boolean} closeMdns Whether to close the mDNS service (default true).
  * @example
  * ```typescript
  * // Destroy Matterbridge environment
@@ -698,12 +708,14 @@ export async function stopMatterbridgeEnvironment(): Promise<void> {
  * await destroyMatterbridgeEnvironment();
  * ```
  */
-export async function destroyMatterbridgeEnvironment(cleanupPause: number = 10, destroyPause: number = 250): Promise<void> {
+export async function destroyMatterbridgeEnvironment(cleanupPause: number = 10, destroyPause: number = 250, closeMdns: boolean = true): Promise<void> {
   // Destroy a matterbridge instance
   await destroyInstance(matterbridge, cleanupPause, destroyPause);
 
   // Close the mDNS service
-  await closeMdnsInstance(matterbridge);
+  if (closeMdns) {
+    await closeMdnsInstance(matterbridge);
+  }
 
   // Reset the singleton instance
   // @ts-expect-error - accessing private member for testing
@@ -1142,4 +1154,122 @@ export async function deleteDevice(owner: ServerNode<ServerNode.RootEndpoint> | 
   expect(device.construction.status).toBe(Lifecycle.Status.Destroyed);
   await flushAsync(undefined, undefined, pause);
   return true;
+}
+
+/**
+ * Build a Matter LevelControl `MoveToLevelRequest` payload.
+ *
+ * Helper used in tests to create a correctly shaped request object, including
+ * `optionsMask` and `optionsOverride`.
+ *
+ * @param {number} level Target level (Matter `uint8`; commonly 0–254).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {LevelControl.MoveToLevelRequest} The request payload.
+ */
+export function getMoveToLevelRequest(level: number, transitionTime: number, executeIfOff: boolean): LevelControl.MoveToLevelRequest {
+  const request: LevelControl.MoveToLevelRequest = {
+    level,
+    transitionTime,
+    optionsMask: { executeIfOff, coupleColorTempToLevel: false },
+    optionsOverride: { executeIfOff, coupleColorTempToLevel: false },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveToColorTemperatureRequest` payload.
+ *
+ * @param {number} colorTemperatureMireds Target color temperature in mireds (micro reciprocal degrees).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveToColorTemperatureRequest} The request payload.
+ */
+export function getMoveToColorTemperatureRequest(colorTemperatureMireds: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToColorTemperatureRequest {
+  const request: ColorControl.MoveToColorTemperatureRequest = {
+    colorTemperatureMireds,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveToHueRequest` payload.
+ *
+ * Uses `ColorControl.Direction.Shortest` by default.
+ *
+ * @param {number} hue Target hue (Matter `uint8`; commonly 0–254).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveToHueRequest} The request payload.
+ */
+export function getMoveToHueRequest(hue: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToHueRequest {
+  const request: ColorControl.MoveToHueRequest = {
+    hue,
+    transitionTime,
+    direction: ColorControl.Direction.Shortest,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveToSaturationRequest` payload.
+ *
+ * @param {number} saturation Target saturation (Matter `uint8`; commonly 0–254).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveToSaturationRequest} The request payload.
+ */
+export function getMoveToSaturationRequest(saturation: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToSaturationRequest {
+  const request: ColorControl.MoveToSaturationRequest = {
+    saturation,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveToHueAndSaturationRequest` payload.
+ *
+ * @param {number} hue Target hue (Matter `uint8`; commonly 0–254).
+ * @param {number} saturation Target saturation (Matter `uint8`; commonly 0–254).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveToHueAndSaturationRequest} The request payload.
+ */
+export function getMoveToHueAndSaturationRequest(hue: number, saturation: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToHueAndSaturationRequest {
+  const request: ColorControl.MoveToHueAndSaturationRequest = {
+    hue,
+    saturation,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveToColorRequest` payload.
+ *
+ * @param {number} colorX Target X coordinate in CIE 1931 XY color space (Matter `uint16`).
+ * @param {number} colorY Target Y coordinate in CIE 1931 XY color space (Matter `uint16`).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveToColorRequest} The request payload.
+ */
+export function getMoveToColorRequest(colorX: number, colorY: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToColorRequest {
+  const request: ColorControl.MoveToColorRequest = {
+    colorX,
+    colorY,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
 }

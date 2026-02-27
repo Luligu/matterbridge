@@ -25,9 +25,8 @@
 import { AddressInfo } from 'node:net';
 import os from 'node:os';
 
-// Net imports
-import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT, DnsClass, DnsClassFlag, DnsRecordType, Mdns } from '@matterbridge/dgram';
-// Utils imports
+// @matterbridge
+import { DnsClass, DnsClassFlag, DnsRecordType, Mdns, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from '@matterbridge/dgram';
 import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '@matterbridge/utils';
 
 // istanbul ignore next

@@ -1,0 +1,11 @@
+{
+  "vendorId": 65521,
+  "vendorName": "Matterbridge",
+  "productId": 32768,
+  "productName": "Matterbridge Bridge",
+  "passcode": 20252025,
+  "discriminator": 3535,
+  "deviceType": 14,
+  "serialNumber": "SN12345678",
+  "uniqueId": "UI12345678"
+}

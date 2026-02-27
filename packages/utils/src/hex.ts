@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-import { createPublicKey, createPrivateKey, X509Certificate } from 'node:crypto';
+import { createPrivateKey, createPublicKey, X509Certificate } from 'node:crypto';
 
 /**
  * Converts an ArrayBuffer or Uint8Array to a hexadecimal string.

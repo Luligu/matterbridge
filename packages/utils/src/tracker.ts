@@ -26,12 +26,12 @@
 
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mTracker loaded.\u001B[40;0m');
 
-import os from 'node:os';
 import EventEmitter from 'node:events';
+import os from 'node:os';
 
-import { AnsiLogger, LogLevel, TimestampFormat, BRIGHT, CYAN, RESET, YELLOW, db, RED } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, RESET, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
-import { formatPercent, formatBytes, formatTimeStamp } from './format.js';
+import { formatBytes, formatPercent, formatTimeStamp } from './format.js';
 
 // Memory snapshot focusing on cpu and rss, heapUsed, heapTotal, external and arrayBuffers plus peak values
 export type TrackerSnapshot = {

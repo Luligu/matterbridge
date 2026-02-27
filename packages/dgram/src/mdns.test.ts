@@ -13,7 +13,7 @@ import dgram from 'node:dgram';
 import { jest } from '@jest/globals';
 import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/jest-utils';
 
-import { Mdns, DnsRecordType, DnsClass, DnsClassFlag, isMdns, isMdnsQuery, isMdnsResponse } from './mdns.js';
+import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns } from './mdns.js';
 
 process.argv.push('--verbose');
 

@@ -1,16 +1,16 @@
 // src\utils\isValid.test.ts
 
 import {
-  isValidIpv4Address,
-  isValidNumber,
-  isValidBoolean,
-  isValidString,
-  isValidObject,
   isValidArray,
+  isValidBoolean,
+  isValidIpv4Address,
   isValidNull,
+  isValidNumber,
+  isValidObject,
+  isValidRegExp,
+  isValidString,
   isValidUndefined,
   parseVersionString,
-  isValidRegExp,
 } from './isValid.js';
 
 describe('Validation Functions', () => {

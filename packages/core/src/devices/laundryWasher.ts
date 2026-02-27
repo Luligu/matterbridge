@@ -23,18 +23,17 @@
 
 // Imports from @matter
 import { MaybePromise } from '@matter/general';
-import { OperationalState } from '@matter/types/clusters/operational-state';
+import { LaundryWasherControlsServer } from '@matter/node/behaviors/laundry-washer-controls';
+import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
-import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
-import { LaundryWasherControlsServer } from '@matter/node/behaviors/laundry-washer-controls';
+import { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
+import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { laundryWasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
-
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 export class LaundryWasher extends MatterbridgeEndpoint {

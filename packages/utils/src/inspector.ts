@@ -27,9 +27,9 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mInspector loaded.\u001B[40;0m');
 
 import EventEmitter from 'node:events';
-import type { InspectorNotification, HeapProfiler, Session } from 'node:inspector';
+import type { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
 
-import { AnsiLogger, LogLevel, TimestampFormat, BRIGHT, CYAN, RESET, YELLOW, db } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RESET, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
 // Inspector events
 interface InspectorEvents {

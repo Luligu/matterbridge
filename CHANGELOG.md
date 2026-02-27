@@ -43,19 +43,55 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
-These threads already run as a workers:
+These threads already run as workers:
 
 - ✅ check updates;
 - ✅ system check;
 - npm install;
 - ✅ check the global node_modules directory;
 
+## [3.5.6] - 2026-02-27
+
+### Dev Breaking Changes
+
+- [rootNode]: The serialNumber and uniqueId for accessory plugins in childbridge mode, and for devices with mode = server, are now taken from the device. These values are persisted in storage and cannot be changed later.
+- [devContainer]: Add the guide to [pair Matterbridge with Dev Container](README-DEV.md#how-to-pair-matterbridge-in-dev-containers)
+- [devContainer]: Add the new [dev container setup](https://matterbridge.io/reflector/MatterbridgeDevContainer.html).
+- [devContainer]: Add the new [reflector dev container setup](https://matterbridge.io/reflector/Reflector.html).
+
+### Dev News
+
+- [binding]: Add for test only MatterbridgeBindingServer.
+- [docker]: Add **luligu/matterbridge:chip-test** image (400MB): it is based on Ubuntu LTS, Node.Js 24 LTS and includes connectedhomeip repository with chip-tool, chip-cert and all packages requierd to run yaml and phyton tests. The matterbridge instance inside the container is already paired for yaml and python test. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the yaml or phyton tests. Matterbridge frontend is bound on port 8283. No volumes or port mapping needed.
+- [styleguide]: Add [STYLEGUIDE.md](STYLEGUIDE.md).
+- [contributing]: Add [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Added
+
+- [nvm]: Add detection for Nvm (not for production with systemd service).
+- [nvm]: Clarify in systemd guides that Nvm cannot be used for production.
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Bump packages to `automator` v.3.1.0.
+- [package]: Bump `eslint` to v.10.0.2.
+- [package]: Bump `typescript-eslint` to v.8.56.1.
+- [package]: Replace `eslint-plugin-import` with `eslint-plugin-simple-import-sort`.
+- [package]: Bump `matter.js` to v.0.16.10. Thanks matter.js team.
+
+### Fixed
+
+- [advertise]: Remove no more used timeout of 15 minutes.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.5.5] - 2026-02-20
 
 ### Breaking Changes
 
-- [Node.Js]: Consider to update all setups to Node.Js 24 that is now the LTS.
-- [docker]: Use mb_health instead of curl for HEALTHCHECK. This allows to save around 15MB on the image size. If you override the UI port or the protocol, update the CMD with mb_health https://localhost/health.
+- [Node.Js]: Consider to update all not docker based setups to Node.Js 24 that is now the LTS.
+- [docker]: Use mb_health instead of curl for HEALTHCHECK. This allows to save around 15MB on the docker image size. If you override the UI port or the protocol, update the health check CMD with mb_health https://localhost/health or disable it.
 
 ### Added
 
@@ -73,7 +109,7 @@ These threads already run as a workers:
 
 ### Fixed
 
-- [frontend]: Fix possible issue with some browser in check authentication. Thanks Ludovic BOUÉ and k3067e3 (https://github.com/Luligu/matterbridge/issues/498).
+- [frontend]: Fix possible issue with some browsers in check authentication. Thanks Ludovic BOUÉ and k3067e3 (https://github.com/Luligu/matterbridge/issues/498).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
@@ -88,7 +124,7 @@ These threads already run as a workers:
 - [doorLock]: The default value for **DoorLock.actuatorEnabled** has been changed to true. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/509).
 - [ingress]: Removed the `--ingress` parameter used in the old Home Assisant add-on. Update the Matterbridge Home Assistant Application (formerly known as add-on) if you didn't.
 - [Node.Js]: Restricted **Node.Js requirents** to `>= 20.19` < 21 or `>= 22.13` < 23 or `>= 24` < 25.
-- [Node.Js]: Consider to update all setups to Node.Js 24 that is now the LTS.
+- [Node.Js]: Consider to update all all not docker based setups to Node.Js 24 that is now the LTS.
 
 ### Added
 

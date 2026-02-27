@@ -14,9 +14,8 @@ import { Endpoint, ServerNode } from '@matter/node';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { Matterbridge } from '../matterbridge.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { bridge, onOffOutlet } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import {
   addDevice,
   addMatterbridgePlatform,

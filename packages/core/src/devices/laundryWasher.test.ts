@@ -9,14 +9,12 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
+import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
 // @matter
 import { Identify, LaundryWasherControls, LaundryWasherMode, OnOff, OperationalState, PowerSource, TemperatureControl } from '@matter/types/clusters';
-import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
+import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import {
   addDevice,
   aggregator,
@@ -30,7 +28,8 @@ import {
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
 import { laundryWasher } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { LaundryWasher, MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';
 import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
 

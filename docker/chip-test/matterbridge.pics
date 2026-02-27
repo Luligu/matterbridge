@@ -1,0 +1,67 @@
+MCORE.BRIDGE=1
+MCORE.BRIDGE.BatInfo=0
+MCORE.BRIDGE.OtherControl=0
+MCORE.BRIDGE.AllowDeviceRename=0
+
+# Test_TC_I_2_1.yaml Test_TC_I_2_2.yaml Test_TC_I_2_3.yaml
+# Identify cluster
+I.S.A0000=0  # IdentifyTime
+I.S.A0001=0  # IdentifyType
+
+# Test_TC_BR_1.yaml
+# BridgedDeviceBasicInformation cluster
+BRBINFO.S=1
+BRBINFO.S.A0001=1
+BRBINFO.S.A0002=1
+BRBINFO.S.A0003=1
+BRBINFO.S.A0004=0 # ProductId: it doesn't exist on this cluster!
+BRBINFO.S.A0005=1
+BRBINFO.S.A0006=1
+BRBINFO.S.A0007=1
+BRBINFO.S.A0008=1
+BRBINFO.S.A0009=1
+BRBINFO.S.A000a=1
+BRBINFO.S.A000b=0 # ManufaturingDate
+BRBINFO.S.A000c=0 # PartNumber
+BRBINFO.S.A000d=1
+BRBINFO.S.A000e=1
+BRBINFO.S.A000f=1
+BRBINFO.S.A0010=0 # LocalConfigDisabled
+BRBINFO.S.A0011=1
+BRBINFO.S.A0012=1
+BRBINFO.S.A0013=0 # 
+BRBINFO.S.A0014=0 # ProductAppearance
+BRBINFO.S.A0018=0 # ConfigurationVersion
+
+# Test_TC_PS_2_1.yaml Test_TC_PS_2_2.yaml
+# PowerSource cluster
+PS.S.A0000=1 # Status
+PS.S.A0001=1 # Order
+PS.S.A0002=1 # Description
+PS.S.A001f=1 # EndpointList
+
+# Test_TC_BOOL_2_1 Test_TC_BOOL_2_2
+# BooleanState cluster
+BOOL.S.A0000=1
+
+# Occupancy Sensing cluster enabled
+OCC.S=1
+
+# Test_TC_OO_2_1.yaml
+# OnOff cluster attributes are implemented
+OO.S.A0000=1
+OO.S.A4000=1
+OO.S.A4001=1
+OO.S.A4002=1
+
+# Test_TC_OO_2_2.yaml
+# OnOff cluster commands are implemented
+OO.S.C00.Rsp=1
+OO.S.C01.Rsp=1
+OO.S.C02.Rsp=1
+
+# Test_TC_OO_2_4 Startup behavior
+
+# Test_TC_OO_2_6 OffOnly feature
+
+# Test_TC_OO_2_7 Scenes interaction

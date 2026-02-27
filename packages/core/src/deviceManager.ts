@@ -26,15 +26,15 @@
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mDevice Manager loaded.\u001B[40;0m');
 
+// @matterbridge
+import { BroadcastServer } from '@matterbridge/thread';
+import type { BaseDevice, WorkerMessage } from '@matterbridge/types';
+import { dev } from '@matterbridge/types';
+import { hasParameter } from '@matterbridge/utils';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
-// @matterbridge
-import { hasParameter } from '@matterbridge/utils';
-import { dev } from '@matterbridge/types';
-import type { BaseDevice, WorkerMessage } from '@matterbridge/types';
-import { BroadcastServer } from '@matterbridge/thread';
 
-// Matterbridge
+// matterbridge
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 /**

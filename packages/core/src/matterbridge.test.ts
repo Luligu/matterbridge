@@ -34,23 +34,23 @@ jest.unstable_mockModule('@matterbridge/thread', () => ({
 const workerModule = await import('@matterbridge/thread');
 const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import fs from 'node:fs';
 
 import { jest } from '@jest/globals';
-import { LogLevel as MatterLogLevel, Logger } from '@matter/general';
-import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types';
+import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { SessionsBehavior } from '@matter/node';
 import { ExposedFabricInformation } from '@matter/protocol';
-import { LogLevel, nf } from 'node-ansi-logger';
-import { getParameter, hasParameter } from '@matterbridge/utils';
-import { plg } from '@matterbridge/types';
+import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types';
 import { BroadcastServer } from '@matterbridge/thread';
+import { plg } from '@matterbridge/types';
+import { getParameter, hasParameter } from '@matterbridge/utils';
+import { LogLevel, nf } from 'node-ansi-logger';
 
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 
 // Mock BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
@@ -144,9 +144,9 @@ describe('Matterbridge', () => {
     expect(matterbridge.matterbridgeDevVersion).toBe('1.0.0');
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_global_prefix', src: 'manager', dst: 'matterbridge', params: { prefix: '' } } as any);
     expect(matterbridge.globalModulesDirectory).toBe('');
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_sys_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shelly_sys_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
     expect(matterbridge.shellySysUpdate).toBe(true);
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_main_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shelly_main_update', src: 'manager', dst: 'matterbridge', params: {} } as any);
     expect(matterbridge.shellyMainUpdate).toBe(true);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_platform', src: 'manager', dst: 'matterbridge', params: {} } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shared', src: 'manager', dst: 'matterbridge', params: {} } as any);

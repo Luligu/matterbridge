@@ -1,8 +1,17 @@
+/**
+ * Launcher script for a developer "automator".
+ *
+ * - Locates `automator.mjs` either via `AUTOMATOR_PATH` or common OneDrive roots.
+ * - Invokes it with the current Node executable, forwarding CLI args and stdio.
+ * - Exits with the same status code (or 1 on failure).
+ */
+
 /* eslint-disable n/no-process-exit */
+
+import { spawnSync } from 'node:child_process';
+import { access } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { access } from 'node:fs/promises';
-import { spawnSync } from 'node:child_process';
 
 const argv = process.argv.slice(2);
 

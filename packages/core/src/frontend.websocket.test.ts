@@ -31,20 +31,16 @@ process.argv = [
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
-import WebSocket from 'ws';
 import { LogLevel as MatterLogLevel } from '@matter/general';
 import { Identify } from '@matter/types/clusters';
 import { EndpointNumber } from '@matter/types/datatype';
-import { wait, waiter } from '@matterbridge/utils';
-import { plg, isApiRequest, isApiResponse, isBroadcast } from '@matterbridge/types';
 import type { WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
+import { isApiRequest, isApiResponse, isBroadcast, plg } from '@matterbridge/types';
+import { wait, waiter } from '@matterbridge/utils';
+import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import WebSocket from 'ws';
 
-import { Matterbridge } from './matterbridge.js';
 import type { Frontend as FrontendType } from './frontend.js';
-import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import type { Plugin } from './pluginManager.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Frontend } from './frontend.js';
 import {
   closeMdnsInstance,
@@ -61,6 +57,10 @@ import {
   wssSendRestartNotRequiredSpy,
   wssSendSnackbarMessageSpy,
 } from './jestutils/jestHelpers.js';
+import { Matterbridge } from './matterbridge.js';
+import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import type { Plugin } from './pluginManager.js';
 
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('@matterbridge/thread', () => ({

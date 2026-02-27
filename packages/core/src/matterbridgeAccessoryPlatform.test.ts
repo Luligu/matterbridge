@@ -4,8 +4,8 @@ const NAME = 'MatterbridgeAccessoryPlatform';
 
 import { jest } from '@jest/globals';
 
-import { isMatterbridgeAccessoryPlatform, MatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
 import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, log, matterbridge, setupTest } from './jestutils/jestHelpers.js';
+import { isMatterbridgeAccessoryPlatform, MatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

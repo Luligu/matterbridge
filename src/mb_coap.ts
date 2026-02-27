@@ -24,8 +24,8 @@
 // Node.js imports
 import { AddressInfo } from 'node:net';
 
-// Net imports
-import { COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, Coap, COAP_OPTION_URI_PATH } from '@matterbridge/dgram';
+// @matterbridge
+import { Coap, COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, COAP_OPTION_URI_PATH } from '@matterbridge/dgram';
 
 // istanbul ignore next
 {

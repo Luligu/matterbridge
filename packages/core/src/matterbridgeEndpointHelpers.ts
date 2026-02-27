@@ -31,113 +31,115 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // Other modules
 import { createHash } from 'node:crypto';
 
-// AnsiLogger module
-import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
 // @matter
 import { Lifecycle } from '@matter/general';
 import { ActionContext, Behavior, ClusterBehavior, Endpoint } from '@matter/node';
-import { ClusterId } from '@matter/types/datatype';
-import { MeasurementType } from '@matter/types/globals';
+// @matter behaviors
+import { AirQualityServer } from '@matter/node/behaviors/air-quality';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
+import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
+import { CarbonDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-dioxide-concentration-measurement';
+import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-monoxide-concentration-measurement';
+import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
+import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
+import { FixedLabelServer } from '@matter/node/behaviors/fixed-label';
+import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
+import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behaviors/formaldehyde-concentration-measurement';
+import { GroupsServer } from '@matter/node/behaviors/groups';
+import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
+import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
+import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
+import { OzoneConcentrationMeasurementServer } from '@matter/node/behaviors/ozone-concentration-measurement';
+import { Pm1ConcentrationMeasurementServer } from '@matter/node/behaviors/pm1-concentration-measurement';
+import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
+import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-concentration-measurement';
+import { PowerSourceServer } from '@matter/node/behaviors/power-source';
+import { PowerTopologyServer } from '@matter/node/behaviors/power-topology';
+import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
+import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
+import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
+import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
+import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
+import { SwitchServer } from '@matter/node/behaviors/switch';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { UserLabelServer } from '@matter/node/behaviors/user-label';
+// @matter types
 import { ClusterType, getClusterNameById } from '@matter/types/cluster';
-// @matter clusters
-import { PowerSource } from '@matter/types/clusters/power-source';
-import { UserLabel } from '@matter/types/clusters/user-label';
-import { FixedLabel } from '@matter/types/clusters/fixed-label';
+import { AirQuality } from '@matter/types/clusters/air-quality';
 import { BasicInformation } from '@matter/types/clusters/basic-information';
-import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
-import { Identify } from '@matter/types/clusters/identify';
-import { Groups } from '@matter/types/clusters/groups';
-import { ScenesManagement } from '@matter/types/clusters/scenes-management';
-import { OnOff } from '@matter/types/clusters/on-off';
-import { LevelControl } from '@matter/types/clusters/level-control';
-import { ColorControl } from '@matter/types/clusters/color-control';
-import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { Thermostat } from '@matter/types/clusters/thermostat';
-import { FanControl } from '@matter/types/clusters/fan-control';
-import { DoorLock } from '@matter/types/clusters/door-lock';
-import { ModeSelect } from '@matter/types/clusters/mode-select';
-import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
-import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
-import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
-import { Switch } from '@matter/types/clusters/switch';
 import { BooleanState } from '@matter/types/clusters/boolean-state';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
-import { PowerTopology } from '@matter/types/clusters/power-topology';
-import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
-import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
-import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
-import { RelativeHumidityMeasurement } from '@matter/types/clusters/relative-humidity-measurement';
-import { PressureMeasurement } from '@matter/types/clusters/pressure-measurement';
-import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
-import { IlluminanceMeasurement } from '@matter/types/clusters/illuminance-measurement';
-import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
-import { AirQuality } from '@matter/types/clusters/air-quality';
-import { CarbonMonoxideConcentrationMeasurement } from '@matter/types/clusters/carbon-monoxide-concentration-measurement';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { CarbonDioxideConcentrationMeasurement } from '@matter/types/clusters/carbon-dioxide-concentration-measurement';
-import { NitrogenDioxideConcentrationMeasurement } from '@matter/types/clusters/nitrogen-dioxide-concentration-measurement';
-import { OzoneConcentrationMeasurement } from '@matter/types/clusters/ozone-concentration-measurement';
-import { FormaldehydeConcentrationMeasurement } from '@matter/types/clusters/formaldehyde-concentration-measurement';
-import { Pm1ConcentrationMeasurement } from '@matter/types/clusters/pm1-concentration-measurement';
-import { Pm25ConcentrationMeasurement } from '@matter/types/clusters/pm25-concentration-measurement';
-import { Pm10ConcentrationMeasurement } from '@matter/types/clusters/pm10-concentration-measurement';
-import { RadonConcentrationMeasurement } from '@matter/types/clusters/radon-concentration-measurement';
-import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/types/clusters/total-volatile-organic-compounds-concentration-measurement';
-import { OperationalState } from '@matter/types/clusters/operational-state';
+import { CarbonMonoxideConcentrationMeasurement } from '@matter/types/clusters/carbon-monoxide-concentration-measurement';
+import { ColorControl } from '@matter/types/clusters/color-control';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
-// @matter behaviors
-import { PowerSourceServer } from '@matter/node/behaviors/power-source';
-import { UserLabelServer } from '@matter/node/behaviors/user-label';
-import { FixedLabelServer } from '@matter/node/behaviors/fixed-label';
-import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
-import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
-import { GroupsServer } from '@matter/node/behaviors/groups';
-import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
-import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
-import { SwitchServer } from '@matter/node/behaviors/switch';
-import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
-import { PowerTopologyServer } from '@matter/node/behaviors/power-topology';
-import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
-import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
-import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
-import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
-import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
-import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
-import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
-import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
-import { AirQualityServer } from '@matter/node/behaviors/air-quality';
-import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-monoxide-concentration-measurement';
-import { CarbonDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-dioxide-concentration-measurement';
-import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
-import { OzoneConcentrationMeasurementServer } from '@matter/node/behaviors/ozone-concentration-measurement';
-import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behaviors/formaldehyde-concentration-measurement';
-import { Pm1ConcentrationMeasurementServer } from '@matter/node/behaviors/pm1-concentration-measurement';
-import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-concentration-measurement';
-import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
-import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
-import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { DoorLock } from '@matter/types/clusters/door-lock';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
+import { FanControl } from '@matter/types/clusters/fan-control';
+import { FixedLabel } from '@matter/types/clusters/fixed-label';
+import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
+import { FormaldehydeConcentrationMeasurement } from '@matter/types/clusters/formaldehyde-concentration-measurement';
+import { Groups } from '@matter/types/clusters/groups';
+import { Identify } from '@matter/types/clusters/identify';
+import { IlluminanceMeasurement } from '@matter/types/clusters/illuminance-measurement';
+import { LevelControl } from '@matter/types/clusters/level-control';
+import { ModeSelect } from '@matter/types/clusters/mode-select';
+import { NitrogenDioxideConcentrationMeasurement } from '@matter/types/clusters/nitrogen-dioxide-concentration-measurement';
+import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { OzoneConcentrationMeasurement } from '@matter/types/clusters/ozone-concentration-measurement';
+import { Pm1ConcentrationMeasurement } from '@matter/types/clusters/pm1-concentration-measurement';
+import { Pm10ConcentrationMeasurement } from '@matter/types/clusters/pm10-concentration-measurement';
+import { Pm25ConcentrationMeasurement } from '@matter/types/clusters/pm25-concentration-measurement';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { PowerTopology } from '@matter/types/clusters/power-topology';
+import { PressureMeasurement } from '@matter/types/clusters/pressure-measurement';
+import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
+import { RadonConcentrationMeasurement } from '@matter/types/clusters/radon-concentration-measurement';
+import { RelativeHumidityMeasurement } from '@matter/types/clusters/relative-humidity-measurement';
+import { ScenesManagement } from '@matter/types/clusters/scenes-management';
+import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { Switch } from '@matter/types/clusters/switch';
+import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
+import { Thermostat } from '@matter/types/clusters/thermostat';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/types/clusters/total-volatile-organic-compounds-concentration-measurement';
+import { UserLabel } from '@matter/types/clusters/user-label';
+import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
+import { WindowCovering } from '@matter/types/clusters/window-covering';
+import { ClusterId } from '@matter/types/datatype';
+import { MeasurementType } from '@matter/types/globals';
+// @matterbridge
 import { deepCopy, deepEqual, isValidArray } from '@matterbridge/utils';
+// AnsiLogger module
+import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
 
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
+// matterbridge
 import {
-  MatterbridgeIdentifyServer,
-  MatterbridgeOnOffServer,
-  MatterbridgeLevelControlServer,
-  MatterbridgeColorControlServer,
-  MatterbridgeLiftWindowCoveringServer,
-  MatterbridgeThermostatServer,
-  MatterbridgeFanControlServer,
-  MatterbridgeDoorLockServer,
-  MatterbridgeModeSelectServer,
-  MatterbridgeValveConfigurationAndControlServer,
-  MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
+  MatterbridgeColorControlServer,
+  MatterbridgeDeviceEnergyManagementModeServer,
+  MatterbridgeDeviceEnergyManagementServer,
+  MatterbridgeDoorLockServer,
+  MatterbridgeFanControlServer,
+  MatterbridgeIdentifyServer,
+  MatterbridgeLevelControlServer,
+  MatterbridgeLiftWindowCoveringServer,
+  MatterbridgeModeSelectServer,
+  MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
   MatterbridgePowerSourceServer,
-  MatterbridgeDeviceEnergyManagementServer,
-  MatterbridgeDeviceEnergyManagementModeServer,
+  MatterbridgeSmokeCoAlarmServer,
+  MatterbridgeThermostatServer,
+  MatterbridgeValveConfigurationAndControlServer,
 } from './matterbridgeBehaviors.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
 
 /**
  *  Capitalizes the first letter of a string.

@@ -24,7 +24,7 @@
 
 import { inspect } from 'node:util';
 
-import { RESET, type AnsiLogger } from 'node-ansi-logger';
+import { type AnsiLogger, RESET } from 'node-ansi-logger';
 
 /**
  * Logs an error message using the provided AnsiLogger instance.

@@ -1,13 +1,16 @@
 // src\matterbridgeEndpointHelpers.test.ts
 
 const NAME = 'MatterbridgeEndpointHelpers';
+const MATTER_PORT = 11300;
 const HOMEDIR = path.join('jest', NAME);
+const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
 
-import { setupTest } from './jestutils/jestHelpers.js';
+import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, setupTest, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestHelpers.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   getApparentElectricalPowerMeasurementClusterServer,
   getDefaultDeviceEnergyManagementClusterServer,
@@ -30,12 +33,25 @@ import {
 await setupTest(NAME, false);
 
 describe('Options helpers', () => {
-  beforeEach(() => {
+  let device: MatterbridgeEndpoint;
+
+  beforeAll(async () => {
+    // Create Matterbridge environment
+    await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
+    await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+  });
+
+  beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
   });
 
+  afterEach(async () => {});
+
   afterAll(async () => {
+    // Destroy Matterbridge environment
+    await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
+    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
   });

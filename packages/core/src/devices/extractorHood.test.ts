@@ -8,21 +8,18 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
-// @matter
-import { Identify } from '@matter/types/clusters/identify';
-import { PowerSource } from '@matter/types/clusters/power-source';
-import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
-import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
 import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-monitoring';
 import { FanControl } from '@matter/types/clusters';
-// Matterbridge
+import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
+import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
+// @matter
+import { Identify } from '@matter/types/clusters/identify';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { wait } from '@matterbridge/utils';
+import { LogLevel } from 'node-ansi-logger';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand, invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';
-import { MatterbridgeActivatedCarbonFilterMonitoringServer, MatterbridgeHepaFilterMonitoringServer } from '../matterbridgeBehaviors.js';
+// Matterbridge
 import {
   addDevice,
   aggregator,
@@ -34,8 +31,10 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
+import { MatterbridgeActivatedCarbonFilterMonitoringServer, MatterbridgeHepaFilterMonitoringServer } from '../matterbridgeBehaviors.js';
 import { extractorHood } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { invokeBehaviorCommand, invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';
 import { ExtractorHood } from './extractorHood.js';
 
 // Setup the test environment

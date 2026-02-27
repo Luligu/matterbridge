@@ -293,6 +293,8 @@ try {
   console.log(`fields removed (total): ${stripSummary.removedCount}`);
   console.log('');
 
+  runCmd(repoRoot, false, 'npm', ['install', '--package-lock-only', '--no-fund', '--no-audit', '--omit=dev']);
+  runCmd(repoRoot, false, 'npm', ['pkg', 'delete', 'overrides', 'devDependencies', 'scripts', 'workspaces']);
   runCmd(repoRoot, false, 'npm', ['shrinkwrap']);
 
   console.log('packing root package: package.json');

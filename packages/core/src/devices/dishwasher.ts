@@ -23,17 +23,16 @@
 
 // Imports from @matter
 import { MaybePromise } from '@matter/general';
-import { OperationalState } from '@matter/types/clusters/operational-state';
-import { ModeBase } from '@matter/types/clusters/mode-base';
-import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
-import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
 import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
+import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
+import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
+import { ModeBase } from '@matter/types/clusters/mode-base';
+import { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
+import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { dishwasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
-
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 export class Dishwasher extends MatterbridgeEndpoint {

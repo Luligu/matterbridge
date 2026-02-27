@@ -7,16 +7,13 @@ const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
 
-import { er, hk, LogLevel } from 'node-ansi-logger';
 import { jest } from '@jest/globals';
+import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
 // @matter
 import { Identify, PowerSource, RvcCleanMode, RvcOperationalState, RvcRunMode, ServiceArea } from '@matter/types/clusters';
-import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
+import { er, hk, LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviors.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import {
   addDevice,
   aggregator,
@@ -28,8 +25,10 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
+import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviors.js';
 import { roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 
 // Setup the test environment

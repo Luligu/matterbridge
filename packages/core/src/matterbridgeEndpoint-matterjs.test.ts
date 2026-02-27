@@ -4,42 +4,13 @@ const MATTER_PORT = 11100;
 const NAME = 'EndpointMatterJs';
 const HOMEDIR = path.join('jest', NAME);
 
-import path from 'node:path';
-import { appendFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { appendFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
-import { StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, Diagnostic, LogDestination, NamedHandler } from '@matter/general';
-import { FabricManager } from '@matter/protocol';
-import {
-  ColorControl,
-  ColorControlCluster,
-  Descriptor,
-  DescriptorCluster,
-  DeviceEnergyManagement,
-  DeviceEnergyManagementMode,
-  ElectricalEnergyMeasurement,
-  ElectricalPowerMeasurement,
-  FanControl,
-  GroupsCluster,
-  Identify,
-  IdentifyCluster,
-  LevelControlCluster,
-  OccupancySensing,
-  OnOffCluster,
-  PowerSource,
-  RvcCleanMode,
-  RvcOperationalState,
-  RvcRunMode,
-  ScenesManagementCluster,
-  ServiceArea,
-  Thermostat,
-  WaterHeaterManagement,
-  WaterHeaterMode,
-} from '@matter/types/clusters';
+import { Diagnostic, LogDestination, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, NamedHandler, StorageContext } from '@matter/general';
 import { Endpoint } from '@matter/node';
-import { ContactSensorDevice, OccupancySensorDevice, OccupancySensorDeviceDefinition, OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices';
 import {
   BooleanStateConfigurationServer,
   BooleanStateServer,
@@ -75,48 +46,39 @@ import {
   WaterHeaterModeServer,
   WindowCoveringServer,
 } from '@matter/node/behaviors';
+import { ContactSensorDevice, OccupancySensorDevice, OccupancySensorDeviceDefinition, OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices';
+import { FabricManager } from '@matter/protocol';
+import {
+  ColorControl,
+  ColorControlCluster,
+  Descriptor,
+  DescriptorCluster,
+  DeviceEnergyManagement,
+  DeviceEnergyManagementMode,
+  ElectricalEnergyMeasurement,
+  ElectricalPowerMeasurement,
+  FanControl,
+  GroupsCluster,
+  Identify,
+  IdentifyCluster,
+  LevelControlCluster,
+  OccupancySensing,
+  OnOffCluster,
+  PowerSource,
+  RvcCleanMode,
+  RvcOperationalState,
+  RvcRunMode,
+  ScenesManagementCluster,
+  ServiceArea,
+  Thermostat,
+  WaterHeaterManagement,
+  WaterHeaterMode,
+} from '@matter/types/clusters';
+import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
 
-import {
-  MatterbridgeBooleanStateConfigurationServer,
-  MatterbridgeColorControlServer,
-  MatterbridgeDoorLockServer,
-  MatterbridgeFanControlServer,
-  MatterbridgeIdentifyServer,
-  MatterbridgeLevelControlServer,
-  MatterbridgeModeSelectServer,
-  MatterbridgeOnOffServer,
-  MatterbridgeOperationalStateServer,
-  MatterbridgeServer,
-  MatterbridgeSmokeCoAlarmServer,
-  MatterbridgeThermostatServer,
-  MatterbridgeValveConfigurationAndControlServer,
-  MatterbridgeLiftWindowCoveringServer,
-  MatterbridgeLiftTiltWindowCoveringServer,
-  MatterbridgeDeviceEnergyManagementModeServer,
-  MatterbridgeDeviceEnergyManagementServer,
-  MatterbridgeEnhancedColorControlServer,
-} from './matterbridgeBehaviors.js';
-import {
-  lightSensor,
-  occupancySensor,
-  onOffOutlet,
-  coverDevice,
-  doorLockDevice,
-  fanDevice,
-  thermostatDevice,
-  waterValve,
-  modeSelect,
-  smokeCoAlarm,
-  waterLeakDetector,
-  laundryWasher,
-  extendedColorLight,
-  waterHeater,
-} from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
+import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
-import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
 import {
   createMatterbridgeEnvironment,
   createTestEnvironment,
@@ -130,6 +92,44 @@ import {
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
+import {
+  MatterbridgeBooleanStateConfigurationServer,
+  MatterbridgeColorControlServer,
+  MatterbridgeDeviceEnergyManagementModeServer,
+  MatterbridgeDeviceEnergyManagementServer,
+  MatterbridgeDoorLockServer,
+  MatterbridgeEnhancedColorControlServer,
+  MatterbridgeFanControlServer,
+  MatterbridgeIdentifyServer,
+  MatterbridgeLevelControlServer,
+  MatterbridgeLiftTiltWindowCoveringServer,
+  MatterbridgeLiftWindowCoveringServer,
+  MatterbridgeModeSelectServer,
+  MatterbridgeOnOffServer,
+  MatterbridgeOperationalStateServer,
+  MatterbridgeServer,
+  MatterbridgeSmokeCoAlarmServer,
+  MatterbridgeThermostatServer,
+  MatterbridgeValveConfigurationAndControlServer,
+} from './matterbridgeBehaviors.js';
+import {
+  coverDevice,
+  doorLockDevice,
+  extendedColorLight,
+  fanDevice,
+  laundryWasher,
+  lightSensor,
+  modeSelect,
+  occupancySensor,
+  onOffOutlet,
+  smokeCoAlarm,
+  thermostatDevice,
+  waterHeater,
+  waterLeakDetector,
+  waterValve,
+} from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

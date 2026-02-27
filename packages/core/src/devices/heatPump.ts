@@ -21,13 +21,13 @@
  * limitations under the License.
  */
 
-// @matter
+// Imports from @matter
 import { NumberTag, PowerSourceTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 
 // Matterbridge
+import { deviceEnergyManagement, electricalSensor, heatPump, powerSource, temperatureSensor, thermostatDevice } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { deviceEnergyManagement, electricalSensor, powerSource, heatPump, temperatureSensor, thermostatDevice } from '../matterbridgeDeviceTypes.js';
 
 export class HeatPump extends MatterbridgeEndpoint {
   /**

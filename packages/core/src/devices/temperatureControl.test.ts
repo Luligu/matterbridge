@@ -7,13 +7,11 @@ const HOMEDIR = path.join('jest', NAME);
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-// @matter
 
 // Matterbridge
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { setupTest } from '../jestutils/jestHelpers.js';
 import { laundryDryer, laundryWasher } from '../matterbridgeDeviceTypes.js';
-
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 // Setup the test environment

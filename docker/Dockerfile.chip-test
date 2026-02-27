@@ -1,0 +1,233 @@
+FROM ubuntu:latest AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG VERSION
+ARG VCS_REF
+ARG BUILD_DATE
+
+# Build deps (toolchain + headers) + Node.js for building Matterbridge
+RUN \
+  apt-get update && apt-get upgrade -y && \
+  apt-get install -y --no-install-recommends \
+  bash ca-certificates curl gnupg git \
+  gcc g++ pkg-config cmake ninja-build binutils \
+  libssl-dev libdbus-1-dev libglib2.0-dev libavahi-client-dev libevent-dev libpcsclite-dev libgirepository1.0-dev libcairo2-dev \
+  python3 python3-venv python3-dev python3-pip \
+  unzip && \
+  mkdir -p /etc/apt/keyrings && \
+  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
+  apt-get update && \
+  apt-get install -y --no-install-recommends nodejs && \
+  node --version && npm --version && \
+  rm -rf /var/lib/apt/lists/*
+
+# Build connectedhomeip: chip-tool/chip-cert + python venv for YAML/Python tests
+WORKDIR /root/connectedhomeip
+RUN \
+  git clone --depth=1 https://github.com/project-chip/connectedhomeip.git . && \
+  python3 scripts/checkout_submodules.py --shallow --platform linux && \
+  bash -lc "\
+  set -e; \
+  cd /root/connectedhomeip; \
+  source scripts/activate.sh; \
+  pw cli-analytics --opt-out; \
+  gn gen out/host; \
+  ninja -C out/host chip-tool chip-cert; \
+  ./scripts/build_python.sh -i out/python_env; \
+  rm -rf .git \
+  "
+
+# Prune/strip in a separate layer so connectedhomeip build stays cached.
+RUN bash -lc "\
+  set -e; \
+  cd /root/connectedhomeip; \
+  # Strip symbols from built binaries (huge savings for chip-tool).
+  if command -v strip >/dev/null 2>&1; then \
+  strip --strip-unneeded out/host/chip-tool 2>/dev/null || true; \
+  strip --strip-unneeded out/host/chip-tool/chip-tool 2>/dev/null || true; \
+  strip --strip-unneeded out/host/chip-cert 2>/dev/null || true; \
+  strip --strip-unneeded out/host/chip-cert/chip-cert 2>/dev/null || true; \
+  fi; \
+  # Remove caches/bytecode and dev-only tooling from the python venv.
+  find out/python_env -type d -name '__pycache__' -prune -exec rm -rf '{}' +; \
+  find out/python_env -type f -name '*.pyc' -delete; \
+  py_site=\"\$(out/python_env/bin/python -c 'import sysconfig; print(sysconfig.get_paths()[\"purelib\"])')\"; \
+  rm -rf \"\${py_site}\"/mypy \"\${py_site}\"/mypy-*.dist-info \"\${py_site}\"/mypy_extensions.py \"\${py_site}\"/mypy_extensions-*.dist-info \
+  \"\${py_site}\"/mypyc \"\${py_site}\"/mypyc-*.dist-info \
+  \"\${py_site}\"/debugpy \"\${py_site}\"/debugpy-*.dist-info \
+  \"\${py_site}\"/IPython \"\${py_site}\"/ipython-*.dist-info \"\${py_site}\"/ipython_pygments_lexers* \
+  \"\${py_site}\"/ipykernel* \"\${py_site}\"/jupyter_client* \"\${py_site}\"/jupyter_core* \
+  \"\${py_site}\"/jedi \"\${py_site}\"/jedi-*.dist-info \"\${py_site}\"/parso \"\${py_site}\"/parso-*.dist-info \
+  \"\${py_site}\"/prompt_toolkit \"\${py_site}\"/prompt_toolkit-*.dist-info \
+  \"\${py_site}\"/traitlets* \"\${py_site}\"/comm* \"\${py_site}\"/nest_asyncio* \"\${py_site}\"/matplotlib_inline* \"\${py_site}\"/stack_data* \
+  \"\${py_site}\"/executing* \"\${py_site}\"/pure_eval* \"\${py_site}\"/asttokens* \"\${py_site}\"/ptyprocess* \"\${py_site}\"/pexpect* \
+  \"\${py_site}\"/decorator* \"\${py_site}\"/ipdb* || true; \
+  du -sh out/host/chip-tool out/python_env || true; \
+  "
+
+# Build Matterbridge and plugins (keep only runtime deps)
+WORKDIR /root/matterbridge
+RUN \
+  git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
+  npm ci --no-fund --no-audit && npm run build && \
+  cd apps/frontend && npm ci --no-fund --no-audit && npm run build && rm -rf node_modules && cd ../.. && \
+  npm prune --omit=dev --no-fund --no-audit
+
+WORKDIR /root/matterbridge-test
+RUN \
+  git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-test.git . && \
+  npm ci --no-fund --no-audit && npm link matterbridge && npm run build && \
+  npm prune --omit=dev --no-fund --no-audit
+
+WORKDIR /root/matterbridge-example-accessory-platform
+RUN \
+  git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-accessory-platform.git . && \
+  npm ci --no-fund --no-audit && npm link matterbridge && npm run build && \
+  npm prune --omit=dev --no-fund --no-audit
+
+WORKDIR /root/matterbridge-example-dynamic-platform
+RUN \
+  git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-dynamic-platform.git . && \
+  npm ci --no-fund --no-audit && npm link matterbridge && npm run build && \
+  npm prune --omit=dev --no-fund --no-audit
+
+FROM ubuntu:latest AS release
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG VERSION
+ARG VCS_REF
+ARG BUILD_DATE
+
+LABEL org.opencontainers.image.title="matterbridge-chip-test" \
+  org.opencontainers.image.description="Matterbridge CHIP test environment" \
+  org.opencontainers.image.version=$VERSION \
+  org.opencontainers.image.revision=$VCS_REF \
+  org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \
+  org.opencontainers.image.url="https://matterbridge.io" \
+  org.opencontainers.image.documentation="https://matterbridge.io/README.html" \
+  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.authors="Luligu <https://github.com/Luligu>" \
+  org.opencontainers.image.created=$BUILD_DATE
+
+# Runtime deps only + Node.js
+RUN \
+  apt-get update && apt-get upgrade -y && \
+  apt-get install -y --no-install-recommends \
+  bash ca-certificates curl gnupg \
+  python3 python3-venv python3-pip \
+  libssl3 libglib2.0-0 libgobject-2.0-0 libgio-2.0-0 \
+  libcairo2 \
+  libgirepository-1.0-1 gir1.2-glib-2.0 \
+  libevent-core-2.1-7 libevent-pthreads-2.1-7 \
+  libmount1 libselinux1 libffi8 libpcre2-8-0 zlib1g libblkid1 \
+  libpcsclite1 \
+  libstdc++6 && \
+  mkdir -p /etc/apt/keyrings && \
+  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
+  apt-get update && \
+  apt-get install -y --no-install-recommends nodejs && \
+  rm -rf /var/lib/apt/lists/*
+
+ENV CHIP_ROOT=/root/connectedhomeip
+ENV VIRTUAL_ENV=/root/connectedhomeip/out/python_env
+ENV PATH="/root/connectedhomeip/out/host:${VIRTUAL_ENV}/bin:${PATH}"
+
+# Matterbridge module (global install copied from builder)
+COPY --from=builder /usr/lib/node_modules/matterbridge /usr/lib/node_modules/matterbridge
+
+# Recreate executable links (do NOT copy /usr/bin/* from builder, they are symlinks)
+RUN \
+  ln -sf /usr/lib/node_modules/matterbridge/bin/matterbridge.js /usr/bin/matterbridge && \
+  ln -sf /usr/lib/node_modules/matterbridge/bin/mb_mdns.js /usr/bin/mb_mdns && \
+  ln -sf /usr/lib/node_modules/matterbridge/bin/mb_coap.js /usr/bin/mb_coap && \
+  ln -sf /usr/lib/node_modules/matterbridge/bin/mb_health.js /usr/bin/mb_health
+
+# Matterbridge + local plugin repos + config
+COPY --from=builder /root/matterbridge /root/matterbridge
+COPY --from=builder /root/matterbridge-test /root/matterbridge-test
+COPY --from=builder /root/matterbridge-example-accessory-platform /root/matterbridge-example-accessory-platform
+COPY --from=builder /root/matterbridge-example-dynamic-platform /root/matterbridge-example-dynamic-platform
+
+# Setup Matterbridge
+WORKDIR /root/matterbridge
+RUN \
+  matterbridge --add /root/matterbridge-test && \
+  matterbridge --add /root/matterbridge-example-accessory-platform && \
+  matterbridge --add /root/matterbridge-example-dynamic-platform && \
+  mkdir -p /root/.mattercert
+COPY docker/chip-test/pairing.json /root/.mattercert/pairing.json
+WORKDIR /root/matterbridge-test
+RUN npm link matterbridge
+WORKDIR /root/matterbridge-example-accessory-platform
+RUN npm link matterbridge
+WORKDIR /root/matterbridge-example-dynamic-platform
+RUN npm link matterbridge
+
+# Persist Matterbridge fabric state (copied from repo)
+RUN mkdir -p /root/.matterbridge/matterstorage/Matterbridge
+COPY docker/chip-test/fabrics.* /root/.matterbridge/matterstorage/Matterbridge/
+COPY docker/chip-test/root.operationalCredentials.* /root/.matterbridge/matterstorage/Matterbridge/
+COPY docker/chip-test/matterbridge.pics /root/
+
+
+# connectedhomeip minimal bits for YAML/Python tests
+RUN mkdir -p /root/connectedhomeip/out/host /root/connectedhomeip/out
+COPY --from=builder /root/connectedhomeip/out/host/chip-tool /root/connectedhomeip/out/host/chip-tool
+COPY --from=builder /root/connectedhomeip/out/host/chip-cert /root/connectedhomeip/out/host/chip-cert
+COPY --from=builder /root/connectedhomeip/out/python_env /root/connectedhomeip/out/python_env
+COPY --from=builder /root/connectedhomeip/scripts /root/connectedhomeip/scripts
+
+# Replace connectedhomeip activator with a minimal one for YAML + Python tests.
+# This avoids Pigweed/CIPD bootstrap and keeps the familiar `. ./scripts/activate.sh` workflow.
+RUN cat > /root/connectedhomeip/scripts/activate.sh <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+
+export CHIP_ROOT=/root/connectedhomeip
+
+# Idempotent PATH handling: don't prepend duplicates if sourced multiple times.
+chip_host_path="$CHIP_ROOT/out/host"
+case ":${PATH:-}:" in
+  *":${chip_host_path}:"*) ;;
+  *) export PATH="$chip_host_path:${PATH:-}" ;;
+esac
+
+# Activate the Python venv built by connectedhomeip's build_python.sh.
+# Avoid re-activating if we're already in the same venv.
+chip_venv="$CHIP_ROOT/out/python_env"
+if [ "${VIRTUAL_ENV-}" != "$chip_venv" ]; then
+  # shellcheck disable=SC1091
+  source "$chip_venv/bin/activate"
+  if [ -n "${PS1-}" ]; then
+    echo "Activated CHIP environment: CHIP_ROOT=$CHIP_ROOT, VIRTUAL_ENV=$chip_venv" 1>&2
+  fi
+else
+  if [ -n "${PS1-}" ]; then
+    echo "CHIP environment already active: CHIP_ROOT=$CHIP_ROOT, VIRTUAL_ENV=$chip_venv" 1>&2
+  fi
+fi
+
+cd "$CHIP_ROOT"
+SH
+RUN chmod +x /root/connectedhomeip/scripts/activate.sh
+
+COPY --from=builder /root/connectedhomeip/credentials /root/connectedhomeip/credentials
+COPY --from=builder /root/connectedhomeip/src/app/tests /root/connectedhomeip/src/app/tests
+COPY --from=builder /root/connectedhomeip/src/app/zap-templates/zcl/data-model/chip /root/connectedhomeip/src/app/zap-templates/zcl/data-model/chip
+COPY --from=builder /root/connectedhomeip/src/python_testing /root/connectedhomeip/src/python_testing
+
+# Persist pairing state for yaml and python tests
+COPY docker/chip-test/chip_* /tmp/
+COPY docker/chip-test/admin_storage.json /root/connectedhomeip/
+
+WORKDIR /root/connectedhomeip
+
+# Add Docker HEALTHCHECK
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
+  CMD mb_health
+
+CMD ["matterbridge", "-docker"]

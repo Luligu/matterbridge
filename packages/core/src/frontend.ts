@@ -27,27 +27,47 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mFrontend loaded.\u001B[40;0m');
 
 // Node modules
-import os from 'node:os';
-import path from 'node:path';
 import EventEmitter from 'node:events';
 import type { Server as HttpServer } from 'node:http';
 import type { Server as HttpsServer, ServerOptions as HttpsServerOptions } from 'node:https';
+import os from 'node:os';
+import path from 'node:path';
 
-// Third-party modules
-import type { Express } from 'express';
-import type WebSocket from 'ws';
-import type { WebSocketServer } from 'ws';
-// AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, YELLOW, nt } from 'node-ansi-logger';
 // @matter
+import { Diagnostic, Lifecycle, LogDestination, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { ServerNode } from '@matter/node';
-import { Logger, Diagnostic, LogDestination, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/general';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
-import { EndpointNumber, FabricIndex } from '@matter/types/datatype';
-import { CommissioningOptions } from '@matter/types/commissioning';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { CommissioningOptions } from '@matter/types/commissioning';
+import { EndpointNumber, FabricIndex } from '@matter/types/datatype';
 // @matterbridge
+import { BroadcastServer } from '@matterbridge/thread';
+import type {
+  ApiClusters,
+  ApiDevice,
+  ApiMatter,
+  ApiPlugin,
+  ApiSettings,
+  Cluster,
+  MatterbridgeInformation,
+  PlatformConfig,
+  RefreshRequiredChanged,
+  WorkerMessage,
+  WsMessageApiRequest,
+  WsMessageApiResponse,
+  WsMessageBroadcast,
+  WsMessageErrorApiResponse,
+} from '@matterbridge/types';
+import {
+  MATTER_LOGGER_FILE,
+  MATTER_STORAGE_NAME,
+  MATTERBRIDGE_DIAGNOSTIC_FILE,
+  MATTERBRIDGE_HISTORY_FILE,
+  MATTERBRIDGE_LOGGER_FILE,
+  NODE_STORAGE_DIR,
+  plg,
+} from '@matterbridge/types';
 import {
   createZip,
   formatBytes,
@@ -64,39 +84,18 @@ import {
   wait,
   withTimeout,
 } from '@matterbridge/utils';
-import type {
-  Cluster,
-  ApiClusters,
-  ApiDevice,
-  ApiMatter,
-  ApiPlugin,
-  MatterbridgeInformation,
-  PlatformConfig,
-  ApiSettings,
-  RefreshRequiredChanged,
-  WsMessageApiRequest,
-  WsMessageApiResponse,
-  WsMessageBroadcast,
-  WsMessageErrorApiResponse,
-  WorkerMessage,
-} from '@matterbridge/types';
-import {
-  MATTER_LOGGER_FILE,
-  MATTER_STORAGE_NAME,
-  MATTERBRIDGE_DIAGNOSTIC_FILE,
-  MATTERBRIDGE_HISTORY_FILE,
-  MATTERBRIDGE_LOGGER_FILE,
-  NODE_STORAGE_DIR,
-  plg,
-} from '@matterbridge/types';
-import { BroadcastServer } from '@matterbridge/thread';
+// Third-party modules
+import type { Express } from 'express';
+import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
+import type WebSocket from 'ws';
+import type { WebSocketServer } from 'ws';
 
-// Matterbridge
+// matterbridge
+import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
+import { generateHistoryPage } from './cliHistory.js';
 import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
-import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
-import { generateHistoryPage } from './cliHistory.js';
 import { Plugin } from './pluginManager.js';
 
 /**

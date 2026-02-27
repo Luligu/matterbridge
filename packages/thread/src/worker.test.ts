@@ -3,15 +3,15 @@
 const NAME = 'Workers';
 const HOMEDIR = path.join('jest', NAME);
 
-import path from 'node:path';
-import type { Worker } from 'node:worker_threads';
-import { inspect } from 'node:util';
 import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { inspect } from 'node:util';
+import type { Worker } from 'node:worker_threads';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 import { setupTest } from '@matterbridge/core/jestutils';
-import type { WorkerMessage, ParentPortMessage } from '@matterbridge/types';
+import type { ParentPortMessage, WorkerMessage } from '@matterbridge/types';
+import { AnsiLogger, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
 import { createESMWorker } from './worker.js';

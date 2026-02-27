@@ -23,15 +23,15 @@
 
 // Imports from @matter
 import { MaybePromise } from '@matter/general';
-import { MediaPlayback } from '@matter/types/clusters/media-playback';
-import { KeypadInput } from '@matter/types/clusters/keypad-input';
-import { MediaPlaybackServer } from '@matter/node/behaviors/media-playback';
 import { KeypadInputServer } from '@matter/node/behaviors/keypad-input';
+import { MediaPlaybackServer } from '@matter/node/behaviors/media-playback';
+import { KeypadInput } from '@matter/types/clusters/keypad-input';
+import { MediaPlayback } from '@matter/types/clusters/media-playback';
 
 // Matterbridge
+import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { basicVideoPlayer, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
 
 /**
  * Options for configuring an {@link AirConditioner} instance.

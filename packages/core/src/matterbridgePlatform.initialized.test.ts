@@ -8,11 +8,11 @@ process.argv = [...originalProcessArgv, '--verbose', '--loader'];
 
 import { jest } from '@jest/globals';
 
-import { PlatformSchema } from './matterbridgePlatform.js';
+import { Frontend } from './frontend.js';
+import { flushAsync, matterbridge, originalProcessArgv, plugins, setDebug, setupTest, startMatterbridge, stopMatterbridge } from './jestutils/jestHelpers.js';
 import { MatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
-import { flushAsync, matterbridge, originalProcessArgv, plugins, setupTest, setDebug, startMatterbridge, stopMatterbridge } from './jestutils/jestHelpers.js';
-import { Frontend } from './frontend.js';
+import { PlatformSchema } from './matterbridgePlatform.js';
 
 const wssSendRestartRequired = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
 

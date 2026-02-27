@@ -31,7 +31,7 @@ jest.unstable_mockModule('node:https', async () => {
   };
 });
 
-const { checkHealth, mbHealthCli, mbHealthExitCode, mbHealthMain } = await import('./mb_health.ts');
+const { checkHealth, mbHealthCli, mbHealthExitCode, mbHealthMain } = await import('./mb_health.js');
 
 function createStreamingResponse(statusCode: number | undefined, body: string, emitAsString = false) {
   const handlers: Record<string, Array<(...args: any[]) => void>> = {};

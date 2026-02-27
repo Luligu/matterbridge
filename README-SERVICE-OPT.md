@@ -21,6 +21,8 @@
 
 # Production advanced configuration
 
+> **Nvm is a development tool and is not supported for production**.
+
 ## Run matterbridge as a daemon with systemctl (Linux only) with user matterbridge and private global node_modules
 
 The advantage of this setup is that the global node_modules and npm cache are private for matterbridge and sudo is not required.

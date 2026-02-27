@@ -4,7 +4,7 @@ const NAME = 'MatterbridgeDevicetypesClustersZclRevision';
 const HOMEDIR = path.join('jest', NAME);
 
 // Cross-check a few cluster revisions between official ZCL XML and @matter/types
-import { readFile, access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { AccountLogin } from '@matter/types/clusters/account-login';

@@ -22,8 +22,8 @@
  */
 
 // Imports from @matter
-import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import { FanControl } from '@matter/types/clusters/fan-control';
+import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 
 // Matterbridge
 import { airConditioner, powerSource } from '../matterbridgeDeviceTypes.js';

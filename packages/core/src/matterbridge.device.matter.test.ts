@@ -37,11 +37,11 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Environment } from '@matter/general';
-import { db, er, LogLevel } from 'node-ansi-logger';
 import { dev, plg } from '@matterbridge/types';
+import { db, er, LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { Matterbridge } from './matterbridge.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

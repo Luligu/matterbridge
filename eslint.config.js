@@ -5,16 +5,16 @@
 import path from 'node:path';
 import url from 'node:url';
 
-import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import pluginImport from 'eslint-plugin-import';
-import pluginN from 'eslint-plugin-n';
-import pluginPromise from 'eslint-plugin-promise';
-import pluginJsdoc from 'eslint-plugin-jsdoc';
-import pluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
-import pluginJest from 'eslint-plugin-jest';
 import pluginVitest from '@vitest/eslint-plugin';
+import { defineConfig } from 'eslint/config';
+import pluginJest from 'eslint-plugin-jest';
+import pluginJsdoc from 'eslint-plugin-jsdoc';
+import pluginN from 'eslint-plugin-n';
+import pluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import pluginPromise from 'eslint-plugin-promise';
+import pluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
+import tseslint from 'typescript-eslint';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,18 +23,17 @@ export default defineConfig([
   {
     name: 'Global Ignores',
     ignores: [
-      '.cache/**',
+      '**/.cache/**',
       'apps/**',
-      'build/**',
-      'coverage/**',
-      'dist/**',
-      'jest/**',
-      'node_modules/**',
-      'packages/**',
-      'screenshots/**',
-      'temp/**',
+      '**/build/**',
+      '**/coverage/**',
+      '**/dist/**',
+      '**/jest/**',
+      '**/node_modules/**',
+      '**/screenshots/**',
+      '**/temp/**',
       'vendor/**',
-      'vite.config.ts',
+      '**/vite.config.ts',
       'chip/**',
       'docs/**',
       'systemd/**',
@@ -51,7 +50,6 @@ export default defineConfig([
   tseslint.configs.strict,
   // Uncomment this line to enable strict type-checked rules, but be aware that it may cause many errors until you fix all type issues in your codebase
   // tseslint.configs.strictTypeChecked,
-  pluginImport.flatConfigs.recommended,
   pluginN.configs['flat/recommended-script'],
   pluginPromise.configs['flat/recommended'],
   pluginJsdoc.configs['flat/recommended'],
@@ -63,21 +61,24 @@ export default defineConfig([
       ecmaVersion: 'latest',
       parserOptions: {
         tsconfigRootDir: __dirname,
-        project: './tsconfig.json',
+        project: './tsconfig.eslint.json',
       },
     },
     linterOptions: {
       reportUnusedDisableDirectives: 'error', // Report unused eslint-disable directives
       reportUnusedInlineConfigs: 'error', // Report unused eslint-disable-line directives
     },
+    plugins: {
+      'simple-import-sort': pluginSimpleImportSort,
+    },
     rules: {
       'no-console': 'warn', // Warn on console usage
       'spaced-comment': ['error', 'always'], // Require space after comment markers
       'no-unused-vars': 'warn', // Use the base rule for unused variables
-      'import/order': ['warn', { 'newlines-between': 'always' }],
-      'import/no-unresolved': 'off', // Too many false errors with named exports
-      'import/named': 'off', // Too many false errors with named exports
+      'simple-import-sort/imports': ['warn'],
+      'simple-import-sort/exports': ['warn'],
       'n/prefer-node-protocol': 'error', // Prefer using 'node:' protocol for built-in modules
+      'n/no-unsupported-features/node-builtins': ['error', { ignores: ['fetch'] }],
       'n/no-extraneous-import': 'off', // Allow imports from node_modules
       'n/no-unpublished-import': 'off', // Allow imports from unpublished packages
       'promise/always-return': 'warn', // Ensure promises always return a value
@@ -96,8 +97,8 @@ export default defineConfig([
   },
   {
     name: 'TypeScript Source Files',
-    files: ['src/**/*.ts'],
-    ignores: ['src/**/*.test.ts', 'src/**/*.spec.ts'], // Ignore test files
+    files: ['**/src/**/*.ts'],
+    ignores: ['**/src/**/*.test.ts', '**/src/**/*.spec.ts'], // Ignore test files
     languageOptions: {
       parser: tseslint.parser,
     },
@@ -119,11 +120,12 @@ export default defineConfig([
   },
   {
     name: 'Jest Test Files',
-    files: ['**/*.spec.ts', '**/*.test.ts', 'test/**/*.ts'],
-    ignores: ['vitest/**'], // Ignore Vitest test files
+    files: ['**/*.spec.ts', '**/*.test.ts', '**/test/**/*.ts'],
+    ignores: ['**/vitest/**'], // Ignore Vitest test files
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
+        tsconfigRootDir: __dirname,
         project: './tsconfig.jest.json', // Use a separate tsconfig for Jest tests with "isolatedModules": true
       },
     },
@@ -144,10 +146,11 @@ export default defineConfig([
   },
   {
     name: 'Vitest Test Files',
-    files: ['vitest/*.spec.ts', 'vitest/*.test.ts'],
+    files: ['**/vitest/*.spec.ts', '**/vitest/*.test.ts'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
+        tsconfigRootDir: __dirname,
         project: './tsconfig.vitest.json', // Use a separate tsconfig for Vitest tests
       },
     },

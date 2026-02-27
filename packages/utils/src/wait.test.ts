@@ -1,10 +1,10 @@
 // src\utils\wait.test.ts
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
 import { loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
+import { LogLevel } from 'node-ansi-logger';
 
-import { waiter, wait, withTimeout } from './wait.js';
+import { wait, waiter, withTimeout } from './wait.js';
 
 // Setup the test environment
 await setupTest('Wait', false);

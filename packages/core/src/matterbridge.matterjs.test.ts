@@ -33,12 +33,12 @@ const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<type
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
 import { Environment } from '@matter/general';
 import { FabricIndex } from '@matter/types';
+import { LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
 import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { Matterbridge } from './matterbridge.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -126,12 +126,12 @@ describe('Matterbridge matterjs', () => {
 
   test('serverNode commissioned', async () => {
     matterbridge.serverNode?.lifecycle.commissioned.emit(undefined as any);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge was initially commissioned successfully!`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge commissioned successfully!`);
   });
 
   test('serverNode decommissioned', async () => {
     matterbridge.serverNode?.lifecycle.decommissioned.emit(undefined as any);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge was fully decommissioned successfully!`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge fully decommissioned successfully!`);
   });
 
   test('serverNode fabricsChanged', async () => {

@@ -1,7 +1,7 @@
 /* eslint-disable n/no-missing-import */
+import { onOffOutlet } from '../../matterbridgeDeviceTypes.js';
 import { MatterbridgeDynamicPlatform } from '../../matterbridgeDynamicPlatform.js';
 import { MatterbridgeEndpoint } from '../../matterbridgeEndpoint.js';
-import { onOffOutlet } from '../../matterbridgeDeviceTypes.js';
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 export default function initializePlugin(matterbridge, log, config) {

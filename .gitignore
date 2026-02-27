@@ -25,7 +25,6 @@ heap_profile
 heap_profiles
 heap_snapshots
 TODO.md
-STYLEGUIDE.md
 packages/core/src/crypto
 packages/core/src/workers
 

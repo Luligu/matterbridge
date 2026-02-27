@@ -5,11 +5,11 @@ const HOMEDIR = path.join('jest', NAME);
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
 import { Inspector, Tracker } from '@matterbridge/utils';
+import { LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
 import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { Matterbridge } from './matterbridge.js';
 
 const loadInstance = jest.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
   throw new Error('Mock implementation of loadInstance called.'); // Simulate an error by throwing an exception

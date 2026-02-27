@@ -26,76 +26,38 @@
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridge loaded.\u001B[40;0m');
 
+// @matter
+import '@matter/nodejs'; // Set up Node.js environment for matter.js
+
 // Node.js modules
+import EventEmitter from 'node:events';
+import fs, { unlinkSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import fs, { unlinkSync } from 'node:fs';
-import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
-// AnsiLogger module
-import {
-  AnsiLogger,
-  TimestampFormat,
-  LogLevel,
-  UNDERLINE,
-  UNDERLINEOFF,
-  db,
-  debugStringify,
-  BRIGHT,
-  RESET,
-  er,
-  nf,
-  rs,
-  wr,
-  RED,
-  GREEN,
-  zb,
-  CYAN,
-  nt,
-  BLUE,
-  or,
-} from 'node-ansi-logger';
-// NodeStorage module
-import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
-import '@matter/nodejs'; // Set up Node.js environment for matter.js
 import {
-  Logger,
-  Diagnostic,
-  LogLevel as MatterLogLevel,
-  LogFormat as MatterLogFormat,
-  UINT32_MAX,
-  UINT16_MAX,
   Crypto,
+  Diagnostic,
   Environment,
+  LogFormat as MatterLogFormat,
+  Logger,
+  LogLevel as MatterLogLevel,
   StorageContext,
   StorageManager,
   StorageService,
+  UINT16_MAX,
+  UINT32_MAX,
 } from '@matter/general';
-import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
-import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
-import { DeviceTypeId, VendorId } from '@matter/types/datatype';
-import { AggregatorEndpoint } from '@matter/node/endpoints';
+import { CommissioningDiscovery, Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { AggregatorEndpoint } from '@matter/node/endpoints';
+import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
+import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
-import {
-  copyDirectory,
-  createDirectory,
-  formatBytes,
-  formatPercent,
-  formatUptime,
-  getIntParameter,
-  getParameter,
-  hasParameter,
-  isValidNumber,
-  isValidObject,
-  isValidString,
-  parseVersionString,
-  excludedInterfaceNamePattern,
-} from '@matterbridge/utils';
-import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
 import type {
   ApiMatter,
   MaybePromise,
@@ -106,15 +68,56 @@ import type {
   SystemInformation,
   WorkerMessage,
 } from '@matterbridge/types';
-import { BroadcastServer } from '@matterbridge/thread';
+import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import {
+  copyDirectory,
+  createDirectory,
+  excludedInterfaceNamePattern,
+  formatBytes,
+  formatPercent,
+  formatUptime,
+  getIntParameter,
+  getParameter,
+  hasParameter,
+  isValidNumber,
+  isValidObject,
+  isValidString,
+  parseVersionString,
+} from '@matterbridge/utils';
+// AnsiLogger module
+import {
+  AnsiLogger,
+  BLUE,
+  BRIGHT,
+  CYAN,
+  db,
+  debugStringify,
+  er,
+  GREEN,
+  LogLevel,
+  nf,
+  nt,
+  or,
+  RED,
+  RESET,
+  rs,
+  TimestampFormat,
+  UNDERLINE,
+  UNDERLINEOFF,
+  wr,
+  zb,
+} from 'node-ansi-logger';
+// NodeStorage module
+import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
-// Matterbridge
-import { Plugin, PluginManager } from './pluginManager.js';
+// matterbridge
 import { DeviceManager } from './deviceManager.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
+import { ManualPairingCodeCodec } from './matter/types.js';
+import { bridge } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { Plugin, PluginManager } from './pluginManager.js';
 
 /**
  * Represents the Matterbridge events.
@@ -298,6 +301,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   aggregatorSerialNumber = getParameter('serialNumber');
   aggregatorUniqueId = getParameter('uniqueId');
 
+  /** Matter controller node in controller mode */
+  controllerNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+  controllerVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
+  controllerVendorName = getParameter('vendorName') ?? 'Matterbridge';
+  controllerProductId = getIntParameter('productId') ?? 0x8000;
+  controllerProductName = getParameter('productName') ?? 'Matterbridge controller';
+
   /** Advertising nodes map: time advertising started keyed by storeId */
   advertisingNodes = new Map<string, number>();
 
@@ -408,11 +418,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await this.nodeContext?.set<string>('globalModulesDirectory', msg.params.prefix);
           this.server.respond({ ...msg, result: { success: true } });
           break;
-        case 'matterbridge_sys_update':
+        case 'matterbridge_shelly_sys_update':
           this.shellySysUpdate = true;
           this.server.respond({ ...msg, result: { success: true } });
           break;
-        case 'matterbridge_main_update':
+        case 'matterbridge_shelly_main_update':
           this.shellyMainUpdate = true;
           this.server.respond({ ...msg, result: { success: true } });
           break;
@@ -821,6 +831,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
+      this.log.debug(
+        `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} with version ${CYAN}${plugin.version}${db} and type ${CYAN}${plugin.type}${db}.`,
+      );
       // Try to reinstall the plugin from npm (for Docker pull and external plugins)
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
       if (
@@ -1635,6 +1648,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
       this.log.notice('Stopped matter server nodes');
 
+      if (this.controllerNode) {
+        this.log.notice(`Stopping matter controller...`);
+        await this.stopServerNode(this.controllerNode);
+        this.controllerNode = undefined;
+        this.log.notice('Stopped matter controller');
+      }
+
       // Matter commisioning reset
       if (message === 'shutting down with reset...') {
         this.log.info('Resetting Matterbridge commissioning information...');
@@ -2061,45 +2081,136 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
+  // istanbul ignore next cause is provisionally not covered by tests, but we want to keep it in the code for maintainability and future use when matter.js supports commissioning as a controller with the new apis.
   private async startController(): Promise<void> {
-    /*
     if (!this.matterStorageManager) {
       this.log.error('No storage manager initialized');
       await this.cleanup('No storage manager initialized');
       return;
     }
-    this.log.info('Creating context: mattercontrollerContext');
-    this.controllerContext = this.matterStorageManager.createContext('mattercontrollerContext');
+    if (!this.matterStorageService) {
+      this.log.error('No storage service initialized');
+      await this.cleanup('No storage service initialized');
+      return;
+    }
+    this.matterStorageManager = await this.matterStorageService.open('MatterbridgeController');
+    this.log.info('Matter node storage manager "MatterbridgeController" created');
+
+    this.log.info('Creating context controllerContext...');
+    this.controllerContext = this.matterStorageManager.createContext('controllerContext');
     if (!this.controllerContext) {
-      this.log.error('No storage context mattercontrollerContext initialized');
-      await this.cleanup('No storage context mattercontrollerContext initialized');
+      this.log.error('No storage context controllerContext initialized');
+      await this.cleanup('No storage context controllerContext initialized');
       return;
     }
 
-    this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-    this.matterServer = await this.createMatterServer(this.storageManager);
-    this.log.info('Creating matter commissioning controller');
-    this.commissioningController = new CommissioningController({
-      autoConnect: false,
-    });
-    this.log.info('Adding matter commissioning controller to matter server');
-    await this.matterServer.addCommissioningController(this.commissioningController);
+    const { randomBytes } = await import('node:crypto');
 
+    const storeId = 'MatterbridgeController';
+    const random = randomBytes(8).toString('hex');
+    await this.controllerContext.set('storeId', storeId);
+    await this.controllerContext.set('vendorId', this.controllerVendorId);
+    await this.controllerContext.set('vendorName', this.controllerVendorName.slice(0, 32));
+    await this.controllerContext.set('productId', this.controllerProductId);
+    await this.controllerContext.set('productName', this.controllerProductName.slice(0, 32));
+    await this.controllerContext.set('productLabel', this.controllerProductName.slice(0, 32));
+    await this.controllerContext.set('nodeLabel', storeId.slice(0, 32));
+    await this.controllerContext.set('serialNumber', await this.controllerContext.get('serialNumber', 'SN' + random));
+    await this.controllerContext.set('uniqueId', await this.controllerContext.get('uniqueId', 'UI' + random));
+    await this.controllerContext.set(
+      'softwareVersion',
+      isValidNumber(parseVersionString(this.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridgeVersion) : 1,
+    );
+    await this.controllerContext.set('softwareVersionString', isValidString(this.matterbridgeVersion, 5, 64) ? this.matterbridgeVersion : '1.0.0');
+    await this.controllerContext.set(
+      'hardwareVersion',
+      isValidNumber(parseVersionString(this.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.systemInformation.osRelease) : 1,
+    );
+    await this.controllerContext.set('hardwareVersionString', isValidString(this.systemInformation.osRelease, 5, 64) ? this.systemInformation.osRelease : '1.0.0');
+
+    this.log.info('Creating matter commissioning controller...');
+    this.controllerNode = await ServerNode.create({
+      id: storeId,
+
+      environment: this.environment,
+
+      network: {
+        listeningAddressIpv4: this.ipv4Address,
+        listeningAddressIpv6: this.ipv6Address,
+        port: this.port,
+      },
+
+      // Provide defaults for the BasicInformation cluster on the Root endpoint
+      basicInformation: {
+        nodeLabel: await this.controllerContext.get<string>('nodeLabel'),
+
+        vendorId: VendorId(await this.controllerContext.get<number>('vendorId')),
+        vendorName: await this.controllerContext.get<string>('vendorName'),
+
+        productId: await this.controllerContext.get<number>('productId'),
+        productName: await this.controllerContext.get<string>('productName'),
+        productLabel: await this.controllerContext.get<string>('productLabel'),
+
+        serialNumber: await this.controllerContext.get<string>('serialNumber'),
+        uniqueId: await this.controllerContext.get<string>('uniqueId'),
+
+        softwareVersion: await this.controllerContext.get<number>('softwareVersion'),
+        softwareVersionString: await this.controllerContext.get<string>('softwareVersionString'),
+        hardwareVersion: await this.controllerContext.get<number>('hardwareVersion'),
+        hardwareVersionString: await this.controllerContext.get<string>('hardwareVersionString'),
+
+        reachable: true,
+      },
+    });
+
+    this.log.info(`Starting matter commissioning controller: ${this.controllerNode.peers.size} peer nodes...`);
+
+    if (hasParameter('pair')) {
+      // passcode (setupPin) 20242025 longDiscriminator 3840
+      let options: CommissioningDiscovery.Options;
+      if (hasParameter('pairingcode')) {
+        const pairingCode = getParameter('pairingcode') as string;
+        this.log.info(`Pairing device with pairingcode: ${pairingCode}`);
+        const pairingData = ManualPairingCodeCodec.decode(pairingCode);
+        this.log.info(`Data extracted from pairing code: ${Logger.toJSON(pairingData)}`);
+        options = { id: 'device', pairingCode };
+      } else {
+        const discriminator = getIntParameter('discriminator');
+        const passcode = getIntParameter('passcode') ?? 0;
+        options = { id: 'device', discriminator, passcode };
+      }
+      this.log.info('Commissioning with options:', options);
+      const nodeId = this.controllerNode.peers.commission(options);
+      this.log.info(`Commissioning successfully done with nodeId: ${nodeId}`);
+    }
+
+    if (hasParameter('unpairall')) {
+      this.log.info('Matter commissioning controller decommissioning all nodes...');
+      const nodeIds = this.controllerNode.peers;
+      for (const nodeId of nodeIds) {
+        this.log.info('Matter commissioning controller decommissioning node:', nodeId.id);
+        await nodeId.decommission();
+      }
+      this.log.info('Matter commissioning controller decommissioned all nodes');
+      return;
+    }
+
+    /*
     this.log.info('Starting matter server');
     await this.matterServer.start();
     this.log.info('Matter server started');
-  const commissioningOptions: ControllerCommissioningFlowOptions = {
+    const commissioningOptions: ControllerCommissioningFlowOptions = {
       regulatoryLocation: GeneralCommissioning.RegulatoryLocationType.IndoorOutdoor,
       regulatoryCountryCode: 'XX',
     };
-const commissioningController = new CommissioningController({
-  environment: {
-      environment,
-      id: uniqueId,
-  },
-  autoConnect: false, // Do not auto connect to the commissioned nodes
-  adminFabricLabel,
-});
+    const commissioningController = new CommissioningController({
+      environment: {
+          environment,
+          id: uniqueId,
+      },
+      autoConnect: false, // Do not auto connect to the commissioned nodes
+      adminFabricLabel,
+    });
 
     if (hasParameter('pairingcode')) {
       this.log.info('Pairing device with pairingcode:', getParameter('pairingcode'));
@@ -2335,6 +2446,7 @@ const commissioningController = new CommissioningController({
     this.matterStorageService = undefined;
     this.matterStorageManager = undefined;
     this.matterbridgeContext = undefined;
+    this.controllerContext = undefined;
     this.log.info('Matter node storage closed');
   }
 
@@ -2499,17 +2611,19 @@ const commissioningController = new CommissioningController({
      * This means: It is added to the first fabric.
      */
     serverNode.lifecycle.commissioned.on(() => {
-      this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`);
+      this.log.notice(`Server node for ${storeId} commissioned successfully!`);
       this.advertisingNodes.delete(storeId);
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} commissioned successfully!`, 5, 'success');
     });
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
     serverNode.lifecycle.decommissioned.on(() => {
-      this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`);
+      this.log.notice(`Server node for ${storeId} fully decommissioned successfully!`);
       this.advertisingNodes.delete(storeId);
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
+      this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} fully decommissioned successfully!`, 5, 'success');
     });
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
@@ -2601,7 +2715,7 @@ const commissioningController = new CommissioningController({
       id: serverNode.id,
       online: serverNode.lifecycle.isOnline,
       commissioned: serverNode.state.commissioning.commissioned,
-      advertising: advertiseTime > Date.now() - 15 * 60 * 1000,
+      advertising: advertiseTime > 0, // Date.now() - 15 * 60 * 1000,
       advertiseTime,
       windowStatus: serverNode.state.administratorCommissioning.windowStatus,
       qrPairingCode: serverNode.state.commissioning.pairingCodes.qrPairingCode,
@@ -2677,6 +2791,8 @@ const commissioningController = new CommissioningController({
         device.vendorName,
         device.productId,
         device.productName,
+        device.serialNumber,
+        device.uniqueId,
       );
       plugin.serverNode = await this.createServerNode(
         plugin.storageContext,
@@ -2748,6 +2864,8 @@ const commissioningController = new CommissioningController({
         device.vendorName,
         device.productId,
         device.productName,
+        device.serialNumber,
+        device.uniqueId,
       );
       device.serverNode = await this.createServerNode(
         context,

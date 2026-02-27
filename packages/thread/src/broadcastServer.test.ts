@@ -8,8 +8,8 @@ import path from 'node:path';
 import { BroadcastChannel } from 'node:worker_threads';
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { flushAsync, loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/core/jestutils';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
 

@@ -2,8 +2,8 @@
 // Tests for worker without spawning real worker threads.
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { WorkerMessage } from '@matterbridge/types';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
 

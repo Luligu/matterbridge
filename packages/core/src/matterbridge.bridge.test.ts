@@ -47,16 +47,16 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Environment } from '@matter/general';
-import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { BridgedDeviceBasicInformationServer, PressureMeasurementServer } from '@matter/node/behaviors';
-import { waiter } from '@matterbridge/utils';
 import { MATTER_STORAGE_NAME, plg } from '@matterbridge/types';
+import { waiter } from '@matterbridge/utils';
+import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerErrorSpy, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
-import { PluginManager } from './pluginManager.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
-import { loggerLogSpy, setupTest, flushAsync, destroyInstance, closeMdnsInstance, loggerErrorSpy } from './jestutils/jestHelpers.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { PluginManager } from './pluginManager.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

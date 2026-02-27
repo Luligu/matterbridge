@@ -26,8 +26,6 @@
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeDeviceTypes loaded.\u001B[40;0m');
 
-// @matter
-import { ClusterId, DeviceTypeId } from '@matter/types/datatype';
 // @matter clusters
 import { AccountLogin } from '@matter/types/clusters/account-login';
 import { Actions } from '@matter/types/clusters/actions';
@@ -99,6 +97,7 @@ import { RelativeHumidityMeasurement } from '@matter/types/clusters/relative-hum
 import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
+import { ScenesManagement } from '@matter/types/clusters/scenes-management';
 import { ServiceArea } from '@matter/types/clusters/service-area';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Switch } from '@matter/types/clusters/switch';
@@ -113,7 +112,7 @@ import { WakeOnLan } from '@matter/types/clusters/wake-on-lan';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { ScenesManagement } from '@matter/types/clusters/scenes-management';
+import { ClusterId, DeviceTypeId } from '@matter/types/datatype';
 
 export enum DeviceClasses {
   /** 1.1.5. Device Type Class Conditions */

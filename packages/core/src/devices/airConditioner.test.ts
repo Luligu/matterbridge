@@ -9,13 +9,12 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 // @matter
-import { Identify, OnOff, PowerSource, Thermostat, ThermostatUserInterfaceConfiguration, FanControl, ThermostatCluster } from '@matter/types/clusters';
+import { FanControl, Identify, OnOff, PowerSource, Thermostat, ThermostatCluster, ThermostatUserInterfaceConfiguration } from '@matter/types/clusters';
 
 // Matterbridge helpers
 import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setDebug, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
-import { featuresFor } from '../matterbridgeEndpointHelpers.js';
 import { airConditioner } from '../matterbridgeDeviceTypes.js';
-
+import { featuresFor } from '../matterbridgeEndpointHelpers.js';
 import { AirConditioner } from './airConditioner.js';
 
 // Setup the test environment

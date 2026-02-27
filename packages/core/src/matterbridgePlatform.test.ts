@@ -6,14 +6,11 @@ const NAME = 'MatterbridgePlatform';
 const MATTER_PORT = 7000;
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { EndpointNumber } from '@matter/types/datatype';
 import { dev, plg } from '@matterbridge/types';
+import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 
-import { assertMatterbridgePlatform, MatterbridgePlatform } from './matterbridgePlatform.js';
-import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   addMatterbridgePlatform,
   createMatterbridgeEnvironment,
@@ -30,6 +27,9 @@ import {
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
+import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { assertMatterbridgePlatform, MatterbridgePlatform } from './matterbridgePlatform.js';
 
 jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
   // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);

@@ -21,6 +21,8 @@
 
 # Production configuration
 
+> **Nvm is a development tool and is not supported for production**.
+
 ## Run matterbridge as a daemon with systemctl (Linux only)
 
 The easiest way to add systemctl is to use [Matterbridge service cli for linux](https://github.com/Luligu/mb-service-linux).
@@ -51,7 +53,7 @@ Add the following to this file, replacing 3 times (!) USER with your user name (
 
 You may need to adapt the configuration to your setup:
 
-- execStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -service
+- ExecStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge --service
 
 ```
 [Unit]
@@ -60,7 +62,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=matterbridge -service
+ExecStart=matterbridge --service
 WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit
@@ -72,7 +74,7 @@ Group=<USER>
 WantedBy=multi-user.target
 ```
 
-If you use the frontend with -ssl -frontend 443 and get an error message: "Port 443 requires elevated privileges",
+If you use the frontend with --ssl --frontend 443 and get an error message: "Port 443 requires elevated privileges",
 add this:
 
 ```
@@ -92,6 +94,7 @@ If you modify matterbridge.service after, then run:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl restart matterbridge.service
+sudo systemctl status matterbridge.service
 ```
 
 ### Start Matterbridge

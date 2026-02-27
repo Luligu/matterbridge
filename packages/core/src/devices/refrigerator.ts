@@ -23,17 +23,16 @@
 
 // Imports from @matter
 import { MaybePromise } from '@matter/general';
+import { RefrigeratorAlarmServer } from '@matter/node/behaviors/refrigerator-alarm';
+import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
 import { Semtag } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
-import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
-import { RefrigeratorAlarmServer } from '@matter/node/behaviors/refrigerator-alarm';
 
 // Matterbridge
+import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { powerSource, refrigerator, temperatureControlledCabinetCooler } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
-
 import { createLevelTemperatureControlClusterServer } from './temperatureControl.js';
 
 export class Refrigerator extends MatterbridgeEndpoint {

@@ -1,4 +1,4 @@
-import { cliEmitter, lastOsCpuUsage, setLastOsCpuUsage, lastProcessCpuUsage, setLastProcessCpuUsage } from './cliEmitter.js';
+import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage, setLastOsCpuUsage, setLastProcessCpuUsage } from './cliEmitter.js';
 
 describe('cliEmitter', () => {
   it('should be an instance of EventEmitter', () => {
