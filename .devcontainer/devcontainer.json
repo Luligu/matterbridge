@@ -8,12 +8,14 @@ Dev containers have networking limitations depending on the host OS and Docker s
   - Runs inside a VM
   - Host networking mode is NOT available
   - Use the Matterbridge Plugin Dev Container system (https://matterbridge.io/reflector/MatterbridgeDevContainer.html) for development and testing. It provides a similar environment to the native Linux setup with the following features:
-    ✅ Is possible to pair with an Home Assistant instance running in docker compose on the same host
-    ✅ Remote and local network access (cloud services, internet APIs) works normally
+    ✅ It is possible to pair with a Home Assistant instance running via Docker Compose on the same host
+    ✅ mDNS works normally inside the containers
+    ✅ Remote and local network access (cloud services, internet APIs) work normally
     ✅ Matterbridge and plugins work normally
     ✅ Matterbridge frontend works normally
   - Use the Matterbridge mDNS Reflector with the Matterbridge Plugin Dev Container system (https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network with the following features:
-    ✅ Is possible to pair with a controller running on the local network using mDNS reflector
+    ✅ It is possible to pair with a Home Assistant instance running via Docker Compose on the same host
+    ✅ It is possible to pair with a controller running on the local network using mDNS reflector
     ✅ mDNS, remote and local network access (cloud services, internet APIs) work normally
     ✅ Matterbridge and plugins work normally
     ✅ Matterbridge frontend works normally

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+    }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+  </style>
+</head>
+<body>
+<h1 id="contributing">Contributing</h1>
+<p>Thanks for taking the time to contribute to Matterbridge.</p>
+<p>This guide is intentionally <strong>repository-agnostic</strong> so it can be reused across Matterbridge repositories. Each repository may also include extra instructions in its <code>README*</code> files. When in doubt, follow the repo-specific documentation.</p>
+<h2 id="ways-to-contribute">Ways to Contribute</h2>
+<ul>
+<li>Report bugs (with clear reproduction steps)</li>
+<li>Propose improvements and new features</li>
+<li>Improve documentation and examples</li>
+<li>Submit code changes and tests</li>
+</ul>
+<h2 id="before-you-start">Before You Start</h2>
+<ul>
+<li>Search existing issues and pull requests to avoid duplicates.</li>
+<li>For larger changes, open an issue first to discuss scope and approach.</li>
+</ul>
+<h2 id="development-workflow">Development Workflow</h2>
+<ul>
+<li>Fork the repository and create a topic branch.</li>
+<li>Base your branch on the repository’s intended development branch:<ul>
+<li>Prefer <code>dev</code> when the repository uses it.</li>
+<li>Otherwise, use the default branch (<code>main</code>).</li>
+</ul>
+</li>
+<li>Follow the repo’s setup instructions (usually in <code>README.html</code> / <code>README-DEV.html</code>).</li>
+<li>Run formatting/lint/tests if the repository provides scripts for them (for example: <code>npm run lint</code>, <code>npm run format</code>, <code>npm run test</code>, <code>npm run build</code>).</li>
+</ul>
+<h2 id="submitting-a-pull-request">Submitting a Pull Request</h2>
+<ul>
+<li>Open a PR from your fork to the upstream repository.</li>
+<li>Target the correct base branch (<code>dev</code> when used, otherwise the default branch).</li>
+<li>Keep the PR focused (one feature/fix per PR when possible).</li>
+<li>Describe what changed and why, and include:<ul>
+<li>Steps to test the change</li>
+<li>Links to related issues</li>
+<li>Screenshots/logs when relevant</li>
+</ul>
+</li>
+<li>Follow the existing code style and patterns.</li>
+<li>Add or update tests for any behavior changes when practical.</li>
+<li>Ensure CI passes (or explain why it cannot).</li>
+</ul>
+<h2 id="reporting-bugs">Reporting Bugs</h2>
+<p>When filing a bug report, please include:</p>
+<ul>
+<li>What you expected to happen vs what happened</li>
+<li>Steps to reproduce</li>
+<li>Versions (Matterbridge/repo version, Node.js, OS)</li>
+<li>Relevant logs (remove tokens/secrets)</li>
+</ul>
+<h2 id="security">Security</h2>
+<p>If you believe you’ve found a security issue, avoid posting sensitive details publicly. Contact the maintainers through GitHub or Discord group.</p>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

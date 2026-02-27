@@ -50,7 +50,7 @@ These threads already run as workers:
 - npm install;
 - ✅ check the global node_modules directory;
 
-## [3.5.6] - Dev branch
+## [3.5.6] - 2026-02-27
 
 ### Dev Breaking Changes
 
@@ -59,7 +59,9 @@ These threads already run as workers:
 ### Dev News
 
 - [binding]: Add for test only MatterbridgeBindingServer.
-- [docker]: Add **luligu/matterbridge:chip-test** image (400MB): Ubuntu LTS, Node.Js 24 LTS, connectedhomeip repository with chip-tool, chip-cert and all needed for yaml and phyton tests. The matterbridge instance inside the container is already paired for yaml and python test. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the tests. Matterbridge frontend as usual on port 8283. No volumes or port mapping needed.
+- [docker]: Add **luligu/matterbridge:chip-test** image (400MB): it is based on Ubuntu LTS, Node.Js 24 LTS and includes connectedhomeip repository with chip-tool, chip-cert and all packages requierd to run yaml and phyton tests. The matterbridge instance inside the container is already paired for yaml and python test. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the yaml or phyton tests. Matterbridge frontend is bound on port 8283. No volumes or port mapping needed.
+- [styleguide]: Add [STYLEGUIDE.md](STYLEGUIDE.md).
+- [contributing]: Add [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Added
 
@@ -77,7 +79,7 @@ These threads already run as workers:
 
 ### Fixed
 
-- [advertise]: Remove not used timeout of 15 minutes.
+- [advertise]: Remove no more used timeout of 15 minutes.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

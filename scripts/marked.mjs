@@ -69,6 +69,8 @@ const FILES_TO_RENDER = [
   { source: 'README-SERVICE.md', target: 'README-SERVICE.html' },
   { source: 'README.md', target: 'README.html' },
   { source: 'CHANGELOG.md', target: 'CHANGELOG.html' },
+  { source: 'CONTRIBUTING.md', target: 'CONTRIBUTING.html' },
+  { source: 'STYLEGUIDE.md', target: 'STYLEGUIDE.html' },
   { source: 'reflector/MatterbridgeDevContainer.md', target: 'reflector/MatterbridgeDevContainer.html' },
   { source: 'reflector/Reflector.md', target: 'reflector/Reflector.html' },
 ];

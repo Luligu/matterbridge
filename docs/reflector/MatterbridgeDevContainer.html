@@ -120,24 +120,30 @@
 <li><p>Host networking mode is NOT available</p>
 </li>
 <li><p>Use the Matterbridge Plugin Dev Container system (<a href="https://matterbridge.io/reflector/MatterbridgeDevContainer.html">https://matterbridge.io/reflector/MatterbridgeDevContainer.html</a>) for development and testing. It provides a similar environment to the native Linux setup with the following features:</p>
-<p>✅ Is possible to pair with an Home Assistant instance running in docker compose on the same host</p>
-<p>✅ Remote and local network access (cloud services, internet APIs) works normally</p>
+<p>✅ It is possible to pair with a Home Assistant instance running via docker compose on the same host</p>
+<p>✅ mDNS works normally inside the containers</p>
+<p>✅ Remote and local network access (cloud services, internet APIs) work normally</p>
 <p>✅ Matterbridge and plugins work normally</p>
 <p>✅ Matterbridge frontend works normally</p>
 </li>
 <li><p>Use the Matterbridge mDNS Reflector with the Matterbridge Plugin Dev Container system (<a href="https://matterbridge.io/reflector/Reflector.html">https://matterbridge.io/reflector/Reflector.html</a>) if you want to pair with a controller on the local network with the following features:</p>
-<p>✅ Is possible to pair with a controller running on the local network using mDNS reflector</p>
-<p>✅ Remote and local network access (cloud services, internet APIs) works normally</p>
+<p>✅ It is possible to pair with a Home Assistant instance running via docker compose on the same host</p>
+<p>✅ It is possible to pair with a controller running on the local network using mDNS reflector</p>
+<p>✅ mDNS, remote and local network access (cloud services, internet APIs) work normally</p>
 <p>✅ Matterbridge and plugins work normally</p>
 <p>✅ Matterbridge frontend works normally</p>
 </li>
 </ul>
 <p>• Native Linux or WSL 2 with Docker Engine CLI integration:</p>
 <ul>
-<li>✅ Host networking IS available (with --network=host)</li>
-<li>✅ Full local network access is supported</li>
-<li>✅ Matterbridge and plugins work correctly, including pairing</li>
-<li>✅ Matterbridge frontend works normally</li>
+<li><p>✅ Host networking IS available (with --network=host)</p>
+</li>
+<li><p>✅ Full local network access is supported</p>
+</li>
+<li><p>✅ Matterbridge and plugins work correctly, including pairing</p>
+</li>
+<li><p>✅ Matterbridge frontend works normally</p>
+</li>
 </ul>
 <h2 id="create-the-shared-matterbridge-bridge-docker-network">Create the shared matterbridge bridge docker network</h2>
 <pre><code class="language-shell">docker network inspect matterbridge || docker network create matterbridge

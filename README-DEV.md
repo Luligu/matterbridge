@@ -39,51 +39,65 @@ It also has a workflow configured to run on push and pull request that build, li
 
 Using a Dev Container provides a fully isolated, reproducible, and pre-configured development environment. This ensures that all contributors have the same tools, extensions, and dependencies, eliminating "works on my machine" issues. It also makes onboarding new developers fast and hassle-free, as everything needed is set up automatically.
 
-For improved efficiency, the setup uses named Docker volumes for `node_modules`. This means dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes.
+For improved efficiency, the setup uses named Docker volumes for `.cache` and `node_modules`. This means dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes.
 
 To start the Dev Container, simply open the project folder in [Visual Studio Code](https://code.visualstudio.com/) and, if prompted, click "Reopen in Container". Alternatively, use the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`), search for "Dev Containers: Reopen in Container", and select it. VS Code will automatically build and start the containerized environment for you.
 
-> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as as fast as from the local folder.
-
-Since Dev Container doesn't run in network mode 'host', it is not possible to pair Mattebridge running inside the Dev Container.
+> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as fast as opening the local folder.
 
 ## Matterbridge Plugin Dev Container
 
 Using a Dev Container provides a fully isolated, reproducible, and pre-configured development environment. This ensures that all contributors have the same tools, extensions, and dependencies, eliminating "works on my machine" issues. It also makes onboarding new developers fast and hassle-free, as everything needed is set up automatically.
 
-For improved efficiency, the setup uses named Docker volumes for `matterbridge` and `node_modules`. This means that the dev of matterbridge and the plugin dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes.
+For improved efficiency, the setup uses named Docker volumes for `matterbridge`, `.cache` and `node_modules`. This means that the dev of matterbridge and the plugin dependencies are installed only once and persist across container rebuilds, making installs and rebuilds much faster than with bind mounts or ephemeral volumes. The plugin is automatically added to Matterbridge instance installed inside the dev container.
 
 To start the Dev Container, simply open the project folder in [Visual Studio Code](https://code.visualstudio.com/) and, if prompted, click "Reopen in Container". Alternatively, use the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`), search for "Dev Containers: Reopen in Container", and select it. VS Code will automatically build and start the containerized environment for you.
 
-> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as fast as from the local folder.
+> **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as fast as opening the local folder.
 
 ## Dev containers networking limitations
 
 Dev containers have networking limitations depending on the host OS and Docker setup.
 
-• Docker Desktop on Windows or macOS:
+• Docker Desktop on Windows or macOS (you can use your desktop or laptop PC for development running on your favorite OS):
 
 - Runs inside a VM
 - Host networking mode is NOT available
-- Matterbridge and plugins can run but:
-  ❌ Pairing with Matter controllers will NOT work cause of missing mDNS support
-  ✅ Remote and local network access (cloud services, internet APIs) works normally
+- Use the **Matterbridge Plugin Dev Container** system (https://matterbridge.io/reflector/MatterbridgeDevContainer.html) for development and testing. It provides a similar environment to the native Linux setup with the following features:
+
+  ✅ It is possible to pair with a Home Assistant instance running via Docker Compose on the same host
+
+  ✅ mDNS works normally inside the containers
+
+  ✅ Remote and local network access (cloud services, internet APIs) work normally
+
+  ✅ Matterbridge and plugins work normally
+
+  ✅ Matterbridge frontend works normally
+
+- Use the **Matterbridge mDNS Reflector** with the **Matterbridge Plugin Dev Container** system (https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network with the following features:
+
+  ✅ It is possible to pair with a Home Assistant instance running via Docker Compose on the same host
+
+  ✅ It is possible to pair with a controller running on the local network using the mDNS reflector
+
+  ✅ mDNS, remote and local network access (cloud services, internet APIs) work normally
+
+  ✅ Matterbridge and plugins work normally
+
   ✅ Matterbridge frontend works normally
 
 • Native Linux or WSL 2 with Docker Engine CLI integration:
 
-- Host networking IS available
-- Full local network access is supported with mDNS
-- Matterbridge and plugins work correctly, including pairing
-- Matterbridge frontend works normally
+- ✅ Host networking IS available (with --network=host)
+
+- ✅ Full local network access is supported
+
+- ✅ Matterbridge and plugins work correctly, including pairing
+
+- ✅ Matterbridge frontend works normally
 
 ## How to pair the plugin
-
-When you want to test your plugin with a paired controller and you cannot use native Linux or WSL 2 with Docker Engine, you have several other options:
-
-- create a tgz (npm run npmPack) and upload it to a running instance of matterbridge.
-- publish the plugin with tag dev and install it (matterbridge-yourplugin@dev in Install plugins) in a running instance of matterbridge.
-- use a local instance of matterbridge running outside the dev container and install (../matterbridge-yourplugin in Install plugins) or add (../matterbridge-yourplugin in Install plugins) your plugin to it (easiest way). Adjust the path if matterbridge dir and your plugin dir are not in the same parent directory.
 
 ## Guidelines on imports/exports
 
@@ -538,21 +552,10 @@ Matterbridge's node_modules - Only reached if not found in plugin's dependencies
 Plugin's node_modules takes precedence - If a package exists in the plugin's own node_modules, that version will be used.
 Matterbridge's node_modules is used as fallback.
 
+# Code Style Guidelines and Copilot hints
+
+Read the [guideline](STYLEGUIDE.md)
+
 # Contribution Guidelines
 
-Thank you for your interest in contributing to my project!
-
-I warmly welcome contributions to this project! Whether it's reporting bugs, proposing new features, updating documentation, or writing code, your help is greatly appreciated.
-
-## Getting Started
-
-- Fork this repository to your own GitHub account and clone it to your local device.
-- Make the necessary changes and test them out
-- Commit your changes and push to your forked repository
-
-## Submitting Changes
-
-- Create a new pull request against the dev from my repository and I'll be glad to check it out
-- Be sure to follow the existing code style
-- Add unit tests for any new or changed functionality if possible cause Matterbridge has a 100% test coverage.
-- In your pull request, do describe what your changes do and how they work
+Read the [guideline](CONTRIBUTING.md)

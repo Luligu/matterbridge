@@ -22,9 +22,11 @@ Dev containers have networking limitations depending on the host OS and Docker s
 - Host networking mode is NOT available
 - Use the Matterbridge Plugin Dev Container system (https://matterbridge.io/reflector/MatterbridgeDevContainer.html) for development and testing. It provides a similar environment to the native Linux setup with the following features:
 
-  ✅ Is possible to pair with an Home Assistant instance running in docker compose on the same host
+  ✅ It is possible to pair with a Home Assistant instance running via docker compose on the same host
 
-  ✅ Remote and local network access (cloud services, internet APIs) works normally
+  ✅ mDNS works normally inside the containers
+
+  ✅ Remote and local network access (cloud services, internet APIs) work normally
 
   ✅ Matterbridge and plugins work normally
 
@@ -32,9 +34,11 @@ Dev containers have networking limitations depending on the host OS and Docker s
 
 - Use the Matterbridge mDNS Reflector with the Matterbridge Plugin Dev Container system (https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network with the following features:
 
-  ✅ Is possible to pair with a controller running on the local network using mDNS reflector
+  ✅ It is possible to pair with a Home Assistant instance running via docker compose on the same host
 
-  ✅ Remote and local network access (cloud services, internet APIs) works normally
+  ✅ It is possible to pair with a controller running on the local network using mDNS reflector
+
+  ✅ mDNS, remote and local network access (cloud services, internet APIs) work normally
 
   ✅ Matterbridge and plugins work normally
 
@@ -43,8 +47,11 @@ Dev containers have networking limitations depending on the host OS and Docker s
 • Native Linux or WSL 2 with Docker Engine CLI integration:
 
 - ✅ Host networking IS available (with --network=host)
+
 - ✅ Full local network access is supported
+
 - ✅ Matterbridge and plugins work correctly, including pairing
+
 - ✅ Matterbridge frontend works normally
 
 ## Create the shared matterbridge bridge docker network

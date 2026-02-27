@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+    }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+  </style>
+</head>
+<body>
+<h1 id="style-guide">Style Guide</h1>
+<p>Concise rules the codebase and Copilot suggestions should follow.</p>
+<h2 id="1-general-principles">1. General Principles</h2>
+<ul>
+<li>Prefer clarity over brevity; explicit names, no ambiguous abbreviations.</li>
+<li>All exported functions/classes/interfaces: full JSDoc.</li>
+<li>Validate external inputs; never trust parameters coming from device/network events: use isValid... matterbridge functions.</li>
+<li>Fail fast with descriptive Error messages; return early on invalid input.</li>
+<li>Keep functions focused (single responsibility, &lt;= ~40 lines ideally).</li>
+</ul>
+<h2 id="2-typescript-conventions">2. TypeScript Conventions</h2>
+<ul>
+<li>Use <code>strict</code> typing; no <code>any</code> unless justified with a preceding comment <code>// intentional any: reason</code>.</li>
+<li>Prefer readonly (<code>readonly</code> or <code>as const</code>) for constant structures / lookup tables.</li>
+<li>Narrow types with guards instead of type assertions. Avoid <code>as X</code> unless unavoidable.</li>
+<li>Prefer enums / literal unions over magic numbers. Map protocol constants in lookup arrays.</li>
+</ul>
+<h2 id="3-naming">3. Naming</h2>
+<ul>
+<li>Functions: verb or verb phrase (<code>createDevice</code>, <code>updateState</code>).</li>
+<li>Booleans: prefix with <code>is/has/can/should</code> (internal helpers); state flags in this project may keep existing names (<code>intervalOnOff</code>).</li>
+<li>Private file‑local helpers start with <code>_</code> only if intentionally unused yet (silencing ESLint); otherwise export or remove.</li>
+<li>Constants: <code>UPPER_SNAKE_CASE</code> only for process env or true constants; otherwise camelCase.</li>
+</ul>
+<h2 id="4-jsdoc-template">4. JSDoc Template</h2>
+<p>For every public/exported function or public methods (and important internal helpers):</p>
+<pre><code>/**
+ * One‑line summary (starts with a verb, ends without period if short).
+ *
+ * Longer description (optional) explaining rationale or algorithm. Mention spec refs if relevant.
+ *
+ * Edge cases:
+ *  - bullet 1
+ *  - bullet 2
+ *
+ * @param {Type} name Description (units, accepted range, behavior on bounds)
+ *
+ * @returns {Type} Description (units, range, side effects)
+ */
+</code></pre>
+<p>Rules:</p>
+<ul>
+<li>Always include <code>@param</code> and <code>@returns</code> with explicit types (even if TS can infer) for consistency with lint rules.</li>
+<li>Document units (e.g. <code>°C * 100</code>, <code>lux</code>, <code>mireds</code>, <code>Pa</code>).</li>
+<li>List clamping and fallback behaviors under Edge cases.</li>
+<li>If returning Promise, use <code>@returns {Promise&lt;Type&gt;}</code>.</li>
+</ul>
+<h2 id="5-error-handling-validation">5. Error Handling &amp; Validation</h2>
+<ul>
+<li>Reject invalid numeric input: use <code>Number.isFinite(n)</code>; clamp with <code>Math.min/Math.max</code>.</li>
+<li>When decoding device values, guard against null/undefined before math.</li>
+<li>Prefer returning 0 / empty array for non‑critical sensor errors, log at debug level.</li>
+<li>Throw only for programmer/config errors; not for transient sensor states.</li>
+</ul>
+<h2 id="6-logging">6. Logging</h2>
+<p>The logger is always AnsiLogger.</p>
+<ul>
+<li>Use <code>log.debug</code> for verbose internal transitions.</li>
+<li>Use <code>log.info</code> for state changes &amp; received commands.</li>
+<li>Use <code>log.notice</code> for notices.</li>
+<li>Use <code>log.warn</code> for recoverable anomalies (out‑of‑range adjusted, missing optional attribute).</li>
+<li>Use <code>log.error</code> only for failed operations that stop progress.</li>
+<li>Use <code>log.fatal</code> only for failed operations that are not recoverable.</li>
+<li>Avoid duplicate logs inside tight intervals; coalesce if needed.</li>
+</ul>
+<h2 id="7-formatting-lint">7. Formatting &amp; Lint</h2>
+<ul>
+<li>ESLint + Prettier govern style; do not fight formatters. VSCode is configured to format on save.</li>
+<li>The default tabWidth is 2 not 4.</li>
+<li>No trailing spaces; keep imports sorted by groups: std libs, external deps, internal modules, types.</li>
+<li>Use trailing commas where multi‑line.</li>
+<li>The repo uses import &#39;eslint-plugin-simple-import-sort&#39;, &#39;eslint-plugin-n&#39;, &#39;eslint-plugin-promise&#39;, &#39;eslint-plugin-jsdoc&#39;, &#39;eslint-plugin-prettier/recommended&#39;, &#39;eslint-plugin-jest&#39;;</li>
+</ul>
+<h2 id="8-tests">8. Tests</h2>
+<ul>
+<li>Add at least one test per new helper function (happy path + one edge case).</li>
+<li>Use explicit test names describing behavior (<code>converts 100 lux to encoded value</code>).</li>
+<li>Keep test data small and deterministic.</li>
+</ul>
+<h2 id="9-performance">9. Performance</h2>
+<ul>
+<li>Avoid premature optimization; micro‑opt only with measurable hotspot proof.</li>
+<li>Prefer simple loops over complex chaining when in per‑tick update paths.</li>
+</ul>
+<h2 id="10-copilot-prompting-hints">10. Copilot Prompting Hints</h2>
+<p>Placing this file at root lets Copilot pick patterns. Reinforce by:</p>
+<ul>
+<li>Keeping 2–3 perfect exemplar functions near top of large files.</li>
+<li>Adding a brief <code>// Style: ...</code> comment before a series of helpers.</li>
+<li>Rejecting poor suggestions early so the buffer stays clean.</li>
+</ul>
+<h2 id="11-file-header-blocks">11. File Header Blocks</h2>
+<ul>
+<li>Keep existing license header exactly; update <code>@version</code> only on functional changes, not style edits.</li>
+</ul>
+<h2 id="12-deprecation">12. Deprecation</h2>
+<ul>
+<li>Mark deprecated APIs with <code>@deprecated</code> tag explaining alternative and planned removal version.</li>
+</ul>
+<h2 id="13-commit-messages-conventional-subset">13. Commit Messages (conventional subset)</h2>
+<ul>
+<li><code>feat:</code>, <code>fix:</code>, <code>docs:</code>, <code>refactor:</code>, <code>test:</code>, <code>chore:</code> prefix.</li>
+<li>Imperative, lower case first line; no period.</li>
+</ul>
+<h2 id="14-example-reference">14. Example (Reference)</h2>
+<pre><code class="language-ts">/**
+ * Convert lux to Matter encoded illuminance value.
+ *
+ * Edge cases:
+ *  - &lt;=0 or non-finite -&gt; 0
+ *  - Caps at 0xFFFE
+ *
+ * @param {number} lux Illuminance in lux (&gt;=0).
+ * @returns {number} Encoded value (0..0xFFFE)
+ */
+function luxToMatterExample(lux: number): number {
+  if (!Number.isFinite(lux) || lux &lt;= 0) return 0;
+  return Math.round(Math.min(10000 * Math.log10(lux), 0xfffe));
+}
+</code></pre>
+<h2 id="15-creating-jest-test">15. Creating Jest test</h2>
+<p>Always remember we are in ESM module with ts-jest.</p>
+<p>So use jest.unstable_mockModule and not jest.mock.</p>
+<h2 id="16-running-jest-test">16. Running Jest test</h2>
+<p>Always use</p>
+<p>npm run test:coverage -- yourTest.test.ts</p>
+<hr>
+<p>Short, opinionated. If a rule isn’t helping, propose a PR to adjust.</p>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>
