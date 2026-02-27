@@ -55,6 +55,9 @@ These threads already run as workers:
 ### Dev Breaking Changes
 
 - [rootNode]: The serialNumber and uniqueId for accessory plugins in childbridge mode, and for devices with mode = server, are now taken from the device. These values are persisted in storage and cannot be changed later.
+- [devContainer]: Add the guide to [pair Matterbridge with Dev Container](README-DEV.md#how-to-pair-matterbridge-in-dev-containers)
+- [devContainer]: Add the new [dev container setup](https://matterbridge.io/reflector/MatterbridgeDevContainer.html).
+- [devContainer]: Add the new [reflector dev container setup](https://matterbridge.io/reflector/Reflector.html).
 
 ### Dev News
 
