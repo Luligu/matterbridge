@@ -137,30 +137,34 @@
 <blockquote>
 <p><strong>Note:</strong> The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as fast as opening the local folder.</p>
 </blockquote>
-<h2 id="dev-containers-networking-limitations">Dev containers networking limitations</h2>
+<h2 id="how-to-pair-matterbridge-in-dev-containers">How to pair matterbridge in Dev Containers</h2>
 <p>Dev containers have networking limitations depending on the host OS and Docker setup.</p>
-<p>• Docker Desktop on Windows or macOS (you can use your desktop or laptop PC for development running on your favorite OS):</p>
+<h3 id="docker-desktop-on-windows-or-macos">• Docker Desktop on Windows or macOS:</h3>
 <ul>
 <li><p>Runs inside a VM</p>
 </li>
 <li><p>Host networking mode is NOT available</p>
 </li>
-<li><p>Use the <strong>Matterbridge Plugin Dev Container</strong> system (<a href="https://matterbridge.io/reflector/MatterbridgeDevContainer.html">https://matterbridge.io/reflector/MatterbridgeDevContainer.html</a>) for development and testing. It provides a similar environment to the native Linux setup with the following features:</p>
-<p>✅ It is possible to pair with a Home Assistant instance running via Docker Compose on the same host</p>
+<li><p>Use the <strong>Matterbridge Plugin Dev Container</strong> system (<a href="https://matterbridge.io/reflector/MatterbridgeDevContainer.html">https://matterbridge.io/reflector/MatterbridgeDevContainer.html</a>) for development and testing. It provides an environment similar to the native Linux setup with the following features:</p>
+<p>✅ You can use your desktop or laptop for development running on your favorite OS</p>
+<p>✅ There is no need to SSH to other hosts</p>
+<p>✅ You can pair with the Home Assistant instance running via Docker Compose on the same host</p>
 <p>✅ mDNS works normally inside the containers</p>
 <p>✅ Remote and local network access (cloud services, internet APIs) work normally</p>
 <p>✅ Matterbridge and plugins work normally</p>
 <p>✅ Matterbridge frontend works normally</p>
 </li>
 <li><p>Use the <strong>Matterbridge mDNS Reflector</strong> with the <strong>Matterbridge Plugin Dev Container</strong> system (<a href="https://matterbridge.io/reflector/Reflector.html">https://matterbridge.io/reflector/Reflector.html</a>) if you want to pair with a controller on the local network with the following features:</p>
-<p>✅ It is possible to pair with a Home Assistant instance running via Docker Compose on the same host</p>
-<p>✅ It is possible to pair with a controller running on the local network using the mDNS reflector</p>
+<p>✅ You can use your desktop or laptop for development running on your favorite OS</p>
+<p>✅ There is no need to SSH to other hosts</p>
+<p>✅ You can pair with the Home Assistant instance running via Docker Compose on the same host (in this system you will also see all the devices on your lan)</p>
+<p>✅ You can pair with a controller running on the local network using the mDNS reflector</p>
 <p>✅ mDNS, remote and local network access (cloud services, internet APIs) work normally</p>
 <p>✅ Matterbridge and plugins work normally</p>
 <p>✅ Matterbridge frontend works normally</p>
 </li>
 </ul>
-<p>• Native Linux or WSL 2 with Docker Engine CLI integration:</p>
+<h3 id="native-linux-or-wsl-2-with-docker-engine-cli-integration">• Native Linux or WSL 2 with Docker Engine CLI integration:</h3>
 <ul>
 <li><p>✅ Host networking IS available (with --network=host)</p>
 </li>
@@ -171,7 +175,6 @@
 <li><p>✅ Matterbridge frontend works normally</p>
 </li>
 </ul>
-<h2 id="how-to-pair-the-plugin">How to pair the plugin</h2>
 <h2 id="guidelines-on-importsexports">Guidelines on imports/exports</h2>
 <p>Matterbridge exports from:</p>
 <p><strong>&quot;matterbridge&quot;</strong></p>
@@ -235,18 +238,18 @@
 }
 </code></pre>
 <p>If you don&#39;t use Dev Container from the Matterbridge Plugin Template, on the host you use for the development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).</p>
-<pre><code class="language-bash">git clone https://github.com/Luligu/matterbridge.git
+<pre><code class="language-bash">git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge.git
 cd matterbridge
-npm install
+npm install --no-fund --no-audit
 npm run build
-npm link
+npm link --no-fund --no-audit
 </code></pre>
 <p>If you want to develop a plugin using the dev branch of matterbridge (I suggest you do it).</p>
-<pre><code class="language-bash">git clone -b dev https://github.com/Luligu/matterbridge.git
+<pre><code class="language-bash">git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git
 cd matterbridge
-npm install
+npm install --no-fund --no-audit
 npm run build
-npm link
+npm link --no-fund --no-audit
 </code></pre>
 <p>Always keep your local instance of matterbridge up to date.</p>
 <h3 id="warning-2">*<strong>*****</strong> WARNING *<strong>*****</strong></h3>
@@ -260,9 +263,9 @@ npm link
 <pre><code class="language-bash">cd ~/Matterbridge
 </code></pre>
 <p>then clone the plugin</p>
-<pre><code class="language-bash">git clone https://github.com/Luligu/matterbridge-example-accessory-platform
+<pre><code class="language-bash">git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
-npm install
+npm install --no-fund --no-audit
 npm link matterbridge
 npm run build
 </code></pre>
@@ -454,22 +457,26 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
 <p>In the first 2 cases the devDependeincies are always installed in node_modules!</p>
 <p>In the last (most dangerous case) they are installed when the user forgets to add --omit=dev or doesn&#39;t have NODE_ENV=production.</p>
 <p>This is also the reason why to be safe 100% all official plugins are published for production removing also devDependencies from package.json.</p>
-<p>I also lock the dependencies with npm shrinkwrap cause npm installs always the latest versions that mach your range in package.json but sometimes this just breaks the plugin. This permits to be sure that the user host machine has exactly the same dependencies you coded your plugin with.</p>
+<p>I also lock the direct dependencies with npm shrinkwrap cause npm installs always the latest versions that mach your range in package.json but sometimes this just breaks the plugin. This permits to be sure that the user host machine has exactly the same direct dependencies you coded your plugin with.</p>
 <h3 id="the-technical-reason-we-cannot-have-matterbridge-or-matter-in-the-plugin-nodemodules">The technical reason we cannot have matterbridge or @matter in the plugin node_modules.</h3>
-<p>Module Resolution in Matterbridge Plugin System.
-When Matterbridge loads plugins on demand as ESM modules, the module resolution follows Node.js&#39;s standard module resolution algorithm. Here&#39;s how it works:</p>
+<p>Module Resolution in Matterbridge Plugin System.</p>
+<p>When Matterbridge loads plugins on demand as ESM modules, the module resolution follows Node.js&#39;s standard module resolution algorithm. Here&#39;s how it works:</p>
 <p><strong>1. Plugin Loading Process</strong>
 From the code in pluginManager.ts (lines 628-632), Matterbridge:</p>
-<p>Resolves the plugin&#39;s main entry point from its package.json
-Converts the file path to a URL using pathToFileURL()
-Uses dynamic import: await import(pluginUrl.href)</p>
+<ul>
+<li>Resolves the plugin&#39;s main entry point from its package.json</li>
+<li>Converts the file path to a URL using pathToFileURL()</li>
+<li>Uses dynamic import: await import(pluginUrl.href)</li>
+</ul>
 <p><strong>2. Module Resolution Priority</strong>
 When the plugin code runs import statements, Node.js follows this resolution order:</p>
-<p>Plugin&#39;s local node_modules - Checked first
-Parent directories - Walks up the directory tree looking for node_modules
-Matterbridge&#39;s node_modules - Only reached if not found in plugin&#39;s dependencies</p>
+<ul>
+<li>Plugin&#39;s local node_modules - Checked first</li>
+<li>Parent directories - Walks up the directory tree looking for node_modules</li>
+<li>Matterbridge&#39;s node_modules - Only reached if not found in plugin&#39;s dependencies</li>
+</ul>
 <p><strong>3. Key Behavior</strong>
-Plugin&#39;s node_modules takes precedence - If a package exists in the plugin&#39;s own node_modules, that version will be used.
+Plugin&#39;s node_modules takes precedence. If a package exists in the plugin&#39;s own node_modules, that version will be used.
 Matterbridge&#39;s node_modules is used as fallback.</p>
 <h1 id="code-style-guidelines-and-copilot-hints">Code Style Guidelines and Copilot hints</h1>
 <p>Read the <a href="STYLEGUIDE.html">guideline</a></p>
