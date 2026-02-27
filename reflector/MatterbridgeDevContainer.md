@@ -1,5 +1,52 @@
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp; Matterbridge Dev Container
 
+## Using the Dev Container
+
+- Docker Desktop or Docker Engine are required to use the Dev Container.
+- Devcontainer works correctly on Linux, macOS, Windows, WSL2.
+- The devcontainer provides Node.js, npm, TypeScript, ESLint, Prettier, Jest, Vitest and other tools and extensions pre-installed and configured.
+- The dev branch of Matterbridge is already build and installed into the Dev Container and linked to the plugin. The plugin is automatically added to matterbridge.
+- The devcontainer is optimized using named mounts for node_modules, .cache and matterbridge.
+- You can run, build, and test your plugin directly inside the container.
+- To open a terminal in the devcontainer, use the VS Code terminal after the container starts.
+- All commands (npm, tsc, matterbridge etc.) will run inside the container environment.
+- All the source files are on the host.
+
+## Dev containers networking limitations
+
+Dev containers have networking limitations depending on the host OS and Docker setup.
+
+• Docker Desktop on Windows or macOS:
+
+- Runs inside a VM
+- Host networking mode is NOT available
+- Use the Matterbridge Plugin Dev Container system (https://matterbridge.io/reflector/MatterbridgeDevContainer.html) for development and testing. It provides a similar environment to the native Linux setup with the following features:
+
+  ✅ Is possible to pair with an Home Assistant instance running in docker compose on the same host
+
+  ✅ Remote and local network access (cloud services, internet APIs) works normally
+
+  ✅ Matterbridge and plugins work normally
+
+  ✅ Matterbridge frontend works normally
+
+- Use the Matterbridge mDNS Reflector with the Matterbridge Plugin Dev Container system (https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network with the following features:
+
+  ✅ Is possible to pair with a controller running on the local network using mDNS reflector
+
+  ✅ Remote and local network access (cloud services, internet APIs) works normally
+
+  ✅ Matterbridge and plugins work normally
+
+  ✅ Matterbridge frontend works normally
+
+• Native Linux or WSL 2 with Docker Engine CLI integration:
+
+- ✅ Host networking IS available (with --network=host)
+- ✅ Full local network access is supported
+- ✅ Matterbridge and plugins work correctly, including pairing
+- ✅ Matterbridge frontend works normally
+
 ## Create the shared matterbridge bridge docker network
 
 ```shell
@@ -7,7 +54,7 @@ docker network inspect matterbridge || docker network create matterbridge
 docker network ls
 ```
 
-## Run Home Assitant and Matter Server in Docker Compose with Docker Desktop
+## Run Home Assistant and Matter Server in Docker Compose with Docker Desktop
 
 Will join the matterbridge bridge docker network.
 

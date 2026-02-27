@@ -99,11 +99,51 @@
 </head>
 <body>
 <h1 id="img-srchttpsmatterbridgeioassetsmatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbsp-matterbridge-dev-container"><img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp; Matterbridge Dev Container</h1>
+<h2 id="using-the-dev-container">Using the Dev Container</h2>
+<ul>
+<li>Docker Desktop or Docker Engine are required to use the Dev Container.</li>
+<li>Devcontainer works correctly on Linux, macOS, Windows, WSL2.</li>
+<li>The devcontainer provides Node.js, npm, TypeScript, ESLint, Prettier, Jest, Vitest and other tools and extensions pre-installed and configured.</li>
+<li>The dev branch of Matterbridge is already build and installed into the Dev Container and linked to the plugin. The plugin is automatically added to matterbridge.</li>
+<li>The devcontainer is optimized using named mounts for node_modules, .cache and matterbridge.</li>
+<li>You can run, build, and test your plugin directly inside the container.</li>
+<li>To open a terminal in the devcontainer, use the VS Code terminal after the container starts.</li>
+<li>All commands (npm, tsc, matterbridge etc.) will run inside the container environment.</li>
+<li>All the source files are on the host.</li>
+</ul>
+<h2 id="dev-containers-networking-limitations">Dev containers networking limitations</h2>
+<p>Dev containers have networking limitations depending on the host OS and Docker setup.</p>
+<p>• Docker Desktop on Windows or macOS:</p>
+<ul>
+<li><p>Runs inside a VM</p>
+</li>
+<li><p>Host networking mode is NOT available</p>
+</li>
+<li><p>Use the Matterbridge Plugin Dev Container system (<a href="https://matterbridge.io/reflector/MatterbridgeDevContainer.html">https://matterbridge.io/reflector/MatterbridgeDevContainer.html</a>) for development and testing. It provides a similar environment to the native Linux setup with the following features:</p>
+<p>✅ Is possible to pair with an Home Assistant instance running in docker compose on the same host</p>
+<p>✅ Remote and local network access (cloud services, internet APIs) works normally</p>
+<p>✅ Matterbridge and plugins work normally</p>
+<p>✅ Matterbridge frontend works normally</p>
+</li>
+<li><p>Use the Matterbridge mDNS Reflector with the Matterbridge Plugin Dev Container system (<a href="https://matterbridge.io/reflector/Reflector.html">https://matterbridge.io/reflector/Reflector.html</a>) if you want to pair with a controller on the local network with the following features:</p>
+<p>✅ Is possible to pair with a controller running on the local network using mDNS reflector</p>
+<p>✅ Remote and local network access (cloud services, internet APIs) works normally</p>
+<p>✅ Matterbridge and plugins work normally</p>
+<p>✅ Matterbridge frontend works normally</p>
+</li>
+</ul>
+<p>• Native Linux or WSL 2 with Docker Engine CLI integration:</p>
+<ul>
+<li>✅ Host networking IS available (with --network=host)</li>
+<li>✅ Full local network access is supported</li>
+<li>✅ Matterbridge and plugins work correctly, including pairing</li>
+<li>✅ Matterbridge frontend works normally</li>
+</ul>
 <h2 id="create-the-shared-matterbridge-bridge-docker-network">Create the shared matterbridge bridge docker network</h2>
 <pre><code class="language-shell">docker network inspect matterbridge || docker network create matterbridge
 docker network ls
 </code></pre>
-<h2 id="run-home-assitant-and-matter-server-in-docker-compose-with-docker-desktop">Run Home Assitant and Matter Server in Docker Compose with Docker Desktop</h2>
+<h2 id="run-home-assistant-and-matter-server-in-docker-compose-with-docker-desktop">Run Home Assistant and Matter Server in Docker Compose with Docker Desktop</h2>
 <p>Will join the matterbridge bridge docker network.</p>
 <p>The matterbridge-dev-container-docker-compose.yml is available <a href="https://matterbridge.io/reflector/matterbridge-dev-container-docker-compose.yml">here</a>.</p>
 <pre><code class="language-shell">docker network inspect matterbridge || docker network create matterbridge
