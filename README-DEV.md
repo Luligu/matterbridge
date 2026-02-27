@@ -55,17 +55,21 @@ To start the Dev Container, simply open the project folder in [Visual Studio Cod
 
 > **Note:** The first time you use the Dev Container, it may take a while to download all the required Docker images and set up the environment. Subsequent starts will be as fast as opening the local folder.
 
-## Dev containers networking limitations
+## How to pair matterbridge in Dev Containers
 
 Dev containers have networking limitations depending on the host OS and Docker setup.
 
-• Docker Desktop on Windows or macOS (you can use your desktop or laptop PC for development running on your favorite OS):
+### • Docker Desktop on Windows or macOS:
 
 - Runs inside a VM
 - Host networking mode is NOT available
-- Use the **Matterbridge Plugin Dev Container** system (https://matterbridge.io/reflector/MatterbridgeDevContainer.html) for development and testing. It provides a similar environment to the native Linux setup with the following features:
+- Use the **Matterbridge Plugin Dev Container** system (https://matterbridge.io/reflector/MatterbridgeDevContainer.html) for development and testing. It provides an environment similar to the native Linux setup with the following features:
 
-  ✅ It is possible to pair with a Home Assistant instance running via Docker Compose on the same host
+  ✅ You can use your desktop or laptop for development running on your favorite OS
+
+  ✅ There is no need to SSH to other hosts
+
+  ✅ You can pair with the Home Assistant instance running via Docker Compose on the same host
 
   ✅ mDNS works normally inside the containers
 
@@ -77,9 +81,13 @@ Dev containers have networking limitations depending on the host OS and Docker s
 
 - Use the **Matterbridge mDNS Reflector** with the **Matterbridge Plugin Dev Container** system (https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network with the following features:
 
-  ✅ It is possible to pair with a Home Assistant instance running via Docker Compose on the same host
+  ✅ You can use your desktop or laptop for development running on your favorite OS
 
-  ✅ It is possible to pair with a controller running on the local network using the mDNS reflector
+  ✅ There is no need to SSH to other hosts
+
+  ✅ You can pair with the Home Assistant instance running via Docker Compose on the same host (in this system you will also see all the devices on your lan)
+
+  ✅ You can pair with a controller running on the local network using the mDNS reflector
 
   ✅ mDNS, remote and local network access (cloud services, internet APIs) work normally
 
@@ -87,7 +95,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
 
   ✅ Matterbridge frontend works normally
 
-• Native Linux or WSL 2 with Docker Engine CLI integration:
+### • Native Linux or WSL 2 with Docker Engine CLI integration:
 
 - ✅ Host networking IS available (with --network=host)
 
@@ -96,8 +104,6 @@ Dev containers have networking limitations depending on the host OS and Docker s
 - ✅ Matterbridge and plugins work correctly, including pairing
 
 - ✅ Matterbridge frontend works normally
-
-## How to pair the plugin
 
 ## Guidelines on imports/exports
 
@@ -174,21 +180,21 @@ Matterbridge must be linked to the plugin in development only. At runtime the pl
 If you don't use Dev Container from the Matterbridge Plugin Template, on the host you use for the development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).
 
 ```bash
-git clone https://github.com/Luligu/matterbridge.git
+git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge.git
 cd matterbridge
-npm install
+npm install --no-fund --no-audit
 npm run build
-npm link
+npm link --no-fund --no-audit
 ```
 
 If you want to develop a plugin using the dev branch of matterbridge (I suggest you do it).
 
 ```bash
-git clone -b dev https://github.com/Luligu/matterbridge.git
+git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git
 cd matterbridge
-npm install
+npm install --no-fund --no-audit
 npm run build
-npm link
+npm link --no-fund --no-audit
 ```
 
 Always keep your local instance of matterbridge up to date.
@@ -216,9 +222,9 @@ cd ~/Matterbridge
 then clone the plugin
 
 ```bash
-git clone https://github.com/Luligu/matterbridge-example-accessory-platform
+git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
-npm install
+npm install --no-fund --no-audit
 npm link matterbridge
 npm run build
 ```
@@ -527,29 +533,30 @@ In the last (most dangerous case) they are installed when the user forgets to ad
 
 This is also the reason why to be safe 100% all official plugins are published for production removing also devDependencies from package.json.
 
-I also lock the dependencies with npm shrinkwrap cause npm installs always the latest versions that mach your range in package.json but sometimes this just breaks the plugin. This permits to be sure that the user host machine has exactly the same dependencies you coded your plugin with.
+I also lock the direct dependencies with npm shrinkwrap cause npm installs always the latest versions that mach your range in package.json but sometimes this just breaks the plugin. This permits to be sure that the user host machine has exactly the same direct dependencies you coded your plugin with.
 
 ### The technical reason we cannot have matterbridge or @matter in the plugin node_modules.
 
 Module Resolution in Matterbridge Plugin System.
+
 When Matterbridge loads plugins on demand as ESM modules, the module resolution follows Node.js's standard module resolution algorithm. Here's how it works:
 
 **1. Plugin Loading Process**
 From the code in pluginManager.ts (lines 628-632), Matterbridge:
 
-Resolves the plugin's main entry point from its package.json
-Converts the file path to a URL using pathToFileURL()
-Uses dynamic import: await import(pluginUrl.href)
+- Resolves the plugin's main entry point from its package.json
+- Converts the file path to a URL using pathToFileURL()
+- Uses dynamic import: await import(pluginUrl.href)
 
 **2. Module Resolution Priority**
 When the plugin code runs import statements, Node.js follows this resolution order:
 
-Plugin's local node_modules - Checked first
-Parent directories - Walks up the directory tree looking for node_modules
-Matterbridge's node_modules - Only reached if not found in plugin's dependencies
+- Plugin's local node_modules - Checked first
+- Parent directories - Walks up the directory tree looking for node_modules
+- Matterbridge's node_modules - Only reached if not found in plugin's dependencies
 
 **3. Key Behavior**
-Plugin's node_modules takes precedence - If a package exists in the plugin's own node_modules, that version will be used.
+Plugin's node_modules takes precedence. If a package exists in the plugin's own node_modules, that version will be used.
 Matterbridge's node_modules is used as fallback.
 
 # Code Style Guidelines and Copilot hints
