@@ -1,25 +1,12 @@
-name: Build Docker Image dev with buildx
+name: Build Docker Image chip-test with buildx
 
 on:
-  # Use in other repository workflows with:
-  # - name: Trigger Matterbridge Docker Build Dev
-  #   uses: actions/github-script@v7
-  #   with:
-  #     github-token: ${{ secrets.TRIGGER_TOKEN }}
-  #     script: |
-  #       await github.rest.actions.createWorkflowDispatch({
-  #         owner: 'Luligu',
-  #         repo: 'matterbridge',
-  #         workflow_id: 'docker-buildx-dev.yml',
-  #         ref: 'dev'
-  #       })
-
-  # Allow manual dispatch and trigger from other workflows
+  # Allow manual dispatch
   workflow_dispatch:
 
 # Cancel previous runs when a new one is triggered
 concurrency:
-  group: docker-build-dev
+  group: docker-build-chip-test
   cancel-in-progress: true
 
 jobs:
@@ -27,10 +14,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code to dev branch
+      - name: Checkout code to main branch
         uses: actions/checkout@v4
-        with:
-          ref: dev
 
       - name: Setup Node.js 24.x
         uses: actions/setup-node@v4
@@ -63,7 +48,7 @@ jobs:
             "workflow": "${GITHUB_WORKFLOW}",
             "type": "${GITHUB_REF_TYPE}",
             "name": "${GITHUB_REF_NAME}",
-            "dev": true
+            "dev": false
           }
           EOF
 
@@ -83,20 +68,18 @@ jobs:
         with:
           version: latest
 
-      - name: Run Docker Buildx with Dockerfile.dev for version ${{ steps.meta.outputs.VERSION }}
+      - name: Run Docker Buildx with Dockerfile.chip-test for version ${{ steps.meta.outputs.VERSION }}
         run: |
           docker buildx build \
             --no-cache \
             --pull \
             --platform linux/amd64,linux/arm64 \
-            -f docker/Dockerfile.dev \
-            -t luligu/matterbridge:dev \
-            -t luligu/matterbridge:dev-${{ steps.meta.outputs.VERSION }} \
+            -f docker/Dockerfile.chip-test \
+            -t luligu/matterbridge:chip-test \
+            -t luligu/matterbridge:chip-test-${{ steps.meta.outputs.VERSION }} \
             --build-arg VERSION=${{ steps.meta.outputs.VERSION }} \
             --build-arg VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
             --build-arg BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
             --push .
-        timeout-minutes: 60
-
-      - name: Inspect pushed manifest
-        run: docker manifest inspect luligu/matterbridge:dev
+          docker manifest inspect luligu/matterbridge:chip-test
+        timeout-minutes: 120

@@ -41,6 +41,7 @@ jobs:
         run: |
           cat > .dockerbuild.json <<EOF
           {
+            "version": "${{ steps.meta.outputs.VERSION }}",
             "sha": "${GITHUB_SHA}",
             "sha7": "${GITHUB_SHA::7}",
             "event": "${GITHUB_EVENT_NAME}",

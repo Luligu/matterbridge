@@ -28,7 +28,7 @@ This guide is intentionally **repository-agnostic** so it can be reused across M
 ## Submitting a Pull Request
 
 - Open a PR from your fork to the upstream repository.
-- Target the correct base branch (`dev` when used, otherwise the default branch).
+- Target the correct base branch (`dev` when used, otherwise the default branch `main`).
 - Keep the PR focused (one feature/fix per PR when possible).
 - Describe what changed and why, and include:
   - Steps to test the change
