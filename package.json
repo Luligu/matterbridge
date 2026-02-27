@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.5.6",
+  "version": "3.5.7",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -221,7 +221,7 @@
     "docker:build:local:s6-rc": "docker build --no-cache --pull -f docker/Dockerfile.s6-rc -t matterbridge:s6-rc .",
     "docker:run:local:s6-rc": "npm run docker:rm:all && docker run -dit --restart always --name matterbridge-s6-rc-local -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 matterbridge:s6-rc",
     "docker:run:hub:s6-rc": "npm run docker:rm:all && docker pull luligu/matterbridge:s6-rc && docker run -dit --restart always --name matterbridge-s6-rc-hub -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 luligu/matterbridge:s6-rc",
-    "docker:run:hub:s6-rc:tag": "npm run docker:rm:all && docker pull luligu/matterbridge:2026.2.5 && docker run -dit --restart always --name matterbridge-s6-rc-hub -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 luligu/matterbridge:2026.2.5",
+    "docker:run:hub:s6-rc:tag": "npm run docker:rm:all && docker pull luligu/matterbridge:2026.2.6 && docker run -dit --restart always --name matterbridge-s6-rc-hub -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 luligu/matterbridge:2026.2.5",
     "docker:build:local:chip-test": "docker build --pull -f docker/Dockerfile.chip-test -t matterbridge:chip-test .",
     "docker:run:local:chip-test": "npm run docker:rm:all && docker run -dit --restart always --name matterbridge-chip-test-local -p 8283:8283 matterbridge:chip-test",
     "docker:buildx:cloud:chip-test": "docker buildx build --builder cloud-luligu-matterbridge-builder --cache-to type=registry,mode=max,ref=luligu/matterbridge:buildcache --cache-from type=registry,ref=luligu/matterbridge:buildcache --platform linux/amd64,linux/arm64 --pull -f docker/Dockerfile.chip-test -t luligu/matterbridge:chip-test --push .",
@@ -237,13 +237,13 @@
     "pack:latest": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag latest && npm run reset"
   },
   "dependencies": {
-    "@matterbridge/core": "3.5.5",
-    "@matterbridge/dgram": "3.5.5",
-    "@matterbridge/jest-utils": "3.5.5",
-    "@matterbridge/thread": "3.5.5",
-    "@matterbridge/types": "3.5.5",
-    "@matterbridge/utils": "3.5.5",
-    "@matterbridge/vitest-utils": "3.5.5"
+    "@matterbridge/core": "3.5.7",
+    "@matterbridge/dgram": "3.5.7",
+    "@matterbridge/jest-utils": "3.5.7",
+    "@matterbridge/thread": "3.5.7",
+    "@matterbridge/types": "3.5.7",
+    "@matterbridge/utils": "3.5.7",
+    "@matterbridge/vitest-utils": "3.5.7"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -267,7 +267,7 @@
     "eslint-plugin-simple-import-sort": "12.1.1",
     "jest": "30.2.0",
     "marked": "17.0.3",
-    "npm-check-updates": "19.6.2",
+    "npm-check-updates": "19.6.3",
     "prettier": "3.8.1",
     "shx": "0.4.0",
     "ts-jest": "29.4.6",

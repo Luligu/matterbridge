@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/thread",
-  "version": "3.5.5",
+  "version": "3.5.7",
   "description": "Matterbridge thread library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -66,8 +66,8 @@
     "install:dependencies": "npm install --no-fund --no-audit --save-exact node-ansi-logger @matterbridge/utils @matterbridge/types"
   },
   "dependencies": {
-    "@matterbridge/types": "3.5.5",
-    "@matterbridge/utils": "3.5.5",
+    "@matterbridge/types": "3.5.7",
+    "@matterbridge/utils": "3.5.7",
     "node-ansi-logger": "3.2.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/vitest-utils",
-  "version": "3.5.5",
+  "version": "3.5.7",
   "description": "Matterbridge vitest utility library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",

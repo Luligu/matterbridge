@@ -50,6 +50,14 @@ These threads already run as workers:
 - npm install;
 - ✅ check the global node_modules directory;
 
+## [3.5.7] - Dev branch
+
+### Changed
+
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.5.6] - 2026-02-27
 
 ### Dev Breaking Changes
