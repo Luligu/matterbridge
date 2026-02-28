@@ -1017,7 +1017,7 @@ export const bridge = aggregator;
  */
 export const roboticVacuumCleaner = DeviceTypeDefinition({
   name: 'MA-roboticvacuumcleaner',
-  code: 0x74,
+  code: 0x74, // 116
   deviceClass: DeviceClasses.Simple,
   revision: 4,
   requiredServerClusters: [Identify.Cluster.id, RvcRunMode.Cluster.id, RvcOperationalState.Cluster.id],
@@ -1033,7 +1033,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
  */
 export const laundryWasher = DeviceTypeDefinition({
   name: 'MA-laundrywasher',
-  code: 0x73,
+  code: 0x73, // 115
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id],
@@ -1050,7 +1050,7 @@ export const laundryWasher = DeviceTypeDefinition({
  */
 export const refrigerator = DeviceTypeDefinition({
   name: 'MA-refrigerator',
-  code: 0x70,
+  code: 0x70, // 112
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [],
@@ -1076,7 +1076,7 @@ export const refrigerator = DeviceTypeDefinition({
  */
 export const airConditioner = DeviceTypeDefinition({
   name: 'MA-airConditioner',
-  code: 0x72,
+  code: 0x72, // 114
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
@@ -1105,7 +1105,7 @@ export const airConditioner = DeviceTypeDefinition({
  */
 export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetcooler',
-  code: 0x71,
+  code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   revision: 5,
   requiredServerClusters: [TemperatureControl.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id],
@@ -1128,7 +1128,7 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
  */
 export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetheater',
-  code: 0x71,
+  code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   revision: 5,
   requiredServerClusters: [TemperatureControl.Cluster.id, OvenMode.Cluster.id, OvenCavityOperationalState.Cluster.id],
@@ -1142,7 +1142,7 @@ export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
  */
 export const dishwasher = DeviceTypeDefinition({
   name: 'MA-dishwasher',
-  code: 0x75,
+  code: 0x75, // 117
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id],
@@ -1156,7 +1156,7 @@ export const dishwasher = DeviceTypeDefinition({
  */
 export const laundryDryer = DeviceTypeDefinition({
   name: 'MA-laundrydryer',
-  code: 0x7c,
+  code: 0x7c, // 124
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id],
@@ -1173,7 +1173,7 @@ export const laundryDryer = DeviceTypeDefinition({
  */
 export const cookSurface = DeviceTypeDefinition({
   name: 'MA-cooksurface',
-  code: 0x77,
+  code: 0x77, // 119
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [],
@@ -1194,7 +1194,7 @@ export const cookSurface = DeviceTypeDefinition({
  */
 export const cooktop = DeviceTypeDefinition({
   name: 'MA-cooktop',
-  code: 0x78,
+  code: 0x78, // 120
   deviceClass: DeviceClasses.Simple,
   revision: 1,
   requiredServerClusters: [OnOff.Cluster.id],
@@ -1212,7 +1212,7 @@ export const cooktop = DeviceTypeDefinition({
  */
 export const oven = DeviceTypeDefinition({
   name: 'MA-oven',
-  code: 0x7b,
+  code: 0x7b, // 123
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [],
@@ -1233,7 +1233,7 @@ export const oven = DeviceTypeDefinition({
  */
 export const extractorHood = DeviceTypeDefinition({
   name: 'MA-extractorhood',
-  code: 0x7a,
+  code: 0x7a, // 122
   deviceClass: DeviceClasses.Simple,
   revision: 1,
   requiredServerClusters: [FanControl.Cluster.id],
@@ -1250,7 +1250,7 @@ export const extractorHood = DeviceTypeDefinition({
  */
 export const microwaveOven = DeviceTypeDefinition({
   name: 'MA-microwaveoven',
-  code: 0x79,
+  code: 0x79, // 121
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id, MicrowaveOvenMode.Cluster.id, MicrowaveOvenControl.Cluster.id],
