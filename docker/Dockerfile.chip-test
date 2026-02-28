@@ -73,7 +73,8 @@ RUN \
   git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
   npm ci --no-fund --no-audit && npm run build && \
   cd apps/frontend && npm ci --no-fund --no-audit && npm run build && rm -rf node_modules && cd ../.. && \
-  npm prune --omit=dev --no-fund --no-audit
+  npm prune --omit=dev --no-fund --no-audit && \
+  npm link
 
 WORKDIR /root/matterbridge-test
 RUN \
