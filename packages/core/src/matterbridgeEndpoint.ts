@@ -119,6 +119,7 @@ import {
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
   MatterbridgePowerSourceServer,
+  MatterbridgePresetThermostatServer,
   MatterbridgeServer,
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeSwitchServer,
@@ -2194,7 +2195,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     presetTypes: Thermostat.PresetType[] | null | undefined = undefined,
   ): this {
     this.behaviors.require(
-      MatterbridgeThermostatServer.with(
+      MatterbridgePresetThermostatServer.with(
         Thermostat.Feature.Heating,
         Thermostat.Feature.Cooling,
         Thermostat.Feature.AutoMode,
