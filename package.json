@@ -222,18 +222,15 @@
     "docker:run:local:s6-rc": "npm run docker:rm:all && docker run -dit --restart always --name matterbridge-s6-rc-local -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 matterbridge:s6-rc",
     "docker:run:hub:s6-rc": "npm run docker:rm:all && docker pull luligu/matterbridge:s6-rc && docker run -dit --restart always --name matterbridge-s6-rc-hub -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 luligu/matterbridge:s6-rc",
     "docker:run:hub:s6-rc:tag": "npm run docker:rm:all && docker pull luligu/matterbridge:2026.2.7 && docker run -dit --restart always --name matterbridge-s6-rc-hub -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 luligu/matterbridge:2026.2.7",
-
     "docker:buildx:local:s6-rc-legacy:amd64": "docker buildx build --builder matterbridge --platform linux/amd64 --no-cache --pull -f docker/Dockerfile.s6-rc-legacy -t matterbridge:s6-rc-legacy-amd64 --load .",
     "docker:buildx:local:s6-rc-legacy:arm64": "docker buildx build --builder matterbridge --platform linux/arm64 --no-cache --pull -f docker/Dockerfile.s6-rc-legacy -t matterbridge:s6-rc-legacy-arm64 --load .",
     "docker:buildx:local:s6-rc-legacy:armv7": "docker buildx build --builder matterbridge --platform linux/arm/v7 --no-cache --pull -f docker/Dockerfile.s6-rc-legacy -t matterbridge:s6-rc-legacy-armv7 --load .",
-
     "docker:run:local:s6-rc-legacy:amd64": "npm run docker:rm:all && docker run -dit --restart always --platform linux/amd64 --name matterbridge-s6-rc-legacy-local -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 matterbridge:s6-rc-legacy-amd64",
     "docker:run:local:s6-rc-legacy:arm64": "npm run docker:rm:all && docker run -dit --restart always --platform linux/arm64 --name matterbridge-s6-rc-legacy-local -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 matterbridge:s6-rc-legacy-arm64",
     "docker:run:local:s6-rc-legacy:armv7": "npm run docker:rm:all && docker run -dit --restart always --platform linux/arm/v7 --name matterbridge-s6-rc-legacy-local -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 matterbridge:s6-rc-legacy-armv7",
     "docker:run:hub:s6-rc-legacy:arm64": "npm run docker:rm:all && docker run -dit --restart always --platform linux/arm64 --name matterbridge-s6-rc-legacy-hub -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 luligu/matterbridge:s6-rc-legacy",
     "docker:run:hub:s6-rc-legacy:amd64": "npm run docker:rm:all && docker run -dit --restart always --platform linux/amd64 --name matterbridge-s6-rc-legacy-hub -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 luligu/matterbridge:s6-rc-legacy",
     "docker:run:hub:s6-rc-legacy:armv7": "npm run docker:rm:all && docker run -dit --restart always --platform linux/arm/v7 --name matterbridge-s6-rc-legacy-hub -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 luligu/matterbridge:s6-rc-legacy",
-
     "docker:build:local:chip-test": "docker build --pull -f docker/Dockerfile.chip-test -t matterbridge:chip-test .",
     "docker:run:local:chip-test": "npm run docker:rm:all && docker run -dit --restart always --name matterbridge-chip-test-local -p 8283:8283 matterbridge:chip-test",
     "docker:buildx:cloud:chip-test": "docker buildx build --builder cloud-luligu-matterbridge-builder --cache-to type=registry,mode=max,ref=luligu/matterbridge:buildcache --cache-from type=registry,ref=luligu/matterbridge:buildcache --platform linux/amd64,linux/arm64 --pull -f docker/Dockerfile.chip-test -t luligu/matterbridge:chip-test --push .",
@@ -260,6 +257,8 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@eslint/json": "1.0.1",
+    "@eslint/markdown": "7.5.1",
     "@jest/globals": "30.2.0",
     "@types/archiver": "7.0.0",
     "@types/express": "5.0.6",
