@@ -59,6 +59,7 @@ These threads already run as workers:
 ### Changed
 
 - [package]: Update dependencies.
+- [docker]: The base image `24-ubuntu-slim` is now built with node 24 latest release.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
