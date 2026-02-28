@@ -101,7 +101,6 @@ export class Oven extends MatterbridgeEndpoint {
   ): MatterbridgeEndpoint {
     const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetHeater, { tagList }, true);
     cabinet.log.logName = name;
-    cabinet.createDefaultIdentifyClusterServer();
     createLevelTemperatureControlClusterServer(cabinet, selectedTemperatureLevel, supportedTemperatureLevels);
     cabinet.createDefaultTemperatureMeasurementClusterServer(2000);
     this.createDefaultOvenModeClusterServer(cabinet, currentMode, supportedModes);
