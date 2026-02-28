@@ -52,6 +52,10 @@ These threads already run as workers:
 
 ## [3.5.7] - Dev branch
 
+### Added
+
+- [docker]: Add the image (tag **s6-rc-legacy** 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim`, supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
+
 ### Changed
 
 - [package]: Update dependencies.
