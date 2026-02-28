@@ -101,7 +101,6 @@ export class Refrigerator extends MatterbridgeEndpoint {
   ): MatterbridgeEndpoint {
     const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetCooler, { tagList });
     cabinet.log.logName = name;
-    cabinet.createDefaultIdentifyClusterServer();
     createLevelTemperatureControlClusterServer(cabinet, selectedTemperatureLevel, supportedTemperatureLevels);
     this.createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(cabinet, currentMode, supportedModes);
     this.createDefaultRefrigeratorAlarmClusterServer(cabinet, false);
