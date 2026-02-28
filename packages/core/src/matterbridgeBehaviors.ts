@@ -431,6 +431,8 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
   override async initialize() {
     // While matter.js solve the issue we remove the 'atomic' commands
     this.endpoint.construction.onSuccess(async () => {
+      const device = this.endpoint.stateOf(MatterbridgeServer);
+      device.log.debug(`Removing atomic commands (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       // @ts-expect-error cause acceptedCommandList and generatedCommandList are not typed in the cluster state
       await this.endpoint.setStateOf(ThermostatServer, {
         acceptedCommandList: [0],
