@@ -428,6 +428,17 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
 }
 
 export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
+  override async initialize() {
+    // While matter.js solve the issue we remove the 'atomic' commands
+    this.endpoint.construction.onSuccess(async () => {
+      // @ts-expect-error cause acceptedCommandList and generatedCommandList are not typed in the cluster state
+      await this.endpoint.setStateOf(ThermostatServer, {
+        acceptedCommandList: [0],
+        generatedCommandList: [],
+      });
+    });
+  }
+
   override setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
