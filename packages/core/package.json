@@ -121,9 +121,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "automator": "node scripts/runAutomator.mjs --monorepo-package",
-    "prepublishOnly": "npm pkg delete devDependencies scripts",
-    "install:dependencies": "npm install --no-fund --no-audit --save-exact @matter/main @matterbridge/types @matterbridge/dgram @matterbridge/thread @matterbridge/utils archiver express glob multer node-ansi-logger node-persist-manager ws"
+    "automator": "node scripts/runAutomator.mjs --monorepo-package"
   },
   "dependencies": {
     "@matter/main": "0.16.10",

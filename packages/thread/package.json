@@ -61,9 +61,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "automator": "node scripts/runAutomator.mjs --monorepo-package",
-    "prepublishOnly": "npm pkg delete devDependencies scripts",
-    "install:dependencies": "npm install --no-fund --no-audit --save-exact node-ansi-logger @matterbridge/utils @matterbridge/types"
+    "automator": "node scripts/runAutomator.mjs --monorepo-package"
   },
   "dependencies": {
     "@matterbridge/types": "3.5.7",

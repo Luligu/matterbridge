@@ -61,9 +61,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "automator": "node scripts/runAutomator.mjs --monorepo-package",
-    "prepublishOnly": "npm pkg delete devDependencies scripts",
-    "install:dependencies": "npm install --no-fund --no-audit --save-exact node-ansi-logger"
+    "automator": "node scripts/runAutomator.mjs --monorepo-package"
   },
   "dependencies": {
     "node-ansi-logger": "3.2.0"
