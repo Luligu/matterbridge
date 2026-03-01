@@ -7,6 +7,7 @@ import Tooltip from '@mui/material/Tooltip';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import InputAdornment from '@mui/material/InputAdornment';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import OutlinedInput from '@mui/material/OutlinedInput';
@@ -14,6 +15,7 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 // @mui/icons-material
 import TableViewIcon from '@mui/icons-material/TableView';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
+import ClearIcon from '@mui/icons-material/Clear';
 
 // Backend
 import { WsMessageApiResponse } from '../utils/backendTypes';
@@ -33,34 +35,23 @@ function Devices(): React.JSX.Element {
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
   // Filter and view mode states
-  const [plugins, setPlugins] = useState<string[]>(['All plugins']);
-  const [filterPlugins, setFilterPlugins] = useState('All plugins');
-  const [filterDevices, setFilterDevices] = useState('');
+  const [plugins, setPlugins] = useState<string[]>(['All plugins']); // Start with 'All plugins' as the only option until we fetch the real list
+  const [filterPlugins, setFilterPlugins] = useState('All plugins'); // Default to 'All plugins'
+  const [filterDevices, setFilterDevices] = useState(''); // No filter by default
   const [viewMode, setViewMode] = useState('icon'); // Default to icon view
 
   // Refs
   const uniqueId = useRef(getUniqueId());
 
-  const normalizePluginSelection = (value: string, options: string[]) => {
-    const normalizedValue = value?.trim().toLowerCase();
-    const fallback = options[0] ?? 'All plugins';
-    if (!normalizedValue) return fallback;
-    return options.find((p) => p.toLowerCase() === normalizedValue) ?? fallback;
-  };
-
   useEffect(() => {
-    const savedPlugin = localStorage.getItem(MbfLsk.devicesPlugin);
+    const savedPlugin = localStorage.getItem(MbfLsk.devicesFilterPlugins);
     if (savedPlugin) {
       setFilterPlugins(savedPlugin);
     }
   }, []);
 
   useEffect(() => {
-    setFilterPlugins((current) => normalizePluginSelection(current, plugins));
-  }, [plugins]);
-
-  useEffect(() => {
-    const savedFilter = localStorage.getItem(MbfLsk.devicesFilter);
+    const savedFilter = localStorage.getItem(MbfLsk.devicesFilterDevices);
     if (savedFilter) {
       setFilterDevices(savedFilter);
     }
@@ -76,14 +67,13 @@ function Devices(): React.JSX.Element {
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (debug) console.log('Devices received WebSocket Message:', msg);
+      if (debug && msg.id) console.log('Devices received WebSocket Message:', msg);
       if (msg.method === 'refresh_required' && msg.response.changed === 'plugins' && !msg.response.lock) {
-        if (debug) console.log('Devices received refresh_required for plugins, sending /api/plugins request with id ', uniqueId.current);
+        if (debug) console.log(`Devices received refresh_required for plugins lock=${msg.response.lock}, sending /api/plugins request with id ${uniqueId.current}`);
         sendMessage({ id: uniqueId.current, sender: 'Devices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
       } else if (msg.method === '/api/plugins' && msg.id === uniqueId.current && msg.response) {
-        if (debug) console.log(`Plugins received ${msg.response.length} plugins:`, msg.response);
+        if (debug) console.log(`Devices received ${msg.response.length} plugins:`, msg.response);
         setPlugins(['All plugins', ...msg.response.map((p) => p.name)]);
-        if (debug) console.log(`Plugins list:`, plugins.join(', '));
       }
     };
 
@@ -94,7 +84,7 @@ function Devices(): React.JSX.Element {
       removeListener(handleWebSocketMessage);
       if (debug) console.log('Devices removed WebSocket listener');
     };
-  }, [sendMessage, addListener, removeListener, plugins]);
+  }, [sendMessage, addListener, removeListener]);
 
   // Send API requests when online
   useEffect(() => {
@@ -104,15 +94,20 @@ function Devices(): React.JSX.Element {
     }
   }, [online, sendMessage]);
 
-  const handlePluginChange = (event: SelectChangeEvent<string>) => {
+  const handleFilterPluginsChange = (event: SelectChangeEvent<string>) => {
     const selected = event.target.value;
     setFilterPlugins(selected);
-    localStorage.setItem(MbfLsk.devicesPlugin, selected);
+    localStorage.setItem(MbfLsk.devicesFilterPlugins, selected);
   };
 
-  const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFilterDevices(event.target.value.toLowerCase());
-    localStorage.setItem(MbfLsk.devicesFilter, event.target.value.toLowerCase());
+  const handleFilterDevicesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterDevices(event.target.value);
+    localStorage.setItem(MbfLsk.devicesFilterDevices, event.target.value);
+  };
+
+  const handleClearFilterDevices = () => {
+    setFilterDevices('');
+    localStorage.removeItem(MbfLsk.devicesFilterDevices);
   };
 
   const handleViewModeChange = (mode: string) => {
@@ -131,46 +126,61 @@ function Devices(): React.JSX.Element {
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', padding: 0, margin: 0, gap: '20px' }}>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
             <Typography sx={{ fontSize: '16px', fontWeight: 'normal', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>Plugin:</Typography>
-            <Select
-              variant='outlined'
-              value={filterPlugins}
-              onChange={handlePluginChange}
-              sx={{
-                width: '260px',
-                backgroundColor: 'var(--main-bg-color)',
-                '& .MuiOutlinedInput-root': {
+            <Tooltip title='Filter devices by plugin'>
+              <Select
+                variant='outlined'
+                value={filterPlugins}
+                onChange={handleFilterPluginsChange}
+                sx={{
+                  width: '260px',
                   backgroundColor: 'var(--main-bg-color)',
-                },
-                '& .MuiSelect-select': {
-                  backgroundColor: 'var(--main-bg-color)',
-                },
-                '& .MuiSelect-icon': {
-                  color: 'var(--main-label-color)',
-                },
-              }}
-              input={<OutlinedInput sx={{ backgroundColor: 'var(--main-bg-color)' }} />}
-            >
-              {plugins.map((p) => (
-                <MenuItem key={p} value={p}>
-                  {p}
-                </MenuItem>
-              ))}
-            </Select>
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'var(--main-bg-color)',
+                  },
+                  '& .MuiSelect-select': {
+                    backgroundColor: 'var(--main-bg-color)',
+                  },
+                  '& .MuiSelect-icon': {
+                    color: 'var(--main-label-color)',
+                  },
+                }}
+                input={<OutlinedInput sx={{ backgroundColor: 'var(--main-bg-color)' }} />}
+              >
+                {plugins.map((p) => (
+                  <MenuItem key={p} value={p}>
+                    {p}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Tooltip>
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
             <Typography sx={{ fontSize: '16px', fontWeight: 'normal', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>Filter by:</Typography>
-            <TextField
-              variant='outlined'
-              value={filterDevices}
-              onChange={handleFilterChange}
-              placeholder='Enter the device name or serial'
-              sx={{
-                width: '260px',
-                '& .MuiOutlinedInput-root': {
-                  backgroundColor: 'var(--main-bg-color)',
-                },
-              }}
-            />
+            <Tooltip title='Filter devices by name or serial number'>
+              <TextField
+                variant='outlined'
+                value={filterDevices}
+                onChange={handleFilterDevicesChange}
+                placeholder='Enter the device name or serial'
+                sx={{
+                  width: '260px',
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'var(--main-bg-color)',
+                  },
+                }}
+                slotProps={{
+                  input: {
+                    endAdornment: filterDevices ? (
+                      <InputAdornment position='end'>
+                        <IconButton aria-label='Clear device filter' size='small' onClick={handleClearFilterDevices} edge='end'>
+                          <ClearIcon sx={{ fontSize: 18, color: 'var(--main-label-color)' }} />
+                        </IconButton>
+                      </InputAdornment>
+                    ) : null,
+                  },
+                }}
+              />
+            </Tooltip>
           </Box>
         </div>
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>

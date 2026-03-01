@@ -213,8 +213,19 @@ describe('Devices', () => {
     });
 
     await waitFor(() => {
-      expect(localStorage.getItem(MbfLsk.devicesPlugin)).toBe('PluginA');
+      expect(localStorage.getItem(MbfLsk.devicesFilterPlugins)).toBe('PluginA');
     });
+
+    // Type in the device filter and ensure it's persisted.
+    fireEvent.change(screen.getByPlaceholderText(/enter the device name or serial/i), { target: { value: 'abc' } });
+    await waitFor(() => {
+      expect(localStorage.getItem(MbfLsk.devicesFilterDevices)).toBe('abc');
+    });
+
+    // Clear button (X) should clear both input and localStorage.
+    fireEvent.click(screen.getByRole('button', { name: /clear device filter/i }));
+    expect(screen.getByPlaceholderText(/enter the device name or serial/i)).toHaveValue('');
+    expect(localStorage.getItem(MbfLsk.devicesFilterDevices)).toBeNull();
 
     // Switch to table view.
     act(() => {
