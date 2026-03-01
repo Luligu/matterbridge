@@ -3086,8 +3086,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default TemperatureMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value of the temperature x 100.
-   * @param {number | null} minMeasuredValue - The minimum measured value of the temperature x 100.
-   * @param {number | null} maxMeasuredValue - The maximum measured value of the temperature x 100.
+   * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the temperature x 100. Default is null.
+   * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the temperature x 100. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
@@ -3099,8 +3099,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default RelativeHumidityMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value of the relative humidity x 100.
-   * @param {number | null} minMeasuredValue - The minimum measured value of the relative humidity x 100.
-   * @param {number | null} maxMeasuredValue - The maximum measured value of the relative humidity x 100.
+   * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the relative humidity x 100. Default is null.
+   * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the relative humidity x 100. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
@@ -3112,8 +3112,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default PressureMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value for the pressure in kPa x 10.
-   * @param {number | null} minMeasuredValue - The minimum measured value for the pressure in kPa x 10.
-   * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure in kPa x 10.
+   * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) for the pressure in kPa x 10. Default is null.
+   * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) for the pressure in kPa x 10. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -3134,8 +3134,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default IlluminanceMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value of illuminance.
-   * @param {number | null} minMeasuredValue - The minimum measured value of illuminance.
-   * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
+   * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of illuminance. Default is null.
+   * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of illuminance. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -3160,8 +3160,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default FlowMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h.
-   * @param {number | null} minMeasuredValue - The minimum measured value of the flow in 10 x m3/h.
-   * @param {number | null} maxMeasuredValue - The maximum measured value of the flow in 10 x m3/h.
+   * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the flow in 10 x m3/h. Default is null.
+   * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the flow in 10 x m3/h. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
