@@ -162,11 +162,11 @@ RUN \
   mkdir -p /root/.mattercert
 COPY docker/chip-test/pairing.json /root/.mattercert/pairing.json
 WORKDIR /root/matterbridge-test
-RUN npm link matterbridge
+RUN npm link matterbridge --no-fund --no-audit
 WORKDIR /root/matterbridge-example-accessory-platform
-RUN npm link matterbridge
+RUN npm link matterbridge --no-fund --no-audit
 WORKDIR /root/matterbridge-example-dynamic-platform
-RUN npm link matterbridge
+RUN npm link matterbridge --no-fund --no-audit
 
 # Persist Matterbridge fabric state (copied from repo)
 RUN mkdir -p /root/.matterbridge/matterstorage/Matterbridge
