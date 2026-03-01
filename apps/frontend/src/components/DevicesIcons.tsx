@@ -382,10 +382,11 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
 }
 
 interface DevicesIconsProps {
-  filter: string;
+  filterPlugins: string;
+  filterDevices: string;
 }
 
-function DevicesIcons({ filter }: DevicesIconsProps): React.JSX.Element {
+function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): React.JSX.Element {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
@@ -498,11 +499,18 @@ function DevicesIcons({ filter }: DevicesIconsProps): React.JSX.Element {
 
   const MemoizedDevice = memo(Device);
 
+  const normalizedPlugin = filterPlugins?.trim().toLowerCase();
+  const filterByPlugin = normalizedPlugin && normalizedPlugin !== 'all plugins';
+
   if (debug) console.log('DevicesIcons rendering...');
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', paddingBottom: '5px', gap: '20px', width: '100%', overflow: 'auto' }}>
       {devices
-        .filter((device) => device.name.toLowerCase().includes(filter) || device.serial.toLowerCase().includes(filter))
+        .filter((device) => {
+          if (filterByPlugin && device.pluginName.toLowerCase() !== normalizedPlugin) return false;
+          if (filterDevices === '') return true;
+          return device.name.toLowerCase().includes(filterDevices) || device.serial.toLowerCase().includes(filterDevices);
+        })
         .map(
           (device) =>
             endpoints[device.serial] &&

@@ -115,4 +115,12 @@ export default defineConfig([
       'prettier/prettier': 'warn',
     },
   },
+  {
+    name: 'TypeScript Vitest tests',
+    files: ['vitest/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
 ]);

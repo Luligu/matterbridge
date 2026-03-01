@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import type React from 'react';
 import { render } from '@testing-library/react';
 import { describe, it, beforeEach, vi, expect } from 'vitest';
 import { MbfPage } from '../src/components/MbfPage';
@@ -24,6 +25,8 @@ describe('MbfPage', () => {
     exitInstallProgressError: vi.fn(),
     hideInstallProgress: vi.fn(),
     addInstallProgress: vi.fn(),
+    installAutoExit: true,
+    setInstallAutoExit: vi.fn() as React.Dispatch<React.SetStateAction<boolean>>,
   });
 
   beforeEach(() => {

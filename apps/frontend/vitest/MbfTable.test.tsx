@@ -194,9 +194,21 @@ describe('MbfTable', () => {
 
     render(<MbfTable name="TestTableTooltip" columns={tooltipColumns} rows={tooltipRows} getRowKey="id" />);
 
-    const cell = screen.getByText('Alpha');
+    const cell = screen.getByLabelText('Alpha');
     Object.defineProperty(cell, 'scrollWidth', { value: 200, configurable: true });
     Object.defineProperty(cell, 'clientWidth', { value: 50, configurable: true });
+    cell.getBoundingClientRect = () =>
+      ({
+        width: 100,
+        height: 20,
+        top: 0,
+        left: 0,
+        bottom: 20,
+        right: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
 
     await act(async () => {
       fireEvent.mouseEnter(cell);
