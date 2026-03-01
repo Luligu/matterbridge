@@ -594,6 +594,17 @@ describe('Matterbridge ' + NAME, () => {
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('Thermostat occupiedCoolingSetpoint below MinCoolSetpointLimit should error', async () => {
+    const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoAutoConstraint' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultThermostatClusterServer();
+    await add(device);
+
+    // Default minCoolSetpointLimit is 0°C => 0 in Matter format (°C * 100)
+    await expect(device.setAttribute(Thermostat.Cluster.id, 'occupiedCoolingSetpoint', -100)).rejects.toThrow(/Constraint/i);
+  });
+
   test('createDefaultThermostatClusterServer mutable with occupancy and outdoorTemperature', async () => {
     const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoAutoMutableOccupancyOutdoor' });
     expect(device).toBeDefined();

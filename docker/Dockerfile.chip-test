@@ -74,7 +74,7 @@ RUN \
   npm ci --no-fund --no-audit && npm run build && \
   cd apps/frontend && npm ci --no-fund --no-audit && npm run build && rm -rf node_modules && cd ../.. && \
   npm prune --omit=dev --no-fund --no-audit && \
-  npm link
+  npm link --no-fund --no-audit
 
 WORKDIR /root/matterbridge-test
 RUN \
