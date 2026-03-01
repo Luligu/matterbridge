@@ -74,7 +74,7 @@ RUN \
   npm ci --no-fund --no-audit && npm run build && \
   cd apps/frontend && npm ci --no-fund --no-audit && npm run build && rm -rf node_modules && cd ../.. && \
   npm prune --omit=dev --no-fund --no-audit && \
-  npm link --no-fund --no-audit
+  npm link --no-fund  --no-audit
 
 WORKDIR /root/matterbridge-test
 RUN \
@@ -172,8 +172,7 @@ RUN npm link matterbridge
 RUN mkdir -p /root/.matterbridge/matterstorage/Matterbridge
 COPY docker/chip-test/fabrics.* /root/.matterbridge/matterstorage/Matterbridge/
 COPY docker/chip-test/root.operationalCredentials.* /root/.matterbridge/matterstorage/Matterbridge/
-COPY docker/chip-test/matterbridge.pics /root/
-
+COPY docker/chip-test/*.pics /root/
 
 # connectedhomeip minimal bits for YAML/Python tests
 RUN mkdir -p /root/connectedhomeip/out/host /root/connectedhomeip/out
