@@ -74,7 +74,7 @@ RUN \
   npm ci --no-fund --no-audit && npm run build && \
   cd apps/frontend && npm ci --no-fund --no-audit && npm run build && rm -rf node_modules && cd ../.. && \
   npm prune --omit=dev --no-fund --no-audit && \
-  npm link --no-fund  --no-audit
+  npm link  --no-fund --no-audit
 
 WORKDIR /root/matterbridge-test
 RUN \
@@ -140,14 +140,14 @@ ENV PATH="/root/connectedhomeip/out/host:${VIRTUAL_ENV}/bin:${PATH}"
 # Matterbridge module (global install copied from builder)
 COPY --from=builder /usr/lib/node_modules/matterbridge /usr/lib/node_modules/matterbridge
 
-# Recreate executable links (do NOT copy /usr/bin/* from builder, they are symlinks)
+# Recreate executable links
 RUN \
   ln -sf /usr/lib/node_modules/matterbridge/bin/matterbridge.js /usr/bin/matterbridge && \
   ln -sf /usr/lib/node_modules/matterbridge/bin/mb_mdns.js /usr/bin/mb_mdns && \
   ln -sf /usr/lib/node_modules/matterbridge/bin/mb_coap.js /usr/bin/mb_coap && \
   ln -sf /usr/lib/node_modules/matterbridge/bin/mb_health.js /usr/bin/mb_health
 
-# Matterbridge + local plugin repos + config
+# Matterbridge + local plugin repos + config. This allows to code inside the container and have changes reflected immediately without needing to rebuild the image.
 COPY --from=builder /root/matterbridge /root/matterbridge
 COPY --from=builder /root/matterbridge-test /root/matterbridge-test
 COPY --from=builder /root/matterbridge-example-accessory-platform /root/matterbridge-example-accessory-platform
