@@ -92,7 +92,7 @@ export class Evse extends MatterbridgeEndpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultEnergyEvseClusterServer(state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState): this {
-    this.behaviors.require(MatterbridgeEnergyEvseServer, {
+    this.behaviors.require(MatterbridgeEnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), {
       state: state !== undefined ? state : EnergyEvse.State.NotPluggedIn,
       supplyState: supplyState !== undefined ? supplyState : EnergyEvse.SupplyState.ChargingEnabled,
       faultState: faultState !== undefined ? faultState : EnergyEvse.FaultState.NoError,
