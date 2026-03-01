@@ -62,11 +62,13 @@ These threads already run as workers:
 - [package]: Add `@eslint/json`.
 - [package]: Add `@eslint/markdown`.
 - [docker]: The base image `24-ubuntu-slim` is now built with the latest node 24 release.
+- [frontend]: Bumped `frontend` version to v. 3.4.7.
 
 ### Fixed
 
-- [thermostat]: Removed atomic commands required only with Preset and Schedule features.
-- [thermostat]: Removed not mandatory Identify cluster fwhen using TemperatureControlledCabinet device type.
+- [thermostat]: Remove atomic commands required only with Preset and Schedule features.
+- [thermostat]: Remove not mandatory Identify cluster fwhen using TemperatureControlledCabinet device type.
+- [frontend]: Fix config lock from select.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

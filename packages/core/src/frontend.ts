@@ -2278,6 +2278,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             plugin.configJson = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             this.wssSendRestartRequired(false);
+            this.wssSendRefreshRequired('plugins', { lock: plugin.name });
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
@@ -2324,6 +2325,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             plugin.configJson = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             this.wssSendRestartRequired(false);
+            this.wssSendRefreshRequired('plugins', { lock: plugin.name });
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
@@ -2398,16 +2400,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {Record<string, unknown>} params - Additional parameters to send with the message.
    * possible values for changed:
    * - 'settings' (when the bridge has started in bridge mode or childbridge mode and when update finds a new version)
-   * - 'plugins'
+   * - 'plugins' with param 'lock' (prevents to the config to open)
    * - 'devices'
    * - 'matter' with param 'matter' (QRDiv component)
    * @param {ApiMatter} params.matter - The matter device that has changed. Required if changed is 'matter'.
+   * @param {string} params.lock - The name of the plugin that has locked the refresh. Required if changed is 'plugins'.
    */
-  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter: ApiMatter }) {
+  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter?: ApiMatter; lock?: string }) {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, ...params } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, lock: params?.lock, ...params } });
   }
 
   /**
