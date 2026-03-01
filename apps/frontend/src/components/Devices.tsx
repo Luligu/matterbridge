@@ -27,8 +27,8 @@ import DevicesTable from './DevicesTable';
 import { Connecting } from './Connecting';
 import { MbfPage } from './MbfPage';
 import { MbfLsk } from '../utils/localStorage';
-// import { debug } from '../App';
-const debug = true; // Set to true to enable debug logs in Devices component
+import { debug } from '../App';
+// const debug = true; // Set to true to enable debug logs in Devices component
 
 function Devices(): React.JSX.Element {
   // WebSocket context
