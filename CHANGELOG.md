@@ -52,6 +52,11 @@ These threads already run as workers:
 
 ## [3.5.7] - Dev branch
 
+### Dev Breaking Changes
+
+- [oven]: Refactor oven class to use TemperatureNumber for TemperatureControlledCabinet device type.
+- [refrigerator]: Refactor refrigerator class to use TemperatureNumber for TemperatureControlledCabinet device type.
+
 ### Added
 
 - [docker]: Add the image (tag **s6-rc-legacy** 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim` (the last node version supporting armv7), supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
@@ -70,8 +75,8 @@ These threads already run as workers:
 ### Fixed
 
 - [thermostat]: Remove atomic commands required only with Preset and Schedule features.
-- [thermostat]: Remove not mandatory Identify cluster fwhen using TemperatureControlledCabinet device type.
-- [frontend]: Fix config lock from select.
+- [TemperatureControlledCabinet]: Remove not mandatory Identify cluster from TemperatureControlledCabinet device type.
+- [frontend]: Fix config lock from select Devices panel.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

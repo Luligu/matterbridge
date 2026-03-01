@@ -9,9 +9,9 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 // @matter
-import { PositionTag } from '@matter/node';
+import { PositionTag, RefrigeratorTag } from '@matter/node';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors';
-import { Identify, OnOff, PowerSource, RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters';
+import { Identify, OnOff, PowerSource, RefrigeratorAlarm, RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters';
 import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
@@ -71,37 +71,44 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(OnOff.Cluster.id)).toBeFalsy();
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'fixedLabel']);
+    expect(device.getAllClusterServerNames()).toEqual([
+      'descriptor',
+      'matterbridge',
+      'identify',
+      'powerSource',
+      'fixedLabel',
+      'refrigeratorAndTemperatureControlledCabinetMode',
+      'refrigeratorAlarm',
+    ]);
+    expect(device.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(RefrigeratorAlarm.Cluster.id)).toBeTruthy();
 
     cabinet1 = device.addCabinet('Refrigerator Test Cabinet Top', [
       { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label },
+      { mfgCode: null, namespaceId: RefrigeratorTag.Refrigerator.namespaceId, tag: RefrigeratorTag.Refrigerator.tag, label: RefrigeratorTag.Refrigerator.label },
     ]);
     expect(cabinet1).toBeDefined();
     expect(cabinet1.id).toBe('RefrigeratorTestCabinetTop');
-    expect(cabinet1.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeTruthy();
-    expect(cabinet1.getAllClusterServerNames()).toEqual([
-      'descriptor',
-      'matterbridge',
-      'temperatureControl',
-      'refrigeratorAndTemperatureControlledCabinetMode',
-      'refrigeratorAlarm',
-      'temperatureMeasurement',
-    ]);
+    expect(cabinet1.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeFalsy();
+    expect(cabinet1.hasClusterServer(RefrigeratorAlarm.Cluster.id)).toBeFalsy();
+    expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement']);
 
-    cabinet2 = device.addCabinet('Freezer Test Cabinet Bottom', [
-      { mfgCode: null, namespaceId: PositionTag.Bottom.namespaceId, tag: PositionTag.Bottom.tag, label: PositionTag.Bottom.label },
-    ]);
+    cabinet2 = device.addCabinet(
+      'Freezer Test Cabinet Bottom',
+      [
+        { mfgCode: null, namespaceId: PositionTag.Bottom.namespaceId, tag: PositionTag.Bottom.tag, label: PositionTag.Bottom.label },
+        { mfgCode: null, namespaceId: RefrigeratorTag.Freezer.namespaceId, tag: RefrigeratorTag.Freezer.tag, label: RefrigeratorTag.Freezer.label },
+      ],
+      -20 * 100,
+      -30 * 100,
+      10 * 100,
+      10 * 100,
+    );
     expect(cabinet2).toBeDefined();
     expect(cabinet2.id).toBe('FreezerTestCabinetBottom');
-    expect(cabinet2.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeTruthy();
-    expect(cabinet2.getAllClusterServerNames()).toEqual([
-      'descriptor',
-      'matterbridge',
-      'temperatureControl',
-      'refrigeratorAndTemperatureControlledCabinetMode',
-      'refrigeratorAlarm',
-      'temperatureMeasurement',
-    ]);
+    expect(cabinet2.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeFalsy();
+    expect(cabinet2.hasClusterServer(RefrigeratorAlarm.Cluster.id)).toBeFalsy();
+    expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement']);
   });
 
   test('add a refrigerator device', async () => {
@@ -111,29 +118,29 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('cabinet1 open door', async () => {
-    expect(await device.setDoorOpenState('RefrigeratorTestCabinetTop', true)).toBeDefined();
-    expect(cabinet1.getAttribute('RefrigeratorAlarm', 'state')).toEqual({ doorOpen: true });
+    expect(await device.setDoorOpenState(true)).toBeDefined();
+    expect(device.getAttribute('RefrigeratorAlarm', 'state')).toEqual({ doorOpen: true });
   });
 
   test('cabinet1 trigger alert on open door', async () => {
-    expect(await device.triggerDoorOpenState('RefrigeratorTestCabinetTop', true)).toBeDefined();
+    expect(await device.triggerDoorOpenState(true)).toBeDefined();
   });
 
   test('cabinet1 trigger alert on close door', async () => {
-    expect(await device.triggerDoorOpenState('RefrigeratorTestCabinetTop', false)).toBeDefined();
+    expect(await device.triggerDoorOpenState(false)).toBeDefined();
   });
 
   test('cabinet2 open door', async () => {
-    expect(await device.setDoorOpenState('FreezerTestCabinetBottom', true)).toBeDefined();
-    expect(cabinet2.getAttribute('RefrigeratorAlarm', 'state')).toEqual({ doorOpen: true });
+    expect(await device.setDoorOpenState(true)).toBeDefined();
+    expect(device.getAttribute('RefrigeratorAlarm', 'state')).toEqual({ doorOpen: true });
   });
 
   test('cabinet2 trigger alert on open door', async () => {
-    expect(await device.triggerDoorOpenState('FreezerTestCabinetBottom', true)).toBeDefined();
+    expect(await device.triggerDoorOpenState(true)).toBeDefined();
   });
 
   test('cabinet2 trigger alert on close door', async () => {
-    expect(await device.triggerDoorOpenState('FreezerTestCabinetBottom', false)).toBeDefined();
+    expect(await device.triggerDoorOpenState(false)).toBeDefined();
   });
 
   test('device forEachAttribute', async () => {
@@ -154,7 +161,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(40);
+    expect(attributes.length).toBe(55);
   });
 
   test('cabinet1 forEachAttribute', async () => {
@@ -175,7 +182,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(42);
+    expect(attributes.length).toBe(29);
   });
 
   test('cabinet2 forEachAttribute', async () => {
@@ -196,30 +203,30 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(42);
+    expect(attributes.length).toBe(29);
   });
 
   test('invoke MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer commands', async () => {
-    expect(cabinet1.behaviors.has(RefrigeratorAndTemperatureControlledCabinetModeServer)).toBeTruthy();
-    expect(cabinet1.behaviors.has(MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer)).toBeTruthy();
-    expect(cabinet1.behaviors.elementsOf(RefrigeratorAndTemperatureControlledCabinetModeServer).commands.has('changeToMode')).toBeTruthy();
-    expect((cabinet1 as any).state['refrigeratorAndTemperatureControlledCabinetMode'].acceptedCommandList).toEqual([0]);
-    expect((cabinet1 as any).state['refrigeratorAndTemperatureControlledCabinetMode'].generatedCommandList).toEqual([1]);
+    expect(device.behaviors.has(RefrigeratorAndTemperatureControlledCabinetModeServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(RefrigeratorAndTemperatureControlledCabinetModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect((device as any).state['refrigeratorAndTemperatureControlledCabinetMode'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['refrigeratorAndTemperatureControlledCabinetMode'].generatedCommandList).toEqual([1]);
 
     // Change to mode 2
     jest.clearAllMocks();
-    await invokeBehaviorCommand(cabinet1, 'refrigeratorAndTemperatureControlledCabinetMode', 'changeToMode', { newMode: 2 });
+    await invokeBehaviorCommand(device, 'refrigeratorAndTemperatureControlledCabinetMode', 'changeToMode', { newMode: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestCabinetTop.3) called with mode 2 = RapidCool`,
+      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestDevice-RF123456.2) called with mode 2 = RapidCool`,
     );
 
     // Change to mode 15
     jest.clearAllMocks();
-    await invokeBehaviorCommand(cabinet1, 'refrigeratorAndTemperatureControlledCabinetMode', 'changeToMode', { newMode: 15 });
+    await invokeBehaviorCommand(device, 'refrigeratorAndTemperatureControlledCabinetMode', 'changeToMode', { newMode: 15 });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.ERROR,
-      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestCabinetTop.3) called with invalid mode 15`,
+      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestDevice-RF123456.2) called with invalid mode 15`,
     );
   });
 

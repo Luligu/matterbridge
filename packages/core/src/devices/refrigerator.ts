@@ -33,7 +33,7 @@ import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/c
 import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { powerSource, refrigerator, temperatureControlledCabinetCooler } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { createLevelTemperatureControlClusterServer } from './temperatureControl.js';
+import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 export class Refrigerator extends MatterbridgeEndpoint {
   /**
@@ -41,6 +41,8 @@ export class Refrigerator extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the refrigerator.
    * @param {string} serial - The serial number of the refrigerator.
+   * @param {number} currentMode - The current mode of the cabinet. Defaults to 1 (which corresponds to 'Auto').
+   * @param {RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[]} supportedModes - The supported modes for the cabinet. Defaults to 'Auto', 'RapidCool', and 'RapidFreeze'.
    *
    * @remarks
    * 13.2 A refrigerator represents a device that contains one or more cabinets that are capable of chilling or
@@ -49,12 +51,23 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * A refrigerator is always defined via endpoint composition.
    * - Use `addCabinet` to add one or more cabinets to the refrigerator.
    */
-  constructor(name: string, serial: string) {
+  constructor(
+    name: string,
+    serial: string,
+    currentMode: number = 1,
+    supportedModes: RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[] = [
+      { label: 'Auto', mode: 1, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.Auto }] },
+      { label: 'RapidCool', mode: 2, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.RapidCool }] },
+      { label: 'RapidFreeze', mode: 3, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.RapidFreeze }] },
+    ],
+  ) {
     super([refrigerator, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Refrigerator');
     this.createDefaultPowerSourceWiredClusterServer();
     this.addFixedLabel('composed', 'Refrigerator');
+    this.createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(this, currentMode, supportedModes);
+    this.createDefaultRefrigeratorAlarmClusterServer(this, false);
   }
 
   /**
@@ -62,11 +75,11 @@ export class Refrigerator extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the cabinet.
    * @param {Semtag[]} tagList - The tagList associated with the cabinet.
-   * @param {number} currentMode - The current mode of the cabinet. Defaults to 1 (which corresponds to 'Auto').
-   * @param {RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[]} supportedModes - The supported modes for the cabinet. Defaults to 'Auto', 'RapidCool', and 'RapidFreeze'.
-   * @param {number} selectedTemperatureLevel - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 2 (which corresponds to 'Level 3').
-   * @param {string[]} supportedTemperatureLevels - The list of supported temperature levels for the cabinet. Defaults to ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'].
-   * @param {number} currentTemperature - The current temperature of the cabinet in degrees Celsius. Defaults to 1000 (which corresponds to 10.00 degrees Celsius).
+   * @param {number} targetTemperature - The selected temperature setpoint in degrees Celsius. Defaults to 10°C.
+   * @param {number} minTemperature - The minimum temperature for the cabinet. Defaults to -30°C.
+   * @param {number} maxTemperature - The maximum temperature for the cabinet. Defaults to 20°C.
+   * @param {number} step - The step size for temperature changes. Defaults to 1°C.
+   * @param {number} currentTemperature - The current temperature of the cabinet in degrees Celsius. Defaults to 10°C.
    *
    * @returns {MatterbridgeEndpoint} The MatterbridgeEndpoint instance representing the cabinet.
    *
@@ -89,21 +102,15 @@ export class Refrigerator extends MatterbridgeEndpoint {
   addCabinet(
     name: string,
     tagList: Semtag[],
-    currentMode: number = 1,
-    supportedModes: RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[] = [
-      { label: 'Auto', mode: 1, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.Auto }] },
-      { label: 'RapidCool', mode: 2, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.RapidCool }] },
-      { label: 'RapidFreeze', mode: 3, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.RapidFreeze }] },
-    ],
-    selectedTemperatureLevel: number = 2,
-    supportedTemperatureLevels: string[] = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
-    currentTemperature: number = 1000, // Default to 10.00 degrees Celsius
+    targetTemperature: number = 10 * 100,
+    minTemperature: number = -30 * 100,
+    maxTemperature: number = 20 * 100,
+    step: number = 1 * 100,
+    currentTemperature: number = 10 * 100, // Default to 10.00 degrees Celsius
   ): MatterbridgeEndpoint {
     const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetCooler, { tagList });
     cabinet.log.logName = name;
-    createLevelTemperatureControlClusterServer(cabinet, selectedTemperatureLevel, supportedTemperatureLevels);
-    this.createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(cabinet, currentMode, supportedModes);
-    this.createDefaultRefrigeratorAlarmClusterServer(cabinet, false);
+    createNumberTemperatureControlClusterServer(cabinet, targetTemperature, minTemperature, maxTemperature, step);
     cabinet.createDefaultTemperatureMeasurementClusterServer(currentTemperature);
     return cabinet;
   }
@@ -153,45 +160,37 @@ export class Refrigerator extends MatterbridgeEndpoint {
   /**
    * Sets the door open state for a specific cabinet.
    *
-   * @param {string} cabinetName - The name of the cabinet.
    * @param {boolean} doorOpen - Indicates if the door is open.
-   * @returns {MatterbridgeEndpoint | undefined} The updated MatterbridgeEndpoint instance or undefined if not found.
+   * @returns {MatterbridgeEndpoint} The updated MatterbridgeEndpoint instance.
    */
-  async setDoorOpenState(cabinetName: string, doorOpen: boolean): Promise<MatterbridgeEndpoint | undefined> {
-    const endpoint = this.getChildEndpointByName(cabinetName);
-    if (endpoint) {
-      await endpoint.setAttribute('RefrigeratorAlarm', 'state', { doorOpen }, endpoint.log);
-      return endpoint;
-    }
+  async setDoorOpenState(doorOpen: boolean): Promise<MatterbridgeEndpoint> {
+    await this.setAttribute('RefrigeratorAlarm', 'state', { doorOpen }, this.log);
+    return this;
   }
 
   /**
    * Triggers the notify event for door open state on a specific cabinet.
    *
-   * @param {string} cabinetName - The name of the cabinet.
    * @param {boolean} doorOpen - Indicates if the door is open.
-   * @returns {MatterbridgeEndpoint | undefined} The updated MatterbridgeEndpoint instance or undefined if not found.
+   * @returns {MatterbridgeEndpoint} The updated MatterbridgeEndpoint instance.
    */
-  async triggerDoorOpenState(cabinetName: string, doorOpen: boolean): Promise<MatterbridgeEndpoint | undefined> {
-    const endpoint = this.getChildEndpointByName(cabinetName);
-    if (endpoint) {
-      if (doorOpen) {
-        await endpoint.triggerEvent(
-          'RefrigeratorAlarm',
-          'notify',
-          { active: { doorOpen: true }, inactive: { doorOpen: false }, state: { doorOpen: true }, mask: { doorOpen: true } },
-          endpoint.log,
-        );
-      } else {
-        await endpoint.triggerEvent(
-          'RefrigeratorAlarm',
-          'notify',
-          { active: { doorOpen: false }, inactive: { doorOpen: true }, state: { doorOpen: false }, mask: { doorOpen: true } },
-          endpoint.log,
-        );
-      }
-      return endpoint;
+  async triggerDoorOpenState(doorOpen: boolean): Promise<MatterbridgeEndpoint> {
+    if (doorOpen) {
+      await this.triggerEvent(
+        'RefrigeratorAlarm',
+        'notify',
+        { active: { doorOpen: true }, inactive: { doorOpen: false }, state: { doorOpen: true }, mask: { doorOpen: true } },
+        this.log,
+      );
+    } else {
+      await this.triggerEvent(
+        'RefrigeratorAlarm',
+        'notify',
+        { active: { doorOpen: false }, inactive: { doorOpen: true }, state: { doorOpen: false }, mask: { doorOpen: true } },
+        this.log,
+      );
     }
+    return this;
   }
 }
 

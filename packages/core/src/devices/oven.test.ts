@@ -89,8 +89,11 @@ describe('Matterbridge ' + NAME, () => {
         { label: 'Clean', mode: 2, modeTags: [{ value: OvenMode.ModeTag.Clean }] },
         { label: 'Steam', mode: 3, modeTags: [{ value: OvenMode.ModeTag.Steam }] },
       ],
-      2,
-      ['180°', '190°', '200°'],
+      180 * 100,
+      180 * 100,
+      300 * 100,
+      10 * 100,
+      20 * 100,
       OperationalState.OperationalStateEnum.Running,
       1,
       ['pre-heating', 'pre-heated', 'cooling down'],
@@ -151,7 +154,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(45);
+    expect(attributes.length).toBe(47);
   });
 
   test('cabinet2 forEachAttribute', async () => {
@@ -172,7 +175,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(45);
+    expect(attributes.length).toBe(47);
   });
 
   test('invoke MatterbridgeOvenModeServer commands', async () => {
