@@ -82,7 +82,6 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet1.getAllClusterServerNames()).toEqual([
       'descriptor',
       'matterbridge',
-      'identify',
       'temperatureControl',
       'refrigeratorAndTemperatureControlledCabinetMode',
       'refrigeratorAlarm',
@@ -98,7 +97,6 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet2.getAllClusterServerNames()).toEqual([
       'descriptor',
       'matterbridge',
-      'identify',
       'temperatureControl',
       'refrigeratorAndTemperatureControlledCabinetMode',
       'refrigeratorAlarm',
@@ -177,7 +175,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(49);
+    expect(attributes.length).toBe(42);
   });
 
   test('cabinet2 forEachAttribute', async () => {
@@ -198,7 +196,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(49);
+    expect(attributes.length).toBe(42);
   });
 
   test('invoke MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer commands', async () => {
