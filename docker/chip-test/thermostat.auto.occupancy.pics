@@ -1,0 +1,7 @@
+# To run phyton tests on Thermostat --PICS is required
+TSTAT.S=1
+TSTAT.S.F00=1 # Heating
+TSTAT.S.F01=1 # Cooling
+TSTAT.S.F05=1 # Auto mode
+TSTAT.S.F08=0 # Presets
+TSTAT.S.F02=1 # Occupancy
