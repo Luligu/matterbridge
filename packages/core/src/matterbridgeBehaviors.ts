@@ -429,7 +429,9 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
 
 export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
   override async initialize() {
-    // While matter.js solve the issue we remove the 'atomic' commands
+    await super.initialize();
+
+    // While matter.js solve the issue we remove the 'atomic' commands only required for Preset and Schedule features, to avoid the error "Unsupported command received: 0" when receiving a SetpointRaiseLower command without Preset or Schedule features
     this.endpoint.construction.onSuccess(async () => {
       const device = this.endpoint.stateOf(MatterbridgeServer);
       device.log.debug(`Removing atomic commands (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
