@@ -239,8 +239,12 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       // Broadcast messages
       // 'settings' | 'plugins' | 'devices' | 'matter';
       if (msg.method === 'refresh_required' && msg.response.changed !== 'matter') {
-        if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} and sending /api/plugins request`);
-        sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        if (msg.response.changed === 'plugins' && msg.response.lock) {
+          if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} lock=${msg.response.lock} skipping /api/plugins request`);
+        } else {
+          if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} and sending /api/plugins request`);
+          sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        }
       } else if (msg.method === 'refresh_required' && msg.response.changed === 'matter') {
         if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} and setting matter id ${msg.response.matter?.id}`);
         setMixedDevices((prev) => {
