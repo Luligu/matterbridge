@@ -152,7 +152,12 @@
 <li>[package]: Update dependencies.</li>
 <li>[package]: Add <code>@eslint/json</code>.</li>
 <li>[package]: Add <code>@eslint/markdown</code>.</li>
-<li>[docker]: The base image <code>24-ubuntu-slim</code> is now built with node 24 latest release.</li>
+<li>[docker]: The base image <code>24-ubuntu-slim</code> is now built with the latest node 24 release.</li>
+</ul>
+<h3 id="fixed">Fixed</h3>
+<ul>
+<li>[thermostat]: Removed atomic commands required only with Preset and Schedule features.</li>
+<li>[thermostat]: Removed not mandatory Identify cluster fwhen using TemperatureControlledCabinet device type.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="356-2026-02-27">[3.5.6] - 2026-02-27</h2>
@@ -184,7 +189,7 @@
 <li>[package]: Replace <code>eslint-plugin-import</code> with <code>eslint-plugin-simple-import-sort</code>.</li>
 <li>[package]: Bump <code>matter.js</code> to v.0.16.10. Thanks matter.js team.</li>
 </ul>
-<h3 id="fixed">Fixed</h3>
+<h3 id="fixed-1">Fixed</h3>
 <ul>
 <li>[advertise]: Remove no more used timeout of 15 minutes.</li>
 </ul>
@@ -209,7 +214,7 @@
 <li>[package]: Bump <code>eslint</code> to v.10.0.0.</li>
 <li>[package]: Bump <code>matter.js</code> to v.0.16.9 (suspended, waiting for <a href="https://github.com/matter-js/matter.js/issues/3232">https://github.com/matter-js/matter.js/issues/3232</a>).</li>
 </ul>
-<h3 id="fixed-1">Fixed</h3>
+<h3 id="fixed-2">Fixed</h3>
 <ul>
 <li>[frontend]: Fix possible issue with some browsers in check authentication. Thanks Ludovic BOUÉ and k3067e3 (<a href="https://github.com/Luligu/matterbridge/issues/498">https://github.com/Luligu/matterbridge/issues/498</a>).</li>
 </ul>
@@ -244,7 +249,7 @@
 <li>[docker]: Updated docker readme file to clarify which base image is used.</li>
 <li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.5.</li>
 </ul>
-<h3 id="fixed-2">Fixed</h3>
+<h3 id="fixed-3">Fixed</h3>
 <ul>
 <li>[worflows]: Fixed workflows that failed and dockerfiles.</li>
 <li>[childbridge]: Fixed sequence of disabling a plugin in childbridge mode. Thanks <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</li>
@@ -289,7 +294,7 @@
 <li>[frontend]: Updated <code>frontend</code> dependencies.</li>
 <li>[frontend]: Updated rendering of button actions in config editor.</li>
 </ul>
-<h3 id="fixed-3">Fixed</h3>
+<h3 id="fixed-4">Fixed</h3>
 <ul>
 <li>[publish]: Updated publish.yml to trigger the correct docker-buildx-latest.yml.</li>
 </ul>
@@ -400,7 +405,7 @@
 <li>[DevContainer]: Refactor DevContainer to use bridge mode and matterbridge docker network.</li>
 <li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.2.</li>
 </ul>
-<h3 id="fixed-4">Fixed</h3>
+<h3 id="fixed-5">Fixed</h3>
 <ul>
 <li>[evse]: Fixed the EnergyEvse.chargingEnabledUntil attribute that was wrongly set in the disable command (spec 9.3.8.4).</li>
 <li>[package]: Fixed the devDependencies that slipped in for a bug in 3.4.7.</li>
@@ -427,7 +432,7 @@
 <li>[dgram]: Bumbed version number to 1.0.3 and excluded virtual, overlay, or tunnel interfaces in Dgram class.</li>
 <li>[network]: Bumbed version number to 1.0.3.</li>
 </ul>
-<h3 id="fixed-5">Fixed</h3>
+<h3 id="fixed-6">Fixed</h3>
 <ul>
 <li>[macOS]: Fixed the macOS launchctl configuration file. Update it from the README-MACOS-PLIST.</li>
 </ul>
@@ -484,7 +489,7 @@
 <li>[package]: Updated dependencies.</li>
 <li>[frontend]: Bumped <code>frontend</code> version to v.3.4.1.</li>
 </ul>
-<h3 id="fixed-6">Fixed</h3>
+<h3 id="fixed-7">Fixed</h3>
 <ul>
 <li>[doorLock]: Fixed DoorLock.supportedOperatingModes. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/issues/454">https://github.com/Luligu/matterbridge/issues/454</a>).</li>
 <li>[frontend]: Fixed mobileMode menu navigation. Thanks Calimerorulez (<a href="https://github.com/Luligu/matterbridge/issues/457">https://github.com/Luligu/matterbridge/issues/457</a>).</li>
@@ -515,7 +520,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Removed column Url from Devices panel in the Home page. It is already available on the Devices page.</li>
 <li>[frontend]: Mobile mode starts below 1200 x 900 and is fully resizable and responsive till a width of 360 pixel.</li>
 </ul>
-<h3 id="fixed-7">Fixed</h3>
+<h3 id="fixed-8">Fixed</h3>
 <ul>
 <li>[matterbridge]: Plugin version is now updated even if the plugin is disabled.</li>
 <li>[matterbridge]: Fixed default delay and fixed_delay to 120 seconds.</li>
@@ -544,7 +549,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Bumped <code>frontend</code> version to v.3.3.3.</li>
 <li>[thread]: Bump <code>BroadcastServer</code> to v.2.0.1.</li>
 </ul>
-<h3 id="fixed-8">Fixed</h3>
+<h3 id="fixed-9">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed persistance of autoScroll.</li>
 <li>[frontend]: Fixed parameters info of Log panel in the Home page.</li>
@@ -568,7 +573,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[thread]: Bump <code>BroadcastServer</code> to v.2.0.0.</li>
 <li>[updates]: The update availability check now starts after 5 minutes and each 12 hours. It can also be triggered from the frontend.</li>
 </ul>
-<h3 id="fixed-9">Fixed</h3>
+<h3 id="fixed-10">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed when the user put special characters in password. Thanks Dabern (<a href="https://github.com/Luligu/matterbridge/issues/443">https://github.com/Luligu/matterbridge/issues/443</a>).</li>
 <li>[frontend]: Fixed minimum size to 1300x1024 and add a max width to Url. Thanks Ricardo B. (<a href="https://github.com/Luligu/matterbridge-home-assistant-addon/issues/23">https://github.com/Luligu/matterbridge-home-assistant-addon/issues/23</a>).</li>
@@ -656,7 +661,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[DeviceManager]: Bumped <code>DeviceManager</code> version to 1.1.0.</li>
 <li>[frontend]: Readded password dialog when running in Ingress.</li>
 </ul>
-<h3 id="fixed-10">Fixed</h3>
+<h3 id="fixed-11">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed route fallback and cross platform path failing randomly with node prefix.</li>
 </ul>
@@ -672,7 +677,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Updated dependencies.</li>
 <li>[frontend]: Removed password dialog when running in Ingress.</li>
 </ul>
-<h3 id="fixed-11">Fixed</h3>
+<h3 id="fixed-12">Fixed</h3>
 <ul>
 <li>[ingress]: Fixed websocket connection from Ingress.</li>
 </ul>
@@ -696,7 +701,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[package]: Updated dependencies.</li>
 <li>[frontend]: Bumped <code>frontend</code> version to 3.2.4.</li>
 </ul>
-<h3 id="fixed-12">Fixed</h3>
+<h3 id="fixed-13">Fixed</h3>
 <ul>
 <li>[service]: Fixed systemd <a href="README-SERVICE-LOCAL.html">configuration</a> with local global node_modules.</li>
 </ul>
@@ -726,7 +731,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: Bumped <code>frontend</code> version to 3.2.3.</li>
 <li>[thread]: Bumped <code>BroadcastServer</code> version to 1.0.1.</li>
 </ul>
-<h3 id="fixed-13">Fixed</h3>
+<h3 id="fixed-14">Fixed</h3>
 <ul>
 <li>[thrmostat]: Fixed minSetpointDeadBand data type. Thanks Apollon!</li>
 </ul>
@@ -761,7 +766,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="332-2025-10-13">[3.3.2] - 2025-10-13</h2>
-<h3 id="fixed-14">Fixed</h3>
+<h3 id="fixed-15">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed update to latest.</li>
 </ul>
@@ -800,7 +805,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[backend]: Optimized imports.</li>
 <li>[cli]: Bumped <code>cli</code> version to 2.1.0.</li>
 </ul>
-<h3 id="fixed-15">Fixed</h3>
+<h3 id="fixed-16">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed matter log on file not setting correctly.</li>
 </ul>
@@ -908,7 +913,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[matter]: Bumped <code>matter.js</code> version to 0.15.4. Thanks matter.js!</li>
 <li>[package]: Updated dependencies.</li>
 </ul>
-<h3 id="fixed-16">Fixed</h3>
+<h3 id="fixed-17">Fixed</h3>
 <ul>
 <li>[frontend]: Fix default values (devices) for homePageMode (logs/devices) in MatterbridgeSettings.</li>
 </ul>
@@ -935,7 +940,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <ul>
 <li>[package]: Updated dependencies.</li>
 </ul>
-<h3 id="fixed-17">Fixed</h3>
+<h3 id="fixed-18">Fixed</h3>
 <ul>
 <li>[childbridge]: Fixed the case when the plugin didn&#39;t restart in childbridge mode when it didn&#39;t add any device.</li>
 <li>[shutdown]: Fixed the case when shutting down the http(s) server took 10 seconds.</li>
@@ -994,7 +999,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[package]: Bumped Jest to v. 30.1.3. (this version finally solves the broken ESM module mock).</li>
 <li>[jest]: Refactor all tests units.</li>
 </ul>
-<h3 id="fixed-18">Fixed</h3>
+<h3 id="fixed-19">Fixed</h3>
 <ul>
 <li>[jest]: Fixed cli test failing with Jest v. 30.1.3.</li>
 </ul>
@@ -1015,7 +1020,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[package]: Updated dependencies.</li>
 <li>[devContainer]: Updated devContainer with repository name for the container.</li>
 </ul>
-<h3 id="fixed-19">Fixed</h3>
+<h3 id="fixed-20">Fixed</h3>
 <ul>
 <li>[refrigerator]: Fixed device type.</li>
 <li>[frontend]: Fixed padding in QRDivDevice (devices in &#39;server&#39; mode).</li>
@@ -1061,7 +1066,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <ul>
 <li>[package]: Updated dependencies.</li>
 </ul>
-<h3 id="fixed-20">Fixed</h3>
+<h3 id="fixed-21">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed new Matterbridge frontend version message on the Home page.</li>
 </ul>
@@ -1088,7 +1093,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[matter.js]: Bumped <code>matter.js</code> to 0.15.3. Thanks matter.js!</li>
 <li>[matter.js]: Bumped <code>typescript</code> to 5.9.2.</li>
 </ul>
-<h3 id="fixed-21">Fixed</h3>
+<h3 id="fixed-22">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed pointer on Discord icon.</li>
 <li>[deepcopy]: Fixed Date test case to use a specific UTC timestamp. It was failing on different timezones.</li>
@@ -1143,7 +1148,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <ul>
 <li>[package]: Updated dependencies.</li>
 </ul>
-<h3 id="fixed-22">Fixed</h3>
+<h3 id="fixed-23">Fixed</h3>
 <ul>
 <li>[switch]: Added conditional handling for momentary switch events in MatterbridgeEndpoint for single press only switches.</li>
 <li>[advertise]: Changed the message advertise stopped to work also in childbridge mode.</li>
@@ -1224,7 +1229,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[package]: Updated dependencies.</li>
 <li>[network]: Refactor network logging to improve clarity and update logging format.</li>
 </ul>
-<h3 id="fixed-23">Fixed</h3>
+<h3 id="fixed-24">Fixed</h3>
 <ul>
 <li>[bin]: Updated matterbridge bin.</li>
 </ul>
@@ -1245,7 +1250,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[server]: Refactored serverNode event handlers and types.</li>
 <li>[matterbridge]: Removed duplicated properties.</li>
 </ul>
-<h3 id="fixed-24">Fixed</h3>
+<h3 id="fixed-25">Fixed</h3>
 <ul>
 <li>[shutdown]: Fixed error messages from frontend when Matterbridge is shutting down.</li>
 </ul>
@@ -1368,7 +1373,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[rvc]: Updated class and behavior to 1.1.0.</li>
 <li>[laundryWasher]: Updated class and behavior to 1.1.0.</li>
 </ul>
-<h3 id="fixed-25">Fixed</h3>
+<h3 id="fixed-26">Fixed</h3>
 <ul>
 <li>[evse]: Fixed jsdoc on Evse.</li>
 </ul>
@@ -1391,7 +1396,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[matter.js]: Update to 0.14.0-alpha.0-20250528-d6d12ae65.</li>
 <li>[matter.js]: Update to 0.14.0. Great job matter.js!</li>
 </ul>
-<h3 id="fixed-26">Fixed</h3>
+<h3 id="fixed-27">Fixed</h3>
 <ul>
 <li>[selectAreas]: Fixed MatterbridgeServiceAreaServer.selectAreas.</li>
 </ul>
@@ -1411,7 +1416,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[package]: Updated dependencies.</li>
 <li>[package]: Updated multer package to 2.0.0.</li>
 </ul>
-<h3 id="fixed-27">Fixed</h3>
+<h3 id="fixed-28">Fixed</h3>
 <ul>
 <li>[virtualDevice]: Fixed possible vulnerability in the length of the nodeLabel.</li>
 </ul>
@@ -1459,7 +1464,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[utils]: Updated Jest tests on utils functions.</li>
 <li>[devices]: Added RoboticVacuumCleaner class to create the Robotic Vacuum Cleaner device type in one line of code.</li>
 </ul>
-<h3 id="fixed-28">Fixed</h3>
+<h3 id="fixed-29">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed refresh of start/stop sharing.</li>
 </ul>
@@ -1488,7 +1493,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Optimized rendering of Devices and Plugins panels.</li>
 <li>[frontend]: Frontend v.2.6.4.</li>
 </ul>
-<h3 id="fixed-29">Fixed</h3>
+<h3 id="fixed-30">Fixed</h3>
 <ul>
 <li>[BasicInformation]: Fixed vulnerability in BasicInformation and BridgedDeviceBasicInformation cluster initialization attributes.</li>
 <li>[frontend]: Fixed refresh and postfix for select in HomeDevices.</li>
@@ -1552,7 +1557,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[help]: Updated cli help screen.</li>
 <li>[logger]: Improved frontend logger cleaning.</li>
 </ul>
-<h3 id="fixed-30">Fixed</h3>
+<h3 id="fixed-31">Fixed</h3>
 <ul>
 <li>[doorLock]: Fixed supportedOperatingModes inverted bitmap (Thanks Apollon).</li>
 <li>[DevicesIcon]: Fixed rendering of leak freeze and rain sensors.</li>
@@ -1573,7 +1578,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <ul>
 <li>[package]: Update dependencies.</li>
 </ul>
-<h3 id="fixed-31">Fixed</h3>
+<h3 id="fixed-32">Fixed</h3>
 <ul>
 <li>[QRCode]: Fixed update when the server node is no more advertising.</li>
 <li>[frontend]: Fixed wrong notification when the server node has been paired.</li>
@@ -1596,7 +1601,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[package]: Use node:https.</li>
 <li>[endpoint]: Modified createOnOffClusterServer().</li>
 </ul>
-<h3 id="fixed-32">Fixed</h3>
+<h3 id="fixed-33">Fixed</h3>
 <ul>
 <li>[homepage]: Fixed warning log for homepage property in package.json.</li>
 <li>[DevicesIcon]: Fixed rendering of rain, freeze and leak sensors.</li>
@@ -1616,7 +1621,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Frontend v.2.6.1.</li>
 <li>[package]: Update dependencies.</li>
 </ul>
-<h3 id="fixed-33">Fixed</h3>
+<h3 id="fixed-34">Fixed</h3>
 <ul>
 <li>[author]: Fixed case when author is an object in the package.json.</li>
 <li>[platform]: Fix getSelectDevices and getSelectEntities on node &lt; 22.</li>
@@ -1639,7 +1644,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[package]: Update dependencies.</li>
 <li>[package]: Update matter.js to 0.12.6.</li>
 </ul>
-<h3 id="fixed-34">Fixed</h3>
+<h3 id="fixed-35">Fixed</h3>
 <ul>
 <li>[ipv6address]: The ipv6address can be entered in the frontend with the scopeid. On Windows the format is ipv6%scopeid (i.e. fe80::5a71:b2f6:7bc8:d00b%8). On Linux the format is ipv6%interfaceName (i.e. fe80::5a71:b2f6:7bc8:d00b%eth0)</li>
 <li>[onOff]: The onOff cluster created from createOnOffClusterServer() is now correct (no Lighting feature).</li>
@@ -1665,7 +1670,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Removed @rjsf/mui and use @rjsf/core (this allows to update to the latest react and @mui packages).</li>
 <li>[frontend]: Updated @emotion @fontsource/roboto @mdi @mui @rjsf qrcode.react react-router notistack packages.</li>
 </ul>
-<h3 id="fixed-35">Fixed</h3>
+<h3 id="fixed-36">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed case where more then one plugin has select in the Home page Devices panel.</li>
 </ul>
@@ -1696,7 +1701,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <ul>
 <li>[matterbridge]: Timeout on shelly board.</li>
 </ul>
-<h3 id="fixed-36">Fixed</h3>
+<h3 id="fixed-37">Fixed</h3>
 <ul>
 <li>[matterbridge]: False error notification on configure plugin.</li>
 </ul>
@@ -1759,7 +1764,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[package]: Update matter.js to 0.12.4</li>
 <li>[matterbridge]: The check for available updates now runs at restart and each 24 hours after.</li>
 </ul>
-<h3 id="fixed-37">Fixed</h3>
+<h3 id="fixed-38">Fixed</h3>
 <ul>
 <li>[matterbridge]: Check endpoint state in /api/devices.</li>
 </ul>
@@ -1782,7 +1787,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[matterbridge]: Calls getNpmPackageVersion() instead of npm to get latest version to optimize memory and cpu usage.</li>
 <li>[matterbridge]: Memory optimization on MatterbridgeEndpoint.</li>
 </ul>
-<h3 id="fixed-38">Fixed</h3>
+<h3 id="fixed-39">Fixed</h3>
 <ul>
 <li>[matterbridge]: Refactor shutdown sequences for reset and factory reset.</li>
 <li>[matterbridge]: Refactor reset devices adding a wait of 1 sec to allow matter to deliver all messages before shutting down.</li>
@@ -1828,7 +1833,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[memorydump]: Added memoryinterval to memoryDump.</li>
 <li>[memorydump]: Added memorytimeout to memoryDump.</li>
 </ul>
-<h3 id="fixed-39">Fixed</h3>
+<h3 id="fixed-40">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed update matterbridge.</li>
 </ul>
@@ -1837,7 +1842,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="211-2025-02-02">[2.1.1] - 2025-02-02</h2>
-<h3 id="fixed-40">Fixed</h3>
+<h3 id="fixed-41">Fixed</h3>
 <ul>
 <li>[matter.js]: Fix close server nodes.</li>
 </ul>
@@ -1888,7 +1893,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[package]: Optimized all imports from matter.js.</li>
 <li>[package]: Update dependencies.</li>
 </ul>
-<h3 id="fixed-41">Fixed</h3>
+<h3 id="fixed-42">Fixed</h3>
 <ul>
 <li>[sessions]: Fixed the case when Active session was not reporting correctly.</li>
 </ul>
@@ -1927,7 +1932,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[frontend]: Frontend v.2.3.10</li>
 <li>[package]: Update dependencies.</li>
 </ul>
-<h3 id="fixed-42">Fixed</h3>
+<h3 id="fixed-43">Fixed</h3>
 <ul>
 <li>[edge]: Fixed ValveConfigurationAndControlServer behavior.</li>
 <li>[frontend]: Fixed restart that was not working correctly in Ingress.</li>
@@ -1950,7 +1955,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[websocket]: Added params to /api/clusters.</li>
 <li>[frontend]: Frontend v.2.3.3</li>
 </ul>
-<h3 id="fixed-43">Fixed</h3>
+<h3 id="fixed-44">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed WebSocketProvider online.</li>
 </ul>
@@ -1982,7 +1987,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <li>[edge]: Fixes to edge mode.</li>
 <li>[package]: Update dependencies.</li>
 </ul>
-<h3 id="fixed-44">Fixed</h3>
+<h3 id="fixed-45">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed device/cluster api that was not working in Ingress.</li>
 </ul>
@@ -2008,7 +2013,7 @@ It is possible that some controllers see them as new devices or need time to rea
 <li>[edge]: Various fixes to edge mode.</li>
 <li>[package]: Update dependencies.</li>
 </ul>
-<h3 id="fixed-45">Fixed</h3>
+<h3 id="fixed-46">Fixed</h3>
 <ul>
 <li>[Device]: Fix addChildDeviceType methods to include debug parameter in MatterbridgeDevice instantiation.</li>
 </ul>
@@ -2044,7 +2049,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[lightSensor]: Refactor lightSensor removing Group optional cluster server.</li>
 <li>[jest]: Update Jest tests.</li>
 </ul>
-<h3 id="fixed-46">Fixed</h3>
+<h3 id="fixed-47">Fixed</h3>
 <ul>
 <li>[device]: Fix typos in Device and Endpoint.</li>
 </ul>
@@ -2077,7 +2082,7 @@ It is also possible to use the install plugin to install a specific version of m
 <ul>
 <li>[matterbridge]: Changed default minLevel to 0 in LevelControlCluster utility methods.</li>
 </ul>
-<h3 id="fixed-47">Fixed</h3>
+<h3 id="fixed-48">Fixed</h3>
 <ul>
 <li>[matter.js]: Temporary fix the crash of matter.js on close when using command line parameters.</li>
 <li>[matter.js]: Update to matter.js 0.11.6.</li>
@@ -2111,7 +2116,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[frontend]: Added font roboto.</li>
 <li>[matterbridge]: Removed BasicInformationCluster from Aggregator.</li>
 </ul>
-<h3 id="fixed-48">Fixed</h3>
+<h3 id="fixed-49">Fixed</h3>
 <ul>
 <li>[energySensor]: Fixed wrong types on ElectricalEnergyMeasurementCluster ElectricalPowerMeasurementCluster.</li>
 </ul>
@@ -2167,7 +2172,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="159-2024-09-23">[1.5.9] - 2024-09-23</h2>
-<h3 id="fixed-49">Fixed</h3>
+<h3 id="fixed-50">Fixed</h3>
 <ul>
 <li>[ingress]: Fixed download routes with Ingress from the ha addon. The add-on <a href="https://github.com/Luligu/matterbridge-home-assistant-addon">https://github.com/Luligu/matterbridge-home-assistant-addon</a> has been updated to v. 1.0.4.</li>
 </ul>
@@ -2365,7 +2370,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[history]: Update matter-history to 1.1.6.</li>
 <li>[frontend]: Removed duplicated buttons.</li>
 </ul>
-<h3 id="fixed-50">Fixed</h3>
+<h3 id="fixed-51">Fixed</h3>
 <ul>
 <li>[package]: Fixed dependencies.</li>
 </ul>
@@ -2402,7 +2407,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[frontend]: Removed QR button for plugins in error and not enabled.</li>
 <li>[frontend]: The Logs page and the log in the Home page persist till you close or reload the frontend (the last 1000 lines are available).</li>
 </ul>
-<h3 id="fixed-51">Fixed</h3>
+<h3 id="fixed-52">Fixed</h3>
 <ul>
 <li>[matterbridge]: Fixed utils export</li>
 </ul>
@@ -2417,7 +2422,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[frontend]: The Logs window in the Home page has the same filter as the Logs page.</li>
 <li>[matterbridge]: The plugins debug is now indipendent from matterbridge debug and matter.js log level. It can be set from the plugin config.</li>
 </ul>
-<h3 id="fixed-52">Fixed</h3>
+<h3 id="fixed-53">Fixed</h3>
 <ul>
 <li>[frontend]: Fix Home page for mobile (the page doesn&#39;t &quot;jump&quot; anymore with touchscreens).</li>
 <li>[matterbridge]: Fixed npm ignore for exports.</li>
@@ -2434,7 +2439,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[frontend]: The Logs in Home page has the same filter as the Logs page.</li>
 <li>[matterbridge]: The plugins debug is now indipendent from matterbridge debug and matter.js log level. It can be set from the plugin config.</li>
 </ul>
-<h3 id="fixed-53">Fixed</h3>
+<h3 id="fixed-54">Fixed</h3>
 <ul>
 <li>[frontend]: Fix Home for mobile.</li>
 </ul>
@@ -2477,7 +2482,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="139-2024-07-02">[1.3.9] - 2024-07-02</h2>
-<h3 id="fixed-54">Fixed</h3>
+<h3 id="fixed-55">Fixed</h3>
 <ul>
 <li>[matterbridge]: Fixed nodeLabel in childbridge mode</li>
 <li>[matterbridge]: Fixed MeasurementClusters</li>
@@ -2487,7 +2492,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="138-2024-07-01">[1.3.8] - 2024-07-01</h2>
-<h3 id="fixed-55">Fixed</h3>
+<h3 id="fixed-56">Fixed</h3>
 <ul>
 <li>[matterbridge]: Fixed crash in childbridge mode</li>
 </ul>
@@ -2517,7 +2522,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>[matterbridge]: Unified the https server port for the frontend and the WebSockerServer.</li>
 <li>[certificates]: The certificates for https connections are imported from the directory ~/.matterbridge/certs with these names: cert.pem, key.pem and ca.pem (optional). Use the -ssl command line parameter to activate https for both frontend and WebSocketServer.</li>
 </ul>
-<h3 id="fixed-56">Fixed</h3>
+<h3 id="fixed-57">Fixed</h3>
 <ul>
 <li>[matterbridge]: Fixed exports</li>
 <li>[matterbridgeDevice]: Fixed ElectricalEnergyMeasurement and ElectricalPowerMeasurement</li>
@@ -2546,7 +2551,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="134-2024-06-23">[1.3.4] - 2024-06-23</h2>
-<h3 id="fixed-57">Fixed</h3>
+<h3 id="fixed-58">Fixed</h3>
 <ul>
 <li>[matterbridge]: Fixed exports</li>
 </ul>
@@ -2657,7 +2662,7 @@ RadonConcentrationMeasurement,</li>
 <ul>
 <li>[matterbridge]: Updated dependencies</li>
 </ul>
-<h3 id="fixed-58">Fixed</h3>
+<h3 id="fixed-59">Fixed</h3>
 <ul>
 <li>[matterbridge]: Removed error stack from log error for npm get versions</li>
 <li>[matterbridge]: Fixed the error that caused -add plugin to fail at the first run of matterbridge</li>
@@ -2672,7 +2677,7 @@ RadonConcentrationMeasurement,</li>
 <li>[matter.js]: Update to @project-chip/matter-node.js v. 0.9.1</li>
 <li>[matterbridge]: Updated dependencies</li>
 </ul>
-<h3 id="fixed-59">Fixed</h3>
+<h3 id="fixed-60">Fixed</h3>
 <ul>
 <li>[matterbridge]: Log level of Plugin already configured is now info</li>
 </ul>
@@ -2690,7 +2695,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[matterbridge]: In child bridge mode the plugins are loaded and started immediately</li>
 <li>[matterbridge]: Updated dependencies</li>
 </ul>
-<h3 id="fixed-60">Fixed</h3>
+<h3 id="fixed-61">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed the error badge in the registered plugins window</li>
 <li>[frontend]: Added tooltip to the plugin update badge in the registered plugins window</li>
@@ -2704,7 +2709,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <ul>
 <li>[matterbridgeDevice]: bridgedNode and powerSource device types as conformance to Matter 1.3</li>
 </ul>
-<h3 id="fixed-61">Fixed</h3>
+<h3 id="fixed-62">Fixed</h3>
 <ul>
 <li>[matterbridge]: Fixed /api/settings error after resetting commissioning server</li>
 <li>[matterbridge]: Added error message and clean shutdown when WebSocketServer or ExpressServer ports are already in use</li>
@@ -2718,7 +2723,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 </a>
 
 <h2 id="1217-2024-05-25">[1.2.17] - 2024-05-25</h2>
-<h3 id="fixed-62">Fixed</h3>
+<h3 id="fixed-63">Fixed</h3>
 <ul>
 <li>[matterbridge]: Fixed the issue causing the commissioning reset for all fabrics when only one is removed. (Apple uses 2 fabrics: Home app and Key chain).</li>
 </ul>
@@ -2764,7 +2769,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Added sponsor link in Header.</li>
 <li>[frontend]: Added sponsor link in the plugin list.</li>
 </ul>
-<h3 id="fixed-63">Fixed</h3>
+<h3 id="fixed-64">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed the case when the latest version of Matterbridge or a plugin is not available.</li>
 </ul>
@@ -2826,7 +2831,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[docker]: See the guidelines on <a href="https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-the-Docker-container-and-start-it">https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-the-Docker-container-and-start-it</a>.</li>
 <li>[docker compose]: See the guidelines on <a href="https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-with-docker-compose">https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-with-docker-compose</a>.</li>
 </ul>
-<h3 id="fixed-64">Fixed</h3>
+<h3 id="fixed-65">Fixed</h3>
 <ul>
 <li>[matterbridge]: Fixed the case when a plugin throws errors.</li>
 </ul>
@@ -2851,7 +2856,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Added colors to the logs in the Home page and in the Logs page.</li>
 <li>[frontend]: Frontend updated to 0.8.7.</li>
 </ul>
-<h3 id="fixed-65">Fixed</h3>
+<h3 id="fixed-66">Fixed</h3>
 <ul>
 <li>[logs]: Fixed wss for some browser that didn&#39;t connect to wss.</li>
 </ul>
@@ -2867,7 +2872,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Added log for update and plugin install.</li>
 <li>[extension]: Started implementation of zigbee2MQTT internal extension.</li>
 </ul>
-<h3 id="fixed-66">Fixed</h3>
+<h3 id="fixed-67">Fixed</h3>
 <ul>
 <li>[spawn]: Fixed under windows.</li>
 </ul>
@@ -2895,7 +2900,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <ul>
 <li>[matterbridge.service]: Updated matterbridge.service instructions that fix network start issue with systemctl on Linux.</li>
 </ul>
-<h3 id="fixed-67">Fixed</h3>
+<h3 id="fixed-68">Fixed</h3>
 <ul>
 <li>[frontend]: Added sudo to the spawned command to execute update and install from frontend (for Linux this may be necessary).</li>
 <li>[childbridge mode]: Fixed a syncronize issue on the start.</li>
@@ -2938,7 +2943,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[workflow]: All packages now have a workflow on GitHub.</li>
 <li>[frontend]: Frontend got updated to 0.8.4.</li>
 </ul>
-<h3 id="fixed-68">Fixed</h3>
+<h3 id="fixed-69">Fixed</h3>
 <ul>
 <li>[frontend]: Fixed the restart needed message.</li>
 <li>[matterbridge]: Fixed the delay of loading from the cli.</li>
@@ -2986,12 +2991,12 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[cli]: Resolve the plugin name from absolute or relative path or from globally installed modules (see the help).</li>
 <li>[frontend]: Added some fancy stuff still not visible.</li>
 </ul>
-<h3 id="fixed-69">Fixed</h3>
+<h3 id="fixed-70">Fixed</h3>
 <ul>
 <li>[install]: Fixed the error caused when the controllers disconnect and connect again.</li>
 </ul>
 <h2 id="117-2024-03-14">[1.1.7] - 2024-03-14</h2>
-<h3 id="fixed-70">Fixed</h3>
+<h3 id="fixed-71">Fixed</h3>
 <ul>
 <li>[install]: Fixed the install error (thanks <a href="https://github.com/khaidakin">https://github.com/khaidakin</a>).</li>
 </ul>
@@ -3007,7 +3012,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[debug]: Added public property enableDebug to Matterbridge.</li>
 <li>[debug]: Added parameter -debug to the command line.</li>
 </ul>
-<h3 id="fixed-71">Fixed</h3>
+<h3 id="fixed-72">Fixed</h3>
 <ul>
 <li>[plugin]: Fixed the plugin.paired and plugin.commissioned in bridge mode.</li>
 <li>[routes]: Fixed the plugin devices route.</li>
@@ -3028,7 +3033,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <ul>
 <li>[dependencies]: Updated dependencies.</li>
 </ul>
-<h3 id="fixed-72">Fixed</h3>
+<h3 id="fixed-73">Fixed</h3>
 <ul>
 <li>[Plugin route]: Fixed the plugin device route in frontend.</li>
 </ul>

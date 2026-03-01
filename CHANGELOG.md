@@ -61,7 +61,12 @@ These threads already run as workers:
 - [package]: Update dependencies.
 - [package]: Add `@eslint/json`.
 - [package]: Add `@eslint/markdown`.
-- [docker]: The base image `24-ubuntu-slim` is now built with node 24 latest release.
+- [docker]: The base image `24-ubuntu-slim` is now built with the latest node 24 release.
+
+### Fixed
+
+- [thermostat]: Removed atomic commands required only with Preset and Schedule features.
+- [thermostat]: Removed not mandatory Identify cluster fwhen using TemperatureControlledCabinet device type.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
