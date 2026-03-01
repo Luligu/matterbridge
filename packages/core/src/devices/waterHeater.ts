@@ -33,7 +33,7 @@ import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 
 // Matterbridge
 import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
-import { electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
+import { deviceEnergyManagement, electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 export class WaterHeater extends MatterbridgeEndpoint {
@@ -76,7 +76,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
-    super([waterHeater, powerSource, electricalSensor], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([waterHeater, powerSource, electricalSensor, deviceEnergyManagement], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Water Heater')
       .createDefaultPowerSourceWiredClusterServer()
