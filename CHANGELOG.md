@@ -56,6 +56,7 @@ These threads already run as workers:
 
 - [docker]: Add the image (tag **s6-rc-legacy** 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim` (the last node version supporting armv7), supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
 - [frontend]: Add the ability to filter by plugin in the Devices page. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+- [frontend]: Add in the config whiteList and blackList select a filter to remove from the list what is already added. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 
 ### Changed
 
@@ -64,6 +65,7 @@ These threads already run as workers:
 - [package]: Add `@eslint/markdown`.
 - [docker]: The base image `24-ubuntu-slim` is now built with the latest node 24 release.
 - [frontend]: Bumped `frontend` version to v. 3.4.7.
+- [frontend]: Update dependencies.
 
 ### Fixed
 
