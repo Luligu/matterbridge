@@ -65,6 +65,9 @@ These threads already run as workers:
 - [frontend]: Add the ability to filter by plugin in the Devices page. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 - [frontend]: Add in the config whiteList and blackList select a filter to remove from the list what is already added. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 - [frontend]: Uregister all devices increments the BasicInformation.configurationVersion. This, if supported on controller side, allows controllers to detect changes in the configuration.
+- [matter1.5.0]: Add SoilMeasurement cluster and corresponding test.
+- [matter1.5.0]: Add ClosureControl and ClosureDimension clusters with corresponding tests.
+- [matter1.5.0]: Add SoilSensor class and corresponding tests for SoilMeasurement cluster
 
 ### Changed
 

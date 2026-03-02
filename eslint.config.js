@@ -26,7 +26,7 @@ export default defineConfig([
   {
     name: 'Global Ignores',
     // This works faster in eslint 10.x and is recursive by default, so we don't need to specify '**/' in the patterns
-    ignores: ['**/.cache', '**/build', '**/coverage', '**/dist', '**/jest', '**/node_modules', '**/screenshots', '**/temp', '**/vendor', '**/vite.config.ts', '**/apps'],
+    ignores: ['**/.cache', '**/build', '**/coverage', '**/dist', '**/jest', '**/node_modules', '**/screenshots', '**/temp', '**/vendor', '**/vite.config.ts', '**/apps', '**/chip'],
   },
   // Comment out this line if you want to enable strict type-checked rules, but be aware that it may cause many errors until you fix all type issues in your codebase
   ...tseslint.configs.strict.map((c) => ({ ...c, files: sourceFiles })),

@@ -6,10 +6,12 @@
  * It supports environment variables to customize the version and output paths.
  *
  * MATTER_DATA_MODEL_VERSION - The default version is 1.4.2.
+ * MATTER_DATA_MODEL_XML_OUT - Where to store the downloaded XMLs (default: chip/<version>/xml).
  */
 
 const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.4.2';
-const SRC_PATH = `https://raw.githubusercontent.com/project-chip/connectedhomeip/master/data_model/${MATTER_DATA_MODEL_VERSION}/`;
+const MATTER_DATA_MODEL_VERSION_REMOTE = MATTER_DATA_MODEL_VERSION.replace(/^(\d+\.\d+)\.0$/, '$1');
+const SRC_PATH = `https://raw.githubusercontent.com/project-chip/connectedhomeip/master/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/`;
 const DATA_MODEL_PATHS = {
   clusters: `${SRC_PATH}clusters/`,
   clustersIds: `${SRC_PATH}clusters/cluster_ids.json`,
@@ -18,12 +20,13 @@ const DATA_MODEL_PATHS = {
   namespaces: `${SRC_PATH}namespaces/`,
 };
 const DST_PATH = `chip/${MATTER_DATA_MODEL_VERSION}/`;
+const XML_DST_PATH = process.env.MATTER_DATA_MODEL_XML_OUT || `chip/${MATTER_DATA_MODEL_VERSION}/xml`;
 const OUTPUT_NAMESPACES = 'namespaces.json';
 const OUTPUT_DEVICE_TYPES = 'deviceTypes.json';
 const OUTPUT_CLUSTERS = 'clusters.json';
 const GITHUB_API_BASE = 'https://api.github.com/repos/project-chip/connectedhomeip/contents';
-const DEVICE_TYPES_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_MODEL_VERSION}/device_types?ref=master`;
-const CLUSTERS_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_MODEL_VERSION}/clusters?ref=master`;
+const DEVICE_TYPES_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/device_types?ref=master`;
+const CLUSTERS_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/clusters?ref=master`;
 const GITHUB_API_HEADERS = {
   'User-Agent': 'matterbridge-data-model-script',
   'Accept': 'application/vnd.github.v3+json',
@@ -1308,7 +1311,9 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
     }
   }
 
-  const clusterMatches = [...xmlContent.matchAll(/<cluster\b[^>]*?(?:\/>|>[\s\S]*?<\/cluster>)/gi)];
+  const clustersMatch = xmlContent.match(/<clusters\b[^>]*>([\s\S]*?)<\/clusters>/i);
+  const clustersBody = clustersMatch ? clustersMatch[1] : '';
+  const clusterMatches = [...clustersBody.matchAll(/<cluster\b[^>]*?(?:\/>|>[\s\S]*?<\/cluster>)/gi)];
   const clusters = clusterMatches.map((match) => {
     const fullCluster = match[0];
     const openingTagMatch = fullCluster.match(/<cluster\b[^>]*>/i);
@@ -1339,6 +1344,8 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
       const [, featuresBody] = featuresMatch;
       const featureMatches = [...featuresBody.matchAll(/<feature\b[^>]*?(?:\/>|>[\s\S]*?<\/feature>)/gi)];
 
+      let unnamedFeatureCounter = 0;
+
       for (const featureMatch of featureMatches) {
         const fullFeature = featureMatch[0];
         const featureOpeningTagMatch = fullFeature.match(/<feature\b[^>]*>/i);
@@ -1348,10 +1355,12 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
         }
 
         const featureAttributes = parseAttributes(featureOpeningTagMatch[0]);
-        const { code = '', name: featureName, summary = '', ...rest } = featureAttributes;
+        const { code = '', name: rawFeatureName, summary = '', ...rest } = featureAttributes;
 
-        if (!featureName) {
-          throw new Error(`Feature without a name encountered in cluster ${clusterName} for device type ${name}.`);
+        const featureName = rawFeatureName || (code ? `Feature_${code}` : `Feature_${++unnamedFeatureCounter}`);
+
+        if (!rawFeatureName) {
+          console.log(`Warning: Feature without a name encountered in cluster ${clusterName} for device type ${name}. Using "${featureName}".`);
         }
 
         let featureBody = '';
@@ -1685,11 +1694,16 @@ const namespacesOutput = {};
 
 console.log(`Fetching namespaces for Matter data model v${MATTER_DATA_MODEL_VERSION}`);
 
+await mkdir(join(XML_DST_PATH, 'namespaces'), { recursive: true });
+
 for (const filename of namespacesFiles) {
   console.log(`Downloading ${filename}...`);
   const xml = await fetchRemoteText(`${DATA_MODEL_PATHS.namespaces}${filename}`, {
     description: `namespace ${filename}`,
   });
+
+  await writeFile(join(XML_DST_PATH, 'namespaces', filename), xml);
+
   const { id, name, tags } = parseNamespaceXml(xml);
   const key = sanitizeKey(name);
   namespacesOutput[key] = { id, name, tags };
@@ -1727,6 +1741,8 @@ console.log(`Discovered ${deviceTypeFiles.length} device type XML file(s).`);
 
 const parsedDeviceTypes = new Map();
 
+await mkdir(join(XML_DST_PATH, 'device_types'), { recursive: true });
+
 for (const { name: filename, download_url: downloadUrl } of deviceTypeFiles) {
   if (!downloadUrl) {
     console.log(`Skipping ${filename} because it does not expose a download URL.`);
@@ -1737,6 +1753,8 @@ for (const { name: filename, download_url: downloadUrl } of deviceTypeFiles) {
   const xml = await fetchRemoteText(downloadUrl, {
     description: `device type ${filename}`,
   });
+
+  await writeFile(join(XML_DST_PATH, 'device_types', filename), xml);
 
   const parsed = parseDeviceTypeXml(xml, filename);
   if (!parsed) {
@@ -1860,6 +1878,8 @@ console.log(`Discovered ${clusterFiles.length} cluster XML file(s).`);
 
 const parsedClustersById = new Map();
 
+await mkdir(join(XML_DST_PATH, 'clusters'), { recursive: true });
+
 for (const { name: filename, download_url: downloadUrl } of clusterFiles) {
   if (!downloadUrl) {
     console.log(`Skipping ${filename} because it does not expose a download URL.`);
@@ -1870,6 +1890,8 @@ for (const { name: filename, download_url: downloadUrl } of clusterFiles) {
   const xml = await fetchRemoteText(downloadUrl, {
     description: `cluster ${filename}`,
   });
+
+  await writeFile(join(XML_DST_PATH, 'clusters', filename), xml);
 
   const parsed = parseClusterXml(xml, filename);
 
