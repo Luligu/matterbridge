@@ -60,6 +60,8 @@ describe('Matterbridge ' + NAME, () => {
     await startServerNode(NAME, MATTER_PORT, microwaveOven.code, MATTER_CREATE_ONLY);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
+    await server.construction.ready;
+    await aggregator.construction.ready;
   }, 10000);
 
   test('create a microwave oven device', async () => {
@@ -77,7 +79,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add a microwave oven device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
-
+    await device.construction.ready;
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer initialized`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
   });

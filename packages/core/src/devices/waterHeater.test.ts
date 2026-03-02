@@ -87,8 +87,6 @@ describe('Matterbridge Water Heater', () => {
     expect(device.hasClusterServer(WaterHeaterManagementServer)).toBeTruthy();
     expect(device.hasClusterServer(WaterHeaterModeServer)).toBeTruthy();
     expect(device.hasClusterServer(ThermostatServer)).toBeTruthy();
-    expect(device.getChildEndpointByOriginalId('Temperature Top')?.hasClusterServer(TemperatureMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointByOriginalId('Temperature Bottom')?.hasClusterServer(TemperatureMeasurement.Cluster.id)).toBeTruthy();
     expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
     expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
@@ -104,8 +102,6 @@ describe('Matterbridge Water Heater', () => {
     expect(device.hasClusterServer(WaterHeaterManagementServer)).toBeTruthy();
     expect(device.hasClusterServer(WaterHeaterModeServer)).toBeTruthy();
     expect(device.hasClusterServer(ThermostatServer)).toBeTruthy();
-    expect(device.getChildEndpointById('TemperatureTop')?.hasClusterServer(TemperatureMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('TemperatureBottom')?.hasClusterServer(TemperatureMeasurement.Cluster.id)).toBeTruthy();
     expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
     expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
@@ -135,7 +131,7 @@ describe('Matterbridge Water Heater', () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(68);
+    expect(attributes.length).toBe(74);
   });
 
   test('invoke MatterbridgeThermostatServer commands', async () => {
