@@ -79,6 +79,10 @@ export interface MatterbridgeEndpointCommands {
   goToLiftPercentage: HandlerFunction;
   goToTiltPercentage: HandlerFunction;
 
+  // Closure
+  moveTo: HandlerFunction;
+  setTarget: HandlerFunction;
+
   // Door Lock
   lockDoor: HandlerFunction;
   unlockDoor: HandlerFunction;

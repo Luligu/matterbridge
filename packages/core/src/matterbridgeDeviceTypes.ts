@@ -114,6 +114,10 @@ import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId, DeviceTypeId } from '@matter/types/datatype';
 
+import { ClosureControl } from './clusters/closure-control.js';
+import { ClosureDimension } from './clusters/closure-dimension.js';
+import { SoilMeasurement } from './clusters/soil-measurement.js';
+
 export enum DeviceClasses {
   /** 1.1.5. Device Type Class Conditions */
 
@@ -1425,4 +1429,74 @@ export const heatPump = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [], // See 14.5.5.1. Cluster Requirements on Composing Device Types
   optionalServerClusters: [Identify.Cluster.id, Thermostat.Cluster.id],
+});
+
+/** Matter 1.5.0 device types */
+
+/**
+ * 7.14. Soil Sensor Device Type
+ *
+ * A Soil Sensor device reports measurements of soil values, such as moisture and (optionally) temperature.
+ */
+export const soilSensor = DeviceTypeDefinition({
+  name: 'MA-soilSensor',
+  code: 0x0045,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, SoilMeasurement.Cluster.id],
+  optionalServerClusters: [TemperatureMeasurement.Cluster.id],
+});
+
+/**
+ * 5.7. Irrigation System Device Type
+ *
+ * An irrigation system is always defined via endpoint composition. Irrigation system manufacturers
+ * determine how many watering "zone" terminals are present on the physical device. Each zone is
+ * represented by a disambiguated Water Valve endpoint.
+ *
+ * 5.7.5. Device Type Requirements
+ * An irrigation system SHALL be composed of at least one endpoint with device types as defined by the
+ * conformance below. There MAY be more endpoints with additional instances of these device types or
+ * additional device types existing in the irrigation system.
+ *
+ * - ID     Name                        Constraint    Conformance
+ * - 0x0042 Water Valve                 min 1         M
+ */
+export const irrigationSystem = DeviceTypeDefinition({
+  name: 'MA-irrigationSystem',
+  code: 0x0040,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [],
+  optionalServerClusters: [Identify.Cluster.id, OperationalState.Cluster.id, FlowMeasurement.Cluster.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [FlowMeasurement.Cluster.id],
+});
+
+/**
+ * 8.5. Closure Device Type
+ *
+ * A Closure device provides actuator control over an endpoint.
+ */
+export const closure = DeviceTypeDefinition({
+  name: 'MA-closure',
+  code: 0x0230,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, ClosureControl.Cluster.id],
+  optionalServerClusters: [],
+});
+
+/**
+ * 8.6. Closure Panel Device Type
+ *
+ * A Closure Panel device provides dimension information for an endpoint.
+ */
+export const closurePanel = DeviceTypeDefinition({
+  name: 'MA-closurePanel',
+  code: 0x0231,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [ClosureDimension.Cluster.id],
+  optionalServerClusters: [],
 });
