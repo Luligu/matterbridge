@@ -54,9 +54,10 @@ These threads already run as workers:
 
 ### Dev Breaking Changes
 
-- [oven]: Refactor oven class to use TemperatureNumber for TemperatureControlledCabinet device type.
-- [refrigerator]: Refactor refrigerator class to use TemperatureNumber for TemperatureControlledCabinet device type.
-- [evse]: Refactor evse class as composed device.
+- [Oven]: Refactor `Oven` class to use TemperatureNumber for TemperatureControlledCabinet device type.
+- [Refrigerator]: Refactor `Refrigerator` class to use TemperatureNumber for TemperatureControlledCabinet device type.
+- [Evse]: Refactor `Evse` class as composed device.
+- [WaterHeater]: Refactor `WaterHeater` class as composed device.
 
 ### Added
 

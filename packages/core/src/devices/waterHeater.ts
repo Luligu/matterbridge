@@ -24,6 +24,7 @@
 
 // Imports from @matter
 import { MaybePromise } from '@matter/general';
+import { PositionTag } from '@matter/main';
 import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
 import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
@@ -33,7 +34,7 @@ import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 
 // Matterbridge
 import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
-import { deviceEnergyManagement, electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
+import { deviceEnergyManagement, electricalSensor, powerSource, temperatureSensor, waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 export class WaterHeater extends MatterbridgeEndpoint {
@@ -79,15 +80,27 @@ export class WaterHeater extends MatterbridgeEndpoint {
     super([waterHeater, powerSource, electricalSensor, deviceEnergyManagement], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Water Heater')
-      .createDefaultPowerSourceWiredClusterServer()
       .createDefaultHeatingThermostatClusterServer(waterTemperature, targetWaterTemperature, minHeatSetpointLimit, maxHeatSetpointLimit)
       .createDefaultWaterHeaterManagementClusterServer(heaterTypes, {}, tankPercentage)
-      .createDefaultWaterHeaterModeClusterServer()
+      .createDefaultWaterHeaterModeClusterServer();
+    this.addChildDeviceType('Temperature Top', temperatureSensor, { tagList: [{ mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: null }] })
+      .createDefaultTemperatureMeasurementClusterServer(55_10, -50_00, 100_00)
+      .addRequiredClusterServers();
+    this.addChildDeviceType('Temperature Bottom', temperatureSensor, {
+      tagList: [{ mfgCode: null, namespaceId: PositionTag.Bottom.namespaceId, tag: PositionTag.Bottom.tag, label: null }],
+    })
+      .createDefaultTemperatureMeasurementClusterServer(50_10, -50_00, 100_00)
+      .addRequiredClusterServers();
+    this.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
+    this.addChildDeviceType('ElectricalSensor', electricalSensor)
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
-      .createDefaultElectricalEnergyMeasurementClusterServer(energy)
-      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.WaterHeating, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
-      .createDefaultDeviceEnergyManagementModeClusterServer();
+      .createDefaultElectricalEnergyMeasurementClusterServer(energy, 0)
+      .addRequiredClusterServers();
+    this.addChildDeviceType('DeviceEnergyManagement', deviceEnergyManagement)
+      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.WaterHeating, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultDeviceEnergyManagementModeClusterServer()
+      .addRequiredClusterServers();
   }
 
   /**

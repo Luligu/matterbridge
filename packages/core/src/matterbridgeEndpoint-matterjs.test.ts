@@ -794,7 +794,6 @@ describe('Matterbridge ' + NAME, () => {
     expect(heater).toBeDefined();
     expect(heater.id).toBe('WaterHeater-0xABC123456789');
     expect(heater.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(heater.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(heater.hasClusterServer(WaterHeaterManagement.Cluster.id)).toBeTruthy();
     expect(heater.hasClusterServer(WaterHeaterMode.Cluster.id)).toBeTruthy();
   });
