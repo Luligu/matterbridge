@@ -1520,8 +1520,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   async unregisterAndShutdownProcess(timeout: number = 1000): Promise<void> {
     const { wait } = await import('@matterbridge/utils');
     this.log.info('Unregistering all devices and shutting down...');
+    if (this.serverNode) await this.serverNode.setStateOf(BasicInformationServer, { configurationVersion: this.serverNode.state.basicInformation.configurationVersion + 1 });
     for (const plugin of this.plugins.array()) {
       if (plugin.error || !plugin.enabled) continue;
+      if (plugin.serverNode)
+        await plugin.serverNode.setStateOf(BasicInformationServer, { configurationVersion: plugin.serverNode.state.basicInformation.configurationVersion + 1 });
       const registeredDevices = plugin.registeredDevices;
       await this.plugins.shutdown(plugin, 'unregistering all devices and shutting down...', false, true);
       plugin.registeredDevices = registeredDevices;
