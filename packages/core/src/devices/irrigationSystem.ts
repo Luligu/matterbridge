@@ -1,0 +1,45 @@
+/**
+ * @description  Matter 1.5 Irrigation System device class.
+ * @file src/devices/irrigationSystem.ts
+ * @author Luca Liguori
+ * @created 2026-03-02
+ * @version 1.0.0
+ * @license Apache-2.0
+ *
+ * Copyright 2026 Luca Liguori.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { OperationalState } from '@matter/types/clusters/operational-state';
+
+import { irrigationSystem } from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+
+export interface IrrigationSystemOptions {
+  operationalState?: OperationalState.OperationalStateEnum;
+  flowMeasuredValue?: number | null;
+}
+
+export class IrrigationSystem extends MatterbridgeEndpoint {
+  constructor(name: string, serial: string, options: IrrigationSystemOptions = {}) {
+    super([irrigationSystem], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+
+    this.createDefaultIdentifyClusterServer();
+    this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Irrigation System');
+
+    // Optional clusters included by default for this device class.
+    this.createDefaultOperationalStateClusterServer(options.operationalState ?? OperationalState.OperationalStateEnum.Stopped);
+    this.createDefaultFlowMeasurementClusterServer(options.flowMeasuredValue ?? null);
+  }
+}
