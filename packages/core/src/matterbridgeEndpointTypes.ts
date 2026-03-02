@@ -135,6 +135,9 @@ export interface MatterbridgeEndpointCommands {
   // Energy Evse
   enableCharging: HandlerFunction;
   disable: HandlerFunction;
+  setTargets: HandlerFunction;
+  getTargets: HandlerFunction;
+  clearTargets: HandlerFunction;
 
   // Device Energy Management
   powerAdjustRequest: HandlerFunction;

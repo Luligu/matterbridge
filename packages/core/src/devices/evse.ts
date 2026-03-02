@@ -69,17 +69,22 @@ export class Evse extends MatterbridgeEndpoint {
     absMinPower?: number,
     absMaxPower?: number,
   ) {
-    super([evse, powerSource, electricalSensor, deviceEnergyManagement], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([evse], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Evse')
-      .createDefaultPowerSourceWiredClusterServer()
+      .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
+      .createDefaultEnergyEvseModeClusterServer(currentMode, supportedModes)
+      .createDefaultTemperatureMeasurementClusterServer(24_00) // Internal temperature 24°C in centi-degrees
+      .addRequiredClusterServers();
+    this.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
+    this.addChildDeviceType('ElectricalSensor', electricalSensor)
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(energy, 0)
+      .addRequiredClusterServers();
+    this.addChildDeviceType('DeviceEnergyManagement', deviceEnergyManagement)
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.Evse, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer()
-      .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
-      .createDefaultEnergyEvseModeClusterServer(currentMode, supportedModes)
       .addRequiredClusterServers();
   }
 
@@ -130,7 +135,7 @@ export class Evse extends MatterbridgeEndpoint {
   }
 }
 
-export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
+export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences) {
   override disable(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Disable charging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -158,6 +163,30 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
     // The implementation should also stop the charging session at the required time and update the sessionId, sessionDuration, and sessionEnergyCharged attributes if needed.
     // super.enableCharging();
     // enableCharging is not implemented in matter.js
+  }
+  override setTargets(request: EnergyEvse.SetTargetsRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`SetTargets request ${request.chargingTargetSchedules} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // The implementation should store the provided charging targets and use them to manage the charging process according to the user's preferences.
+    // super.setTargets();
+    // setTargets is not implemented in matter.js
+    return;
+  }
+  override getTargets(): MaybePromise<EnergyEvse.GetTargetsResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`GetTargets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // The implementation should retrieve the currently stored charging targets and return them in the response.
+    // return super.getTargets();
+    // getTargets is not implemented in matter.js
+    return { chargingTargetSchedules: [] };
+  }
+  override clearTargets(): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`ClearTargets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // The implementation should clear all stored charging targets and stop any ongoing charging sessions that were scheduled based on those targets.
+    // super.clearTargets();
+    // clearTargets is not implemented in matter.js
+    return;
   }
 }
 
