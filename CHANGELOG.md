@@ -58,6 +58,7 @@ These threads already run as workers:
 - [Refrigerator]: Refactor `Refrigerator` class to use TemperatureNumber for TemperatureControlledCabinet device type.
 - [Evse]: Refactor `Evse` class as composed device.
 - [WaterHeater]: Refactor `WaterHeater` class as composed device.
+- [SolarPower]: Refactor `SolarPower` class as composed device.
 
 ### Added
 
@@ -67,7 +68,11 @@ These threads already run as workers:
 - [frontend]: Uregister all devices increments the BasicInformation.configurationVersion. This, if supported on controller side, allows controllers to detect changes in the configuration.
 - [matter1.5.0]: Add SoilMeasurement cluster and corresponding test.
 - [matter1.5.0]: Add ClosureControl and ClosureDimension clusters with corresponding tests.
-- [matter1.5.0]: Add SoilSensor class and corresponding tests for SoilMeasurement cluster
+- [matter1.5.0]: Add SoilSensor class and corresponding tests.
+- [matter1.5.0]: Add IrrigationSystem class and corresponding tests.
+- [matter1.5.0]: Add Closure class and corresponding tests.
+- [matter1.5.0]: Add ClosurePanel class and corresponding tests.
+- [matter1.5.0]: Add SoilSensor, IrrigationSystem, Closure, and ClosurePanel device types with corresponding definitions.
 
 ### Changed
 

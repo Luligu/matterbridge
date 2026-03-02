@@ -23,7 +23,7 @@
  */
 
 // Imports from @matter
-import { PowerSourceTag } from '@matter/node';
+import { NumberTag, PowerSourceTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 
 // Matterbridge
@@ -49,7 +49,7 @@ export class SolarPower extends MatterbridgeEndpoint {
     voltage: number | bigint | null = null,
     current: number | bigint | null = null,
     power: number | bigint | null = null,
-    energyExported: number | bigint | null = null,
+    energyExported: number | bigint = 0,
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
@@ -66,5 +66,39 @@ export class SolarPower extends MatterbridgeEndpoint {
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.SolarPv, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
+  }
+
+  /**
+   * Helper method to add a solar panel as child device with the appropriate clusters and tags.
+   * The tag parameter is used to disambiguate the panels and should be unique for each panel (e.g. 1, 2, 3, 4).
+   *
+   * @param {string} name - The name of the solar panel.
+   * @param {number} tag - The unique tag for the solar panel.
+   * @param {number | bigint | null} [voltage] - The voltage value in millivolts. Defaults to null if not provided.
+   * @param {number | bigint | null} [current] - The current value in milliamps. Defaults to null if not provided.
+   * @param {number | bigint | null} [power] - The power value in milliwatts. Defaults to null if not provided.
+   * @param {number | bigint | null} [energyExported] - The total energy exported in mWh. Defaults to null if not provided.
+   * @returns {MatterbridgeEndpoint} The created solar panel endpoint.
+   */
+  addPanel(
+    name: string,
+    tag: number,
+    voltage: number | bigint | null = null,
+    current: number | bigint | null = null,
+    power: number | bigint | null = null,
+    energyExported: number | bigint | null = null,
+  ): MatterbridgeEndpoint {
+    const panel = this.addChildDeviceType(name, electricalSensor, {
+      tagList: [
+        { mfgCode: null, namespaceId: PowerSourceTag.Solar.namespaceId, tag: PowerSourceTag.Solar.tag, label: null },
+        { mfgCode: null, namespaceId: NumberTag.One.namespaceId, tag, label: null },
+      ],
+    })
+      .createDefaultPowerTopologyClusterServer()
+      .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
+      .createDefaultElectricalEnergyMeasurementClusterServer(0, energyExported)
+      .addRequiredClusterServers();
+    panel.addUserLabel('panel', name.slice(0, 16)); // UserLabel has a max length of 16 characters
+    return panel;
   }
 }

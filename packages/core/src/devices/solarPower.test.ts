@@ -25,7 +25,7 @@ import { SolarPower } from './solarPower.js';
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
-  let device: MatterbridgeEndpoint;
+  let device: SolarPower;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -61,6 +61,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
+    device.addPanel('Solar Panel 1', 1);
+    device.addPanel('Solar Panel 2', 2);
+    device.addPanel('Solar Panel 3', 3);
+    device.addPanel('Solar Panel 4', 4);
   });
 
   test('add a solar power device', async () => {
