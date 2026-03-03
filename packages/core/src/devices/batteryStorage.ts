@@ -23,6 +23,8 @@
  */
 
 // Imports from @matter
+import { ElectricalPowerMeasurementServer } from '@matter/main/behaviors/electrical-power-measurement';
+import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
 import { PowerSourceTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -30,6 +32,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 // Matterbridge
 import { batteryStorage, deviceEnergyManagement, electricalSensor, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { getDefaultElectricalPowerMeasurementClusterServer, getSemtag } from '../matterbridgeEndpointHelpers.js';
 
 export class BatteryStorage extends MatterbridgeEndpoint {
   /**
@@ -64,28 +67,31 @@ export class BatteryStorage extends MatterbridgeEndpoint {
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
-    super([batteryStorage, electricalSensor, deviceEnergyManagement], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([batteryStorage, powerSource, electricalSensor, deviceEnergyManagement], {
+      id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      tagList: [getSemtag(PowerSourceTag.Grid)],
+    });
     this.createDefaultIdentifyClusterServer()
-      .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Solar Power')
+      .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Battery Storage')
+      .createDefaultPowerSourceWiredClusterServer()
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported)
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.BatteryStorage, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
+    this.addFixedLabel('composed', 'Battery Storage');
 
-    // Add separate PowerSource child devices cause in matter.js the PowerSource cluster is not supported with both features Wired and Battery.
-    // Probably this is also an error in the specification...
-    this.addChildDeviceType('BatteryPowerSource', powerSource, {
-      tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Battery.namespaceId, tag: PowerSourceTag.Battery.tag, label: null }],
+    const battery = this.addChildDeviceType('Battery', [powerSource, electricalSensor], {
+      tagList: [getSemtag(PowerSourceTag.Battery)],
     })
       .createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining, batChargeLevel, 24_000) // Battery voltage in mV (24V).
-      .addRequiredClusterServers();
-
-    this.addChildDeviceType('GridPowerSource', powerSource, {
-      tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Grid.namespaceId, tag: PowerSourceTag.Grid.tag, label: null }],
-    })
-      .createDefaultPowerSourceWiredClusterServer()
-      .addRequiredClusterServers();
+      .createDefaultPowerTopologyClusterServer()
+      // .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
+      .createDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported);
+    battery.behaviors.require(
+      ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.DirectCurrent),
+      getDefaultElectricalPowerMeasurementClusterServer(voltage, current, power),
+    );
   }
 }
