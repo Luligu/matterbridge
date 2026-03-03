@@ -8,6 +8,8 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
+import { NumberTag, PowerSourceTag } from '@matter/node';
+import { VendorId } from '@matter/types';
 
 import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, setupTest, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestHelpers.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -27,6 +29,7 @@ import {
   getDefaultPressureMeasurementClusterServer,
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
+  getSemtag,
 } from './matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
@@ -54,6 +57,24 @@ describe('Options helpers', () => {
     await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
+  });
+
+  test('getSemtag helper', () => {
+    expect(getSemtag(PowerSourceTag.Solar)).toEqual({ label: null, mfgCode: null, namespaceId: PowerSourceTag.Solar.namespaceId, tag: PowerSourceTag.Solar.tag });
+    expect(getSemtag(NumberTag.TwentyFour, 'My Label')).toEqual({ label: 'My Label', mfgCode: null, namespaceId: NumberTag.TwentyFour.namespaceId, tag: NumberTag.TwentyFour.tag });
+    expect(getSemtag(NumberTag.One, 'My Label', VendorId(12))).toEqual({
+      label: 'My Label',
+      mfgCode: 12,
+      namespaceId: 7,
+      tag: 1,
+    });
+    expect(getSemtag(NumberTag.One, '   0123456789012345678901234567890123456789012345678901234567890123456789   ', VendorId(12))).toEqual({
+      label: '0123456789012345678901234567890123456789012345678901234567890123', // Label should be trimmed to 64 characters
+      mfgCode: 12,
+      namespaceId: 7,
+      tag: 1,
+    });
+    expect(NumberTag.Two).toEqual({ label: 'Two', mfgCode: null, namespaceId: 7, tag: 2 });
   });
 
   test('options helpers', () => {

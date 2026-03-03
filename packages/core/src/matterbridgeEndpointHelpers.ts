@@ -113,7 +113,7 @@ import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId } from '@matter/types/datatype';
-import { MeasurementType } from '@matter/types/globals';
+import { MeasurementType, Semtag } from '@matter/types/globals';
 // @matterbridge
 import { deepCopy, deepEqual, isValidArray } from '@matterbridge/utils';
 // AnsiLogger module
@@ -206,6 +206,26 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
   const hash = createHash('md5');
   hash.update(param1 + param2 + param3 + param4);
   return hash.digest('hex');
+}
+
+/**
+ * Creates a Semtag object usable in Descriptor.cluster tagList.
+ *
+ * @param {Semtag} semtag - The semantic tag object (e.g. PowerSourceTag.Solar, NumberTag.One).
+ * @param {string | null} [label] - Optional label (max length of 64 characters), defaults to null.
+ * @param {Semtag['mfgCode']} [mfgCode] - Optional manufacturer code, defaults to null.
+ * @returns {Semtag} The Semtag object.
+ *
+ * @remarks
+ * The label field SHOULD NOT be used if the Tag is from a standard namespace, unless the Tag requires further qualification.
+ * Example: Switches.Custom requires a label to disambiguate the different custom switches, while PowerSource.Solar does not require a label as it is already specific.
+ *
+ * The mfgCode field shall be used only if the Semtag is from a manufacturer-specific namespace, and shall be set to the manufacturer code of the device.
+ * Don't set the mfgCode field for standard namespaces: the namespaceId already provides uniqueness.
+ */
+export function getSemtag(semtag: Semtag, label: Semtag['label'] = null, mfgCode: Semtag['mfgCode'] = null): Semtag {
+  if (label !== null && typeof label === 'string') label = label.trim().slice(0, 64); // Trim and limit label to 64 characters
+  return { mfgCode, namespaceId: semtag.namespaceId, tag: semtag.tag, label };
 }
 
 /**
