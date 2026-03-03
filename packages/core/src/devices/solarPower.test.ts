@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/solarPower.test.ts
 
 const MATTER_PORT = 8014;
@@ -8,6 +9,7 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
+import { NumberTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
@@ -16,9 +18,20 @@ import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 
 // Matterbridge
-import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import {
+  addDevice,
+  aggregator,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
+  server,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestHelpers.js';
 import { solarPower } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { SolarPower } from './solarPower.js';
 
 // Setup the test environment
@@ -37,7 +50,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment
@@ -61,10 +78,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
-    device.addPanel('Solar Panel 1', 1);
-    device.addPanel('Solar Panel 2', 2);
-    device.addPanel('Solar Panel 3', 3);
-    device.addPanel('Solar Panel 4', 4);
+    device.addPanel('Solar Panel 1', NumberTag.One);
+    device.addPanel('Solar Panel 2', NumberTag.Two);
+    device.addPanel('Solar Panel 3', NumberTag.Three);
+    device.addPanel('Solar Panel 4', NumberTag.Four);
   });
 
   test('add a solar power device', async () => {
