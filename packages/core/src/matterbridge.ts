@@ -51,10 +51,10 @@ import {
   UINT16_MAX,
   UINT32_MAX,
 } from '@matter/general';
-import { CommissioningDiscovery, Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
-import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { CommissioningDiscovery, Endpoint, NetworkClient, ServerNode, SessionsBehavior } from '@matter/node';
+import { BasicInformationClient, BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
-import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
+import { DeviceCertification, ExposedFabricInformation, PaseClient, Read, Subscribe } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread';
@@ -2166,7 +2166,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       },
     });
 
-    this.log.info(`Starting matter commissioning controller: ${this.controllerNode.peers.size} peer nodes...`);
+    this.log.info(`Loaded matter commissioning controller with ${this.controllerNode.peers.size} peer nodes.`);
+    const requestedNodeId = getIntParameter('node');
+    const nodeLabel = requestedNodeId !== undefined ? `Node ${requestedNodeId}` : undefined;
+    const peerId = requestedNodeId !== undefined ? `peer${requestedNodeId}` : undefined;
 
     if (hasParameter('pair')) {
       // passcode (setupPin) 20242025 longDiscriminator 3840
@@ -2174,28 +2177,68 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       let options: CommissioningDiscovery.Options;
       if (hasParameter('pairingcode')) {
         const pairingCode = getParameter('pairingcode') as string;
-        this.log.info(`Pairing device with pairingcode: ${pairingCode}`);
+        this.log.info(`Pairing device ${nodeLabel} with pairingcode: ${pairingCode}`);
         const pairingData = ManualPairingCodeCodec.decode(pairingCode);
         this.log.info(`- passcode: ${pairingData.passcode}`);
-        this.log.info(`- shortDiscriminator: ${pairingData.shortDiscriminator}`);
-        this.log.info(`- longDiscriminator: ${pairingData.discriminator}`);
-        this.log.info(`- vendorId: ${pairingData.vendorId}`);
-        this.log.info(`- productId: ${pairingData.productId}`);
-        options = { id: 'device', pairingCode };
+        this.log.info(`- shortDiscriminator: ${pairingData.shortDiscriminator ?? 'n/a (should never be n/a, short discriminator is encoded in the manual pairing code)'} `);
+        this.log.info(`- longDiscriminator: ${pairingData.discriminator ?? 'n/a (manual pairing code encodes short discriminator only)'}`);
+        this.log.info(`- vendorId: ${pairingData.vendorId ?? 'n/a'}`);
+        this.log.info(`- productId: ${pairingData.productId ?? 'n/a'}`);
+        options = {
+          id: peerId,
+          pairingCode,
+          ...(pairingData.shortDiscriminator !== undefined ? { shortDiscriminator: pairingData.shortDiscriminator } : {}),
+          ...(pairingData.vendorId !== undefined ? { vendorId: pairingData.vendorId } : {}),
+          ...(pairingData.productId !== undefined ? { productId: pairingData.productId } : {}),
+        };
       } else {
         const discriminator = getIntParameter('discriminator');
         const passcode = getIntParameter('passcode') ?? 0;
-        options = { id: 'device', discriminator, passcode };
+        this.log.info(`Pairing device ${nodeLabel} with discriminator: ${discriminator}, passcode: ${passcode}`);
+        options = { id: peerId, discriminator, passcode };
       }
-      this.log.info('Commissioning with options:', options);
-      const nodeId = this.controllerNode.peers.commission(options);
-      this.log.info(`Commissioning successfully done with nodeId: ${nodeId}`);
-    }
-    if (hasParameter('discover')) {
+      this.log.notice(`Commissioning node ${nodeLabel} with options: ${debugStringify(options)}`);
+      try {
+        const commissionedNode = await this.controllerNode.peers.commission(options);
+        this.log.notice(`Commissioning successfully done for node ${commissionedNode.id}`);
+      } catch (error) {
+        this.log.error(`Commissioning failed for node ${nodeLabel}: ${error instanceof Error ? error.message : error}`);
+      }
+    } else if (hasParameter('discover')) {
       this.log.info('Discovering commissionable devices...');
-      this.controllerNode.peers.discover();
-    }
-    if (hasParameter('unpairall')) {
+      const discovery = this.controllerNode.peers.discover();
+      discovery.discovered.on((node) => {
+        this.log.info(`Discovered commissionable device: ${node.id}`);
+      });
+    } else if (hasParameter('peers')) {
+      await this.controllerNode.start();
+      const peers = this.controllerNode.peers;
+      this.log.info(`Matter commissioning controller paired nodes: ${peers.size}`);
+      for (const peer of peers) {
+        const match = /^peer(\d+)$/.exec(peer.id);
+        this.log.info(`- ${match ? `Node ${match[1]}` : peer.id}`);
+      }
+    } else if (hasParameter('unpair')) {
+      await this.controllerNode.start();
+      const requestedNodeId = getIntParameter('node');
+      if (requestedNodeId === undefined) {
+        this.log.error('Missing parameter --node for --unpair');
+        return;
+      }
+      const nodeLabel = `Node ${requestedNodeId}`;
+      const peerId = `peer${requestedNodeId}`;
+      this.log.info(`Matter commissioning controller decommissioning node: ${nodeLabel}`);
+      const peers = this.controllerNode.peers;
+      for (const peer of peers) {
+        if (peer.id === peerId) {
+          await peer.decommission();
+          this.log.info(`Matter commissioning controller decommissioned node: ${nodeLabel}`);
+          return;
+        }
+      }
+      this.log.warn(`Matter commissioning controller node not found: ${nodeLabel}`);
+    } else if (hasParameter('unpairall')) {
+      await this.controllerNode.start();
       this.log.info('Matter commissioning controller decommissioning all nodes...');
       const nodeIds = this.controllerNode.peers;
       for (const nodeId of nodeIds) {
@@ -2203,192 +2246,147 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         await nodeId.decommission();
       }
       this.log.info('Matter commissioning controller decommissioned all nodes');
-      return;
-    }
+    } else {
+      this.log.info('Starting matter commissioning controller...');
+      await this.controllerNode.start();
+      this.log.info(`Matter commissioning controller started with ${this.controllerNode.peers.size} paired nodes`);
 
-    /*
-    this.log.info('Starting matter server');
-    await this.matterServer.start();
-    this.log.info('Matter server started');
-    const commissioningOptions: ControllerCommissioningFlowOptions = {
-      regulatoryLocation: GeneralCommissioning.RegulatoryLocationType.IndoorOutdoor,
-      regulatoryCountryCode: 'XX',
-    };
-    const commissioningController = new CommissioningController({
-      environment: {
-          environment,
-          id: uniqueId,
-      },
-      autoConnect: false, // Do not auto connect to the commissioned nodes
-      adminFabricLabel,
-    });
+      const tracerSubscriptions = new Map<string, Promise<{ close(): unknown }>>();
 
-    if (hasParameter('pairingcode')) {
-      this.log.info('Pairing device with pairingcode:', getParameter('pairingcode'));
-      const pairingCode = getParameter('pairingcode');
-      const ip = this.controllerContext.has('ip') ? this.controllerContext.get<string>('ip') : undefined;
-      const port = this.controllerContext.has('port') ? this.controllerContext.get<number>('port') : undefined;
-
-      let longDiscriminator, setupPin, shortDiscriminator;
-      if (pairingCode !== undefined) {
-        const pairingCodeCodec = ManualPairingCodeCodec.decode(pairingCode);
-        shortDiscriminator = pairingCodeCodec.shortDiscriminator;
-        longDiscriminator = undefined;
-        setupPin = pairingCodeCodec.passcode;
-        this.log.info(`Data extracted from pairing code: ${Logger.toJSON(pairingCodeCodec)}`);
+      // Matter.js currently restores persisted peers but does not automatically start (connect) them.
+      // Starting a peer triggers discovery + session establishment when the device is reachable.
+      const peersToStart = [];
+      if (peerId) {
+        const peer = this.controllerNode.peers.get(peerId);
+        if (!peer) {
+          this.log.warn(`Matter commissioning controller peer not found: ${nodeLabel ?? peerId}`);
+        } else {
+          peersToStart.push(peer);
+        }
       } else {
-        longDiscriminator = await this.controllerContext.get('longDiscriminator', 3840);
-        if (longDiscriminator > 4095) throw new Error('Discriminator value must be less than 4096');
-        setupPin = this.controllerContext.get('pin', 20202021);
-      }
-      if ((shortDiscriminator === undefined && longDiscriminator === undefined) || setupPin === undefined) {
-        throw new Error('Please specify the longDiscriminator of the device to commission with -longDiscriminator or provide a valid passcode with -passcode');
+        for (const peer of this.controllerNode.peers) {
+          peersToStart.push(peer);
+        }
       }
 
-      const options = {
-        commissioning: commissioningOptions,
-        discovery: {
-          knownAddress: ip !== undefined && port !== undefined ? { ip, port, type: 'udp' } : undefined,
-          identifierData: longDiscriminator !== undefined ? { longDiscriminator } : shortDiscriminator !== undefined ? { shortDiscriminator } : {},
-        },
-        passcode: setupPin,
-      } as NodeCommissioningOptions;
-      this.log.info('Commissioning with options:', options);
-      const nodeId = await this.commissioningController.commissionNode(options);
-      this.log.info(`Commissioning successfully done with nodeId: ${nodeId}`);
-      this.log.info('ActiveSessionInformation:', this.commissioningController.getActiveSessionInformation());
-    } // (hasParameter('pairingcode'))
+      for (const peer of peersToStart) {
+        const match = /^peer(\d+)$/.exec(peer.id);
+        const startedLabel = match ? `Node ${match[1]}` : peer.id;
 
-    if (hasParameter('unpairall')) {
-      this.log.info('***Commissioning controller unpairing all nodes...');
-      const nodeIds = this.commissioningController.getCommissionedNodes();
-      for (const nodeId of nodeIds) {
-        this.log.info('***Commissioning controller unpairing node:', nodeId);
-        await this.commissioningController.removeNode(nodeId);
-      }
-      return;
-    }
-
-    if (hasParameter('discover')) {
-      // const discover = await this.commissioningController.discoverCommissionableDevices({ productId: 0x8000, deviceType: 0xfff1 });
-      // console.log(discover);
-    }
-
-    if (!this.commissioningController.isCommissioned()) {
-      this.log.info('***Commissioning controller is not commissioned: use matterbridge -controller -pairingcode [pairingcode] to commission a device');
-      return;
-    }
-
-    const nodeIds = this.commissioningController.getCommissionedNodes();
-    this.log.info(`***Commissioning controller is commissioned ${this.commissioningController.isCommissioned()} and has ${nodeIds.length} nodes commisioned: `);
-    for (const nodeId of nodeIds) {
-      this.log.info(`***Connecting to commissioned node: ${nodeId}`);
-
-      const node = await this.commissioningController.connectNode(nodeId, {
-        autoSubscribe: false,
-        attributeChangedCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, attributeName }, value }) =>
-          this.log.info(`***Commissioning controller attributeChangedCallback ${peerNodeId}: attribute ${nodeId}/${endpointId}/${clusterId}/${attributeName} changed to ${Logger.toJSON(value)}`),
-        eventTriggeredCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, eventName }, events }) =>
-          this.log.info(`***Commissioning controller eventTriggeredCallback ${peerNodeId}: Event ${nodeId}/${endpointId}/${clusterId}/${eventName} triggered with ${Logger.toJSON(events)}`),
-        stateInformationCallback: (peerNodeId, info) => {
-          switch (info) {
-            case NodeStateInformation.Connected:
-              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} connected`);
-              break;
-            case NodeStateInformation.Disconnected:
-              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} disconnected`);
-              break;
-            case NodeStateInformation.Reconnecting:
-              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} reconnecting`);
-              break;
-            case NodeStateInformation.WaitingForDeviceDiscovery:
-              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} waiting for device discovery`);
-              break;
-            case NodeStateInformation.StructureChanged:
-              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} structure changed`);
-              break;
-            case NodeStateInformation.Decommissioned:
-              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} decommissioned`);
-              break;
-            default:
-              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} NodeStateInformation.${info}`);
-              break;
+        peer.lifecycle.online.on(() => {
+          this.log.notice(`Matter commissioning controller peer ${startedLabel} is online`);
+          if (peer.stateOf(NetworkClient).autoSubscribe) {
+            this.log.info(`Matter commissioning controller autoSubscribe is enabled for peer ${startedLabel}`);
+          } else {
+            this.log.info(`Matter commissioning controller setting autoSubscribe for peer ${startedLabel}`);
+            peer.setStateOf(NetworkClient, { autoSubscribe: true }).catch((error) => {
+              this.log.error(`Failed to set autoSubscribe for peer ${startedLabel}: ${error instanceof Error ? error.message : error}`);
+            });
           }
-        },
-      });
 
-      node.logStructure();
+          // Uses a subscription with an updated callback that yields ReadResult reports on every update.
+          if (hasParameter('trace-peer') && !tracerSubscriptions.has(peer.id)) {
+            this.log.info(`Matter commissioning controller enabling trace-peer for ${startedLabel}`);
 
-      // Get the interaction client
-      this.log.info('Getting the interaction client');
-      const interactionClient = await node.getInteractionClient();
-      let cluster;
-      let attributes;
+            const subscribe = Subscribe({
+              fabricFilter: true,
+              keepSubscriptions: false,
+              attributes: [{}],
+              events: [{ isUrgent: true }],
+            });
 
-      // Log BasicInformationCluster
-      cluster = BasicInformationCluster;
-      attributes = await interactionClient.getMultipleAttributes({
-        attributes: [{ clusterId: cluster.id }],
-      });
-      if (attributes.length > 0) this.log.info(`Cluster: ${idn}${cluster.name}${rs}${nf} attributes:`);
-      attributes.forEach((attribute) => {
-        this.log.info(
-          `- endpoint ${or}${attribute.path.endpointId}${nf} cluster ${hk}${getClusterNameById(attribute.path.clusterId)}${nf} (${hk}0x${attribute.path.clusterId.toString(16)}${nf}) attribute ${zb}${attribute.path.attributeName}${nf} (${zb}0x${attribute.path.attributeId.toString(16)}${nf}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
-        );
-      });
+            const subscriptionPromise = peer.interaction.subscribe({
+              ...subscribe,
+              updated: async (update) => {
+                for await (const chunk of update) {
+                  for (const report of chunk) {
+                    if (report.kind === 'attr-value') {
+                      this.log.info(
+                        `Peer ${startedLabel} attr ${report.path.endpointId}/${report.path.clusterId}/${report.path.attributeId} v${report.version}: ${
+                          typeof report.value === 'object' ? debugStringify(report.value ?? { none: true }) : String(report.value)
+                        }`,
+                      );
+                    } else if (report.kind === 'event-value') {
+                      this.log.info(
+                        `Peer ${startedLabel} event ${report.path.endpointId}/${report.path.clusterId}/${report.path.eventId} #${report.number}: ${
+                          typeof report.value === 'object' ? debugStringify(report.value ?? { none: true }) : String(report.value)
+                        }`,
+                      );
+                    } else if (report.kind === 'attr-status') {
+                      this.log.warn(`Peer ${startedLabel} attr-status ${report.path.endpointId}/${report.path.clusterId}/${report.path.attributeId}: ${String(report.status)}`);
+                    } else if (report.kind === 'event-status') {
+                      this.log.warn(`Peer ${startedLabel} event-status ${report.path.endpointId}/${report.path.clusterId}/${report.path.eventId}: ${String(report.status)}`);
+                    }
+                  }
+                }
+              },
+              closed: () => {
+                this.log.warn(`Matter commissioning controller trace-peer subscription closed for ${startedLabel}`);
+                tracerSubscriptions.delete(peer.id);
+              },
+            });
 
-      // Log PowerSourceCluster
-      cluster = PowerSourceCluster;
-      attributes = await interactionClient.getMultipleAttributes({
-        attributes: [{ clusterId: cluster.id }],
-      });
-      if (attributes.length > 0) this.log.info(`Cluster: ${idn}${cluster.name}${rs}${nf} attributes:`);
-      attributes.forEach((attribute) => {
-        this.log.info(
-          `- endpoint ${or}${attribute.path.endpointId}${nf} cluster ${hk}${getClusterNameById(attribute.path.clusterId)}${nf} (${hk}0x${attribute.path.clusterId.toString(16)}${nf}) attribute ${zb}${attribute.path.attributeName}${nf} (${zb}0x${attribute.path.attributeId.toString(16)}${nf}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
-        );
-      });
+            tracerSubscriptions.set(peer.id, subscriptionPromise);
+            subscriptionPromise.catch((error) => {
+              tracerSubscriptions.delete(peer.id);
+              this.log.error(`Matter commissioning controller trace-peer subscription failed for ${startedLabel}: ${error instanceof Error ? error.message : error}`);
+            });
+          }
 
-      // Log ThreadNetworkDiagnostics
-      cluster = ThreadNetworkDiagnosticsCluster;
-      attributes = await interactionClient.getMultipleAttributes({
-        attributes: [{ clusterId: cluster.id }],
-      });
-      if (attributes.length > 0) this.log.info(`Cluster: ${idn}${cluster.name}${rs}${nf} attributes:`);
-      attributes.forEach((attribute) => {
-        this.log.info(
-          `- endpoint ${or}${attribute.path.endpointId}${nf} cluster ${hk}${getClusterNameById(attribute.path.clusterId)}${nf} (${hk}0x${attribute.path.clusterId.toString(16)}${nf}) attribute ${zb}${attribute.path.attributeName}${nf} (${zb}0x${attribute.path.attributeId.toString(16)}${nf}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
-        );
-      });
+          if (hasParameter('dump-peer')) {
+            void (async () => {
+              try {
+                // Populate local cache for cluster client behaviors (includes BasicInformation on endpoint 0).
+                for await (const _chunk of peer.interaction.read(Read({ fabricFilter: true, attributes: [{}] }))) {
+                  // Intentionally empty: the mutate() side-effect updates local state.
+                }
 
-      // Log SwitchCluster
-      cluster = SwitchCluster;
-      attributes = await interactionClient.getMultipleAttributes({
-        attributes: [{ clusterId: cluster.id }],
-      });
-      if (attributes.length > 0) this.log.info(`Cluster: ${idn}${cluster.name}${rs}${nf} attributes:`);
-      attributes.forEach((attribute) => {
-        this.log.info(
-          `- endpoint ${or}${attribute.path.endpointId}${nf} cluster ${hk}${getClusterNameById(attribute.path.clusterId)}${nf} (${hk}0x${attribute.path.clusterId.toString(16)}${nf}) attribute ${zb}${attribute.path.attributeName}${nf} (${zb}0x${attribute.path.attributeId.toString(16)}${nf}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
-        );
-      });
+                // Logger.get(`PeerNode: ${startedLabel}`).info(peer);
 
-      this.log.info('Subscribing to all attributes and events');
-      await node.subscribeAllAttributesAndEvents({
-        ignoreInitialTriggers: false,
-        attributeChangedCallback: ({ path: { nodeId, clusterId, endpointId, attributeName }, version, value }) =>
+                const basicInfo = peer.stateOf(BasicInformationClient);
+                Logger.get(`BasicInformation: ${startedLabel}`).info(basicInfo);
+              } catch (error) {
+                this.log.error(`Matter commissioning controller dump-peer failed for ${startedLabel}: ${error instanceof Error ? error.message : error}`);
+              }
+            })();
+          }
+        });
+
+        peer.lifecycle.offline.on(() => {
+          this.log.warn(`Matter commissioning controller peer ${startedLabel} is offline`);
+        });
+
+        peer.eventsOf(NetworkClient).autoSubscribe$Changed.on((value, oldValue) => {
+          this.log.info(`Matter commissioning controller peer ${startedLabel} autoSubscribe changed from ${oldValue ? 'active' : 'inactive'} to ${value ? 'active' : 'inactive'}`);
+        });
+
+        peer.eventsOf(NetworkClient).defaultSubscription$Changed.on((value, oldValue) => {
           this.log.info(
-            `***${db}Commissioning controller attributeChangedCallback version ${version}: attribute ${BLUE}${nodeId}${db}/${or}${endpointId}${db}/${hk}${getClusterNameById(clusterId)}${db}/${zb}${attributeName}${db} changed to ${typeof value === 'object' ? debugStringify(value ?? { none: true }) : value}`,
-          ),
-        eventTriggeredCallback: ({ path: { nodeId, clusterId, endpointId, eventName }, events }) => {
-          this.log.info(
-            `***${db}Commissioning controller eventTriggeredCallback: event ${BLUE}${nodeId}${db}/${or}${endpointId}${db}/${hk}${getClusterNameById(clusterId)}${db}/${zb}${eventName}${db} triggered with ${debugStringify(events ?? { none: true })}`,
+            `Matter commissioning controller peer ${startedLabel} defaultSubscription changed from ${oldValue ? 'active' : 'inactive'} to ${value ? 'active' : 'inactive'}`,
           );
-        },
-      });
-      this.log.info('Subscribed to all attributes and events');
+        });
+
+        peer.eventsOf(NetworkClient).subscriptionStatusChanged.on((isActive) => {
+          this.log.info(`Matter commissioning controller peer ${startedLabel} subscription is ${isActive ? 'active' : 'inactive'}`);
+        });
+
+        peer.eventsOf(NetworkClient).subscriptionAlive.on(() => {
+          this.log.info(`Matter commissioning controller peer ${startedLabel} subscription alive event received`);
+        });
+
+        // Fire-and-forget: a peer may be offline; don't block controller startup.
+        this.log.notice(`Starting matter commissioning controller peer ${startedLabel}...`);
+        peer
+          .start()
+          .then(() => {
+            this.log.notice(`Matter commissioning controller peer ${startedLabel} started successfully`);
+            return;
+          })
+          .catch((error) => {
+            this.log.error(`Matter commissioning controller failed to start peer ${startedLabel}: ${error instanceof Error ? error.message : error}`);
+          });
+      }
     }
-    */
   }
 
   /**                                                                                                                                   */
