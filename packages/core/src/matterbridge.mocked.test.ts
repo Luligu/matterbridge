@@ -860,7 +860,7 @@ describe('Matterbridge mocked', () => {
       '-novirtual',
       '-frontend',
       '0',
-      '-controller',
+      '--test',
       '-homedir',
       HOMEDIR,
       '-profile',
@@ -877,7 +877,7 @@ describe('Matterbridge mocked', () => {
 
   test('Matterbridge.initialize() reset', async () => {
     // Reset the process.argv to simulate reset of a registered plugin
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-mock1'];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-mock1'];
     jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
       return Promise.resolve();
     });
@@ -889,7 +889,7 @@ describe('Matterbridge mocked', () => {
     await destroyInstance(matterbridge, 10, 10);
 
     // Reset the process.argv to simulate reset of not registered plugin
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-noplugin'];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-noplugin'];
     jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
       return Promise.resolve();
     });
@@ -905,7 +905,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
     // Mock the checkUpdates from update module before importing it
     jest.useFakeTimers();
     await (matterbridge as any).initialize();
@@ -923,7 +923,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger'];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger'];
     const createDestinationMatterLoggerSpy = jest.spyOn(Matterbridge.prototype as any, 'createDestinationMatterLogger');
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -964,7 +964,7 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() logNodeAndSystemInfo networkInterfaces', async () => {
     // setDebug(false);
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1025,7 +1025,7 @@ describe('Matterbridge mocked', () => {
 
   test('matterbridge.initialize() logNodeAndSystemInfo global node modules', async () => {
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1041,7 +1041,7 @@ describe('Matterbridge mocked', () => {
 
   test('Matterbridge.initialize() logNodeAndSystemInfo global node modules failed', async () => {
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-controller', '-homedir', HOMEDIR];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
     getGlobalNodeModulesMock.mockImplementation(() => {
       throw new Error('Test error for getGlobalNodeModules');
     });
