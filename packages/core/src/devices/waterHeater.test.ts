@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src\waterHeater.test.ts
 
 const MATTER_PORT = 8016;
@@ -29,7 +30,10 @@ import {
   aggregator,
   createTestEnvironment,
   destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
   loggerLogSpy,
+  loggerWarnSpy,
   server,
   setupTest,
   startServerNode,
@@ -55,6 +59,12 @@ describe('Matterbridge Water Heater', () => {
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
   });
 
   afterAll(async () => {

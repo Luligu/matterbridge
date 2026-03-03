@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/heatPump.test.ts
 
 const MATTER_PORT = 8007;
@@ -16,7 +17,19 @@ import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 
 // Matterbridge
-import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import {
+  addDevice,
+  aggregator,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
+  server,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestHelpers.js';
 import { heatPump } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { HeatPump } from './heatPump.js';
@@ -37,7 +50,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment

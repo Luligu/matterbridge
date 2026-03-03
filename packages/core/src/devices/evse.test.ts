@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src\evse.test.ts
 
 const MATTER_PORT = 8005;
@@ -36,7 +37,10 @@ import {
   aggregator,
   createTestEnvironment,
   destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
   loggerLogSpy,
+  loggerWarnSpy,
   server,
   setupTest,
   startServerNode,
@@ -64,7 +68,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment

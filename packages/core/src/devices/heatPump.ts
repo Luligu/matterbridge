@@ -22,12 +22,13 @@
  */
 
 // Imports from @matter
-import { NumberTag, PowerSourceTag } from '@matter/node';
+import { AreaNamespaceTag, NumberTag, PowerSourceTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 
 // Matterbridge
 import { deviceEnergyManagement, electricalSensor, heatPump, powerSource, temperatureSensor, thermostatDevice } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 
 export class HeatPump extends MatterbridgeEndpoint {
   /**
@@ -61,7 +62,7 @@ export class HeatPump extends MatterbridgeEndpoint {
     absMaxPower: number = 0,
   ) {
     super([heatPump, powerSource, electricalSensor, deviceEnergyManagement], {
-      tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Grid.namespaceId, tag: PowerSourceTag.Grid.tag, label: null }],
+      tagList: [getSemtag(PowerSourceTag.Grid)],
       id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
     });
     this.createDefaultIdentifyClusterServer()
@@ -76,23 +77,32 @@ export class HeatPump extends MatterbridgeEndpoint {
 
     // Add the flow temperature sensor for the heat pump.
     this.addChildDeviceType('FlowTemperature', temperatureSensor, {
-      tagList: [{ mfgCode: null, namespaceId: NumberTag.One.namespaceId, tag: NumberTag.One.tag, label: 'Flow' }],
+      tagList: [getSemtag(NumberTag.One, 'FlowTemperature')],
     })
       .createDefaultTemperatureMeasurementClusterServer(4500) // Default flow temperature setpoint in hundredths of degrees Celsius (45.00°C).
       .addRequiredClusterServers();
 
     // Add the return temperature sensor for the heat pump.
     this.addChildDeviceType('ReturnTemperature', temperatureSensor, {
-      tagList: [{ mfgCode: null, namespaceId: NumberTag.Two.namespaceId, tag: NumberTag.Two.tag, label: 'Return' }],
+      tagList: [getSemtag(NumberTag.Two, 'ReturnTemperature')],
     })
       .createDefaultTemperatureMeasurementClusterServer(3500) // Default return temperature setpoint in hundredths of degrees Celsius (35.00°C).
       .addRequiredClusterServers();
 
-    // Add the global thermostat for the heat pump.
-    this.addChildDeviceType('Thermostat', thermostatDevice, {
-      tagList: [{ mfgCode: null, namespaceId: NumberTag.One.namespaceId, tag: NumberTag.One.tag, label: 'Main Thermostat' }],
+    // Add the Living thermostat for the heat pump.
+    this.addChildDeviceType('LivingThermostat', thermostatDevice, {
+      tagList: [getSemtag(NumberTag.One, 'LivingThermostat'), getSemtag(AreaNamespaceTag.LivingRoom)],
     })
-      .createDefaultHeatingThermostatClusterServer()
-      .addRequiredClusterServers();
+      .createDefaultThermostatClusterServer()
+      .addRequiredClusterServers()
+      .addUserLabel('room', 'Living Room');
+
+    // Add the Bedroom thermostat for the heat pump.
+    this.addChildDeviceType('BedroomThermostat', thermostatDevice, {
+      tagList: [getSemtag(NumberTag.Two, 'BedroomThermostat'), getSemtag(AreaNamespaceTag.Bedroom)],
+    })
+      .createDefaultThermostatClusterServer()
+      .addRequiredClusterServers()
+      .addUserLabel('room', 'Bedroom');
   }
 }
