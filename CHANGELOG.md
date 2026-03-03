@@ -59,13 +59,6 @@ These threads already run as workers:
 - [Evse]: Refactor `Evse` class as composed device.
 - [WaterHeater]: Refactor `WaterHeater` class as composed device.
 - [SolarPower]: Refactor `SolarPower` class as composed device.
-
-### Added
-
-- [docker]: Add the image (tag **s6-rc-legacy** 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim` (the last node version supporting armv7), supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
-- [frontend]: Add the ability to filter by plugin in the Devices page. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
-- [frontend]: Add in the config whiteList and blackList select a filter to remove from the list what is already added. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
-- [frontend]: Uregister all devices increments the BasicInformation.configurationVersion. This, if supported on controller side, allows controllers to detect changes in the configuration.
 - [matter1.5.0]: Add SoilMeasurement cluster and corresponding test.
 - [matter1.5.0]: Add ClosureControl and ClosureDimension clusters with corresponding tests.
 - [matter1.5.0]: Add SoilSensor class and corresponding tests.
@@ -73,6 +66,16 @@ These threads already run as workers:
 - [matter1.5.0]: Add Closure class and corresponding tests.
 - [matter1.5.0]: Add ClosurePanel class and corresponding tests.
 - [matter1.5.0]: Add SoilSensor, IrrigationSystem, Closure, and ClosurePanel device types with corresponding definitions.
+- [chip-test]: ✅ `TC_DeviceBasicComposition.py` passes.
+- [chip-test]: ✅ `TC_DeviceConformance.py` passes.
+- [chip-test]: ✅ `TC_DefaultWarnings.py` passes.
+
+### Added
+
+- [docker]: Add the image (tag **s6-rc-legacy** 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim` (the last node version supporting armv7), supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
+- [frontend]: Add the ability to filter by plugin in the Devices page. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+- [frontend]: Add in the config whiteList and blackList select a filter to remove from the list what is already added. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+- [frontend]: Uregister all devices increments the BasicInformation.configurationVersion. This, if supported on controller side, allows controllers to detect changes in the configuration.
 
 ### Changed
 

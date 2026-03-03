@@ -69,7 +69,7 @@ RUN bash -lc "\
 
 # Build Matterbridge and plugins (keep only runtime deps)
 WORKDIR /root/matterbridge
-RUN echo "Build matterbridge module 3.6.0"
+RUN echo "Build matterbridge module 3.6.0 23:39:00"
 RUN \
   git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
   npm ci --no-fund --no-audit && npm run build && \
@@ -220,6 +220,46 @@ COPY --from=builder /root/connectedhomeip/credentials /root/connectedhomeip/cred
 COPY --from=builder /root/connectedhomeip/src/app/tests /root/connectedhomeip/src/app/tests
 COPY --from=builder /root/connectedhomeip/src/app/zap-templates/zcl/data-model/chip /root/connectedhomeip/src/app/zap-templates/zcl/data-model/chip
 COPY --from=builder /root/connectedhomeip/src/python_testing /root/connectedhomeip/src/python_testing
+
+# Work around a bug in TC_DeviceBasicComposition.py duplicate-tag detection:
+# it checks duplicates by comparing only `tag`, ignoring namespaceID/mfgCode.
+# For semantic tags, the uniqueness key is namespaced.
+RUN python3 - <<'PY'
+from pathlib import Path
+import re
+
+path = Path('/root/connectedhomeip/src/python_testing/TC_DeviceBasicComposition.py')
+text = path.read_text(encoding='utf-8')
+
+def replace_one(pattern: str, replacement: str, *, label: str) -> str:
+  matches = list(re.finditer(pattern, text, flags=re.MULTILINE))
+  if len(matches) != 1:
+    raise SystemExit(f'Expected exactly 1 match for {label} in {path}, found {len(matches)}; file likely changed upstream')
+  return re.sub(pattern, replacement, text, count=1, flags=re.MULTILINE)
+
+text = replace_one(
+  r'(^[ \t]*)no_duplicate_tag\s*=\s*\[\]\s*\n',
+  r'\1no_duplicate_tag_keys = set()\n',
+  label='no_duplicate_tag init',
+)
+
+text = replace_one(
+  r'(^[ \t]*)if\s+tag_struct\.tag\s+in\s+no_duplicate_tag\s*:\s*\n',
+  r"\1mfg_code_key = None if isinstance(tag_struct.mfgCode, Nullable) else int(tag_struct.mfgCode)\n"
+  r"\1tag_key = (mfg_code_key, int(tag_struct.namespaceID), int(tag_struct.tag))\n"
+  r"\1if tag_key in no_duplicate_tag_keys:\n",
+  label='duplicate-tag if check',
+)
+
+text = replace_one(
+  r'(^[ \t]*)no_duplicate_tag\.append\(\s*tag_struct\.tag\s*\)\s*\n',
+  r'\1no_duplicate_tag_keys.add(tag_key)\n',
+  label='no_duplicate_tag append',
+)
+
+path.write_text(text, encoding='utf-8')
+print(f'Patched {path}')
+PY
 
 # Persist pairing state for yaml and python tests
 COPY docker/chip-test/chip_* /tmp/

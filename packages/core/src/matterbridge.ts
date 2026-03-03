@@ -2170,12 +2170,17 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     if (hasParameter('pair')) {
       // passcode (setupPin) 20242025 longDiscriminator 3840
+      // const shortDiscriminator = (discriminator >> 8) & 0x0f;
       let options: CommissioningDiscovery.Options;
       if (hasParameter('pairingcode')) {
         const pairingCode = getParameter('pairingcode') as string;
         this.log.info(`Pairing device with pairingcode: ${pairingCode}`);
         const pairingData = ManualPairingCodeCodec.decode(pairingCode);
-        this.log.info(`Data extracted from pairing code: ${Logger.toJSON(pairingData)}`);
+        this.log.info(`- passcode: ${pairingData.passcode}`);
+        this.log.info(`- shortDiscriminator: ${pairingData.shortDiscriminator}`);
+        this.log.info(`- longDiscriminator: ${pairingData.discriminator}`);
+        this.log.info(`- vendorId: ${pairingData.vendorId}`);
+        this.log.info(`- productId: ${pairingData.productId}`);
         options = { id: 'device', pairingCode };
       } else {
         const discriminator = getIntParameter('discriminator');
@@ -2186,7 +2191,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       const nodeId = this.controllerNode.peers.commission(options);
       this.log.info(`Commissioning successfully done with nodeId: ${nodeId}`);
     }
-
+    if (hasParameter('discover')) {
+      this.log.info('Discovering commissionable devices...');
+      this.controllerNode.peers.discover();
+    }
     if (hasParameter('unpairall')) {
       this.log.info('Matter commissioning controller decommissioning all nodes...');
       const nodeIds = this.controllerNode.peers;
