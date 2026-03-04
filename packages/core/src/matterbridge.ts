@@ -1112,6 +1112,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Start the matterbridge in mode controller
+    // istanbul ignore next cause controller is under development and not tested yet
     if (hasParameter('controller')) {
       this.bridgeMode = 'controller';
       await this.startController();
@@ -1651,6 +1652,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
       this.log.notice('Stopped matter server nodes');
 
+      // istanbul ignore next cause controller is under development and not tested yet
       if (this.controllerNode) {
         this.log.notice(`Stopping matter controller...`);
         await this.stopServerNode(this.controllerNode);
@@ -2084,7 +2086,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  // istanbul ignore next cause is provisionally not covered by tests, but we want to keep it in the code for maintainability and future use when matter.js supports commissioning as a controller with the new apis.
+  // istanbul ignore next cause controller is under development and not tested yet
   private async startController(): Promise<void> {
     if (!this.matterStorageManager) {
       this.log.error('No storage manager initialized');
