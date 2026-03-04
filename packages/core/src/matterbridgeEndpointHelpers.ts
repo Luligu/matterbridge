@@ -393,18 +393,24 @@ export async function invokeBehaviorCommand(
     return false;
   }
 
-  await endpoint.act((agent) => {
+  let invoked = true;
+  await endpoint.act(async (agent) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    const behavior = (agent as unknown as Record<string, Record<string, Function>>)[behaviorId];
-    if (!(command in behavior) || typeof behavior[command] !== 'function') {
+    const behavior = (agent as unknown as Record<string, Record<string, Function> | undefined>)[behaviorId];
+    const handler = behavior?.[command];
+    if (typeof handler !== 'function') {
       endpoint.log?.error(
         `invokeBehaviorCommand error: command ${hk}${command}${er} not found on agent for endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`,
       );
-      return false;
+      invoked = false;
+      return;
     }
-    behavior[command](params);
+
+    // Preserve `this` binding for behavior command handlers.
+    const result = params === undefined ? handler.call(behavior) : handler.call(behavior, params);
+    await Promise.resolve(result);
   });
-  return true;
+  return invoked;
 }
 
 /**

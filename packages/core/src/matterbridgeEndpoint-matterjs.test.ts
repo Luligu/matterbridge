@@ -1366,6 +1366,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: 0`);
     jest.clearAllMocks();
     await invokeBehaviorCommand(dem, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 1 });
+    await flushAsync();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${dem.id}.${dem.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
@@ -1373,6 +1374,7 @@ describe('Matterbridge ' + NAME, () => {
     );
     jest.clearAllMocks();
     await invokeBehaviorCommand(dem, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 2 });
+    await flushAsync();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 2 (endpoint ${dem.id}.${dem.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 2 => Device Energy Management`);
   });

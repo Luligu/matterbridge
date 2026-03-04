@@ -324,7 +324,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   test('set reachable -bridge mode', async () => {
     for (const device of matterbridge.devices.array()) {
       expect(device).toBeDefined();
-      if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) device?.setStateOf(BridgedDeviceBasicInformationServer, { reachable: false });
+      if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) await device.setStateOf(BridgedDeviceBasicInformationServer, { reachable: false });
       device.getChildEndpoints().some(async (child) => {
         if (child.hasClusterServer(PressureMeasurementServer)) await child.setStateOf(PressureMeasurementServer, { measuredValue: 9900 });
       });

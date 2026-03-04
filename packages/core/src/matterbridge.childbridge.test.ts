@@ -58,6 +58,7 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { Environment } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { dev, MATTER_STORAGE_NAME, plg } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils';
 import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -469,7 +470,8 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   test('set reachable -bridge mode', async () => {
     for (const plugin of matterbridge.plugins.array()) {
       expect(plugin).toBeDefined();
-      plugin.serverNode?.setStateOf(BasicInformationServer, { reachable: false });
+      if (plugin.serverNode?.behaviors.has(BasicInformationServer)) await plugin.serverNode.setStateOf(BasicInformationServer, { reachable: false });
+      if (plugin.serverNode?.behaviors.has(BridgedDeviceBasicInformationServer)) await plugin.serverNode.setStateOf(BridgedDeviceBasicInformationServer, { reachable: false });
     }
   });
 

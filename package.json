@@ -191,7 +191,7 @@
     "fetchChip": "node ./scripts/fetch-chip.mjs",
     "updateHtmls": "node ./scripts/marked.mjs",
     "sync": "node scripts/sync-workspaces.mjs --scope \"@matterbridge\"",
-    "runMeBeforePublish": "npm run cleanBuild && npm run lint && npm run format && npm run test:coverage && npm run build && npm run updateHtmls",
+    "runMeBeforePublish": "npm run cleanBuild && npm run lint && npm run format && npm run test:typecheck && npm run test:coverage && npm run build && npm run updateHtmls",
     "prepublishOnly": "npm run cleanBuildProduction && npm --workspaces pkg delete devDependencies scripts && npm pkg delete devDependencies scripts workspaces && npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap --omit=dev",
     "checkDependencies": "npx --workspaces --include-workspace-root ncu",
     "updateDependencies": "npx --workspaces --include-workspace-root ncu -u && npm run reset",

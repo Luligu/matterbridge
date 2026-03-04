@@ -91,11 +91,13 @@ export namespace MatterbridgeServer {
 }
 
 export class MatterbridgePowerSourceServer extends PowerSourceServer {
-  override initialize() {
+  override async initialize() {
+    await super.initialize();
+
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Initializing MatterbridgePowerSourceServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     this.state.endpointList = [this.endpoint.number];
-    this.endpoint.construction.onSuccess(() => {
+    this.endpoint.construction.onSuccess(async () => {
       device.log.debug(`MatterbridgePowerSourceServer: endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber} construction completed`);
       const endpointList: EndpointNumber[] = [this.endpoint.number];
       for (const endpoint of this.endpoint.parts) {
@@ -103,7 +105,7 @@ export class MatterbridgePowerSourceServer extends PowerSourceServer {
           endpointList.push(endpoint.number);
         }
       }
-      this.endpoint.setStateOf(PowerSourceServer, { endpointList });
+      await this.endpoint.setStateOf(PowerSourceServer, { endpointList });
       device.log.debug(
         `MatterbridgePowerSourceServer: endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber} construction completed with endpointList: ${endpointList.join(', ')}`,
       );
@@ -723,7 +725,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
 }
 
 export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyManagementModeServer {
-  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('changeToMode', { request, cluster: DeviceEnergyManagementModeServer.id, attributes: this.state, endpoint: this.endpoint });
@@ -736,12 +738,12 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
     // The implementation is responsible for setting the device accordingly with the new mode if this logic is not enough
     if (supported.modeTags.find((tag) => tag.value === DeviceEnergyManagementMode.ModeTag.NoOptimization)) {
       if (this.endpoint.behaviors.has(DeviceEnergyManagementServer))
-        this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
+        await this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
           optOutState: DeviceEnergyManagement.OptOutState.OptOut,
         });
     } else {
       if (this.endpoint.behaviors.has(DeviceEnergyManagementServer))
-        this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
+        await this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
           optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
         });
     }
