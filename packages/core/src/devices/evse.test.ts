@@ -164,16 +164,20 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['energyEvse'].generatedCommandList).toEqual([0]);
     expect((device.stateOf(MatterbridgeEnergyEvseServer) as any).acceptedCommandList).toEqual([1, 2, 5, 6, 7]);
     expect((device.stateOf(MatterbridgeEnergyEvseServer) as any).generatedCommandList).toEqual([0]);
+
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'energyEvse', 'disable');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer disable called`);
+
     jest.clearAllMocks();
     await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInCharging);
     await invokeBehaviorCommand(device, 'energyEvse', 'disable');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer disable called`);
+
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer enableCharging called`);
+
     jest.clearAllMocks();
     await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
     await invokeBehaviorCommand(device, 'energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
@@ -199,9 +203,11 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseModeServer).commands.has('changeToMode')).toBeTruthy();
     expect((device as any).state['energyEvseMode'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['energyEvseMode'].generatedCommandList).toEqual([1]);
+
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'energyEvseMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeEnergyEvseModeServer changeToMode called with unsupported newMode: 0`);
+
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'energyEvseMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);

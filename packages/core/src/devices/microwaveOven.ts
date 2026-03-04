@@ -134,7 +134,8 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
  * Matterbridge Microwave Oven Control Server
  */
 export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControlServer.with(MicrowaveOvenControl.Feature.PowerInWatts) {
-  override initialize() {
+  override async initialize() {
+    await super.initialize();
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info('MatterbridgeMicrowaveOvenControlServer initialized');
   }
