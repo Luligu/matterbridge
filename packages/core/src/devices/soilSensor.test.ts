@@ -118,7 +118,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(typeof attributeId).toBe('number');
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBeGreaterThan(0);
+    expect(attributes.length).toBe(24);
   });
 
   test('close the server node', async () => {

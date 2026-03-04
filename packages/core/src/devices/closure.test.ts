@@ -114,6 +114,18 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
+  test('device forEachAttribute', async () => {
+    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      expect(typeof clusterName).toBe('string');
+      expect(typeof clusterId).toBe('number');
+      expect(typeof attributeName).toBe('string');
+      expect(typeof attributeId).toBe('number');
+      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+    });
+    expect(attributes.length).toBe(27);
+  });
+
   test('close the server node', async () => {
     expect(server).toBeDefined();
     await stopServerNode(server, MATTER_CREATE_ONLY);
