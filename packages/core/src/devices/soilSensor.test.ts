@@ -26,6 +26,7 @@ import {
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
 import { soilSensor } from '../matterbridgeDeviceTypes.js';
+import { featuresFor } from '../matterbridgeEndpointHelpers.js';
 import { createClusterSchema } from './customClusterSchema.js';
 import { SoilSensor } from './soilSensor.js';
 
@@ -87,6 +88,20 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getSoilMoistureMeasuredValue()).toBe(42);
   });
 
+  test('read SoilMeasurement global attributes', async () => {
+    // Verify hasAttributeServer() sees both globals and custom attributes.
+    expect(device.hasAttributeServer(SoilMeasurement.Cluster.id, 'soilMoistureMeasurementLimits')).toBe(true);
+    expect(device.hasAttributeServer(SoilMeasurement.Cluster.id, 'soilMoistureMeasuredValue')).toBe(true);
+    expect(featuresFor(device, SoilMeasurement.Cluster.id)).toEqual({});
+
+    const clusterRevision = device.getAttribute(SoilMeasurement.Cluster.id, 'clusterRevision');
+    expect(typeof clusterRevision).toBe('number');
+    expect(clusterRevision).toBeGreaterThanOrEqual(1);
+
+    const featureMap = device.getAttribute(SoilMeasurement.Cluster.id, 'featureMap');
+    expect(featureMap).toEqual({});
+  });
+
   test('setSoilMoistureMeasuredValue updates attribute', async () => {
     await device.setSoilMoistureMeasuredValue(55);
     expect(device.getSoilMoistureMeasuredValue()).toBe(55);
@@ -128,6 +143,21 @@ describe('Matterbridge ' + NAME, () => {
       name: 'EmptyCluster',
     });
     expect(emptySchema.name).toBe('EmptyCluster');
+  });
+
+  test('createClusterSchema infers TLV-backed types', async () => {
+    const schema = createClusterSchema(SoilMeasurement.Cluster as any);
+
+    const limits = schema.attributes.find((a) => a.id === 0x0000);
+    expect(limits).toBeDefined();
+    expect(limits?.type).toBe('struct');
+    expect(limits?.mandatory).toBe(true);
+
+    const measuredValue = schema.attributes.find((a) => a.id === 0x0001);
+    expect(measuredValue).toBeDefined();
+    expect(measuredValue?.type).toBe('uint8');
+    expect(measuredValue?.nullable).toBe(true);
+    expect(measuredValue?.default).toBe(null);
   });
 
   test('device forEachAttribute', async () => {
