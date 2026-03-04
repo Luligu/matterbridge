@@ -140,7 +140,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
   }
 
   // 8.13.6.2. SetCookingParameters Command
-  override setCookingParameters(request: MicrowaveOvenControl.SetCookingParametersRequest): MaybePromise {
+  override async setCookingParameters(request: MicrowaveOvenControl.SetCookingParametersRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('setCookingParameters', { request, cluster: MicrowaveOvenControl.Cluster.id, attributes: this.state, endpoint: this.endpoint });
@@ -148,12 +148,12 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
     // 8.13.6.2.1. CookMode Field. Default to Normal mode if not present.
     if (request.cookMode !== undefined) {
       device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to ${request.cookMode}`);
-      this.endpoint.setStateOf(MicrowaveOvenModeServer, { currentMode: request.cookMode });
+      await this.endpoint.setStateOf(MicrowaveOvenModeServer, { currentMode: request.cookMode });
     } else {
       device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
       const supportedModes = this.endpoint.stateOf(MicrowaveOvenModeServer).supportedModes;
       const normalMode = supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === MicrowaveOvenMode.ModeTag.Normal));
-      this.endpoint.setStateOf(MicrowaveOvenModeServer, { currentMode: normalMode?.mode });
+      await this.endpoint.setStateOf(MicrowaveOvenModeServer, { currentMode: normalMode?.mode });
     }
 
     // 8.13.6.2.2. CookTime Field. Default to 30 seconds.
@@ -177,7 +177,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
     // 8.13.6.2.5. StartAfterSetting Field. Default to false.
     if (request.startAfterSetting === true) {
       device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true`);
-      this.endpoint.setStateOf(MatterbridgeOperationalStateServer, { operationalState: OperationalState.OperationalStateEnum.Running });
+      await this.endpoint.setStateOf(MatterbridgeOperationalStateServer, { operationalState: OperationalState.OperationalStateEnum.Running });
     }
   }
 

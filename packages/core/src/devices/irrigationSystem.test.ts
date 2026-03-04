@@ -9,6 +9,7 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
+import { NumberTag } from '@matter/main';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { Identify } from '@matter/types/clusters/identify';
 import { OperationalState } from '@matter/types/clusters/operational-state';
@@ -27,6 +28,7 @@ import {
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
 import { irrigationSystem } from '../matterbridgeDeviceTypes.js';
+import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 import { IrrigationSystem } from './irrigationSystem.js';
 
 // Setup the test environment
@@ -61,9 +63,17 @@ describe('Matterbridge ' + NAME, () => {
   }, 10000);
 
   test('create an irrigation system device', async () => {
-    device = new IrrigationSystem('Irrigation System Test Device', 'IR123456', { flowMeasuredValue: 123, operationalState: OperationalState.OperationalStateEnum.Running });
+    device = new IrrigationSystem('Irrigation System Test Device', 'IR123456', { flowMeasuredValue: 123, operationalState: OperationalState.OperationalStateEnum.Running })
+      .addZone(getSemtag(NumberTag.One))
+      .addZone(getSemtag(NumberTag.Two))
+      .addZone(getSemtag(NumberTag.Three))
+      .addZone(getSemtag(NumberTag.Four));
     expect(device).toBeDefined();
     expect(device.id).toBe('IrrigationSystemTestDevice-IR123456');
+    expect(device.getChildEndpointByOriginalId('Zone 1')).toBeDefined();
+    expect(device.getChildEndpointByOriginalId('Zone 2')).toBeDefined();
+    expect(device.getChildEndpointByOriginalId('Zone 3')).toBeDefined();
+    expect(device.getChildEndpointByOriginalId('Zone 4')).toBeDefined();
 
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();

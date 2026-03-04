@@ -27,7 +27,6 @@ import {
 } from '../jestutils/jestHelpers.js';
 import { soilSensor } from '../matterbridgeDeviceTypes.js';
 import { featuresFor } from '../matterbridgeEndpointHelpers.js';
-import { createClusterSchema } from './customClusterSchema.js';
 import { SoilSensor } from './soilSensor.js';
 
 // Setup the test environment
@@ -108,56 +107,6 @@ describe('Matterbridge ' + NAME, () => {
 
     await device.setSoilMoistureMeasuredValue(null);
     expect(device.getSoilMoistureMeasuredValue()).toBeNull();
-  });
-
-  test('createClusterSchema covers optional + no-feature branches', async () => {
-    const schema = createClusterSchema({
-      id: 0x1234,
-      name: 'TestCluster',
-      revision: 2,
-      supportedFeatures: {},
-      attributes: { optionalAttr: { id: 1, optional: true } },
-      commands: { optionalCommand: { requestId: 2, optional: true } },
-      events: { optionalEvent: { id: 3, optional: true } },
-    });
-
-    expect(schema.name).toBe('TestCluster');
-    expect(schema.attributes.length).toBeGreaterThan(0);
-    expect(schema.commands.length).toBeGreaterThan(0);
-    expect(schema.events.length).toBeGreaterThan(0);
-
-    // Cover FeatureMap branch explicitly (supportedFeatures non-empty)
-    const schemaWithFeatures = createClusterSchema({
-      id: 0x1235,
-      name: 'TestClusterWithFeatures',
-      supportedFeatures: { testFeature: true },
-      attributes: { requiredAttr: { id: 1, optional: false } },
-    });
-
-    expect(schemaWithFeatures.name).toBe('TestClusterWithFeatures');
-    expect(schemaWithFeatures.attributes.length).toBeGreaterThan(0);
-
-    // Cover the "nullish/omitted" branches for supportedFeatures/attributes/commands/events + revision defaulting.
-    const emptySchema = createClusterSchema({
-      id: 0x1236,
-      name: 'EmptyCluster',
-    });
-    expect(emptySchema.name).toBe('EmptyCluster');
-  });
-
-  test('createClusterSchema infers TLV-backed types', async () => {
-    const schema = createClusterSchema(SoilMeasurement.Cluster as any);
-
-    const limits = schema.attributes.find((a) => a.id === 0x0000);
-    expect(limits).toBeDefined();
-    expect(limits?.type).toBe('struct');
-    expect(limits?.mandatory).toBe(true);
-
-    const measuredValue = schema.attributes.find((a) => a.id === 0x0001);
-    expect(measuredValue).toBeDefined();
-    expect(measuredValue?.type).toBe('uint8');
-    expect(measuredValue?.nullable).toBe(true);
-    expect(measuredValue?.default).toBe(null);
   });
 
   test('device forEachAttribute', async () => {

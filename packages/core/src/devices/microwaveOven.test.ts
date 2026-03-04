@@ -12,7 +12,6 @@ import { jest } from '@jest/globals';
 // @matter
 import { MicrowaveOvenControlServer, MicrowaveOvenModeServer } from '@matter/node/behaviors';
 import { Identify, MicrowaveOvenControl, MicrowaveOvenMode, OnOff, OperationalState, PowerSource } from '@matter/types/clusters';
-import { wait } from '@matterbridge/utils';
 import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
@@ -21,6 +20,7 @@ import {
   aggregator,
   createTestEnvironment,
   destroyTestEnvironment,
+  flushAsync,
   loggerErrorSpy,
   loggerFatalSpy,
   loggerLogSpy,
@@ -195,14 +195,12 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { startAfterSetting: false });
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true`);
-    await wait(100);
     expect((device as any).state['operationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Stopped);
 
     // Test setCookingParameters - startAfterSetting true (transition to Running)
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { startAfterSetting: true });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true`);
-    await wait(100);
     expect((device as any).state['operationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Running);
   });
 

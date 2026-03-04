@@ -32,7 +32,7 @@ import { soilSensor } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 /**
- * SoilMeasurement server schema.
+ * SoilMeasurement schema.
  */
 const SoilMeasurementSchema = ClusterElement(
   {

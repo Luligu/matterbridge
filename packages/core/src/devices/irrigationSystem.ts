@@ -21,9 +21,11 @@
  * limitations under the License.
  */
 
+import { LocationTag } from '@matter/main/node';
 import { OperationalState } from '@matter/types/clusters/operational-state';
+import { Semtag } from '@matter/types/globals';
 
-import { irrigationSystem } from '../matterbridgeDeviceTypes.js';
+import { irrigationSystem, waterValve } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 export interface IrrigationSystemOptions {
@@ -41,5 +43,12 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
     // Optional clusters included by default for this device class.
     this.createDefaultOperationalStateClusterServer(options.operationalState ?? OperationalState.OperationalStateEnum.Stopped);
     this.createDefaultFlowMeasurementClusterServer(options.flowMeasuredValue ?? null);
+  }
+
+  addZone(tag: Semtag) {
+    this.addChildDeviceType(`Zone ${tag.tag}`, waterValve, { tagList: [tag, LocationTag.Zone] })
+      .createDefaultValveConfigurationAndControlClusterServer()
+      .addRequiredClusterServers();
+    return this;
   }
 }
