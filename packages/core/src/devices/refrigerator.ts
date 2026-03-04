@@ -35,6 +35,9 @@ import { powerSource, refrigerator, temperatureControlledCabinetCooler } from '.
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
+/**
+ * Matterbridge endpoint representing a refrigerator device.
+ */
 export class Refrigerator extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the Refrigerator class.
@@ -195,11 +198,23 @@ export class Refrigerator extends MatterbridgeEndpoint {
 }
 
 // Server for RefrigeratorAndTemperatureControlledCabinetMode
+/**
+ * Refrigerator/cabinet mode server that forwards mode changes to the device implementation.
+ */
 export class MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer extends RefrigeratorAndTemperatureControlledCabinetModeServer {
+  /**
+   * Initializes the server.
+   */
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info('MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer initialized');
   }
+  /**
+   * Handles the RefrigeratorAndTemperatureControlledCabinetMode `ChangeToMode` command.
+   *
+   * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
+   * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
+   */
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);

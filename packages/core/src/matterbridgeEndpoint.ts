@@ -205,6 +205,9 @@ export function assertMatterbridgeEndpoint(value: unknown, context?: string): as
   throw new TypeError(`Invalid MatterbridgeEndpoint received${context ? ` in ${context}` : ''}`);
 }
 
+/**
+ * Matterbridge endpoint implementation extending the Matter.js {@link Endpoint}.
+ */
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
@@ -547,7 +550,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. When context.offline === true then the change is locally generated and not from the controller.
    */
-
   async subscribeAttribute(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
     attribute: string,

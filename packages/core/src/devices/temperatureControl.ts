@@ -78,7 +78,13 @@ export function createNumberTemperatureControlClusterServer(
   return endpoint;
 }
 
+/**
+ * Temperature control server that exposes discrete temperature levels.
+ */
 export class MatterbridgeLevelTemperatureControlServer extends TemperatureControlServer.with(TemperatureControl.Feature.TemperatureLevel) {
+  /**
+   * Initializes the server and logs the configured temperature levels.
+   */
   override initialize() {
     if (this.state.supportedTemperatureLevels.length >= 2) {
       const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -88,6 +94,11 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
     }
   }
 
+  /**
+   * Handles the TemperatureControl `SetTemperature` command.
+   *
+   * @param {TemperatureControl.SetTemperatureRequest} request - Temperature set request payload.
+   */
   override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -103,10 +114,16 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
   }
 }
 
+/**
+ * Temperature control server that exposes a numeric temperature setpoint.
+ */
 export class MatterbridgeNumberTemperatureControlServer extends TemperatureControlServer.with(
   TemperatureControl.Feature.TemperatureNumber,
   TemperatureControl.Feature.TemperatureStep,
 ) {
+  /**
+   * Initializes the server and logs the configured setpoint constraints.
+   */
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -114,6 +131,11 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
     );
   }
 
+  /**
+   * Handles the TemperatureControl `SetTemperature` command.
+   *
+   * @param {TemperatureControl.SetTemperatureRequest} request - Temperature set request payload.
+   */
   override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

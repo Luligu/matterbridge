@@ -34,6 +34,9 @@ import { batteryStorage, deviceEnergyManagement, electricalSensor, powerSource }
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getDefaultElectricalPowerMeasurementClusterServer, getSemtag } from '../matterbridgeEndpointHelpers.js';
 
+/**
+ * Matterbridge endpoint representing a battery storage device.
+ */
 export class BatteryStorage extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the BatteryStorage class.

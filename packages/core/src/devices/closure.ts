@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-namespace */
 /**
  * @description Closure device class exposing the Matter 1.5 ClosureControl cluster.
  * @file src/devices/closure.ts
@@ -7,7 +6,7 @@
  * @version 1.0.0
  * @license Apache-2.0
  *
- * Copyright 2026 Luca Liguori.
+ * Copyright 2026, 2027, 2028 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +20,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/* eslint-disable @typescript-eslint/no-namespace */
 
 import { MaybePromise } from '@matter/general';
 import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, EventElement, FieldElement } from '@matter/main/model';
@@ -147,6 +148,9 @@ export namespace ClosureControlServer {
   }
 }
 
+/**
+ * ClosureControl server that forwards MoveTo/Stop commands to the Matterbridge command handler.
+ */
 export class ClosureControlServer extends ClosureControlBehavior.with(ClosureControl.Feature.Positioning) {
   declare state: ClosureControlServer.State;
 
@@ -180,7 +184,17 @@ export interface ClosureOptions {
   mainState?: ClosureControl.MainState;
 }
 
+/**
+ * Matterbridge endpoint representing a closure device.
+ */
 export class Closure extends MatterbridgeEndpoint {
+  /**
+   * Creates a Closure endpoint and configures the ClosureControl cluster.
+   *
+   * @param {string} name - Human-readable device name.
+   * @param {string} serial - Device serial number.
+   * @param {ClosureOptions} [options] - Optional initial cluster state values.
+   */
   constructor(name: string, serial: string, options: ClosureOptions = {}) {
     super([closure], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
 
@@ -196,6 +210,11 @@ export class Closure extends MatterbridgeEndpoint {
     });
   }
 
+  /**
+   * Gets the ClosureControl `mainState` attribute.
+   *
+   * @returns {ClosureControl.MainState} Current main state.
+   */
   getMainState(): ClosureControl.MainState {
     return this.getAttribute(ClosureControl.Cluster.id, 'mainState');
   }

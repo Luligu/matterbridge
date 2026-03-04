@@ -6,7 +6,7 @@
  * @version 1.0.0
  * @license Apache-2.0
  *
- * Copyright 2026 Luca Liguori.
+ * Copyright 2026, 2027, 2028 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,17 @@ export interface IrrigationSystemOptions {
   flowMeasuredValue?: number | null;
 }
 
+/**
+ * Matterbridge endpoint representing an irrigation system device.
+ */
 export class IrrigationSystem extends MatterbridgeEndpoint {
+  /**
+   * Creates an IrrigationSystem endpoint and configures default clusters.
+   *
+   * @param {string} name - Human-readable device name.
+   * @param {string} serial - Device serial number.
+   * @param {IrrigationSystemOptions} [options] - Optional initial operational state and attributes.
+   */
   constructor(name: string, serial: string, options: IrrigationSystemOptions = {}) {
     super([irrigationSystem], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
 
@@ -45,6 +55,16 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
     this.createDefaultFlowMeasurementClusterServer(options.flowMeasuredValue ?? null);
   }
 
+  /*
+   * Helper method to add a new irrigation zone to the system.
+   * Each zone is represented as a child device of type Water Valve, with the appropriate tags.
+   */
+  /**
+   * Adds a new irrigation zone child endpoint.
+   *
+   * @param {Semtag} tag - Semantic tag describing the zone.
+   * @returns {this} The current endpoint instance for chaining.
+   */
   addZone(tag: Semtag) {
     this.addChildDeviceType(`Zone ${tag.tag}`, waterValve, { tagList: [tag, LocationTag.Zone] })
       .createDefaultValveConfigurationAndControlClusterServer()

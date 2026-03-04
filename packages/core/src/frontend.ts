@@ -109,6 +109,9 @@ interface FrontendEvents {
   websocket_server_stopped: [];
 }
 
+/**
+ * Frontend server controller providing the web UI and websocket integration.
+ */
 export class Frontend extends EventEmitter<FrontendEvents> {
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
@@ -125,6 +128,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private readonly debug = hasParameter('debug') || hasParameter('verbose');
   private readonly verbose = hasParameter('verbose');
 
+  /**
+   * Creates a frontend server controller.
+   *
+   * @param {Matterbridge} matterbridge - Parent Matterbridge instance.
+   */
   constructor(matterbridge: Matterbridge) {
     super();
     this.matterbridge = matterbridge;
@@ -138,6 +146,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.server.on('broadcast_message', this.msgHandler.bind(this));
   }
 
+  /**
+   * Stops the frontend broadcast server and releases resources.
+   */
   destroy(): void {
     this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
@@ -237,6 +248,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     }
   }
 
+  /**
+   * Updates the logger level at runtime.
+   */
   set logLevel(logLevel: LogLevel) {
     this.log.logLevel = logLevel;
   }
@@ -250,6 +264,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     return true;
   }
 
+  /**
+   * Starts the frontend server.
+   *
+   * @param {number} [port] - TCP port to listen on. Defaults to 8283.
+   * @returns {Promise<void>} Resolves when startup completes.
+   */
   async start(port = 8283) {
     this.port = port;
     this.storedPassword = await this.matterbridge.nodeContext?.get('password', '');
@@ -1023,6 +1043,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     );
   }
 
+  /**
+   * Stops the frontend HTTP/HTTPS and websocket servers.
+   */
   async stop() {
     this.log.debug('Stopping the frontend...');
     const ws = await import('ws');

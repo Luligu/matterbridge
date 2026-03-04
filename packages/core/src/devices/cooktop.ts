@@ -29,6 +29,9 @@ import { cookSurface, cooktop, powerSource } from '../matterbridgeDeviceTypes.js
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createLevelTemperatureControlClusterServer } from './temperatureControl.js';
 
+/**
+ * Matterbridge endpoint representing a cooktop device.
+ */
 export class Cooktop extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the Cooktop class.

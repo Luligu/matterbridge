@@ -142,10 +142,34 @@
 <li>npm install;</li>
 <li>✅ check the global node_modules directory;</li>
 </ul>
-<h2 id="357-dev-branch">[3.5.7] - Dev branch</h2>
+<h2 id="360-dev-branch">[3.6.0] - Dev branch</h2>
+<h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
+<ul>
+<li>[Oven]: Refactor <code>Oven</code> class to use TemperatureNumber for TemperatureControlledCabinet device type.</li>
+<li>[Refrigerator]: Refactor <code>Refrigerator</code> class to use TemperatureNumber for TemperatureControlledCabinet device type.</li>
+<li>[Evse]: Refactor <code>Evse</code> class as composed device.</li>
+<li>[WaterHeater]: Refactor <code>WaterHeater</code> class as composed device.</li>
+<li>[SolarPower]: Refactor <code>SolarPower</code> class as composed device.</li>
+<li>[BatteryStorage]: Refactor <code>BatteryStorage</code> class as composed device.</li>
+<li>[HeatPump]: Refactor <code>HeatPump</code> class as composed device.</li>
+<li>[matter1.5.0]: Add SoilMeasurement cluster and corresponding test.</li>
+<li>[matter1.5.0]: Add ClosureControl and ClosureDimension clusters with corresponding tests.</li>
+<li>[matter1.5.0]: Add SoilSensor class and corresponding tests.</li>
+<li>[matter1.5.0]: Add IrrigationSystem class and corresponding tests.</li>
+<li>[matter1.5.0]: Add Closure class and corresponding tests.</li>
+<li>[matter1.5.0]: Add ClosurePanel class and corresponding tests.</li>
+<li>[matter1.5.0]: Add SoilSensor, IrrigationSystem, Closure, and ClosurePanel device types with corresponding definitions.</li>
+<li>[semtag]: Add getSemtag() helper to facilitate adding tagList to the Desscriptor cluster.</li>
+<li>[chip-test]: ✅ <code>TC_DeviceBasicComposition.py</code> passes.</li>
+<li>[chip-test]: ✅ <code>TC_DeviceConformance.py</code> passes.</li>
+<li>[chip-test]: ✅ <code>TC_DefaultWarnings.py</code> passes.</li>
+</ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[docker]: Add the image (tag <strong>s6-rc-legacy</strong> 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on <code>node:22-bullseye-slim</code> (the last node version supporting armv7), supports <code>arm64</code>, <code>amd64</code> and <code>arm/v7</code> and integrates the <code>s6-rc overlay</code> system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy <a href="https://github.com/Luligu/matterbridge-home-assistant-addon-legacy">Matterbridge Home Assistant Application (Legacy)</a>.</li>
+<li>[frontend]: Add the ability to filter by plugin in the Devices page. Thanks <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</li>
+<li>[frontend]: Add in the config whiteList and blackList select a filter to remove from the list what is already added. Thanks <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</li>
+<li>[frontend]: Unregister all devices increments the BasicInformation.configurationVersion. This, if supported on controller side, allows controllers to detect changes in the configuration.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -153,15 +177,18 @@
 <li>[package]: Add <code>@eslint/json</code>.</li>
 <li>[package]: Add <code>@eslint/markdown</code>.</li>
 <li>[docker]: The base image <code>24-ubuntu-slim</code> is now built with the latest node 24 release.</li>
+<li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.7.</li>
+<li>[frontend]: Update dependencies.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
-<li>[thermostat]: Removed atomic commands required only with Preset and Schedule features.</li>
-<li>[thermostat]: Removed not mandatory Identify cluster fwhen using TemperatureControlledCabinet device type.</li>
+<li>[thermostat]: Remove atomic commands required only with Preset and Schedule features.</li>
+<li>[TemperatureControlledCabinet]: Remove not mandatory Identify cluster from TemperatureControlledCabinet device type.</li>
+<li>[frontend]: Fix config lock from select Devices panel.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="356-2026-02-27">[3.5.6] - 2026-02-27</h2>
-<h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-1">Dev Breaking Changes</h3>
 <ul>
 <li>[rootNode]: The serialNumber and uniqueId for accessory plugins in childbridge mode, and for devices with mode = server, are now taken from the device. These values are persisted in storage and cannot be changed later.</li>
 <li>[devContainer]: Add the guide to <a href="README-DEV.html#how-to-pair-matterbridge-in-dev-containers">pair Matterbridge with Dev Container</a></li>
@@ -220,7 +247,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="354-2026-02-13">[3.5.4] - 2026-02-13</h2>
-<h3 id="dev-breaking-changes-1">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-2">Dev Breaking Changes</h3>
 <ul>
 <li>[exports]: Removed Matterbridge export from matterbridge.</li>
 </ul>
@@ -263,7 +290,7 @@
 <p>In short: you can safely ignore this message; it is a dependency warning, not a Matterbridge vulnerability.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="353-2026-02-06">[3.5.3] - 2026-02-06</h2>
-<h3 id="dev-breaking-changes-2">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-3">Dev Breaking Changes</h3>
 <ul>
 <li>[logger]: The logger (node-ansi-logger) has been refactored and updated (v.3.2.0) to support the new features below.</li>
 </ul>

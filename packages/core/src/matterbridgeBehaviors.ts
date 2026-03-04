@@ -73,10 +73,16 @@ import { AnsiLogger } from 'node-ansi-logger';
 // MatterbridgeEndpoint
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
 
+/**
+ * Base behavior providing a logger and command dispatch for Matterbridge endpoints.
+ */
 export class MatterbridgeServer extends Behavior {
   static override readonly id = 'matterbridge';
   declare state: MatterbridgeServer.State;
 
+  /**
+   * Logs initialization and delegates to the base behavior.
+   */
   override initialize() {
     this.state.log.debug(`MatterbridgeServer initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     super.initialize();
@@ -84,13 +90,22 @@ export class MatterbridgeServer extends Behavior {
 }
 
 export namespace MatterbridgeServer {
+  /**
+   * State shared by Matterbridge servers.
+   */
   export class State {
     log!: AnsiLogger;
     commandHandler!: NamedHandler<MatterbridgeEndpointCommands>;
   }
 }
 
+/**
+ * PowerSource server that keeps the Matterbridge endpoint list in sync.
+ */
 export class MatterbridgePowerSourceServer extends PowerSourceServer {
+  /**
+   * Initializes state and updates endpointList when construction completes.
+   */
   override async initialize() {
     await super.initialize();
 
@@ -113,7 +128,15 @@ export class MatterbridgePowerSourceServer extends PowerSourceServer {
   }
 }
 
+/**
+ * Identify server that forwards Identify commands to the Matterbridge command handler.
+ */
 export class MatterbridgeIdentifyServer extends IdentifyServer {
+  /**
+   * Forwards Identify requests to the Matterbridge command handler.
+   *
+   * @param {Identify.IdentifyRequest} request - Identify request payload.
+   */
   override identify(request: Identify.IdentifyRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Identifying device for ${request.identifyTime} seconds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -122,6 +145,11 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
     super.identify(request);
   }
 
+  /**
+   * Forwards TriggerEffect requests to the Matterbridge command handler.
+   *
+   * @param {Identify.TriggerEffectRequest} request - Trigger-effect request payload.
+   */
   override triggerEffect(request: Identify.TriggerEffectRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Triggering effect ${request.effectIdentifier} variant ${request.effectVariant} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -131,7 +159,13 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
   }
 }
 
+/**
+ * OnOff server that forwards On/Off commands to the Matterbridge command handler.
+ */
 export class MatterbridgeOnOffServer extends OnOffServer {
+  /**
+   * Handles the On command.
+   */
   override on(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Switching device on (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -140,6 +174,9 @@ export class MatterbridgeOnOffServer extends OnOffServer {
     super.on();
   }
 
+  /**
+   * Handles the Off command.
+   */
   override off(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Switching device off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -148,6 +185,9 @@ export class MatterbridgeOnOffServer extends OnOffServer {
     super.off();
   }
 
+  /**
+   * Handles the Toggle command.
+   */
   override toggle(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Toggle device on/off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -157,7 +197,15 @@ export class MatterbridgeOnOffServer extends OnOffServer {
   }
 }
 
+/**
+ * LevelControl server that forwards level commands to the Matterbridge command handler.
+ */
 export class MatterbridgeLevelControlServer extends LevelControlServer {
+  /**
+   * Forwards MoveToLevel requests to the Matterbridge command handler.
+   *
+   * @param {LevelControl.MoveToLevelRequest} request - Move-to-level request payload.
+   */
   override moveToLevel(request: LevelControl.MoveToLevelRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -166,6 +214,11 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
     super.moveToLevel(request);
   }
 
+  /**
+   * Forwards MoveToLevelWithOnOff requests to the Matterbridge command handler.
+   *
+   * @param {LevelControl.MoveToLevelRequest} request - Move-to-level request payload.
+   */
   override moveToLevelWithOnOff(request: LevelControl.MoveToLevelRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -175,7 +228,15 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
   }
 }
 
+/**
+ * ColorControl server (hue/saturation/xy/color temperature) forwarding commands to the Matterbridge command handler.
+ */
 export class MatterbridgeColorControlServer extends ColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature) {
+  /**
+   * Forwards MoveToHue requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveToHueRequest} request - Move-to-hue request payload.
+   */
   override moveToHue(request: ColorControl.MoveToHueRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -184,6 +245,11 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
     super.moveToHue(request);
   }
 
+  /**
+   * Forwards MoveToSaturation requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveToSaturationRequest} request - Move-to-saturation request payload.
+   */
   override moveToSaturation(request: ColorControl.MoveToSaturationRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -192,6 +258,11 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
     super.moveToSaturation(request);
   }
 
+  /**
+   * Forwards MoveToHueAndSaturation requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveToHueAndSaturationRequest} request - Move-to-hue-and-saturation request payload.
+   */
   override moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -202,6 +273,11 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
     super.moveToHueAndSaturation(request);
   }
 
+  /**
+   * Forwards MoveToColor requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveToColorRequest} request - Move-to-color request payload.
+   */
   override moveToColor(request: ColorControl.MoveToColorRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -212,6 +288,11 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
     super.moveToColor(request);
   }
 
+  /**
+   * Forwards MoveToColorTemperature requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveToColorTemperatureRequest} request - Move-to-color-temperature request payload.
+   */
   override moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -223,12 +304,20 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
   }
 }
 
+/**
+ * Enhanced ColorControl server forwarding enhanced hue commands to the Matterbridge command handler.
+ */
 export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.with(
   ColorControl.Feature.HueSaturation,
   ColorControl.Feature.EnhancedHue,
   ColorControl.Feature.Xy,
   ColorControl.Feature.ColorTemperature,
 ) {
+  /**
+   * Forwards MoveToHue requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveToHueRequest} request - Move-to-hue request payload.
+   */
   override moveToHue(request: ColorControl.MoveToHueRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -237,6 +326,11 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
     super.moveToHue(request);
   }
 
+  /**
+   * Forwards EnhancedMoveToHue requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.EnhancedMoveToHueRequest} request - Enhanced-move-to-hue request payload.
+   */
   override enhancedMoveToHue(request: ColorControl.EnhancedMoveToHueRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -247,6 +341,11 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
     super.enhancedMoveToHue(request);
   }
 
+  /**
+   * Forwards MoveToSaturation requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveToSaturationRequest} request - Move-to-saturation request payload.
+   */
   override moveToSaturation(request: ColorControl.MoveToSaturationRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -255,6 +354,11 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
     super.moveToSaturation(request);
   }
 
+  /**
+   * Forwards MoveToHueAndSaturation requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveToHueAndSaturationRequest} request - Move-to-hue-and-saturation request payload.
+   */
   override moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -265,6 +369,11 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
     super.moveToHueAndSaturation(request);
   }
 
+  /**
+   * Forwards EnhancedMoveToHueAndSaturation requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.EnhancedMoveToHueAndSaturationRequest} request - Enhanced-move-to-hue-and-saturation request payload.
+   */
   override enhancedMoveToHueAndSaturation(request: ColorControl.EnhancedMoveToHueAndSaturationRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -275,6 +384,11 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
     super.enhancedMoveToHueAndSaturation(request);
   }
 
+  /**
+   * Forwards MoveToColor requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveToColorRequest} request - Move-to-color request payload.
+   */
   override moveToColor(request: ColorControl.MoveToColorRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -285,6 +399,11 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
     super.moveToColor(request);
   }
 
+  /**
+   * Forwards MoveToColorTemperature requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveToColorTemperatureRequest} request - Move-to-color-temperature request payload.
+   */
   override moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -296,7 +415,13 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
   }
 }
 
+/**
+ * WindowCovering server (lift) that forwards covering commands to the Matterbridge command handler.
+ */
 export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {
+  /**
+   * Handles UpOrOpen for lift-only window coverings.
+   */
   override upOrOpen(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -305,6 +430,9 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     super.upOrOpen();
   }
 
+  /**
+   * Handles DownOrClose for lift-only window coverings.
+   */
   override downOrClose(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -313,6 +441,9 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     super.downOrClose();
   }
 
+  /**
+   * Handles StopMotion for lift-only window coverings.
+   */
   override stopMotion(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -321,6 +452,11 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     super.stopMotion();
   }
 
+  /**
+   * Forwards GoToLiftPercentage requests to the Matterbridge command handler.
+   *
+   * @param {WindowCovering.GoToLiftPercentageRequest} request - Go-to-lift-percentage request payload.
+   */
   override goToLiftPercentage(request: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -329,17 +465,31 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     super.goToLiftPercentage(request);
   }
 
+  /**
+   * No-op: movement is handled by the device implementation.
+   *
+   * @param {MovementType} type - Movement type.
+   * @param {boolean} reversed - Whether the direction is reversed.
+   * @param {MovementDirection} direction - Movement direction.
+   * @param {number} [targetPercent100ths] - Target position in hundredths of a percent.
+   */
   override async handleMovement(type: MovementType, reversed: boolean, direction: MovementDirection, targetPercent100ths?: number) {
     // Do nothing here, as the device will handle the movement
   }
 }
 
+/**
+ * WindowCovering server (lift + tilt) that forwards covering commands to the Matterbridge command handler.
+ */
 export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServer.with(
   WindowCovering.Feature.Lift,
   WindowCovering.Feature.PositionAwareLift,
   WindowCovering.Feature.Tilt,
   WindowCovering.Feature.PositionAwareTilt,
 ) {
+  /**
+   * Handles UpOrOpen for lift/tilt window coverings.
+   */
   override upOrOpen(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -348,6 +498,9 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     super.upOrOpen();
   }
 
+  /**
+   * Handles DownOrClose for lift/tilt window coverings.
+   */
   override downOrClose(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -356,6 +509,9 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     super.downOrClose();
   }
 
+  /**
+   * Handles StopMotion for lift/tilt window coverings.
+   */
   override stopMotion(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -364,6 +520,11 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     super.stopMotion();
   }
 
+  /**
+   * Forwards GoToLiftPercentage requests to the Matterbridge command handler.
+   *
+   * @param {WindowCovering.GoToLiftPercentageRequest} request - Go-to-lift-percentage request payload.
+   */
   override goToLiftPercentage(request: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -372,6 +533,11 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     super.goToLiftPercentage(request);
   }
 
+  /**
+   * Forwards GoToTiltPercentage requests to the Matterbridge command handler.
+   *
+   * @param {WindowCovering.GoToTiltPercentageRequest} request - Go-to-tilt-percentage request payload.
+   */
   override goToTiltPercentage(request: WindowCovering.GoToTiltPercentageRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover tilt percentage to ${request.tiltPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -380,12 +546,26 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     super.goToTiltPercentage(request);
   }
 
+  /**
+   * No-op: movement is handled by the device implementation.
+   *
+   * @param {MovementType} type - Movement type.
+   * @param {boolean} reversed - Whether the direction is reversed.
+   * @param {MovementDirection} direction - Movement direction.
+   * @param {number} [targetPercent100ths] - Target position in hundredths of a percent.
+   */
   override async handleMovement(type: MovementType, reversed: boolean, direction: MovementDirection, targetPercent100ths?: number) {
     // Do nothing here, as the device will handle the movement
   }
 }
 
+/**
+ * DoorLock server that forwards lock/unlock commands to the Matterbridge command handler.
+ */
 export class MatterbridgeDoorLockServer extends DoorLockServer {
+  /**
+   * Handles the LockDoor command.
+   */
   override lockDoor(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Locking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -394,6 +574,9 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
     super.lockDoor();
   }
 
+  /**
+   * Handles the UnlockDoor command.
+   */
   override unlockDoor(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Unlocking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -403,7 +586,15 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
   }
 }
 
+/**
+ * FanControl server (auto + step) that forwards step commands to the Matterbridge command handler.
+ */
 export class MatterbridgeFanControlServer extends FanControlServer.with(FanControl.Feature.Auto, FanControl.Feature.Step) {
+  /**
+   * Forwards Step requests to the Matterbridge command handler and updates percentCurrent.
+   *
+   * @param {FanControl.StepRequest} request - Step request payload.
+   */
   override step(request: FanControl.StepRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stepping fan with direction ${request.direction} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -429,7 +620,13 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
   }
 }
 
+/**
+ * Thermostat server (cooling/heating/auto) with Matterbridge-specific command handling.
+ */
 export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
+  /**
+   * Initializes thermostat behavior and adjusts command lists to avoid unsupported atomic commands.
+   */
   override async initialize() {
     await super.initialize();
 
@@ -445,6 +642,11 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
     });
   }
 
+  /**
+   * Forwards SetpointRaiseLower requests to the Matterbridge command handler and updates occupied setpoints.
+   *
+   * @param {Thermostat.SetpointRaiseLowerRequest} request - Setpoint-raise/lower request payload.
+   */
   override setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -471,12 +673,20 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
 }
 
 // istanbul ignore next
+/**
+ * Thermostat server with Presets feature enabled and Matterbridge-specific command handling.
+ */
 export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
   Thermostat.Feature.Presets,
   Thermostat.Feature.Cooling,
   Thermostat.Feature.Heating,
   Thermostat.Feature.AutoMode,
 ) {
+  /**
+   * Forwards SetpointRaiseLower requests to the Matterbridge command handler and updates occupied setpoints.
+   *
+   * @param {Thermostat.SetpointRaiseLowerRequest} request - Setpoint-raise/lower request payload.
+   */
   override setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -502,6 +712,11 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
     // super.setpointRaiseLower(request);
   }
 
+  /**
+   * Forwards SetActivePresetRequest requests to the Matterbridge command handler.
+   *
+   * @param {Thermostat.SetActivePresetRequest} request - Set-active-preset request payload.
+   */
   override setActivePresetRequest(request: Thermostat.SetActivePresetRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting preset to ${request.presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -513,7 +728,15 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
   }
 }
 
+/**
+ * ValveConfigurationAndControl server that forwards valve commands to the Matterbridge command handler.
+ */
 export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level) {
+  /**
+   * Forwards Open requests to the Matterbridge command handler and updates valve state.
+   *
+   * @param {ValveConfigurationAndControl.OpenRequest} request - Open request payload.
+   */
   override open(request: ValveConfigurationAndControl.OpenRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -532,6 +755,9 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
     // super.open(request);
   }
 
+  /**
+   * Handles the Close command.
+   */
   override close(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Closing valve (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -549,7 +775,13 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
   }
 }
 
+/**
+ * Smoke/CO Alarm server that forwards self-test commands to the Matterbridge command handler.
+ */
 export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm) {
+  /**
+   * Handles the SelfTestRequest command.
+   */
   override selfTestRequest(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Testing SmokeCOAlarm (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -561,11 +793,19 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
   }
 }
 
+/**
+ * BooleanStateConfiguration server that forwards alarm control commands to the Matterbridge command handler.
+ */
 export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateConfigurationServer.with(
   BooleanStateConfiguration.Feature.Visual,
   BooleanStateConfiguration.Feature.Audible,
   BooleanStateConfiguration.Feature.SensitivityLevel,
 ) {
+  /**
+   * Forwards EnableDisableAlarm requests to the Matterbridge command handler.
+   *
+   * @param {BooleanStateConfiguration.EnableDisableAlarmRequest} request - Enable/disable-alarm request payload.
+   */
   override enableDisableAlarm(request: BooleanStateConfiguration.EnableDisableAlarmRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Enabling/disabling alarm ${request.alarmsToEnableDisable} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -577,13 +817,25 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
   }
 }
 
+/**
+ * Switch server placeholder; the device implementation drives switch logic.
+ */
 export class MatterbridgeSwitchServer extends SwitchServer {
+  /**
+   * Intentionally no-op: switch logic is handled by the device implementation.
+   */
   override initialize() {
     // Do nothing here, as the device will handle the switch logic: we need to convert something like "single" into the appropriate sequence of state changes and events
   }
 }
 
+/**
+ * OperationalState server that maps operational commands to Matterbridge command handler calls.
+ */
 export class MatterbridgeOperationalStateServer extends OperationalStateServer {
+  /**
+   * Initializes operational state defaults.
+   */
   override initialize(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.debug('MatterbridgeOperationalStateServer initialized: setting operational state to Stopped');
@@ -592,6 +844,11 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     super.initialize(); // Error handling logic is handled in matter.js
   }
 
+  /**
+   * Handles the Pause command.
+   *
+   * @returns {MaybePromise<OperationalState.OperationalCommandResponse>} The operational command response.
+   */
   override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -606,6 +863,11 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     };
   }
 
+  /**
+   * Handles the Stop command.
+   *
+   * @returns {MaybePromise<OperationalState.OperationalCommandResponse>} The operational command response.
+   */
   override stop(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -620,6 +882,11 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     };
   }
 
+  /**
+   * Handles the Start command.
+   *
+   * @returns {MaybePromise<OperationalState.OperationalCommandResponse>} The operational command response.
+   */
   override start(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Start (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -634,6 +901,11 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     };
   }
 
+  /**
+   * Handles the Resume command.
+   *
+   * @returns {MaybePromise<OperationalState.OperationalCommandResponse>} The operational command response.
+   */
   override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -649,7 +921,16 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
   }
 }
 
+/**
+ * ServiceArea server that validates and applies selected areas.
+ */
 export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
+  /**
+   * Validates area IDs, updates selectedAreas, and forwards the request.
+   *
+   * @param {ServiceArea.SelectAreasRequest} request - Select-areas request payload.
+   * @returns {MaybePromise<ServiceArea.SelectAreasResponse>} The select-areas response.
+   */
   override selectAreas(request: ServiceArea.SelectAreasRequest): MaybePromise<ServiceArea.SelectAreasResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Selecting areas ${request.newAreas} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -668,7 +949,15 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
   }
 }
 
+/**
+ * ModeSelect server that forwards mode changes to the Matterbridge command handler.
+ */
 export class MatterbridgeModeSelectServer extends ModeSelectServer {
+  /**
+   * Forwards ChangeToMode requests to the Matterbridge command handler.
+   *
+   * @param {ModeSelect.ChangeToModeRequest} request - Change-to-mode request payload.
+   */
   override changeToMode(request: ModeSelect.ChangeToModeRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -678,7 +967,13 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
   }
 }
 
+/**
+ * HEPA filter monitoring server that forwards reset commands and updates condition state.
+ */
 export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition) {
+  /**
+   * Resets filter condition to 100%.
+   */
   override resetCondition(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -689,7 +984,13 @@ export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoring
   }
 }
 
+/**
+ * Activated carbon filter monitoring server that forwards reset commands and updates condition state.
+ */
 export class MatterbridgeActivatedCarbonFilterMonitoringServer extends ActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition) {
+  /**
+   * Resets filter condition to 100%.
+   */
   override resetCondition(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -700,10 +1001,18 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
   }
 }
 
+/**
+ * DeviceEnergyManagement server forwarding energy management commands to the Matterbridge command handler.
+ */
 export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManagementServer.with(
   DeviceEnergyManagement.Feature.PowerForecastReporting,
   DeviceEnergyManagement.Feature.PowerAdjustment,
 ) {
+  /**
+   * Forwards PowerAdjustRequest requests to the Matterbridge command handler.
+   *
+   * @param {DeviceEnergyManagement.PowerAdjustRequest} request - Power-adjust request payload.
+   */
   override powerAdjustRequest(request: DeviceEnergyManagement.PowerAdjustRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Adjusting power to ${request.power} duration ${request.duration} cause ${request.cause} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -713,6 +1022,9 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     // powerAdjustRequest is not implemented in matter.js
     // return super.powerAdjustRequest();
   }
+  /**
+   * Cancels an in-progress power adjustment.
+   */
   override cancelPowerAdjustRequest(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Cancelling power adjustment (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -724,7 +1036,16 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
   }
 }
 
+/**
+ * DeviceEnergyManagementMode server that validates and applies energy optimization modes.
+ */
 export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyManagementModeServer {
+  /**
+   * Validates the requested mode, updates opt-out state, and forwards the request.
+   *
+   * @param {ModeBase.ChangeToModeRequest} request - Change-to-mode request payload.
+   * @returns {Promise<ModeBase.ChangeToModeResponse>} The change-to-mode response.
+   */
   override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

@@ -80,6 +80,9 @@ interface TrackerEvents {
   gc_done: [type: 'major' | 'minor', execution: 'sync' | 'async'];
 }
 
+/**
+ * Tracks CPU and memory usage over time.
+ */
 export class Tracker extends EventEmitter<TrackerEvents> {
   private trackerInterval?: NodeJS.Timeout;
   static historyIndex = 0;
@@ -114,6 +117,13 @@ export class Tracker extends EventEmitter<TrackerEvents> {
   private prevCpuUsage = process.cpuUsage();
   private log: AnsiLogger;
 
+  /**
+   * Creates a Tracker instance.
+   *
+   * @param {string} name - Logger/instance name.
+   * @param {boolean} debug - Enables debug logging.
+   * @param {boolean} verbose - Enables verbose logging.
+   */
   constructor(
     private readonly name: string = 'Tracker',
     private readonly debug: boolean = false,

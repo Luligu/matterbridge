@@ -36,6 +36,9 @@ import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { deviceEnergyManagement, electricalSensor, evse, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
+/**
+ * Matterbridge endpoint representing an EVSE (electric vehicle supply equipment).
+ */
 export class Evse extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the EVSE class.
@@ -136,7 +139,13 @@ export class Evse extends MatterbridgeEndpoint {
   }
 }
 
+/**
+ * Energy EVSE server that forwards charging commands and updates supply/state attributes.
+ */
 export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences) {
+  /**
+   * Disables charging and updates EVSE state.
+   */
   override disable(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Disable charging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -149,6 +158,11 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     // super.disable();
     // disable is not implemented in matter.js
   }
+  /**
+   * Handles the EnergyEvse `EnableCharging` command.
+   *
+   * @param {EnergyEvse.EnableChargingRequest} request - Charging enable request payload.
+   */
   override enableCharging(request: EnergyEvse.EnableChargingRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`EnableCharging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -165,6 +179,11 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     // super.enableCharging();
     // enableCharging is not implemented in matter.js
   }
+  /**
+   * Handles the EnergyEvse `SetTargets` command.
+   *
+   * @param {EnergyEvse.SetTargetsRequest} request - Charging target schedules request payload.
+   */
   override setTargets(request: EnergyEvse.SetTargetsRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTargets request ${request.chargingTargetSchedules} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -173,6 +192,11 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     // setTargets is not implemented in matter.js
     return;
   }
+  /**
+   * Handles the EnergyEvse `GetTargets` command.
+   *
+   * @returns {EnergyEvse.GetTargetsResponse} Stored charging target schedules.
+   */
   override getTargets(): MaybePromise<EnergyEvse.GetTargetsResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`GetTargets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -181,6 +205,11 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     // getTargets is not implemented in matter.js
     return { chargingTargetSchedules: [] };
   }
+  /**
+   * Handles the EnergyEvse `ClearTargets` command.
+   *
+   * @returns {void} No return value.
+   */
   override clearTargets(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`ClearTargets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -191,7 +220,16 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   }
 }
 
+/**
+ * Energy EVSE mode server that validates and applies mode changes.
+ */
 export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
+  /**
+   * Handles the EnergyEvseMode `ChangeToMode` command.
+   *
+   * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
+   * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
+   */
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

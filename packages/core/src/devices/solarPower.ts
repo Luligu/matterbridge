@@ -32,6 +32,9 @@ import { deviceEnergyManagement, electricalSensor, powerSource, solarPower } fro
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 
+/**
+ * Matterbridge endpoint representing a solar power device.
+ */
 export class SolarPower extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the SolarPower class.

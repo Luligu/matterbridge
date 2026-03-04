@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-namespace */
 /**
  * @description Soil Sensor device class exposing the Matter 1.5 SoilMeasurement custom cluster.
  * @file src/devices/soilSensor.ts
@@ -7,7 +6,7 @@
  * @version 1.0.0
  * @license Apache-2.0
  *
- * Copyright 2026 Luca Liguori.
+ * Copyright 2026, 2027, 2028 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +21,15 @@
  * limitations under the License.
  */
 
+/* eslint-disable @typescript-eslint/no-namespace */
+
 import { AttributeElement, ClusterElement, ClusterModel } from '@matter/main/model';
 import { ClusterBehavior } from '@matter/node';
 import { MeasurementType } from '@matter/types/globals';
 import { type MeasurementAccuracy } from '@matter/types/globals';
 
 import { SoilMeasurement } from '../clusters/soil-measurement.js';
-import { soilSensor } from '../matterbridgeDeviceTypes.js';
+import { powerSource, soilSensor } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 /**
@@ -65,6 +66,9 @@ export namespace SoilMeasurementServer {
   }
 }
 
+/**
+ * Behavior server for the custom SoilMeasurement cluster.
+ */
 export class SoilMeasurementServer extends SoilMeasurementBehavior {
   declare state: SoilMeasurementServer.State;
 }
@@ -75,29 +79,51 @@ export interface SoilSensorOptions {
   soilMoistureMeasuredValue?: number | null;
 }
 
+/**
+ * Matterbridge endpoint representing a soil sensor.
+ */
 export class SoilSensor extends MatterbridgeEndpoint {
+  /**
+   * Creates a SoilSensor endpoint and configures the SoilMeasurement cluster.
+   *
+   * @param {string} name - Human-readable device name.
+   * @param {string} serial - Device serial number.
+   * @param {SoilSensorOptions} [options] - Optional initial SoilMeasurement attribute values.
+   */
   constructor(name: string, serial: string, options: SoilSensorOptions = {}) {
-    super([soilSensor], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([soilSensor, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
 
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Soil Sensor');
+    this.createDefaultPowerSourceBatteryClusterServer();
 
     this.behaviors.require(SoilMeasurementServer, {
       soilMoistureMeasurementLimits: options.soilMoistureMeasurementLimits ?? {
         measurementType: MeasurementType.SoilMoisture,
         measured: true,
-        minMeasuredValue: 0n,
-        maxMeasuredValue: 100n,
-        accuracyRanges: [{ rangeMin: 0n, rangeMax: 100n, fixedMax: 1n }],
+        minMeasuredValue: 0,
+        maxMeasuredValue: 100,
+        accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 1 }],
       },
       soilMoistureMeasuredValue: options.soilMoistureMeasuredValue ?? null,
     });
   }
 
+  /**
+   * Sets the SoilMeasurement `soilMoistureMeasuredValue` attribute.
+   *
+   * @param {number | null} value - Soil moisture in percent (0..100), or null when unknown.
+   * @returns {Promise<void>} Resolves when the attribute has been updated.
+   */
   async setSoilMoistureMeasuredValue(value: number | null): Promise<void> {
     await this.setAttribute(SoilMeasurement.Cluster.id, 'soilMoistureMeasuredValue', value);
   }
 
+  /**
+   * Gets the SoilMeasurement `soilMoistureMeasuredValue` attribute.
+   *
+   * @returns {number | null} Soil moisture in percent (0..100), or null when unknown.
+   */
   getSoilMoistureMeasuredValue(): number | null {
     return this.getAttribute(SoilMeasurement.Cluster.id, 'soilMoistureMeasuredValue');
   }

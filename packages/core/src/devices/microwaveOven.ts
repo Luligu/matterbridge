@@ -34,6 +34,9 @@ import { MatterbridgeOperationalStateServer, MatterbridgeServer } from '../matte
 import { microwaveOven, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
+/**
+ * Matterbridge endpoint representing a microwave oven device.
+ */
 export class MicrowaveOven extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the MicrowaveOven class.
@@ -134,6 +137,9 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
  * Matterbridge Microwave Oven Control Server
  */
 export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControlServer.with(MicrowaveOvenControl.Feature.PowerInWatts) {
+  /**
+   * Initializes the server.
+   */
   override async initialize() {
     await super.initialize();
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -141,6 +147,11 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
   }
 
   // 8.13.6.2. SetCookingParameters Command
+  /**
+   * Handles the MicrowaveOvenControl `SetCookingParameters` command.
+   *
+   * @param {MicrowaveOvenControl.SetCookingParametersRequest} request - Cooking parameter request payload.
+   */
   override async setCookingParameters(request: MicrowaveOvenControl.SetCookingParametersRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -183,6 +194,11 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
   }
 
   // 8.13.6.3. AddMoreTime Command
+  /**
+   * Handles the MicrowaveOvenControl `AddMoreTime` command.
+   *
+   * @param {MicrowaveOvenControl.AddMoreTimeRequest} request - Additional time request payload.
+   */
   override addMoreTime(request: MicrowaveOvenControl.AddMoreTimeRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeMicrowaveOvenControlServer: addMoreTime (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

@@ -33,6 +33,9 @@ import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
+/**
+ * Matterbridge endpoint representing a laundry dryer device.
+ */
 export class LaundryDryer extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the LaundryDryer class.

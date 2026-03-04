@@ -42,6 +42,9 @@ export interface CastingVideoPlayerOptions {
   playbackState?: MediaPlayback.PlaybackState;
 }
 
+/**
+ * Matterbridge endpoint representing a casting video player device.
+ */
 export class CastingVideoPlayer extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the CastingVideoPlayer class.
@@ -110,7 +113,13 @@ export class CastingVideoPlayer extends MatterbridgeEndpoint {
   }
 }
 
+/**
+ * ContentLauncher server that forwards launch commands to the Matterbridge command handler.
+ */
 export class MatterbridgeContentLauncherServer extends ContentLauncherServer {
+  /**
+   * Initializes the server.
+   */
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeContentLauncherServer initialized`);

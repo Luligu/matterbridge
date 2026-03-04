@@ -268,6 +268,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     if (this.verbose) this.log.debug(`Destroyed MatterNode instance for ${this.storeId}`);
   }
 
+  /**
+   * Creates and initializes the Matter node, storage, and plugins.
+   */
   async create(): Promise<void> {
     this.log.info('Creating Matter node...');
 
@@ -327,6 +330,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     await this.yieldToNode();
   }
 
+  /**
+   * Starts the Matter node and any dependant nodes.
+   */
   async start(): Promise<void> {
     if (!this.serverNode && !this.pluginName) throw new Error('Matter server node not created yet. Call create() first.');
     this.log.info('Starting MatterNode...');
@@ -387,6 +393,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     await this.yieldToNode();
   }
 
+  /**
+   * Stops the Matter node and releases associated resources.
+   */
   async stop(): Promise<void> {
     if (!this.serverNode) throw new Error('Matter server node not created yet. Call create() first.');
     this.log.info('Stopping MatterNode...');

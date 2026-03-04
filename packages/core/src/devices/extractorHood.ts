@@ -28,6 +28,9 @@ import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { extractorHood, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
+/**
+ * Matterbridge endpoint representing an extractor hood device.
+ */
 export class ExtractorHood extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the ExtractorHood class.

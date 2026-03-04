@@ -40,6 +40,9 @@ import { MatterbridgeServer, MatterbridgeServiceAreaServer } from '../matterbrid
 import { powerSource, roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
+/**
+ * Matterbridge endpoint representing a robotic vacuum cleaner device.
+ */
 export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the RoboticVacuumCleaner class.
@@ -211,7 +214,16 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
   }
 }
 
+/**
+ * RVC run mode server that validates and applies run mode changes.
+ */
 export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
+  /**
+   * Handles the RvcRunMode `ChangeToMode` command.
+   *
+   * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
+   * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
+   */
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -237,7 +249,16 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
   }
 }
 
+/**
+ * RVC clean mode server that validates and applies clean mode changes.
+ */
 export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
+  /**
+   * Handles the RvcCleanMode `ChangeToMode` command.
+   *
+   * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
+   * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
+   */
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -253,7 +274,15 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
   }
 }
 
+/**
+ * RVC operational state server that forwards operational commands and updates state.
+ */
 export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateServer {
+  /**
+   * Handles the RvcOperationalState `Pause` command.
+   *
+   * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
+   */
   override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -267,6 +296,11 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     } as OperationalState.OperationalCommandResponse;
   }
 
+  /**
+   * Handles the RvcOperationalState `Resume` command.
+   *
+   * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
+   */
   override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -280,6 +314,11 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     } as OperationalState.OperationalCommandResponse;
   }
 
+  /**
+   * Handles the RvcOperationalState `GoHome` command.
+   *
+   * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
+   */
   override goHome(): MaybePromise<OperationalState.OperationalCommandResponse> {
     // const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     const device = this.endpoint.stateOf(MatterbridgeServer);

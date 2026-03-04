@@ -159,7 +159,19 @@ export const COIOT_OPTION_SERIAL = 3420;
 export const COIOT_REQUEST_STATUS_ID = 56831;
 export const COIOT_REQUEST_DESCRIPTION_ID = 56832;
 
+/** CoAP over multicast helper implementation. */
 export class Coap extends Multicast {
+  /**
+   * Creates a CoAP multicast instance.
+   *
+   * @param {string} name - Logger/instance name.
+   * @param {string} multicastAddress - Multicast address.
+   * @param {number} multicastPort - Multicast port.
+   * @param {'udp4' | 'udp6'} socketType - Socket type.
+   * @param {boolean | undefined} [reuseAddr] - Whether to reuse the address. Defaults to true.
+   * @param {string} [interfaceName] - Optional network interface name.
+   * @param {string} [interfaceAddress] - Optional interface address.
+   */
   constructor(
     name: string,
     multicastAddress: string,
@@ -172,10 +184,22 @@ export class Coap extends Multicast {
     super(name, multicastAddress, multicastPort, socketType, reuseAddr, interfaceName, interfaceAddress);
   }
 
+  /**
+   * Handles a decoded CoAP message.
+   *
+   * @param {CoapMessage} message - Parsed CoAP message.
+   * @param {dgram.RemoteInfo} rinfo - Sender address information.
+   */
   onCoapMessage(message: CoapMessage, rinfo: dgram.RemoteInfo): void {
     this.log.debug(`Coap message received from ${BLUE}${rinfo.family}${db} ${BLUE}${rinfo.address}${db}:${BLUE}${rinfo.port}${db}`);
   }
 
+  /**
+   * Handles a raw UDP datagram.
+   *
+   * @param {Buffer} msg - Received datagram.
+   * @param {dgram.RemoteInfo} rinfo - Sender address information.
+   */
   override onMessage(msg: Buffer, rinfo: dgram.RemoteInfo): void {
     this.log.info(`Dgram multicast socket received a CoAP message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
     try {
@@ -449,6 +473,17 @@ export class Coap extends Multicast {
     return codeStr;
   }
 
+  /**
+   * Sends a CoAP request message.
+   *
+   * @param {number} messageId - CoAP message identifier.
+   * @param {CoapOption[]} options - CoAP options list.
+   * @param {Record<string, unknown> | undefined} payload - Optional JSON payload.
+   * @param {string | undefined} token - Optional CoAP token.
+   * @param {string | undefined} address - Destination IP address. Defaults to the CoAP multicast address.
+   * @param {number | undefined} port - Destination UDP port. Defaults to the CoAP multicast port.
+   * @returns {void} No return value.
+   */
   sendRequest(
     messageId: number,
     options: CoapOption[],
@@ -466,12 +501,18 @@ export class Coap extends Multicast {
       messageId,
       token: token ? Buffer.from(token) : Buffer.alloc(0),
       options,
-      payload: payload ? Buffer.from(JSON.stringify(payload)) : undefined,
+      payload: payload !== undefined ? Buffer.from(JSON.stringify(payload)) : undefined,
     };
     const encodedBuffer = this.encodeCoapMessage(coapMessage);
     this.send(encodedBuffer, address ?? COAP_MULTICAST_IPV4_ADDRESS, port ?? COAP_MULTICAST_PORT);
   }
 
+  /**
+   * Logs a decoded CoAP message.
+   *
+   * @param {CoapMessage} msg - Parsed CoAP message.
+   * @returns {void} No return value.
+   */
   logCoapMessage(msg: CoapMessage) {
     this.log.info(
       `Decoded CoAP message: version ${MAGENTA}${msg.version}${nf} type ${MAGENTA}${this.coapTypeToString(msg.type)}${nf} ` +

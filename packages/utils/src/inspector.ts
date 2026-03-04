@@ -47,6 +47,9 @@ interface InspectorEvents {
   gc_done: [type: 'major' | 'minor', execution: 'sync' | 'async'];
 }
 
+/**
+ * Inspector helper to collect heap snapshots and GC metrics.
+ */
 export class Inspector extends EventEmitter<InspectorEvents> {
   private session: Session | undefined;
   private snapshotInterval?: NodeJS.Timeout;
@@ -54,6 +57,13 @@ export class Inspector extends EventEmitter<InspectorEvents> {
   private snapshotInProgress = false;
   private log: AnsiLogger;
 
+  /**
+   * Creates an Inspector instance.
+   *
+   * @param {string} name - Logger/instance name.
+   * @param {boolean} debug - Enables debug logging.
+   * @param {boolean} verbose - Enables verbose logging.
+   */
   constructor(
     private readonly name: string = 'Inspector',
     private readonly debug: boolean = false,

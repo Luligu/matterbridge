@@ -94,6 +94,25 @@ export default defineConfig([
       'no-redeclare': 'off', // Disable no-redeclare for TypeScript files since TypeScript already checks for redeclarations
       'no-undef': 'off', // Disable no-undef for TypeScript files since TypeScript already checks for undefined variables
       'no-unused-vars': 'off', // Disable base rule for unused variables and use the TypeScript-specific rule instead
+      'jsdoc/require-file-overview': 'warn',
+      'jsdoc/require-jsdoc': [
+        'warn',
+        {
+          contexts: [
+            // Exported classes
+            'ExportNamedDeclaration > ClassDeclaration',
+            'ExportDefaultDeclaration > ClassDeclaration',
+
+            // Public methods on exported classes (TS `public` or default). Exclude protected/private.
+            'ExportNamedDeclaration > ClassDeclaration MethodDefinition:not([accessibility="private"]):not([accessibility="protected"])',
+            'ExportDefaultDeclaration > ClassDeclaration MethodDefinition:not([accessibility="private"]):not([accessibility="protected"])',
+
+            // Exported functions
+            'ExportNamedDeclaration > FunctionDeclaration',
+            'ExportDefaultDeclaration > FunctionDeclaration',
+          ],
+        },
+      ],
       '@typescript-eslint/no-unused-vars': [
         'error',
         {

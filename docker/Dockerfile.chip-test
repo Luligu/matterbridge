@@ -69,7 +69,7 @@ RUN bash -lc "\
 
 # Build Matterbridge and plugins (keep only runtime deps)
 WORKDIR /root/matterbridge
-RUN echo "Build matterbridge module 3.6.0 0303"
+RUN echo "Build matterbridge module 3.6.0 0304"
 RUN \
   git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
   npm ci --no-fund --no-audit && npm run build && \

@@ -30,6 +30,9 @@ import { deviceEnergyManagement, electricalSensor, heatPump, powerSource, temper
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 
+/**
+ * Matterbridge endpoint representing a heat pump device.
+ */
 export class HeatPump extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the HeatPump class.

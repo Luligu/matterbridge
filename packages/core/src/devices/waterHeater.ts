@@ -36,6 +36,9 @@ import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { deviceEnergyManagement, electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
+/**
+ * Matterbridge endpoint representing a water heater device.
+ */
 export class WaterHeater extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the WaterHeater class.
@@ -160,7 +163,15 @@ export class WaterHeater extends MatterbridgeEndpoint {
   }
 }
 
+/**
+ * WaterHeaterManagement server that forwards boost commands and updates boost state.
+ */
 export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManagementServer {
+  /**
+   * Handles the WaterHeaterManagement `Boost` command.
+   *
+   * @param {WaterHeaterManagement.BoostRequest} request - Boost request payload.
+   */
   override boost(request: WaterHeaterManagement.BoostRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -172,6 +183,9 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
     // boost is not implemented in matter.js
   }
 
+  /**
+   * Cancels an active boost.
+   */
   override cancelBoost(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Cancel boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -184,7 +198,16 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
   }
 }
 
+/**
+ * WaterHeaterMode server that validates and applies mode changes.
+ */
 export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
+  /**
+   * Handles the WaterHeaterMode `ChangeToMode` command.
+   *
+   * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
+   * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
+   */
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
