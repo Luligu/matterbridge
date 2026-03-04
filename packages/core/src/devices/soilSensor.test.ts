@@ -10,6 +10,8 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Identify } from '@matter/types/clusters/identify';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 
 import { SoilMeasurement } from '../clusters/soil-measurement.js';
 import {
@@ -71,11 +73,40 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getClusterServerOptions(SoilMeasurement.Cluster.id)).toMatchObject({
       soilMoistureMeasuredValue: 42,
     });
+  });
 
-    // Cover default option path (value omitted -> null)
+  test('create a soil sensor device with default option', async () => {
     const defaultDevice = new SoilSensor('Soil Sensor Default Device', 'SS000000');
     expect(defaultDevice.getClusterServerOptions(SoilMeasurement.Cluster.id)).toMatchObject({
       soilMoistureMeasuredValue: null,
+    });
+  });
+
+  test('create a soil sensor device with battery power', async () => {
+    const defaultDevice = new SoilSensor('Soil Sensor Default Device', 'SS000000', { batteryPowered: true });
+    expect(defaultDevice.getClusterServerOptions(PowerSource.Cluster.id)).toMatchObject({
+      batChargeLevel: 0,
+      batPercentRemaining: null,
+      batReplaceability: 0,
+      batReplacementNeeded: false,
+      batVoltage: null,
+      description: 'Primary battery',
+      endpointList: [],
+      order: 0,
+      status: 1,
+    });
+  });
+
+  test('create a soil sensor device with temperature', async () => {
+    const defaultDevice = new SoilSensor('Soil Sensor Default Device', 'SS000000', { temperatureMeasuredValue: 2500 });
+    expect(defaultDevice.getClusterServerOptions(SoilMeasurement.Cluster.id)).toMatchObject({
+      soilMoistureMeasuredValue: null,
+    });
+    expect(defaultDevice.getClusterServerOptions(TemperatureMeasurement.Cluster.id)).toMatchObject({
+      maxMeasuredValue: null,
+      measuredValue: 2500,
+      minMeasuredValue: null,
+      tolerance: 0,
     });
   });
 

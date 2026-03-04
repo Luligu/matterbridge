@@ -13,6 +13,8 @@ import { NumberTag } from '@matter/main';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { Identify } from '@matter/types/clusters/identify';
 import { OperationalState } from '@matter/types/clusters/operational-state';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 
 import {
   addDevice,
@@ -36,6 +38,7 @@ await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let device: IrrigationSystem;
+  let singleZoneBatteryDevice: IrrigationSystem;
 
   beforeAll(async () => {
     createTestEnvironment(NAME, MATTER_CREATE_ONLY);
@@ -78,6 +81,11 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(FlowMeasurement.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+
+    // Default behavior: wired power source and NOT a single-zone valve endpoint
+    expect(device.getClusterServerOptions(PowerSource.Cluster.id)).toMatchObject({ description: 'AC Power', wiredCurrentType: PowerSource.WiredCurrentType.Ac });
+    expect(device.hasClusterServer(ValveConfigurationAndControl.Cluster.id)).toBeFalsy();
 
     // Cover option paths
     expect(device.getClusterServerOptions(OperationalState.Cluster.id)).toMatchObject({ operationalState: OperationalState.OperationalStateEnum.Running });
@@ -86,11 +94,34 @@ describe('Matterbridge ' + NAME, () => {
     // Cover default paths
     const defaultDevice = new IrrigationSystem('Irrigation System Default Device', 'IR000000');
     expect(defaultDevice.getClusterServerOptions(OperationalState.Cluster.id)).toMatchObject({ operationalState: OperationalState.OperationalStateEnum.Stopped });
-    expect(defaultDevice.getClusterServerOptions(FlowMeasurement.Cluster.id)).toMatchObject({ measuredValue: null });
+    expect(defaultDevice.getClusterServerOptions(PowerSource.Cluster.id)).toMatchObject({ description: 'AC Power', wiredCurrentType: PowerSource.WiredCurrentType.Ac });
+    expect(defaultDevice.hasClusterServer(ValveConfigurationAndControl.Cluster.id)).toBeFalsy();
+  });
+
+  test('create a single zone battery irrigation system device', async () => {
+    singleZoneBatteryDevice = new IrrigationSystem('Irrigation System Single Zone', 'IRBAT001', { singleZone: true, batteryPowered: true, flowMeasuredValue: 45 });
+    expect(singleZoneBatteryDevice).toBeDefined();
+    expect(singleZoneBatteryDevice.id).toBe('IrrigationSystemSingleZone-IRBAT001');
+
+    expect(singleZoneBatteryDevice.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+    expect(singleZoneBatteryDevice.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
+    expect(singleZoneBatteryDevice.hasClusterServer(FlowMeasurement.Cluster.id)).toBeTruthy();
+    expect(singleZoneBatteryDevice.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+    expect(singleZoneBatteryDevice.hasClusterServer(ValveConfigurationAndControl.Cluster.id)).toBeTruthy();
+
+    expect(singleZoneBatteryDevice.getClusterServerOptions(FlowMeasurement.Cluster.id)).toMatchObject({ measuredValue: 45 });
+    expect(singleZoneBatteryDevice.getClusterServerOptions(PowerSource.Cluster.id)).toMatchObject({
+      description: 'Primary battery',
+      batChargeLevel: PowerSource.BatChargeLevel.Ok,
+    });
   });
 
   test('add an irrigation system device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
+  });
+
+  test('add a single zone battery irrigation system device', async () => {
+    expect(await addDevice(server, singleZoneBatteryDevice)).toBeTruthy();
   });
 
   test('device forEachAttribute', async () => {
@@ -102,7 +133,19 @@ describe('Matterbridge ' + NAME, () => {
       expect(typeof attributeId).toBe('number');
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(37);
+    expect(attributes.length).toBe(54);
+  });
+
+  test('single zone battery device forEachAttribute', async () => {
+    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    singleZoneBatteryDevice.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      expect(typeof clusterName).toBe('string');
+      expect(typeof clusterId).toBe('number');
+      expect(typeof attributeName).toBe('string');
+      expect(typeof attributeId).toBe('number');
+      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+    });
+    expect(attributes.length).toBe(69);
   });
 
   test('close the server node', async () => {

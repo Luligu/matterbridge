@@ -21,15 +21,19 @@
  * limitations under the License.
  */
 
+import { AtLeastOne } from '@matter/general';
 import { LocationTag } from '@matter/main/node';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { Semtag } from '@matter/types/globals';
 
-import { irrigationSystem, waterValve } from '../matterbridgeDeviceTypes.js';
+import { DeviceTypeDefinition, irrigationSystem, powerSource, waterValve } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 export interface IrrigationSystemOptions {
+  singleZone?: boolean;
+  batteryPowered?: boolean;
   operationalState?: OperationalState.OperationalStateEnum;
+  /** Flow measurement in 10 x m3/h. This is an optional attribute that may be included if the irrigation system has a flow measurement capability. */
   flowMeasuredValue?: number | null;
 }
 
@@ -45,14 +49,24 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
    * @param {IrrigationSystemOptions} [options] - Optional initial operational state and attributes.
    */
   constructor(name: string, serial: string, options: IrrigationSystemOptions = {}) {
-    super([irrigationSystem], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    const deviceTypes: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition> = options.singleZone ? [irrigationSystem, waterValve, powerSource] : [irrigationSystem, powerSource];
+    super(deviceTypes, { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
 
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Irrigation System');
+    if (options.batteryPowered) {
+      this.createDefaultPowerSourceBatteryClusterServer();
+    } else {
+      this.createDefaultPowerSourceWiredClusterServer();
+    }
 
     // Optional clusters included by default for this device class.
     this.createDefaultOperationalStateClusterServer(options.operationalState ?? OperationalState.OperationalStateEnum.Stopped);
-    this.createDefaultFlowMeasurementClusterServer(options.flowMeasuredValue ?? null);
+    if (options.flowMeasuredValue !== undefined) this.createDefaultFlowMeasurementClusterServer(options.flowMeasuredValue);
+    if (options.singleZone) {
+      this.createDefaultValveConfigurationAndControlClusterServer();
+    }
+    this.addRequiredClusterServers();
   }
 
   /*

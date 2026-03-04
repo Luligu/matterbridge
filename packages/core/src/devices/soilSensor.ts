@@ -42,7 +42,7 @@ const SoilMeasurementSchema = ClusterElement(
     classification: 'application',
   },
   // Matter global attributes.
-  AttributeElement({ id: 0xfffd, name: 'ClusterRevision', type: 'ClusterRevision', conformance: 'M', default: SoilMeasurement.Cluster.revision ?? 1 }),
+  AttributeElement({ id: 0xfffd, name: 'ClusterRevision', type: 'ClusterRevision', conformance: 'M', default: SoilMeasurement.Cluster.revision }),
   AttributeElement({ id: 0xfffc, name: 'FeatureMap', type: 'FeatureMap', conformance: 'M', default: 0 }),
 
   // Custom attributes.
@@ -74,9 +74,14 @@ export class SoilMeasurementServer extends SoilMeasurementBehavior {
 }
 
 export interface SoilSensorOptions {
+  /** Measurement limits and accuracy for the soil moisture measurement. */
   soilMoistureMeasurementLimits?: MeasurementAccuracy;
   /** Soil moisture in percent (0..100). Use null when unknown/not available. */
   soilMoistureMeasuredValue?: number | null;
+  /** Measured temperature in hundredths of a degree Celsius (°C × 100). This is an optional attribute that may be included if the soil sensor also has a temperature measurement capability. */
+  temperatureMeasuredValue?: number | null;
+  /** Whether the device is battery powered. Defaults to false (wired). */
+  batteryPowered?: boolean;
 }
 
 /**
@@ -95,7 +100,11 @@ export class SoilSensor extends MatterbridgeEndpoint {
 
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Soil Sensor');
-    this.createDefaultPowerSourceBatteryClusterServer();
+    if (options.batteryPowered) {
+      this.createDefaultPowerSourceBatteryClusterServer();
+    } else {
+      this.createDefaultPowerSourceWiredClusterServer();
+    }
 
     this.behaviors.require(SoilMeasurementServer, {
       soilMoistureMeasurementLimits: options.soilMoistureMeasurementLimits ?? {
@@ -107,6 +116,7 @@ export class SoilSensor extends MatterbridgeEndpoint {
       },
       soilMoistureMeasuredValue: options.soilMoistureMeasuredValue ?? null,
     });
+    if (options.temperatureMeasuredValue !== undefined) this.createDefaultTemperatureMeasurementClusterServer(options.temperatureMeasuredValue);
   }
 
   /**
