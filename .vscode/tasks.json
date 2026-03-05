@@ -104,7 +104,8 @@
         "--maxWorkers=100%",
         "matterbridgeEndpoint.test.ts",
         "matterbridgeEndpoint-default.test.ts",
-        "matterbridgeEndpoint-matterjs.test.ts"
+        "matterbridgeEndpoint-matterjs.test.ts",
+        "matterbridgeEndpointHelpers.test.ts"
       ],
       "group": {
         "kind": "test",
