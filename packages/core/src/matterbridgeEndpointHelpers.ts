@@ -112,7 +112,7 @@ import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/t
 import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { ClusterId } from '@matter/types/datatype';
+import { ClusterId, VendorId } from '@matter/types/datatype';
 import { MeasurementType, Semtag } from '@matter/types/globals';
 // @matterbridge
 import { deepCopy, deepEqual, isValidArray } from '@matterbridge/utils';
@@ -209,22 +209,26 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
 }
 
 /**
- * Creates a Semtag object usable in Descriptor.cluster tagList.
+ * Creates a Semtag object usable in the Descriptor.cluster tagList.
  *
  * @param {Semtag} semtag - The semantic tag object (e.g. PowerSourceTag.Solar, NumberTag.One).
- * @param {string | null} [label] - Optional label (max length of 64 characters), defaults to null.
- * @param {Semtag['mfgCode']} [mfgCode] - Optional manufacturer code, defaults to null.
+ * @param {string | null | undefined} [label] - Optional label (trimmed, max 64 characters). If undefined, the returned object omits the label field.
+ * @param {VendorId | null} mfgCode - Manufacturer code (VendorId) for a manufacturer-specific namespace, defaults to null. Manufacturer-specific tags requires the label.
  * @returns {Semtag} The Semtag object.
+ *
+ * @remarks Requires matterbridge version 3.6.0 or higher.
  *
  * @remarks
  * The label field SHOULD NOT be used if the Tag is from a standard namespace, unless the Tag requires further qualification.
  * Example: Switches.Custom requires a label to disambiguate the different custom switches, while PowerSource.Solar does not require a label as it is already specific.
  *
  * The mfgCode field shall be used only if the Semtag is from a manufacturer-specific namespace, and shall be set to the manufacturer code of the device.
- * Don't set the mfgCode field for standard namespaces: the namespaceId already provides uniqueness.
+ * Don't set the mfgCode field for standard namespaces: the global namespaceId already provides uniqueness.
  */
-export function getSemtag(semtag: Semtag, label: Semtag['label'] = null, mfgCode: Semtag['mfgCode'] = null): Semtag {
-  if (label !== null && typeof label === 'string') label = label.trim().slice(0, 64); // Trim and limit label to 64 characters
+export function getSemtag(semtag: Semtag, label: string | null | undefined = undefined, mfgCode: VendorId | null = null): Semtag {
+  if (label !== undefined && label !== null && typeof label === 'string') label = label.trim().slice(0, 64); // Trim and limit label to 64 characters
+
+  if (label === undefined) return { mfgCode, namespaceId: semtag.namespaceId, tag: semtag.tag };
   return { mfgCode, namespaceId: semtag.namespaceId, tag: semtag.tag, label };
 }
 
@@ -823,6 +827,75 @@ export async function subscribeAttribute(
   events[clusterName][attribute].on(listener);
   log?.info(`${db}Subscribed endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db}`);
   return true;
+}
+
+/**
+ * Sets the state of the provided cluster on a given endpoint.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to set the cluster on.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to set.
+ * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} value - The state to set for the cluster.
+ * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
+ * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
+ *
+ * @remarks Requires matterbridge version 3.6.0 or higher.
+ */
+export async function setCluster(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+  value: Record<string, boolean | number | bigint | string | object | undefined | null>,
+  log?: AnsiLogger,
+): Promise<boolean> {
+  const clusterName = getBehavior(endpoint, cluster)?.id;
+  if (!clusterName) {
+    endpoint.log.error(`setCluster error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return false;
+  }
+
+  if (endpoint.construction.status !== Lifecycle.Status.Active) {
+    endpoint.log.error(
+      `setCluster ${hk}${capitalizeFirstLetter(clusterName)}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`,
+    );
+    return false;
+  }
+
+  await endpoint.setStateOf(endpoint.behaviors.supported[clusterName], value);
+  log?.info(`${db}Set endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} cluster ${hk}${capitalizeFirstLetter(clusterName)}${db} to ${debugStringify(value)}`);
+  return true;
+}
+
+/**
+ * Retrieves the state of the provided cluster from the given endpoint.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to retrieve the cluster from.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the state from.
+ * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
+ * @returns {Record<string, boolean | number | bigint | string | object | undefined | null> | undefined} The state of the cluster, or undefined if the cluster is not found.
+ *
+ * @remarks Requires matterbridge version 3.6.0 or higher.
+ */
+export function getCluster(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+  log?: AnsiLogger,
+): Record<string, boolean | number | bigint | string | object | undefined | null> | undefined {
+  const clusterName = getBehavior(endpoint, cluster)?.id;
+  if (!clusterName) {
+    endpoint.log.error(`getCluster error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return undefined;
+  }
+
+  if (endpoint.construction.status !== Lifecycle.Status.Active) {
+    endpoint.log.error(
+      `getCluster ${hk}${capitalizeFirstLetter(clusterName)}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`,
+    );
+    return undefined;
+  }
+
+  const state = endpoint.state as Record<string, Record<string, boolean | number | bigint | string | object | undefined | null>>;
+  const value = deepCopy(state[clusterName]);
+  log?.info(`${db}Get endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} cluster ${hk}${capitalizeFirstLetter(clusterName)}${db} state ${debugStringify(value)}}`);
+  return value;
 }
 
 /**

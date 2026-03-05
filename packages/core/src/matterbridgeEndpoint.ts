@@ -143,6 +143,7 @@ import {
   getBehavior,
   getBehaviourTypesFromClusterClientIds,
   getBehaviourTypesFromClusterServerIds,
+  getCluster,
   getClusterId,
   getDefaultDeviceEnergyManagementClusterServer,
   getDefaultDeviceEnergyManagementModeClusterServer,
@@ -162,6 +163,7 @@ import {
   invokeBehaviorCommand,
   lowercaseFirstLetter,
   setAttribute,
+  setCluster,
   subscribeAttribute,
   triggerEvent,
   updateAttribute,
@@ -558,6 +560,40 @@ export class MatterbridgeEndpoint extends Endpoint {
     log?: AnsiLogger,
   ): Promise<boolean> {
     return await subscribeAttribute(this, cluster, attribute, listener, log);
+  }
+
+  /**
+   * Sets the state of the provided cluster on a given endpoint.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to set.
+   * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} value - The state to set for the cluster.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   */
+  async setCluster(
+    cluster: Behavior.Type | ClusterType | ClusterId | string,
+    value: Record<string, boolean | number | bigint | string | object | undefined | null>,
+    log?: AnsiLogger,
+  ): Promise<boolean> {
+    return await setCluster(this, cluster, value, log);
+  }
+
+  /**
+   * Retrieves the state of the provided cluster from the given endpoint.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the state from.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
+   * @returns {Record<string, boolean | number | bigint | string | object | undefined | null> | undefined} The state of the cluster, or undefined if the cluster is not found.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   */
+  getCluster(
+    cluster: Behavior.Type | ClusterType | ClusterId | string,
+    log?: AnsiLogger,
+  ): Record<string, boolean | number | bigint | string | object | undefined | null> | undefined {
+    return getCluster(this, cluster, log);
   }
 
   /**

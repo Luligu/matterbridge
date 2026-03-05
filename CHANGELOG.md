@@ -68,7 +68,9 @@ These threads already run as workers:
 - [matter1.5.0]: Add Closure class and corresponding tests.
 - [matter1.5.0]: Add ClosurePanel class and corresponding tests.
 - [matter1.5.0]: Add SoilSensor, IrrigationSystem, Closure, and ClosurePanel device types with corresponding definitions.
-- [semtag]: Add getSemtag() helper to facilitate adding tagList to the Desscriptor cluster.
+- [semtag]: Add getSemtag() helper to facilitate adding tagList to the Descriptor cluster.
+- [getCluster]: Add getCluster() method to retrive the state of a cluster.
+- [setCluster]: Add setCluster() method to set the state of a cluster.
 - [chip-test]: ✅ `TC_DeviceBasicComposition.py` passes.
 - [chip-test]: ✅ `TC_DeviceConformance.py` passes.
 - [chip-test]: ✅ `TC_DefaultWarnings.py` passes.
