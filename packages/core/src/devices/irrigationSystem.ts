@@ -28,6 +28,7 @@ import { Semtag } from '@matter/types/globals';
 
 import { DeviceTypeDefinition, irrigationSystem, powerSource, waterValve } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 
 export interface IrrigationSystemOptions {
   singleZone?: boolean;
@@ -80,7 +81,7 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
    * @returns {this} The current endpoint instance for chaining.
    */
   addZone(tag: Semtag) {
-    this.addChildDeviceType(`Zone ${tag.tag}`, waterValve, { tagList: [tag, LocationTag.Zone] })
+    this.addChildDeviceType(`Zone ${tag.tag}`, waterValve, { tagList: [getSemtag(tag), getSemtag(LocationTag.Zone)] })
       .createDefaultValveConfigurationAndControlClusterServer()
       .addRequiredClusterServers();
     return this;

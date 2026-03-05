@@ -118,6 +118,10 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add an irrigation system device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
+    expect(device.getChildEndpointByOriginalId('Zone 1')?.getAttribute('Descriptor', 'tagList')).toEqual([
+      { mfgCode: null, namespaceId: 7, tag: 1 },
+      { mfgCode: null, namespaceId: 6, tag: 4 },
+    ]);
   });
 
   test('add a single zone battery irrigation system device', async () => {
