@@ -159,16 +159,16 @@
 <li>[matter1.5.0]: Add Closure class and corresponding tests.</li>
 <li>[matter1.5.0]: Add ClosurePanel class and corresponding tests.</li>
 <li>[matter1.5.0]: Add SoilSensor, IrrigationSystem, Closure, and ClosurePanel device types with corresponding definitions.</li>
-<li>[semtag]: Add getSemtag() helper to facilitate adding tagList to the Descriptor cluster.</li>
-<li>[getCluster]: Add getCluster() method to retrive the state of a cluster.</li>
-<li>[setCluster]: Add setCluster() method to set the state of a cluster.</li>
+<li>[semtag]: Add <code>getSemtag()</code> helper to facilitate adding tagList to the Descriptor cluster. If you use them don&#39;t forget to require Matterbridge 3.6.0.</li>
+<li>[getCluster]: Add <code>getCluster()</code> method to retrive the state of a cluster. If you use them don&#39;t forget to require Matterbridge 3.6.0.</li>
+<li>[setCluster]: Add <code>setCluster()</code> method to set the state of a cluster. If you use them don&#39;t forget to require Matterbridge 3.6.0.</li>
 <li>[chip-test]: ✅ <code>TC_DeviceBasicComposition.py</code> passes.</li>
 <li>[chip-test]: ✅ <code>TC_DeviceConformance.py</code> passes.</li>
 <li>[chip-test]: ✅ <code>TC_DefaultWarnings.py</code> passes.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
-<li>[docker]: Add the image (tag <strong>s6-rc-legacy</strong> 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on <code>node:22-bullseye-slim</code> (the last node version supporting armv7), supports <code>arm64</code>, <code>amd64</code> and <code>arm/v7</code> and integrates the <code>s6-rc overlay</code> system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy <a href="https://github.com/Luligu/matterbridge-home-assistant-addon-legacy">Matterbridge Home Assistant Application (Legacy)</a>.</li>
+<li>[docker]: Add the image (tag <strong>s6-rc-legacy</strong> 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on <code>node:22-bullseye-slim</code> (the last node version supporting armv7), supports <code>arm64</code>, <code>amd64</code> and <code>arm/v7</code> and integrates the <code>s6-rc overlay</code> system. Plugins are not included in the image: they will be installed on first run. It will be used for the legacy <a href="https://github.com/Luligu/matterbridge-home-assistant-addon-legacy">Matterbridge Home Assistant Application (Legacy)</a>.</li>
 <li>[frontend]: Add the ability to filter by plugin in the Devices page. Thanks <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</li>
 <li>[frontend]: Add in the config whiteList and blackList select a filter to remove from the list what is already added. Thanks <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</li>
 <li>[frontend]: Unregister all devices increments the BasicInformation.configurationVersion. This, if supported on controller side, allows controllers to detect changes in the configuration.</li>
@@ -186,7 +186,9 @@
 <ul>
 <li>[thermostat]: Remove atomic commands required only with Preset and Schedule features.</li>
 <li>[TemperatureControlledCabinet]: Remove not mandatory Identify cluster from TemperatureControlledCabinet device type.</li>
-<li>[frontend]: Fix config lock from select Devices panel.</li>
+<li>[frontend]: Fix config lock from select Devices panel. It broke somehow in the past releases.</li>
+<li>[logger]: Fix logger level in the single class devices. Thanks Reimer Prochnow (<a href="https://github.com/Luligu/matterbridge/issues/521">https://github.com/Luligu/matterbridge/issues/521</a>).</li>
+<li>[frontend]: Add <code>charset=utf-8</code> to type in view and download api. Thanks FredForHACS (<a href="https://github.com/Luligu/matterbridge-home-assistant-addon/issues/48">https://github.com/Luligu/matterbridge-home-assistant-addon/issues/48</a>).</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="356-2026-02-27">[3.5.6] - 2026-02-27</h2>
