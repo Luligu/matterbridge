@@ -2547,7 +2547,7 @@ const serializedClusters = `${JSON.stringify(sortedClusters, null, 2)}\n`;
 await writeFile(clustersOutputPath, serializedClusters);
 console.log(greenText(`Cluster identifiers JSON written to ${clustersOutputPath} (${Object.keys(sortedClusters).length} entries).`));
 
-const clusterTypesOutputDir = join('src', 'generated');
+const clusterTypesOutputDir = join('packages', 'types', 'src');
 await mkdir(clusterTypesOutputDir, { recursive: true });
 const clusterTypesOutputPath = join(clusterTypesOutputDir, 'clusterTypes.ts');
 const unknownTypeUsages = [];
