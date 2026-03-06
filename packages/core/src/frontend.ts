@@ -753,7 +753,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
-        res.type('text/plain');
+        res.type('text/plain; charset=utf-8');
         res.send(data.slice(29));
       } catch (error) {
         // istanbul ignore next
