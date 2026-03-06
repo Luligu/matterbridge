@@ -69,11 +69,141 @@ export type PrimitiveTypes = boolean | number | bigint | string | object | undef
 export type CommandHandlerData = { request: Record<string, any>; cluster: string; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint };
 export type CommandHandlerFunction = (data: CommandHandlerData) => void | Promise<void>;
 
-/*
- * Types for the command handlers of the MatterbridgeEndpoint.
- * Each command handler is associated with a specific cluster and a specific command of that cluster.
- */
-export type CommandHandlerDataMap = {
+export interface MatterbridgeEndpointCommands {
+  // Identify
+  identify: HandlerFunction;
+  triggerEffect: HandlerFunction;
+
+  // On/Off
+  on: HandlerFunction;
+  off: HandlerFunction;
+  toggle: HandlerFunction;
+  offWithEffect: HandlerFunction;
+
+  // Level Control
+  moveToLevel: HandlerFunction;
+  moveToLevelWithOnOff: HandlerFunction;
+
+  // Color Control
+  moveToColor: HandlerFunction;
+  moveColor: HandlerFunction;
+  stepColor: HandlerFunction;
+  moveToHue: HandlerFunction;
+  moveHue: HandlerFunction;
+  stepHue: HandlerFunction;
+  enhancedMoveToHue: HandlerFunction;
+  enhancedMoveHue: HandlerFunction;
+  enhancedStepHue: HandlerFunction;
+  moveToSaturation: HandlerFunction;
+  moveSaturation: HandlerFunction;
+  stepSaturation: HandlerFunction;
+  moveToHueAndSaturation: HandlerFunction;
+  enhancedMoveToHueAndSaturation: HandlerFunction;
+  moveToColorTemperature: HandlerFunction;
+
+  // Window Covering
+  upOrOpen: HandlerFunction;
+  downOrClose: HandlerFunction;
+  stopMotion: HandlerFunction;
+  goToLiftPercentage: HandlerFunction;
+  goToTiltPercentage: HandlerFunction;
+
+  // Closure
+  moveTo: HandlerFunction;
+  setTarget: HandlerFunction;
+
+  // Door Lock
+  lockDoor: HandlerFunction;
+  unlockDoor: HandlerFunction;
+
+  // Thermostat
+  setpointRaiseLower: HandlerFunction;
+  setActivePresetRequest: HandlerFunction;
+
+  // Fan Control
+  step: HandlerFunction;
+
+  // Mode Select
+  changeToMode: HandlerFunction;
+
+  // Valve Configuration and Control
+  open: HandlerFunction;
+  close: HandlerFunction;
+
+  // Boolean State Configuration
+  suppressAlarm: HandlerFunction;
+  enableDisableAlarm: HandlerFunction;
+
+  // Smoke and CO Alarm
+  selfTestRequest: HandlerFunction;
+
+  // Thread Network Diagnostics
+  resetCounts: HandlerFunction;
+
+  // Time Synchronization
+  setUtcTime: HandlerFunction;
+  setTimeZone: HandlerFunction;
+  setDstOffset: HandlerFunction;
+
+  // Device Energy Management
+  pauseRequest: HandlerFunction;
+  resumeRequest: HandlerFunction;
+
+  // Operational State
+  pause: HandlerFunction;
+  stop: HandlerFunction;
+  start: HandlerFunction;
+  resume: HandlerFunction;
+
+  // Rvc Operational State
+  goHome: HandlerFunction;
+
+  // Rvc Service Area
+  selectAreas: HandlerFunction;
+
+  // Water Heater Management
+  boost: HandlerFunction;
+  cancelBoost: HandlerFunction;
+
+  // Energy Evse
+  enableCharging: HandlerFunction;
+  disable: HandlerFunction;
+  setTargets: HandlerFunction;
+  getTargets: HandlerFunction;
+  clearTargets: HandlerFunction;
+
+  // Device Energy Management
+  powerAdjustRequest: HandlerFunction;
+  cancelPowerAdjustRequest: HandlerFunction;
+
+  // Temperature Control
+  setTemperature: HandlerFunction;
+
+  // Microwave Oven Control
+  setCookingParameters: HandlerFunction;
+  addMoreTime: HandlerFunction;
+
+  // MediaPlayback Control
+  play: HandlerFunction;
+  // pause: HandlerFunction; Already defined
+  // stop: HandlerFunction; Already defined
+  previous: HandlerFunction;
+  next: HandlerFunction;
+  skipForward: HandlerFunction;
+  skipBackward: HandlerFunction;
+
+  // KeypadInput Control
+  sendKey: HandlerFunction;
+
+  // Resource Monitoring
+  resetCondition: HandlerFunction;
+}
+
+/* Will be wired in MatterbridgeEndpoint.addCommandHandler() to provide the correct types for the command handler functions */
+type _CommandHandlerCommands = keyof _CommandHandlerDataMap;
+type _CommandHandlerData<T extends _CommandHandlerCommands = _CommandHandlerCommands> = _CommandHandlerDataMap[T];
+type _CommandHandlerFunction = (data: _CommandHandlerData) => void | Promise<void>;
+type _CommandHandlerDataMap = {
   // Identify
   'Identify.identify': {
     request: Identify.IdentifyRequest;
@@ -594,136 +724,6 @@ export type CommandHandlerDataMap = {
     endpoint: MatterbridgeEndpoint;
   };
 };
-
-export interface MatterbridgeEndpointCommands {
-  // Identify
-  identify: HandlerFunction;
-  triggerEffect: HandlerFunction;
-
-  // On/Off
-  on: HandlerFunction;
-  off: HandlerFunction;
-  toggle: HandlerFunction;
-  offWithEffect: HandlerFunction;
-
-  // Level Control
-  moveToLevel: HandlerFunction;
-  moveToLevelWithOnOff: HandlerFunction;
-
-  // Color Control
-  moveToColor: HandlerFunction;
-  moveColor: HandlerFunction;
-  stepColor: HandlerFunction;
-  moveToHue: HandlerFunction;
-  moveHue: HandlerFunction;
-  stepHue: HandlerFunction;
-  enhancedMoveToHue: HandlerFunction;
-  enhancedMoveHue: HandlerFunction;
-  enhancedStepHue: HandlerFunction;
-  moveToSaturation: HandlerFunction;
-  moveSaturation: HandlerFunction;
-  stepSaturation: HandlerFunction;
-  moveToHueAndSaturation: HandlerFunction;
-  enhancedMoveToHueAndSaturation: HandlerFunction;
-  moveToColorTemperature: HandlerFunction;
-
-  // Window Covering
-  upOrOpen: HandlerFunction;
-  downOrClose: HandlerFunction;
-  stopMotion: HandlerFunction;
-  goToLiftPercentage: HandlerFunction;
-  goToTiltPercentage: HandlerFunction;
-
-  // Closure
-  moveTo: HandlerFunction;
-  setTarget: HandlerFunction;
-
-  // Door Lock
-  lockDoor: HandlerFunction;
-  unlockDoor: HandlerFunction;
-
-  // Thermostat
-  setpointRaiseLower: HandlerFunction;
-  setActivePresetRequest: HandlerFunction;
-
-  // Fan Control
-  step: HandlerFunction;
-
-  // Mode Select
-  changeToMode: HandlerFunction;
-
-  // Valve Configuration and Control
-  open: HandlerFunction;
-  close: HandlerFunction;
-
-  // Boolean State Configuration
-  suppressAlarm: HandlerFunction;
-  enableDisableAlarm: HandlerFunction;
-
-  // Smoke and CO Alarm
-  selfTestRequest: HandlerFunction;
-
-  // Thread Network Diagnostics
-  resetCounts: HandlerFunction;
-
-  // Time Synchronization
-  setUtcTime: HandlerFunction;
-  setTimeZone: HandlerFunction;
-  setDstOffset: HandlerFunction;
-
-  // Device Energy Management
-  pauseRequest: HandlerFunction;
-  resumeRequest: HandlerFunction;
-
-  // Operational State
-  pause: HandlerFunction;
-  stop: HandlerFunction;
-  start: HandlerFunction;
-  resume: HandlerFunction;
-
-  // Rvc Operational State
-  goHome: HandlerFunction;
-
-  // Rvc Service Area
-  selectAreas: HandlerFunction;
-
-  // Water Heater Management
-  boost: HandlerFunction;
-  cancelBoost: HandlerFunction;
-
-  // Energy Evse
-  enableCharging: HandlerFunction;
-  disable: HandlerFunction;
-  setTargets: HandlerFunction;
-  getTargets: HandlerFunction;
-  clearTargets: HandlerFunction;
-
-  // Device Energy Management
-  powerAdjustRequest: HandlerFunction;
-  cancelPowerAdjustRequest: HandlerFunction;
-
-  // Temperature Control
-  setTemperature: HandlerFunction;
-
-  // Microwave Oven Control
-  setCookingParameters: HandlerFunction;
-  addMoreTime: HandlerFunction;
-
-  // MediaPlayback Control
-  play: HandlerFunction;
-  // pause: HandlerFunction; Already defined
-  // stop: HandlerFunction; Already defined
-  previous: HandlerFunction;
-  next: HandlerFunction;
-  skipForward: HandlerFunction;
-  skipBackward: HandlerFunction;
-
-  // KeypadInput Control
-  sendKey: HandlerFunction;
-
-  // Resource Monitoring
-  resetCondition: HandlerFunction;
-}
 
 export interface SerializedMatterbridgeEndpoint {
   pluginName: string;
