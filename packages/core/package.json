@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/core",
-  "version": "3.5.5",
+  "version": "3.6.0",
   "description": "Matterbridge core library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -121,20 +121,18 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "automator": "node scripts/runAutomator.mjs --monorepo-package",
-    "prepublishOnly": "npm pkg delete devDependencies scripts",
-    "install:dependencies": "npm install --no-fund --no-audit --save-exact @matter/main @matterbridge/types @matterbridge/dgram @matterbridge/thread @matterbridge/utils archiver express glob multer node-ansi-logger node-persist-manager ws"
+    "automator": "node scripts/runAutomator.mjs --monorepo-package"
   },
   "dependencies": {
     "@matter/main": "0.16.10",
-    "@matterbridge/dgram": "3.5.5",
-    "@matterbridge/thread": "3.5.5",
-    "@matterbridge/types": "3.5.5",
-    "@matterbridge/utils": "3.5.5",
+    "@matterbridge/dgram": "3.6.0",
+    "@matterbridge/thread": "3.6.0",
+    "@matterbridge/types": "3.6.0",
+    "@matterbridge/utils": "3.6.0",
     "archiver": "7.0.1",
     "express": "5.2.1",
     "glob": "13.0.6",
-    "multer": "2.0.2",
+    "multer": "2.1.0",
     "node-ansi-logger": "3.2.0",
     "node-persist-manager": "2.0.1",
     "ws": "8.19.0"

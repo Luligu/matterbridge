@@ -141,31 +141,61 @@ export class Dgram extends EventEmitter<DgramEvents> {
     });
   }
 
+  /**
+   * Handles socket errors.
+   *
+   * @param {Error} error - Error instance.
+   */
   onError(error: Error) {
     this.log.error(`Socket error: ${error instanceof Error ? error.message : error}`);
   }
 
+  /** Handles socket close. */
   onClose() {
     this.log.info(`Socket closed`);
   }
 
+  /** Handles socket connect. */
   onConnect() {
     this.log.info(`Socket connected`);
   }
 
+  /**
+   * Called when a message has been sent.
+   *
+   * @param {Buffer} msg - Sent message.
+   * @param {string} serverAddress - Destination address.
+   * @param {number} serverPort - Destination port.
+   */
   onSent(msg: Buffer, serverAddress: string, serverPort: number) {
     this.log.info(`Socket sent a message to ${BLUE}${serverAddress}${db}:${BLUE}${serverPort}${db}`);
   }
 
+  /**
+   * Called when a message is received.
+   *
+   * @param {Buffer} msg - Received message.
+   * @param {dgram.RemoteInfo} rinfo - Sender address information.
+   */
   onMessage(msg: Buffer, rinfo: dgram.RemoteInfo) {
     this.log.info(`Socket received a message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
   }
 
+  /**
+   * Called when the socket starts listening.
+   *
+   * @param {AddressInfo} address - Bound address information.
+   */
   onListening(address: AddressInfo) {
     this.log.info(`Socket listening on ${BLUE}${address.family}${nf} ${BLUE}${address.address}${nf}:${BLUE}${address.port}${nf}`);
     this.onReady(address);
   }
 
+  /**
+   * Called when the socket is ready.
+   *
+   * @param {AddressInfo} address - Bound address information.
+   */
   onReady(address: AddressInfo) {
     this.log.info(`Socket ready on ${BLUE}${address.family}${nf} ${BLUE}${address.address}${nf}:${BLUE}${address.port}${nf}`);
     this.emit('ready', address);

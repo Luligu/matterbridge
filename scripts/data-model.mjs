@@ -6,10 +6,14 @@
  * It supports environment variables to customize the version and output paths.
  *
  * MATTER_DATA_MODEL_VERSION - The default version is 1.4.2.
+ * MATTER_DATA_MODEL_XML_OUT - Where to store the downloaded XMLs (default: chip/<version>/xml).
  */
 
+/* eslint-disable no-console */
+
 const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.4.2';
-const SRC_PATH = `https://raw.githubusercontent.com/project-chip/connectedhomeip/master/data_model/${MATTER_DATA_MODEL_VERSION}/`;
+const MATTER_DATA_MODEL_VERSION_REMOTE = MATTER_DATA_MODEL_VERSION.replace(/^(\d+\.\d+)\.0$/, '$1');
+const SRC_PATH = `https://raw.githubusercontent.com/project-chip/connectedhomeip/master/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/`;
 const DATA_MODEL_PATHS = {
   clusters: `${SRC_PATH}clusters/`,
   clustersIds: `${SRC_PATH}clusters/cluster_ids.json`,
@@ -18,12 +22,13 @@ const DATA_MODEL_PATHS = {
   namespaces: `${SRC_PATH}namespaces/`,
 };
 const DST_PATH = `chip/${MATTER_DATA_MODEL_VERSION}/`;
+const XML_DST_PATH = process.env.MATTER_DATA_MODEL_XML_OUT || `chip/${MATTER_DATA_MODEL_VERSION}/xml`;
 const OUTPUT_NAMESPACES = 'namespaces.json';
 const OUTPUT_DEVICE_TYPES = 'deviceTypes.json';
 const OUTPUT_CLUSTERS = 'clusters.json';
 const GITHUB_API_BASE = 'https://api.github.com/repos/project-chip/connectedhomeip/contents';
-const DEVICE_TYPES_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_MODEL_VERSION}/device_types?ref=master`;
-const CLUSTERS_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_MODEL_VERSION}/clusters?ref=master`;
+const DEVICE_TYPES_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/device_types?ref=master`;
+const CLUSTERS_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/clusters?ref=master`;
 const GITHUB_API_HEADERS = {
   'User-Agent': 'matterbridge-data-model-script',
   'Accept': 'application/vnd.github.v3+json',
@@ -31,6 +36,391 @@ const GITHUB_API_HEADERS = {
 
 const sanitizeKey = (value) => value.replace(/[\s/]+/g, '');
 const normalizeDisplayName = (value) => (typeof value === 'string' ? value.replace(/\s*\/\s*/g, '') : value);
+
+const isValidTsIdentifier = (value) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(value);
+
+const escapeSingleQuotedTsStringLiteral = (value) => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n');
+
+const formatTsStringLiteralKey = (key) => `'${escapeSingleQuotedTsStringLiteral(key)}'`;
+
+const toLowerCamelCase = (value) => {
+  if (!value) {
+    return value;
+  }
+
+  const parts = value.match(/[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+/g) || [value];
+
+  return parts
+    .map((part, index) => {
+      const lower = part.toLowerCase();
+      if (index === 0) {
+        return lower;
+      }
+      return `${lower.charAt(0).toUpperCase()}${lower.slice(1)}`;
+    })
+    .join('');
+};
+
+const formatTsPropertyKey = (key) => (isValidTsIdentifier(key) ? key : formatTsStringLiteralKey(key));
+
+const wrapNullableType = (tsType) => (tsType.includes('|') ? `(${tsType}) | null` : `${tsType} | null`);
+
+const MATTER_DATATYPE_TS_MAP = {
+  // Matter "seed" datatypes (Core spec §7.19)
+  'vendor-id': 'VendorId',
+  'fabric-idx': 'FabricIndex',
+  'endpoint-no': 'EndpointNumber',
+  'cluster-id': 'ClusterId',
+  'node-id': 'NodeId',
+  'octstr': 'Bytes',
+  'elapsed-s': 'ElapsedS',
+  'epoch-us': 'EpochUs',
+
+  // Compact temperature aliases (0.1°C resolution, value = °C × 10)
+  'signedtemperature': 'SignedTemperatureX10',
+  'unsignedtemperature': 'UnsignedTemperatureX10',
+
+  // Matter global structs referenced as list element types
+  'semantictagstruct': 'Semtag',
+
+  // Common structs referenced across clusters
+  'labelstruct': 'LabelStruct',
+
+  // Common unit/bitmap datatypes used by clusters
+  'map16': 'Map16',
+  'amperage-ma': 'Int64',
+  'voltage-mv': 'Int64',
+  'power-mva': 'Int64',
+  'power-mvar': 'Int64',
+};
+
+const resolvePrimitiveOrSeedTypeToTs = (typeName) => {
+  if (!typeName || typeof typeName !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = typeName.trim();
+  const normalized = trimmed.toLowerCase();
+
+  if (normalized === 'bool' || normalized === 'boolean') {
+    return 'boolean';
+  }
+
+  if (
+    normalized === 'single' ||
+    normalized === 'double' ||
+    normalized === 'percent' ||
+    normalized === 'percent100ths' ||
+    normalized === 'power-mw' ||
+    normalized === 'energy-mwh'
+  ) {
+    return 'number';
+  }
+
+  if (normalized === 'temperature') {
+    return 'TemperatureX100';
+  }
+
+  if (normalized === 'epoch-s' || normalized === 'epoch_s') {
+    return 'EpochS';
+  }
+
+  const mapped = MATTER_DATATYPE_TS_MAP[normalized];
+  if (mapped) {
+    return mapped;
+  }
+
+  // Integer sizes. Note that 64-bit values in Matter.js are generally represented as number | bigint.
+  const intMatch = /^(u?int)(8|16|24|32|40|48|56|64)(s)?$/i.exec(trimmed);
+  if (intMatch) {
+    const bits = Number(intMatch[2]);
+    return bits === 64 ? 'Int64' : 'number';
+  }
+
+  if (/^(float|float32|float64)$/i.test(trimmed)) {
+    return 'number';
+  }
+
+  if (/^(enum|bitmap)\d*$/i.test(trimmed)) {
+    return 'number';
+  }
+
+  if (normalized.endsWith('char_string') || normalized.endsWith('string')) {
+    return 'string';
+  }
+
+  if (normalized === 'octet_string' || normalized === 'long_octet_string') {
+    return 'string';
+  }
+
+  return undefined;
+};
+
+const resolveClusterDataTypeToTs = (typeName, clusterEntry) => {
+  const dataType = clusterEntry?.dataTypes?.[typeName];
+  if (!dataType || typeof dataType !== 'object') {
+    return undefined;
+  }
+
+  const kind = (dataType.type || '').toLowerCase();
+  if (kind === 'enum' || kind === 'bitmap') {
+    return 'number';
+  }
+  if (kind === 'struct') {
+    return 'Record<string, unknown>';
+  }
+
+  return undefined;
+};
+
+const resolveTypeNameToTs = (typeName, clusterEntry) => {
+  const primitive = resolvePrimitiveOrSeedTypeToTs(typeName);
+  if (primitive) {
+    return primitive;
+  }
+  return resolveClusterDataTypeToTs(typeName, clusterEntry);
+};
+
+const attributeToTsTypeDiagnostic = (attributeEntry, clusterEntry, clusterKey, attributeKey) => {
+  const rawType = attributeEntry?.type;
+
+  /** @type {{ tsType: string, baseTsType: string, rawType?: string, reason?: string, details?: Record<string, unknown> }} */
+  const diagnostic = { tsType: 'unknown', baseTsType: 'unknown' };
+
+  if (typeof attributeKey === 'string') {
+    const normalizedAttributeKey = attributeKey.trim().toLowerCase();
+    const baseCluster = typeof clusterEntry?.classification?.baseCluster === 'string' ? clusterEntry.classification.baseCluster : '';
+    const isModeCluster =
+      clusterKey === 'ModeSelect' ||
+      clusterKey === 'ModeBaseCluster' ||
+      (typeof clusterKey === 'string' && clusterKey.endsWith('Mode')) ||
+      baseCluster.toLowerCase().includes('mode base');
+
+    if (isModeCluster) {
+      if (normalizedAttributeKey === 'currentmode') {
+        diagnostic.reason = 'override';
+        diagnostic.baseTsType = 'ModeId';
+        diagnostic.tsType = 'ModeId';
+        return diagnostic;
+      }
+
+      if (normalizedAttributeKey === 'onmode' || normalizedAttributeKey === 'startupmode') {
+        diagnostic.reason = 'override';
+        diagnostic.baseTsType = 'ModeId | null';
+        diagnostic.tsType = 'ModeId | null';
+        return diagnostic;
+      }
+
+      if (normalizedAttributeKey === 'supportedmodes') {
+        diagnostic.reason = 'override';
+        diagnostic.baseTsType = 'SupportedModes[]';
+        diagnostic.tsType = 'SupportedModes[]';
+        return diagnostic;
+      }
+    }
+  }
+
+  if (!rawType || typeof rawType !== 'string') {
+    diagnostic.reason = 'missing-type';
+    return diagnostic;
+  }
+
+  const typeName = rawType.trim();
+  const normalized = typeName.toLowerCase();
+
+  diagnostic.rawType = typeName;
+
+  let baseTsType;
+
+  if (normalized === 'list') {
+    const elementTypeName = attributeEntry?.entries?.[0]?.type;
+    if (typeof elementTypeName === 'string' && elementTypeName.trim()) {
+      const resolved = resolveTypeNameToTs(elementTypeName.trim(), clusterEntry);
+      baseTsType = `${resolved || 'unknown'}[]`;
+      if (!resolved) {
+        diagnostic.reason = 'list-element-unresolved';
+        diagnostic.details = { elementType: elementTypeName.trim() };
+      }
+    } else {
+      baseTsType = 'unknown[]';
+      diagnostic.reason = 'list-missing-element-type';
+    }
+  } else {
+    const resolved = resolveTypeNameToTs(typeName, clusterEntry);
+    baseTsType = resolved || 'unknown';
+    if (!resolved) {
+      diagnostic.reason = 'unresolved-type';
+    }
+  }
+
+  if (attributeEntry?.qualityNullable === true) {
+    diagnostic.baseTsType = baseTsType;
+    diagnostic.tsType = wrapNullableType(baseTsType);
+    return diagnostic;
+  }
+
+  diagnostic.baseTsType = baseTsType;
+  diagnostic.tsType = baseTsType;
+  return diagnostic;
+};
+
+const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages) => {
+  const clusterKeys = Object.keys(clustersByKey).sort((left, right) => left.localeCompare(right));
+  const clusterLines = [];
+  const matterDatatypeImports = new Set();
+  const matterRootImports = new Set();
+  const matterClusterImports = new Set();
+  let usesMatterBytes = false;
+
+  const trackImportsForType = (tsType) => {
+    if (typeof tsType !== 'string') {
+      return;
+    }
+    if (/\bVendorId\b/.test(tsType)) matterDatatypeImports.add('VendorId');
+    if (/\bFabricIndex\b/.test(tsType)) matterDatatypeImports.add('FabricIndex');
+    if (/\bEndpointNumber\b/.test(tsType)) matterDatatypeImports.add('EndpointNumber');
+    if (/\bClusterId\b/.test(tsType)) matterDatatypeImports.add('ClusterId');
+    if (/\bNodeId\b/.test(tsType)) matterDatatypeImports.add('NodeId');
+    if (/\bBytes\b/.test(tsType)) usesMatterBytes = true;
+    if (/\bSemtag\b/.test(tsType)) matterRootImports.add('Semtag');
+    if (/\bModeSelect\b/.test(tsType)) matterClusterImports.add('ModeSelect');
+  };
+
+  clusterLines.push('export type ClusterTypes = {');
+
+  for (const clusterKey of clusterKeys) {
+    const clusterEntry = clustersByKey[clusterKey];
+    const attributes = clusterEntry?.attributes && typeof clusterEntry.attributes === 'object' ? clusterEntry.attributes : {};
+    const attributeKeys = Object.keys(attributes);
+    const clusterTypeKey = formatTsStringLiteralKey(clusterKey);
+
+    if (attributeKeys.length === 0) {
+      clusterLines.push(`  ${clusterTypeKey}: {};`);
+      continue;
+    }
+
+    clusterLines.push(`  ${clusterTypeKey}: {`);
+
+    const usedKeys = new Set();
+    const sortedAttributeKeys = attributeKeys.sort((left, right) => left.localeCompare(right));
+
+    for (const attributeKey of sortedAttributeKeys) {
+      const attributeEntry = attributes[attributeKey];
+      let propKey = toLowerCamelCase(attributeKey);
+
+      if (usedKeys.has(propKey)) {
+        const suffix = typeof attributeEntry?.id === 'number' ? attributeEntry.id : usedKeys.size + 1;
+        propKey = `${propKey}_${suffix}`;
+      }
+
+      usedKeys.add(propKey);
+
+      const tsPropertyKey = formatTsPropertyKey(propKey);
+      const { tsType, baseTsType, rawType, reason, details } = attributeToTsTypeDiagnostic(attributeEntry, clusterEntry, clusterKey, attributeKey);
+
+      trackImportsForType(tsType);
+
+      if (Array.isArray(unknownTypeUsages) && typeof baseTsType === 'string' && baseTsType.startsWith('unknown')) {
+        unknownTypeUsages.push({
+          cluster: clusterKey,
+          clusterId: clusterEntry?.id,
+          attribute: attributeKey,
+          property: propKey,
+          type: rawType,
+          tsType,
+          reason,
+          details,
+        });
+      }
+
+      clusterLines.push(`    ${tsPropertyKey}: ${tsType};`);
+    }
+
+    clusterLines.push('  };');
+  }
+
+  clusterLines.push('};');
+
+  const lines = [];
+
+  lines.push('/**');
+  lines.push(' * Generated by scripts/data-model.mjs. Do not edit.');
+  lines.push(' *');
+  lines.push(' * @file clusterTypes.ts');
+  lines.push(` * @remarks Matter data model version: ${versionLabel}`);
+  lines.push(' */');
+  lines.push('/* eslint-disable @typescript-eslint/no-empty-object-type */');
+
+  // Keep import order compatible with simple-import-sort.
+  if (usesMatterBytes) {
+    lines.push("import type { Bytes } from '@matter/general';");
+  }
+  if (matterRootImports.size > 0) {
+    const sorted = [...matterRootImports].sort((left, right) => left.localeCompare(right));
+    lines.push(`import type { ${sorted.join(', ')} } from '@matter/types';`);
+  }
+  if (matterClusterImports.size > 0) {
+    const sorted = [...matterClusterImports].sort((left, right) => left.localeCompare(right));
+    lines.push(`import type { ${sorted.join(', ')} } from '@matter/types/clusters';`);
+  }
+  if (matterDatatypeImports.size > 0) {
+    const sorted = [...matterDatatypeImports].sort((left, right) => left.localeCompare(right));
+    lines.push(`import type { ${sorted.join(', ')} } from '@matter/types/datatype';`);
+  }
+
+  lines.push('');
+  lines.push('/** Epoch time in seconds since the Matter epoch (2000-01-01 00:00:00 UTC). */');
+  lines.push('export type EpochS = number;');
+  lines.push('');
+  lines.push('/** Epoch time in microseconds since the Matter epoch (2000-01-01 00:00:00 UTC) - commonly represented as number or bigint. */');
+  lines.push('export type EpochUs = number | bigint;');
+  lines.push('');
+  lines.push('/** Elapsed time in seconds. */');
+  lines.push('export type ElapsedS = number;');
+  lines.push('');
+  lines.push('/** 64-bit signed/unsigned integer (commonly represented as number or bigint). */');
+  lines.push('export type Int64 = number | bigint;');
+  lines.push('');
+  lines.push('/** 16-bit bitmap. */');
+  lines.push('export type Map16 = number;');
+  lines.push('');
+  lines.push('/** Temperature in hundredths of a degree Celsius (0.01°C), value = °C × 100. */');
+  lines.push('export type TemperatureX100 = number;');
+  lines.push('');
+  lines.push('/** SignedTemperature (spec): temperature in tenths of a degree Celsius (0.1°C), value = °C × 10. */');
+  lines.push('export type SignedTemperatureX10 = number;');
+  lines.push('');
+  lines.push('/** UnsignedTemperature (spec): temperature in tenths of a degree Celsius (0.1°C), value = °C × 10. */');
+  lines.push('export type UnsignedTemperatureX10 = number;');
+  lines.push('');
+  lines.push('/** Mode identifier used by mode-related clusters. */');
+  lines.push('export type ModeId = number;');
+  lines.push('');
+  lines.push('/** SupportedModes entry used by mode-related clusters. */');
+  lines.push('export type SupportedModes = {');
+  lines.push('  label: string;');
+  lines.push('  mode: ModeId;');
+  lines.push('  semanticTags: Semtag[];');
+  lines.push('};');
+  lines.push('');
+
+  lines.push('/** LabelStruct used by FixedLabel/UserLabel clusters. */');
+  lines.push('export type LabelStruct = {');
+  lines.push('  label: string;');
+  lines.push('  value: string;');
+  lines.push('};');
+  lines.push('');
+
+  lines.push(...clusterLines);
+  lines.push('');
+  lines.push('export type ClusterName = keyof ClusterTypes;');
+  lines.push('export type AttributeName<C extends ClusterName> = keyof ClusterTypes[C];');
+
+  return `${lines.join('\n')}\n`;
+};
+
+const greenText = (value) => (process.env.NO_COLOR ? value : `\x1b[32m${value}\x1b[0m`);
+const yellowText = (value) => (process.env.NO_COLOR ? value : `\x1b[33m${value}\x1b[0m`);
 
 const cloneDeep = (value) => {
   if (value === undefined) {
@@ -93,7 +483,17 @@ const fetchJson = async (url, { description, headers, maxRedirects } = {}) => {
   }
 };
 
-/* eslint-disable no-console */
+const fetchJsonAndSave = async (url, outputPath, { description, headers, maxRedirects } = {}) => {
+  const text = await fetchRemoteText(url, { description, headers, maxRedirects });
+  await writeFile(outputPath, text);
+  console.log(greenText(`Saved ${description || url} to ${outputPath}.`));
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`Unable to parse JSON from ${description || url}: ${error.message}`, { cause: error });
+  }
+};
 
 const decodeEntities = (value) =>
   value
@@ -1242,9 +1642,16 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
     throw new Error(`Device type name is missing in ${contextLabel}.`);
   }
 
-  if (!id) {
+  const isBaseDeviceType = contextLabel.toLowerCase() === 'basedevicetype.xml' || name.trim().toLowerCase() === 'base device type';
+
+  if (!id && !isBaseDeviceType) {
     console.log(`Skipping ${contextLabel} (device type "${name}") because it does not declare an id.`);
     return null;
+  }
+
+  const parsedId = id ? parseHexId(id, `device type ${name}`) : 0;
+  if (!id && isBaseDeviceType) {
+    console.log(`Device type ${name} in ${contextLabel} does not declare an id; defaulting to 0.`);
   }
 
   if (!revision) {
@@ -1277,16 +1684,25 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
   });
 
   const classificationMatch = xmlContent.match(/<classification\b[^>]*>/i);
+  let classificationClass;
+  let scope;
+
   if (!classificationMatch) {
-    throw new Error(`Missing classification block for device type ${name}.`);
-  }
+    if (!isBaseDeviceType) {
+      throw new Error(`Missing classification block for device type ${name}.`);
+    }
 
-  const classificationAttributes = parseAttributes(classificationMatch[0]);
-  const classificationClass = classificationAttributes.class;
-  const { scope } = classificationAttributes;
+    classificationClass = 'utility';
+    scope = 'endpoint';
+    console.log(`Device type ${name} in ${contextLabel} does not declare classification; using defaults.`);
+  } else {
+    const classificationAttributes = parseAttributes(classificationMatch[0]);
+    classificationClass = classificationAttributes.class;
+    scope = classificationAttributes.scope;
 
-  if (!classificationClass || !scope) {
-    throw new Error(`Classification attributes are incomplete for device type ${name}.`);
+    if (!classificationClass || !scope) {
+      throw new Error(`Classification attributes are incomplete for device type ${name}.`);
+    }
   }
 
   const conditionsMatch = xmlContent.match(/<conditions\b[^>]*>([\s\S]*?)<\/conditions>/i);
@@ -1308,7 +1724,9 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
     }
   }
 
-  const clusterMatches = [...xmlContent.matchAll(/<cluster\b[^>]*?(?:\/>|>[\s\S]*?<\/cluster>)/gi)];
+  const clustersMatch = xmlContent.match(/<clusters\b[^>]*>([\s\S]*?)<\/clusters>/i);
+  const clustersBody = clustersMatch ? clustersMatch[1] : '';
+  const clusterMatches = [...clustersBody.matchAll(/<cluster\b[^>]*?(?:\/>|>[\s\S]*?<\/cluster>)/gi)];
   const clusters = clusterMatches.map((match) => {
     const fullCluster = match[0];
     const openingTagMatch = fullCluster.match(/<cluster\b[^>]*>/i);
@@ -1339,6 +1757,8 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
       const [, featuresBody] = featuresMatch;
       const featureMatches = [...featuresBody.matchAll(/<feature\b[^>]*?(?:\/>|>[\s\S]*?<\/feature>)/gi)];
 
+      let unnamedFeatureCounter = 0;
+
       for (const featureMatch of featureMatches) {
         const fullFeature = featureMatch[0];
         const featureOpeningTagMatch = fullFeature.match(/<feature\b[^>]*>/i);
@@ -1348,10 +1768,13 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
         }
 
         const featureAttributes = parseAttributes(featureOpeningTagMatch[0]);
-        const { code = '', name: featureName, summary = '', ...rest } = featureAttributes;
+        const { code = '', name: rawFeatureName, summary = '', ...rest } = featureAttributes;
 
-        if (!featureName) {
-          throw new Error(`Feature without a name encountered in cluster ${clusterName} for device type ${name}.`);
+        const featureName = rawFeatureName || code || `UnnamedFeature${++unnamedFeatureCounter}`;
+
+        if (!rawFeatureName) {
+          const fallbackLabel = code ? `code "${code}"` : `generated name "${featureName}"`;
+          console.log(`Warning: Feature without a name encountered in cluster ${clusterName} for device type ${name}. Using ${fallbackLabel}.`);
         }
 
         let featureBody = '';
@@ -1447,7 +1870,7 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
 
   return {
     name,
-    id: parseHexId(id, `device type ${name}`),
+    id: parsedId,
     revision: revisionValue,
     revisionHistory,
     conditions,
@@ -1455,6 +1878,28 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
     scope,
     clusters,
   };
+};
+
+const parseClusterIdsBlock = (xmlContent) => {
+  const match = xmlContent.match(/<clusterIds\b[^>]*>([\s\S]*?)<\/clusterIds>/i);
+  if (!match) {
+    return [];
+  }
+
+  const [, body] = match;
+  const clusterIdMatches = [...body.matchAll(/<clusterId\b[^>]*\/>/gi)];
+  const results = [];
+
+  for (const entry of clusterIdMatches) {
+    const attributes = parseAttributes(entry[0]);
+    const { id, name, picsCode } = attributes;
+    if (!id || !name) {
+      continue;
+    }
+    results.push({ id, name, ...(picsCode ? { picsCode } : {}) });
+  }
+
+  return results;
 };
 
 const parseClusterXml = (xmlContent, contextLabel) => {
@@ -1631,9 +2076,10 @@ const parseClusterXml = (xmlContent, contextLabel) => {
     }
   }
 
-  const parsedId = id ? parseHexId(id, `cluster ${name}`) : 0;
+  const clusterIds = !id ? parseClusterIdsBlock(xmlContent) : [];
+  const shouldExpandClusterIds = !id && clusterIds.length > 0;
 
-  if (!id) {
+  if (!id && !shouldExpandClusterIds) {
     console.log(`Cluster ${name} in ${contextLabel} does not declare an id; defaulting to 0.`);
   }
 
@@ -1646,8 +2092,8 @@ const parseClusterXml = (xmlContent, contextLabel) => {
   const hasCommands = Object.keys(commands).length > 0;
   const hasEvents = Object.keys(events).length > 0;
 
-  return {
-    id: parsedId,
+  const baseEntry = {
+    id: id ? parseHexId(id, `cluster ${name}`) : 0,
     definitionName: name,
     revision: revisionValue,
     revisionHistory,
@@ -1658,6 +2104,36 @@ const parseClusterXml = (xmlContent, contextLabel) => {
     ...(hasCommands ? { commands } : {}),
     ...(hasEvents ? { events } : {}),
   };
+
+  if (!shouldExpandClusterIds) {
+    return baseEntry;
+  }
+
+  const expandedClusterList = clusterIds.map(({ id: clusterId, name: clusterName }) => `  - [${clusterId}] ${clusterName}`).join('\n');
+
+  console.warn(
+    yellowText(
+      `Cluster ${name} in ${contextLabel} does not declare an id; expanding metadata for ${clusterIds.length} <clusterId> entr${clusterIds.length === 1 ? 'y' : 'ies'}:\n${expandedClusterList}`,
+    ),
+  );
+
+  const expandedEntries = clusterIds
+    .map(({ id: clusterId, name: clusterName, picsCode }) => {
+      const expanded = {
+        ...baseEntry,
+        id: parseHexId(clusterId, `clusterId ${clusterName} in ${contextLabel}`),
+        definitionName: clusterName,
+      };
+
+      if (picsCode && expanded.classification && typeof expanded.classification === 'object') {
+        expanded.classification = { ...expanded.classification, picsCode };
+      }
+
+      return expanded;
+    })
+    .filter(Boolean);
+
+  return [baseEntry, ...expandedEntries];
 };
 
 /** Fetch all namespaces */
@@ -1685,11 +2161,18 @@ const namespacesOutput = {};
 
 console.log(`Fetching namespaces for Matter data model v${MATTER_DATA_MODEL_VERSION}`);
 
+await mkdir(XML_DST_PATH, { recursive: true });
+
+await mkdir(join(XML_DST_PATH, 'namespaces'), { recursive: true });
+
 for (const filename of namespacesFiles) {
   console.log(`Downloading ${filename}...`);
   const xml = await fetchRemoteText(`${DATA_MODEL_PATHS.namespaces}${filename}`, {
     description: `namespace ${filename}`,
   });
+
+  await writeFile(join(XML_DST_PATH, 'namespaces', filename), xml);
+
   const { id, name, tags } = parseNamespaceXml(xml);
   const key = sanitizeKey(name);
   namespacesOutput[key] = { id, name, tags };
@@ -1701,13 +2184,14 @@ const outputPath = join(DST_PATH, OUTPUT_NAMESPACES);
 const sortedNamespaces = Object.fromEntries(Object.entries(namespacesOutput).sort(([left], [right]) => left.localeCompare(right)));
 const serializedNamespaces = `${JSON.stringify(sortedNamespaces, null, 2)}\n`;
 await writeFile(outputPath, serializedNamespaces);
-console.log(`Namespaces JSON written to ${outputPath} (${Object.keys(namespacesOutput).length} entries).`);
+console.log(greenText(`Namespaces JSON written to ${outputPath} (${Object.keys(namespacesOutput).length} entries).`));
 
 /** Fetch all device types */
 
 console.log(`Fetching device type identifiers for Matter data model v${MATTER_DATA_MODEL_VERSION}`);
-const deviceTypeIds = await fetchJson(DATA_MODEL_PATHS.deviceTypesIds, {
-  description: 'device type ids',
+const deviceTypeIdsOutputPath = join(XML_DST_PATH, 'device_type_ids.json');
+const deviceTypeIds = await fetchJsonAndSave(DATA_MODEL_PATHS.deviceTypesIds, deviceTypeIdsOutputPath, {
+  description: 'device_type_ids.json',
 });
 const deviceTypeIdEntries = Object.entries(deviceTypeIds);
 console.log(`Fetched ${deviceTypeIdEntries.length} device type identifier entries.`);
@@ -1727,6 +2211,8 @@ console.log(`Discovered ${deviceTypeFiles.length} device type XML file(s).`);
 
 const parsedDeviceTypes = new Map();
 
+await mkdir(join(XML_DST_PATH, 'device_types'), { recursive: true });
+
 for (const { name: filename, download_url: downloadUrl } of deviceTypeFiles) {
   if (!downloadUrl) {
     console.log(`Skipping ${filename} because it does not expose a download URL.`);
@@ -1737,6 +2223,8 @@ for (const { name: filename, download_url: downloadUrl } of deviceTypeFiles) {
   const xml = await fetchRemoteText(downloadUrl, {
     description: `device type ${filename}`,
   });
+
+  await writeFile(join(XML_DST_PATH, 'device_types', filename), xml);
 
   const parsed = parseDeviceTypeXml(xml, filename);
   if (!parsed) {
@@ -1751,7 +2239,6 @@ for (const { name: filename, download_url: downloadUrl } of deviceTypeFiles) {
 }
 
 const deviceTypesOutput = {};
-const classScopeSet = new Set();
 
 const sortedDeviceTypeIds = deviceTypeIdEntries
   .map(([rawId, displayName]) => ({
@@ -1780,15 +2267,13 @@ for (const { id, name } of sortedDeviceTypeIds) {
   }
 
   const key = sanitizeKey(name);
-  classScopeSet.add(`${parsed.class}:${parsed.scope}`);
   deviceTypesOutput[key] = {
     name: normalizeDisplayName(name),
     id: parsed.id,
     revision: parsed.revision,
     revisionHistory: parsed.revisionHistory,
     conditions: parsed.conditions,
-    class: parsed.class,
-    scope: parsed.scope,
+    ...(name.trim().toLowerCase() === 'base device type' ? {} : { class: parsed.class, scope: parsed.scope }),
     clusters: parsed.clusters,
   };
 
@@ -1801,15 +2286,13 @@ if (parsedDeviceTypes.size > 0) {
 
   for (const [name, parsed] of remainingEntries) {
     const key = sanitizeKey(name);
-    classScopeSet.add(`${parsed.class}:${parsed.scope}`);
     deviceTypesOutput[key] = {
       name: normalizeDisplayName(name),
       id: parsed.id,
       revision: parsed.revision,
       revisionHistory: parsed.revisionHistory,
       conditions: parsed.conditions,
-      class: parsed.class,
-      scope: parsed.scope,
+      ...(name.trim().toLowerCase() === 'base device type' ? {} : { class: parsed.class, scope: parsed.scope }),
       clusters: parsed.clusters,
     };
   }
@@ -1819,14 +2302,14 @@ const deviceTypesOutputPath = join(DST_PATH, OUTPUT_DEVICE_TYPES);
 const sortedDeviceTypes = Object.fromEntries(Object.entries(deviceTypesOutput).sort(([left], [right]) => left.localeCompare(right)));
 const serializedDeviceTypes = `${JSON.stringify(sortedDeviceTypes, null, 2)}\n`;
 await writeFile(deviceTypesOutputPath, serializedDeviceTypes);
-console.log(`Device types JSON written to ${deviceTypesOutputPath} (${Object.keys(deviceTypesOutput).length} entries).`);
-console.log('Observed class/scope combinations:', [...classScopeSet.values()]);
+console.log(greenText(`Device types JSON written to ${deviceTypesOutputPath} (${Object.keys(deviceTypesOutput).length} entries).`));
 
 /** Fetch all clusters */
 
 console.log(`Fetching cluster identifiers for Matter data model v${MATTER_DATA_MODEL_VERSION}`);
-const clusterIds = await fetchJson(DATA_MODEL_PATHS.clustersIds, {
-  description: 'cluster ids',
+const clusterIdsOutputPath = join(XML_DST_PATH, 'cluster_ids.json');
+const clusterIds = await fetchJsonAndSave(DATA_MODEL_PATHS.clustersIds, clusterIdsOutputPath, {
+  description: 'cluster_ids.json',
 });
 
 const clusterIdEntries = Object.entries(clusterIds)
@@ -1860,6 +2343,8 @@ console.log(`Discovered ${clusterFiles.length} cluster XML file(s).`);
 
 const parsedClustersById = new Map();
 
+await mkdir(join(XML_DST_PATH, 'clusters'), { recursive: true });
+
 for (const { name: filename, download_url: downloadUrl } of clusterFiles) {
   if (!downloadUrl) {
     console.log(`Skipping ${filename} because it does not expose a download URL.`);
@@ -1871,17 +2356,22 @@ for (const { name: filename, download_url: downloadUrl } of clusterFiles) {
     description: `cluster ${filename}`,
   });
 
+  await writeFile(join(XML_DST_PATH, 'clusters', filename), xml);
+
   const parsed = parseClusterXml(xml, filename);
+  const parsedList = Array.isArray(parsed) ? parsed : [parsed];
 
-  if (!parsed) {
-    continue;
-  }
+  for (const parsedEntry of parsedList) {
+    if (!parsedEntry) {
+      continue;
+    }
 
-  const existing = parsedClustersById.get(parsed.id);
-  if (existing) {
-    existing.push(parsed);
-  } else {
-    parsedClustersById.set(parsed.id, [parsed]);
+    const existing = parsedClustersById.get(parsedEntry.id);
+    if (existing) {
+      existing.push(parsedEntry);
+    } else {
+      parsedClustersById.set(parsedEntry.id, [parsedEntry]);
+    }
   }
 }
 
@@ -2005,12 +2495,12 @@ for (const { target, template } of clusterFallbackTemplates) {
     continue;
   }
 
-  if (!templateEntry) {
-    console.log(`Warning: Unable to apply fallback for missing cluster "${target}" because template "${template}" is unavailable.`);
+  if (targetEntry.revision) {
     continue;
   }
 
-  if (targetEntry.revision) {
+  if (!templateEntry) {
+    console.log(`Warning: Unable to apply fallback for missing cluster "${target}" because template "${template}" is unavailable.`);
     continue;
   }
 
@@ -2055,4 +2545,30 @@ const clustersOutputPath = join(DST_PATH, OUTPUT_CLUSTERS);
 const sortedClusters = Object.fromEntries(Object.entries(clustersOutput).sort(([left], [right]) => left.localeCompare(right)));
 const serializedClusters = `${JSON.stringify(sortedClusters, null, 2)}\n`;
 await writeFile(clustersOutputPath, serializedClusters);
-console.log(`Cluster identifiers JSON written to ${clustersOutputPath} (${Object.keys(sortedClusters).length} entries).`);
+console.log(greenText(`Cluster identifiers JSON written to ${clustersOutputPath} (${Object.keys(sortedClusters).length} entries).`));
+
+const clusterTypesOutputDir = join('packages', 'types', 'src');
+await mkdir(clusterTypesOutputDir, { recursive: true });
+const clusterTypesOutputPath = join(clusterTypesOutputDir, 'clusterTypes.ts');
+const unknownTypeUsages = [];
+const clusterTypesTs = generateClusterTypesTs(sortedClusters, MATTER_DATA_MODEL_VERSION, unknownTypeUsages);
+await writeFile(clusterTypesOutputPath, clusterTypesTs);
+console.log(greenText(`Cluster types TS written to ${clusterTypesOutputPath} (${Object.keys(sortedClusters).length} clusters).`));
+
+if (unknownTypeUsages.length > 0) {
+  const affectedClusters = new Set(unknownTypeUsages.map((entry) => entry.cluster));
+  const unknownTypesReportPath = join(DST_PATH, 'clusterTypes.unknown.json');
+  const report = {
+    version: MATTER_DATA_MODEL_VERSION,
+    generatedAt: new Date().toISOString(),
+    unknownAttributes: unknownTypeUsages.length,
+    affectedClusters: affectedClusters.size,
+    items: unknownTypeUsages,
+  };
+  await writeFile(unknownTypesReportPath, `${JSON.stringify(report, null, 2)}\n`);
+  console.warn(
+    yellowText(
+      `Cluster types TS contains ${unknownTypeUsages.length} unknown attribute type(s) across ${affectedClusters.size} cluster(s). Details written to ${unknownTypesReportPath}.`,
+    ),
+  );
+}

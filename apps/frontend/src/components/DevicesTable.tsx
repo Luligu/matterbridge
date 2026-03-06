@@ -116,7 +116,12 @@ const getClusterRowKey = (row: Cluster) => {
   return `${row.endpoint}::${row.clusterName}::${row.attributeName}`;
 };
 
-function DevicesTable({ filter }: { filter: string }) {
+interface DevicesTableProps {
+  filterPlugins: string;
+  filterDevices: string;
+}
+
+function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): React.JSX.Element {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
@@ -215,15 +220,20 @@ function DevicesTable({ filter }: { filter: string }) {
   }, [pluginName, endpoint, sendMessage]);
 
   useEffect(() => {
-    if (filter === '') {
-      setFilteredDevices(devices);
-      filteredDevicesRef.current = devices;
-      return;
+    const normalizedPlugin = filterPlugins?.trim().toLowerCase();
+    const filterByPlugin = normalizedPlugin && normalizedPlugin !== 'all plugins';
+
+    let next = devices;
+    if (filterByPlugin) {
+      next = next.filter((device) => device.pluginName.toLowerCase() === normalizedPlugin);
     }
-    const filteredDevices = devices.filter((device) => device.name.toLowerCase().includes(filter) || device.serial.toLowerCase().includes(filter));
-    setFilteredDevices(filteredDevices);
-    filteredDevicesRef.current = filteredDevices;
-  }, [devices, filter]);
+    if (filterDevices !== '') {
+      next = next.filter((device) => device.name.toLowerCase().includes(filterDevices) || device.serial.toLowerCase().includes(filterDevices));
+    }
+
+    setFilteredDevices(next);
+    filteredDevicesRef.current = next;
+  }, [devices, filterPlugins, filterDevices]);
 
   const handleDeviceClick = (row: ApiDevice) => {
     if (row.uniqueId === selectedDeviceUniqueId) {

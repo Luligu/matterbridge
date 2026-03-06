@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/thread",
-  "version": "3.5.5",
+  "version": "3.6.0",
   "description": "Matterbridge thread library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -61,13 +61,11 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "automator": "node scripts/runAutomator.mjs --monorepo-package",
-    "prepublishOnly": "npm pkg delete devDependencies scripts",
-    "install:dependencies": "npm install --no-fund --no-audit --save-exact node-ansi-logger @matterbridge/utils @matterbridge/types"
+    "automator": "node scripts/runAutomator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matterbridge/types": "3.5.5",
-    "@matterbridge/utils": "3.5.5",
+    "@matterbridge/types": "3.6.0",
+    "@matterbridge/utils": "3.6.0",
     "node-ansi-logger": "3.2.0"
   }
 }

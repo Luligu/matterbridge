@@ -36,6 +36,9 @@ import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { deviceEnergyManagement, electricalSensor, evse, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
+/**
+ * Matterbridge endpoint representing an EVSE (electric vehicle supply equipment).
+ */
 export class Evse extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the EVSE class.
@@ -69,17 +72,23 @@ export class Evse extends MatterbridgeEndpoint {
     absMinPower?: number,
     absMaxPower?: number,
   ) {
-    super([evse, powerSource, electricalSensor, deviceEnergyManagement], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([evse], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Evse')
-      .createDefaultPowerSourceWiredClusterServer()
+      .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
+      .createDefaultEnergyEvseModeClusterServer(currentMode, supportedModes)
+      .createDefaultTemperatureMeasurementClusterServer(24_00) // Internal temperature 24°C in centi-degrees
+      .addRequiredClusterServers();
+    this.addFixedLabel('composed', 'EVSE');
+    this.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
+    this.addChildDeviceType('ElectricalSensor', electricalSensor)
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(energy, 0)
+      .addRequiredClusterServers();
+    this.addChildDeviceType('DeviceEnergyManagement', deviceEnergyManagement)
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.Evse, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer()
-      .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
-      .createDefaultEnergyEvseModeClusterServer(currentMode, supportedModes)
       .addRequiredClusterServers();
   }
 
@@ -92,7 +101,7 @@ export class Evse extends MatterbridgeEndpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultEnergyEvseClusterServer(state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState): this {
-    this.behaviors.require(MatterbridgeEnergyEvseServer, {
+    this.behaviors.require(MatterbridgeEnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), {
       state: state !== undefined ? state : EnergyEvse.State.NotPluggedIn,
       supplyState: supplyState !== undefined ? supplyState : EnergyEvse.SupplyState.ChargingEnabled,
       faultState: faultState !== undefined ? faultState : EnergyEvse.FaultState.NoError,
@@ -130,7 +139,13 @@ export class Evse extends MatterbridgeEndpoint {
   }
 }
 
-export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
+/**
+ * Energy EVSE server that forwards charging commands and updates supply/state attributes.
+ */
+export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences) {
+  /**
+   * Disables charging and updates EVSE state.
+   */
   override disable(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Disable charging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -143,6 +158,11 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
     // super.disable();
     // disable is not implemented in matter.js
   }
+  /**
+   * Handles the EnergyEvse `EnableCharging` command.
+   *
+   * @param {EnergyEvse.EnableChargingRequest} request - Charging enable request payload.
+   */
   override enableCharging(request: EnergyEvse.EnableChargingRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`EnableCharging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -159,9 +179,57 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
     // super.enableCharging();
     // enableCharging is not implemented in matter.js
   }
+  /**
+   * Handles the EnergyEvse `SetTargets` command.
+   *
+   * @param {EnergyEvse.SetTargetsRequest} request - Charging target schedules request payload.
+   */
+  override setTargets(request: EnergyEvse.SetTargetsRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`SetTargets request ${request.chargingTargetSchedules} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // The implementation should store the provided charging targets and use them to manage the charging process according to the user's preferences.
+    // super.setTargets();
+    // setTargets is not implemented in matter.js
+    return;
+  }
+  /**
+   * Handles the EnergyEvse `GetTargets` command.
+   *
+   * @returns {EnergyEvse.GetTargetsResponse} Stored charging target schedules.
+   */
+  override getTargets(): MaybePromise<EnergyEvse.GetTargetsResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`GetTargets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // The implementation should retrieve the currently stored charging targets and return them in the response.
+    // return super.getTargets();
+    // getTargets is not implemented in matter.js
+    return { chargingTargetSchedules: [] };
+  }
+  /**
+   * Handles the EnergyEvse `ClearTargets` command.
+   *
+   * @returns {void} No return value.
+   */
+  override clearTargets(): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`ClearTargets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // The implementation should clear all stored charging targets and stop any ongoing charging sessions that were scheduled based on those targets.
+    // super.clearTargets();
+    // clearTargets is not implemented in matter.js
+    return;
+  }
 }
 
+/**
+ * Energy EVSE mode server that validates and applies mode changes.
+ */
 export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
+  /**
+   * Handles the EnergyEvseMode `ChangeToMode` command.
+   *
+   * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
+   * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
+   */
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

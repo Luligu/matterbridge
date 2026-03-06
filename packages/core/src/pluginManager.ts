@@ -102,6 +102,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     this.log.debug('Matterbridge plugin manager started');
   }
 
+  /**
+   * Destroys the plugin manager and releases resources.
+   */
   destroy(): void {
     this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();

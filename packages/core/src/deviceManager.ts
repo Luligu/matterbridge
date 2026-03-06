@@ -92,6 +92,9 @@ export class DeviceManager {
     this.log.debug('Matterbridge device manager started');
   }
 
+  /**
+   * Destroys the device manager and releases resources.
+   */
   destroy(): void {
     this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();

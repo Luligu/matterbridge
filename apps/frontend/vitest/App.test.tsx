@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 
 // Mock UiContext and UiProvider before all other imports to avoid hoisting issues

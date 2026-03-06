@@ -22,7 +22,6 @@ describe('muiTheme', () => {
   it('getCssVariable returns value from CSS', () => {
     window.getComputedStyle = vi.fn().mockReturnValue({
       getPropertyValue: (name: string) => name === '--primary-color' ? 'red' : '',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any;
     expect(getCssVariable('--primary-color', 'blue')).toBe('red');
   });
@@ -30,7 +29,6 @@ describe('muiTheme', () => {
   it('getCssVariable returns default if not set', () => {
     window.getComputedStyle = vi.fn().mockReturnValue({
       getPropertyValue: () => '',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any;
     expect(getCssVariable('--not-set', 'fallback')).toBe('fallback');
   });

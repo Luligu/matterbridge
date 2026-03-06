@@ -109,6 +109,9 @@ interface FrontendEvents {
   websocket_server_stopped: [];
 }
 
+/**
+ * Frontend server controller providing the web UI and websocket integration.
+ */
 export class Frontend extends EventEmitter<FrontendEvents> {
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
@@ -125,6 +128,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private readonly debug = hasParameter('debug') || hasParameter('verbose');
   private readonly verbose = hasParameter('verbose');
 
+  /**
+   * Creates a frontend server controller.
+   *
+   * @param {Matterbridge} matterbridge - Parent Matterbridge instance.
+   */
   constructor(matterbridge: Matterbridge) {
     super();
     this.matterbridge = matterbridge;
@@ -138,6 +146,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.server.on('broadcast_message', this.msgHandler.bind(this));
   }
 
+  /**
+   * Stops the frontend broadcast server and releases resources.
+   */
   destroy(): void {
     this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
@@ -237,6 +248,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     }
   }
 
+  /**
+   * Updates the logger level at runtime.
+   */
   set logLevel(logLevel: LogLevel) {
     this.log.logLevel = logLevel;
   }
@@ -250,6 +264,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     return true;
   }
 
+  /**
+   * Starts the frontend server.
+   *
+   * @param {number} [port] - TCP port to listen on. Defaults to 8283.
+   * @returns {Promise<void>} Resolves when startup completes.
+   */
   async start(port = 8283) {
     this.port = port;
     this.storedPassword = await this.matterbridge.nodeContext?.get('password', '');
@@ -702,7 +722,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
-        res.type('text/plain');
+        res.type('text/plain; charset=utf-8');
         res.send(data);
       } catch (error) {
         this.log.error(`Error reading matterbridge log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
@@ -717,7 +737,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
-        res.type('text/plain');
+        res.type('text/plain; charset=utf-8');
         res.send(data);
       } catch (error) {
         this.log.error(`Error reading matter log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
@@ -733,7 +753,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
-        res.type('text/plain');
+        res.type('text/plain; charset=utf-8');
         res.send(data.slice(29));
       } catch (error) {
         // istanbul ignore next
@@ -757,7 +777,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // istanbul ignore next
         this.log.debug(`Error in /api/download-diagnostic: ${error instanceof Error ? error.message : error}`);
       }
-      res.type('text/plain');
+      res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), MATTERBRIDGE_DIAGNOSTIC_FILE, (error) => {
         /* istanbul ignore if */
         if (error) {
@@ -774,7 +794,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'utf8');
-        res.type('text/html');
+        res.type('text/html; charset=utf-8');
         res.send(data);
       } catch (error) {
         this.log.error(`Error in /api/viewhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
@@ -791,7 +811,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), fs.constants.F_OK);
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'utf8');
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), data, 'utf-8');
-        res.type('text/plain');
+        res.type('text/html; charset=utf-8');
         res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
           /* istanbul ignore if */
           if (error) {
@@ -812,7 +832,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
-        res.type('text/plain');
+        res.type('text/plain; charset=utf-8');
         res.send(data);
       } catch (error) {
         this.log.error(`Error reading shelly log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
@@ -837,7 +857,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         );
         this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
-      res.type('text/plain');
+      res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'matterbridge.log', (error) => {
         /* istanbul ignore if */
         if (error) {
@@ -860,7 +880,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
         this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
-      res.type('text/plain');
+      res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'matter.log', (error) => {
         /* istanbul ignore if */
         if (error) {
@@ -883,7 +903,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await fs.promises.writeFile(path.join(os.tmpdir(), 'shelly.log'), 'Create the Shelly system log before downloading it.', 'utf-8');
         this.log.debug(`Error in /api/shellydownloadsystemlog: ${error instanceof Error ? error.message : error}`);
       }
-      res.type('text/plain');
+      res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), 'shelly.log'), 'shelly.log', (error) => {
         /* istanbul ignore if */
         if (error) {
@@ -1023,6 +1043,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     );
   }
 
+  /**
+   * Stops the frontend HTTP/HTTPS and websocket servers.
+   */
   async stop() {
     this.log.debug('Stopping the frontend...');
     const ws = await import('ws');
@@ -2278,6 +2301,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             plugin.configJson = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             this.wssSendRestartRequired(false);
+            this.wssSendRefreshRequired('plugins', { lock: plugin.name });
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
@@ -2324,6 +2348,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             plugin.configJson = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             this.wssSendRestartRequired(false);
+            this.wssSendRefreshRequired('plugins', { lock: plugin.name });
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
@@ -2398,16 +2423,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {Record<string, unknown>} params - Additional parameters to send with the message.
    * possible values for changed:
    * - 'settings' (when the bridge has started in bridge mode or childbridge mode and when update finds a new version)
-   * - 'plugins'
+   * - 'plugins' with param 'lock' (prevents to the config to open)
    * - 'devices'
    * - 'matter' with param 'matter' (QRDiv component)
    * @param {ApiMatter} params.matter - The matter device that has changed. Required if changed is 'matter'.
+   * @param {string} params.lock - The name of the plugin that has locked the refresh. Required if changed is 'plugins'.
    */
-  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter: ApiMatter }) {
+  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter?: ApiMatter; lock?: string }) {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, ...params } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, lock: params?.lock, ...params } });
   }
 
   /**

@@ -258,7 +258,18 @@ function HomeInstallAddPlugins() {
               <span>
                 <FormControl size='small' style={{ minWidth: '150px' }}>
                   <InputLabel id='plugin-version-label'>Tag or version</InputLabel>
-                  <Select labelId='plugin-version-label' id='plugin-version' value={selectedPluginVersion} label='Tag or version' onChange={(event) => setSelectedPluginVersion(String(event.target.value ?? ''))}>
+                  <Select
+                    labelId='plugin-version-label'
+                    id='plugin-version'
+                    value={selectedPluginVersion}
+                    label='Tag or version'
+                    onChange={(event) => setSelectedPluginVersion(String(event.target.value ?? ''))}
+                    sx={{
+                      '& .MuiSelect-icon': {
+                        color: 'var(--main-label-color)',
+                      },
+                    }}
+                  >
                     {pluginVersions.map((v) => (
                       <MenuItem key={v} value={v}>
                         {v}

@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/batteryStorage.test.ts
 
 const MATTER_PORT = 8002;
@@ -16,7 +17,19 @@ import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 
 // Matterbridge
-import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import {
+  addDevice,
+  aggregator,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
+  server,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestHelpers.js';
 import { batteryStorage } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { BatteryStorage } from './batteryStorage.js';
@@ -37,7 +50,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment
@@ -61,10 +78,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
 
-    expect(device.getChildEndpointByName('BatteryPowerSource')).toBeDefined();
-    expect(device.getChildEndpointByName('BatteryPowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointByName('GridPowerSource')).toBeDefined();
-    expect(device.getChildEndpointByName('GridPowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+    expect(device.getChildEndpointByName('Battery')).toBeDefined();
+    expect(device.getChildEndpointByName('Battery')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+    expect(device.getChildEndpointByName('Battery')?.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
+    expect(device.getChildEndpointByName('Battery')?.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
   });
 
   test('add a battery storage device', async () => {
@@ -89,7 +106,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(72);
+    expect(attributes.length).toBe(96);
   });
 
   test('close the server node', async () => {

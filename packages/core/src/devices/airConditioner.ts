@@ -67,6 +67,9 @@ export interface AirConditionerOptions {
   percentCurrent?: number;
 }
 
+/**
+ * Matterbridge endpoint representing a room air conditioner device.
+ */
 export class AirConditioner extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the AirConditioner class.

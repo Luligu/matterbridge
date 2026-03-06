@@ -35,6 +35,9 @@ import { dishwasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
+/**
+ * Matterbridge endpoint representing a dishwasher device.
+ */
 export class Dishwasher extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the DishWasher class.
@@ -118,7 +121,13 @@ export class Dishwasher extends MatterbridgeEndpoint {
   }
 }
 
+/**
+ * DishwasherMode server that forwards mode changes and reacts to on/off state.
+ */
 export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
+  /**
+   * Initializes mode defaults and hooks on/off changes.
+   */
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeDishwasherModeServer initialized: currentMode is ${this.state.currentMode}`);
@@ -135,6 +144,12 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
     }
   }
 
+  /**
+   * Handles the DishwasherMode `ChangeToMode` command.
+   *
+   * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
+   * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
+   */
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

@@ -119,6 +119,7 @@ import {
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
   MatterbridgePowerSourceServer,
+  MatterbridgePresetThermostatServer,
   MatterbridgeServer,
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeSwitchServer,
@@ -142,6 +143,7 @@ import {
   getBehavior,
   getBehaviourTypesFromClusterClientIds,
   getBehaviourTypesFromClusterServerIds,
+  getCluster,
   getClusterId,
   getDefaultDeviceEnergyManagementClusterServer,
   getDefaultDeviceEnergyManagementModeClusterServer,
@@ -161,6 +163,7 @@ import {
   invokeBehaviorCommand,
   lowercaseFirstLetter,
   setAttribute,
+  setCluster,
   subscribeAttribute,
   triggerEvent,
   updateAttribute,
@@ -204,6 +207,9 @@ export function assertMatterbridgeEndpoint(value: unknown, context?: string): as
   throw new TypeError(`Invalid MatterbridgeEndpoint received${context ? ` in ${context}` : ''}`);
 }
 
+/**
+ * Matterbridge endpoint implementation extending the Matter.js {@link Endpoint}.
+ */
 export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
@@ -546,7 +552,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. When context.offline === true then the change is locally generated and not from the controller.
    */
-
   async subscribeAttribute(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
     attribute: string,
@@ -555,6 +560,40 @@ export class MatterbridgeEndpoint extends Endpoint {
     log?: AnsiLogger,
   ): Promise<boolean> {
     return await subscribeAttribute(this, cluster, attribute, listener, log);
+  }
+
+  /**
+   * Sets the state of the provided cluster on a given endpoint.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to set.
+   * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} value - The state to set for the cluster.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   */
+  async setCluster(
+    cluster: Behavior.Type | ClusterType | ClusterId | string,
+    value: Record<string, boolean | number | bigint | string | object | undefined | null>,
+    log?: AnsiLogger,
+  ): Promise<boolean> {
+    return await setCluster(this, cluster, value, log);
+  }
+
+  /**
+   * Retrieves the state of the provided cluster from the given endpoint.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the state from.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
+   * @returns {Record<string, boolean | number | bigint | string | object | undefined | null> | undefined} The state of the cluster, or undefined if the cluster is not found.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   */
+  getCluster(
+    cluster: Behavior.Type | ClusterType | ClusterId | string,
+    log?: AnsiLogger,
+  ): Record<string, boolean | number | bigint | string | object | undefined | null> | undefined {
+    return getCluster(this, cluster, log);
   }
 
   /**
@@ -2194,7 +2233,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     presetTypes: Thermostat.PresetType[] | null | undefined = undefined,
   ): this {
     this.behaviors.require(
-      MatterbridgeThermostatServer.with(
+      MatterbridgePresetThermostatServer.with(
         Thermostat.Feature.Heating,
         Thermostat.Feature.Cooling,
         Thermostat.Feature.AutoMode,
@@ -3085,8 +3124,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default TemperatureMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value of the temperature x 100.
-   * @param {number | null} minMeasuredValue - The minimum measured value of the temperature x 100.
-   * @param {number | null} maxMeasuredValue - The maximum measured value of the temperature x 100.
+   * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the temperature x 100. Default is null.
+   * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the temperature x 100. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
@@ -3098,8 +3137,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default RelativeHumidityMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value of the relative humidity x 100.
-   * @param {number | null} minMeasuredValue - The minimum measured value of the relative humidity x 100.
-   * @param {number | null} maxMeasuredValue - The maximum measured value of the relative humidity x 100.
+   * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the relative humidity x 100. Default is null.
+   * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the relative humidity x 100. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
@@ -3111,8 +3150,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default PressureMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value for the pressure in kPa x 10.
-   * @param {number | null} minMeasuredValue - The minimum measured value for the pressure in kPa x 10.
-   * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure in kPa x 10.
+   * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) for the pressure in kPa x 10. Default is null.
+   * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) for the pressure in kPa x 10. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -3133,8 +3172,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default IlluminanceMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value of illuminance.
-   * @param {number | null} minMeasuredValue - The minimum measured value of illuminance.
-   * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
+   * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of illuminance. Default is null.
+   * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of illuminance. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -3159,8 +3198,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default FlowMeasurement cluster server.
    *
    * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h.
-   * @param {number | null} minMeasuredValue - The minimum measured value of the flow in 10 x m3/h.
-   * @param {number | null} maxMeasuredValue - The maximum measured value of the flow in 10 x m3/h.
+   * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the flow in 10 x m3/h. Default is null.
+   * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the flow in 10 x m3/h. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {

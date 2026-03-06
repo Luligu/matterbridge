@@ -44,6 +44,9 @@ export interface BasicVideoPlayerOptions {
   playbackState?: MediaPlayback.PlaybackState;
 }
 
+/**
+ * Matterbridge endpoint representing a basic video player device.
+ */
 export class BasicVideoPlayer extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the BasicVideoPlayer class.
@@ -104,7 +107,13 @@ export class BasicVideoPlayer extends MatterbridgeEndpoint {
   }
 }
 
+/**
+ * MediaPlayback server that forwards playback commands and tracks state.
+ */
 export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
+  /**
+   * Initializes the server and hooks on/off changes.
+   */
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeMediaPlaybackServer initialized: currentState is ${this.state.currentState}`);
@@ -115,6 +124,11 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
   }
 
+  /**
+   * Handles the MediaPlayback `Play` command.
+   *
+   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
+   */
   override play(): MaybePromise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Play (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -123,6 +137,11 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     return { status: MediaPlayback.Status.Success };
   }
 
+  /**
+   * Handles the MediaPlayback `Pause` command.
+   *
+   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
+   */
   override pause(): MaybePromise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -131,6 +150,11 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     return { status: MediaPlayback.Status.Success };
   }
 
+  /**
+   * Handles the MediaPlayback `Stop` command.
+   *
+   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
+   */
   override stop(): MaybePromise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -139,6 +163,11 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     return { status: MediaPlayback.Status.Success };
   }
 
+  /**
+   * Handles the MediaPlayback `Previous` command.
+   *
+   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
+   */
   override previous(): MaybePromise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Previous (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -146,6 +175,11 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     return { status: MediaPlayback.Status.Success };
   }
 
+  /**
+   * Handles the MediaPlayback `Next` command.
+   *
+   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
+   */
   override next(): MaybePromise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Next (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -153,6 +187,11 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     return { status: MediaPlayback.Status.Success };
   }
 
+  /**
+   * Handles the MediaPlayback `SkipForward` command.
+   *
+   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
+   */
   override skipForward(): MaybePromise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SkipForward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -160,6 +199,11 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     return { status: MediaPlayback.Status.Success };
   }
 
+  /**
+   * Handles the MediaPlayback `SkipBackward` command.
+   *
+   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
+   */
   override skipBackward(): MaybePromise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SkipBackward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -168,12 +212,24 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
   }
 }
 
+/**
+ * KeypadInput server that forwards key events to the Matterbridge command handler.
+ */
 export class MatterbridgeKeypadInputServer extends KeypadInputServer {
+  /**
+   * Initializes the server.
+   */
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeKeypadInputServer initialized`);
   }
 
+  /**
+   * Handles the KeypadInput `SendKey` command.
+   *
+   * @param {KeypadInput.SendKeyRequest} request - Key request payload.
+   * @returns {KeypadInput.SendKeyResponse} Command response with status.
+   */
   override sendKey(request: KeypadInput.SendKeyRequest): MaybePromise<KeypadInput.SendKeyResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SendKey keyCode ${request.keyCode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

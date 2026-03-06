@@ -78,15 +78,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet1.id).toBe('OvenTestCabinetTop');
     expect(cabinet1.hasClusterServer(OvenMode.Cluster.id)).toBeTruthy();
     expect(cabinet1.hasClusterServer(OvenCavityOperationalState.Cluster.id)).toBeTruthy();
-    expect(cabinet1.getAllClusterServerNames()).toEqual([
-      'descriptor',
-      'matterbridge',
-      'identify',
-      'temperatureControl',
-      'temperatureMeasurement',
-      'ovenMode',
-      'ovenCavityOperationalState',
-    ]);
+    expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
 
     cabinet2 = device.addCabinet(
       'Oven Test Cabinet Bottom',
@@ -97,8 +89,11 @@ describe('Matterbridge ' + NAME, () => {
         { label: 'Clean', mode: 2, modeTags: [{ value: OvenMode.ModeTag.Clean }] },
         { label: 'Steam', mode: 3, modeTags: [{ value: OvenMode.ModeTag.Steam }] },
       ],
-      2,
-      ['180°', '190°', '200°'],
+      180 * 100,
+      180 * 100,
+      300 * 100,
+      10 * 100,
+      20 * 100,
       OperationalState.OperationalStateEnum.Running,
       1,
       ['pre-heating', 'pre-heated', 'cooling down'],
@@ -107,15 +102,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet2.id).toBe('OvenTestCabinetBottom');
     expect(cabinet2.hasClusterServer(OvenMode.Cluster.id)).toBeTruthy();
     expect(cabinet2.hasClusterServer(OvenCavityOperationalState.Cluster.id)).toBeTruthy();
-    expect(cabinet2.getAllClusterServerNames()).toEqual([
-      'descriptor',
-      'matterbridge',
-      'identify',
-      'temperatureControl',
-      'temperatureMeasurement',
-      'ovenMode',
-      'ovenCavityOperationalState',
-    ]);
+    expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
   });
 
   test('add a oven device', async () => {
@@ -167,7 +154,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(52);
+    expect(attributes.length).toBe(47);
   });
 
   test('cabinet2 forEachAttribute', async () => {
@@ -188,7 +175,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(52);
+    expect(attributes.length).toBe(47);
   });
 
   test('invoke MatterbridgeOvenModeServer commands', async () => {

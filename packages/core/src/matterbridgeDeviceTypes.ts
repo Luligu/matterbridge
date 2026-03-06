@@ -114,6 +114,10 @@ import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId, DeviceTypeId } from '@matter/types/datatype';
 
+import { ClosureControl } from './clusters/closure-control.js';
+import { ClosureDimension } from './clusters/closure-dimension.js';
+import { SoilMeasurement } from './clusters/soil-measurement.js';
+
 export enum DeviceClasses {
   /** 1.1.5. Device Type Class Conditions */
 
@@ -1017,7 +1021,7 @@ export const bridge = aggregator;
  */
 export const roboticVacuumCleaner = DeviceTypeDefinition({
   name: 'MA-roboticvacuumcleaner',
-  code: 0x74,
+  code: 0x74, // 116
   deviceClass: DeviceClasses.Simple,
   revision: 4,
   requiredServerClusters: [Identify.Cluster.id, RvcRunMode.Cluster.id, RvcOperationalState.Cluster.id],
@@ -1033,7 +1037,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
  */
 export const laundryWasher = DeviceTypeDefinition({
   name: 'MA-laundrywasher',
-  code: 0x73,
+  code: 0x73, // 115
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id],
@@ -1050,7 +1054,7 @@ export const laundryWasher = DeviceTypeDefinition({
  */
 export const refrigerator = DeviceTypeDefinition({
   name: 'MA-refrigerator',
-  code: 0x70,
+  code: 0x70, // 112
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [],
@@ -1076,7 +1080,7 @@ export const refrigerator = DeviceTypeDefinition({
  */
 export const airConditioner = DeviceTypeDefinition({
   name: 'MA-airConditioner',
-  code: 0x72,
+  code: 0x72, // 114
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
@@ -1105,7 +1109,7 @@ export const airConditioner = DeviceTypeDefinition({
  */
 export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetcooler',
-  code: 0x71,
+  code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   revision: 5,
   requiredServerClusters: [TemperatureControl.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id],
@@ -1128,7 +1132,7 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
  */
 export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetheater',
-  code: 0x71,
+  code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   revision: 5,
   requiredServerClusters: [TemperatureControl.Cluster.id, OvenMode.Cluster.id, OvenCavityOperationalState.Cluster.id],
@@ -1142,7 +1146,7 @@ export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
  */
 export const dishwasher = DeviceTypeDefinition({
   name: 'MA-dishwasher',
-  code: 0x75,
+  code: 0x75, // 117
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id],
@@ -1156,7 +1160,7 @@ export const dishwasher = DeviceTypeDefinition({
  */
 export const laundryDryer = DeviceTypeDefinition({
   name: 'MA-laundrydryer',
-  code: 0x7c,
+  code: 0x7c, // 124
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id],
@@ -1173,7 +1177,7 @@ export const laundryDryer = DeviceTypeDefinition({
  */
 export const cookSurface = DeviceTypeDefinition({
   name: 'MA-cooksurface',
-  code: 0x77,
+  code: 0x77, // 119
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [],
@@ -1194,7 +1198,7 @@ export const cookSurface = DeviceTypeDefinition({
  */
 export const cooktop = DeviceTypeDefinition({
   name: 'MA-cooktop',
-  code: 0x78,
+  code: 0x78, // 120
   deviceClass: DeviceClasses.Simple,
   revision: 1,
   requiredServerClusters: [OnOff.Cluster.id],
@@ -1212,7 +1216,7 @@ export const cooktop = DeviceTypeDefinition({
  */
 export const oven = DeviceTypeDefinition({
   name: 'MA-oven',
-  code: 0x7b,
+  code: 0x7b, // 123
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [],
@@ -1233,7 +1237,7 @@ export const oven = DeviceTypeDefinition({
  */
 export const extractorHood = DeviceTypeDefinition({
   name: 'MA-extractorhood',
-  code: 0x7a,
+  code: 0x7a, // 122
   deviceClass: DeviceClasses.Simple,
   revision: 1,
   requiredServerClusters: [FanControl.Cluster.id],
@@ -1250,7 +1254,7 @@ export const extractorHood = DeviceTypeDefinition({
  */
 export const microwaveOven = DeviceTypeDefinition({
   name: 'MA-microwaveoven',
-  code: 0x79,
+  code: 0x79, // 121
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [OperationalState.Cluster.id, MicrowaveOvenMode.Cluster.id, MicrowaveOvenControl.Cluster.id],
@@ -1425,4 +1429,74 @@ export const heatPump = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [], // See 14.5.5.1. Cluster Requirements on Composing Device Types
   optionalServerClusters: [Identify.Cluster.id, Thermostat.Cluster.id],
+});
+
+/** Matter 1.5.0 device types */
+
+/**
+ * 7.14. Soil Sensor Device Type
+ *
+ * A Soil Sensor device reports measurements of soil values, such as moisture and (optionally) temperature.
+ */
+export const soilSensor = DeviceTypeDefinition({
+  name: 'MA-soilSensor',
+  code: 0x0045,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, SoilMeasurement.Cluster.id],
+  optionalServerClusters: [TemperatureMeasurement.Cluster.id],
+});
+
+/**
+ * 5.7. Irrigation System Device Type
+ *
+ * An irrigation system is always defined via endpoint composition. Irrigation system manufacturers
+ * determine how many watering "zone" terminals are present on the physical device. Each zone is
+ * represented by a disambiguated Water Valve endpoint.
+ *
+ * 5.7.5. Device Type Requirements
+ * An irrigation system SHALL be composed of at least one endpoint with device types as defined by the
+ * conformance below. There MAY be more endpoints with additional instances of these device types or
+ * additional device types existing in the irrigation system.
+ *
+ * - ID     Name                        Constraint    Conformance
+ * - 0x0042 Water Valve                 min 1         M
+ */
+export const irrigationSystem = DeviceTypeDefinition({
+  name: 'MA-irrigationSystem',
+  code: 0x0040,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [],
+  optionalServerClusters: [Identify.Cluster.id, OperationalState.Cluster.id, FlowMeasurement.Cluster.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [FlowMeasurement.Cluster.id],
+});
+
+/**
+ * 8.5. Closure Device Type
+ *
+ * A Closure device provides actuator control over an endpoint.
+ */
+export const closure = DeviceTypeDefinition({
+  name: 'MA-closure',
+  code: 0x0230,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, ClosureControl.Cluster.id],
+  optionalServerClusters: [],
+});
+
+/**
+ * 8.6. Closure Panel Device Type
+ *
+ * A Closure Panel device provides dimension information for an endpoint.
+ */
+export const closurePanel = DeviceTypeDefinition({
+  name: 'MA-closurePanel',
+  code: 0x0231,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [ClosureDimension.Cluster.id],
+  optionalServerClusters: [],
 });

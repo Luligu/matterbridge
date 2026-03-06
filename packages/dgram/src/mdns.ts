@@ -216,6 +216,9 @@ export function isMdnsResponse(message: Buffer): boolean {
   return id == 0 && qr === 1;
 }
 
+/**
+ * Multicast mDNS helper that tracks device queries/responses and applies filters.
+ */
 export class Mdns extends Multicast {
   deviceQueries = new Map<IpAddress, { rinfo: dgram.RemoteInfo; query: MdnsMessage }>();
   deviceResponses = new Map<IpAddress, { rinfo: dgram.RemoteInfo; response: MdnsMessage; dataPTR?: string }>();
@@ -247,14 +250,32 @@ export class Mdns extends Multicast {
     super(name, multicastAddress, multicastPort, socketType, reuseAddr, interfaceName, interfaceAddress, outgoingInterfaceAddress);
   }
 
+  /**
+   * Called when an mDNS query is received.
+   *
+   * @param {dgram.RemoteInfo} rinfo - Sender address information.
+   * @param {MdnsMessage} _query - Parsed query message.
+   */
   onQuery(rinfo: dgram.RemoteInfo, _query: MdnsMessage) {
     this.log.debug(`mDNS query received from ${BLUE}${rinfo.family}${db} ${BLUE}${rinfo.address}${db}:${BLUE}${rinfo.port}${db}`);
   }
 
+  /**
+   * Called when an mDNS response is received.
+   *
+   * @param {dgram.RemoteInfo} rinfo - Sender address information.
+   * @param {MdnsMessage} _response - Parsed response message.
+   */
   onResponse(rinfo: dgram.RemoteInfo, _response: MdnsMessage) {
     this.log.debug(`mDNS response received from ${BLUE}${rinfo.family}${db} ${BLUE}${rinfo.address}${db}:${BLUE}${rinfo.port}${db}`);
   }
 
+  /**
+   * Handles a raw UDP datagram.
+   *
+   * @param {Buffer} msg - Received datagram.
+   * @param {dgram.RemoteInfo} rinfo - Sender address information.
+   */
   override onMessage(msg: Buffer, rinfo: dgram.RemoteInfo): void {
     // Apply ip filters if any
     if (this.ipFilters.length > 0) {

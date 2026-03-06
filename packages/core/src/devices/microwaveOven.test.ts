@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/microwaveOven.test.ts
 
 const MATTER_PORT = 8010;
@@ -11,7 +12,6 @@ import { jest } from '@jest/globals';
 // @matter
 import { MicrowaveOvenControlServer, MicrowaveOvenModeServer } from '@matter/node/behaviors';
 import { Identify, MicrowaveOvenControl, MicrowaveOvenMode, OnOff, OperationalState, PowerSource } from '@matter/types/clusters';
-import { wait } from '@matterbridge/utils';
 import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
@@ -20,7 +20,11 @@ import {
   aggregator,
   createTestEnvironment,
   destroyTestEnvironment,
+  flushAsync,
+  loggerErrorSpy,
+  loggerFatalSpy,
   loggerLogSpy,
+  loggerWarnSpy,
   server,
   setupTest,
   startServerNode,
@@ -47,7 +51,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment
@@ -60,6 +68,8 @@ describe('Matterbridge ' + NAME, () => {
     await startServerNode(NAME, MATTER_PORT, microwaveOven.code, MATTER_CREATE_ONLY);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
+    await server.construction.ready;
+    await aggregator.construction.ready;
   }, 10000);
 
   test('create a microwave oven device', async () => {
@@ -77,7 +87,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add a microwave oven device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
-
+    await device.construction.ready;
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer initialized`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
   });
@@ -185,14 +195,12 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { startAfterSetting: false });
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true`);
-    await wait(100);
     expect((device as any).state['operationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Stopped);
 
     // Test setCookingParameters - startAfterSetting true (transition to Running)
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { startAfterSetting: true });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true`);
-    await wait(100);
     expect((device as any).state['operationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Running);
   });
 

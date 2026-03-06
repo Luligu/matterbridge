@@ -432,7 +432,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   }
 
   function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
-    const { canAdd, onAddClick, schema, title } = props;
+    const { canAdd, onAddClick, schema, title, formData } = props;
     if (rjsfDebug) console.log(`ArrayFieldTemplate for ${title}:`, props);
 
     const [dialogDeviceOpen, setDialogDeviceOpen] = useState(false);
@@ -564,6 +564,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
             <List dense>
               {selectDevices
                 .filter((v) => v.serial.toLowerCase().includes(filter.toLowerCase()) || v.name.toLowerCase().includes(filter.toLowerCase()))
+                .filter((d) => !schema.uniqueItems || !formData.includes(schema.selectFrom === 'serial' ? d.serial : d.name))
                 .map((value, index) => (
                   <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listItemButtonSx}>
                     {value.icon === 'wifi' && (
@@ -614,6 +615,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
             <List dense>
               {selectEntities
                 .filter((v) => v.name.toLowerCase().includes(filter.toLowerCase()) || v.description.toLowerCase().includes(filter.toLowerCase()))
+                .filter((e) => !schema.uniqueItems || !formData.includes(schema.selectEntityFrom === 'name' ? e.name : e.description))
                 .map((value, index) => (
                   <ListItemButton onClick={() => handleSelectEntityValue(value)} key={index} sx={listItemButtonSx}>
                     {value.icon === 'wifi' && (

@@ -4,7 +4,8 @@ export const MbfLsk = {
   // App
   enableMobile: `${LOCAL_STORAGE_PREFIX}enableMobile`,
   // Devices page
-  devicesFilter: `${LOCAL_STORAGE_PREFIX}devicesFilter`,
+  devicesFilterPlugins: `${LOCAL_STORAGE_PREFIX}devicesFilterPlugins`,
+  devicesFilterDevices: `${LOCAL_STORAGE_PREFIX}devicesFilterDevices`,
   devicesViewMode: `${LOCAL_STORAGE_PREFIX}devicesViewMode`,
   // Home page
   frontendVersion: `${LOCAL_STORAGE_PREFIX}frontendVersion`,

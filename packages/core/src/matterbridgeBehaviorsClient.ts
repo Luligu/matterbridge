@@ -30,10 +30,16 @@ import { ClusterId } from '@matter/main/types';
 
 import { MatterbridgeServer } from './matterbridgeBehaviors.js';
 
+/**
+ * Binding client behavior that mirrors bindings into the Descriptor clientList.
+ */
 export class MatterbridgeBindingServer extends BindingBehavior {
   declare protected internal: MatterbridgeBindingServer.Internal;
   declare state: MatterbridgeBindingServer.State;
 
+  /**
+   * Initializes binding handling and reacts to binding changes.
+   */
   override async initialize(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Initializing MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) with clientList: ${this.state.clientList.join(', ')}`);
@@ -48,9 +54,15 @@ export class MatterbridgeBindingServer extends BindingBehavior {
 
 // istanbul ignore next but why is this not covered?
 export namespace MatterbridgeBindingServer {
+  /**
+   * Internal state for binding behavior.
+   */
   export class Internal {
     bound: boolean = false;
   }
+  /**
+   * Persistent state for binding behavior.
+   */
   export class State extends BindingBehavior.State {
     clientList: ClusterId[] = [];
   }

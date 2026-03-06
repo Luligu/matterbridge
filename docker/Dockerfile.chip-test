@@ -69,11 +69,13 @@ RUN bash -lc "\
 
 # Build Matterbridge and plugins (keep only runtime deps)
 WORKDIR /root/matterbridge
+RUN echo "Build matterbridge module 3.6.0 0304"
 RUN \
   git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
   npm ci --no-fund --no-audit && npm run build && \
   cd apps/frontend && npm ci --no-fund --no-audit && npm run build && rm -rf node_modules && cd ../.. && \
-  npm prune --omit=dev --no-fund --no-audit
+  npm prune --omit=dev --no-fund --no-audit && \
+  npm link --no-fund  --no-audit
 
 WORKDIR /root/matterbridge-test
 RUN \
@@ -139,14 +141,14 @@ ENV PATH="/root/connectedhomeip/out/host:${VIRTUAL_ENV}/bin:${PATH}"
 # Matterbridge module (global install copied from builder)
 COPY --from=builder /usr/lib/node_modules/matterbridge /usr/lib/node_modules/matterbridge
 
-# Recreate executable links (do NOT copy /usr/bin/* from builder, they are symlinks)
+# Recreate executable links
 RUN \
   ln -sf /usr/lib/node_modules/matterbridge/bin/matterbridge.js /usr/bin/matterbridge && \
   ln -sf /usr/lib/node_modules/matterbridge/bin/mb_mdns.js /usr/bin/mb_mdns && \
   ln -sf /usr/lib/node_modules/matterbridge/bin/mb_coap.js /usr/bin/mb_coap && \
   ln -sf /usr/lib/node_modules/matterbridge/bin/mb_health.js /usr/bin/mb_health
 
-# Matterbridge + local plugin repos + config
+# Matterbridge + local plugin repos + config. This allows to code inside the container and have changes reflected immediately without needing to rebuild the image.
 COPY --from=builder /root/matterbridge /root/matterbridge
 COPY --from=builder /root/matterbridge-test /root/matterbridge-test
 COPY --from=builder /root/matterbridge-example-accessory-platform /root/matterbridge-example-accessory-platform
@@ -161,18 +163,17 @@ RUN \
   mkdir -p /root/.mattercert
 COPY docker/chip-test/pairing.json /root/.mattercert/pairing.json
 WORKDIR /root/matterbridge-test
-RUN npm link matterbridge
+RUN npm link matterbridge --no-fund --no-audit
 WORKDIR /root/matterbridge-example-accessory-platform
-RUN npm link matterbridge
+RUN npm link matterbridge --no-fund --no-audit
 WORKDIR /root/matterbridge-example-dynamic-platform
-RUN npm link matterbridge
+RUN npm link matterbridge --no-fund --no-audit
 
 # Persist Matterbridge fabric state (copied from repo)
 RUN mkdir -p /root/.matterbridge/matterstorage/Matterbridge
 COPY docker/chip-test/fabrics.* /root/.matterbridge/matterstorage/Matterbridge/
 COPY docker/chip-test/root.operationalCredentials.* /root/.matterbridge/matterstorage/Matterbridge/
-COPY docker/chip-test/matterbridge.pics /root/
-
+COPY docker/chip-test/*.pics /root/
 
 # connectedhomeip minimal bits for YAML/Python tests
 RUN mkdir -p /root/connectedhomeip/out/host /root/connectedhomeip/out
@@ -220,6 +221,46 @@ COPY --from=builder /root/connectedhomeip/src/app/tests /root/connectedhomeip/sr
 COPY --from=builder /root/connectedhomeip/src/app/zap-templates/zcl/data-model/chip /root/connectedhomeip/src/app/zap-templates/zcl/data-model/chip
 COPY --from=builder /root/connectedhomeip/src/python_testing /root/connectedhomeip/src/python_testing
 
+# Work around a bug in TC_DeviceBasicComposition.py duplicate-tag detection:
+# it checks duplicates by comparing only `tag`, ignoring namespaceID/mfgCode.
+# For semantic tags, the uniqueness key is namespaced.
+RUN python3 - <<'PY'
+from pathlib import Path
+import re
+
+path = Path('/root/connectedhomeip/src/python_testing/TC_DeviceBasicComposition.py')
+text = path.read_text(encoding='utf-8')
+
+def replace_one(pattern: str, replacement: str, *, label: str) -> str:
+  matches = list(re.finditer(pattern, text, flags=re.MULTILINE))
+  if len(matches) != 1:
+    raise SystemExit(f'Expected exactly 1 match for {label} in {path}, found {len(matches)}; file likely changed upstream')
+  return re.sub(pattern, replacement, text, count=1, flags=re.MULTILINE)
+
+text = replace_one(
+  r'(^[ \t]*)no_duplicate_tag\s*=\s*\[\]\s*\n',
+  r'\1no_duplicate_tag_keys = set()\n',
+  label='no_duplicate_tag init',
+)
+
+text = replace_one(
+  r'(^[ \t]*)if\s+tag_struct\.tag\s+in\s+no_duplicate_tag\s*:\s*\n',
+  r"\1mfg_code_key = None if isinstance(tag_struct.mfgCode, Nullable) else int(tag_struct.mfgCode)\n"
+  r"\1tag_key = (mfg_code_key, int(tag_struct.namespaceID), int(tag_struct.tag))\n"
+  r"\1if tag_key in no_duplicate_tag_keys:\n",
+  label='duplicate-tag if check',
+)
+
+text = replace_one(
+  r'(^[ \t]*)no_duplicate_tag\.append\(\s*tag_struct\.tag\s*\)\s*\n',
+  r'\1no_duplicate_tag_keys.add(tag_key)\n',
+  label='no_duplicate_tag append',
+)
+
+path.write_text(text, encoding='utf-8')
+print(f'Patched {path}')
+PY
+
 # Persist pairing state for yaml and python tests
 COPY docker/chip-test/chip_* /tmp/
 COPY docker/chip-test/admin_storage.json /root/connectedhomeip/
@@ -230,4 +271,8 @@ WORKDIR /root/connectedhomeip
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
   CMD mb_health
 
+# Copy and execute the entrypoint script
+COPY ./docker/entrypoint.chip-test.sh ./
+RUN chmod +x ./entrypoint.chip-test.sh
+ENTRYPOINT ["./entrypoint.chip-test.sh"]
 CMD ["matterbridge", "-docker"]

@@ -452,6 +452,7 @@ export interface WsMessageApiRefreshRequired extends WsMessageSuccessApiResponse
   response: {
     changed: RefreshRequiredChanged;
     matter?: ApiMatter;
+    lock?: string;
   };
 }
 

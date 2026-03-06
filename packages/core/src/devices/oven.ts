@@ -34,8 +34,11 @@ import { OvenMode } from '@matter/types/clusters/oven-mode';
 import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
 import { oven, powerSource, temperatureControlledCabinetHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { createLevelTemperatureControlClusterServer } from './temperatureControl.js';
+import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
+/**
+ * Matterbridge endpoint representing an oven device.
+ */
 export class Oven extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the Oven class.
@@ -65,8 +68,11 @@ export class Oven extends MatterbridgeEndpoint {
    * @param {Semtag[]} tagList - The tagList associated with the cabinet.
    * @param {number} currentMode - The current mode of the cabinet. Defaults to 2 (which corresponds to 'Convection').
    * @param {OvenMode.ModeOption[]} supportedModes - The supported modes of the cabinet. Defaults to a set of common oven modes.
-   * @param {number} selectedTemperatureLevel - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
-   * @param {string[]} supportedTemperatureLevels - The list of supported temperature levels for the cabinet. Defaults to ['Defrost', '180°', '190°', '200°', '250°', '300°'].
+   * @param {number} targetTemperature - The selected temperature setpoint in degrees Celsius. Defaults to 180°C.
+   * @param {number} minTemperature - The minimum temperature for the cabinet. Defaults to 0°C.
+   * @param {number} maxTemperature - The maximum temperature for the cabinet. Defaults to 300°C.
+   * @param {number} step - The step size for temperature changes. Defaults to 10°C.
+   * @param {number} currentTemperature - The current temperature of the cabinet. Defaults to 20°C.
    * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state of the cabinet. Defaults to Stopped.
    * @param {number} [currentPhase] - Optional: the current phase of the cabinet.
    * @param {string[]} [phaseList] - Optional: the list of phases for the cabinet.
@@ -93,17 +99,19 @@ export class Oven extends MatterbridgeEndpoint {
       { label: 'Proofing', mode: 9, modeTags: [{ value: OvenMode.ModeTag.Proofing }] },
       { label: 'Steam', mode: 10, modeTags: [{ value: OvenMode.ModeTag.Steam }] },
     ],
-    selectedTemperatureLevel: number = 1,
-    supportedTemperatureLevels: string[] = ['Defrost', '180°', '190°', '200°', '250°', '300°'],
+    targetTemperature: number = 180 * 100,
+    minTemperature: number = 30 * 100,
+    maxTemperature: number = 300 * 100,
+    step: number = 10 * 100,
+    currentTemperature: number = 20 * 100, // Default to 20.00 degrees Celsius
     operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped,
     currentPhase?: number,
     phaseList?: string[],
   ): MatterbridgeEndpoint {
-    const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetHeater, { tagList }, true);
+    const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetHeater, { tagList });
     cabinet.log.logName = name;
-    cabinet.createDefaultIdentifyClusterServer();
-    createLevelTemperatureControlClusterServer(cabinet, selectedTemperatureLevel, supportedTemperatureLevels);
-    cabinet.createDefaultTemperatureMeasurementClusterServer(2000);
+    createNumberTemperatureControlClusterServer(cabinet, targetTemperature, minTemperature, maxTemperature, step);
+    cabinet.createDefaultTemperatureMeasurementClusterServer(currentTemperature);
     this.createDefaultOvenModeClusterServer(cabinet, currentMode, supportedModes);
     this.createDefaultOvenCavityOperationalStateClusterServer(cabinet, operationalState, currentPhase, phaseList);
     return cabinet;
@@ -162,11 +170,23 @@ export class Oven extends MatterbridgeEndpoint {
 }
 
 // Server for OvenMode
+/**
+ * OvenMode server that forwards mode changes to the device implementation.
+ */
 export class MatterbridgeOvenModeServer extends OvenModeServer {
+  /**
+   * Initializes the server.
+   */
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info('MatterbridgeOvenModeServer initialized');
   }
+  /**
+   * Handles the OvenMode `ChangeToMode` command.
+   *
+   * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
+   * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
+   */
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
@@ -184,7 +204,13 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
 }
 
 // Server for OvenCavityOperationalState
+/**
+ * Oven cavity operational state server that initializes and updates operational state.
+ */
 export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOperationalStateServer {
+  /**
+   * Initializes operational state defaults.
+   */
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info('MatterbridgeOvenCavityOperationalStateServer initialized: setting operational state to Stopped and operational error to No error');
@@ -192,6 +218,11 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
   }
 
+  /**
+   * Handles the OvenCavityOperationalState `Stop` command.
+   *
+   * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
+   */
   override stop(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
@@ -204,6 +235,11 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     } as OperationalState.OperationalCommandResponse;
   }
 
+  /**
+   * Handles the OvenCavityOperationalState `Start` command.
+   *
+   * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
+   */
   override start(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(

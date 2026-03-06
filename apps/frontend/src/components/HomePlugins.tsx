@@ -246,8 +246,15 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       if (debug) console.log('HomePlugins received WebSocket Message:', msg);
       // Broadcast messages
       if (msg.method === 'refresh_required' && msg.response.changed === 'plugins') {
-        if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and sending /api/plugins request`);
-        sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        if (msg.response.lock) {
+          if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} lock=${msg.response.lock} and locking plugins list`);
+          setPlugins((prevPlugins) => {
+            return prevPlugins.map((p) => (p.name === msg.response.lock ? { ...p, restartRequired: true } : p));
+          });
+        } else {
+          if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} lock=${msg.response.lock} and sending /api/plugins request`);
+          sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        }
       } else if (msg.method === 'refresh_required' && msg.response.changed === 'matter') {
         if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and setting matter id ${msg.response.matter?.id}`);
         setPlugins((prevPlugins) => {
