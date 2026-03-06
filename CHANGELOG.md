@@ -97,6 +97,7 @@ These threads already run as workers:
 - [TemperatureControlledCabinet]: Remove not mandatory Identify cluster from TemperatureControlledCabinet device type.
 - [frontend]: Fix config lock from select Devices panel. It broke somehow in the past releases.
 - [logger]: Fix logger level in the single class devices. Thanks Reimer Prochnow (https://github.com/Luligu/matterbridge/issues/521).
+- [frontend]: Add `charset=utf-8` to type in view and download api. Thanks FredForHACS (https://github.com/Luligu/matterbridge-home-assistant-addon/issues/48).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

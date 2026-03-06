@@ -722,7 +722,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
-        res.type('text/plain');
+        res.type('text/plain; charset=utf-8');
         res.send(data);
       } catch (error) {
         this.log.error(`Error reading matterbridge log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
@@ -737,7 +737,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
-        res.type('text/plain');
+        res.type('text/plain; charset=utf-8');
         res.send(data);
       } catch (error) {
         this.log.error(`Error reading matter log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
@@ -794,7 +794,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'utf8');
-        res.type('text/html');
+        res.type('text/html; charset=utf-8');
         res.send(data);
       } catch (error) {
         this.log.error(`Error in /api/viewhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
@@ -811,7 +811,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), fs.constants.F_OK);
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'utf8');
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), data, 'utf-8');
-        res.type('text/plain');
+        res.type('text/html; charset=utf-8');
         res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
           /* istanbul ignore if */
           if (error) {
@@ -832,7 +832,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       try {
         const fs = await import('node:fs');
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
-        res.type('text/plain');
+        res.type('text/plain; charset=utf-8');
         res.send(data);
       } catch (error) {
         this.log.error(`Error reading shelly log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
@@ -857,7 +857,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         );
         this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
-      res.type('text/plain');
+      res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'matterbridge.log', (error) => {
         /* istanbul ignore if */
         if (error) {
@@ -880,7 +880,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
         this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
-      res.type('text/plain');
+      res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'matter.log', (error) => {
         /* istanbul ignore if */
         if (error) {
@@ -903,7 +903,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await fs.promises.writeFile(path.join(os.tmpdir(), 'shelly.log'), 'Create the Shelly system log before downloading it.', 'utf-8');
         this.log.debug(`Error in /api/shellydownloadsystemlog: ${error instanceof Error ? error.message : error}`);
       }
-      res.type('text/plain');
+      res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), 'shelly.log'), 'shelly.log', (error) => {
         /* istanbul ignore if */
         if (error) {

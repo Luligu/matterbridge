@@ -2645,8 +2645,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
         this.advertisingNodes.set(storeId, Date.now());
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
+        const pairingData = ManualPairingCodeCodec.decode(manualPairingCode);
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
         this.log.notice(`Manual pairing code: ${manualPairingCode}`);
+        this.log.notice(`Discriminator: ${discriminator}`);
+        this.log.notice(`Short discriminator: ${pairingData.shortDiscriminator}`);
+        this.log.notice(`Passcode: ${passcode}`);
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
         this.advertisingNodes.delete(storeId);
