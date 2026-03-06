@@ -68,16 +68,16 @@ These threads already run as workers:
 - [matter1.5.0]: Add Closure class and corresponding tests.
 - [matter1.5.0]: Add ClosurePanel class and corresponding tests.
 - [matter1.5.0]: Add SoilSensor, IrrigationSystem, Closure, and ClosurePanel device types with corresponding definitions.
-- [semtag]: Add getSemtag() helper to facilitate adding tagList to the Descriptor cluster.
-- [getCluster]: Add getCluster() method to retrive the state of a cluster.
-- [setCluster]: Add setCluster() method to set the state of a cluster.
+- [semtag]: Add `getSemtag()` helper to facilitate adding tagList to the Descriptor cluster. If you use them don't forget to require Matterbridge 3.6.0.
+- [getCluster]: Add `getCluster()` method to retrive the state of a cluster. If you use them don't forget to require Matterbridge 3.6.0.
+- [setCluster]: Add `setCluster()` method to set the state of a cluster. If you use them don't forget to require Matterbridge 3.6.0.
 - [chip-test]: ✅ `TC_DeviceBasicComposition.py` passes.
 - [chip-test]: ✅ `TC_DeviceConformance.py` passes.
 - [chip-test]: ✅ `TC_DefaultWarnings.py` passes.
 
 ### Added
 
-- [docker]: Add the image (tag **s6-rc-legacy** 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim` (the last node version supporting armv7), supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
+- [docker]: Add the image (tag **s6-rc-legacy** 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim` (the last node version supporting armv7), supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It will be used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
 - [frontend]: Add the ability to filter by plugin in the Devices page. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 - [frontend]: Add in the config whiteList and blackList select a filter to remove from the list what is already added. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 - [frontend]: Unregister all devices increments the BasicInformation.configurationVersion. This, if supported on controller side, allows controllers to detect changes in the configuration.
@@ -95,7 +95,7 @@ These threads already run as workers:
 
 - [thermostat]: Remove atomic commands required only with Preset and Schedule features.
 - [TemperatureControlledCabinet]: Remove not mandatory Identify cluster from TemperatureControlledCabinet device type.
-- [frontend]: Fix config lock from select Devices panel.
+- [frontend]: Fix config lock from select Devices panel. It broke somehow in the past releases.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
