@@ -2642,17 +2642,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.notice(`Server node for ${storeId} is online`);
       // istanbul ignore else
       if (!serverNode.lifecycle.isCommissioned) {
-        this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
+        this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission.`);
         this.advertisingNodes.set(storeId, Date.now());
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
         const pairingData = ManualPairingCodeCodec.decode(manualPairingCode);
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
-        this.log.notice(`Manual pairing code: ${manualPairingCode}`);
-        this.log.notice(`Discriminator: ${discriminator}`);
-        this.log.notice(`Short discriminator: ${pairingData.shortDiscriminator}`);
-        this.log.notice(`Passcode: ${passcode}`);
+        this.log.notice(`Manual pairing code ${CYAN}${manualPairingCode}${nt} discriminator ${CYAN}${discriminator}${nt} short discriminator ${CYAN}${pairingData.shortDiscriminator}${nt} passcode ${CYAN}${passcode}${nt}`);
       } else {
-        this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
+        this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect...`);
         this.advertisingNodes.delete(storeId);
       }
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
@@ -2660,7 +2657,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.emit('online', storeId);
     });
 
-    /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
+    /** This event is triggered when the device went offline. It is no longer discoverable or connectable in the network. */
     serverNode.lifecycle.offline.on(() => {
       this.log.notice(`Server node for ${storeId} is offline`);
       this.advertisingNodes.delete(storeId);
