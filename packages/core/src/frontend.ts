@@ -777,7 +777,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // istanbul ignore next
         this.log.debug(`Error in /api/download-diagnostic: ${error instanceof Error ? error.message : error}`);
       }
-      res.type('text/plain');
+      res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), MATTERBRIDGE_DIAGNOSTIC_FILE, (error) => {
         /* istanbul ignore if */
         if (error) {
