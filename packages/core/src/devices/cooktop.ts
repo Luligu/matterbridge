@@ -80,7 +80,7 @@ export class Cooktop extends MatterbridgeEndpoint {
     selectedTemperatureLevel: number = 2,
     supportedTemperatureLevels: string[] = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
   ): MatterbridgeEndpoint {
-    const surface = this.addChildDeviceType(name, cookSurface, { tagList }, true);
+    const surface = this.addChildDeviceType(name, cookSurface, { tagList });
     surface.log.logName = name;
     createLevelTemperatureControlClusterServer(surface, selectedTemperatureLevel, supportedTemperatureLevels);
     surface.createDefaultTemperatureMeasurementClusterServer(2000);
