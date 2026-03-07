@@ -3,7 +3,7 @@
 const MATTER_PORT = 9001;
 const FRONTEND_PORT = 8285;
 const NAME = 'FrontendExpress';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',

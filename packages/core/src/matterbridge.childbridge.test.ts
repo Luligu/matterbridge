@@ -6,7 +6,7 @@
 const MATTER_PORT = 6400;
 const FRONTEND_PORT = 8802;
 const NAME = 'MatterbridgeChildBridge';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const PASSCODE = 123456;
 const DISCRIMINATOR = 3860;
 

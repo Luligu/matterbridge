@@ -3,7 +3,7 @@
 /* eslint-disable simple-import-sort/imports */
 
 const NAME = 'MatterbridgeDevicetypesRequirements';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 import path from 'node:path';
 

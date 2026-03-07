@@ -53,7 +53,7 @@ process.argv.push('--debug');
 describe('Matter.js test environment', () => {
   const MATTER_PORT = 8501;
   const NAME = 'JestHelpersMatterjs';
-  const HOMEDIR = path.join('jest', NAME);
+  const HOMEDIR = path.join('.cache', 'jest', NAME);
 
   let deviceServer: MatterbridgeEndpoint;
   let deviceAggregator: MatterbridgeEndpoint;
@@ -154,7 +154,7 @@ describe('Matter.js test environment', () => {
 describe('Matterbridge not initialized test environment', () => {
   const MATTER_PORT = 8502;
   const NAME = 'JestHelpersMatterbridgeNotInitialized';
-  const HOMEDIR = path.join('jest', NAME);
+  const HOMEDIR = path.join('.cache', 'jest', NAME);
 
   let deviceServer: MatterbridgeEndpoint;
   let deviceAggregator: MatterbridgeEndpoint;

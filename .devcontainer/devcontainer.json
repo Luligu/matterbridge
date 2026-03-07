@@ -94,7 +94,9 @@ Dev containers have networking limitations depending on the host OS and Docker s
         "git.autofetch": true,
         "files.eol": "\n",
         "files.insertFinalNewline": true,
-        "files.trimFinalNewlines": true
+        "files.trimFinalNewlines": true,
+        "js/ts.tsdk.path": "node_modules/typescript/lib",
+        "js/ts.tsdk.promptToUseWorkspaceVersion": false
       }
     }
   }

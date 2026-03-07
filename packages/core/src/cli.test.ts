@@ -1,7 +1,7 @@
 // src\cli.test.ts
 
 const NAME = 'CliMain';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',

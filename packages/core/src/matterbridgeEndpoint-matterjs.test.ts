@@ -2,10 +2,10 @@
 
 const MATTER_PORT = 11100;
 const NAME = 'EndpointMatterJs';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
-import { existsSync } from 'node:fs';
-import { appendFile } from 'node:fs/promises';
+import { existsSync, mkdirSync } from 'node:fs';
+import { appendFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -134,6 +134,8 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 
 // Setup the test environment
 await setupTest(NAME, false);
+mkdirSync(HOMEDIR, { recursive: true });
+// await writeFile(path.join(HOMEDIR, 'diagnostic.log'), '', { encoding: 'utf8' });
 
 describe('Matterbridge ' + NAME, () => {
   let context: StorageContext;

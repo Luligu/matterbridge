@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 6100;
 const NAME = 'MatterbridgeMatterjs';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',

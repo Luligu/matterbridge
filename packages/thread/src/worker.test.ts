@@ -1,7 +1,7 @@
 // src\worker.test.ts
 
 const NAME = 'Workers';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 import { existsSync } from 'node:fs';
 import path from 'node:path';

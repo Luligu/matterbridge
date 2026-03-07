@@ -1,7 +1,7 @@
 // src/matterbridgeDeviceTypes.clusters.revision.test.ts
 
 const NAME = 'MatterbridgeDevicetypesClustersRevision';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 /**
  * Verifies that the revision of every Matter cluster referenced by matterbridgeDeviceTypes.ts
  * matches the expected (current) revision. If any cluster revision changes in `@matter/types`,

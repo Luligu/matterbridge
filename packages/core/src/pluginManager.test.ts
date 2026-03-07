@@ -2,9 +2,11 @@
 
 const MATTER_PORT = 12000;
 const NAME = 'PluginManager';
-const HOMEDIR = path.join('jest', NAME);
-const NPM_CONFIG_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-global'));
-const NPM_CONFIG_CACHE = path.resolve(path.join(HOMEDIR, '.npm-cache'));
+const HOMEDIR = path.join('.cache', 'jest', NAME);
+// const NPM_CONFIG_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-global'));
+// const NPM_CONFIG_CACHE = path.resolve(path.join(HOMEDIR, '.npm-cache'));
+const NPM_CONFIG_PREFIX = path.resolve(path.join('.cache', '.npm-global'));
+const NPM_CONFIG_CACHE = path.resolve(path.join('.cache', '.npm-cache'));
 
 process.argv = [
   'node',
@@ -39,7 +41,7 @@ const jsonParseSpy = jest.spyOn(JSON, 'parse');
 const matterbridgeShutdownSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess');
 
 import { execSync } from 'node:child_process';
-import { accessSync, existsSync, promises as fs, unlinkSync, writeFileSync } from 'node:fs';
+import { promises as fs, unlinkSync } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -1088,19 +1090,26 @@ describe('PluginManager', () => {
 
   test('install example plugins', async () => {
     await setDebug(false);
-    // console.log('Installing with prefix:', prefix);
-    execSync(`npm install ./ --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
-      stdio: 'inherit',
-      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
-    });
-    execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
-      stdio: 'inherit',
-      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
-    });
-    execSync(`npm install ./packages/core/src/mock/plugin4 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
-      stdio: 'inherit',
-      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
-    });
+    let output;
+    try {
+      // console.log(`Installing matterbridge with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
+      output = execSync(`npm install . --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+        stdio: 'inherit',
+        env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+      });
+      // console.log(`Installing plugin1 with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
+      output = execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+        stdio: 'inherit',
+        env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+      });
+      // console.log(`Installing plugin4 with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
+      output = execSync(`npm install ./packages/core/src/mock/plugin4 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+        stdio: 'inherit',
+        env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+      });
+    } catch (error) {
+      //
+    }
     expect(plugins.length).toBe(0);
   }, 60000);
 

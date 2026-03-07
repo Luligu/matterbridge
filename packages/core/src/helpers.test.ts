@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 const MATTER_PORT = 6600;
 const NAME = 'Helpers';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 /*
 // Mock the function getShellySysUpdate and getShellyMainUpdate

@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 8001; // Unique test port (ensure no collision with other device tests)
 const NAME = 'AirConditioner';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';

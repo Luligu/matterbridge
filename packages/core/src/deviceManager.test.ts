@@ -1,7 +1,7 @@
 // src\deviceManager.test.ts
 
 const NAME = 'DeviceManager';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = ['node', 'deviceManager.test.js', '-logger', 'info', '-matterlogger', 'info', '-homedir', HOMEDIR];
 

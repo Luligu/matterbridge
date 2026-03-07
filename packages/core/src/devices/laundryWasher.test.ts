@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 8009;
 const NAME = 'LaundryWasher';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
 // Import necessary modules and types

@@ -1,7 +1,7 @@
 // src/matterbridgeDeviceTypes.clusters.zcl.revision.test.ts
 
 const NAME = 'MatterbridgeDevicetypesClustersZclRevision';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 // Cross-check a few cluster revisions between official ZCL XML and @matter/types
 import { access, readFile } from 'node:fs/promises';

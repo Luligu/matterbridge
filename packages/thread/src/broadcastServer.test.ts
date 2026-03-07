@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 0;
 const NAME = 'BroadcastServer';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 import path from 'node:path';
 import { BroadcastChannel } from 'node:worker_threads';

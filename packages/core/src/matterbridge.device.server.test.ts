@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 6200;
 const NAME = 'MatterbridgeDeviceServer';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',

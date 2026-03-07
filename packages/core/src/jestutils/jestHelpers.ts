@@ -178,7 +178,7 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   expect(typeof name).toBe('string');
   expect(name.length).toBeGreaterThanOrEqual(4);
   NAME = name;
-  HOMEDIR = path.join('jest', name);
+  HOMEDIR = path.join('.cache', 'jest', name);
 
   // Cleanup any existing home directory
   rmSync(HOMEDIR, { recursive: true, force: true });
@@ -372,10 +372,10 @@ export async function startMatterbridge(
   expect(matterbridge.initialized).toBeTruthy();
   expect(matterbridge.log).toBeDefined();
   expect(matterbridge.rootDirectory).toBe(path.resolve('./'));
-  expect(matterbridge.homeDirectory).toBe(path.join('jest', NAME));
-  expect(matterbridge.matterbridgeDirectory).toBe(path.join('jest', NAME, '.matterbridge'));
-  expect(matterbridge.matterbridgePluginDirectory).toBe(path.join('jest', NAME, 'Matterbridge'));
-  expect(matterbridge.matterbridgeCertDirectory).toBe(path.join('jest', NAME, '.mattercert'));
+  expect(matterbridge.homeDirectory).toBe(path.join(HOMEDIR));
+  expect(matterbridge.matterbridgeDirectory).toBe(path.join(HOMEDIR, '.matterbridge'));
+  expect(matterbridge.matterbridgePluginDirectory).toBe(path.join(HOMEDIR, 'Matterbridge'));
+  expect(matterbridge.matterbridgeCertDirectory).toBe(path.join(HOMEDIR, '.mattercert'));
 
   expect(plugins).toBeDefined();
   expect(plugins.size).toBe(pluginSize);
@@ -494,11 +494,11 @@ export async function createMatterbridgeEnvironment(name: string, createOnly: bo
   expect(matterbridge).toBeInstanceOf(Matterbridge);
   matterbridge.matterbridgeVersion = '3.6.1';
   matterbridge.bridgeMode = 'bridge';
-  matterbridge.rootDirectory = path.join('jest', name);
-  matterbridge.homeDirectory = path.join('jest', name);
-  matterbridge.matterbridgeDirectory = path.join('jest', name, '.matterbridge');
-  matterbridge.matterbridgePluginDirectory = path.join('jest', name, 'Matterbridge');
-  matterbridge.matterbridgeCertDirectory = path.join('jest', name, '.mattercert');
+  matterbridge.rootDirectory = path.join(HOMEDIR);
+  matterbridge.homeDirectory = path.join(HOMEDIR);
+  matterbridge.matterbridgeDirectory = path.join(HOMEDIR, '.matterbridge');
+  matterbridge.matterbridgePluginDirectory = path.join(HOMEDIR, 'Matterbridge');
+  matterbridge.matterbridgeCertDirectory = path.join(HOMEDIR, '.mattercert');
   matterbridge.log.logLevel = LogLevel.DEBUG;
 
   // Get the frontend, plugins and devices
@@ -769,13 +769,13 @@ export function createTestEnvironment(name: string, createOnly: boolean = false)
   log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Cleanup any existing home directory
-  rmSync(path.join('jest', name), { recursive: true, force: true });
+  rmSync(path.join(HOMEDIR), { recursive: true, force: true });
 
   // Setup the matter environment
   environment = Environment.default;
   environment.vars.set('log.level', MatterLogLevel.DEBUG);
   environment.vars.set('log.format', MatterLogFormat.ANSI);
-  environment.vars.set('path.root', path.join('jest', name, '.matterbridge', MATTER_STORAGE_NAME));
+  environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_NAME));
   environment.vars.set('runtime.signals', false);
   environment.vars.set('runtime.exitcode', false);
 
