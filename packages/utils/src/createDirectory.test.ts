@@ -6,17 +6,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { HOMEDIR, log, loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
+import { LogLevel } from 'node-ansi-logger';
 
 import { createDirectory } from './createDirectory.js';
 
-const log = new AnsiLogger({ logName: 'CreateDirectory', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-
-await fs.promises.rmdir(path.join('jest', 'newDir')).catch(() => {});
-
 // Setup the test environment
 await setupTest(NAME, false);
+
+await fs.promises.rmdir(path.join(HOMEDIR, 'newDir')).catch(() => {});
 
 describe('createDirectory', () => {
   beforeEach(() => {
@@ -29,21 +27,21 @@ describe('createDirectory', () => {
   });
 
   it('should create directory if it does not exist', async () => {
-    await createDirectory(path.join('jest', 'newDir'), 'Jest New Directory', log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Created Jest New Directory: ${path.join('jest', 'newDir')}`);
-    await fs.promises.rmdir(path.join('jest', 'newDir')).catch(() => {});
+    await createDirectory(path.join(HOMEDIR, 'newDir'), 'Jest New Directory', log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Created Jest New Directory: ${path.join(HOMEDIR, 'newDir')}`);
+    await fs.promises.rmdir(path.join(HOMEDIR, 'newDir')).catch(() => {});
   });
 
   it('should handle errors when creating directory', async () => {
     jest.spyOn(fs.promises, 'mkdir').mockRejectedValueOnce(new Error('Failed to create directory'));
-    await createDirectory(path.join('jest', 'newDir'), 'Jest New Directory', log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error creating dir Jest New Directory path ${path.join('jest', 'newDir')}: Error: Failed to create directory`);
+    await createDirectory(path.join(HOMEDIR, 'newDir'), 'Jest New Directory', log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error creating dir Jest New Directory path ${path.join(HOMEDIR, 'newDir')}: Error: Failed to create directory`);
   });
 
   it('should handle errors when accessing directory', async () => {
     const errorMessage = 'Access denied';
     jest.spyOn(fs.promises, 'access').mockRejectedValueOnce(new Error(errorMessage));
-    await createDirectory(path.join('jest', 'newDir'), 'Jest New Directory', log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error accessing dir Jest New Directory path ${path.join('jest', 'newDir')}: Error: ${errorMessage}`);
+    await createDirectory(path.join(HOMEDIR, 'newDir'), 'Jest New Directory', log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error accessing dir Jest New Directory path ${path.join(HOMEDIR, 'newDir')}: Error: ${errorMessage}`);
   });
 });
