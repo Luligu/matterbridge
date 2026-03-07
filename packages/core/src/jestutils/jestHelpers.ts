@@ -492,7 +492,7 @@ export async function createMatterbridgeEnvironment(name: string, createOnly: bo
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.6.0';
+  matterbridge.matterbridgeVersion = '3.6.1';
   matterbridge.bridgeMode = 'bridge';
   matterbridge.rootDirectory = path.join('jest', name);
   matterbridge.homeDirectory = path.join('jest', name);
