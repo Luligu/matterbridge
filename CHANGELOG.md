@@ -52,6 +52,8 @@ These threads already run as workers:
 
 ## [3.6.1] - Dev branch
 
+### Dev News
+
 ### Changed
 
 - [package]: Update dependencies.
@@ -69,6 +71,9 @@ These threads already run as workers:
 - [SolarPower]: Refactor `SolarPower` class as composed device.
 - [BatteryStorage]: Refactor `BatteryStorage` class as composed device.
 - [HeatPump]: Refactor `HeatPump` class as composed device.
+
+### Dev News
+
 - [matter1.5.0]: Add SoilMeasurement cluster and corresponding test.
 - [matter1.5.0]: Add ClosureControl and ClosureDimension clusters with corresponding tests.
 - [matter1.5.0]: Add SoilSensor class and corresponding tests.
