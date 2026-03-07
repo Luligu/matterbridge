@@ -147,6 +147,12 @@ export type WorkerMessageTypes = {
     response: { result: { logLevel: LogLevel } };
   };
 
+  // ThreadsManager methods
+  manager_run: {
+    request: { params: { name: string } };
+    response: { result: { success: boolean } };
+  };
+
   // Matterbridge methods
   matterbridge_initialize: {
     request: { params: undefined };
@@ -297,12 +303,6 @@ export type WorkerMessageTypes = {
     request: { params: { packageName: string } };
     response: { result: { packageName: string; success: boolean } };
   };
-  /*
-  plugins_parse: {
-    request: { params: { plugin: Plugin } };
-    response: { result: { packageJson: Record<string, unknown> | null } };
-  };
-  */
   plugins_enable: {
     request: { params: { nameOrPath: string } };
     response: { result: { plugin: ApiPlugin | null } };
