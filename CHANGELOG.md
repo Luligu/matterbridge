@@ -27,7 +27,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## Project evolution
 
-The project is evolving to a multi-threaded architecture (the CLI will become the thread manager) with these initial threads:
+The project is evolving to a multi-threaded architecture with these initial threads:
 
 - matterbridge;
 - frontend;
@@ -43,16 +43,32 @@ Advantages:
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
 
+✅ The CLI is the threads manager.
+
 These threads already run as workers:
 
 - ✅ check updates;
 - ✅ system check;
-- npm install;
+- ✅ npm install;
 - ✅ check the global node_modules directory;
 
 ## [3.6.1] - Dev branch
 
-### Dev News
+### Added
+
+- [package]: Enable tree-shaking for @matterbridge/utils.
+- [package]: Enable tree-shaking for @matterbridge/thread.
+- [threads]: Add ThreadsManager to the cli.
+- [threads]: Add WorkerWrapper.
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Bump `eslint` to v.10.0.3.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
+## [3.6.1] - Dev branch
 
 ### Changed
 

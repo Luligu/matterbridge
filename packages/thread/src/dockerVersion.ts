@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-import { isValidString } from '@matterbridge/utils';
+import { isValidString } from '@matterbridge/utils/validate';
 
 type DockerRegistryTokenResponse = {
   token?: string;
@@ -60,7 +60,7 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
     const timeoutId = setTimeout(() => {
       controller.abort();
       reject(new Error(`Request timed out after ${timeoutMs / 1000} seconds`));
-    }, timeoutMs);
+    }, timeoutMs).unref();
 
     const req = https.get(url, { headers, signal: controller.signal }, (res) => {
       let data = '';
@@ -154,11 +154,11 @@ function getOciVersionLabel(config: DockerConfigBlob): string | undefined {
  *
  * @param {string} owner Docker Hub namespace (e.g. luligu).
  * @param {string} repo Docker Hub repository (e.g. matterbridge).
- * @param {string} tag Docker tag (e.g. latest).
- * @param {number} timeoutMs Timeout in milliseconds.
+ * @param {string} [tag] Docker tag (e.g. latest). Defaults to 'latest'.
+ * @param {number} [timeoutMs] Timeout in milliseconds. Defaults to 5000ms.
  * @returns {Promise<string | undefined>} The OCI version label (org.opencontainers.image.version) if available.
  */
-export async function getDockerVersion(owner: string, repo: string, tag = 'latest', timeoutMs = 5_000): Promise<string | undefined> {
+export async function getDockerVersion(owner: string, repo: string, tag: string = 'latest', timeoutMs: number = 5_000): Promise<string | undefined> {
   if (!isValidString(owner, 1) || !isValidString(repo, 1) || !isValidString(tag, 1)) return undefined;
 
   try {

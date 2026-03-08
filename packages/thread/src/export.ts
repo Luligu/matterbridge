@@ -8,7 +8,7 @@
  */
 
 export * from './broadcastServer.js';
-export * from './worker.js';
+export * from './threadsManager.js';
 /**
  * Export the systemCheck thread module.
  */

@@ -24,6 +24,8 @@
 
 import type { LogLevel } from 'node-ansi-logger';
 
+export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand';
+
 /** Control messages sent through parentPort manager <-> workers */
 export type ParentPortMessage =
   | { type: 'init'; threadName: string | null; threadId: number; success: boolean }

@@ -22,54 +22,23 @@
  * limitations under the License.
  */
 
-import { isMainThread, parentPort, threadId, workerData } from 'node:worker_threads';
+import { inspectError } from '@matterbridge/utils/error';
+import { LogLevel } from 'node-ansi-logger';
 
-import { hasParameter, inspectError } from '@matterbridge/utils';
-import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
-
-import { BroadcastServer } from './broadcastServer.js';
 import { checkUpdates } from './checkUpdates.js';
-import { logWorkerInfo, parentLog, parentPost, threadLogger } from './worker.js';
+import { WorkerWrapper } from './workerWrapper.js';
 
-const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-worker') || hasParameter('verbose-worker');
-const verbose = hasParameter('verbose') || hasParameter('verbose-worker');
-const name = 'MatterbridgeCheckUpdates';
-
-// Send init message
-if (!isMainThread && parentPort) {
-  parentPost({ type: 'init', threadId, threadName: workerData.threadName, success: true });
-  if (debug) parentLog(name, LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} initialized.`);
-}
-
-// Broadcast server
-const log = new AnsiLogger({
-  logName: name,
-  logNameColor: MAGENTA,
-  logTimestampFormat: TimestampFormat.TIME_MILLIS,
-  logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO,
+new WorkerWrapper('GlobalPrefix', async (worker) => {
+  worker.logger(LogLevel.INFO, `Starting check updates...`);
+  let success = false;
+  try {
+    const shared = (await worker.server.fetch({ type: 'matterbridge_shared', src: `matterbridge`, dst: 'matterbridge' }, 5000)).result.data;
+    await checkUpdates(shared);
+    worker.logger(LogLevel.INFO, `Check updates succeeded`);
+    success = true;
+  } catch (error) {
+    const errorMessage = inspectError(worker.log, `Failed to check updates`, error);
+    worker.logger(LogLevel.ERROR, errorMessage);
+  }
+  return success;
 });
-const server = new BroadcastServer('matterbridge', log);
-
-// Log worker info
-if (verbose) logWorkerInfo(log, verbose);
-
-threadLogger(name, LogLevel.INFO, `Starting check updates...`);
-let success = false;
-try {
-  const shared = (await server.fetch({ type: 'matterbridge_shared', src: `matterbridge`, dst: 'matterbridge' }, 1000)).result.data;
-  await checkUpdates(shared);
-  threadLogger(name, LogLevel.INFO, `Check updates succeeded`);
-  success = true;
-} catch (error) {
-  const errorMessage = inspectError(log, `Failed to check updates`, error);
-  threadLogger(name, LogLevel.ERROR, errorMessage);
-}
-
-// Close the broadcast server
-server.close();
-
-// Send exit message
-if (!isMainThread && parentPort) {
-  parentPost({ type: 'exit', threadId, threadName: workerData.threadName, success });
-  if (debug) parentLog(name, LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} exiting with success: ${success}.`);
-}

@@ -49,6 +49,14 @@
     ".": {
       "types": "./dist/export.d.ts",
       "import": "./dist/export.js"
+    },
+    "./server": {
+      "types": "./dist/broadcastServer.d.ts",
+      "import": "./dist/broadcastServer.js"
+    },
+    "./manager": {
+      "types": "./dist/threadsManager.d.ts",
+      "import": "./dist/threadsManager.js"
     }
   },
   "engines": {

@@ -63,14 +63,6 @@ import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matte
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { Plugin } from './pluginManager.js';
 
-// Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('@matterbridge/thread', () => ({
-  createESMWorker: jest.fn(() => {
-    return undefined; // Mock the createESMWorker function to return immediately
-  }),
-}));
-const workerModule = await import('@matterbridge/thread');
-
 /*
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),

@@ -24,6 +24,7 @@
 
 /* eslint-disable no-console */
 
+// istanbul ignore next line - loader/debug/verbose flags are only used for development and testing, not in production
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mTracker loaded.\u001B[40;0m');
 
 import EventEmitter from 'node:events';

@@ -27,7 +27,7 @@ import os from 'node:os';
 
 // @matterbridge
 import { DnsClass, DnsClassFlag, DnsRecordType, Mdns, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from '@matterbridge/dgram';
-import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '@matterbridge/utils';
+import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '@matterbridge/utils/cli';
 
 // istanbul ignore next
 {

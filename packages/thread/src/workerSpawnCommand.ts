@@ -1,7 +1,7 @@
 /**
- * This file contains the workerGlobalPrefix thread.
+ * This file contains the workerSpawnCommand thread.
  *
- * @file workerGlobalPrefix.ts
+ * @file workerSpawnCommand.ts
  * @author Luca Liguori
  * @created 2025-11-25
  * @version 1.1.0
@@ -22,24 +22,20 @@
  * limitations under the License.
  */
 
-import { inspectError } from '@matterbridge/utils/error';
-import { getGlobalNodeModules } from '@matterbridge/utils/npm-prefix';
+import { workerData } from 'node:worker_threads';
+
 import { LogLevel } from 'node-ansi-logger';
 
+import { spawnCommand } from './spawnCommand.js';
 import { WorkerWrapper } from './workerWrapper.js';
 
 new WorkerWrapper('GlobalPrefix', async (worker) => {
-  let prefix: string;
-  worker.logger(LogLevel.INFO, `Starting global prefix check...`);
-  let success = false;
-  try {
-    prefix = await getGlobalNodeModules();
-    worker.server.request({ type: 'matterbridge_global_prefix', src: `matterbridge`, dst: 'matterbridge', params: { prefix } });
-    worker.logger(LogLevel.INFO, `Global node_modules directory: ${prefix}`);
-    success = true;
-  } catch (error) {
-    const errorMessage = inspectError(worker.log, `Failed to get global node modules`, error);
-    worker.logger(LogLevel.ERROR, errorMessage);
-  }
+  worker.logger(
+    LogLevel.INFO,
+    `Starting spawn command ${workerData.command} with args ${workerData.args.join(' ')} and package command ${workerData.packageCommand} for package ${workerData.packageName}...`,
+  );
+  const success = await spawnCommand(workerData.command, workerData.args, workerData.packageCommand, workerData.packageName);
+  if (success) worker.logger(LogLevel.INFO, `Spawn command ${workerData.command} with args ${workerData.args.join(' ')} executed successfully`);
+  else worker.logger(LogLevel.ERROR, `Spawn command ${workerData.command} with args ${workerData.args.join(' ')} failed`);
   return success;
 });
