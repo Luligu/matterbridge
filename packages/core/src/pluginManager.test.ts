@@ -1088,7 +1088,7 @@ describe('PluginManager', () => {
     expect(plugins.length).toBe(0);
   });
 
-  test('install example plugins', async () => {
+  test('install matterbridge globally and mocked plugins', async () => {
     await setDebug(false);
     let output;
     try {
@@ -1842,10 +1842,10 @@ describe('PluginManager', () => {
     await plugins.shutdown(plugin as Plugin, 'Test with Jest');
   });
 
-  // Useless test to uninstall example plugins
+  // Useless test to uninstall matterbridge globally and mocked plugins
   // eslint-disable-next-line jest/no-commented-out-tests
   /*
-  test('uninstall example plugins', async () => {
+  test('uninstall matterbridge globally and mocked plugins', async () => {
     execSync(`npm uninstall matterbridge --silent --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX },
