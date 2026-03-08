@@ -149,7 +149,23 @@ export type WorkerMessageTypes = {
 
   // ThreadsManager methods
   manager_run: {
-    request: { params: { name: string } };
+    request: {
+      /** Parameters for running a worker */
+      params: {
+        /** The name of the worker to run */
+        name: string;
+        /** Optional data to pass to the worker */
+        workerData?: Record<string, boolean | number | string | object>;
+        /** Optional arguments to pass to the worker */
+        argv?: string[];
+        /** Optional environment variables for the worker */
+        env?: NodeJS.ProcessEnv;
+        /** Optional exec arguments for the worker */
+        execArgv?: string[];
+        /** Whether to pipe the output of the worker */
+        pipedOutput?: boolean;
+      };
+    };
     response: { result: { success: boolean } };
   };
 
