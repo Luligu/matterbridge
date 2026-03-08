@@ -25,7 +25,7 @@
 import dgram from 'node:dgram';
 
 // @matterbridge
-import { hasParameter } from '@matterbridge/utils';
+import { hasParameter } from '@matterbridge/utils/cli';
 // AnsiLogger imports
 import { AnsiLogger, BLUE, CYAN, db, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
 
