@@ -67,7 +67,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   ) {
     super();
     this.broadcastChannel = new BroadcastChannel(this.channel);
-    // this.broadcastChannel.unref();
+    this.broadcastChannel.unref();
     this.broadcastChannel.onmessage = this.broadcastMessageHandler.bind(this);
     this.broadcastChannel.onmessageerror = this.broadcastMessageErrorHandler.bind(this);
   }
@@ -336,7 +336,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       const timeoutId = setTimeout(() => {
         this.off('broadcast_message', responseHandler);
         reject(new Error(`Fetch timeout after ${timeout}ms for message type ${message.type} id ${message.id} from ${message.src} to ${message.dst}`));
-      }, timeout);
+      }, timeout).unref();
     });
   }
 }
