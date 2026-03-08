@@ -49,6 +49,78 @@
     ".": {
       "types": "./dist/export.d.ts",
       "import": "./dist/export.js"
+    },
+    "./cli": {
+      "types": "./dist/commandLine.d.ts",
+      "import": "./dist/commandLine.js"
+    },
+    "./validate": {
+      "types": "./dist/validate.d.ts",
+      "import": "./dist/validate.js"
+    },
+    "./format": {
+      "types": "./dist/format.d.ts",
+      "import": "./dist/format.js"
+    },
+    "./error": {
+      "types": "./dist/error.d.ts",
+      "import": "./dist/error.js"
+    },
+    "./inspector": {
+      "types": "./dist/inspector.d.ts",
+      "import": "./dist/inspector.js"
+    },
+    "./tracker": {
+      "types": "./dist/tracker.d.ts",
+      "import": "./dist/tracker.js"
+    },
+    "./wait": {
+      "types": "./dist/wait.d.ts",
+      "import": "./dist/wait.js"
+    },
+    "./npm-version": {
+      "types": "./dist/npmVersion.d.ts",
+      "import": "./dist/npmVersion.js"
+    },
+    "./npm-prefix": {
+      "types": "./dist/npmPrefix.d.ts",
+      "import": "./dist/npmPrefix.js"
+    },
+    "./network": {
+      "types": "./dist/network.d.ts",
+      "import": "./dist/network.js"
+    },
+    "./hex": {
+      "types": "./dist/hex.d.ts",
+      "import": "./dist/hex.js"
+    },
+    "./github-version": {
+      "types": "./dist/githubVersion.d.ts",
+      "import": "./dist/githubVersion.js"
+    },
+    "./deep-copy": {
+      "types": "./dist/deepCopy.d.ts",
+      "import": "./dist/deepCopy.js"
+    },
+    "./deep-equal": {
+      "types": "./dist/deepEqual.d.ts",
+      "import": "./dist/deepEqual.js"
+    },
+    "./copy-dir": {
+      "types": "./dist/copyDirectory.d.ts",
+      "import": "./dist/copyDirectory.js"
+    },
+    "./create-dir": {
+      "types": "./dist/createDirectory.d.ts",
+      "import": "./dist/createDirectory.js"
+    },
+    "./zip": {
+      "types": "./dist/createZip.d.ts",
+      "import": "./dist/createZip.js"
+    },
+    "./color-utils": {
+      "types": "./dist/colorUtils.d.ts",
+      "import": "./dist/colorUtils.js"
     }
   },
   "engines": {

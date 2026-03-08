@@ -19,7 +19,7 @@ import { ChildProcess, exec, ExecException } from 'node:child_process';
 import { jest } from '@jest/globals';
 import { setupTest } from '@matterbridge/jest-utils';
 
-import { getGlobalNodeModules } from './npmRoot.js';
+import { getGlobalNodeModules } from './npmPrefix.js';
 
 await setupTest('NpmRoot');
 

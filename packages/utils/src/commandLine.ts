@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-import { isValidNumber } from './isValid.js';
+import { isValidNumber } from './validate.js';
 
 /**
  * Checks if a command-line parameter is present.
