@@ -42,7 +42,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { CommissioningOptions } from '@matter/types/commissioning';
 import { EndpointNumber, FabricIndex } from '@matter/types/datatype';
 // @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
   ApiClusters,
   ApiDevice,
@@ -68,22 +68,12 @@ import {
   NODE_STORAGE_DIR,
   plg,
 } from '@matterbridge/types';
-import {
-  createZip,
-  formatBytes,
-  formatPercent,
-  formatUptime,
-  getParameter,
-  hasParameter,
-  inspectError,
-  isValidArray,
-  isValidBoolean,
-  isValidNumber,
-  isValidObject,
-  isValidString,
-  wait,
-  withTimeout,
-} from '@matterbridge/utils';
+import { getParameter, hasParameter } from '@matterbridge/utils/cli';
+import { inspectError } from '@matterbridge/utils/error';
+import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
+import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
+import { wait, withTimeout } from '@matterbridge/utils/wait';
+import { createZip } from '@matterbridge/utils/zip';
 // Third-party modules
 import type { Express } from 'express';
 import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
@@ -1834,8 +1824,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         }
       } else if (data.method === '/api/checkupdates') {
-        const { createESMWorker } = await import('@matterbridge/thread');
-        createESMWorker('CheckUpdates', this.matterbridge.resolveWorkerDistFilePath('workerCheckUpdates.js'));
+        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellysysupdate') {
         /*

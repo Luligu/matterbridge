@@ -96,7 +96,8 @@ import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId, EndpointNumber, VendorId } from '@matter/types/datatype';
 import { Semtag } from '@matter/types/globals';
 // @matterbridge
-import { inspectError, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils';
+import { inspectError } from '@matterbridge/utils/error';
+import { isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
 // AnsiLogger module
 import { AnsiLogger, CYAN, db, debugStringify, hk, LogLevel, or, TimestampFormat, YELLOW, zb } from 'node-ansi-logger';
 

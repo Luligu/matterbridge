@@ -37,10 +37,11 @@ import type { StorageContext } from '@matter/general';
 import type { Endpoint as EndpointNode, ServerNode } from '@matter/node';
 import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 // @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiPlugin, PlatformConfig, PlatformMatterbridge, PlatformSchema, PluginName, StoragePlugin, WorkerMessage } from '@matterbridge/types';
 import { plg, typ } from '@matterbridge/types';
-import { hasParameter, inspectError, logError } from '@matterbridge/utils';
+import { hasParameter } from '@matterbridge/utils/cli';
+import { inspectError, logError } from '@matterbridge/utils/error';
 // AnsiLogger
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 // NodeStorage

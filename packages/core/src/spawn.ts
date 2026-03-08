@@ -21,8 +21,8 @@
  * limitations under the License.
  */
 
-import { BroadcastServer } from '@matterbridge/thread';
-import { hasParameter } from '@matterbridge/utils';
+import { BroadcastServer } from '@matterbridge/thread/server';
+import { hasParameter } from '@matterbridge/utils/cli';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 /**
@@ -37,9 +37,10 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 export async function spawnCommand(command: string, args: string[], packageCommand?: 'install' | 'uninstall', packageName?: string): Promise<boolean> {
   const { spawn } = await import('node:child_process');
 
+  // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
+  const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-spawn') || hasParameter('verbose-spawn');
+  const verbose = hasParameter('verbose') || hasParameter('verbose-spawn');
   /** Broadcast server */
-  const debug = hasParameter('debug') || hasParameter('verbose');
-  const verbose = hasParameter('verbose');
   const log = new AnsiLogger({ logName: 'Spawn', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO });
   const server = new BroadcastServer('spawn', log);
 

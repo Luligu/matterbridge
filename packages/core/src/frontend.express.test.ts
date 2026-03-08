@@ -1,6 +1,6 @@
 // src\frontend.express.test.ts
 
-const MATTER_PORT = 9001;
+const MATTER_PORT = 9100;
 const FRONTEND_PORT = 8285;
 const NAME = 'FrontendExpress';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
@@ -33,7 +33,7 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_LOGGER_FILE, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE } from '@matterbridge/types';
-import { waiter } from '@matterbridge/utils';
+import { waiter } from '@matterbridge/utils/wait';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import type { Frontend as FrontendType } from './frontend.js';

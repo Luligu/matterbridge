@@ -71,7 +71,7 @@ import { MdnsService } from '@matter/protocol';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '@matterbridge/types';
 import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';

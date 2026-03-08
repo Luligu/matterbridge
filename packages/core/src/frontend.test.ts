@@ -48,8 +48,8 @@ const { Frontend } = await import('./frontend.js');
 import { Lifecycle } from '@matter/general';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
-import { BroadcastServer } from '@matterbridge/thread';
-import { wait, waiter } from '@matterbridge/utils';
+import { BroadcastServer } from '@matterbridge/thread/server';
+import { wait, waiter } from '@matterbridge/utils/wait';
 
 import { cliEmitter } from './cliEmitter.js';
 import type { Frontend as FrontendType } from './frontend.js';

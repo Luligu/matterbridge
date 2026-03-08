@@ -27,10 +27,10 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mDevice Manager loaded.\u001B[40;0m');
 
 // @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type { BaseDevice, WorkerMessage } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';
-import { hasParameter } from '@matterbridge/utils';
+import { hasParameter } from '@matterbridge/utils/cli';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 

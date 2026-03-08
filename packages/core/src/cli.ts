@@ -29,7 +29,12 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli loaded.\u001B[40;0m');
 
 // @matterbridge
-import { formatBytes, formatUptime, hasAnyParameter, hasParameter, inspectError, Inspector, Tracker, TrackerSnapshot } from '@matterbridge/utils';
+import { ThreadsManager } from '@matterbridge/thread/manager';
+import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
+import { inspectError } from '@matterbridge/utils/error';
+import { formatBytes, formatUptime } from '@matterbridge/utils/format';
+import { Inspector } from '@matterbridge/utils/inspector';
+import { Tracker, TrackerSnapshot } from '@matterbridge/utils/tracker';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
@@ -41,6 +46,7 @@ import type { Matterbridge } from './matterbridge.js';
 export let instance: Matterbridge | undefined;
 export const tracker = new Tracker('Cli', false, false);
 export const inspector = new Inspector('Cli', false, false);
+const manager = new ThreadsManager();
 
 if (process.argv.includes('--no-ansi') || process.argv.includes('-no-ansi')) process.env.NO_COLOR = '1';
 
@@ -143,6 +149,8 @@ async function shutdown() {
   if (hasParameter('inspect')) await stopInspector();
 
   stopCpuMemoryCheck();
+
+  manager.destroy();
 
   cliEmitter.emit('shutdown');
 

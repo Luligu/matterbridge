@@ -50,10 +50,14 @@ import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { DeviceCertification, ExposedFabricInformation, MdnsService } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types';
 // @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiMatter, PluginName, SanitizedExposedFabricInformation, SanitizedSession, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
-import { copyDirectory, getIntParameter, getParameter, hasParameter, inspectError, isValidNumber, isValidString, parseVersionString, wait, withTimeout } from '@matterbridge/utils';
+import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
+import { copyDirectory } from '@matterbridge/utils/copy-dir';
+import { inspectError } from '@matterbridge/utils/error';
+import { isValidNumber, isValidString, parseVersionString } from '@matterbridge/utils/validate';
+import { wait, withTimeout } from '@matterbridge/utils/wait';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, or, TimestampFormat, zb } from 'node-ansi-logger';
 // Node persist manager module

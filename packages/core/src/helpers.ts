@@ -41,10 +41,10 @@ import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { VendorId } from '@matter/types/datatype';
 // @matterbridge
-import { hasParameter } from '@matterbridge/utils';
+import { hasParameter } from '@matterbridge/utils/cli';
 
 // matterbridge
-import { Matterbridge } from './matterbridge.js';
+import type { Matterbridge } from './matterbridge.js';
 
 /**
  * Adds a virtual device to the provided endpoint, sets up an event listener for device state changes,

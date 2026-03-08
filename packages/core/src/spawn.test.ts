@@ -15,9 +15,9 @@ jest.unstable_mockModule('node:child_process', async () => {
     }),
   };
 });
-
 const { spawn } = await import('node:child_process');
-import { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
+
+import type { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
 
 import { jest } from '@jest/globals';
 

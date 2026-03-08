@@ -32,7 +32,6 @@ jest.unstable_mockModule('@matterbridge/thread', () => ({
   }),
 }));
 const workerModule = await import('@matterbridge/thread');
-const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -40,12 +39,12 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import { SessionsBehavior } from '@matter/node';
-import { ExposedFabricInformation } from '@matter/protocol';
-import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types';
-import { BroadcastServer } from '@matterbridge/thread';
+import type { SessionsBehavior } from '@matter/node';
+import type { ExposedFabricInformation } from '@matter/protocol';
+import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import { plg } from '@matterbridge/types';
-import { getParameter, hasParameter } from '@matterbridge/utils';
+import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { LogLevel, nf } from 'node-ansi-logger';
 
 import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
@@ -232,6 +231,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
     // Destroy the Matterbridge instance
+    process.argv.push('--reset-sessions');
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
 

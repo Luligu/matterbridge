@@ -115,7 +115,9 @@ import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId, VendorId } from '@matter/types/datatype';
 import { MeasurementType, Semtag } from '@matter/types/globals';
 // @matterbridge
-import { deepCopy, deepEqual, isValidArray } from '@matterbridge/utils';
+import { deepCopy } from '@matterbridge/utils/deep-copy';
+import { deepEqual } from '@matterbridge/utils/deep-equal';
+import { isValidArray } from '@matterbridge/utils/validate';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
 
