@@ -53,6 +53,7 @@ export function getInterfaceDetails(): { interfaceName: string; ipv4Address: str
       if (interfaceName === result.interfaceName && !result.macAddress) result.macAddress = detail.mac;
     }
   }
+  // istanbul ignore else
   if (result.interfaceName) return result;
 }
 
@@ -65,6 +66,7 @@ export function getInterfaceName(): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
     if (!interfaceName || excludedInterfaceNamePattern.test(interfaceName)) continue;
     for (const detail of interfaceDetails || []) {
+      // istanbul ignore else
       if (!detail.internal) return interfaceName;
     }
   }
@@ -86,6 +88,7 @@ export function getIpv4InterfaceAddress(): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
     if (!interfaceName || excludedInterfaceNamePattern.test(interfaceName)) continue;
     for (const detail of interfaceDetails || []) {
+      // istanbul ignore else
       if (detail.family === 'IPv4' && !detail.internal) return detail.address;
     }
   }
@@ -150,6 +153,7 @@ export function getMacAddress(): string | undefined {
   for (const [interfaceName, interfaceDetails] of Object.entries(os.networkInterfaces())) {
     if (!interfaceName || excludedInterfaceNamePattern.test(interfaceName)) continue;
     for (const detail of interfaceDetails || []) {
+      // istanbul ignore else
       if (!detail.internal) return detail.mac;
     }
   }

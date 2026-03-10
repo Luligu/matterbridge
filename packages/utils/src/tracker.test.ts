@@ -91,7 +91,7 @@ describe('Tracker', () => {
   test('reset peaks triggers reset_done', async () => {
     jest.useFakeTimers();
     const { Tracker } = await import('./tracker.js');
-    const tracker = new Tracker('ResetTester');
+    const tracker = new Tracker();
 
     let resetCalled = 0;
     tracker.on('reset_peaks_done', () => resetCalled++);
