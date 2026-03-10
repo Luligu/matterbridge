@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { ThreadNames } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 
 type MockedParentPort = {
@@ -107,7 +108,7 @@ describe('WorkerWrapper', () => {
       return true;
     });
 
-    new WorkerWrapper('MyWorker', callback);
+    new WorkerWrapper('MyWorker' as unknown as ThreadNames, callback);
 
     expect(parentPort?.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'init', threadId: 7, threadName: 'MyWorker', success: true }));
 
@@ -125,7 +126,14 @@ describe('WorkerWrapper', () => {
       }),
     );
     expect(serverClose).toHaveBeenCalledTimes(1);
-    expect(parentPort?.postMessage).toHaveBeenCalledWith({ type: 'exit', threadId: 7, threadName: 'MyWorker', success: true });
+    expect(parentPort?.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'exit',
+        threadId: 7,
+        threadName: 'MyWorker',
+        success: true,
+      }),
+    );
     expect(parentPort?.close).toHaveBeenCalledTimes(1);
   });
 
@@ -137,7 +145,7 @@ describe('WorkerWrapper', () => {
       threadName: 'ThreadPing',
     });
 
-    new WorkerWrapper('Pinger', async () => true);
+    new WorkerWrapper('Pinger' as unknown as ThreadNames, async () => true);
 
     const onMessageHandler = getOnMessageHandler();
     expect(onMessageHandler).toBeDefined();
@@ -157,7 +165,7 @@ describe('WorkerWrapper', () => {
       verboseParam: true,
     });
 
-    new WorkerWrapper('DbgWorker', async () => true);
+    new WorkerWrapper('DbgWorker' as unknown as ThreadNames, async () => true);
 
     const onMessageHandler = getOnMessageHandler();
     expect(onMessageHandler).toBeDefined();
@@ -179,7 +187,7 @@ describe('WorkerWrapper', () => {
       threadName: 'NoPort',
     });
 
-    const worker = new WorkerWrapper('NoPortWorker', async () => true);
+    const worker = new WorkerWrapper('NoPortWorker' as unknown as ThreadNames, async () => true);
     expect(() => worker.parentPost({ type: 'ping', threadId: 1, threadName: 'NoPort' } as any)).toThrow(/parentPort is not available/);
   });
 
@@ -191,7 +199,7 @@ describe('WorkerWrapper', () => {
       threadName: 'NoPort',
     });
 
-    const worker = new WorkerWrapper('NoPortWorker', async () => true);
+    const worker = new WorkerWrapper('NoPortWorker' as unknown as ThreadNames, async () => true);
     expect(() => worker.parentLog('X', LogLevel.INFO, 'msg')).toThrow(/parentPort is not available/);
   });
 
@@ -204,7 +212,7 @@ describe('WorkerWrapper', () => {
       workerDataPresent: false,
     });
 
-    new WorkerWrapper('NoWorkerData', async () => true);
+    new WorkerWrapper('NoWorkerData' as unknown as ThreadNames, async () => true);
     await waitImmediate();
 
     // Without workerData, init/exit messages are not emitted.
@@ -222,7 +230,7 @@ describe('WorkerWrapper', () => {
     });
 
     const callback = jest.fn(async () => true);
-    new WorkerWrapper('MainThreadWrapper', callback);
+    new WorkerWrapper('MainThreadWrapper' as unknown as ThreadNames, callback);
     expect(parentPort).toBeNull();
 
     await waitImmediate();
@@ -249,7 +257,7 @@ describe('WorkerWrapper', () => {
       return true;
     });
 
-    new WorkerWrapper('MainThreadLogger', callback);
+    new WorkerWrapper('MainThreadLogger' as unknown as ThreadNames, callback);
     await waitImmediate();
 
     expect(createSpy).toHaveBeenCalled();
@@ -265,7 +273,7 @@ describe('WorkerWrapper', () => {
       workerDataPresent: false,
     });
 
-    const wrapper = new WorkerWrapper('WorkerInfoActive', async () => true);
+    const wrapper = new WorkerWrapper('WorkerInfoActive' as unknown as ThreadNames, async () => true);
     const debug = jest.fn();
     wrapper.logWorkerInfo({ debug } as any, false);
 
@@ -285,7 +293,7 @@ describe('WorkerWrapper', () => {
     process.argv = ['node', 'script'];
 
     try {
-      const wrapper = new WorkerWrapper('Info', async () => true);
+      const wrapper = new WorkerWrapper('Info' as unknown as ThreadNames, async () => true);
       const debug = jest.fn();
       wrapper.logWorkerInfo({ debug } as any, true);
 
@@ -311,7 +319,7 @@ describe('WorkerWrapper', () => {
     process.argv = ['node', 'script', '--foo', 'bar'];
 
     try {
-      const wrapper = new WorkerWrapper('InfoArgs', async () => true);
+      const wrapper = new WorkerWrapper('InfoArgs' as unknown as ThreadNames, async () => true);
       const debug = jest.fn();
       wrapper.logWorkerInfo({ debug } as any, false);
 
@@ -330,7 +338,7 @@ describe('WorkerWrapper', () => {
       workerDataPresent: false,
     });
 
-    const wrapper = new WorkerWrapper('InfoNoData', async () => true);
+    const wrapper = new WorkerWrapper('InfoNoData' as unknown as ThreadNames, async () => true);
     const debug = jest.fn();
     wrapper.logWorkerInfo({ debug } as any, false);
 
@@ -345,7 +353,7 @@ describe('WorkerWrapper', () => {
       threadName: 'Ignored',
     });
 
-    const wrapper = new WorkerWrapper('InfoDefaultArg', async () => true);
+    const wrapper = new WorkerWrapper('InfoDefaultArg' as unknown as ThreadNames, async () => true);
     const debug = jest.fn();
     wrapper.logWorkerInfo({ debug } as any);
 
