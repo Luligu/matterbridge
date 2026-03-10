@@ -69,6 +69,7 @@ import type {
   WorkerMessage,
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import { wait } from '@matterbridge/utils';
 import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
@@ -969,6 +970,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (hasParameter('systemcheck')) {
       const { systemCheck } = await import('@matterbridge/thread');
       await systemCheck();
+      await wait(1000); // Wait for the thread to log the results before shutting down
       this.shutdown = true;
       return;
     }

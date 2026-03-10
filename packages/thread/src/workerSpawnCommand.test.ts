@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { LogLevel } from 'node-ansi-logger';
+import { id, LogLevel } from 'node-ansi-logger';
 
 type RunOptions = Readonly<{
   spawnSuccess: boolean;
@@ -28,7 +28,7 @@ async function runWorkerSpawnCommand(options: RunOptions) {
   const worker = {
     logger: loggerMock,
     log: { debug: jest.fn() },
-    server: { respond: respondMock },
+    server: { respond: respondMock, getUniqueId: () => 123456789 },
     workerData,
   } as any;
 
@@ -81,6 +81,7 @@ describe('workerSpawnCommand', () => {
       type: 'manager_spawn_response',
       src: 'manager',
       dst: 'all',
+      id: 123456789,
       result: {
         command: workerData.command,
         args: workerData.args,
@@ -101,6 +102,7 @@ describe('workerSpawnCommand', () => {
       type: 'manager_spawn_response',
       src: 'manager',
       dst: 'all',
+      id: 123456789,
       result: {
         command: workerData.command,
         args: workerData.args,

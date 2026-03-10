@@ -309,7 +309,7 @@ describe('BroadcastServer', () => {
       elapsed: expect.any(Number),
       type: 'jest',
       src: 'manager',
-      dst: 'frontend',
+      dst: 'all',
       result: { name: 'Bob', age: 42 },
     });
     postMessageSpy.mockRestore();

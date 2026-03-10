@@ -69,6 +69,7 @@ export class ThreadsManager {
   // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
   private debug: boolean;
   private verbose: boolean;
+  private tracker: boolean;
   private log: AnsiLogger;
   static logLevel: LogLevel;
 
@@ -94,6 +95,7 @@ export class ThreadsManager {
     // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-threads');
+    this.tracker = hasParameter('tracker') || hasParameter('tracker-threads');
     // Create a logger instance for the ThreadsManager
     this.log = new AnsiLogger({
       logName: 'ThreadsManager',
@@ -331,7 +333,7 @@ export class ThreadsManager {
   ): Worker {
     const fileURL = pathToFileURL(resolve(relativePath));
     const options: WorkerOptions & { type: string } = {
-      workerData: { ...workerData, threadName: name, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel }, // Pass threadName in workerData cause worker_threads don't have it natively in node 20
+      workerData: { ...workerData, threadName: name, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel, tracker: this.tracker }, // Pass threadName in workerData cause worker_threads don't have it natively in node 20
       type: 'module',
       name,
       argv: argv ?? process.argv.slice(2), // Pass command line arguments to worker

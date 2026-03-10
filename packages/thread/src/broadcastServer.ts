@@ -274,7 +274,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     if (message.timestamp === undefined) {
       message.timestamp = Date.now();
     }
-    if (message.dst === this.name || message.dst === 'all') {
+    if (message.dst === this.name /* || message.dst === 'all'*/) {
       message.dst = message.src;
     }
     message.src = this.name;

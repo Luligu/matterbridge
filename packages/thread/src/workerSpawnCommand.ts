@@ -44,6 +44,7 @@ new WorkerWrapper('SpawnCommand', async (worker) => {
     type: 'manager_spawn_response',
     src: `manager`,
     dst: 'all',
+    id: worker.server.getUniqueId(),
     result: {
       command: worker.workerData.command,
       args: worker.workerData.args,
