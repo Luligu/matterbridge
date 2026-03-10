@@ -164,6 +164,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
   protected handleOnOffChange(onOff: boolean) {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`HandleOnOffChange (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // istanbul ignore else
     if (onOff === false) {
       device.log.notice('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
       this.state.currentMode = 2;

@@ -43,7 +43,7 @@ const ClosureControlSchema = ClusterElement(
     classification: 'application',
   },
   // Matter global attributes.
-  AttributeElement({ id: 0xfffd, name: 'ClusterRevision', type: 'ClusterRevision', conformance: 'M', default: ClosureControl.Base.revision ?? 1 }),
+  AttributeElement({ id: 0xfffd, name: 'ClusterRevision', type: 'ClusterRevision', conformance: 'M', default: ClosureControl.Base.revision }),
   AttributeElement(
     { id: 0xfffc, name: 'FeatureMap', type: 'FeatureMap', conformance: 'M' },
     FieldElement({ name: 'POS', constraint: '0', title: 'Positioning' }),

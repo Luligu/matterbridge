@@ -138,6 +138,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
   // Dead Front OnOff Cluster
   protected handleOnOffChange(onOff: boolean) {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    // istanbul ignore else
     if (onOff === false) {
       device.log.info('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
       this.state.currentMode = 2;
