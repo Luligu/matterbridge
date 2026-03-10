@@ -459,6 +459,7 @@ export async function startMatterbridge(
  *
  * @param {cleanupPause} cleanupPause The pause duration before cleanup. Default is 10 ms.
  * @param {destroyPause} destroyPause The pause duration before destruction. Default is 250 ms.
+ * @param {closeMdns} closeMdns Whether to close the mDNS service. Default is true.
  *
  * @example
  * ```typescript
@@ -466,8 +467,8 @@ export async function startMatterbridge(
  * await stopMatterbridge();
  * ```
  */
-export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250) {
-  await destroyMatterbridgeEnvironment(cleanupPause, destroyPause);
+export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250, closeMdns: boolean = true) {
+  await destroyMatterbridgeEnvironment(cleanupPause, destroyPause, closeMdns);
 }
 
 /**
