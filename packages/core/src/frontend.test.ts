@@ -182,9 +182,12 @@ describe('Matterbridge frontend', () => {
       dst: 'frontend',
       params: { level: 'info', time: 'time', name: 'jest', message: 'info' },
     } as any);
-    for (const type of ['plugins_install', 'plugins_uninstall'] as const) {
-      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', result: { success: true, packageName: 'testPlugin' } } as any);
-      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', result: { success: false, packageName: 'testPlugin' } } as any);
+    // prettier-ignore
+    {
+      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: true, packageCommand: 'install', packageName: 'testPlugin' } } as any);
+      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: false, packageCommand: 'install', packageName: 'testPlugin' } } as any);
+      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: true, packageCommand: 'uninstall', packageName: 'testPlugin' } } as any);
+      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: false, packageCommand: 'uninstall', packageName: 'testPlugin' } } as any);
     }
   });
 

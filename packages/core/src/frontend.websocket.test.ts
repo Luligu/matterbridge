@@ -684,8 +684,6 @@ describe('Matterbridge frontend', () => {
     expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
     expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`, 0);
-    expect(installPluginSpy).toHaveBeenCalledWith('matterbridge-test');
-    // expect(addPluginSpy).toHaveBeenCalledWith('matterbridge-test'); // Disabled as we do not actually add the plugin in the mock
     expect((matterbridge as any).plugins.size).toBe(3);
   });
 
@@ -716,9 +714,6 @@ describe('Matterbridge frontend', () => {
     await flushAsync(undefined, undefined, 100);
     expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
-    expect(uninstallPluginSpy).toHaveBeenCalledWith('matterbridge-test');
-    // expect(removePluginSpy).toHaveBeenCalledWith('matterbridge-test'); // Disabled as we do not actually remove the plugin in the mock
-    expect((matterbridge as any).plugins.size).toBe(3);
   });
 
   test('Websocket API /api/addplugin', async () => {

@@ -386,6 +386,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -429,15 +430,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
     }
     if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'manager_spawn_response':
-          if (msg.result && msg.result.success && msg.result.packageCommand === 'install' && msg.result.packageName === 'matterbridge') {
-            this.log.info('Matterbridge has been updated. Full restart required.');
-            this.frontend.wssSendRestartRequired();
-            await this.cleanup('updating...', false);
-          } else if (msg.error) {
-            this.log.error('Error updating matterbridge.');
+          // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+          if (msg.result && msg.result.success && msg.result.packageCommand === 'install') {
+            this.restartRequired = true;
+            this.fixedRestartRequired = true;
+            if (msg.result.packageName === 'matterbridge') {
+              this.log.info('Matterbridge has been updated. Full restart required.');
+              if (this.restartMode !== '') await this.cleanup('updating...', false);
+            }
           }
           break;
       }
@@ -1467,13 +1471,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Update matterbridge and shut down the process (called byvirtual device 'Update Matterbridge').
+   * Update matterbridge and shut down the process (called by virtual device 'Update Matterbridge').
    *
    * @returns {Promise<void>} A promise that resolves when the update is completed.
    */
   async updateProcess(): Promise<void> {
     this.log.info('Updating matterbridge...');
-
     this.server.request({
       type: 'manager_run',
       src: 'matterbridge',
@@ -1489,17 +1492,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         },
       },
     });
-
-    /*
-    const { spawnCommand } = await import('./spawn.js');
-    if (await spawnCommand('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge')) {
-      this.log.info('Matterbridge has been updated. Full restart required.');
-    } else {
-      this.log.error('Error updating matterbridge.');
-    }
-    this.frontend.wssSendRestartRequired();
-    await this.cleanup('updating...', false);
-    */
   }
 
   /**

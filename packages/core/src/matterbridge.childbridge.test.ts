@@ -323,6 +323,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugins.get('matterbridge-mock2')?.type).toBe('DynamicPlatform');
     expect(plugins.get('matterbridge-mock3')?.type).toBe('DynamicPlatform');
     expect(plugins.get('matterbridge-mock4')?.type).toBe('AccessoryPlatform');
+    expect(plugins.apiPluginArray().length).toBe(4);
   }, 60000);
 
   test('addBridgedEndpoint fails adding for DynamicPlatform cause aggregatorNode', async () => {

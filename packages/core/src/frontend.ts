@@ -210,28 +210,30 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
-    if (this.server.isWorkerResponse(msg) && msg.result) {
-      // istanbul ignore next
+    if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'frontend')) {
+      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
-        case 'plugins_install':
-          this.wssSendCloseSnackbarMessage(`Installing package ${msg.result.packageName}...`);
-          if (msg.result.success) {
-            this.wssSendRestartRequired(true, true);
-            this.wssSendRefreshRequired('plugins');
-            this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
-          } else {
-            this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not installed`, 10, 'error');
+        case 'manager_spawn_response':
+          if (msg.result && msg.result.packageCommand === 'install') {
+            // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+            this.wssSendCloseSnackbarMessage(`Installing package ${msg.result.packageName}...`);
+            if (msg.result.success) {
+              this.wssSendRestartRequired(true, true);
+              this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
+            } else {
+              this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not installed`, 10, 'error');
+            }
           }
-          break;
-        case 'plugins_uninstall':
-          this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.result.packageName}...`);
-          if (msg.result.success) {
-            this.wssSendRestartRequired(true, true);
-            this.wssSendRefreshRequired('plugins');
-            this.wssSendSnackbarMessage(`Uninstalled package ${msg.result.packageName}`, 5, 'success');
-          } else {
-            this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not uninstalled`, 10, 'error');
+          if (msg.result && msg.result.packageCommand === 'uninstall') {
+            // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+            this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.result.packageName}...`);
+            if (msg.result.success) {
+              this.wssSendRestartRequired(true, true);
+              this.wssSendSnackbarMessage(`Uninstalled package ${msg.result.packageName}`, 5, 'success');
+            } else {
+              this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not uninstalled`, 10, 'error');
+            }
           }
           break;
       }
@@ -1638,7 +1640,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/install') {
         if (isValidString(data.params.packageName, 12) && isValidBoolean(data.params.restart)) {
           this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
-          this.server.request({ type: 'plugins_install', src: this.server.name, dst: 'plugins', params: { packageName: data.params.packageName } });
+          this.server.request({
+            type: 'manager_run',
+            src: 'frontend',
+            dst: 'manager',
+            params: {
+              name: 'SpawnCommand',
+              workerData: {
+                threadName: 'SpawnCommand',
+                command: 'npm',
+                args: ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'],
+                packageCommand: 'install',
+                packageName: data.params.packageName,
+              },
+            },
+          });
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/install' });
@@ -1646,7 +1662,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/uninstall') {
         if (isValidString(data.params.packageName, 12)) {
           this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
-          this.server.request({ type: 'plugins_uninstall', src: this.server.name, dst: 'plugins', params: { packageName: data.params.packageName } });
+          this.server.request({
+            type: 'manager_run',
+            src: 'frontend',
+            dst: 'manager',
+            params: {
+              name: 'SpawnCommand',
+              workerData: {
+                threadName: 'SpawnCommand',
+                command: 'npm',
+                args: ['uninstall', '-g', data.params.packageName, '--omit=dev', '--verbose'],
+                packageCommand: 'uninstall',
+                packageName: data.params.packageName,
+              },
+            },
+          });
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' });

@@ -144,8 +144,9 @@ describe('Matterbridge', () => {
     // Responses
     const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
     // prettier-ignore
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', result: { packageCommand: 'install', packageName: 'matterbridge', success: true } } as any);
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', error: 'Error message' } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', result: { packageCommand: 'install', packageName: 'matterbridge', success: true } } as any);
+    // prettier-ignore
+    await (matterbridge as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', error: 'Error message' } as any);
     cleanupSpy.mockRestore();
   });
 

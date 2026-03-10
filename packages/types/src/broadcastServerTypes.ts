@@ -318,11 +318,11 @@ export type WorkerMessageTypes = {
   };
   plugins_install: {
     request: { params: { packageName: string } };
-    response: { result: { packageName: string; success: boolean } };
+    response: { result: { packageName: string } };
   };
   plugins_uninstall: {
     request: { params: { packageName: string } };
-    response: { result: { packageName: string; success: boolean } };
+    response: { result: { packageName: string } };
   };
   plugins_enable: {
     request: { params: { nameOrPath: string } };

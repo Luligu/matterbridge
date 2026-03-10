@@ -152,10 +152,12 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           this.server.respond({ ...msg, result: { plugins: this.apiPluginArray() } });
           break;
         case 'plugins_install':
-          this.server.respond({ ...msg, result: { packageName: msg.params.packageName, success: await this.install(msg.params.packageName) } });
+          this.install(msg.params.packageName);
+          this.server.respond({ ...msg, result: { packageName: msg.params.packageName } });
           break;
         case 'plugins_uninstall':
-          this.server.respond({ ...msg, result: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
+          this.uninstall(msg.params.packageName);
+          this.server.respond({ ...msg, result: { packageName: msg.params.packageName } });
           break;
         case 'plugins_add':
           {
@@ -292,7 +294,52 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           }
           break;
         default:
+          // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+      }
+    }
+    if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'plugins')) {
+      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        case 'manager_spawn_response':
+          if (msg.result && msg.result.packageCommand === 'install') {
+            // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+            if (msg.result.success) {
+              msg.result.packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
+              // istanbul ignore else
+              if (msg.result.packageName !== 'matterbridge') {
+                // istanbul ignore else
+                if (!this.has(msg.result.packageName)) await this.add(msg.result.packageName);
+                const plugin = this.get(msg.result.packageName);
+                // istanbul ignore else
+                if (plugin && !plugin.loaded) {
+                  await this.load(plugin);
+                  this.server.request({ type: 'frontend_refreshrequired', src: 'plugins', dst: 'frontend', params: { changed: 'plugins' } });
+                }
+              }
+              this.log.info(`Installed plugin ${plg}${msg.result.packageName}${db} successfully`);
+            } else {
+              this.log.error(`Failed to install plugin ${plg}${msg.result.packageName}${er}`);
+            }
+          }
+          if (msg.result && msg.result.packageCommand === 'uninstall') {
+            // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+            if (msg.result.success) {
+              // istanbul ignore else
+              if (this.has(msg.result.packageName)) {
+                const plugin = this.get(msg.result.packageName);
+                // istanbul ignore else
+                if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
+                await this.remove(msg.result.packageName);
+                this.server.request({ type: 'frontend_refreshrequired', src: 'plugins', dst: 'frontend', params: { changed: 'plugins' } });
+              }
+              this.log.info(`Uninstalled plugin ${plg}${msg.result.packageName}${db} successfully`);
+            } else {
+              this.log.error(`Failed to uninstall plugin ${plg}${msg.result.packageName}${er}`);
+            }
+          }
+          break;
       }
     }
   }
@@ -672,55 +719,48 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * Installs a package globally using npm. Called from the frontend /api/install with packageName.
    *
    * @param {string} packageName - The name of the package to install.
-   * @returns {Promise<boolean>} A promise that resolves to true if the installation was successful, false otherwise.
    */
-  async install(packageName: string): Promise<boolean> {
+  install(packageName: string): void {
     this.log.debug(`Installing plugin ${plg}${packageName}${db}...`);
-    const { spawnCommand } = await import('./spawn.js');
-    if (await spawnCommand('npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName)) {
-      this.matterbridge.restartRequired = true;
-      this.matterbridge.fixedRestartRequired = true;
-      packageName = packageName.replace(/@.*$/, ''); // Remove @version if present
-      if (packageName !== 'matterbridge') {
-        if (!this.has(packageName)) await this.add(packageName);
-        const plugin = this.get(packageName);
-        if (plugin && !plugin.loaded) await this.load(plugin);
-      } else {
-        if (this.matterbridge.restartMode !== '') {
-          await this.matterbridge.shutdownProcess();
-        }
-      }
-      this.log.info(`Installed plugin ${plg}${packageName}${db} successfully`);
-      return true;
-    } else {
-      this.log.error(`Failed to install plugin ${plg}${packageName}${er}`);
-      return false;
-    }
+    this.server.request({
+      type: 'manager_run',
+      src: 'plugins',
+      dst: 'manager',
+      params: {
+        name: 'SpawnCommand',
+        workerData: {
+          threadName: 'SpawnCommand',
+          command: 'npm',
+          args: ['install', '-g', packageName, '--omit=dev', '--verbose'],
+          packageCommand: 'install',
+          packageName: packageName,
+        },
+      },
+    });
   }
 
   /**
    * Uninstalls a package globally using npm. Called from the frontend /api/uninstall with packageName.
    *
    * @param {string} packageName - The name of the package to uninstall.
-   * @returns {Promise<boolean>} A promise that resolves to true if the uninstallation was successful, false otherwise.
    */
-  async uninstall(packageName: string): Promise<boolean> {
+  uninstall(packageName: string): void {
     this.log.debug(`Uninstalling plugin ${plg}${packageName}${db}...`);
-    const { spawnCommand } = await import('./spawn.js');
-    packageName = packageName.replace(/@.*$/, '');
-    if (packageName === 'matterbridge') return false;
-    if (this.has(packageName)) {
-      const plugin = this.get(packageName);
-      if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
-      await this.remove(packageName);
-    }
-    if (await spawnCommand('npm', ['uninstall', '-g', packageName, '--verbose'], 'uninstall', packageName)) {
-      this.log.info(`Uninstalled plugin ${plg}${packageName}${db} successfully`);
-      return true;
-    } else {
-      this.log.error(`Failed to uninstall plugin ${plg}${packageName}${er}`);
-      return false;
-    }
+    this.server.request({
+      type: 'manager_run',
+      src: 'plugins',
+      dst: 'manager',
+      params: {
+        name: 'SpawnCommand',
+        workerData: {
+          threadName: 'SpawnCommand',
+          command: 'npm',
+          args: ['uninstall', '-g', packageName, '--omit=dev', '--verbose'],
+          packageCommand: 'uninstall',
+          packageName: packageName,
+        },
+      },
+    });
   }
 
   /**
@@ -817,6 +857,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     // Normalize funding into an array.
     const fundingEntries = Array.isArray(funding) ? funding : [funding];
     for (const entry of fundingEntries) {
+      // istanbul ignore else
       if (entry && typeof entry === 'string' && entry.startsWith('http')) {
         // If the funding entry is a string, assume it is a URL.
         return entry;

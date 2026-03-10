@@ -27,18 +27,7 @@ process.argv = [
 process.env.npm_config_prefix = NPM_CONFIG_PREFIX;
 process.env.npm_config_cache = NPM_CONFIG_CACHE;
 
-// Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('./spawn.js', () => ({
-  spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
-    return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
-  }),
-}));
-const spawnModule = await import('./spawn.js');
-const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
-
 const jsonParseSpy = jest.spyOn(JSON, 'parse');
-
-const matterbridgeShutdownSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess');
 
 import { execSync } from 'node:child_process';
 import { promises as fs, unlinkSync } from 'node:fs';
@@ -52,7 +41,6 @@ import { wait, waiter } from '@matterbridge/utils';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 
 import { addPluginSpy, closeMdnsInstance, destroyInstance, loggerLogSpy, removePluginSpy, setDebug, setupTest, shutdownPluginSpy } from './jestutils/jestHelpers.js';
-import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
@@ -107,11 +95,18 @@ describe('PluginManager', () => {
 
   test('BroadcastServer from local path', async () => {
     const pluginPath = path.join('.', 'packages', 'core', 'src', 'mock', 'plugin1');
-    expect((await testServer.fetch({ type: 'plugins_install', src: testServer.name, dst: 'plugins', params: { packageName: pluginPath } }, 5000)).result.success).toBe(true);
+    expect((await testServer.fetch({ type: 'plugins_install', src: testServer.name, dst: 'plugins', params: { packageName: pluginPath } }, 5000)).result.packageName).toBeDefined();
+    execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+      stdio: 'inherit',
+      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+    });
+    expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
+    addPluginSpy.mockImplementationOnce(async (nameOrPath: string) => {
+      return null;
+    });
+    expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
     expect(plugins.has('matterbridge-mock1')).toBe(true);
     expect(plugins.get('matterbridge-mock1')?.enabled).toBe(true);
-
-    expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
     expect(
       (await testServer.fetch({ type: 'plugins_disable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin,
     ).toBeDefined();
@@ -161,9 +156,17 @@ describe('PluginManager', () => {
     testServer.request({ type: 'plugins_unknown', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } });
 
     expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
-    expect((await testServer.fetch({ type: 'plugins_uninstall', src: testServer.name, dst: 'plugins', params: { packageName: 'matterbridge-mock1' } }, 5000)).result.success).toBe(
-      true,
-    );
+    // pretty-ignore
+    expect(
+      (await testServer.fetch({ type: 'plugins_uninstall', src: testServer.name, dst: 'plugins', params: { packageName: 'matterbridge-mock1' } }, 5000)).result.packageName,
+    ).toBeDefined();
+    execSync(`npm uninstall ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+      stdio: 'inherit',
+      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+    });
+    expect(
+      (await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin,
+    ).not.toBeNull();
     expect(plugins.has('matterbridge-mock1')).toBe(false);
 
     await expect(
@@ -172,6 +175,20 @@ describe('PluginManager', () => {
     await expect(
       testServer.fetch({ type: 'plugins_set_dev_version', src: testServer.name, dst: 'plugins', params: { plugin: {} as ApiPlugin, version: '1.0.0' } }, 5000),
     ).rejects.toThrow();
+
+    // prettier-ignore
+    {
+      // await setDebug(true);
+      execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, { stdio: 'inherit', env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE }});
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
+      expect(plugins.has('matterbridge-mock1')).toBe(true); 
+
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
+      // await setDebug(false);
+      expect(plugins.has('matterbridge-mock1')).toBe(false); 
+    }
   });
 
   test('logLevel changes correctly', async () => {
@@ -545,83 +562,13 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Resolved plugin path'));
   });
 
-  test('install plugin', async () => {
-    addPluginSpy.mockImplementationOnce(async (nameOrPath: string) => {
-      return null;
-    });
-    matterbridgeShutdownSpy.mockImplementationOnce(() => {
-      return Promise.resolve();
-    });
-
-    await plugins.install('matterbridge-websocket');
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge-websocket', '--omit=dev', '--verbose'], 'install', 'matterbridge-websocket');
-    expect(matterbridge.restartRequired).toBe(true);
-    expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(addPluginSpy).toHaveBeenCalledTimes(1);
-    jest.clearAllMocks();
-
-    await plugins.install('matterbridge');
-    expect(matterbridge.restartMode).toBe('');
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
-    expect(matterbridge.restartRequired).toBe(true);
-    expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(addPluginSpy).toHaveBeenCalledTimes(0);
-    expect(matterbridgeShutdownSpy).toHaveBeenCalledTimes(0);
-    jest.clearAllMocks();
-
-    matterbridge.restartMode = 'service';
-    await plugins.install('matterbridge');
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
-    expect(matterbridge.restartRequired).toBe(true);
-    expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(addPluginSpy).toHaveBeenCalledTimes(0);
-    expect(matterbridgeShutdownSpy).toHaveBeenCalledTimes(1);
-    jest.clearAllMocks();
-
-    spawnCommandMock.mockImplementationOnce(() => {
-      return Promise.resolve(false);
-    });
-    await expect(plugins.install('matterbridge')).resolves.toBe(false);
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
-    expect(matterbridge.restartRequired).toBe(true);
-    expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(addPluginSpy).toHaveBeenCalledTimes(0);
-    expect(matterbridgeShutdownSpy).toHaveBeenCalledTimes(0);
-
-    (plugins as any)._plugins.delete('matterbridge-websocket');
+  test('install uninstall plugin', async () => {
+    plugins.install('matterbridge-websocket');
+    plugins.uninstall('matterbridge-websocket');
+    expect(plugins.length).toBe(3);
     matterbridge.restartMode = '';
     matterbridge.restartRequired = false;
     matterbridge.fixedRestartRequired = false;
-  });
-
-  test('uninstall plugin', async () => {
-    (plugins as any)._plugins.set('matterbridge-websocket', { name: 'matterbridge-websocket', loaded: true });
-    shutdownPluginSpy.mockImplementationOnce(async (plugin: Plugin | string, reason?: string, removeAllDevices: boolean = false, force: boolean = false) => {
-      return plugin as Plugin;
-    });
-    removePluginSpy.mockImplementationOnce(async (nameOrPath: string) => {
-      return null;
-    });
-
-    await plugins.uninstall('matterbridge-websocket');
-    expect(shutdownPluginSpy).toHaveBeenCalledTimes(1);
-    expect(removePluginSpy).toHaveBeenCalledTimes(1);
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['uninstall', '-g', 'matterbridge-websocket', '--verbose'], 'uninstall', 'matterbridge-websocket');
-    expect(matterbridge.restartRequired).toBe(false);
-    expect(matterbridge.fixedRestartRequired).toBe(false);
-    jest.clearAllMocks();
-
-    spawnCommandMock.mockImplementationOnce(() => {
-      return Promise.resolve(false);
-    });
-    await expect(plugins.uninstall('matterbridge-websocket')).resolves.toBe(false);
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['uninstall', '-g', 'matterbridge-websocket', '--verbose'], 'uninstall', 'matterbridge-websocket');
-    jest.clearAllMocks();
-
-    await expect(plugins.uninstall('matterbridge')).resolves.toBe(false);
-    expect(spawnCommandMock).toHaveBeenCalledTimes(0);
-
-    (plugins as any)._plugins.delete('matterbridge-websocket');
   });
 
   test('parse plugin', async () => {
