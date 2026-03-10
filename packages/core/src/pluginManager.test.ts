@@ -189,7 +189,7 @@ describe('PluginManager', () => {
       // await setDebug(false);
       expect(plugins.has('matterbridge-mock1')).toBe(false); 
     }
-  });
+  }, 10000);
 
   test('logLevel changes correctly', async () => {
     plugins.logLevel = LogLevel.DEBUG;

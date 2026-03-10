@@ -60,6 +60,7 @@ These threads already run as workers:
 - [package]: Enable tree-shaking for @matterbridge/thread.
 - [threads]: Add ThreadsManager to the cli.
 - [threads]: Add WorkerWrapper.
+- [reset-sessions]: Add --reset-sessions parameter to disable resumption records
 
 ### Changed
 

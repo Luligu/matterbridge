@@ -106,6 +106,7 @@ describe('ThreadsManager', () => {
         type: 'manager_run',
         src: 'matterbridge',
         dst: 'manager',
+        // @ts-expect-error - This is intentional to test the SpawnCommand with specific workerData
         params: {
           name: 'SpawnCommand',
           pipedOutput: true,

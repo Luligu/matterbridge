@@ -170,6 +170,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
 
   test('Matterbridge.destroyInstance()', async () => {
     // Destroy the Matterbridge instance
+    process.argv.push('--reset-sessions');
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   });

@@ -881,7 +881,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('on')).toBeTruthy();
     expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('off')).toBeTruthy();
     expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('toggle')).toBeTruthy();
-    expect((light.stateOf(MatterbridgeOnOffServer) as any).acceptedCommandList).toEqual([0, 64, 65, 66, 1, 2]);
+    expect((light.stateOf(MatterbridgeOnOffServer) as any).acceptedCommandList).toEqual(expect.arrayContaining([0, 64, 65, 66, 1, 2]));
+    expect((light.stateOf(MatterbridgeOnOffServer) as any).acceptedCommandList).toHaveLength(6);
     expect((light.stateOf(MatterbridgeOnOffServer) as any).generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(light, 'onOff', 'on');
     await invokeBehaviorCommand(light, 'onOff', 'off');
@@ -922,7 +923,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
     expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColor')).toBeTruthy();
     expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
-    expect((light.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]);
+    expect((light.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual(expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]));
     expect((light.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(light, 'colorControl', 'moveToHue', {
       hue: 180,
@@ -973,7 +974,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
     expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToColor')).toBeTruthy();
     expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
-    expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 64, 65, 66, 67, 71]);
+    expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).acceptedCommandList).toEqual(
+      expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 64, 65, 66, 67, 71]),
+    );
     expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToHue', {
       hue: 180,

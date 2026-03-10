@@ -261,7 +261,10 @@ describe('MatterNode', () => {
   });
 
   test('Copy fabrics for server node for Matterbridge', async () => {
-    const result = await copyDirectory(path.join('./src/mock/matterstorage/Matterbridge'), path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge'));
+    const result = await copyDirectory(
+      path.join('./packages/core/src/mock/matterstorage/Matterbridge'),
+      path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge'),
+    );
     expect(result).toBeTruthy();
   });
 
@@ -497,7 +500,7 @@ describe('MatterNode', () => {
 
     // Test adding AccessoryPlugin
     (matter as any).matterbridge.bridgeMode = 'childbridge';
-    expect(await matter.pluginManager.add('./src/mock/plugin4')).not.toBeNull();
+    expect(await matter.pluginManager.add('./packages/core/src/mock/plugin4')).not.toBeNull();
     expect(await matter.addVirtualEndpoint('matterbridge-mock4', 'Virtual device', 'switch', async () => {})).toBe(false);
     expect(loggerErrorSpy).toHaveBeenCalledWith(`Virtual devices are only supported in bridge mode and childbridge mode with a DynamicPlatform`);
     (matter as any).matterbridge.bridgeMode = 'bridge';
