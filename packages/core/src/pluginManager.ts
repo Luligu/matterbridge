@@ -51,7 +51,7 @@ import type { NodeStorage } from 'node-persist-manager';
 import type { Matterbridge } from './matterbridge.js';
 import { isMatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
 import { isMatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { assertMatterbridgePlatform, type MatterbridgePlatform } from './matterbridgePlatform.js';
 
 /** Define an interface for matterbridge */
@@ -669,7 +669,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   /**
-   * Installs a package globally using npm.
+   * Installs a package globally using npm. Called from the frontend /api/install with packageName.
    *
    * @param {string} packageName - The name of the package to install.
    * @returns {Promise<boolean>} A promise that resolves to true if the installation was successful, false otherwise.
@@ -699,7 +699,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   /**
-   * Uninstalls a package globally using npm.
+   * Uninstalls a package globally using npm. Called from the frontend /api/uninstall with packageName.
    *
    * @param {string} packageName - The name of the package to uninstall.
    * @returns {Promise<boolean>} A promise that resolves to true if the uninstallation was successful, false otherwise.

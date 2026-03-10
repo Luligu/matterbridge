@@ -77,6 +77,7 @@ import { NodeStorageManager } from 'node-persist-manager';
 import type { DeviceManager as DeviceManagerType } from './deviceManager.js';
 import {
   broadcastServerRequestSpy,
+  broadcastServerRespondSpy,
   closeMdnsInstance,
   configurePluginSpy,
   destroyInstance,
@@ -1303,18 +1304,9 @@ describe('Matterbridge mocked', () => {
     jest.clearAllMocks();
 
     await matterbridge.updateProcess();
-    expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Matterbridge has been updated. Full restart required.'));
+    expect(broadcastServerRequestSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'manager_run', src: 'matterbridge', dst: 'manager' }));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Updating matterbridge...'));
     jest.clearAllMocks();
-
-    spawnCommandMock.mockImplementationOnce(() => {
-      return Promise.resolve(false);
-    });
-    await matterbridge.updateProcess();
-    expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error updating matterbridge.'));
 
     cleanupSpy.mockRestore();
   });

@@ -25,15 +25,6 @@ process.argv = [
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
-// Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('@matterbridge/thread', () => ({
-  createESMWorker: jest.fn(() => {
-    return undefined; // Mock the createESMWorker function to return immediately
-  }),
-}));
-const workerModule = await import('@matterbridge/thread');
-
-import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -149,6 +140,13 @@ describe('Matterbridge', () => {
     expect(matterbridge.shellyMainUpdate).toBe(true);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_platform', src: 'manager', dst: 'matterbridge', params: {} } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shared', src: 'manager', dst: 'matterbridge', params: {} } as any);
+
+    // Responses
+    const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
+    // prettier-ignore
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', result: { packageCommand: 'install', packageName: 'matterbridge', success: true } } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', error: 'Error message' } as any);
+    cleanupSpy.mockRestore();
   });
 
   test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
@@ -231,7 +229,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
     // Destroy the Matterbridge instance
-    process.argv.push('--reset-sessions');
+    // process.argv.push('--reset-sessions');
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
 
@@ -302,45 +300,6 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).frontend.expressApp).toBeDefined();
     expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
   }, 60000);
-
-  test('resolveWorkerDistFilePath() should return current module dir candidate when file exists', async () => {
-    const fileName = `__jest_worker_${process.pid}_${Date.now()}_a.js`;
-    const candidate1 = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
-    try {
-      // Create the file where resolveWorkerDistFilePath expects it (candidate1)
-      fs.writeFileSync(candidate1, '// jest worker placeholder', 'utf8');
-      const resolved = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
-      expect(path.resolve(resolved)).toBe(path.resolve(candidate1));
-    } finally {
-      fs.rmSync(candidate1, { force: true });
-    }
-  });
-
-  test('resolveWorkerDistFilePath() should fall back to ../dist when current module dir candidate is missing', async () => {
-    const fileName = `__jest_worker_${process.pid}_${Date.now()}_b.js`;
-    const candidate1 = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
-    const moduleDir = path.dirname(candidate1);
-    const candidate2 = path.resolve(moduleDir, '..', 'dist', fileName);
-
-    try {
-      // Ensure candidate1 does not exist and create candidate2
-      fs.rmSync(candidate1, { force: true });
-      fs.mkdirSync(path.dirname(candidate2), { recursive: true });
-      fs.writeFileSync(candidate2, '// jest worker placeholder', 'utf8');
-
-      const resolved = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
-      expect(path.resolve(resolved)).toBe(path.resolve(candidate2));
-    } finally {
-      fs.rmSync(candidate2, { force: true });
-      // Optional: clean dist dir if we created it and it is empty
-      try {
-        const distDir = path.dirname(candidate2);
-        if (fs.existsSync(distDir) && fs.readdirSync(distDir).length === 0) fs.rmdirSync(distDir);
-      } catch {
-        // ignore cleanup errors
-      }
-    }
-  });
 
   test('destroy instance', async () => {
     // Destroy the Matterbridge instance

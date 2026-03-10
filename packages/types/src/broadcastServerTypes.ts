@@ -31,6 +31,7 @@ import { LogLevel } from 'node-ansi-logger';
 import type { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
+import { ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
@@ -153,9 +154,9 @@ export type WorkerMessageTypes = {
       /** Parameters for running a worker */
       params: {
         /** The name of the worker to run */
-        name: string;
+        name: ThreadNames;
         /** Optional data to pass to the worker */
-        workerData?: Record<string, boolean | number | string | object>;
+        workerData?: WorkerData;
         /** Optional arguments to pass to the worker */
         argv?: string[];
         /** Optional environment variables for the worker */
@@ -167,6 +168,10 @@ export type WorkerMessageTypes = {
       };
     };
     response: { result: { success: boolean } };
+  };
+  manager_spawn_response: {
+    request: { params: undefined };
+    response: { result: { command: string; args: string[]; packageCommand: 'install' | 'uninstall'; packageName: string; success: boolean } };
   };
 
   // Matterbridge methods

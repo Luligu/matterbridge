@@ -316,6 +316,7 @@ function help(): void {
       --delay [seconds]:       set a delay in seconds before starting Matterbridge in the first 5 minutes from a reboot (default 120)
       --fixed_delay [seconds]: set a fixed delay in seconds before starting Matterbridge (default 120)
       --no-ansi:               disable ANSI color output in the logs    
+      --no-reset-sessions:     disable resetting of sessions and resumption records on shutdown 
   `);
   process.exit(0);
 }

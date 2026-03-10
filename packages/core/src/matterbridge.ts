@@ -427,6 +427,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
+    if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+      if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        case 'manager_spawn_response':
+          if (msg.result && msg.result.success && msg.result.packageCommand === 'install' && msg.result.packageName === 'matterbridge') {
+            this.log.info('Matterbridge has been updated. Full restart required.');
+            this.frontend.wssSendRestartRequired();
+            await this.cleanup('updating...', false);
+          } else if (msg.error) {
+            this.log.error('Error updating matterbridge.');
+          }
+          break;
+      }
+    }
   }
 
   //* ************************************************************************************************************************************ */
@@ -893,36 +907,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Resolve a file path located in the `@matterbridge/core` distribution directory.
-   *
-   * @remarks
-   * Matterbridge spawns ESM workers from built JavaScript files (e.g. `workerCheckUpdates.js`).
-   * Depending on how the code is executed:
-   * - **Production**: `import.meta.url` points inside `.../node_modules/@matterbridge/core/dist/...`
-   *   and the worker file is usually alongside the current module.
-   * - **Development / tests**: `import.meta.url` may point inside `.../packages/core/src/...`
-   *   while the worker file exists in `.../packages/core/dist/...`.
-   *
-   * This helper tries both locations and returns the first existing candidate.
-   *
-   * @param {string} fileName - Worker/build artifact file name, e.g. `workerGlobalPrefix.js`.
-   * @returns {string} Absolute path to the resolved file. If none exists, returns the first candidate (best effort).
-   */
-  resolveWorkerDistFilePath(fileName: string): string {
-    const currentModuleDirectory = path.dirname(fileURLToPath(import.meta.url));
-    // This core package's src or dist directory or the global installation dist directory for thread package
-    const candidates = [
-      path.join(currentModuleDirectory, fileName), // Dist directory for local development with local packages
-      path.join(currentModuleDirectory, '..', 'dist', fileName), // Current src directory for jest tests
-      path.join(this.rootDirectory, 'node_modules', '@matterbridge', 'thread', 'dist', fileName), // Global installation dist directory for production with thread package
-    ];
-    for (const candidate of candidates) {
-      if (fs.existsSync(candidate)) return candidate;
-    }
-    return candidates[0];
-  }
-
-  /**
    * Parses the command line arguments and performs the corresponding actions.
    *
    * @private
@@ -1073,20 +1057,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Run in 2 minutes the system check
     clearTimeout(this.systemCheckTimeout);
-    this.systemCheckTimeout = setTimeout(async () => {
+    this.systemCheckTimeout = setTimeout(() => {
       this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'SystemCheck' } });
     }, 120 * 1000).unref();
 
     // Check in 5 minutes the latest and dev versions of matterbridge and the plugins
     clearTimeout(this.checkUpdateTimeout);
-    this.checkUpdateTimeout = setTimeout(async () => {
+    this.checkUpdateTimeout = setTimeout(() => {
       this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
     }, 300 * 1000).unref();
 
     // Check each 12 hours the latest and dev versions of matterbridge and the plugins
     clearInterval(this.checkUpdateInterval);
     this.checkUpdateInterval = setInterval(
-      async () => {
+      () => {
         this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
       },
       12 * 60 * 60 * 1000, // 12 hours
@@ -1481,12 +1465,30 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Update matterbridge and shut down the process (virtual device 'Update Matterbridge').
+   * Update matterbridge and shut down the process (called byvirtual device 'Update Matterbridge').
    *
    * @returns {Promise<void>} A promise that resolves when the update is completed.
    */
   async updateProcess(): Promise<void> {
     this.log.info('Updating matterbridge...');
+
+    this.server.request({
+      type: 'manager_run',
+      src: 'matterbridge',
+      dst: 'manager',
+      params: {
+        name: 'SpawnCommand',
+        workerData: {
+          threadName: 'SpawnCommand',
+          command: 'npm',
+          args: ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'],
+          packageCommand: 'install',
+          packageName: 'matterbridge',
+        },
+      },
+    });
+
+    /*
     const { spawnCommand } = await import('./spawn.js');
     if (await spawnCommand('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge')) {
       this.log.info('Matterbridge has been updated. Full restart required.');
@@ -1495,6 +1497,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
     this.frontend.wssSendRestartRequired();
     await this.cleanup('updating...', false);
+    */
   }
 
   /**
@@ -1692,8 +1695,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           // Ignore errors if the file does not exist
         }
       }
-      // Remove the resumption records for Matterbridge (bridge mode)
-      if (getParameter('reset-sessions')) {
+      // Remove the resumption records and subscriptions. Till the matter.js team solves the issue of closing server node when resumption didn't work.
+      if (!hasParameter('no-reset-sessions')) {
         this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
