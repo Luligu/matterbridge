@@ -55,7 +55,7 @@ describe('workerCheckUpdates', () => {
   test('success: runs fetch + checkUpdates + logs success', async () => {
     const { wrapperName, success, loggerMock, fetchMock, checkUpdates } = await runWorkerCheckUpdates({});
 
-    expect(wrapperName).toBe('GlobalPrefix');
+    expect(wrapperName).toBe('CheckUpdates');
     expect(success).toBe(true);
 
     expect(fetchMock).toHaveBeenCalledWith({ type: 'matterbridge_shared', src: 'matterbridge', dst: 'matterbridge' }, 5000);

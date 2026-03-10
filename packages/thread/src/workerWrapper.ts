@@ -22,11 +22,16 @@
  * limitations under the License.
  */
 
-import { inspect } from 'node:util';
+// istanbul ignore next 2 lines - loader/debug/verbose flags are only used for development and testing, not in production
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mWorkerWrapper loaded.\u001B[40;0m');
+
 import { isMainThread, parentPort, threadId, workerData } from 'node:worker_threads';
 
-import type { ParentPortMessage } from '@matterbridge/types';
+import type { ParentPortMessage, ThreadNames, WorkerData } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
+import { formatBytes } from '@matterbridge/utils/format';
+import type { Tracker } from '@matterbridge/utils/tracker';
 import { AnsiLogger, debugStringify, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
@@ -39,25 +44,50 @@ import { ThreadsManager } from './threadsManager.js';
  * The WorkerWrapper class abstracts away the complexities of working with worker threads, allowing developers to focus on the specific tasks that each worker thread needs to perform.
  */
 export class WorkerWrapper {
-  // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
+  // istanbul ignore next 3 lines - debug/verbose flags are only used for development and testing, not in production
   debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
   verbose = hasParameter('verbose') || hasParameter('verbose-threads');
+  useTracker = hasParameter('tracker') || hasParameter('tracker-threads');
   log: AnsiLogger;
   server: BroadcastServer;
+  workerData: WorkerData | null = workerData;
+  tracker: Tracker | undefined;
 
   /**
    * Initializes the worker by sending an init message to the parent and logging the initialization if debug is enabled.
    *
-   * @param {string} name - The name of the worker thread, used for logging and identification purposes.
+   * @param {ThreadNames} name - The name of the worker thread, used for logging and identification purposes.
    * @param { (worker: WorkerWrapper) => Promise<boolean> } callback - A callback function that is executed after the worker is initialized.
    */
   constructor(
-    public name: string,
+    public name: ThreadNames,
     callback: (worker: WorkerWrapper) => Promise<boolean>,
   ) {
+    // Update debug, verbose and tracker flags if workerData is available
+    // istanbul ignore next 5 lines - debug/verbose flags are only used for development and testing, not in production
+    if (this.workerData) {
+      this.debug = this.workerData.debug || this.debug;
+      this.verbose = this.workerData.verbose || this.verbose;
+      this.useTracker = this.workerData.tracker || this.useTracker;
+    }
+    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    if (this.useTracker) {
+      void import('@matterbridge/utils/tracker')
+        .then(({ Tracker }) => {
+          this.tracker = new Tracker(`Thread${this.name}`, this.debug, this.verbose);
+          this.tracker.start();
+          return undefined;
+        })
+        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        .catch((err) => {
+          // eslint-disable-next-line no-console
+          if (this.debug) console.error(`WorkerWrapper ${this.name}: failed to load Tracker`, err);
+          return undefined;
+        });
+    }
     // Initialize logger
     this.log = new AnsiLogger({
-      logName: name,
+      logName: this.name,
       logNameColor: MAGENTA,
       logTimestampFormat: TimestampFormat.TIME_MILLIS,
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
@@ -67,35 +97,30 @@ export class WorkerWrapper {
     this.server = new BroadcastServer('matterbridge', this.log);
 
     // Message handler for the worker, which listens for messages from the parent and handles them accordingly
-    if (!isMainThread && parentPort) {
+    if (!isMainThread && parentPort && this.workerData) {
       parentPort.on('message', (message: ParentPortMessage) => {
         // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
-        if (this.debug) this.log.debug(`Worker ${workerData.threadName}:${threadId} received message from parent: ${debugStringify(message)}`);
+        if (this.debug) this.log.debug(`Worker ${this.name}:${threadId} received message from parent: ${debugStringify(message)}`);
         switch (message.type) {
           case 'ping':
-            this.parentLog(workerData.threadName, LogLevel.DEBUG, `Worker ${workerData.threadName}:${threadId} received ping message type from parent: ${debugStringify(message)}`);
-            this.parentPost({ type: 'pong', threadId, threadName: workerData.threadName });
-            this.parentLog(workerData.threadName, LogLevel.DEBUG, `Worker ${workerData.threadName}:${threadId} sent pong message type to parent: ${debugStringify(message)}`);
+            this.parentLog(this.name, LogLevel.DEBUG, `Worker ${this.name}:${threadId} received ping message type from parent: ${debugStringify(message)}`);
+            this.parentPost({ type: 'pong', threadId, threadName: this.name });
+            this.parentLog(this.name, LogLevel.DEBUG, `Worker ${this.name}:${threadId} sent pong message type to parent: ${debugStringify(message)}`);
             break;
           case 'pong':
-            this.parentLog(workerData.threadName, LogLevel.DEBUG, `Worker ${workerData.threadName}:${threadId} received pong message type from parent: ${debugStringify(message)}`);
+            this.parentLog(this.name, LogLevel.DEBUG, `Worker ${this.name}:${threadId} received pong message type from parent: ${debugStringify(message)}`);
             break;
           default:
-            this.parentLog(
-              workerData.threadName,
-              LogLevel.WARN,
-              `Worker ${workerData.threadName}:${threadId} received unknown message type from parent: ${debugStringify(message)}`,
-            );
+            this.parentLog(this.name, LogLevel.WARN, `Worker ${this.name}:${threadId} received unknown message type from parent: ${debugStringify(message)}`);
         }
       });
     }
 
     // Send init message
-    if (!isMainThread && parentPort && workerData) {
-      name = workerData.threadName;
-      this.parentPost({ type: 'init', threadId, threadName: workerData.threadName, success: true });
+    if (!isMainThread && parentPort && this.workerData) {
+      this.parentPost({ type: 'init', threadId, threadName: this.name, memoryUsage: process.memoryUsage(), success: true });
       // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
-      if (this.debug) this.parentLog(name, LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} initialized.`);
+      if (this.debug) this.parentLog(this.name, LogLevel.INFO, `Worker ${this.name}:${threadId} initialized.`);
     }
 
     // Log worker info
@@ -115,14 +140,18 @@ export class WorkerWrapper {
    * @param {boolean} success - Indicates whether the worker completed its task successfully, which is included in the exit message sent to the parent.
    */
   destroy(success: boolean): void {
+    // Close the tracker if it exists
+    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    if (this.tracker) this.tracker.stop();
+
     // Close the broadcast server
     this.server.close();
 
     // Send exit message to parent and close parentPort
-    if (!isMainThread && parentPort && workerData) {
+    if (!isMainThread && parentPort && this.workerData) {
       // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
-      if (this.debug) this.parentLog(this.name, LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} exiting with success: ${success}.`);
-      this.parentPost({ type: 'exit', threadId, threadName: workerData.threadName, success });
+      if (this.debug) this.parentLog(this.name, LogLevel.INFO, `Worker ${this.name}:${threadId} exiting with success: ${success}.`);
+      this.parentPost({ type: 'exit', threadId, threadName: this.name, memoryUsage: process.memoryUsage(), success });
       parentPort.close();
     }
   }
@@ -135,10 +164,10 @@ export class WorkerWrapper {
    * @throws {Error} If parentPort is not available.
    */
   parentPost(message: ParentPortMessage): void {
-    if (!parentPort) throw new Error(`WorkerServer ${workerData.threadName}: parentPort is not available.`);
+    if (!parentPort) throw new Error(`WorkerServer ${this.name}: parentPort is not available.`);
     parentPort.postMessage(message);
     // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
-    if (this.debug) this.log.debug(`Worker ${workerData.threadName}:${threadId} sent message to parent: ${debugStringify(message)}`);
+    if (this.debug) this.log.debug(`Worker ${this.name}:${threadId} sent message to parent: ${debugStringify(message)}`);
   }
 
   /**
@@ -151,11 +180,11 @@ export class WorkerWrapper {
    * @throws {Error} If parentPort is not available.
    */
   parentLog(logName: string | undefined, logLevel: LogLevel, message: string): void {
-    if (!parentPort) throw new Error(`WorkerServer ${workerData.threadName}: parentPort is not available.`);
-    const logMessage: ParentPortMessage = { type: 'log', threadId, threadName: workerData.threadName, logName, logLevel, message };
+    if (!parentPort) throw new Error(`WorkerServer ${this.name}: parentPort is not available.`);
+    const logMessage: ParentPortMessage = { type: 'log', threadId, threadName: this.name, logName, logLevel, message };
     parentPort.postMessage(logMessage);
     // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
-    if (this.debug) this.log.debug(`Worker ${workerData.threadName}:${threadId} sent log to parent: ${logName} ${logLevel} ${message}`);
+    if (this.debug) this.log.debug(`Worker ${this.name}:${threadId} sent log to parent: ${logName} ${logLevel} ${message}`);
   }
 
   /**
@@ -178,11 +207,12 @@ export class WorkerWrapper {
    * @returns {void}
    */
   logWorkerInfo(log: AnsiLogger, logEnv: boolean = false): void {
-    log.debug(`${isMainThread ? 'Main thread' : 'Worker thread'}: ${workerData?.threadName}:${threadId} Pid: ${process.pid}`);
+    log.debug(`${isMainThread ? 'Main thread' : 'Worker thread'}: ${this.name}:${threadId} Pid: ${process.pid}`);
     log.debug(`ParentPort: ${parentPort ? 'active' : 'not active'}`);
-    log.debug(`WorkerData: ${workerData ? debugStringify(workerData) : 'none'}`);
+    log.debug(`WorkerData: ${this.workerData ? debugStringify(this.workerData) : 'none'}`);
     const argv = process.argv.slice(2);
     log.debug(`Argv: ${argv.length ? argv.join(' ') : 'none'}`);
-    log.debug(`Env: ${logEnv ? inspect(process.env, true, 10, true) : 'not logged'}`);
+    log.debug(`Env: ${logEnv ? debugStringify(process.env) : 'not logged'}`);
+    log.debug(`Memory: ${formatBytes(process.memoryUsage().heapTotal)} total, ${formatBytes(process.memoryUsage().heapUsed)} used`);
   }
 }

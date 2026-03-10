@@ -22,20 +22,35 @@
  * limitations under the License.
  */
 
-import { workerData } from 'node:worker_threads';
-
+import { isSpawnWorkerData } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 
 import { spawnCommand } from './spawnCommand.js';
 import { WorkerWrapper } from './workerWrapper.js';
 
-new WorkerWrapper('GlobalPrefix', async (worker) => {
+new WorkerWrapper('SpawnCommand', async (worker) => {
+  if (!isSpawnWorkerData(worker.workerData)) {
+    worker.logger(LogLevel.ERROR, `SpawnCommand invalid parameters`);
+    return false;
+  }
   worker.logger(
     LogLevel.INFO,
-    `Starting spawn command ${workerData.command} with args ${workerData.args.join(' ')} and package command ${workerData.packageCommand} for package ${workerData.packageName}...`,
+    `Starting spawn command ${worker.workerData.command} with args ${worker.workerData.args.join(' ')} and package command ${worker.workerData.packageCommand} for package ${worker.workerData.packageName}...`,
   );
-  const success = await spawnCommand(workerData.command, workerData.args, workerData.packageCommand, workerData.packageName);
-  if (success) worker.logger(LogLevel.INFO, `Spawn command ${workerData.command} with args ${workerData.args.join(' ')} executed successfully`);
-  else worker.logger(LogLevel.ERROR, `Spawn command ${workerData.command} with args ${workerData.args.join(' ')} failed`);
+  const success = await spawnCommand(worker.workerData.command, worker.workerData.args, worker.workerData.packageCommand, worker.workerData.packageName);
+  if (success) worker.logger(LogLevel.INFO, `Spawn command ${worker.workerData.command} with args ${worker.workerData.args.join(' ')} executed successfully`);
+  else worker.logger(LogLevel.ERROR, `Spawn command ${worker.workerData.command} with args ${worker.workerData.args.join(' ')} failed`);
+  worker.server.respond({
+    type: 'manager_spawn_response',
+    src: `manager`,
+    dst: 'all',
+    result: {
+      command: worker.workerData.command,
+      args: worker.workerData.args,
+      packageCommand: worker.workerData.packageCommand,
+      packageName: worker.workerData.packageName,
+      success,
+    },
+  });
   return success;
 });

@@ -58,7 +58,7 @@ describe('workerSpawnCommand', () => {
   test('success: spawns command and logs success', async () => {
     const { wrapperName, success, loggerMock, spawnCommand, workerData } = await runWorkerSpawnCommand({ spawnSuccess: true });
 
-    expect(wrapperName).toBe('GlobalPrefix');
+    expect(wrapperName).toBe('SpawnCommand');
     expect(success).toBe(true);
 
     expect(spawnCommand).toHaveBeenCalledWith(workerData.command, workerData.args, workerData.packageCommand, workerData.packageName);

@@ -106,7 +106,11 @@ describe('ThreadsManager', () => {
         type: 'manager_run',
         src: 'matterbridge',
         dst: 'manager',
-        params: { name: 'SpawnCommand', pipedOutput: true, workerData: { command: 'npm', args: ['prefix', '-g'], packageCommand: 'npm', packageName: 'prefix' } },
+        params: {
+          name: 'SpawnCommand',
+          pipedOutput: true,
+          workerData: { threadName: 'SpawnCommand', command: 'npm', args: ['prefix', '-g'], packageCommand: 'npm', packageName: 'prefix' },
+        },
       });
     });
     expect(true).toBe(true);

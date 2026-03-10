@@ -127,6 +127,7 @@ describe('ThreadsManager', () => {
         threads.push({ name: 'TestWorker', path: tempWorkerFileName, type: 'worker' });
 
         const testArgv = ['--from-threadsManager-test'];
+        // @ts-expect-error workerData is an internal implementation detail of the worker script, we just want to ensure it is passed through correctly.
         manager.runThread('TestWorker', { foo: 'bar' }, testArgv);
 
         const threadInfo = threads.find((t) => t.name === 'TestWorker');

@@ -43,14 +43,16 @@ describe('WorkerWrapper', () => {
 
     const serverClose = jest.fn();
 
+    const hasParameterMock = jest.fn((parameter: string) => {
+      if (parameter === 'debug') return options.debugParam ?? false;
+      if (parameter === 'verbose') return options.verboseParam ?? false;
+      if (parameter === 'debug-threads') return false;
+      if (parameter === 'verbose-threads') return false;
+      return false;
+    });
+
     jest.unstable_mockModule('@matterbridge/utils/cli', () => ({
-      hasParameter: (parameter: string) => {
-        if (parameter === 'debug') return options.debugParam ?? false;
-        if (parameter === 'verbose') return options.verboseParam ?? false;
-        if (parameter === 'debug-threads') return false;
-        if (parameter === 'verbose-threads') return false;
-        return false;
-      },
+      hasParameter: hasParameterMock,
     }));
 
     jest.unstable_mockModule('node:worker_threads', async () => {
@@ -86,6 +88,7 @@ describe('WorkerWrapper', () => {
       WorkerWrapper,
       parentPort,
       getOnMessageHandler: () => onMessageHandler,
+      hasParameterMock,
       serverClose,
       waitImmediate,
     };
@@ -106,7 +109,7 @@ describe('WorkerWrapper', () => {
 
     new WorkerWrapper('MyWorker', callback);
 
-    expect(parentPort?.postMessage).toHaveBeenCalledWith({ type: 'init', threadId: 7, threadName: 'ThreadA', success: true });
+    expect(parentPort?.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'init', threadId: 7, threadName: 'MyWorker', success: true }));
 
     await waitImmediate();
 
@@ -115,14 +118,14 @@ describe('WorkerWrapper', () => {
       expect.objectContaining({
         type: 'log',
         threadId: 7,
-        threadName: 'ThreadA',
+        threadName: 'MyWorker',
         logName: 'MyWorker',
         logLevel: LogLevel.INFO,
         message: 'hello',
       }),
     );
     expect(serverClose).toHaveBeenCalledTimes(1);
-    expect(parentPort?.postMessage).toHaveBeenCalledWith({ type: 'exit', threadId: 7, threadName: 'ThreadA', success: true });
+    expect(parentPort?.postMessage).toHaveBeenCalledWith({ type: 'exit', threadId: 7, threadName: 'MyWorker', success: true });
     expect(parentPort?.close).toHaveBeenCalledTimes(1);
   });
 
@@ -141,7 +144,7 @@ describe('WorkerWrapper', () => {
     onMessageHandler?.({ type: 'ping' });
 
     const sent = (parentPort?.postMessage as jest.Mock).mock.calls.map((c) => c[0]);
-    expect(sent).toContainEqual({ type: 'pong', threadId: 9, threadName: 'ThreadPing' });
+    expect(sent).toContainEqual({ type: 'pong', threadId: 9, threadName: 'Pinger' });
   });
 
   test('worker thread (debug+verbose): handles pong and unknown message types', async () => {
@@ -251,6 +254,23 @@ describe('WorkerWrapper', () => {
 
     expect(createSpy).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalledWith(LogLevel.INFO, 'hi');
+  });
+
+  test('logWorkerInfo covers worker-thread and active parentPort branches', async () => {
+    const { WorkerWrapper } = await setup({
+      isMainThread: false,
+      parentPortPresent: true,
+      threadId: 12,
+      threadName: 'Ignored',
+      workerDataPresent: false,
+    });
+
+    const wrapper = new WorkerWrapper('WorkerInfoActive', async () => true);
+    const debug = jest.fn();
+    wrapper.logWorkerInfo({ debug } as any, false);
+
+    expect(debug).toHaveBeenCalledWith(expect.stringMatching(/^Worker thread: /));
+    expect(debug).toHaveBeenCalledWith('ParentPort: active');
   });
 
   test('logWorkerInfo covers argv/env branches (logEnv=true)', async () => {

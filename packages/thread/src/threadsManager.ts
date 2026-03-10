@@ -33,7 +33,7 @@ import path, { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Worker, WorkerOptions } from 'node:worker_threads';
 
-import type { ParentPortMessage, ThreadNames, WorkerMessage } from '@matterbridge/types';
+import type { ParentPortMessage, ThreadNames, WorkerData, WorkerMessage } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { AnsiLogger, CYAN, db, debugStringify, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 
@@ -185,7 +185,7 @@ export class ThreadsManager {
    * Run a thread by name.
    *
    * @param {string} name - The name of the thread to run.
-   * @param {Record<string, boolean | number | string | object>} [workerData] - Optional data to pass to the worker.
+   * @param {WorkerData} [workerData] - Optional data to pass to the worker.
    * @param {string[]} [argv] - Optional command line arguments to pass to the worker. If not provided, inherits from the main thread.
    * @param {NodeJS.ProcessEnv} [env] - Optional environment variables to pass to the worker. If not provided, inherits from the main thread.
    * @param {string[]} [execArgv] - Optional execArgv to pass to the worker. If not provided no execArgv are passed.
@@ -196,14 +196,7 @@ export class ThreadsManager {
    * @throws {Error} If the thread with the given name is not found.
    * @throws {Error} If the thread is already running.
    */
-  runThread(
-    name: string,
-    workerData?: Record<string, boolean | number | string | object>,
-    argv?: string[],
-    env?: NodeJS.ProcessEnv,
-    execArgv?: string[],
-    pipedOutput: boolean = false,
-  ): Worker {
+  runThread(name: string, workerData?: WorkerData, argv?: string[], env?: NodeJS.ProcessEnv, execArgv?: string[], pipedOutput: boolean = false): Worker {
     const threadInfo = this.threads.find((t) => t.name === name);
     if (!threadInfo) {
       throw new Error(`Thread ${name} not found`);
@@ -212,7 +205,8 @@ export class ThreadsManager {
       throw new Error(`Thread ${name} is already running with thread ID ${threadInfo.worker.threadId}`);
     }
 
-    this.log.info(`Starting thread ${threadInfo.name} from path: ${threadInfo.path} type ${threadInfo.type}...`);
+    const path = this.resolvePath(threadInfo.path);
+    this.log.debug(`Starting thread ${threadInfo.name} from path ${path} type ${threadInfo.type}...`);
 
     threadInfo.lastStarted = undefined;
     threadInfo.lastStopped = undefined;
@@ -220,8 +214,8 @@ export class ThreadsManager {
 
     threadInfo.worker = this.createESMWorker(
       threadInfo.name,
-      this.resolvePath(threadInfo.path),
-      { ...workerData, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel }, // Pass debug/verbose/logLevel in workerData for workers to adjust their logging behavior
+      path,
+      { ...workerData, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel }, // Pass debug/verbose/logLevel/tracker in workerData for workers to adjust their logging behavior
       argv,
       env,
       execArgv,
@@ -234,7 +228,7 @@ export class ThreadsManager {
       threadInfo.runCount = (threadInfo.runCount ?? 0) + 1;
       threadInfo.lastStarted = Date.now();
       threadInfo.lastSeen = Date.now();
-      this.log.info(`Thread ${threadInfo.name} is online started at ${new Date(threadInfo.lastStarted).toISOString()} with thread ID ${worker.threadId}`);
+      this.log.debug(`Thread ${threadInfo.name} is online started at ${new Date(threadInfo.lastStarted).toISOString()} with thread id ${worker.threadId}`);
     });
 
     worker.once('exit', () => {
@@ -243,12 +237,13 @@ export class ThreadsManager {
       threadInfo.lastDuration = Math.max(0, stoppedAt - (threadInfo.lastStarted ?? stoppedAt));
       threadInfo.worker = undefined;
       threadInfo.lastSeen = Date.now();
-      this.log.info(`Thread ${threadInfo.name} has exited at ${new Date(threadInfo.lastStopped).toISOString()} after running for ${threadInfo.lastDuration} ms`);
+      this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(threadInfo.lastStopped).toISOString()} after running for ${threadInfo.lastDuration} ms`);
     });
 
     worker.on('message', (message: ParentPortMessage) => {
       threadInfo.lastSeen = Date.now();
-      this.log.info(`Thread ${threadInfo.name} sent a message at ${new Date().toISOString()} after running for ${threadInfo.lastDuration} ms: ${debugStringify(message)}`);
+      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      if (this.verbose) this.log.debug(`Thread ${threadInfo.name} sent a message at ${new Date().toISOString()}: ${debugStringify(message)}`);
       if (message.type === 'log') {
         AnsiLogger.create({ logName: threadInfo.name, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.log.logLevel }).log(
           message.logLevel,
@@ -259,7 +254,7 @@ export class ThreadsManager {
 
     worker.on('messageerror', () => {
       threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
-      this.log.error(`Thread ${threadInfo.name} encountered a message error at ${new Date().toISOString()} after running for ${threadInfo.lastDuration} ms`);
+      this.log.error(`Thread ${threadInfo.name} encountered a message error at ${new Date().toISOString()}`);
     });
 
     worker.once('error', () => {
@@ -271,7 +266,7 @@ export class ThreadsManager {
       this.log.error(`Thread ${threadInfo.name} encountered an error at ${new Date(threadInfo.lastStopped).toISOString()} after running for ${threadInfo.lastDuration} ms`);
     });
 
-    this.log.info(`Started thread ${threadInfo.name} from path: ${threadInfo.path} type ${threadInfo.type}...`);
+    this.log.debug(`Started thread ${threadInfo.name} from path ${path} type ${threadInfo.type} with thread id ${worker.threadId}`);
 
     return threadInfo.worker;
   }
@@ -346,7 +341,7 @@ export class ThreadsManager {
       stderr: pipedOutput, // When true, worker.stderr becomes a Readable stream (otherwise null)
     };
     // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
-    if (this.verbose) this.log.debug(`Creating ESM Worker ${name} with file URL: ${fileURL.href} and options: ${debugStringify(options)}`);
+    if (this.verbose) this.log.debug(`Creating ESM Worker ${name} with file URL ${fileURL.href} and options ${debugStringify(options)}`);
     return new Worker(fileURL, options);
   }
 }
