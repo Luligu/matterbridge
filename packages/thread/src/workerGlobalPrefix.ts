@@ -28,7 +28,7 @@ import { LogLevel } from 'node-ansi-logger';
 
 import { WorkerWrapper } from './workerWrapper.js';
 
-new WorkerWrapper('GlobalPrefix', async (worker) => {
+export default new WorkerWrapper('GlobalPrefix', async (worker) => {
   let prefix: string;
   worker.logger(LogLevel.INFO, `Starting global prefix check...`);
   let success = false;

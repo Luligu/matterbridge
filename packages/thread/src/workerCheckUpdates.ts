@@ -28,7 +28,7 @@ import { LogLevel } from 'node-ansi-logger';
 import { checkUpdates } from './checkUpdates.js';
 import { WorkerWrapper } from './workerWrapper.js';
 
-new WorkerWrapper('CheckUpdates', async (worker) => {
+export default new WorkerWrapper('CheckUpdates', async (worker) => {
   worker.logger(LogLevel.INFO, `Starting check updates...`);
   let success = false;
   try {

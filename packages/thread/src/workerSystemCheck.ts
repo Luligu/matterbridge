@@ -30,7 +30,7 @@ import { LogLevel } from 'node-ansi-logger';
 
 import { WorkerWrapper } from './workerWrapper.js';
 
-new WorkerWrapper('SystemCheck', async (worker) => {
+export default new WorkerWrapper('SystemCheck', async (worker) => {
   worker.logger(LogLevel.INFO, `Starting system check...`);
   let success = false;
   try {

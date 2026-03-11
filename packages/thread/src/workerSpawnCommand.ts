@@ -28,7 +28,7 @@ import { LogLevel } from 'node-ansi-logger';
 import { spawnCommand } from './spawnCommand.js';
 import { WorkerWrapper } from './workerWrapper.js';
 
-new WorkerWrapper('SpawnCommand', async (worker) => {
+export default new WorkerWrapper('SpawnCommand', async (worker) => {
   if (!isSpawnWorkerData(worker.workerData)) {
     worker.logger(LogLevel.ERROR, `SpawnCommand invalid parameters`);
     return false;
