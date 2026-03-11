@@ -92,7 +92,7 @@ export class ThreadsManager {
    * @param {number} [intervalMs=10_000] - The delay in milliseconds for the interval handler. Defaults to 10 seconds (10000 ms).
    */
   constructor(intervalMs: number = 10_000) {
-    // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
+    // istanbul ignore next 3 lines - debug/verbose/tracker flags are only used for development and testing, not in production
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-threads');
     this.tracker = hasParameter('tracker') || hasParameter('tracker-threads');
