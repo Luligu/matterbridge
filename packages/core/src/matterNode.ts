@@ -574,7 +574,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     await storageContext.set('productId', productId);
     await storageContext.set('productName', productName.slice(0, 32));
     await storageContext.set('nodeLabel', productName.slice(0, 32));
-    await storageContext.set('productLabel', productName.slice(0, 32));
+    await storageContext.set('productLabel', productName.replace(vendorName, '').trim().slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
     await storageContext.set(

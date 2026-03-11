@@ -1257,7 +1257,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         vendorName: vendorName.slice(0, 32),
         productName: productName.slice(0, 32),
         productUrl: this.productUrl.slice(0, 256),
-        productLabel: productName.slice(0, 64),
+        productLabel: productName.replace(vendorName, '').trim().slice(0, 64),
         nodeLabel: deviceName.slice(0, 32),
         serialNumber: serialNumber.slice(0, 32),
         uniqueId: this.uniqueId.slice(0, 32),

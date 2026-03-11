@@ -288,7 +288,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   aggregatorVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
   aggregatorVendorName = getParameter('vendorName') ?? 'Matterbridge';
   aggregatorProductId = getIntParameter('productId') ?? 0x8000;
-  aggregatorProductName = getParameter('productName') ?? 'Matterbridge aggregator';
+  aggregatorProductName = getParameter('productName') ?? 'Matterbridge Aggregator';
   aggregatorDeviceType = DeviceTypeId(getIntParameter('deviceType') ?? bridge.code);
   aggregatorSerialNumber = getParameter('serialNumber');
   aggregatorUniqueId = getParameter('uniqueId');
@@ -298,7 +298,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   controllerVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
   controllerVendorName = getParameter('vendorName') ?? 'Matterbridge';
   controllerProductId = getIntParameter('productId') ?? 0x8000;
-  controllerProductName = getParameter('productName') ?? 'Matterbridge controller';
+  controllerProductName = getParameter('productName') ?? 'Matterbridge Controller';
 
   /** Advertising nodes map: time advertising started keyed by storeId */
   advertisingNodes = new Map<string, number>();
@@ -2105,7 +2105,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await this.controllerContext.set('vendorName', this.controllerVendorName.slice(0, 32));
     await this.controllerContext.set('productId', this.controllerProductId);
     await this.controllerContext.set('productName', this.controllerProductName.slice(0, 32));
-    await this.controllerContext.set('productLabel', this.controllerProductName.slice(0, 32));
+    await this.controllerContext.set('productLabel', this.controllerProductName.replace(this.controllerVendorName, '').trim().slice(0, 32));
     await this.controllerContext.set('nodeLabel', storeId.slice(0, 32));
     await this.controllerContext.set('serialNumber', await this.controllerContext.get('serialNumber', 'SN' + random));
     await this.controllerContext.set('uniqueId', await this.controllerContext.get('uniqueId', 'UI' + random));
@@ -2487,7 +2487,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await storageContext.set('vendorName', vendorName.slice(0, 32));
     await storageContext.set('productId', productId);
     await storageContext.set('productName', productName.slice(0, 32));
-    await storageContext.set('productLabel', productName.slice(0, 32));
+    await storageContext.set('productLabel', productName.replace(vendorName, '').trim().slice(0, 32));
     await storageContext.set('nodeLabel', deviceName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
