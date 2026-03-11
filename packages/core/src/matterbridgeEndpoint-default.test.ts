@@ -1,3 +1,26 @@
+test('setActivePresetRequest updates activePresetHandle on presets-enabled thermostat', async () => {
+  const presetTypes: Thermostat.PresetType[] = [
+    { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+  ];
+  const presetsList: Thermostat.Preset[] = [
+    { presetHandle: Buffer.from([0x42]), presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied', coolingSetpoint: 2500, heatingSetpoint: 2100, builtIn: null },
+  ];
+  const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoPresetsActiveHandle' });
+  device.createDefaultIdentifyClusterServer();
+  device.createDefaultPresetsThermostatClusterServer(23, 21, 25, 1, 0, 50, 0, 50, undefined, undefined, undefined, undefined, 0, presetsList, presetTypes);
+  device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
+  // Get the presets-enabled thermostat server instance
+  const clusterServer = device.getClusterServer(Thermostat.Cluster.id);
+  expect(clusterServer).toBeDefined();
+  // Simulate a setActivePresetRequest command
+  const newHandle = Uint8Array.from([0x99, 0x01]);
+  clusterServer.setActivePresetRequest({ presetHandle: newHandle });
+  // Assert that activePresetHandle is updated and is a clone, not the same reference
+  const activePresetHandle = device.getAttribute(Thermostat.Cluster.id, 'activePresetHandle');
+  expect(activePresetHandle).toBeDefined();
+  expect(Array.from(activePresetHandle)).toEqual(Array.from(newHandle));
+  expect(activePresetHandle).not.toBe(newHandle); // Should be a clone, not the same reference
+});
 // src\matterbridgeEndpoint-default.test.ts
 
 const MATTER_PORT = 11200;
@@ -149,7 +172,7 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => { });
 
   afterAll(async () => {
     // Destroy Matterbridge environment
