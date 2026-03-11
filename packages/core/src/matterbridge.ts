@@ -2590,7 +2590,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
         productId: await storageContext.get<number>('productId'),
         productName: await storageContext.get<string>('productName'),
-        productLabel: await storageContext.get<string>('productName'),
+        productLabel: await storageContext.get<string>('productLabel'),
 
         serialNumber: await storageContext.get<string>('serialNumber'),
         uniqueId: await storageContext.get<string>('uniqueId'),
