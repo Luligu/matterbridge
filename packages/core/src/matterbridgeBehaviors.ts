@@ -724,9 +724,9 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
   override setActivePresetRequest(request: Thermostat.SetActivePresetRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting preset to ${request.presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Update the internal state to reflect the active preset handle, so that attribute reads are always in sync after a command.
+    // Always clone the incoming preset handle to avoid reference aliasing and ensure consistency with other usages (e.g., createDefaultPresetsThermostatClusterServer).
     if (request.presetHandle !== undefined) {
-      this.state.activePresetHandle = request.presetHandle instanceof Uint8Array ? request.presetHandle : Uint8Array.from(request.presetHandle);
+      this.state.activePresetHandle = Uint8Array.from(request.presetHandle);
       device.log.debug(`Updated state.activePresetHandle to: ${Array.from(this.state.activePresetHandle)}`);
     }
     device.commandHandler.executeHandler('setActivePresetRequest', { request, cluster: ThermostatServer.id, attributes: this.state, endpoint: this.endpoint });
