@@ -372,6 +372,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         case 'manager_spawn_response':
           if (msg.result && msg.result.packageCommand === 'install') {
             // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+            if (msg.result.packageName.endsWith('.tgz')) return; // Ignore install responses for tarball packages
             if (msg.result.success) {
               const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
               // istanbul ignore else
