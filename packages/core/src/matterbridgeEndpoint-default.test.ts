@@ -172,7 +172,7 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => { });
+  afterEach(async () => {});
 
   afterAll(async () => {
     // Destroy Matterbridge environment
