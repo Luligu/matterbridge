@@ -1,11 +1,12 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
 import { jest } from '@jest/globals';
 import { loggerInfoSpy, setupTest } from '@matterbridge/jest-utils';
+// eslint-disable-next-line n/no-missing-import
 import { Uint8ArrayReader, Uint8ArrayWriter, ZipWriter } from '@zip.js/zip.js';
 
 import { createZip, readZip, unZip } from './zipjs.js';
@@ -65,13 +66,7 @@ describe('zipjs', () => {
 
     const content = await readZip(zipPath);
 
-    expect(content.map((entry) => entry.filename)).toEqual([
-      'source/',
-      'source/nested/',
-      'source/nested/child.txt',
-      'source/root.txt',
-      'standalone.txt',
-    ]);
+    expect(content.map((entry) => entry.filename)).toEqual(['source/', 'source/nested/', 'source/nested/child.txt', 'source/root.txt', 'standalone.txt']);
     expect(content.filter((entry) => entry.directory)).toHaveLength(2);
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(`Created zip ${zipPath}`));
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('source/'));
@@ -115,6 +110,31 @@ describe('zipjs', () => {
     await expect(readFile(join(customDestination, 'folder', 'child.txt'), 'utf-8')).resolves.toBe('windows-content');
 
     await expect(unZip(traversalZipPath, join(tempDirectory, 'traversal'))).rejects.toThrow('Refusing to extract zip entry outside destination: ..\\escape.txt');
+  });
+
+  test('rejects unsupported source path types when stat is neither file nor directory', async () => {
+    const tempDirectory = await createTempDirectory();
+    const sourcePath = join(tempDirectory, 'unsupported-source');
+    const actualFsPromises = (await jest.requireActual('node:fs/promises')) as typeof import('node:fs/promises');
+    const unsupportedStats = {
+      isDirectory: () => false,
+      isFile: () => false,
+      mtime: new Date(),
+    } as any;
+    const mockedFsPromises = {
+      ...actualFsPromises,
+      stat: async () => unsupportedStats,
+    } as any;
+
+    jest.resetModules();
+    jest.unstable_mockModule('node:fs/promises', () => mockedFsPromises);
+
+    const { createZip: createZipWithMockedStat } = await import('./zipjs.js');
+
+    await expect(createZipWithMockedStat(join(tempDirectory, 'unsupported.zip'), [sourcePath])).rejects.toThrow(`Unsupported source path type: ${sourcePath}`);
+
+    jest.unstable_unmockModule('node:fs/promises');
+    jest.resetModules();
   });
 
   test('rejects unsupported source path types', async () => {

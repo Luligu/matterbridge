@@ -22,10 +22,11 @@
  * limitations under the License.
  */
 
-import { Uint8ArrayReader, Uint8ArrayWriter, ZipReader, ZipWriter } from '@zip.js/zip.js';
-import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 
+// eslint-disable-next-line n/no-missing-import
+import { Uint8ArrayReader, Uint8ArrayWriter, ZipReader, ZipWriter } from '@zip.js/zip.js';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 export interface ZipContentEntry {
@@ -135,10 +136,24 @@ export async function unZip(zipPath: string, destinationPath: string = getDefaul
   return destinationPath;
 }
 
+/**
+ * Creates the logger used by the zip helpers.
+ *
+ * @returns {AnsiLogger} The configured logger instance.
+ */
 function createLogger(): AnsiLogger {
   return new AnsiLogger({ logName: 'ZipJs', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 }
 
+/**
+ * Adds a file system entry to the zip archive, recursing into directories.
+ *
+ * @param {ZipWriter<Uint8Array<ArrayBuffer>>} writer - The zip writer receiving new entries.
+ * @param {string} sourcePath - The absolute file system path to add.
+ * @param {string} entryName - The relative archive entry name to write.
+ * @param {AnsiLogger} log - The logger used to trace added entries.
+ * @returns {Promise<number>} The number of archive entries written for the source path.
+ */
 async function addZipEntry(writer: ZipWriter<Uint8Array<ArrayBuffer>>, sourcePath: string, entryName: string, log: AnsiLogger): Promise<number> {
   const sourceStats = await stat(sourcePath);
   const normalizedEntryName = normalizeEntryName(entryName);
@@ -167,16 +182,35 @@ async function addZipEntry(writer: ZipWriter<Uint8Array<ArrayBuffer>>, sourcePat
   throw new Error(`Unsupported source path type: ${sourcePath}`);
 }
 
+/**
+ * Builds the default extraction directory from a zip file path.
+ *
+ * @param {string} zipPath - The zip archive path.
+ * @returns {string} The sibling directory used for extraction.
+ */
 function getDefaultDestinationPath(zipPath: string): string {
   const zipExtension = extname(zipPath);
   const zipName = basename(zipPath, zipExtension);
   return join(dirname(zipPath), zipName);
 }
 
+/**
+ * Normalizes archive entry names to forward-slash separators.
+ *
+ * @param {string} entryName - The archive entry name to normalize.
+ * @returns {string} The normalized entry name.
+ */
 function normalizeEntryName(entryName: string): string {
   return entryName.replace(/\\/g, '/');
 }
 
+/**
+ * Resolves an archive entry path while preventing zip-slip traversal.
+ *
+ * @param {string} destinationPath - The extraction root directory.
+ * @param {string} entryName - The archive entry name to resolve.
+ * @returns {string} The safe absolute destination path for the entry.
+ */
 function resolveEntryPath(destinationPath: string, entryName: string): string {
   const resolvedDestinationPath = resolve(destinationPath);
   const resolvedEntryPath = resolve(resolvedDestinationPath, normalizeEntryName(entryName));
