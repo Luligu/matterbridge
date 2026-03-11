@@ -44,7 +44,7 @@ import { ThreadsManager } from './threadsManager.js';
  * The WorkerWrapper class abstracts away the complexities of working with worker threads, allowing developers to focus on the specific tasks that each worker thread needs to perform.
  */
 export class WorkerWrapper {
-  // istanbul ignore next 3 lines - debug/verbose flags are only used for development and testing, not in production
+  // istanbul ignore next 3 lines - debug/verbose/tracker flags are only used for development and testing, not in production
   debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
   verbose = hasParameter('verbose') || hasParameter('verbose-threads');
   useTracker = hasParameter('tracker') || hasParameter('tracker-threads');
@@ -61,16 +61,16 @@ export class WorkerWrapper {
    */
   constructor(
     public name: ThreadNames,
-    callback: (worker: WorkerWrapper) => Promise<boolean>,
+    public callback: (worker: WorkerWrapper) => Promise<boolean>,
   ) {
     // Update debug, verbose and tracker flags if workerData is available
-    // istanbul ignore next 5 lines - debug/verbose flags are only used for development and testing, not in production
+    // istanbul ignore next 5 lines - debug/verbose/tracker flags are only used for development and testing, not in production
     if (this.workerData) {
       this.debug = this.workerData.debug || this.debug;
       this.verbose = this.workerData.verbose || this.verbose;
       this.useTracker = this.workerData.tracker || this.useTracker;
     }
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
     if (this.useTracker) {
       void import('@matterbridge/utils/tracker')
         .then(({ Tracker }) => {
@@ -78,7 +78,7 @@ export class WorkerWrapper {
           this.tracker.start();
           return undefined;
         })
-        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
         .catch((err) => {
           // eslint-disable-next-line no-console
           if (this.debug) console.error(`WorkerWrapper ${this.name}: failed to load Tracker`, err);
@@ -119,19 +119,24 @@ export class WorkerWrapper {
     // Send init message
     if (!isMainThread && parentPort && this.workerData) {
       this.parentPost({ type: 'init', threadId, threadName: this.name, memoryUsage: process.memoryUsage(), success: true });
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
       if (this.debug) this.parentLog(this.name, LogLevel.INFO, `Worker ${this.name}:${threadId} initialized.`);
+    } else {
+      // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
+      if (this.debug) this.log.debug(`Worker ${this.name}:${threadId} initialized in main thread.`);
     }
 
     // Log worker info
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
     if (this.verbose) this.logWorkerInfo(this.log, false);
 
     // Execute the callback function and destroy the worker with the success status returned by the callback
-    setImmediate(async () => {
-      const success = await callback(this);
-      this.destroy(success);
-    });
+    if (!isMainThread) {
+      setImmediate(async () => {
+        const success = await callback(this);
+        this.destroy(success);
+      });
+    }
   }
 
   /**
@@ -141,7 +146,7 @@ export class WorkerWrapper {
    */
   destroy(success: boolean): void {
     // Close the tracker if it exists
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
     if (this.tracker) this.tracker.stop();
 
     // Close the broadcast server
@@ -149,10 +154,13 @@ export class WorkerWrapper {
 
     // Send exit message to parent and close parentPort
     if (!isMainThread && parentPort && this.workerData) {
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
       if (this.debug) this.parentLog(this.name, LogLevel.INFO, `Worker ${this.name}:${threadId} exiting with success: ${success}.`);
       this.parentPost({ type: 'exit', threadId, threadName: this.name, memoryUsage: process.memoryUsage(), success });
       parentPort.close();
+    } else {
+      // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
+      if (this.debug) this.log.debug(`Worker ${this.name}:${threadId} exiting with success in main thread: ${success}.`);
     }
   }
 
@@ -166,7 +174,7 @@ export class WorkerWrapper {
   parentPost(message: ParentPortMessage): void {
     if (!parentPort) throw new Error(`WorkerServer ${this.name}: parentPort is not available.`);
     parentPort.postMessage(message);
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
     if (this.debug) this.log.debug(`Worker ${this.name}:${threadId} sent message to parent: ${debugStringify(message)}`);
   }
 
@@ -183,7 +191,7 @@ export class WorkerWrapper {
     if (!parentPort) throw new Error(`WorkerServer ${this.name}: parentPort is not available.`);
     const logMessage: ParentPortMessage = { type: 'log', threadId, threadName: this.name, logName, logLevel, message };
     parentPort.postMessage(logMessage);
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
     if (this.debug) this.log.debug(`Worker ${this.name}:${threadId} sent log to parent: ${logName} ${logLevel} ${message}`);
   }
 

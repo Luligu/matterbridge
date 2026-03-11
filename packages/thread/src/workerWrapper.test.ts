@@ -230,17 +230,23 @@ describe('WorkerWrapper', () => {
     });
 
     const callback = jest.fn(async () => true);
-    new WorkerWrapper('MainThreadWrapper' as unknown as ThreadNames, callback);
+    const worker = new WorkerWrapper('MainThreadWrapper' as unknown as ThreadNames, callback);
     expect(parentPort).toBeNull();
 
     await waitImmediate();
+
+    expect(callback).toHaveBeenCalledTimes(0);
+    expect(serverClose).toHaveBeenCalledTimes(0);
+
+    const success = await worker.callback(worker);
+    worker.destroy(success);
 
     expect(callback).toHaveBeenCalledTimes(1);
     expect(serverClose).toHaveBeenCalledTimes(1);
   });
 
   test('main thread: logger uses AnsiLogger.create path', async () => {
-    const { WorkerWrapper, waitImmediate } = await setup({
+    const { WorkerWrapper } = await setup({
       isMainThread: true,
       parentPortPresent: false,
       threadId: 0,
@@ -257,8 +263,8 @@ describe('WorkerWrapper', () => {
       return true;
     });
 
-    new WorkerWrapper('MainThreadLogger' as unknown as ThreadNames, callback);
-    await waitImmediate();
+    const worker = new WorkerWrapper('MainThreadLogger' as unknown as ThreadNames, callback);
+    await worker.callback(worker);
 
     expect(createSpy).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalledWith(LogLevel.INFO, 'hi');
