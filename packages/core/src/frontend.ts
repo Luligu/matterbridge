@@ -976,6 +976,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Endpoint to upload a package
     this.expressApp.post('/api/uploadpackage', upload.single('file'), async (req, res) => {
+      this.log.debug('The frontend sent /api/uploadpackage');
       if (!this.validateReq(req, res)) return;
       const { filename } = req.body;
       const file = req.file;
@@ -986,7 +987,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.status(400).send('Invalid request: file and filename are required');
         return;
       }
-      this.wssSendSnackbarMessage(`Installing package ${filename}. Please wait...`, 0);
+      this.wssSendSnackbarMessage(`Installing package ${filename}...`, 0);
 
       // Define the path where the plugin file will be saved
       const filePath = path.join(this.matterbridge.matterbridgeDirectory, 'uploads', filename);
@@ -999,25 +1000,26 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
         // Install the plugin package
         if (filename.endsWith('.tgz')) {
-          const { spawnCommand } = await import('./spawn.js');
-          if (await spawnCommand('npm', ['install', '-g', filePath, '--omit=dev', '--verbose'], 'install', filename)) {
-            this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
-            this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
-            this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
-            this.wssSendRestartRequired();
-            res.send(`Plugin package ${filename} uploaded and installed successfully`);
-          } else {
-            this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}`);
-            this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
-            this.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
-            res.status(500).send(`Error uploading or installing plugin package ${filename}`);
-          }
-        } else {
-          res.send(`File ${filename} uploaded successfully`);
+          this.server.request({
+            type: 'manager_run',
+            src: 'frontend',
+            dst: 'manager',
+            params: {
+              name: 'SpawnCommand',
+              workerData: {
+                threadName: 'SpawnCommand',
+                command: 'npm',
+                args: ['install', '-g', filePath, '--omit=dev', '--verbose'],
+                packageCommand: 'install',
+                packageName: filename,
+              },
+            },
+          });
         }
+        res.send(`File ${filename} uploaded successfully`);
       } catch (err) {
         this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
-        this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
+        this.wssSendCloseSnackbarMessage(`Installing package ${filename}...`);
         this.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
         res.status(500).send(`Error uploading or installing plugin package ${filename}`);
       }
