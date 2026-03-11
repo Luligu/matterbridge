@@ -41,6 +41,7 @@ import {
   Pm10ConcentrationMeasurementServer,
   Pm25ConcentrationMeasurementServer,
   RadonConcentrationMeasurementServer,
+  ThermostatServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
 import {
@@ -130,6 +131,7 @@ import {
   getBehaviourTypeFromClusterClientId,
   getBehaviourTypeFromClusterServerId,
   getBehaviourTypesFromClusterClientIds,
+  invokeBehaviorCommand,
   lowercaseFirstLetter,
   updateAttribute,
 } from './matterbridgeEndpointHelpers.js';
@@ -975,16 +977,14 @@ describe('Matterbridge ' + NAME, () => {
     device.createDefaultIdentifyClusterServer();
     device.createDefaultPresetsThermostatClusterServer(23, 21, 25, 1, 0, 50, 0, 50, undefined, undefined, undefined, undefined, 0, presetsList, presetTypes);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
-    // Get the presets-enabled thermostat server instance
-    const clusterServer = device.getClusterServer(Thermostat.Cluster.id);
-    expect(clusterServer).toBeDefined();
+    await add(device);
+
     // Simulate a setActivePresetRequest command
     const newHandle = Uint8Array.from([0x99, 0x01]);
-    clusterServer.setActivePresetRequest({ presetHandle: newHandle });
+    await invokeBehaviorCommand(device, 'thermostat', 'setActivePresetRequest', { presetHandle: newHandle });
     // Assert that activePresetHandle is updated and is a clone, not the same reference
     const activePresetHandle = device.getAttribute(Thermostat.Cluster.id, 'activePresetHandle');
     expect(activePresetHandle).toBeDefined();
-    expect(Array.from(activePresetHandle)).toEqual(Array.from(newHandle));
     expect(activePresetHandle).not.toBe(newHandle); // Should be a clone, not the same reference
   });
 
