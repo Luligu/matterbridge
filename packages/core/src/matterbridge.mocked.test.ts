@@ -45,15 +45,6 @@ jest.unstable_mockModule('@matterbridge/utils/network', async () => {
 const networkModule = await import('@matterbridge/utils/network');
 const logInterfacesMock = networkModule.logInterfaces as jest.MockedFunction<typeof networkModule.logInterfaces>;
 
-// Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('./spawn.js', () => ({
-  spawnCommand: jest.fn((command: string, args: string[]) => {
-    return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
-  }),
-}));
-const spawnModule = await import('./spawn.js');
-const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
-
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('@matterbridge/thread', () => ({
   createESMWorker: jest.fn(() => {
@@ -62,6 +53,21 @@ jest.unstable_mockModule('@matterbridge/thread', () => ({
 }));
 const workerModule = await import('@matterbridge/thread');
 
+// Mock the exec function from the child_process module. We use jest.unstable_mockModule to ensure that the mock is applied correctly and can be used in the tests.
+jest.unstable_mockModule('node:child_process', async () => {
+  const originalModule = jest.requireActual<typeof import('node:child_process')>('node:child_process');
+  return {
+    ...originalModule,
+    execSync: jest.fn((command: string) => {
+      // console.error('execSync called with command:', command);
+      return command;
+    }),
+  };
+});
+const childprocessModule = await import('node:child_process');
+const execSyncMock = childprocessModule.execSync as jest.MockedFunction<typeof childprocessModule.execSync>;
+
+import { exec } from 'node:child_process';
 import fs, { mkdirSync, PathLike, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -134,11 +140,11 @@ describe('Matterbridge mocked', () => {
     jest.restoreAllMocks();
   });
 
-  test('verify mocked spawnCommand', async () => {
-    const { spawnCommand } = await import('./spawn.js');
-    const result = await spawnCommand('echo', ['Hello, World!'], 'install', 'echo');
-    expect(result).toBe(true);
-    expect(spawnCommand).toHaveBeenCalledWith('echo', ['Hello, World!'], 'install', 'echo');
+  test('verify mocked execSync', async () => {
+    const { execSync } = await import('node:child_process');
+    const result = execSync('echo "Hello, World!"');
+    expect(result).toBeDefined();
+    expect(execSyncMock).toHaveBeenCalledWith('echo "Hello, World!"');
   });
 
   test('verify mocked wait', async () => {
@@ -726,8 +732,9 @@ describe('Matterbridge mocked', () => {
     const existSpy = jest.spyOn(fs, 'existsSync').mockImplementation((path: PathLike) => {
       return false; // Simulate a plugin that does not exist
     });
-    spawnCommandMock.mockImplementationOnce((command: string, args: string[]) => {
-      return Promise.resolve(false); // Simulate a failed installation
+    // @ts-expect-error Mock the execSync to simulate a not successful npm install
+    execSyncMock.mockImplementationOnce(() => {
+      return null; // Simulate a not successful npm install
     });
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -736,7 +743,7 @@ describe('Matterbridge mocked', () => {
     expect(plugins.length).toBe(6);
     expect(existSpy).toHaveBeenCalledTimes(6); // Six plugins checked for existence
     expect(parseSpy).toHaveBeenCalledTimes(5); // One plugin is skipped due to invalid install
-    expect(spawnCommandMock).toHaveBeenCalledTimes(6); // Six plugins attempted to install
+    expect(execSyncMock).toHaveBeenCalledTimes(6);
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Trying to reinstall it from npm...'));
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error reinstalling plugin'));
 

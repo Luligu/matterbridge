@@ -70,7 +70,7 @@ import type {
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils';
-import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
+import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
@@ -846,19 +846,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       );
       // Try to reinstall the plugin from npm (for Docker pull and external plugins)
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if (
-        !fs.existsSync(plugin.path) &&
-        !hasParameter('add') &&
-        !hasParameter('remove') &&
-        !hasParameter('enable') &&
-        !hasParameter('disable') &&
-        !hasParameter('reset') &&
-        !hasParameter('factoryreset') &&
-        !hasParameter('systemcheck')
-      ) {
+      if (!fs.existsSync(plugin.path) && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
-        const { spawnCommand } = await import('./spawn.js');
-        if (await spawnCommand('npm', ['install', '-g', `${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}`, '--omit=dev', '--verbose'], 'install', plugin.name)) {
+        const { execSync } = await import('node:child_process');
+        const sudo =
+          hasParameter('sudo') || (process.platform !== 'win32' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'));
+        if (execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} --omit=dev`)) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } else {
