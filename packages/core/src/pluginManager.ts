@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.3.5
+ * @version 1.4.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -79,6 +79,24 @@ interface PluginManagerEvents {
   shutdown: [name: string];
 }
 
+type PackageJsonDependencies = Record<string, string> | string[];
+
+type PackageJsonLike = Record<string, unknown> & {
+  name?: string;
+  dependencies?: PackageJsonDependencies;
+  devDependencies?: PackageJsonDependencies;
+  peerDependencies?: PackageJsonDependencies;
+  optionalDependencies?: PackageJsonDependencies;
+  bundledDependencies?: PackageJsonDependencies;
+  bundleDependencies?: PackageJsonDependencies;
+};
+
+type InvalidDependencies = {
+  dependencyType: keyof Pick<PackageJsonLike, 'dependencies' | 'devDependencies' | 'peerDependencies' | 'optionalDependencies' | 'bundledDependencies' | 'bundleDependencies'>;
+  packages: string[];
+  isMatterbridgePackage: boolean;
+};
+
 /**
  * Manages Matterbridge plugins.
  */
@@ -88,6 +106,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   private readonly server: BroadcastServer;
   private readonly debug = hasParameter('debug') || hasParameter('verbose');
   private readonly verbose = hasParameter('verbose');
+  private readonly dependencyTypes = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies', 'bundledDependencies', 'bundleDependencies'] as const;
 
   /**
    * Creates an instance of PluginManager.
@@ -109,6 +128,54 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   destroy(): void {
     this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
+  }
+
+  private getDependencyNames(dependencies: PackageJsonDependencies | undefined): string[] {
+    if (!dependencies) return [];
+    return Array.isArray(dependencies) ? dependencies : Object.keys(dependencies);
+  }
+
+  private findInvalidDependencies(packageJson: PackageJsonLike): InvalidDependencies | null {
+    for (const dependencyType of this.dependencyTypes) {
+      const packages = this.getDependencyNames(packageJson[dependencyType]);
+      const matterbridgePackages = packages.filter((pkg) => pkg.startsWith('matterbridge'));
+      if (matterbridgePackages.length > 0) {
+        return { dependencyType, packages: matterbridgePackages, isMatterbridgePackage: true };
+      }
+
+      const scopedPackages = packages.filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matterbridge') || pkg.startsWith('@matter'));
+      if (scopedPackages.length > 0) {
+        return { dependencyType, packages: scopedPackages, isMatterbridgePackage: false };
+      }
+    }
+    return null;
+  }
+
+  private logInvalidDependencies(packageJson: PackageJsonLike, invalidDependencies: InvalidDependencies, pluginName?: string): void {
+    if (invalidDependencies.isMatterbridgePackage) {
+      this.log.error(`Found matterbridge package in the plugin${pluginName ? ` ${plg}${pluginName}${er}` : ''} ${invalidDependencies.dependencyType}.`);
+    } else {
+      this.log.error(
+        `Found invalid packages "${invalidDependencies.packages.join(', ')}" in plugin${pluginName ? ` ${plg}${pluginName}${er}` : ''} ${invalidDependencies.dependencyType}.`,
+      );
+    }
+    this.log.error(`Please open an issue on the plugin repository to remove them.`);
+    this.server.request({
+      type: 'frontend_snackbarmessage',
+      src: 'plugins',
+      dst: 'frontend',
+      params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
+    });
+  }
+
+  /**
+   * Checks whether the package.json contains forbidden dependencies.
+   *
+   * @param {PackageJsonLike} packageJson - The package.json object to validate.
+   * @returns {boolean} True if no forbidden dependencies are present, otherwise false.
+   */
+  checkDependencies(packageJson: PackageJsonLike): boolean {
+    return this.findInvalidDependencies(packageJson) === null;
   }
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
@@ -619,85 +686,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         return null;
       }
 
-      // Check for @project-chip and @matter packages in dependencies and devDependencies
-      const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matter'));
-      };
-      const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
-      if (projectChipDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipDependencies.join(', ')}" in plugin dependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const projectChipDevDependencies = checkForProjectChipPackages(packageJson.devDependencies || {});
-      if (projectChipDevDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipDevDependencies.join(', ')}" in plugin devDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const projectChipPeerDependencies = checkForProjectChipPackages(packageJson.peerDependencies || {});
-      if (projectChipPeerDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipPeerDependencies.join(', ')}" in plugin peerDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-
-      // Check for matterbridge package in dependencies and devDependencies
-      const checkForMatterbridgePackage = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg === 'matterbridge');
-      };
-      const matterbridgeDependencies = checkForMatterbridgePackage(packageJson.dependencies || {});
-      if (matterbridgeDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin dependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const matterbridgeDevDependencies = checkForMatterbridgePackage(packageJson.devDependencies || {});
-      if (matterbridgeDevDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin devDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const matterbridgePeerDependencies = checkForMatterbridgePackage(packageJson.peerDependencies || {});
-      if (matterbridgePeerDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin peerDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
+      const invalidDependencies = this.findInvalidDependencies(packageJson);
+      if (invalidDependencies) {
+        this.logInvalidDependencies(packageJson, invalidDependencies);
         return null;
       }
 
@@ -906,85 +897,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       plugin.funding = this.getFunding(packageJson);
       if (!plugin.type) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no type`);
 
-      // Check for @project-chip and @matter packages in dependencies and devDependencies
-      const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matter'));
-      };
-      const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
-      if (projectChipDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} dependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const projectChipDevDependencies = checkForProjectChipPackages(packageJson.devDependencies || {});
-      if (projectChipDevDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipDevDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} devDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const projectChipPeerDependencies = checkForProjectChipPackages(packageJson.peerDependencies || {});
-      if (projectChipPeerDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipPeerDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} peerDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-
-      // Check for matterbridge package in dependencies and devDependencies
-      const checkForMatterbridgePackage = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg === 'matterbridge');
-      };
-      const matterbridgeDependencies = checkForMatterbridgePackage(packageJson.dependencies || {});
-      if (matterbridgeDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} dependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const matterbridgeDevDependencies = checkForMatterbridgePackage(packageJson.devDependencies || {});
-      if (matterbridgeDevDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} devDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const matterbridgePeerDependencies = checkForMatterbridgePackage(packageJson.peerDependencies || {});
-      if (matterbridgePeerDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} peerDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
+      const invalidDependencies = this.findInvalidDependencies(packageJson as PackageJsonLike);
+      if (invalidDependencies) {
+        this.logInvalidDependencies(packageJson as PackageJsonLike, invalidDependencies, plugin.name);
         return null;
       }
 

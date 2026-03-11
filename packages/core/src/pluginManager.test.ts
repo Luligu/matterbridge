@@ -40,7 +40,19 @@ import { plg, typ } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 
-import { addPluginSpy, closeMdnsInstance, destroyInstance, loggerLogSpy, removePluginSpy, setDebug, setupTest, shutdownPluginSpy } from './jestutils/jestHelpers.js';
+import {
+  addPluginSpy,
+  broadcastServerRequestSpy,
+  closeMdnsInstance,
+  destroyInstance,
+  loggerErrorSpy,
+  loggerLogSpy,
+  logKeepAlives,
+  removePluginSpy,
+  setDebug,
+  setupTest,
+  shutdownPluginSpy,
+} from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
@@ -72,6 +84,8 @@ describe('PluginManager', () => {
     testServer.close();
     // Restore all mocks
     jest.restoreAllMocks();
+    // Log keep alives to ensure all async operations have completed before shutting down the instance
+    // logKeepAlives();
   });
 
   test('Load matterbridge', async () => {
@@ -91,6 +105,86 @@ describe('PluginManager', () => {
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
+  });
+
+  test('checkDependencies should detect forbidden package prefixes across dependency types', async () => {
+    expect(
+      plugins.checkDependencies({
+        dependencies: { semver: '^7.7.1' },
+        devDependencies: { typescript: '^5.9.0' },
+        peerDependencies: { react: '^19.0.0' },
+        bundledDependencies: ['left-pad'],
+        bundleDependencies: ['kleur'],
+        optionalDependencies: { ws: '^8.18.1' },
+      }),
+    ).toBe(true);
+
+    expect(
+      plugins.checkDependencies({
+        dependencies: { semver: '^7.7.1' },
+        bundledDependencies: ['@matterbridge/example'],
+        optionalDependencies: { ws: '^8.18.1' },
+      }),
+    ).toBe(false);
+
+    expect(
+      plugins.checkDependencies({
+        dependencies: { semver: '^7.7.1' },
+        optionalDependencies: { 'matterbridge-helper': '^1.0.0' },
+        bundleDependencies: ['kleur'],
+      }),
+    ).toBe(false);
+
+    expect(
+      plugins.checkDependencies({
+        dependencies: { '@matter/main': '^1.0.0' },
+        devDependencies: { typescript: '^5.9.0' },
+        peerDependencies: { react: '^19.0.0' },
+      }),
+    ).toBe(false);
+
+    expect(
+      plugins.checkDependencies({
+        dependencies: { semver: '^7.7.1' },
+        devDependencies: { '@project-chip/matter.js': '^1.0.0' },
+        peerDependencies: { react: '^19.0.0' },
+        optionalDependencies: { ws: '^8.18.1' },
+      }),
+    ).toBe(false);
+
+    expect(
+      plugins.checkDependencies({
+        dependencies: { semver: '^7.7.1' },
+        devDependencies: { typescript: '^5.9.0' },
+        peerDependencies: { react: '^19.0.0' },
+        bundleDependencies: ['matterbridge-cli'],
+      }),
+    ).toBe(false);
+  });
+
+  test('logInvalidDependencies should log errors and notify frontend', async () => {
+    (plugins as any).logInvalidDependencies(
+      { name: 'test-plugin' },
+      {
+        dependencyType: 'bundledDependencies',
+        packages: ['@matterbridge/example', '@matter/main'],
+        isMatterbridgePackage: false,
+      },
+      'test-plugin',
+    );
+
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`Found invalid packages "@matterbridge/example, @matter/main" in plugin ${plg}test-plugin${er} bundledDependencies.`),
+    );
+    expect(loggerErrorSpy).toHaveBeenCalledWith('Please open an issue on the plugin repository to remove them.');
+    expect(broadcastServerRequestSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'frontend_snackbarmessage',
+        src: 'plugins',
+        dst: 'frontend',
+        params: { message: 'Found not allowed package in plugin test-plugin package.json', timeout: 30, severity: 'error' },
+      }),
+    );
   });
 
   test('BroadcastServer from local path', async () => {
@@ -183,6 +277,7 @@ describe('PluginManager', () => {
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
       expect(plugins.has('matterbridge-mock1')).toBe(true); 
+      expect(await plugins.shutdown('matterbridge-mock1', 'Closing', false, true)).toBeDefined();
 
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
@@ -523,37 +618,37 @@ describe('PluginManager', () => {
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', dependencies: { '@project-chip': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', devDependencies: { '@project-chip': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', peerDependencies: { '@project-chip': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', dependencies: { '@matter': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', devDependencies: { '@matter': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', peerDependencies: { '@matter': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js' }, null, 2), 'utf8');
@@ -574,6 +669,11 @@ describe('PluginManager', () => {
   test('parse plugin', async () => {
     expect(plugins.length).toBe(3);
     const packageFilePath = path.join('.', 'packages', 'core', 'src', 'mock', 'plugintest', 'package.json');
+    await fs.writeFile(
+      packageFilePath,
+      JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }),
+      'utf8',
+    );
     (plugins as any)._plugins.set('matterbridge-test', {
       name: 'matterbridge-test',
       path: './packages/core/src/mock/plugintest/package.json',
@@ -742,7 +842,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -759,7 +859,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -776,7 +876,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -785,7 +885,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -794,7 +894,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -803,7 +903,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -1044,6 +1144,14 @@ describe('PluginManager', () => {
         stdio: 'inherit',
         env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
       });
+    } catch (error) {
+      // console.log(`Installing matterbridge with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
+      output = execSync(`sudo npm install . --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+        stdio: 'inherit',
+        env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+      });
+    }
+    try {
       // console.log(`Installing plugin1 with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
       output = execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
         stdio: 'inherit',
@@ -1055,7 +1163,7 @@ describe('PluginManager', () => {
         env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
       });
     } catch (error) {
-      //
+      // console.log(`Installing plugin1 and plugin4 with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
     }
     expect(plugins.length).toBe(0);
   }, 60000);
@@ -1811,7 +1919,7 @@ describe('PluginManager', () => {
 
   test('Matterbridge.destroyInstance()', async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge);
+    await destroyInstance(matterbridge, 250, 500);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);
