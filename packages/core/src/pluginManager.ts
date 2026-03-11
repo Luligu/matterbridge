@@ -306,19 +306,19 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           if (msg.result && msg.result.packageCommand === 'install') {
             // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
             if (msg.result.success) {
-              msg.result.packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
+              const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
               // istanbul ignore else
-              if (msg.result.packageName !== 'matterbridge') {
+              if (packageName !== 'matterbridge') {
                 // istanbul ignore else
-                if (!this.has(msg.result.packageName)) await this.add(msg.result.packageName);
-                const plugin = this.get(msg.result.packageName);
+                if (!this.has(packageName)) await this.add(packageName);
+                const plugin = this.get(packageName);
                 // istanbul ignore else
                 if (plugin && !plugin.loaded) {
                   await this.load(plugin);
                   this.server.request({ type: 'frontend_refreshrequired', src: 'plugins', dst: 'frontend', params: { changed: 'plugins' } });
                 }
               }
-              this.log.info(`Installed plugin ${plg}${msg.result.packageName}${db} successfully`);
+              this.log.info(`Installed plugin ${plg}${packageName}${db} successfully`);
             } else {
               this.log.error(`Failed to install plugin ${plg}${msg.result.packageName}${er}`);
             }

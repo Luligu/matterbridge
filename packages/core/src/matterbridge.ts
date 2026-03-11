@@ -438,7 +438,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           if (msg.result && msg.result.success && msg.result.packageCommand === 'install') {
             this.restartRequired = true;
             this.fixedRestartRequired = true;
-            if (msg.result.packageName === 'matterbridge') {
+            const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
+            if (packageName === 'matterbridge') {
               this.log.info('Matterbridge has been updated. Full restart required.');
               if (this.restartMode !== '') await this.cleanup('updating...', false);
             }
