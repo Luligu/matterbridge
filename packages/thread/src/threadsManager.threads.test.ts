@@ -1,6 +1,6 @@
-// src\threadsManager.real.test.ts
+// src\threadsManager.threads.test.ts
 
-const NAME = 'ThreadsManagerReal';
+const NAME = 'ThreadsManagerThreads';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 import path from 'node:path';
@@ -16,8 +16,8 @@ import { ThreadsManager } from './threadsManager.js';
 // Setup the test environment
 await setupTest(NAME, false);
 
-describe('ThreadsManager', () => {
-  const log = new AnsiLogger({ logName: 'ThreadsManagerReal', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+describe('ThreadsManagerThreads', () => {
+  const log = new AnsiLogger({ logName: 'ThreadsManagerThreads', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   let broadcastserverMatterbridge: BroadcastServer;
   let broadcastserverPlugins: BroadcastServer;
