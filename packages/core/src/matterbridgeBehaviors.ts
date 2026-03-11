@@ -627,6 +627,8 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
   /**
    * Initializes thermostat behavior and adjusts command lists to avoid unsupported atomic commands.
    */
+  /*
+   * Fixed upstream in matter.js in 0.17.x
   override async initialize() {
     await super.initialize();
 
@@ -634,13 +636,14 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
     this.endpoint.construction.onSuccess(async () => {
       const device = this.endpoint.stateOf(MatterbridgeServer);
       device.log.debug(`Removing atomic commands (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-      // @ts-expect-error cause acceptedCommandList and generatedCommandList are not typed in the cluster state
+      /// @ts-expect-error cause acceptedCommandList and generatedCommandList are not typed in the cluster state
       await this.endpoint.setStateOf(ThermostatServer, {
         acceptedCommandList: [0],
         generatedCommandList: [],
       });
     });
   }
+  */
 
   /**
    * Forwards SetpointRaiseLower requests to the Matterbridge command handler and updates occupied setpoints.
@@ -668,6 +671,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
       this.state.occupiedCoolingSetpoint = setpoint * 100;
       device.log.debug(`Set occupiedCoolingSetpoint to ${setpoint}`);
     }
+
     // super.setpointRaiseLower(request);
   }
 }
