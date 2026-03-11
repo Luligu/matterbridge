@@ -38,6 +38,7 @@ import { hasParameter } from '@matterbridge/utils/cli';
 import { AnsiLogger, CYAN, db, debugStringify, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
+import type { WorkerWrapper } from './workerWrapper.js';
 
 interface ThreadInfo {
   /** Logical name used to identify the thread (also passed as workerData.threadName). */
@@ -157,7 +158,7 @@ export class ThreadsManager {
             this.runThread(msg.params.name, msg.params.workerData, msg.params.argv, msg.params.env, msg.params.execArgv, msg.params.pipedOutput);
             this.server.respond({ ...msg, result: { success: true } });
           } catch (err) {
-            this.log.error(`Failed to run thread ${CYAN}${msg.params.name}${db}: ${(err as Error).message}`);
+            this.log.warn(`Failed to run thread ${CYAN}${msg.params.name}${db}: ${(err as Error).message}`);
             this.server.respond({ ...msg, result: { success: false } });
           }
           break;
@@ -271,6 +272,35 @@ export class ThreadsManager {
     this.log.debug(`Started thread ${threadInfo.name} from path ${path} type ${threadInfo.type} with thread id ${worker.threadId}`);
 
     return threadInfo.worker;
+  }
+
+  /**
+   *  Run a thread's code in the main thread instead of a thread.
+   *
+   * @param {string} name - The name of the thread to run in the main thread.
+   * @param {WorkerData | null} [workerData] - Optional data to pass to the thread code.
+   * @returns {Promise<boolean>} True if the thread code ran successfully, false otherwise.
+   *
+   * @throws {Error} If the thread with the given name is not found.
+   */
+  async runInMainThread(name: string, workerData: WorkerData | null = null): Promise<boolean> {
+    const threadInfo = this.threads.find((t) => t.name === name);
+    if (!threadInfo) {
+      throw new Error(`Thread ${name} not found`);
+    }
+
+    this.log.debug(`Running thread ${threadInfo.name} in the main thread...`);
+
+    let success = false;
+    const workerWrapper: WorkerWrapper = (await import(this.resolvePath(threadInfo.path))).default;
+    if (workerWrapper && typeof workerWrapper === 'object' && workerWrapper.name === name && workerWrapper.callback && typeof workerWrapper.callback === 'function') {
+      workerWrapper.workerData = workerData;
+      success = await workerWrapper.callback(workerWrapper);
+      workerWrapper.destroy(success);
+    }
+
+    this.log.debug(`Finished running thread ${threadInfo.name} in the main thread.`);
+    return success;
   }
 
   /**

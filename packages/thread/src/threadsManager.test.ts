@@ -5,7 +5,7 @@
 const NAME = 'ThreadsManager';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
-import { existsSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
@@ -20,8 +20,11 @@ await setupTest(NAME, false);
 
 describe('ThreadsManager', () => {
   const moduleDirectory = path.dirname(url.fileURLToPath(new URL('./threadsManager.js', import.meta.url)));
+  const tempWorkerDirectory = path.resolve(HOMEDIR, 'temp-workers');
 
-  beforeAll(async () => {});
+  beforeAll(async () => {
+    mkdirSync(tempWorkerDirectory, { recursive: true });
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -101,7 +104,7 @@ describe('ThreadsManager', () => {
       const manager = new ThreadsManager();
 
       const tempWorkerFileName = `runThread.test.worker.${Date.now()}.js`;
-      const tempWorkerPath = path.join(moduleDirectory, tempWorkerFileName);
+      const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
       writeFileSync(
         tempWorkerPath,
         [
@@ -113,6 +116,8 @@ describe('ThreadsManager', () => {
       );
 
       try {
+        jest.spyOn(manager, 'resolvePath').mockReturnValue(tempWorkerPath);
+
         // Inject a test thread entry so we don't run real worker scripts.
         const threads = (manager as any).threads as Array<{
           name: string;
@@ -327,6 +332,84 @@ describe('ThreadsManager', () => {
     });
   });
 
+  describe('runInMainThread', () => {
+    test('throws when the thread is not found', async () => {
+      const manager = new ThreadsManager();
+
+      await expect(manager.runInMainThread('DoesNotExist')).rejects.toThrow('Thread DoesNotExist not found');
+
+      manager.destroy();
+    });
+
+    test('runs the exported worker wrapper in the main thread and returns the callback result', async () => {
+      const manager = new ThreadsManager();
+
+      const tempWorkerFileName = `runInMainThread.test.worker.${Date.now()}.js`;
+      const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
+      writeFileSync(
+        tempWorkerPath,
+        [
+          'const state = {',
+          "  name: 'RunInMainThreadWorker',",
+          '  workerData: null,',
+          '  destroy: function(success) { this.destroyCalledWith = success; },',
+          '  callback: async function(worker) {',
+          '    this.callbackCalledWith = worker;',
+          '    return worker.workerData?.ok === true;',
+          '  },',
+          '};',
+          'export default state;',
+        ].join('\n'),
+        { encoding: 'utf8' },
+      );
+
+      try {
+        jest.spyOn(manager, 'resolvePath').mockReturnValue(tempWorkerPath);
+
+        const threads = (manager as any).threads as Array<{ name: string; path: string; type: 'worker' | 'thread' }>;
+        threads.push({ name: 'RunInMainThreadWorker', path: tempWorkerFileName, type: 'worker' });
+
+        // @ts-expect-error test-only workerData shape
+        const result = await manager.runInMainThread('RunInMainThreadWorker', { ok: true, payload: 'value' });
+
+        expect(result).toBe(true);
+
+        const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default as any;
+        expect(imported.workerData).toEqual({ ok: true, payload: 'value' });
+        expect(imported.callbackCalledWith).toBe(imported);
+        expect(imported.destroyCalledWith).toBe(true);
+      } finally {
+        if (existsSync(tempWorkerPath)) rmSync(tempWorkerPath, { force: true });
+        manager.destroy();
+      }
+    });
+
+    test('returns false when the imported default export is not a matching worker wrapper', async () => {
+      const manager = new ThreadsManager();
+
+      const tempWorkerFileName = `runInMainThread.invalid.${Date.now()}.js`;
+      const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
+      writeFileSync(tempWorkerPath, "export default { name: 'DifferentName', callback: async () => true, destroy: () => undefined };", { encoding: 'utf8' });
+
+      try {
+        jest.spyOn(manager, 'resolvePath').mockReturnValue(tempWorkerPath);
+
+        const threads = (manager as any).threads as Array<{ name: string; path: string; type: 'worker' | 'thread' }>;
+        threads.push({ name: 'InvalidMainThreadWorker', path: tempWorkerFileName, type: 'worker' });
+
+        const result = await manager.runInMainThread('InvalidMainThreadWorker');
+
+        expect(result).toBe(false);
+
+        const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default as any;
+        expect(imported.workerData).toBeUndefined();
+      } finally {
+        if (existsSync(tempWorkerPath)) rmSync(tempWorkerPath, { force: true });
+        manager.destroy();
+      }
+    });
+  });
+
   describe('createESMWorker', () => {
     test('uses default argv/env and logs when verbose', async () => {
       const originalArgv = process.argv;
@@ -340,7 +423,7 @@ describe('ThreadsManager', () => {
       const debugSpy = jest.spyOn((manager as any).log, 'debug');
 
       const tempWorkerFileName = `createESMWorker.test.worker.${Date.now()}.js`;
-      const tempWorkerPath = path.join(moduleDirectory, tempWorkerFileName);
+      const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
       writeFileSync(
         tempWorkerPath,
         [
@@ -391,7 +474,7 @@ describe('ThreadsManager', () => {
 
       const manager = new ThreadsManager();
       const tempWorkerFileName = `createESMWorker.test.worker2.${Date.now()}.js`;
-      const tempWorkerPath = path.join(moduleDirectory, tempWorkerFileName);
+      const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
       writeFileSync(
         tempWorkerPath,
         [
@@ -588,6 +671,47 @@ describe('ThreadsManager', () => {
 
       expect(threadInfo.errorCount).toBe(1);
       expect(errorSpy).toHaveBeenCalled();
+
+      manager.destroy();
+    });
+
+    test('logs worker log messages through AnsiLogger.create', async () => {
+      jest.resetModules();
+
+      const { EventEmitter } = await import('node:events');
+      class WorkerMock extends EventEmitter {
+        threadId = 1;
+        constructor(_specifier: unknown, _options: unknown) {
+          super();
+        }
+      }
+
+      jest.unstable_mockModule('node:worker_threads', async () => {
+        const actual = jest.requireActual<any>('node:worker_threads');
+        return {
+          ...actual,
+          Worker: WorkerMock,
+        };
+      });
+
+      const { ThreadsManager: ThreadsManagerMocked } = await import('./threadsManager.js');
+      const { AnsiLogger: AnsiLoggerMocked } = await import('node-ansi-logger');
+      const createSpy = jest.spyOn(AnsiLoggerMocked, 'create');
+      const logSpy = jest.fn();
+      createSpy.mockReturnValue({ log: logSpy } as any);
+
+      const manager = new ThreadsManagerMocked();
+      const threads = (manager as any).threads as Array<any>;
+      threads.push({ name: 'TestWorker', path: 'does-not-exist.js', type: 'worker' });
+
+      manager.runThread('TestWorker');
+      const threadInfo = threads.find((t) => t.name === 'TestWorker');
+      expect(threadInfo.worker).toBeDefined();
+
+      (threadInfo.worker as any).emit('message', { type: 'log', logLevel: LogLevel.INFO, message: 'from worker' });
+
+      expect(createSpy).toHaveBeenCalled();
+      expect(logSpy).toHaveBeenCalledWith(LogLevel.INFO, 'from worker');
 
       manager.destroy();
     });
