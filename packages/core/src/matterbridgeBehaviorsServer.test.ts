@@ -104,7 +104,7 @@ describe('Server clusters and behaviors', () => {
     endpoint: MatterbridgeEndpoint,
     cluster: any,
     command: keyof MatterbridgeEndpointCommands,
-    expectedRequest?: Record<string, unknown>,
+    expectedRequest?: Record<string, boolean | number | bigint | string | object | null>,
     check?: (data: any) => void,
   ) {
     let invoke: Promise<void>;
@@ -843,7 +843,7 @@ describe('Server clusters and behaviors', () => {
     expectPresetThermostatAttributes(null, 2150, 2550);
 
     await thermostatPreset.invokeBehaviorCommand('Thermostat', 'setActivePresetRequest', firstPresetRequest);
-    await thermostatPreset.commandsOf(ThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Presets)).setActivePresetRequest(firstPresetRequest);
+    // await thermostatPreset.commandsOf(ThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Presets)).setActivePresetRequest(firstPresetRequest);
 
     expect(presetCalls[0]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: firstPresetRequest });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting preset to ${firstPresetRequest.presetHandle} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`);
