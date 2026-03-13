@@ -67,9 +67,12 @@ RUN bash -lc "\
   du -sh out/host/chip-tool out/python_env || true; \
   "
 
+# Allow overriding the cache version
+ARG CACHE_VERSION=3.6.X
+RUN echo "Builder with cache version ${CACHE_VERSION}"
+
 # Build Matterbridge and plugins (keep only runtime deps)
 WORKDIR /root/matterbridge
-RUN echo "Build matterbridge module 3.6.1"
 RUN \
   git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
   npm ci --no-fund --no-audit && npm run build && \
@@ -137,6 +140,10 @@ RUN \
 ENV CHIP_ROOT=/root/connectedhomeip
 ENV VIRTUAL_ENV=/root/connectedhomeip/out/python_env
 ENV PATH="/root/connectedhomeip/out/host:${VIRTUAL_ENV}/bin:${PATH}"
+
+# Allow overriding the cache version
+ARG CACHE_VERSION=3.6.X
+RUN echo "Release with cache version ${CACHE_VERSION}"
 
 # Matterbridge module (global install copied from builder)
 COPY --from=builder /usr/lib/node_modules/matterbridge /usr/lib/node_modules/matterbridge
