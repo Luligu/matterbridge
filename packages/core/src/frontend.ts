@@ -247,6 +247,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.logLevel = logLevel;
   }
 
+  /**
+   * Validates the incoming request for protected endpoints by checking the client's IP address against the list of authorized clients.
+   * If the client's IP address is not in the list, it responds with a 401 Unauthorized status and an error message.
+   *
+   * @param {import('express').Request} req - The incoming request object.
+   * @param {import('express').Response} res - The response object.
+   * @returns {boolean} - Returns true if the request is authorized, false otherwise.
+   */
   private validateReq(req: import('express').Request<unknown, unknown, unknown, { password?: string }>, res: import('express').Response): boolean {
     if (req.ip && !this.authClients.has(req.ip)) {
       this.log.warn(`Warning blocked unauthorized access request ${req.originalUrl ?? req.url} from ${req.ip}`);

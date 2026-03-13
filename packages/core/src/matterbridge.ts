@@ -1685,7 +1685,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         }
       }
       // Remove the resumption records and subscriptions. Till the matter.js team solves the issue of closing server node when resumption didn't work.
-      if (hasParameter('reset-sessions')) {
+      if (hasParameter('reset-sessions') || !hasParameter('no-reset-sessions')) {
         this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);

@@ -756,6 +756,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(deviceTypeList[1].revision).toBe(occupancySensor.revision);
     expect(deviceTypeList[2].deviceType).toBe(lightSensor.code);
     expect(deviceTypeList[2].revision).toBe(lightSensor.revision);
+
+    // await endpoint.setStateOf(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), { pirOccupiedToUnoccupiedDelay: 30 });
+    // await endpoint.setStateOf(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), { pirUnoccupiedToOccupiedDelay: 30 });
   });
 
   test('add a booleanState', async () => {
@@ -771,6 +774,15 @@ describe('Matterbridge ' + NAME, () => {
     });
     expect(endpoint).toBeDefined();
     await expect(server.add(endpoint)).resolves.toBeDefined();
+    /*
+    await endpoint.setStateOf(BooleanStateServer, { stateValue: true });
+    await endpoint.set({ booleanState: { stateValue: false } });
+
+    await endpoint.commands.identify.identify({ identifyTime: 5 });
+    await endpoint.commands.identify.triggerEffect({ effectIdentifier: Identify.EffectIdentifier.Blink, effectVariant: 0 });
+    await endpoint.commandsOf(IdentifyServer).identify({ identifyTime: 5 });
+    await endpoint.commandsOf(IdentifyServer).triggerEffect({ effectIdentifier: Identify.EffectIdentifier.Blink, effectVariant: 0 });
+    */
   });
 
   test('create an Rvc device', async () => {

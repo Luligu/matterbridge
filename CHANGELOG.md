@@ -27,16 +27,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## Project evolution
 
-The project is evolving to a multi-threaded architecture with these initial threads:
-
-- matterbridge;
-- frontend;
-- plugins;
-- devices;
-- all plugins in bridge mode;
-- each plugin in childbridge mode;
-
-Advantages:
+The project is evolving to a multi-threaded architecture with these advantages:
 
 - real concurrency outside the Node.js main loop;
 - isolation between threads;
@@ -52,6 +43,13 @@ These threads already run as workers:
 - ✅ npm install;
 - ✅ check the global node_modules directory;
 
+These classes will run as threads in the next releases:
+
+- matterbridge;
+- frontend;
+- all plugins in bridge mode;
+- each plugin in childbridge mode;
+
 ## [3.6.1] - Dev branch
 
 ### Added
@@ -60,20 +58,12 @@ These threads already run as workers:
 - [package]: Enable tree-shaking for @matterbridge/thread.
 - [threads]: Add ThreadsManager to the cli.
 - [threads]: Add WorkerWrapper.
-- [reset-sessions]: Add --reset-sessions parameter to disable resumption records
+- [reset-sessions]: Add --reset-sessions parameter to disable resumption records. Use it only if your controller doesn't support resumption.
 
 ### Changed
 
 - [package]: Update dependencies.
 - [package]: Bump `eslint` to v.10.0.3.
-
-<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
-
-## [3.6.1] - Dev branch
-
-### Changed
-
-- [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

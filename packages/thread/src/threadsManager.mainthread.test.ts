@@ -14,7 +14,7 @@ import { BroadcastServer } from './broadcastServer.js';
 import { ThreadsManager } from './threadsManager.js';
 
 // Setup the test environment
-await setupTest(NAME, true);
+await setupTest(NAME, false);
 
 describe('ThreadsManagerMainThread', () => {
   const log = new AnsiLogger({ logName: 'ThreadsManagerMainThread', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
