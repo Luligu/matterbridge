@@ -770,6 +770,60 @@ export class MatterbridgeEndpoint extends Endpoint {
     await this.commandHandler.executeHandler(command, { request, cluster, attributes, endpoint });
   }
 
+  /* eslint-disable @typescript-eslint/unified-signatures */
+  /**
+   * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+   * @param {string} command - The command to invoke.
+   * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   *
+   * @deprecated Used ONLY in Jest tests.
+   */
+  async invokeBehaviorCommand<
+    T extends Behavior.Type,
+    C extends keyof {
+      [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: unknown[]) => unknown ? K : never]: InstanceType<T>[K];
+    },
+  >(
+    cluster: T,
+    command: C,
+    params?: {
+      [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: unknown[]) => unknown ? K : never]: InstanceType<T>[K];
+    }[C] extends (...args: infer P) => unknown
+      ? P[0]
+      : never,
+  ): Promise<void>;
+  /**
+   * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+   * @param {string} command - The command to invoke.
+   * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   *
+   * @deprecated Used ONLY in Jest tests.
+   */
+  async invokeBehaviorCommand<T extends ClusterType, C extends keyof ClusterType.CommandsOf<T>>(
+    cluster: T,
+    command: C,
+    params?: ClusterType.CommandsOf<T>[C] extends { requestSchema: infer S extends import('@matter/types/tlv').TlvSchema<unknown> }
+      ? import('@matter/types/tlv').TypeFromSchema<S>
+      : never,
+  ): Promise<void>;
+  /**
+   * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+   * @param {string} command - The command to invoke.
+   * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   *
+   * @deprecated Used ONLY in Jest tests.
+   */
+  async invokeBehaviorCommand(
+    cluster: ClusterId | string,
+    command: keyof MatterbridgeEndpointCommands,
+    params?: Record<string, boolean | number | bigint | string | object | null>,
+  ): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
@@ -786,6 +840,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   ) {
     await invokeBehaviorCommand(this, cluster, command, params);
   }
+  /* eslint-enable @typescript-eslint/unified-signatures */
 
   /**
    * Adds the required cluster servers (only if they are not present) for the device types of the specified endpoint.
