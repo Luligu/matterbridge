@@ -9,6 +9,7 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { NumberTag, PowerSourceTag } from '@matter/node';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { VendorId } from '@matter/types';
 import { db, er, hk, or } from 'node-ansi-logger';
 
@@ -117,12 +118,24 @@ describe('Options helpers', () => {
     const cluster = getCluster(device, 'TemperatureMeasurement', log);
     expect(cluster).toBeUndefined();
     expect(device.log.error).toHaveBeenCalledWith(expect.stringContaining(`getCluster ${hk}TemperatureMeasurement${er} error:`));
+    jest.clearAllMocks();
 
-    const cluster0 = await setCluster(device, 'TemperatureMeasurement', { measuredValue: 2000 }, log);
+    const behavior = device.getCluster(TemperatureMeasurementServer, log);
+    expect(behavior).toBeUndefined();
+    expect(device.log.error).toHaveBeenCalledWith(expect.stringContaining(`getCluster ${hk}TemperatureMeasurement${er} error:`));
+    jest.clearAllMocks();
+
+    const cluster0 = await device.setCluster('TemperatureMeasurement', { measuredValue: 2000 }, log);
     expect(cluster0).toBeFalsy();
     expect(device.log.error).toHaveBeenCalledWith(expect.stringContaining(`setCluster ${hk}TemperatureMeasurement${er} error:`));
 
     await addDevice(aggregator, device);
+
+    expect(await device.setCluster(TemperatureMeasurementServer, { measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log)).toBe(true);
+    const behavior1 = device.getCluster(TemperatureMeasurementServer, log);
+    expect(behavior1?.measuredValue).toBe(2000);
+    expect(behavior1).toMatchObject({ measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
+    jest.clearAllMocks();
 
     const cluster1 = getCluster(device, 'NonExistentCluster', log);
     expect(cluster1).toBeUndefined();
@@ -133,7 +146,7 @@ describe('Options helpers', () => {
     expect(device.log.error).toHaveBeenCalledWith(`setCluster error: cluster not found on endpoint ${or}${device.maybeId}${er}:${or}${device.maybeNumber}${er}`);
 
     const cluster3 = device.getCluster('TemperatureMeasurement', log);
-    expect(cluster3).toMatchObject({ measuredValue: 2200, minMeasuredValue: 1000, maxMeasuredValue: 5000, tolerance: 0 });
+    expect(cluster3).toMatchObject({ measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
     expect(device.log.info).toHaveBeenCalledWith(expect.stringContaining(`${db}Get endpoint ${or}${device.id}${db}:${or}${device.number}${db} cluster`));
 
     const cluster4 = await device.setCluster('TemperatureMeasurement', { measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log);

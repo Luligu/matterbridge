@@ -101,7 +101,7 @@ Avoid VLANs, VMs, and firewalls that block communication between the controllers
 
 To pair Matterbridge, you need a Matter-enabled controller (Apple Home, SmartThings, Google Home, Alexa, Home Assistant, etc.).
 
-## Installation
+## Installation with Node.Js
 
 Follow these steps to install Matterbridge:
 

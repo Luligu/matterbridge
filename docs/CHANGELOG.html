@@ -122,6 +122,7 @@
 <p>The project is evolving to a multi-threaded architecture with these advantages:</p>
 <ul>
 <li>real concurrency outside the Node.js main loop;</li>
+<li>memory and performace optimization;</li>
 <li>isolation between threads;</li>
 <li>individual plugin isolation in childbridge mode;</li>
 <li>ability to update the plugin in childbridge mode without restarting matterbridge;</li>
@@ -142,12 +143,17 @@
 <li>each plugin in childbridge mode;</li>
 </ul>
 <h2 id="361-dev-branch">[3.6.1] - Dev branch</h2>
+<h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
+<ul>
+<li>[getCluster]: The overload of <code>getCluster()</code> method that takes a Behavior.Type is now typed.</li>
+<li>[setCluster]: The overload of <code>setCluster()</code> method that takes a Behavior.Type is now typed.</li>
+</ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[package]: Enable tree-shaking for @matterbridge/utils.</li>
 <li>[package]: Enable tree-shaking for @matterbridge/thread.</li>
-<li>[threads]: Add ThreadsManager to the cli.</li>
-<li>[threads]: Add WorkerWrapper.</li>
+<li>[threads]: Add ThreadsManager class to the cli.</li>
+<li>[threads]: Add WorkerWrapper class.</li>
 <li>[reset-sessions]: Add --reset-sessions parameter to disable resumption records. Use it only if your controller doesn&#39;t support resumption.</li>
 </ul>
 <h3 id="changed">Changed</h3>
@@ -157,7 +163,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="360-2026-03-06">[3.6.0] - 2026-03-06</h2>
-<h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-1">Dev Breaking Changes</h3>
 <ul>
 <li>[Oven]: Refactor <code>Oven</code> class to use TemperatureNumber for TemperatureControlledCabinet device type.</li>
 <li>[Refrigerator]: Refactor <code>Refrigerator</code> class to use TemperatureNumber for TemperatureControlledCabinet device type.</li>
@@ -209,7 +215,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="356-2026-02-27">[3.5.6] - 2026-02-27</h2>
-<h3 id="dev-breaking-changes-1">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-2">Dev Breaking Changes</h3>
 <ul>
 <li>[rootNode]: The serialNumber and uniqueId for accessory plugins in childbridge mode, and for devices with mode = server, are now taken from the device. These values are persisted in storage and cannot be changed later.</li>
 <li>[devContainer]: Add the guide to <a href="README-DEV.html#how-to-pair-matterbridge-in-dev-containers">pair Matterbridge with Dev Container</a></li>
@@ -268,7 +274,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="354-2026-02-13">[3.5.4] - 2026-02-13</h2>
-<h3 id="dev-breaking-changes-2">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-3">Dev Breaking Changes</h3>
 <ul>
 <li>[exports]: Removed Matterbridge export from matterbridge.</li>
 </ul>
@@ -311,7 +317,7 @@
 <p>In short: you can safely ignore this message; it is a dependency warning, not a Matterbridge vulnerability.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="353-2026-02-06">[3.5.3] - 2026-02-06</h2>
-<h3 id="dev-breaking-changes-3">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-4">Dev Breaking Changes</h3>
 <ul>
 <li>[logger]: The logger (node-ansi-logger) has been refactored and updated (v.3.2.0) to support the new features below.</li>
 </ul>

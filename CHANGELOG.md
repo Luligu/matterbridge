@@ -30,6 +30,7 @@ If you like this project and find it useful, please consider giving it a star on
 The project is evolving to a multi-threaded architecture with these advantages:
 
 - real concurrency outside the Node.js main loop;
+- memory and performace optimization;
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
@@ -52,12 +53,17 @@ These classes will run as threads in the next releases:
 
 ## [3.6.1] - Dev branch
 
+### Dev Breaking Changes
+
+- [getCluster]: The overload of `getCluster()` method that takes a Behavior.Type is now typed.
+- [setCluster]: The overload of `setCluster()` method that takes a Behavior.Type is now typed.
+
 ### Added
 
 - [package]: Enable tree-shaking for @matterbridge/utils.
 - [package]: Enable tree-shaking for @matterbridge/thread.
-- [threads]: Add ThreadsManager to the cli.
-- [threads]: Add WorkerWrapper.
+- [threads]: Add ThreadsManager class to the cli.
+- [threads]: Add WorkerWrapper class.
 - [reset-sessions]: Add --reset-sessions parameter to disable resumption records. Use it only if your controller doesn't support resumption.
 
 ### Changed
