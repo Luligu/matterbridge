@@ -2403,7 +2403,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
         ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.Presets
-        numberOfPresets: Array.isArray(presetsList) ? presetsList.length : 0,
+        numberOfPresets: Math.max(Array.isArray(presetsList) ? presetsList.length : 0, 10), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute.
         activePresetHandle: activePresetHandle !== undefined ? Uint8Array.from([activePresetHandle]) : null,
         // Ensure presetHandle is a proper Uint8Array by creating a new instance
         presets: (presetsList ?? []).map((p) => ({

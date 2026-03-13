@@ -27,7 +27,7 @@
 
 // AnsiLogger module
 // @matter
-import { MaybePromise, NamedHandler } from '@matter/general';
+import { Bytes, MaybePromise, NamedHandler } from '@matter/general';
 import { Behavior } from '@matter/node';
 // @matter behaviors
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
@@ -50,6 +50,7 @@ import { SwitchServer } from '@matter/node/behaviors/switch';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { ValveConfigurationAndControlServer } from '@matter/node/behaviors/valve-configuration-and-control';
 import { MovementDirection, MovementType, WindowCoveringServer } from '@matter/node/behaviors/window-covering';
+import { StatusResponse } from '@matter/types';
 // @matter clusters
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -89,6 +90,7 @@ export class MatterbridgeServer extends Behavior {
   }
 }
 
+// istanbul ignore next cause this is just a namespace for shared state types
 export namespace MatterbridgeServer {
   /**
    * State shared by Matterbridge servers.
@@ -723,6 +725,11 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
     device.log.info(`Setting preset to ${request.presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('setActivePresetRequest', { request, cluster: ThermostatServer.id, attributes: this.state, endpoint: this.endpoint });
 
+    if (request.presetHandle !== null) {
+      const preset = this.state.persistedPresets?.find((storedPreset) => storedPreset.presetHandle !== null && Bytes.areEqual(storedPreset.presetHandle, request.presetHandle));
+      if (preset === undefined) throw new StatusResponse.InvalidCommandError('Requested PresetHandle not found');
+    }
+    this.state.activePresetHandle = request.presetHandle;
     device.log.debug(`MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${request.presetHandle}`);
 
     // super.setActivePresetRequest(request);
