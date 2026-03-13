@@ -124,12 +124,12 @@ docker exec -it matterbridge-test ip r
 
 | OS      | Type          | Dowload   | Link                                                                                                                           |
 | ------- | ------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Windows | Any arch      | .exe      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector.Setup.0.0.1.exe) |
-| macOS   | Apple Silicon | .dmg      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector-0.0.1-arm64.dmg) |
-| macOS   | Intel         | .dmg      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector-0.0.1.dmg)       |
-| Ubuntu  | desktop       | .AppImage | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/Matterbridge.mDNS.Reflector-0.0.1.AppImage)  |
-| Ubuntu  | headless      | .deb      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mdns-reflector-server_0.0.1-1_all.deb)       |
-| Debian  | Any distro    | .deb      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v0.0.1/mdns-reflector-server_0.0.1-1_all.deb)       |
+| Windows | Any arch      | .exe      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v1.0.0/Matterbridge.mDNS.Reflector.Setup.1.0.0.exe) |
+| macOS   | Apple Silicon | .dmg      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v1.0.0/Matterbridge.mDNS.Reflector-1.0.0-arm64.dmg) |
+| macOS   | Intel         | .dmg      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v1.0.0/Matterbridge.mDNS.Reflector-1.0.0.dmg)       |
+| Ubuntu  | desktop       | .AppImage | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v1.0.0/Matterbridge.mDNS.Reflector-1.0.0.AppImage)  |
+| Ubuntu  | headless      | .deb      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v1.0.0/mdns-reflector-server_1.0.0-1_all.deb)       |
+| Debian  | Any distro    | .deb      | [download](https://github.com/Luligu/mdns-reflector-dist/releases/download/v1.0.0/mdns-reflector-server_1.0.0-1_all.deb)       |
 
 You may need to approve the install while the try apps are not digitally signed.
 
