@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/core",
-  "version": "3.6.1",
+  "version": "3.6.2",
   "description": "Matterbridge core library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -125,10 +125,10 @@
   },
   "dependencies": {
     "@matter/main": "0.16.10",
-    "@matterbridge/dgram": "3.6.1",
-    "@matterbridge/thread": "3.6.1",
-    "@matterbridge/types": "3.6.1",
-    "@matterbridge/utils": "3.6.1",
+    "@matterbridge/dgram": "3.6.2",
+    "@matterbridge/thread": "3.6.2",
+    "@matterbridge/types": "3.6.2",
+    "@matterbridge/utils": "3.6.2",
     "archiver": "7.0.1",
     "express": "5.2.1",
     "glob": "13.0.6",
