@@ -573,26 +573,36 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
-   * @remarks The overload that takes a Behavior.Type is typed.
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
    */
   async setCluster<T extends Behavior.Type>(cluster: T, value: Behavior.StateOf<T>, log?: AnsiLogger): Promise<boolean>;
   /**
    * Sets the state of the provided cluster on a given endpoint.
    *
-   * @param {ClusterType | ClusterId | string} cluster - The cluster to set.
+   * @param {ClusterType} cluster - The cluster to set.
+   * @param {ClusterType.AttributeValues<T>} value - The state to set for the cluster.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   *
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   */
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  async setCluster<T extends ClusterType>(cluster: T, value: ClusterType.AttributeValues<T>, log?: AnsiLogger): Promise<boolean>;
+  /**
+   * Sets the state of the provided cluster on a given endpoint.
+   *
+   * @param {ClusterId | string} cluster - The cluster to set.
    * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} value - The state to set for the cluster.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
    *
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
-   * @remarks The overload that takes a Behavior.Type is typed.
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
    */
-  async setCluster(
-    cluster: ClusterType | ClusterId | string,
-    value: Record<string, boolean | number | bigint | string | object | undefined | null>,
-    log?: AnsiLogger,
-  ): Promise<boolean>;
+  async setCluster(cluster: ClusterId | string, value: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger): Promise<boolean>;
   /**
    * Sets the state of the provided cluster on a given endpoint.
    *
@@ -603,7 +613,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
-   * @remarks The overload that takes a Behavior.Type is typed.
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
    */
   async setCluster(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -622,9 +632,21 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
-   * @remarks The overload that takes a Behavior.Type is typed.
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
    */
   getCluster<T extends Behavior.Type>(cluster: T, log?: AnsiLogger): Behavior.StateOf<T> | undefined;
+  /**
+   * Retrieves the state of the provided cluster from the given endpoint.
+   *
+   * @param {ClusterType} cluster - The cluster to retrieve the state from.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
+   * @returns {ClusterType.AttributeValues<T> | undefined} The state of the cluster, or undefined if the cluster is not found.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   *
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   */
+  getCluster<T extends ClusterType>(cluster: T, log?: AnsiLogger): ClusterType.AttributeValues<T> | undefined;
   /**
    * Retrieves the state of the provided cluster from the given endpoint.
    *
@@ -634,9 +656,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
-   * @remarks The overload that takes a Behavior.Type is typed.
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
    */
-  getCluster(cluster: ClusterType | ClusterId | string, log?: AnsiLogger): Record<string, boolean | number | bigint | string | object | undefined | null> | undefined;
+  getCluster(cluster: ClusterId | string, log?: AnsiLogger): Record<string, boolean | number | bigint | string | object | undefined | null> | undefined;
   /**
    * Retrieves the state of the provided cluster from the given endpoint.
    *
@@ -646,7 +668,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
-   * @remarks The overload that takes a Behavior.Type is typed.
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
    */
   getCluster(
     cluster: Behavior.Type | ClusterType | ClusterId | string,

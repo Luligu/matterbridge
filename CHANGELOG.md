@@ -55,8 +55,8 @@ These classes will run as threads in the next releases:
 
 ### Dev Breaking Changes
 
-- [getCluster]: The overload of `getCluster()` method that takes a Behavior.Type is now typed.
-- [setCluster]: The overload of `setCluster()` method that takes a Behavior.Type is now typed.
+- [getCluster]: The overloads of `getCluster()` method that take Behavior.Type or ClusterType are now typed.
+- [setCluster]: The overloads of `setCluster()` method that take Behavior.Type or ClusterType are now typed.
 
 ### Added
 

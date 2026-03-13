@@ -11,6 +11,7 @@ import { jest } from '@jest/globals';
 import { NumberTag, PowerSourceTag } from '@matter/node';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { VendorId } from '@matter/types';
+import { TemperatureMeasurement, TemperatureMeasurementCluster } from '@matter/types/clusters/temperature-measurement';
 import { db, er, hk, or } from 'node-ansi-logger';
 
 import {
@@ -131,10 +132,16 @@ describe('Options helpers', () => {
 
     await addDevice(aggregator, device);
 
-    expect(await device.setCluster(TemperatureMeasurementServer, { measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log)).toBe(true);
+    expect(await device.setCluster(TemperatureMeasurementServer, { measuredValue: 1900, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log)).toBe(true);
     const behavior1 = device.getCluster(TemperatureMeasurementServer, log);
-    expect(behavior1?.measuredValue).toBe(2000);
-    expect(behavior1).toMatchObject({ measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
+    expect(behavior1?.measuredValue).toBe(1900);
+    expect(behavior1).toMatchObject({ measuredValue: 1900, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
+    jest.clearAllMocks();
+
+    expect(await device.setCluster(TemperatureMeasurement.Cluster, { measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log)).toBe(true);
+    const clustertype = device.getCluster(TemperatureMeasurement.Cluster, log);
+    expect(clustertype?.measuredValue).toBe(2000);
+    expect(clustertype).toMatchObject({ measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
     jest.clearAllMocks();
 
     const cluster1 = getCluster(device, 'NonExistentCluster', log);
