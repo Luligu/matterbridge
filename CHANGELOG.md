@@ -51,7 +51,7 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [3.6.1] - Dev branch
+## [3.6.1] - 2026-03-13
 
 ### Dev Breaking Changes
 
