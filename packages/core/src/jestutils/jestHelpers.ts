@@ -1111,6 +1111,7 @@ export async function addDevice(owner: ServerNode<ServerNode.RootEndpoint> | End
     process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
     return false;
   }
+  await device.construction.ready;
   expect(owner.parts.has(device)).toBeTruthy();
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
   expect(device.lifecycle.isReady).toBeTruthy();
@@ -1218,6 +1219,27 @@ export function getMoveToHueRequest(hue: number, transitionTime: number, execute
 }
 
 /**
+ * Build a Matter ColorControl `EnhancedMoveToHueRequest` payload.
+ *
+ * Uses `ColorControl.Direction.Shortest` by default.
+ *
+ * @param {number} enhancedHue Target enhanced hue (Matter `uint16`; commonly 0–65535).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.EnhancedMoveToHueRequest} The request payload.
+ */
+export function getEnhancedMoveToHueRequest(enhancedHue: number, transitionTime: number, executeIfOff: boolean): ColorControl.EnhancedMoveToHueRequest {
+  const request: ColorControl.EnhancedMoveToHueRequest = {
+    enhancedHue,
+    transitionTime,
+    direction: ColorControl.Direction.Shortest,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
  * Build a Matter ColorControl `MoveToSaturationRequest` payload.
  *
  * @param {number} saturation Target saturation (Matter `uint8`; commonly 0–254).
@@ -1247,6 +1269,31 @@ export function getMoveToSaturationRequest(saturation: number, transitionTime: n
 export function getMoveToHueAndSaturationRequest(hue: number, saturation: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToHueAndSaturationRequest {
   const request: ColorControl.MoveToHueAndSaturationRequest = {
     hue,
+    saturation,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `EnhancedMoveToHueAndSaturationRequest` payload.
+ *
+ * @param {number} enhancedHue Target enhanced hue (Matter `uint16`; commonly 0–65535).
+ * @param {number} saturation Target saturation (Matter `uint8`; commonly 0–254).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.EnhancedMoveToHueAndSaturationRequest} The request payload.
+ */
+export function getEnhancedMoveToHueAndSaturationRequest(
+  enhancedHue: number,
+  saturation: number,
+  transitionTime: number,
+  executeIfOff: boolean,
+): ColorControl.EnhancedMoveToHueAndSaturationRequest {
+  const request: ColorControl.EnhancedMoveToHueAndSaturationRequest = {
+    enhancedHue,
     saturation,
     transitionTime,
     optionsMask: { executeIfOff },

@@ -1,10 +1,10 @@
 /**
- * This file contains the behavior classes of Matterbridge.
+ * This file contains the behavior server classes of Matterbridge.
  *
- * @file matterbridgeBehaviors.ts
+ * @file matterbridgeBehaviorsServer.ts
  * @author Luca Liguori
  * @created 2024-11-07
- * @version 1.3.0
+ * @version 1.4.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.

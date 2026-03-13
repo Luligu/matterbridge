@@ -112,7 +112,7 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
-} from './matterbridgeBehaviors.js';
+} from './matterbridgeBehaviorsServer.js';
 import {
   coverDevice,
   doorLockDevice,

@@ -30,7 +30,7 @@ import { MicrowaveOvenMode } from '@matter/types/clusters/microwave-oven-mode';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
-import { MatterbridgeOperationalStateServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeOperationalStateServer, MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { microwaveOven, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 

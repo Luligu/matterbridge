@@ -27,7 +27,7 @@ import { TemperatureControlServer } from '@matter/node/behaviors/temperature-con
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 
 // Matterbridge imports
-import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 /**

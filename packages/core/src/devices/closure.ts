@@ -29,7 +29,7 @@ import { ClusterBehavior } from '@matter/node';
 import { ClusterType } from '@matter/types';
 
 import { ClosureControl } from '../clusters/closure-control.js';
-import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { closure } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 

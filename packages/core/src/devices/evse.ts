@@ -32,7 +32,7 @@ import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 
 // Matterbridge
-import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { deviceEnergyManagement, electricalSensor, evse, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 

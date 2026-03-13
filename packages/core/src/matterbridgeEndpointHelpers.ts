@@ -139,7 +139,7 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
-} from './matterbridgeBehaviors.js';
+} from './matterbridgeBehaviorsServer.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
 

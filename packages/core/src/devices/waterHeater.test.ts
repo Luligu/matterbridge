@@ -39,7 +39,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-import { MatterbridgeThermostatServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeThermostatServer } from '../matterbridgeBehaviorsServer.js';
 import { waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';

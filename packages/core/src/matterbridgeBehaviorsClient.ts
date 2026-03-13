@@ -28,7 +28,7 @@ import { BindingBehavior } from '@matter/main/behaviors/binding';
 import { DescriptorServer } from '@matter/main/behaviors/descriptor';
 import { ClusterId } from '@matter/main/types';
 
-import { MatterbridgeServer } from './matterbridgeBehaviors.js';
+import { MatterbridgeServer } from './matterbridgeBehaviorsServer.js';
 
 /**
  * Binding client behavior that mirrors bindings into the Descriptor clientList.

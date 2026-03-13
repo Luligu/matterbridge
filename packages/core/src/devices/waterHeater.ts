@@ -32,7 +32,7 @@ import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-manag
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 
 // Matterbridge
-import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { deviceEnergyManagement, electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 

@@ -126,7 +126,7 @@ import {
   MatterbridgeSwitchServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
-} from './matterbridgeBehaviors.js';
+} from './matterbridgeBehaviorsServer.js';
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import {
   addClusterServers,

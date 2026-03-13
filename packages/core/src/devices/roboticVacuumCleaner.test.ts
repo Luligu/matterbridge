@@ -25,7 +25,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviorsServer.js';
 import { roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';

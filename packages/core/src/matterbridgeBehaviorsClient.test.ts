@@ -22,7 +22,7 @@ import {
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
-import { MatterbridgeIdentifyServer, MatterbridgeOnOffServer } from './matterbridgeBehaviors.js';
+import { MatterbridgeIdentifyServer, MatterbridgeOnOffServer } from './matterbridgeBehaviorsServer.js';
 import { MatterbridgeBindingServer } from './matterbridgeBehaviorsClient.js';
 import { onOffSwitch } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
