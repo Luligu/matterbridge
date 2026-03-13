@@ -82,4 +82,4 @@ jobs:
             --build-arg BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
             --push .
           docker manifest inspect luligu/matterbridge:chip-test
-        timeout-minutes: 120
+        timeout-minutes: 240
